@@ -847,8 +847,8 @@ describe("§6 — the census moves in exactly ONE summand", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§7 — engineVersion, and why MATCH_RECORD_VERSION does not move", () => {
-  it("engineVersion is 0.501.0", () => {
-    expect(engineVersion).toBe("0.501.0");
+  it("engineVersion is 0.502.0", () => {
+    expect(engineVersion).toBe("0.502.0");
   });
 
   it("🛑 `MATCH_RECORD_VERSION` STAYS 29 — the SERIALIZED ALPHABET, and REACHABILITY too", () => {

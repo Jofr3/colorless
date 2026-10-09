@@ -67,6 +67,7 @@ import {
   // 🆕🆕🆕 D562 — the Berry's §8.5 summand and its "not asked" answer.
   NO_CONSUMABLE,
   berryReductionOf,
+  attackerGatedReductionOf,
   opposingAttackDebuff,
   passivesOf,
   preventedByDamageThreshold,
@@ -3601,6 +3602,8 @@ export function attack(
       ? seatDamageReduction(next, defender, "othersOnly", action.seat)
       : berry.amount +
         defenderPassives.damageReductionAfterWR +
+        // 🆕🆕🆕 D619 — the attacker-gated reduction (Sacred Charm, Thick Scale, Thick Fat), on-target.
+        attackerGatedReductionOf(next, defender, defenderPassives.damageReductionsFromAttacker, attacker, action.seat) +
         installedReductionOf(next, defender) +
         seatDamageReduction(next, defender, "all", action.seat);
     // §8.5 Mimikyu "Safeguard": prevent ALL damage from an opponent's Pokémon

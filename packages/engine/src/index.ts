@@ -20266,6 +20266,17 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.501.0 → **0.502.0** (D619 — WP12 (THE PASSIVE HALF) + WP15: ATTACKER-GATED
+    REDUCTIONS AND NAMED-SUPPORTER CONDITIONS, 7 TEXTS / 10 `me` PRINTINGS; `MATCH_RECORD_VERSION` STAYS 42
+    (apps/api match.ts "STAYS 42 AT D619")). registry.ts, the NEW `PassiveEffects.damageReductionAfterWRFromAttacker
+    { amount, attacker: CardFilter, holderType? }`, folded by continuous.ts `passivesOf` into
+    `damageReductionsFromAttacker` and summed at the four §8.5 sites by the NEW `attackerGatedReductionOf` (an
+    opposing attacker matching the filter): Sacred Charm ×2 (`abilityPokemon`), Thick Scale (a {N} holder,
+    {G}/{R}/{W}/{L}) and Dewgong ×2 "Thick Fat" ({R}/{W}); Heliolisk ×2 "Frilled Generator" (Sunrise's program
+    behind `youPlayedSupporterNamedThisTurn` "Canari"). effects.ts: three `CONDITIONAL_DAMAGE_CLAUSES` rows on
+    that member (Wicked Impact, Buddy Attack, and Twister Spewing's clause) and arm 6e-quinquies (the
+    clause-gated opponent mill). Dropped and named: WP12's four attack texts (a persisted attacker class, an
+    MRV bump). `attackerClassMeD619.test.ts`.)
     🆕🆕🆕 engineVersion 0.500.0 → **0.501.0** (D618 — WP25b: THE REST OF THE `me` STADIUMS D606 DROPPED,
     3 TEXTS / 8 PRINTINGS; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D618")).
     registry.ts, three NEW `stadium` objects: Battle Cage ×2 (the NEW `StadiumEffects.benchCounterShield`,
@@ -25518,7 +25529,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.501.0";
+export const engineVersion = "0.502.0";
 
 export type {
   ApplyResult,

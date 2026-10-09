@@ -275,6 +275,28 @@ export function berryReductionOf(
   return { amount, toolUids };
 }
 
+/** 🆕🆕🆕 §8.5 (D619) — the ATTACKER-GATED post-W/R reduction `holder` takes from THIS `attacker`
+    (*"… takes {N} less damage from attacks from your opponent's <class> Pokémon (after applying
+    Weakness and Resistance)."*): the sum of `reductions` (`passivesOf(…).damageReductionsFromAttacker`)
+    whose `attacker` filter the attacking card matches (`matchesFilter`, on the attacker's in-play view
+    as every caller passes it). The printed "your opponent's" is the seat test (`berryReductionOf`'s):
+    an own-side hit or an unresolvable attacker gets 0. Summed into the four §8.5 sites' `reduction`
+    on their on-target arm. */
+export function attackerGatedReductionOf(
+  state: GameState,
+  holder: InPlayPokemon,
+  reductions: readonly { amount: number; attacker: CardFilter }[],
+  attacker: Card | undefined,
+  attackerSeat: Seat,
+): number {
+  if (reductions.length === 0 || attacker === undefined) return 0;
+  const holderSeat = seatOfPokemon(state, holder);
+  if (holderSeat === undefined || holderSeat === attackerSeat) return 0;
+  let amount = 0;
+  for (const reduction of reductions) if (matchesFilter(attacker, reduction.attacker)) amount += reduction.amount;
+  return amount;
+}
+
 /** 🆕🆕🆕 §8.1 (D562) — THE SURVIVAL BRACE on `holder` that would answer an attack from
     `attackerSeat` (*"If the Pokémon this card is attached to has full HP and would be
     Knocked Out by damage from an attack from your opponent's Pokémon, it is not Knocked
@@ -1242,6 +1264,12 @@ export function passivesOf(
       FIVE read sites — the four damage arms and `effectRefusedOn` — through `cards.ts
       preventsAttackerBanner`. Empty on every board with no such holder. */
   preventDamageAndEffectsFromBanners: Banner[];
+  /** 🆕🆕🆕 §8.5 (D619) — the ATTACKER-GATED post-W/R reductions (Sacred Charm, Thick Scale, Dewgong
+      "Thick Fat"), the holder gate (`holderType`) already resolved. A LIST for
+      `preventDamageFromTypes`' reason (the gate names the attacker): resolved at the four §8.5 sites
+      by `attackerGatedReductionOf`, which sums the amounts whose `attacker` filter the attacking
+      card matches. Empty on every board with no such holder. */
+  damageReductionsFromAttacker: { amount: number; attacker: CardFilter }[];
   /** §8.5 (D257) — full damage PREVENTION when the damage that would ACTUALLY be
       placed is this number OR MORE. Drednaw `sv07-044` "Impervious Shell",
       **1 legal printing on ONE sentence**:
@@ -1734,6 +1762,7 @@ export function passivesOf(
   const preventDamageFromTypes: PokemonType[] = [];
   const preventDamageFromAttackerClasses: PreventedAttackerClass[] = [];
   const preventDamageAndEffectsFromBanners: Banner[] = [];
+  const damageReductionsFromAttacker: { amount: number; attacker: CardFilter }[] = [];
   // D258 — the COIN-FLIP shields, collected with their Ability names because a fold
   // destroys provenance and `ABILITY_COIN_FLIP` has to name one.
   const preventDamageOnCoinFlip: { ability: string }[] = [];
@@ -1770,6 +1799,14 @@ export function passivesOf(
     // line above's reason (D131).
     if (passive.damageReductionAfterWRIfEnergy !== undefined && pokemon.energy.length > 0)
       damageReductionAfterWR += passive.damageReductionAfterWRIfEnergy;
+    // 🆕🆕🆕 D619 — the ATTACKER-gated twin (Sacred Charm, Thick Scale, Thick Fat): the holder gate is
+    // answered here (Rock Chestplate's, two lines up); the attacker gate only at the read sites.
+    const fromAttacker = passive.damageReductionAfterWRFromAttacker;
+    if (
+      fromAttacker !== undefined &&
+      (fromAttacker.holderType === undefined || holderTypes.includes(fromAttacker.holderType))
+    )
+      damageReductionsFromAttacker.push({ amount: fromAttacker.amount, attacker: fromAttacker.attacker });
     damageBonusBeforeWR += passive.damageBonusBeforeWR ?? 0;
     if (passive.damageBonusBeforeWRIf !== undefined)
       conditionalDamageBonusBeforeWR.push(passive.damageBonusBeforeWRIf);
@@ -2087,6 +2124,7 @@ export function passivesOf(
     preventAbilityEffects,
     preventDamageFromAttackerClasses,
     preventDamageAndEffectsFromBanners,
+    damageReductionsFromAttacker,
     preventDamageAtOrAbove,
     preventDamageOnCoinFlip,
     koPrizeReductions,

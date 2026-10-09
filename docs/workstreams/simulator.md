@@ -30237,6 +30237,24 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D619 — WP12 (passive half) + WP15: attacker-gated reductions and named-Supporter conditions (engine 0.502.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D618 (`d70e2058`), NOT committed.
+
+- **The reduction.** registry.ts, the NEW `PassiveEffects.damageReductionAfterWRFromAttacker { amount, attacker, holderType? }` on
+  Sacred Charm ×2 (`abilityPokemon`), Thick Scale (a {N} holder; {G}/{R}/{W}/{L}) and Dewgong ×2 "Thick Fat" ({R}/{W}).
+  continuous.ts `passivesOf` collects it (`damageReductionsFromAttacker`, holder gate resolved; §9 and Jamming Tower apply) and the NEW
+  `attackerGatedReductionOf` (opposing seat, `matchesFilter` on the attacker's in-play card) is summed on the on-target arm of the four
+  §8.5 sites.
+- **The named-Supporter texts.** Heliolisk ×2 "Frilled Generator" (Sunrise's program behind `youPlayedSupporterNamedThisTurn` Canari);
+  three `CONDITIONAL_DAMAGE_CLAUSES` rows (Wicked Impact, Buddy Attack, Twister Spewing's clause) and arm 6e-quinquies (the clause-gated
+  opponent mill).
+- **Dropped.** WP12's four attack texts (Lava Wall, Flashing Barrier ×2, Psy Protection, Metal Block): a new attacker class on persisted
+  state owes an MRV bump (match.ts "STAYS 42 AT D619").
+- **Suite.** `attackerClassMeD619.test.ts` (26) and a census D619 block (2). +25 mutant rows.
+- **Census.** Standard pool attacks **2,688 / 2,771**, abilities **561 / 610**, trainers **395 / 447**; 1083 `me` printings fully built (all 10 finished).
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
 ## D618 — WP25b: the rest of the `me` Stadiums (engine 0.501.0, `MATCH_RECORD_VERSION` stays 42)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D617 (`001fdbcc`), NOT committed.

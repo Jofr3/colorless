@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-09 — build session #558 (**P3-M5 — D618, *WP25b — THE REST OF THE `me` STADIUMS D606 DROPPED: 3 texts / 8 `me` printings on three new `stadium` objects — Battle Cage ×2 (the new Bench damage-counter shield, `StadiumEffects.benchCounterShield`), Mystery Garden ×3 (Revavroom's Energy discard, then a draw to your {P} count, the new `drawUntilHandSize.per`) and Forest of Vitality ×3 (the new Stadium evolution permission, `StadiumEffects.sameTurnEvolution`); R-BCG1 / R-BCG2 / R-MYG1 / R-FOV1 UNRULED; Dizzying Valley, Fossil Quarry, Risky Ruins and Ange Floette dropped; trainers 392 / 447, 1073 `me` printings fully built*** — engine 0.501.0, MRV 42, NOT committed; the whole-corpus sweep PENDING)
+**Last updated:** 2026-10-09 — build session #559 (**P3-M5 — D619, *WP12 (THE PASSIVE HALF) + WP15 — ATTACKER-GATED REDUCTIONS AND NAMED-SUPPORTER CONDITIONS: 7 texts / 10 `me` printings — Sacred Charm ×2, Thick Scale and Dewgong ×2 "Thick Fat" on the new `PassiveEffects.damageReductionAfterWRFromAttacker` (`attackerGatedReductionOf` at the four §8.5 sites), Heliolisk ×2 "Frilled Generator" and three attack texts (Wicked Impact, Buddy Attack, Twister Spewing) on D564's `youPlayedSupporterNamedThisTurn`; WP12's four attack texts dropped (a persisted attacker class owes an MRV bump); attacks 2,688 / 2,771, abilities 561 / 610, trainers 395 / 447, 1083 `me` printings fully built*** — engine 0.502.0, MRV 42, NOT committed; the whole-corpus sweep PENDING)
+
+**Last updated (was):** 2026-10-09 — build session #558 (**P3-M5 — D618, *WP25b — THE REST OF THE `me` STADIUMS D606 DROPPED: 3 texts / 8 `me` printings on three new `stadium` objects — Battle Cage ×2 (the new Bench damage-counter shield, `StadiumEffects.benchCounterShield`), Mystery Garden ×3 (Revavroom's Energy discard, then a draw to your {P} count, the new `drawUntilHandSize.per`) and Forest of Vitality ×3 (the new Stadium evolution permission, `StadiumEffects.sameTurnEvolution`); R-BCG1 / R-BCG2 / R-MYG1 / R-FOV1 UNRULED; Dizzying Valley, Fossil Quarry, Risky Ruins and Ange Floette dropped; trainers 392 / 447, 1073 `me` printings fully built*** — engine 0.501.0, MRV 42, NOT committed; the whole-corpus sweep PENDING)
 
 **Last updated (was):** 2026-10-09 — build session #557 (**P3-M5 — D617, *WP24b — FIVE MORE WP24 SUPPORTERS: 5 texts / 11 `me` printings on five new objects — Pokémon Center Lady (the new `healChosen.recoverHealed`), AZ's Tranquility ×3 (the new `healChosen.targetRecorded` on the demoted ex, and `switchActive.demotedAsMoved`), Grimsley's Move ×2 (shipped), Gwynn ×3 (the new `drawCards.per` member `recorded`) and Naveen ×2 (the new `payFromHand.cap: "any"` and `yourDeckNotEmpty`); R-AZT1 / R-GW1 / R-NV1 / R-NV2 UNRULED; Gladion's Final Battle, Acerola's Mischief and Roxie's Performance dropped (persisted side state, WP24c); trainers 384 / 447, 1065 `me` printings fully built*** — engine 0.500.0, MRV 42, NOT committed; the whole-corpus sweep PENDING)
 
@@ -861,6 +863,39 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-09, after D619)
+>
+> 🛑 **D619 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D618 = `d70e2058`). D619 is WP12 (the passive half) + WP15 of the Mega backlog. Next: a review of D619, then another package (or the MRV 42 → 43 slice that would carry WP12's four attack texts with WP24c / WP23), or the landing of D581–D619 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is a symlink to the main checkout's local D1). The D612 deploy order still stands (below).
+>
+> ✅ **`bun run check` IS GREEN**: `Test Files 661 passed (661) / Tests 15727 passed (15727) / CHECK_EXIT=0` (D618: 660 / 15699; D619 adds `attackerClassMeD619.test.ts` (26) and the census D619 block (2)).
+>
+> **(a) THE SLICE.** registry.ts, four NEW objects on 7 `me` ids (MID-MAP; LOCAL D1, `legal_standard = 1`): Sacred Charm `me02-093` / `-122`, Thick Scale `me02.5-211`, Dewgong `me02-022` / `-097` "Thick Fat" — the NEW `PassiveEffects.damageReductionAfterWRFromAttacker { amount, attacker: CardFilter, holderType? }`, folded by `passivesOf` into `damageReductionsFromAttacker` (holder gate resolved there; §9 and Jamming Tower apply) and summed by the NEW continuous.ts `attackerGatedReductionOf` (an opposing seat, `matchesFilter` on the in-play attacker) on the on-target arm of attack.ts's main hit and interpreter.ts `spreadDamage`, `placeSnipe`, `snipeActive` — and Heliolisk `me02.5-064` / `-229` "Frilled Generator" (Sunrise's program at {L} behind `playableIf youPlayedSupporterNamedThisTurn` Canari). effects.ts: three `CONDITIONAL_DAMAGE_CLAUSES` literal rows (Wicked Impact `me02.5-162` by the "Team Rocket" substring, Buddy Attack `me04-036` Emma, Twister Spewing `me03-040`'s Tarragon clause) and arm 6e-quinquies `CLAUSE_GATED_OPPONENT_MILL` (`conditionGate` around `discardDeckTop` opponent). sv reader output unchanged (the only corpus sentences the rows and anchor reach are the three). **Dropped and named:** WP12's four attack texts — Heatran "Lava Wall" `me05-007`, Manectric "Flashing Barrier" `me05-024` / `-089`, Deoxys "Psy Protection" `me04-033`, Bronzong "Metal Block" `me05-064` (5 printings): each needs a new attacker class (Burned / Evolution / has an Ability) on PERSISTED next-turn state.
+>
+> **(b) MRV STAYS 42** (match.ts "STAYS 42 AT D619"): the new field is catalog-only and the rest is shipped vocabulary. The same block reasons out the drop: widening `AttackerClass.stage` is safe forward (no v42 record holds a new member) and unsafe backward — a 0.501 rollback falls out of `attackerMatchesStage`'s switch and the block refuses nothing, and a class key on `DamageReduction` would be ignored (D575's finding) — so the four owe MRV 42 → 43.
+>
+> | Column | `me` D619 | Standard pool D619 |
+> |---|---|---|
+> | Attacks | 956 / 1039 | **2688 / 2771** |
+> | Abilities | 185 / 234 | **561 / 610** |
+> | Trainers | 131 / 183 | **395 / 447** |
+> | Special Energy | 11 / 11 | **22 / 22** |
+>
+> **1083 `me` printings fully built** (1073 + 10). Census pins stepped: registry 1320 → 1327 and non-attack 1152 → 1159 (six suites), the partition and `me`-key lists (`CENSUS_ME_POKEMON_D619`, `CENSUS_ME_TRAINER_D619`, `KEYED_AT_D619`), the D581 live tally (reader [365, 926], residue [61, 86]) and every later block's live `- 3`, D611's Heliolisk pin, `flipTheScript`'s `playableIf` list (40), `therapeuticEnergy`'s fold keys, `stadiumGatedSpread`'s `conditionGate` producer count (22), scovillainD578's allowlist (`attackerGatedReductionOf`, EFFECTIVE). Version tax: 274 occurrences in 169 files (tests, `package.json`, `D275-engine-version-drifts-again`'s find) plus the declaration; the D618 heading kept.
+>
+> **D539 sweep.** Annotated in place: D611's "Frilled Generator stays unkeyed" (census, progress D611 block, `coverage-backlog-mega.md`), types.ts's "Two printed readers" of `supporterPlayedUid`, effects.ts's "the pool's only other 'you played' sentence".
+>
+> **(c) THE MUTATION RECORD.** +25 D619 rows (registry.ts 8, continuous.ts 5, attack.ts 2, interpreter.ts 4, effects.ts 5, censusAtHead 1): 5123 in all. Three older rows re-pointed (`D245-sunny-day-loses-an-arm` — Thick Scale's list opens with the same two lines; `D562-placesnipe-berry-summand-dropped`, `D562-snipeactive-berry-summand-dropped` — the new summand sits inside their finds). precheck: 5123 mutants, the same 20 pre-existing broken rows. Probe `run.ts --decision D619 --allow-dirty`: 25 killed · 0 known · 0 GAP · 0 error, tree byte-identical after. `--only` the three re-pointed rows and `D275-engine-version-drifts-again`: 4 killed. GATE-WITNESS `--only` over the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows: 18 killed. Gates: residue-census, opaque-anatomy, splice, partition all OK.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D581–D618's too). Predicted: **5056 killed · 47 known survivor(s) · 0 GAP(S) · 20 error(s)** over **5,123** rows — 5098 + 25 = 5123; 5031 + 25 = 5056 killed; 47 survivors unchanged; 5056 + 47 + 20 = 5123. It assumes D618's prediction holds. If it holds, D581–D619 close together. If it fails: an error count ≠ 20 means a broken `find` outside the pre-existing 20; a survivor among the three re-pointed rows means its new find no longer reaches its arm; a GAP on an older §8.5 reduction row (Berry, `damageReductionAfterWR`, `seatDamageReduction`) means the new summand masks it; a D619 survivor means the probe's single-file view missed a second reader.
+>
+> **Pending decisions (UNRULED readings):** none new — Sacred Charm's "have an Ability" is the printed card (D251's reading), the type gates read in-play types (D578), "your opponent's" is the Berry's seat test (D562), and the named-Supporter member is D564's (R-FC). R-BCG1 / R-BCG2 / R-MYG1 / R-FOV1 (D618) and the earlier readings stand as recorded in the archived blocks below.
+>
+> Still owed from the Mega backlog: as at D618 (below), less WP12's passive half and WP15; plus WP12's four attack texts (the MRV bump).
+>
+> ---
+>
+> **ARCHIVED — the resume point D619 was built from, kept rather than overwritten** (D618 has since been committed on `mega-ingest` as `d70e2058`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-09, after D618)
 >
 > 🛑 **D618 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D617 = `001fdbcc`). D618 is WP25b of the Mega backlog (the Stadiums D606 dropped). Next: a review of D618 (and rulings on R-BCG1 / R-BCG2 / R-MYG1 / R-FOV1), then another package, or the landing of D581–D618 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is a symlink to the main checkout's local D1). The D612 deploy order still stands (below).
@@ -1116,7 +1151,7 @@
 >
 > **Pending decisions (UNRULED readings):** NEW at D611: **R-EG1 ⚠️ UNRULED** — Gumshoos "Evidence Gathering" with an EMPTY DECK is refused (there is no top card to switch with); reversal: the hand card goes on top and nothing comes back (which would let a decked-out player draw it). **R-SE1 ⚠️ UNRULED** — Phantump "Spiteful Evolution" evolves a Phantump put into play THIS turn: the card prints only the first-turn ban, and D307/R-SV1 already read §10's timing bans as rules about playing from the hand; reversal: refuse a Phantump with `turnPlayed >= turn`. **R-SE2 ⚠️ UNRULED** — the hand evolve runs no `onEvolve` trigger (an op cannot run a board trigger; no legal card that evolves from Phantump prints one, so the reading is unobservable today); reversal: route the placement through `placeEvolution`'s trigger tail. **R-SE3 ⚠️ UNRULED** (found in review) — Spiteful Evolution evolves under Bronzong `sv05-069` "Evolution Jammer" (*"they can't play any Pokémon from their hand to evolve their Pokémon"*): the Ability puts the card onto the Phantump and is not a play from the hand (R-SE2's reading; as Rare Candy), so the hand evolve never asks `pokemonPlayBarred` (turn.ts is its one evolve read site); pinned in `activatedMeD611.test.ts` §9; reversal: ask `pokemonPlayBarred(state, seat, "evolve", card)` in the offer. Carried: as at D610 (below).
 >
-> Still owed from the Mega backlog: as at D610 (below), less WP21 and Dragonair; Larry's Komala "Lethargic Charge" (two pieces: an Active-only target and a which-Energy-card choice) and Heliolisk "Frilled Generator" (WP15) remain in the activated family.
+> Still owed from the Mega backlog: as at D610 (below), less WP21 and Dragonair; Larry's Komala "Lethargic Charge" (two pieces: an Active-only target and a which-Energy-card choice) and Heliolisk "Frilled Generator" (WP15) remain in the activated family. [🆕🆕🆕 D619 (D539): Frilled Generator BUILT at D619.]
 >
 > ---
 >
@@ -35725,7 +35760,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D618, *WP25b — the rest of the `me` Stadiums: 3 texts / 8 `me` printings on three new `stadium` objects (Battle Cage's Bench damage-counter shield, Mystery Garden's discard-then-draw to the {P} count, Forest of Vitality's same-turn {G} evolution); R-BCG1 / R-BCG2 / R-MYG1 / R-FOV1 UNRULED; Dizzying Valley, Fossil Quarry, Risky Ruins and Ange Floette dropped; trainers 392 / 447, 1073 `me` printings fully built*** — engine 0.501.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D619, *WP12 (passive half) + WP15 — attacker-gated reductions and named-Supporter conditions: 7 texts / 10 `me` printings (Sacred Charm, Thick Scale and Thick Fat on the new `damageReductionAfterWRFromAttacker`; Frilled Generator and three attack texts on `youPlayedSupporterNamedThisTurn`); WP12's four attack texts dropped (MRV bump owed); attacks 2,688 / 2,771, abilities 561 / 610, trainers 395 / 447, 1083 `me` printings fully built*** — engine 0.502.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D618, *WP25b — the rest of the `me` Stadiums: 3 texts / 8 `me` printings on three new `stadium` objects (Battle Cage's Bench damage-counter shield, Mystery Garden's discard-then-draw to the {P} count, Forest of Vitality's same-turn {G} evolution); R-BCG1 / R-BCG2 / R-MYG1 / R-FOV1 UNRULED; Dizzying Valley, Fossil Quarry, Risky Ruins and Ange Floette dropped; trainers 392 / 447, 1073 `me` printings fully built*** — engine 0.501.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D617, *WP24b — five more WP24 Supporters: 5 texts / 11 `me` printings on five new objects (Pokémon Center Lady's healed-body recovery, AZ's Tranquility's demoted-ex heal, Grimsley's Move, Gwynn's per-discard draw, Naveen's uncapped discard and empty-deck gate); R-AZT1 / R-GW1 / R-NV1 / R-NV2 UNRULED; Gladion, Acerola and Roxie dropped for WP24c; trainers 384 / 447, 1065 `me` printings fully built*** — engine 0.500.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D616, *WP31b — the second part of the `me` deck / hand / discard / Energy misc: 9 attack texts / 11 `me` printings on shipped programs (a discard and a Paralysis, a typed Energy return, a typed Bench heal, the new `devolveChosen.defenderOnly`, three searches, Super Rod's program, an Item to the deck bottom); R-RCL1 UNRULED; attacks 2,685 / 2,771, 1054 `me` printings fully built*** — engine 0.499.0, MRV 42, NOT committed; the sweep PENDING; remote re-ingest owed) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D615, *WP31a — the first part of the `me` deck / hand / discard / Energy misc: 8 attack texts / 13 `me` printings on shipped programs (two looks, Precious Trolley's search, Picnic Basket's heal, the opponent's hand refresh, a Basic retrieval, the new `devolveEach.toHand`, a typed Energy move); R-GLT1 UNRULED; attacks 2,674 / 2,771, 1043 `me` printings fully built*** — engine 0.498.0, MRV 42, NOT committed; the sweep PENDING; remote re-ingest owed) |
@@ -35959,6 +35995,18 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-09 — build session #559 (P3-M5 — D619)
+
+**WP12 (THE PASSIVE HALF) + WP15 — ATTACKER-GATED REDUCTIONS AND NAMED-SUPPORTER CONDITIONS. `MATCH_RECORD_VERSION` STAYS 42.**
+
+Built in the `luminous_ui-mega` worktree on D618 (`d70e2058`); the main checkout was not touched. Ids `git grep`-ped and the
+texts read off the LOCAL D1 first. 7 texts / 10 `me` printings: the new `PassiveEffects.damageReductionAfterWRFromAttacker`
+(Sacred Charm ×2, Thick Scale, Dewgong ×2 "Thick Fat", summed by `attackerGatedReductionOf` at the four §8.5 sites), Heliolisk ×2
+"Frilled Generator", and three clause rows / one anchor on `youPlayedSupporterNamedThisTurn` (Wicked Impact, Buddy Attack, Twister
+Spewing). WP12's four attack texts dropped and named (a persisted attacker class owes MRV 42 → 43, reasoned in match.ts). No new
+reading. `attackerClassMeD619.test.ts` (26), census D619 block (2). +25 mutant rows, all KILLED; three older rows re-pointed.
+Sweep PENDING (NEXT (0)). NOT committed.
 
 ### 2026-10-09 — build session #558 (P3-M5 — D618)
 

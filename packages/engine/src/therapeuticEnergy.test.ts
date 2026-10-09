@@ -742,6 +742,9 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
         "damageAttackerOnKoFromAbility",
         "damageBonusBeforeWR",
         "damageReductionAfterWR",
+        // 🆕🆕🆕 D619 — the attacker-gated reductions (Sacred Charm, Thick Scale, Thick Fat), a list,
+        // EMPTY here because this board's Energy is Therapeutic and writes none.
+        "damageReductionsFromAttacker",
         // 🆕 D278 — the §4/§10 EVOLVE licence (`evolveEarlyExempt`), the fold's
         // newest boolean and `attackFirstTurnExempt`'s twin one rule over. FALSE
         // on this board for the same reason and with the same scope: Therapeutic

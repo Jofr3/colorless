@@ -1042,11 +1042,11 @@ describe("D489 §9 — the census this row moves, and the summands it does not",
     expect(units(rows)).toBe(1732);
   });
 
-  it("engineVersion is 0.501.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.502.0 and the bump is owed for BEHAVIOUR", () => {
     // 🆕🆕🆕 D489 — 0.383.0 → **0.384.0**. A card can reach it: one printed sentence
     // that derived to `null` and fell to the loud `ATTACK_EFFECT_SKIPPED` path now
     // discards from a hand and deals a number proportional to what it discarded.
-    expect(engineVersion).toBe("0.501.0");
+    expect(engineVersion).toBe("0.502.0");
     expect(deriveAttackEffect(PRINTED)).not.toBeNull();
   });
 });

@@ -2311,7 +2311,9 @@ export interface TurnAllowances {
       printed readers: Team Rocket's Factory `sv10-173` (*"if they played a Supporter card
       that has "Team Rocket" in its name from their hand this turn"*) and Crobat
       `sv06.5-029` "Shadowy Envoy" (*"if you played Janine's Secret Art from your hand this
-      turn"*). Every Supporter play is from the hand (`playTrainer` is the one path).
+      turn"*). [🆕🆕🆕 D619 (D539): ~~"Two printed readers"~~ — more since: Malamar "Colluding
+      Tentacles" (D574) and D619's Heliolisk ×2 "Frilled Generator", Wicked Impact, Buddy Attack
+      and Twister Spewing.] Every Supporter play is from the hand (`playTrainer` is the one path).
 
       ⚠️ THE SEAT HAZARD, `supporterPlayed`'s: this bag describes the TURN'S OWNER only, so
       the reader copies `youPlayedSupporterThisTurn`'s `phaseViewOf(...).activeSeat` guard.

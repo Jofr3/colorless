@@ -91,6 +91,7 @@ import {
   // Bomb at `reactToAttackDamage`) and Festival Grounds' refusal at `applyStatus`.
   NO_CONSUMABLE,
   berryReductionOf,
+  attackerGatedReductionOf,
   deluxeBombOf,
   stadiumShieldsStatus,
   // 🆕🆕🆕 D563 — Palafin ex's card-borne "only via Zero to Hero", at the deck-evolve filter
@@ -11402,6 +11403,8 @@ function spreadDamage(
     const reduction =
       berry.amount +
       passives.damageReductionAfterWR +
+      // 🆕🆕🆕 D619 — the attacker-gated reduction (Sacred Charm, Thick Scale, Thick Fat).
+      attackerGatedReductionOf(state, pokemon, passives.damageReductionsFromAttacker, attackerCard, ctx.seat) +
       installedReductionOf(state, pokemon) +
       seatDamageReduction(state, pokemon, "all", ctx.seat);
     // 🆕🆕🆕 D547 — …and the installed NEXT-TURN VULNERABILITY, ADDED at the same
@@ -11805,6 +11808,8 @@ function placeSnipe(
       ? seatDamageReduction(next, pokemon, "othersOnly", ctx.seat)
       : berry.amount +
         targetPassives.damageReductionAfterWR +
+        // 🆕🆕🆕 D619 — the attacker-gated reduction, on-target (`ignoreWR` nulls it).
+        attackerGatedReductionOf(next, pokemon, targetPassives.damageReductionsFromAttacker, attackerCard, ctx.seat) +
         installedReductionOf(next, pokemon) +
         seatDamageReduction(next, pokemon, "all", ctx.seat);
     // D149 — and the DEBUFF is NOT nulled by `ignoreWR`, unlike the reduction one
@@ -12182,6 +12187,8 @@ function snipeActive(
     ? seatDamageReduction(state, target.active, "othersOnly", ctx.seat)
     : berry.amount +
       targetPassives.damageReductionAfterWR +
+      // 🆕🆕🆕 D619 — the attacker-gated reduction, on-target (`ignoreWR` nulls it).
+      attackerGatedReductionOf(state, target.active, targetPassives.damageReductionsFromAttacker, attacker?.card, ctx.seat) +
       installedReductionOf(state, target.active) +
       seatDamageReduction(state, target.active, "all", ctx.seat);
   // ⚠️ D240 — the damage CAP is read against the number that would actually be

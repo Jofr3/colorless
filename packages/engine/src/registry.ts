@@ -621,6 +621,18 @@ export interface PassiveEffects {
       Active clause, so it pays on the Bench. Not §9-gated (a Tool); Jamming Tower
       silences it (`toolsInEffect`). */
   damageReductionAfterWRFromTypeThenDiscard?: { amount: number; type: PokemonType };
+  /** 🆕🆕🆕 §8.5 (D619) — `damageReductionAfterWR` GATED on the ATTACKER: *"… takes {N} less damage
+      from attacks from your opponent's <class> Pokémon (after applying Weakness and Resistance)."*
+      Sacred Charm `me02-093` / `-122` (a Tool, *"Pokémon that have an Ability"* → `abilityPokemon`),
+      Thick Scale `me02.5-211` (a Tool, *"your opponent's {G}, {R}, {W}, or {L} Pokémon"* → `anyOf`
+      `typedPokemon`, and *"The {N} Pokémon this card is attached to"* → `holderType`) and Dewgong
+      `me02-022` / `-097` "Thick Fat" (an Ability, {R} or {W}). Not consumable, so `passivesOf` folds it
+      (the §9 drop silences the Ability, Jamming Tower the Tools) into a LIST: the gate names the
+      attacker, which only the four §8.5 sites hold (continuous.ts `attackerGatedReductionOf`, which also
+      asks the printed "your opponent's" — an opposing seat). `attacker` is a `CardFilter` read through
+      `matchesFilter` on the attacker's in-play card; `holderType` is resolved inside the fold against
+      the holder's in-play types, Rock Chestplate's placement. Persists nothing. */
+  damageReductionAfterWRFromAttacker?: { amount: number; attacker: CardFilter; holderType?: PokemonType };
   /** 🆕🆕🆕 §8.1 (D562) — Survival Brace `sv06-164`: *"If the Pokémon this card is
       attached to has full HP and would be Knocked Out by damage from an attack from your
       opponent's Pokémon, it is not Knocked Out, and its remaining HP becomes 10. Then,
@@ -18041,6 +18053,82 @@ const FOREST_OF_VITALITY: CardProgram = {
   stadium: { sameTurnEvolution: { type: "Grass" } },
 };
 
+// ── 🆕🆕🆕 D619 — WP12 (the passive half) + WP15. Four objects, 7 `me` printings. New piece: the
+//    attacker-gated post-W/R reduction (`PassiveEffects.damageReductionAfterWRFromAttacker`, read at the
+//    four §8.5 sites through continuous.ts `attackerGatedReductionOf`). Frilled Generator is Sunrise's
+//    program behind D564's `youPlayedSupporterNamedThisTurn`. WP15's three attack texts are reader rows
+//    (effects.ts). Texts off the LOCAL D1 (2026-10-09). Dropped and named: WP12's four ATTACK texts
+//    (Heatran "Lava Wall", Manectric ×2 "Flashing Barrier", Deoxys "Psy Protection", Bronzong "Metal
+//    Block") — each installs a PERSISTED next-turn block / reduction filtered by a new attacker class,
+//    which owes `MATCH_RECORD_VERSION` (apps/api match.ts "STAYS 42 AT D619"). `attackerClassMeD619.test.ts`. ──
+
+/** 🆕🆕🆕 **D619 — Sacred Charm `me02-093` / `-122` (Tool)**: *"The Pokémon this card is attached to takes
+    30 less damage from attacks from your opponent's Pokémon that have an Ability (after applying Weakness
+    and Resistance)."* "Have an Ability" is the PRINTED card (`hasPrintedAbility`, D251's reading). */
+const SACRED_CHARM: CardProgram = {
+  passive: { damageReductionAfterWRFromAttacker: { amount: 30, attacker: { kind: "abilityPokemon" } } },
+};
+
+/** 🆕🆕🆕 **D619 — Thick Scale `me02.5-211` (Tool)**: *"The {N} Pokémon this card is attached to takes 50
+    less damage from attacks from your opponent's {G}, {R}, {W}, or {L} Pokémon (after applying Weakness
+    and Resistance)."* The holder gate is Rock Chestplate's (in-play types). */
+const THICK_SCALE: CardProgram = {
+  passive: {
+    damageReductionAfterWRFromAttacker: {
+      amount: 50,
+      attacker: {
+        kind: "anyOf",
+        filters: [
+          { kind: "typedPokemon", pokemonType: "Grass" },
+          { kind: "typedPokemon", pokemonType: "Fire" },
+          { kind: "typedPokemon", pokemonType: "Water" },
+          { kind: "typedPokemon", pokemonType: "Lightning" },
+        ],
+      },
+      holderType: "Dragon",
+    },
+  },
+};
+
+/** 🆕🆕🆕 **D619 — Dewgong `me02-022` / `-097` "Thick Fat" (Ability)**: *"This Pokémon takes 30 less damage
+    from attacks from your opponent's {R} or {W} Pokémon (after applying Weakness and Resistance)."* An
+    Ability, so a §9 lock silences it. Slam keeps deriving. */
+const THICK_FAT: CardProgram = {
+  passive: {
+    damageReductionAfterWRFromAttacker: {
+      amount: 30,
+      attacker: {
+        kind: "anyOf",
+        filters: [
+          { kind: "typedPokemon", pokemonType: "Fire" },
+          { kind: "typedPokemon", pokemonType: "Water" },
+        ],
+      },
+    },
+  },
+};
+
+/** 🆕🆕🆕 **D619 — Heliolisk `me02.5-064` / `-229` "Frilled Generator" (Ability)**: *"Once during your
+    turn, if you played Canari from your hand this turn, you may use this Ability. Search your deck for up
+    to 2 Basic {L} Energy cards and attach them to this Pokémon. Then, shuffle your deck."* Sunrise's
+    program at Lightning behind Shadowy Envoy's `playableIf` (`name: "Canari"`, a Supporter — D588). The
+    use is the printed "you may" and the search is "up to", so no inner confirm. Powerful Bolt keeps
+    deriving. */
+const FRILLED_GENERATOR: CardProgram = {
+  abilities: [
+    {
+      name: "Frilled Generator",
+      oncePerTurn: true,
+      activeOnly: false,
+      playableIf: { kind: "youPlayedSupporterNamedThisTurn", name: "Canari" },
+      program: [
+        { op: "attachFromDeck", filter: { kind: "basicEnergy", energyType: "Lightning" }, max: 2, toSelf: true },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
 // ── 🆕🆕🆕 D608 — WP30: TWO `30th` ATTACK OBJECTS, KEYED BY ID. Text off the LOCAL D1; both printed
 //    tcgdex's `<em>` markup (WP06), so no reader claimed them. `snipeSpreadMeD608.test.ts`.
 //    🆕🆕🆕 D612 — ONE now: the normaliser (cardText.ts) strips the `<em>`. Stealthy Slash's text is
@@ -19559,6 +19647,14 @@ const REGISTRY: Record<string, CardProgram> = {
   "me01-117": FOREST_OF_VITALITY, // Forest of Vitality — {G} into {G} the turn it is played, not turn one
   "me02.5-188": FOREST_OF_VITALITY, // Forest of Vitality
   "me03-109": FOREST_OF_VITALITY, // Forest of Vitality
+  // 🆕🆕🆕 D619 — WP12 (passive half) + WP15: 7 `me` non-attack keys / 4 objects, MID-MAP (`raw[last]` does not move).
+  "me02-093": SACRED_CHARM, // Sacred Charm — 30 less from an opposing Pokémon that has an Ability
+  "me02-122": SACRED_CHARM, // Sacred Charm
+  "me02.5-211": THICK_SCALE, // Thick Scale — a {N} holder takes 50 less from an opposing {G}/{R}/{W}/{L}
+  "me02-022": THICK_FAT, // Dewgong "Thick Fat" — 30 less from an opposing {R} or {W}
+  "me02-097": THICK_FAT, // Dewgong
+  "me02.5-064": FRILLED_GENERATOR, // Heliolisk — played Canari this turn: up to 2 Basic {L} from the deck to itself
+  "me02.5-229": FRILLED_GENERATOR, // Heliolisk
   // 🆕🆕🆕 D608 — WP30: 5 `30th` ATTACK-only keys / 2 objects, MID-MAP (`raw[last]` does not move).
   // 🆕🆕🆕 D612 — 3 now: Stealthy Slash ×2 RETIRED (the normalised text is `mep-099`'s, reader-built).
   "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex

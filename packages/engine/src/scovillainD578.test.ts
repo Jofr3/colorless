@@ -214,8 +214,8 @@ function damageRow(events: readonly GameEvent[]): Extract<GameEvent, { type: "DA
 const SCOV_SPOT: Spot = { id: SCOVILLAIN, under: [CAPSAKID] };
 
 describe("D578 Scovillain §0 — the version", () => {
-  it("is built at engine 0.501.0", () => {
-    expect(engineVersion).toBe("0.501.0");
+  it("is built at engine 0.502.0", () => {
+    expect(engineVersion).toBe("0.502.0");
   });
 });
 
@@ -456,6 +456,8 @@ const ALLOWLIST: Record<string, string> = {
   "filter · cards.ts · matchesFilter · card · { kind: \"anyPokemon\" }": B,
   "filter · cards.ts · matchesFilter · card · { kind: \"supporter\" }": B,
   "filter · cards.ts · matchesFilter · card · { kind: \"toolCard\" }": B,
+  // 🆕🆕🆕 D619 — Sacred Charm / Thick Scale / Thick Fat: the four §8.5 callers pass the in-play attacker view.
+  "filter · continuous.ts · attackerGatedReductionOf · attacker · reduction.attacker": `${E} — the four §8.5 callers pass the in-play attacker`,
   "filter · continuous.ts · auraSuppresses · top · { kind: \"bannerPokemon\", banner: aura.exemptBanner }": B,
   "filter · continuous.ts · basicEnergyUids · cardOfUid(state, uid) · BASIC_ENERGY_CARD": `${P} — an Energy card`,
   "filter · continuous.ts · countEnergyInPlay · inPlayCardOf(state, holder) · filter": E,

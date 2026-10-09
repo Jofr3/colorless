@@ -586,9 +586,9 @@ describe("D550 §4 — nothing new is persisted, so the record version holds", (
     expect(LOCAL_CARDS[SNIPER]?.attacks?.[TOLL_INDEX]).toMatchObject({ effect: PRINTED, damage: "80×" });
   });
 
-  it("engineVersion is 0.501.0 and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.501.0");
-    expect(manifest.version).toBe("0.501.0");
+  it("engineVersion is 0.502.0 and `manifest.version` agrees", () => {
+    expect(engineVersion).toBe("0.502.0");
+    expect(manifest.version).toBe("0.502.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

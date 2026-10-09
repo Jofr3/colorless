@@ -2159,7 +2159,27 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
-    🆕🆕🆕 **STAYS 42 AT D618 — THREE STADIUM OBJECTS, TWO `StadiumEffects` FIELDS AND ONE OPTIONAL OP KEY.**
+    🆕🆕🆕 **STAYS 42 AT D619 — ONE CATALOG PASSIVE FIELD, ONE ABILITY OBJECT, THREE CLAUSE ROWS AND ONE
+    ANCHOR; `AttackerClass` IS NOT WIDENED.** (Placed ABOVE the D618 block.) `PassiveEffects
+    .damageReductionAfterWRFromAttacker` (Sacred Charm, Thick Scale, Thick Fat) is read off the registry by
+    `passivesOf` at damage time and never persisted; Frilled Generator and the three attack texts use only
+    shipped ops and `BoardCondition` members (`conditionGate` + `discardDeckTop` may sit in a parked `rest`,
+    both already shipped). No `GameState`, `PendingStage`, prompt or wire key moves, and the 10 `me` faces in a
+    v42 `cardPool` are unchanged. A 0.501 rollback just loses these programs (the D582 cost).
+    🛑 **WHY WP12's FOUR ATTACK TEXTS WERE DROPPED (reasoned, not measured).** Heatran "Lava Wall", Manectric
+    ×2 "Flashing Barrier", Deoxys "Psy Protection" (*"…prevent all damage done to this Pokémon by attacks from
+    Burned / Evolution Pokémon / Pokémon that have an Ability"*) need new `AttackerClass.stage` members on the
+    PERSISTED `InPlayPokemon.attackBlock.fromClass`; Bronzong "Metal Block" (*"…takes 100 less damage from
+    attacks from Evolution Pokémon"*) needs a class on the PERSISTED `DamageReduction`. Forward, a widening is
+    safe: no v42 record can hold a member no 0.501 writer knows. Backward it is not: a 0.501 ROLLBACK resuming
+    a record saved inside the window reads a new member (say `{ stage: "evolution" }`) through its exhaustive
+    `attackerMatchesStage` switch, falls out (`undefined`, falsy) and the block refuses NOTHING; an extra key
+    on `DamageReduction` is ignored and the reduction applies to EVERY attacker. Both are played effects
+    silently changed — D575's finding on this very field, which paid 37 → 38 for it. So those four texts owe
+    `MATCH_RECORD_VERSION` 42 → 43 (with D583's migration story re-decided for v42), which is beyond this slice
+    and is best paid once with WP24c / WP23.
+
+    🆕🆕🆕 **STAYS 42 AT D618 —THREE STADIUM OBJECTS, TWO `StadiumEffects` FIELDS AND ONE OPTIONAL OP KEY.**
     (Placed ABOVE the D617 block.) `benchCounterShield` and `sameTurnEvolution` are catalog fields read off
     the Stadium in play, never persisted. `drawUntilHandSize.per` (Mystery Garden) rides the `rest` of the
     use's parked Energy discard: a 0.500 ROLLBACK resuming that park ignores the key and draws until 1 card

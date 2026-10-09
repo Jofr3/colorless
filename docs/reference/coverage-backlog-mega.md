@@ -6,6 +6,26 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D619 update (engine 0.502.0) — WP12 (the passive half) + WP15
+
+7 texts / 10 `me` printings (`attackerClassMeD619.test.ts`). WP12: the NEW attacker-gated post-W/R reduction
+(`PassiveEffects.damageReductionAfterWRFromAttacker`, `attackerGatedReductionOf` at the four §8.5 sites) on Sacred Charm ×2
+`me02-093` / `-122`, Thick Scale `me02.5-211` and Dewgong ×2 "Thick Fat" `me02-022` / `-097`. WP15: Heliolisk ×2 "Frilled
+Generator" `me02.5-064` / `-229` and three clause-table rows on D564's `youPlayedSupporterNamedThisTurn` — Team Rocket's Kangaskhan
+ex "Wicked Impact" `me02.5-162`, Espurr "Buddy Attack" `me04-036`, Hippowdon "Twister Spewing" `me03-040` (a gated mill).
+**Finished:** all 10. **Dropped and named:** WP12's four attack texts / 5 printings — Heatran "Lava Wall" `me05-007`, Manectric
+"Flashing Barrier" `me05-024` / `-089`, Deoxys "Psy Protection" `me04-033`, Bronzong "Metal Block" `me05-064`: a new attacker class
+(Burned / Evolution / has an Ability) on persisted next-turn state owes `MATCH_RECORD_VERSION` 42 → 43 (pay it with WP24c / WP23).
+
+| Column | `me` built / units (D619) | Standard pool D619 |
+|---|---|---|
+| Attacks | 956 / 1,039 (+3) | **2,688 / 2,771** |
+| Abilities | 185 / 234 (+4) | **561 / 610** |
+| Trainers | 131 / 183 (+3) | **395 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1083** (1073 + 10).
+
 ## 🆕 D618 update (engine 0.501.0) — the rest of the Stadiums (WP25b)
 
 3 texts / 8 `me` Stadium printings on three new `stadium` objects (`stadiumsMeD618.test.ts`): Battle Cage ×2 `me02-085` / `-116`
@@ -148,7 +168,7 @@ Maneuvers ×3 (Crobat; Ciphermaniac's deck-top search at one card), Boisterous W
 `notYourFirstTurn`), Sinister Surge ×3 (Toxtricity; `countersOnRecordedBody` on the body the Energy went to) and, from WP20b's
 drops, Evolutionary Guidance (Dragonair; `requiresEnergyType: "any"`). **Finished:** all 17 cards. **Dropped and named:** Larry's
 Komala `me02.5-175` "Lethargic Charge" (an Active-only target and a which-Energy-card choice — two pieces; the "Larry's" filter is `attachEnergyFrom`'s shipped `ownerPokemon`, and `attachFromHand` has neither an Active nor a name rider). Heliolisk ×2
-"Frilled Generator" stays with WP15. Four new readings (UNRULED): R-EG1 (Evidence Gathering refused with an empty deck), R-SE1
+"Frilled Generator" stays with WP15 [🆕🆕🆕 D619 (D539): BUILT at D619]. Four new readings (UNRULED): R-EG1 (Evidence Gathering refused with an empty deck), R-SE1
 (Spiteful Evolution evolves a Phantump put into play this turn), R-SE2 (no `onEvolve` trigger on the hand evolve), R-SE3 (review: it evolves under "Evolution Jammer")
 (`progress.md` NEXT).
 
@@ -873,7 +893,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× If this Pokémon is Burned or Poisoned, this attack does 100 more damage. [🆕🆕🆕 D593: BUILT]
 - 2× If your Benched Pokémon have any Shadowy {D} Energy attached, this attack does 70 more damage. [🆕🆕🆕 D600: BUILT]
 - 2× You may discard all Energy from this Pokémon and have this attack do 130 more damage. [🆕🆕🆕 D589: BUILT]
-- 1× During your opponent's next turn, this Pokémon takes 100 less damage from attacks from Evolution Pokémon (after applying Weakness and Resistance).
+- 1× During your opponent's next turn, this Pokémon takes 100 less damage from attacks from Evolution Pokémon (after applying Weakness and Resistance). [🆕🆕🆕 D619: dropped — a new attacker class on persisted state owes an MRV bump]
 - 1× During your opponent's next turn, this Pokémon takes 100 more damage from attacks (after applying Weakness and Resistance).
 - 1× If this Pokémon evolved from Magneton during this turn, this attack does 120 more damage. [🆕🆕🆕 D593: BUILT]
 - 1× If this Pokémon used Spiky Rolling during your last turn, this attack does 80 more damage. [🆕🆕🆕 D593: BUILT]
@@ -882,19 +902,19 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× If you have at least 4 {L} Energy in play, this attack does 90 more damage. [🆕🆕🆕 D586: BUILT]
 - 1× If you have at least 4 {R} Energy in play, this attack does 90 more damage. [🆕🆕🆕 D586: BUILT]
 - 1× If you have at least 4 {W} Energy in play, this attack does 90 more damage. [🆕🆕🆕 D586: BUILT]
-- 1× If you played Emma from your hand during this turn, this attack does 60 more damage.
-- 1× If you played a Supporter card that has "Team Rocket" in its name from your hand during this turn, this attack does 100 more damage.
+- 1× If you played Emma from your hand during this turn, this attack does 60 more damage. [🆕🆕🆕 D619: BUILT]
+- 1× If you played a Supporter card that has "Team Rocket" in its name from your hand during this turn, this attack does 100 more damage. [🆕🆕🆕 D619: BUILT]
 - 1× If your opponent's Active Pokémon has no Retreat Cost, this attack does 80 more damage. [🆕🆕🆕 D594: dropped from WP33a — needs a "no Retreat Cost" member] [🆕🆕🆕 D600: BUILT]
 - 1× You may discard 3 {M} Energy from this Pokémon and have this attack do 150 more damage. [🆕🆕🆕 D589: BUILT]
 - 1× You may shuffle all Energy attached to this Pokémon into your deck and have this attack do 80 more damage. [🆕🆕🆕 D589: BUILT]
 
 ### Next-turn effects on either Active (protection, vulnerability, locks) — 6 text(s) / 7 printing(s)
 
-- 2× During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Evolution Pokémon.
+- 2× During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Evolution Pokémon. [🆕🆕🆕 D619: dropped — a new attacker class on persisted state owes an MRV bump]
 - 1× During your opponent's next turn, Energy can't be attached from your opponent's hand to the Defending Pokémon.
 - 1× During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips 2 coins. If either of them is tails, that attack doesn't happen. [🆕🆕🆕 D595: dropped from WP13 — `flipLockAttack` is one coin and field-free]
-- 1× During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Burned Pokémon.
-- 1× During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Pokémon that have an Ability.
+- 1× During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Burned Pokémon. [🆕🆕🆕 D619: dropped — a new attacker class on persisted state owes an MRV bump]
+- 1× During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Pokémon that have an Ability. [🆕🆕🆕 D619: dropped — a new attacker class on persisted state owes an MRV bump]
 - 1× The Defending Pokémon's Weakness is now &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> until the end of your next turn. &lt;em>(Apply Weakness as ×2.)&lt;/em> [🆕🆕🆕 D612: the markup is normalised (WP06); the clean text still needs a reader]
 
 ### Spread / snipe damage — 15 text(s) / 27 printing(s)
@@ -945,7 +965,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× Devolve each of your opponent's evolved Pokémon by putting the highest Stage Evolution card on it into your opponent's hand. [🆕🆕🆕 D615: BUILT]
 - 1× Discard random cards from your opponent's hand until they have 5 cards in their hand.
 - 1× Discard the top card of your deck, and if that card is a Supporter card, use the effect of that card as the effect of this attack.
-- 1× If you played Tarragon from your hand during this turn, discard the top 3 cards of your opponent's deck.
+- 1× If you played Tarragon from your hand during this turn, discard the top 3 cards of your opponent's deck. [🆕🆕🆕 D619: BUILT]
 - 1× If your opponent has a Stadium in play, discard it. If you do, your opponent can't play any Stadium cards from their hand during their next turn.
 - 1× Look at the top 6 cards of your deck, and you may reveal any number of Pokémon you find there and put them into your hand. Shuffle the other cards back into your deck. [🆕🆕🆕 D615: BUILT]
 - 1× Look at the top 9 cards of your deck, and you may put any number of Pokémon you find there onto your Bench. Shuffle the other cards back into your deck. [🆕🆕🆕 D615: BUILT]
@@ -1011,7 +1031,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× **Fermented Juice** — Once during your turn, if this Pokémon has any {G} Energy attached, you may use this Ability. Heal 30 damage from 1 of your Pokémon. [🆕🆕🆕 D602: BUILT]
 - 2× **Fiery Flapping** — Once during your turn, if you have Articuno and Zapdos in play, you may use this Ability. Attach a Basic Fire Energy card from your hand to this Pokémon. [🆕🆕🆕 D591: BUILT]
 - 2× **Flash-Pop Flapping** — Once during your turn, if you have Moltres and Articuno in play, you may use this Ability. Attach a Basic Lightning Energy card from your hand to this Pokémon. [🆕🆕🆕 D591: BUILT]
-- 2× **Frilled Generator** — Once during your turn, if you played Canari from your hand this turn, you may use this Ability. Search your deck for up to 2 Basic {L} Energy cards and attach them to this Pokémon. Then, shuffle your deck.
+- 2× **Frilled Generator** — Once during your turn, if you played Canari from your hand this turn, you may use this Ability. Search your deck for up to 2 Basic {L} Energy cards and attach them to this Pokémon. Then, shuffle your deck. [🆕🆕🆕 D619: BUILT]
 - 2× **Frosty Flapping** — Once during your turn, if you have Moltres and Zapdos in play, you may use this Ability. Attach a Basic Water Energy card from your hand to this Pokémon. [🆕🆕🆕 D591: BUILT]
 - 2× **Gathering of Blossoms** — Once during your turn, you may use this Ability. Search your deck for an Erika's Pokémon, reveal it, and put it into your hand. Then, shuffle your deck. [🆕🆕🆕 D602: BUILT]
 - 2× **Share Happiness** — Once during your turn, you may use this Ability. Heal 30 damage from 1 of your Pokémon. [🆕🆕🆕 D584: BUILT]
@@ -1059,7 +1079,7 @@ group wins; the grouping is a reading aid, not a census figure).
 
 - 3× **Synchro Pulse** — If you have the same number of cards in your hand as your opponent, attacks used by this Pokémon do 80 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance). [🆕🆕🆕 D585: BUILT]
 - 2× **Powerful a-Salt** — Attacks used by your {F} Pokémon do 30 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance). [🆕🆕🆕 D585: BUILT]
-- 2× **Thick Fat** — This Pokémon takes 30 less damage from attacks from your opponent's {R} or {W} Pokémon (after applying Weakness and Resistance).
+- 2× **Thick Fat** — This Pokémon takes 30 less damage from attacks from your opponent's {R} or {W} Pokémon (after applying Weakness and Resistance). [🆕🆕🆕 D619: BUILT]
 - 2× **Tundra Wall** — All of your Pokémon that have any {W} Energy attached take 50 less damage from attacks from your opponent's Pokémon (after applying Weakness and Resistance). The effect of Tundra Wall doesn't stack. [🆕🆕🆕 D585: BUILT]
 - 1× **Gloomy Garbage** — Attacks used by your opponent's Active Pokémon that has a Pokémon Tool attached do 20 less damage (before applying Weakness and Resistance).
 - 1× **Intimidating Fang** — As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon do 30 less damage (before applying Weakness and Resistance). [🆕🆕🆕 D584: BUILT]
@@ -1219,9 +1239,9 @@ Discard an Energy from 1 of your opponent's Pokémon. [🆕🆕🆕 D588: BUILT]
 - 1× **Backtrack Badge** — Once during your turn, after you flip any coins for an attack of the {C} Pokémon this card is attached to, you may ignore all results of those coin flips and begin flipping those coins again.
 - 1× **Light Ball** — Attacks used by the Pikachu ex this card is attached to do 50 more damage to your opponent's Active Pokémon ex (before applying Weakness and Resistance).
 - 2× **Punk Helmet** — If the {D} Pokémon this card is attached to is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 4 damage counters on the Attacking Pokémon.
-- 2× **Sacred Charm** — The Pokémon this card is attached to takes 30 less damage from attacks from your opponent's Pokémon that have an Ability (after applying Weakness and Resistance).
+- 2× **Sacred Charm** — The Pokémon this card is attached to takes 30 less damage from attacks from your opponent's Pokémon that have an Ability (after applying Weakness and Resistance). [🆕🆕🆕 D619: BUILT]
 - 1× **Team Rocket's Hypnotizer** — If the Team Rocket's Pokémon this card is attached to is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Team Rocket's Pokémon is Knocked Out), the Attacking Pokémon is now Asleep.
-- 1× **Thick Scale** — The {N} Pokémon this card is attached to takes 50 less damage from attacks from your opponent's {G}, {R}, {W}, or {L} Pokémon (after applying Weakness and Resistance).
+- 1× **Thick Scale** — The {N} Pokémon this card is attached to takes 50 less damage from attacks from your opponent's {G}, {R}, {W}, or {L} Pokémon (after applying Weakness and Resistance). [🆕🆕🆕 D619: BUILT]
 
 ## Special Energy — 8 unbuilt texts / 8 printings [🆕🆕🆕 D604: all 8 BUILT — see the D604 update]
 

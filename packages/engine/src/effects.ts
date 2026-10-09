@@ -18130,6 +18130,9 @@ const SEARCH_TYPED_POKEMON_OR_STADIUM =
 // Eevee "Fetch and Hide": `REVEAL_BOTTOM_SUPPORTER`'s op over an Item.
 const REVEAL_BOTTOM_ITEM =
   /^Your opponent reveals their hand, and you put an Item card you find there on the bottom of your opponent['’]s deck\.$/;
+// 🆕🆕🆕 D619 — WP15, Hippowdon "Twister Spewing" (`me03-040`, LOCAL D1): a clause-table gate over the
+// opponent-side mill (arm 6e-quinquies). The clause is looked up, not captured as a name.
+const CLAUSE_GATED_OPPONENT_MILL = /^If (.+), discard the top (\d+) cards of your opponent['’]s deck\.$/;
 
 
 // D131 — the UNCONDITIONAL MILL, both directions on ONE anchor: "Discard the top
@@ -21653,6 +21656,8 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // the whole-sentence anchor refuses it on either one. (🆕🆕🆕 D564: Crobat is BUILT
   // as an Ability `playableIf` on `youPlayedSupporterNamedThisTurn`; this attack-clause
   // table still — rightly — refuses its sentence.)
+  // (🆕🆕🆕 D619 (D539): "the pool's only other" no longer holds — the `me` pool prints three more
+  // "you played … during this turn" clauses, now literal rows at the table's end.)
   [
     "you played a Supporter card from your hand during this turn",
     { kind: "youPlayedSupporterThisTurn" },
@@ -21891,6 +21896,21 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   [
     "your Benched Pokémon have any Shadowy {D} Energy attached",
     { kind: "yourBenchHasNamedEnergyAttached", name: "Shadowy Darkness Energy" },
+  ],
+  // 🆕🆕🆕 D619 — WP15, three literal rows on D564's `youPlayedSupporterNamedThisTurn` (LOCAL D1,
+  // 2026-10-09, legal `me`): Team Rocket's Kangaskhan ex "Wicked Impact" (`me02.5-162`, 120+, +100; the
+  // Factory's substring), Espurr "Buddy Attack" (`me04-036`, 10+, +60) and Hippowdon "Twister Spewing"
+  // (`me03-040`, the gated mill, arm 6e-quinquies). Emma and Tarragon are Supporters (D599 / D587), so
+  // the member's Supporter read is the printed one. Literal rows, not a name template: a template would
+  // read any capitalised name, an Item's included, as a played Supporter.
+  [
+    'you played a Supporter card that has "Team Rocket" in its name from your hand during this turn',
+    { kind: "youPlayedSupporterNamedThisTurn", nameContains: "Team Rocket" },
+  ],
+  ["you played Emma from your hand during this turn", { kind: "youPlayedSupporterNamedThisTurn", name: "Emma" }],
+  [
+    "you played Tarragon from your hand during this turn",
+    { kind: "youPlayedSupporterNamedThisTurn", name: "Tarragon" },
   ],
 ]);
 // The printed energy-type notations, BOTH of them: the modern brace CODE
@@ -29989,6 +30009,25 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     }
   }
   if (REVEAL_BOTTOM_ITEM.test(effect)) return [{ op: "bottomFromOpponentHand", filter: { kind: "item" } }];
+
+  // 6e-quinquies. 🆕🆕🆕 D619 — WP15's gated mill (Hippowdon "Twister Spewing"): a `conditionGate` on the
+  //     clause table's row (D564's `youPlayedSupporterNamedThisTurn`) around `DECK_TOP_MILL`'s op. A clause
+  //     no row claims leaves the sentence unread.
+  match = CLAUSE_GATED_OPPONENT_MILL.exec(effect);
+  if (match !== null) {
+    const millGate = boardConditionForClause(match[1] ?? "");
+    const milled = Number(match[2]);
+    if (millGate !== null && milled >= 1) {
+      return [
+        {
+          op: "conditionGate",
+          cond: millGate,
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [{ op: "discardDeckTop", whose: "opponent", count: milled }],
+        },
+      ];
+    }
+  }
 
   // 6f. 🆕🆕 D420 — "Discard {N} Basic {X} Energy cards from your hand." / "Discard a
   //     Basic {X} Energy card from your hand." — THE PRINTED HAND COST, ALONE.
