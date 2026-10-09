@@ -5228,7 +5228,7 @@ import type { GameState, Seat } from "./types";
     (`CHOSEN_ANY_TARGET`'s group 2 — 🆕🆕 D400: group 3 now, the count having taken 2;
     🆕🆕🆕 D448: group 4 now, the count clause having taken 3 —
     Umbreon "Feint Attack") and TWO read paths
-    (`snipeActive`, `placeSnipe`'s `deals` arm); it is a member of an OP and the
+    (`snipeActive`, `placeSnipe`'s `deals` arm) [🆕🆕🆕 D625 (D539, D622 MINOR 1): WITHDRAWN "ONE writer" — three readers set `ignoreWR`, and the bare-tail ones also set `wrOnly` (D622)]; it is a member of an OP and the
     main hit has NO op, and it is one boolean where three are needed. Sibling, not
     shared — asserted in both directions.
 
@@ -20269,6 +20269,16 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.507.0 → **0.508.0** (D625 — T1: THE REST OF THE `me` TRAINERS, 7 TEXTS / 13 `me` PRINTINGS,
+    PLUS THE OPEN DOCS FINDINGS; `MATCH_RECORD_VERSION` STAYS 43 (apps/api match.ts "STAYS 43 AT D625")). registry.ts: seven
+    NEW Trainer objects — Special Red Card ×2 (`handRefresh` opponent behind `opponentPrizesRemaining [0..3]`, R-SRC1), Jumbo
+    Ice Cream ×2 (`heal` 80 behind `yourActiveEnergyAtLeast 3`, R-JIC1), Dark Bell ×2 (two `conditionGate`s with an empty
+    `then`, R-DB1), Wally's Compassion ×3 (`healChosen` `megaEvolutionEx` with the NEW `energyToHandFromHealed`, R-WC1),
+    Blowtorch ×2 (a Basic {R} `payFromHand`, then the NEW `EffectOp` `chooseOneOffered`, R-BT1), Great Haul Net (two deck
+    retrievals, one shuffle, R-GHN1) and Strange Timepiece (`devolveChosen` with the NEW `whose: "self"` / `pokemonType` /
+    `depth` and the engine-written `bodyUid` / `shed`; the `turnPlayed` stamp, R-ST1). cardplay.ts: two `programPlayable`
+    lines (`offeredBranches`, `ownDevolveAvailable`). Docs findings closed: D622 MINOR 1 / 2, D610 MINOR 2 / 3 / 4.
+    `trainersMeD625.test.ts`.)
     🆕🆕🆕 engineVersion 0.506.0 → **0.507.0** (D624 — WP31c: THE REST OF THE `me` DECK / HAND / DISCARD / ENERGY
     MISC, 5 TEXTS / 7 `me` PRINTINGS; `MATCH_RECORD_VERSION` STAYS 43 (apps/api match.ts "STAYS 43 AT D624")).
     effects.ts arm 6e-sexies, five literal anchors: Tail Generator ×2 (`attachFromDiscard` with the NEW `max`
@@ -20424,7 +20434,7 @@ import type { GameState, Seat } from "./types";
     Rocket's Dugtrio; Lava Zone's moment, `damageSubject` 20), Scale Up ×3 and Tyrannically Gutsy ×2.
     continuous.ts/registry.ts: the NEW `hpBonus.requiresEnergyCount` ("6 or more") and
     `requiresEnergyType` widened to "special". R-HL1 UNRULED (triggers.ts: Holes resolves before
-    Palafin's Zero to Hero, no Knock Out check between); R-MR1 UNRULED (registry.ts: Metal Road's
+    Palafin's Zero to Hero, no Knock Out check between) [🆕🆕🆕 D625 (D610 MINOR 2): R-HL1 INVERTS D356's principle (turn.ts, Magearna "Auto Heal": the turn player's own effects resolve first when two triggers answer one moment), and its listed reversal "Zero to Hero first" IS D356's order. The departure is the reading because under D356's order Holes' subject has already gone to the deck and Holes does nothing; still UNRULED.]; R-MR1 UNRULED (registry.ts: Metal Road's
     moment read as a use-time gate, which affords a delayed use). Fall Back to Reload ×2, Last-Ditch Catch ×3,
     Luminous Wing ×4 (WP37b) and five passives left and named. `onMoveHpMeD610.test.ts`.)
     🆕🆕🆕 engineVersion 0.491.0 → **0.492.0** (D609 — WP36: THE `me` KO / DAMAGE-COUNTER ATTACKS;
@@ -20498,7 +20508,7 @@ import type { GameState, Seat } from "./types";
     Seviper "Excited Power" (`damageBonusBeforeWRIf` 120, {D} gate), Mega Signal ×3 (search a Mega ex)
     and Jett (`drawCards.per` over the opponent's Mega ex; R-PX6 inherited). Dropped and named: Latios
     "Lustrous Assist" (a NAMED Active's move gate) and Wally's Compassion ×3 (all Energy to hand from the
-    healed body). `megaGatedMeD603.test.ts`.)
+    healed body) [🆕🆕🆕 D625 (D539): Wally's Compassion ×3 BUILT at D625 (`healChosen.energyToHandFromHealed`).]. `megaGatedMeD603.test.ts`.)
     🆕🆕🆕 engineVersion 0.484.0 → **0.485.0** (D602 — WP20b: THE `me` ACTIVATED ABILITIES, SEARCH /
     HEAL / ATTACH; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D602")). registry.ts:
     six NEW `abilities` objects over 9 `me` printings, shipped vocabulary only — Silvally ×2 "Call a
@@ -25582,7 +25592,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.507.0";
+export const engineVersion = "0.508.0";
 
 export type {
   ApplyResult,

@@ -62,7 +62,8 @@ import {
 // Skwovet, Gothitelle, Lacey, Drasna, Harlequin, Unfair Stamp and Team Rocket's Archer —
 // **30 registry card ids**, counted off `registryCardIds()` in §7 rather than listed from
 // memory — 🆕🆕🆕 D555: **31**, Meddling Memo `sv08-181` joins them, a Trainer with
-// `who: "opponent"` + `toBottom` + `handPlus 0`; the "30" is the D516 count, kept). Embedding that
+// `who: "opponent"` + `toBottom` + `handPlus 0`; the "30" is the D516 count, kept; 🆕🆕🆕 D625: **42** at this head,
+// Special Red Card ×2 among them, `who: "opponent"` + `toBottom` + `onlyIfAnyMoved`, §7's count). Embedding that
 // union here would therefore buy a SECOND evaluator for it — D159's own failure mode —
 // or plumb an `InPlayPokemon` through a Supporter. ⚠️ **THE HOUSE HAS MADE THIS CALL
 // TWICE IN WRITING**: `AttackFlipCount` re-spells three of that union's concepts under
@@ -595,7 +596,7 @@ describe("D516 §7 — what this slice did NOT buy, measured", () => {
     // write. The claim therefore rests on REACHABILITY (D450) ALONE, and reachability is
     // a measurement over the PRODUCERS rather than a property of the op — which is what
     // the rung below drives.
-    expect(engineVersion).toBe("0.507.0");
+    expect(engineVersion).toBe("0.508.0");
   });
 
   it("🛑 REACHABILITY IS EMPTY, MEASURED OVER EVERY PRODUCER RATHER THAN ASSERTED", () => {
@@ -649,7 +650,7 @@ describe("D516 §7 — what this slice did NOT buy, measured", () => {
     expect(derived).toBeGreaterThan(100);
     expect(registryCardIds().length).toBeGreaterThan(100);
     const producers = registryCardIds().filter((id) => holdsRefresh(programFor(id)));
-    expect(producers).toHaveLength(40); // 🆕🆕🆕 D611 — 39 -> 40, Vivillon `me03-009` "Grand Wing" (`GRAND_WING`, `who: "opponent"` at index 0 of a one-op `abilities` program; `offenders` stays empty). 🆕🆕🆕 D588 — 35 -> 39, Lillie's Determination ×4 (`LILLIES_DETERMINATION`, a `conditionGate` at index 0 of a one-op `trainer` list, both arms `handRefresh`; `offenders` stays empty). 🆕🆕🆕 D582 — 33 -> 35, two `me` reprint-alias keys on EXISTING objects: Team Rocket's Archer `me02.5-201` and Judge `me03-076` (`offenders` stays empty — the objects are the `sv` ones). // 🆕🆕🆕 D557 — 31 -> 33, Lucian `sv06-157`/`-208` (index 0 of a one-op `trainer` list, so `offenders` stays empty). // 🆕🆕🆕 D555 — 30 -> 31, Meddling Memo `sv08-181` (index 0 of a one-op `trainer` list, so `offenders` stays empty)
+    expect(producers).toHaveLength(42); // 🆕🆕🆕 D625 — 40 -> 42, Special Red Card ×2 `me04-082` / `-113` (`SPECIAL_RED_CARD`, `who: "opponent"` with `toBottom` + `onlyIfAnyMoved` at index 0 of a one-op `trainer` list; `offenders` stays empty). 🆕🆕🆕 D611 — 39 -> 40, Vivillon `me03-009` "Grand Wing" (`GRAND_WING`, `who: "opponent"` at index 0 of a one-op `abilities` program; `offenders` stays empty). 🆕🆕🆕 D588 — 35 -> 39, Lillie's Determination ×4 (`LILLIES_DETERMINATION`, a `conditionGate` at index 0 of a one-op `trainer` list, both arms `handRefresh`; `offenders` stays empty). 🆕🆕🆕 D582 — 33 -> 35, two `me` reprint-alias keys on EXISTING objects: Team Rocket's Archer `me02.5-201` and Judge `me03-076` (`offenders` stays empty — the objects are the `sv` ones). // 🆕🆕🆕 D557 — 31 -> 33, Lucian `sv06-157`/`-208` (index 0 of a one-op `trainer` list, so `offenders` stays empty). // 🆕🆕🆕 D555 — 30 -> 31, Meddling Memo `sv08-181` (index 0 of a one-op `trainer` list, so `offenders` stays empty)
     // 🛑 …AND THE INVARIANT IS NOT TRIVIALLY TRUE, WHICH IS THE PART A GREEN `offenders`
     // CANNOT SAY (D200). Of the op lists this walk visits, **337 hold more than one op**
     // (🆕🆕🆕 D555, MEASURED rather than carried: **376 of 1,013** at this head, **368 of

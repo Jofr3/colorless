@@ -214,8 +214,8 @@ function damageRow(events: readonly GameEvent[]): Extract<GameEvent, { type: "DA
 const SCOV_SPOT: Spot = { id: SCOVILLAIN, under: [CAPSAKID] };
 
 describe("D578 Scovillain §0 — the version", () => {
-  it("is built at engine 0.507.0", () => {
-    expect(engineVersion).toBe("0.507.0");
+  it("is built at engine 0.508.0", () => {
+    expect(engineVersion).toBe("0.508.0");
   });
 });
 
@@ -446,6 +446,8 @@ const ALLOWLIST: Record<string, string> = {
   "types · interpreter.ts · conditionHolds · card.types": `${E}`,
   "types · interpreter.ts · conditionHolds · (inPlayCardOf(state, spot.active) ?? spot.card).types": `${E}`,
   "types · interpreter.ts · healEach · card?.types": `${E} — \`inPlayCardOf\``,
+  // 🆕🆕🆕 D625 — Strange Timepiece's own evolved {P} offer, off the in-play card.
+  "types · interpreter.ts · ownDevolveTargets · card?.types": `${E} — \`inPlayCardOf\``,
   // ── `matchesFilter` calls ──
   "filter · attack.ts · benchBodies · inPlayCardOf(state, p) · filter": E,
   "filter · attack.ts · copySources · card · { kind: \"ownerPokemon\", owner }": B,

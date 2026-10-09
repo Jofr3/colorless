@@ -6,6 +6,25 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D625 update (engine 0.508.0) — T1, the rest of the `me` Trainers, plus the open docs findings (`MATCH_RECORD_VERSION` stays 43)
+
+7 texts / 13 `me` printings on seven new Trainer objects (`trainersMeD625.test.ts`): Special Red Card ×2 `me04-082` / `-113` (Iono's
+`handRefresh` on the opponent behind `opponentPrizesRemaining [0..3]`, R-SRC1), Jumbo Ice Cream ×2 `me02-091` / `me04-109` (`heal`
+80 behind `yourActiveEnergyAtLeast 3`, R-JIC1), Dark Bell ×2 `me05-075` / `-106` (two `conditionGate`s with an empty `then`, R-DB1),
+Wally's Compassion ×3 `me01-132` / `-176` / `-186` (`healChosen` over `megaEvolutionEx` with the NEW `energyToHandFromHealed`, R-WC1),
+Blowtorch ×2 `me02-086` / `-117` (a Basic {R} payment, then the NEW `chooseOneOffered` over Tool / Special Energy / Stadium, R-BT1),
+Great Haul Net `me04-078` (two deck retrievals, one shuffle, R-GHN1) and Strange Timepiece `me01-128` (`devolveChosen` on the own side
+with the NEW `whose` / `pokemonType` / `depth`, the `turnPlayed` stamp, R-ST1). **Finished:** all 13. No text dropped.
+
+| Column | `me` built / units (D625) | Standard pool D625 |
+|---|---|---|
+| Attacks | 977 / 1,039 | **2,709 / 2,771** |
+| Abilities | 185 / 234 | **561 / 610** |
+| Trainers | 167 / 183 (+13) | **431 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1138** (1125 + 13).
+
 ## 🆕 D624 update (engine 0.507.0) — WP31c, the rest of the deck / hand / discard / Energy misc (`MATCH_RECORD_VERSION` stays 43)
 
 5 texts / 7 `me` printings, readers only (`deckHandMiscMeD624.test.ts`): Dedenne "Tail Generator" ×2 `me03-029` / `-093`
@@ -282,7 +301,7 @@ Dugtrio) ride Lava Zone's opponent-side `onActiveMovedToBench`; Scale Up ×3 and
 (8 texts / 17 printings): Fall Back to Reload ×2, Last-Ditch Catch ×3, Luminous Wing ×4 (WP37b — Mega Clefable ex ×4 still waits
 on it [🆕🆕🆕 D614: BUILT, Mega Clefable ex ×4 finished]), Supreme Overlord, Gloomy Garbage, Sniper's Eye ×2, Ancient Bulwark ×3, Life-Locked. Two new readings (UNRULED): R-HL1, Holes
 resolves before Palafin's Zero to Hero with no Knock Out check between; R-MR1, Metal Road's moment is a use-time gate, which affords
-a delayed use (`progress.md` NEXT).
+a delayed use (`progress.md` NEXT). [🆕🆕🆕 D625 (D610 MINOR 2): R-HL1 INVERTS D356's principle (turn.ts, Magearna "Auto Heal": the turn player's own effects resolve first when two triggers answer one moment), and its listed reversal "Zero to Hero first" IS D356's order. The departure is the reading because under D356's order Holes' subject has already gone to the deck and Holes does nothing; still UNRULED.]
 
 | Column | `me` built / units (D610) | Standard pool D610 |
 |---|---|---|
@@ -420,7 +439,7 @@ D582's `isMegaEvolutionPokemonEx`: `BoardCondition.yourMegaExInPlay { type? }` a
 heal 60 from 1), Excited Dash (Linoone; on the Bench, any Mega ex, switch with the Active), Excited Power (Seviper; {D} gate,
 +120 before W/R), Mega Signal ×3 (a Mega ex from the deck) and Jett (a card per opponent's Mega ex). **Finished:** all 11.
 **Dropped:** Latios `me01-101` "Lustrous Assist" (a gate on a named Active's Bench-to-Active move) and Wally's Compassion ×3
-(all Energy to the hand from the healed body). **Excluded by the brief:** Tremendous Bomb ×2, Ange Floette, Core Memory. [🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory BUILT at D620 (WP26).]
+(all Energy to the hand from the healed body). **Excluded by the brief:** Tremendous Bomb ×2, Ange Floette, Core Memory. [🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory BUILT at D620 (WP26).] [🆕🆕🆕 D625 (D539): Wally's Compassion ×3 BUILT at D625 (`healChosen.energyToHandFromHealed`).]
 
 | Column | `me` built / units (D603) | Standard pool D603 |
 |---|---|---|
@@ -1217,26 +1236,26 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### Item — 17 text(s) / 30 printing(s)
 
-- 2× **Blowtorch** — You can use this card only if you discard a Basic {R} Energy card from your hand.
+- 2× **Blowtorch** — You can use this card only if you discard a Basic {R} Energy card from your hand. [🆕🆕🆕 D625: BUILT]
 
 Discard a Pokémon Tool or Special Energy card from 1 of your opponent's Pokémon, or discard a Stadium in play.
-- 2× **Dark Bell** — Both Active non-{D} Pokémon are now Confused.
+- 2× **Dark Bell** — Both Active non-{D} Pokémon are now Confused. [🆕🆕🆕 D625: BUILT]
 - 1× **Energy Swatter** — Your opponent reveals their hand, and you choose an Energy card you find there and put it on the bottom of their deck. [🆕🆕🆕 D587: BUILT]
 - 3× **Fighting Gong** — Search your deck for a Basic {F} Energy card or a Basic {F} Pokémon, reveal it, and put it into your hand. Then, shuffle your deck. [🆕🆕🆕 D587: BUILT]
-- 1× **Great Haul Net** — Choose 1 or both:
+- 1× **Great Haul Net** — Choose 1 or both: [🆕🆕🆕 D625: BUILT]
 • Shuffle up to 3 {W} Pokémon from your discard pile into your deck.
 • Shuffle up to 3 Basic {W} Energy cards from your discard pile into your deck.
 - 1× **Hole-Digging Shovel** — Discard the top 2 cards of your deck. [🆕🆕🆕 D588: BUILT]
 - 2× **Iron Defender** — During your opponent's next turn, all of your {M} Pokémon take 30 less damage from attacks from your opponent's Pokémon (after applying Weakness and Resistance). (This includes new Pokémon that come into play.) [🆕🆕🆕 D621: dropped — two plays stack on D564's overwritten `sideDamageReduction`]
-- 2× **Jumbo Ice Cream** — Heal 80 damage from your Active Pokémon that has 3 or more Energy attached.
+- 2× **Jumbo Ice Cream** — Heal 80 damage from your Active Pokémon that has 3 or more Energy attached. [🆕🆕🆕 D625: BUILT]
 - 1× **Lumiose Galette** — Heal 20 damage and remove a Special Condition from your Active Pokémon. [🆕🆕🆕 D588: BUILT]
 - 3× **Poké Pad** — Search your deck for a Pokémon that doesn't have a Rule Box, reveal it, and put it into your hand. Then, shuffle your deck. (Pokémon ex, Pokémon V, etc. have Rule Boxes.) [🆕🆕🆕 D587: BUILT]
 - 3× **Premium Power Pro** — During this turn, attacks used by your {F} Pokémon do 30 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance). [🆕🆕🆕 D621: BUILT]
 - 1× **Repel** — Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.) [🆕🆕🆕 D587: BUILT]
-- 2× **Special Red Card** — You can use this card only if your opponent has 3 or fewer Prize cards remaining.
+- 2× **Special Red Card** — You can use this card only if your opponent has 3 or fewer Prize cards remaining. [🆕🆕🆕 D625: BUILT]
 
 Your opponent shuffles their hand and puts it on the bottom of their deck. If they put any cards on the bottom of their deck in this way, they draw 3 cards.
-- 1× **Strange Timepiece** — Devolve 1 of your evolved {P} Pokémon by putting any number of Evolution cards on it into your hand. (That Pokémon can't evolve this turn.)
+- 1× **Strange Timepiece** — Devolve 1 of your evolved {P} Pokémon by putting any number of Evolution cards on it into your hand. (That Pokémon can't evolve this turn.) [🆕🆕🆕 D625: BUILT]
 - 1× **Transformation Tome** — You must play 2 Transformation Tome cards at once. (This effect works one time for 2 cards.)
 
 Choose a Basic Pokémon in your discard pile and switch it with 1 of your Basic Pokémon in play. Any attached cards, damage counters, Special Conditions, turns in play, and any other effects remain on the new Pokémon.
@@ -1282,7 +1301,7 @@ Each Mega Floette ex in play (both yours and your opponent's) gets +150 HP. [�
 ### Supporter — Mega Evolution-conditioned — 2 text(s) / 4 printing(s)
 
 - 1× **Jett** — Draw a card for each of your opponent's Mega Evolution Pokémon ex in play. [🆕🆕🆕 D603: BUILT]
-- 3× **Wally's Compassion** — Heal all damage from 1 of your Mega Evolution Pokémon ex. If you healed any damage in this way, put all Energy attached to that Pokémon into your hand. [🆕🆕🆕 D603: dropped — all Energy to the hand from the healed body]
+- 3× **Wally's Compassion** — Heal all damage from 1 of your Mega Evolution Pokémon ex. If you healed any damage in this way, put all Energy attached to that Pokémon into your hand. [🆕🆕🆕 D603: dropped — all Energy to the hand from the healed body] [🆕🆕🆕 D625: BUILT]
 
 ### Supporter — 22 text(s) / 55 printing(s)
 

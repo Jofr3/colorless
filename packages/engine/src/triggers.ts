@@ -407,6 +407,7 @@ export function runActiveBenchedTriggers(
   // can make the moved body's damage lethal and Zero to Hero then swaps Palafin ex in with it, so no
   // Knock Out follows (`onMoveHpMeD610.test.ts` §6). Reversals: the Knock Out first, or the self
   // sweep first (Holes would then miss — its subject uid has gone to the deck).
+  // [🆕🆕🆕 D625 (D610 MINOR 2): R-HL1 INVERTS D356's principle (turn.ts, Magearna "Auto Heal": the turn player's own effects resolve first when two triggers answer one moment), and its listed reversal "Zero to Hero first" IS D356's order. The departure is the reading because under D356's order Holes' subject has already gone to the deck and Holes does nothing; still UNRULED.]
   return sweepTriggers(
     watched,
     seat,

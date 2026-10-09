@@ -124,7 +124,7 @@ import {
 // THE CONCLUSION.** That field has ONE writer (`CHOSEN_ANY_TARGET`'s optional
 // group 2 in effects.ts — 🆕🆕 D400: group 3 now, the count having taken 2 — Umbreon
 // "Feint Attack" sv03-130) and TWO read paths
-// (interpreter.ts `snipeActive` and `placeSnipe`'s `deals` arm). It is a member of
+// (interpreter.ts `snipeActive` and `placeSnipe`'s `deals` arm) [🆕🆕🆕 D625 (D539, D622 MINOR 1): WITHDRAWN "ONE writer" — three readers set `ignoreWR`, and the bare-tail ones also set `wrOnly` (D622)]. It is a member of
 // an OP, and the main hit has no op: this sentence IS the whole printed effect of
 // an attack whose damage comes from its `damage` field. It is also ONE boolean
 // where three are needed. Sibling, not shared — and the sibling relationship is
@@ -532,6 +532,7 @@ describe("deriveAttackDamageSuppression — four sentences, three booleans", () 
     // The sibling relationship, asserted in BOTH directions: this reader declines
     // the op-borne twin, and the op-borne twin still derives its op with the flag.
     // The single writer / two read paths were verified in the file before this
+    // [🆕🆕🆕 D625 (D539, D622 MINOR 1): WITHDRAWN "single writer" — three readers set `ignoreWR`, and the bare-tail ones also set `wrOnly` (D622)]
     // slice concluded the field could not be reused; this pins that it was not
     // disturbed.
     expect(deriveAttackDamageSuppression(FEINT_ATTACK)).toBeNull();

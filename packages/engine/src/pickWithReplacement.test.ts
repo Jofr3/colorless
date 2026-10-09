@@ -755,14 +755,28 @@ describe("D535 §6 — `ignoreWR` and `deals` ON THE BOARD", () => {
   // sites: each 20 hit is cancelled and the two picks land 0. The two rungs keep their boards and
   // flip their number; the old titles are kept, struck through.
   it("🆕 RIDE-ALONG — the BENCH read site: ~~`ignoreWR` nulls a benched Bouffalant's `damageReductionAfterWR`, so two picks land the full 40~~ (🆕🆕🆕 D622: `wrOnly` keeps it, so two picks land 0)", () => {
-    const { state } = walk(attack(board(43, WALL, [BOUFFALANT])).state, [1, 1]);
+    const { state, events } = walk(attack(board(43, WALL, [BOUFFALANT])).state, [1, 1]);
     // 0, not 40: Bouffer's −20 cancels each 20 hit exactly.
     expect(state.players.p2.bench[0]?.damage).toBe(0);
+    // 🆕🆕🆕 D625 (D622 MINOR 2) — the damage line above compares 0 with the 0 the board starts at, so it cannot tell
+    // "the reduction applied" from "nothing landed". The DAMAGE_DEALT rows can: two 20 hits on Bouffalant, each
+    // reduced by 20 to 0 dealt.
+    const rows = events.filter((e) => e.type === "DAMAGE_DEALT");
+    expect(rows.map((e) => e.type === "DAMAGE_DEALT" && [e.uid, e.base, e.reduction, e.dealt])).toEqual([
+      [state.players.p2.bench[0]?.stack.at(-1), 20, 20, 0],
+      [state.players.p2.bench[0]?.stack.at(-1), 20, 20, 0],
+    ]);
   });
 
   it("🆕 RIDE-ALONG — the ACTIVE read site: ~~the same nulling~~ (🆕🆕🆕 D622: the same reduction kept) one function over, on the opponent's Active", () => {
-    const { state } = walk(attack(board(47, BOUFFALANT, [FILLERS[1]])).state, [0, 0]);
+    const { state, events } = walk(attack(board(47, BOUFFALANT, [FILLERS[1]])).state, [0, 0]);
     expect(state.players.p2.active?.damage).toBe(0);
+    // 🆕🆕🆕 D625 (D622 MINOR 2) — the rows, not the 0-with-0 comparison: each 20 hit reduced by 20 to 0 dealt.
+    const rows = events.filter((e) => e.type === "DAMAGE_DEALT");
+    expect(rows.map((e) => e.type === "DAMAGE_DEALT" && [e.uid, e.base, e.reduction, e.dealt])).toEqual([
+      [state.players.p2.active?.stack.at(-1), 20, 20, 0],
+      [state.players.p2.active?.stack.at(-1), 20, 20, 0],
+    ]);
   });
 
   it("the FLAT control: the same board WITHOUT the flag would differ — driven on the sibling the engine already ships", () => {
@@ -842,7 +856,7 @@ describe("D535 §8 — the POPULATION RUNG and the version", () => {
   });
 
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
-    expect(engineVersion).toBe("0.507.0");
+    expect(engineVersion).toBe("0.508.0");
     expect(manifest.version).toBe(engineVersion);
     expect(raw("/index.ts")).toContain("engineVersion 0.419.0 → **0.420.0** (D535");
   });

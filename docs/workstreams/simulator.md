@@ -18875,7 +18875,7 @@ audit is RE-READ for the thirteenth field rather than bumped.
 
 **Not `damageChosen.ignoreWR`**, verified before concluding: ONE writer
 (`CHOSEN_ANY_TARGET`'s group 2 — Umbreon "Feint Attack") and TWO read paths (`snipeActive`,
-`placeSnipe`'s `deals` arm). It is a member of an OP and the main hit has no op, and it is
+`placeSnipe`'s `deals` arm) [🆕🆕🆕 D625 (D539, D622 MINOR 1): WITHDRAWN "ONE writer" — three readers set `ignoreWR`, and the bare-tail ones also set `wrOnly` (D622)]. It is a member of an OP and the main hit has no op, and it is
 one boolean where three are needed. Asserted in both directions.
 
 ### Ordering: one witness, two pinned absences
@@ -30243,6 +30243,29 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D625 — T1: the rest of the `me` Trainers, plus the open docs findings (engine 0.508.0, `MATCH_RECORD_VERSION` stays 43)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D624 (`c5c727a2`), NOT committed.
+
+- **Special Red Card ×2.** Iono's `handRefresh` on the opponent (`toBottom`, `onlyIfAnyMoved`, draw 3) behind
+  `opponentPrizesRemaining [0, 1, 2, 3]`. R-SRC1 UNRULED (an empty hand draws 0).
+- **Jumbo Ice Cream ×2.** `heal self` 80 behind `yourActiveEnergyAtLeast 3`. R-JIC1 UNRULED (an undamaged Active may take it).
+- **Dark Bell ×2.** Two `conditionGate`s on the shipped `…ActiveHasType Darkness`, empty `then`, the Confusion in `otherwise`:
+  the "non-{D}" negation at zero new vocabulary. R-DB1 UNRULED.
+- **Wally's Compassion ×3.** `healChosen "all"` over `megaEvolutionEx` with the NEW `energyToHandFromHealed` (every Energy to the
+  hand when the pick healed). R-WC1 UNRULED. D603's drop annotated.
+- **Blowtorch ×2.** A Basic {R} `payFromHand`, then the NEW `EffectOp` `chooseOneOffered`: only the branches with a target are
+  offered, as D557's labelled `optional` chain; none refuses the play. The Tool branch is D543's declinable pick (it can resolve to
+  0). R-BT1 UNRULED.
+- **Great Haul Net.** Two deck retrievals (max 3 each), one shuffle. R-GHN1 UNRULED.
+- **Strange Timepiece.** `devolveChosen` with the NEW `whose: "self"`, `pokemonType`, `depth: "any"` (engine-written `bodyUid` /
+  `shed`); the body is stamped `turnPlayed`, the shipped §10 bar. R-ST1 UNRULED.
+- **Docs findings closed.** D622 MINOR 1 ("ONE writer" withdrawn) and 2 (the 0-with-0 rungs now assert the DAMAGE_DEALT rows),
+  D610 MINOR 2 (R-HL1 cites D356), 3 (the 972 pin annotated as carried arithmetic) and 4 (the D320 row's killers).
+- **MRV stays 43.** Keyed by id; optional keys on parking ops (D608); rollback readings named (match.ts "STAYS 43 AT D625").
+- **Suite.** `trainersMeD625.test.ts` (32) and a census D625 block (2). +25 mutant rows; three older rows re-pointed (D540, D617 ×2) and the D320 row's killers narrowed. Census:
+  trainers **431 / 447**, 1138 `me` printings fully built. Sweep PENDING.
+
 ## D624 — WP31c: the rest of the `me` deck / hand / discard / Energy misc (engine 0.507.0, `MATCH_RECORD_VERSION` stays 43)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D623 (`3a3026a4`), NOT committed.
@@ -30544,7 +30567,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   Supreme Overlord, Gloomy Garbage, Sniper's Eye ×2, Ancient Bulwark ×3, Life-Locked.
 - **Readings.** Two new, **R-HL1 ⚠️ UNRULED**: on the Active→Bench move the opponent's watched triggers (Holes) resolve
   before the mover's own (Palafin "Zero to Hero"), with no Knock Out check between, so lethal Holes counters on Palafin
-  ride onto the swapped-in Palafin ex. And **R-MR1 ⚠️ UNRULED**: Metal Road's printed moment is read as Buzzing Boost's
+  ride onto the swapped-in Palafin ex [🆕🆕🆕 D625 (D610 MINOR 2): R-HL1 INVERTS D356's principle (turn.ts, Magearna "Auto Heal": the turn player's own effects resolve first when two triggers answer one moment), and its listed reversal "Zero to Hero first" IS D356's order. The departure is the reading because under D356's order Holes' subject has already gone to the deck and Holes does nothing; still UNRULED.]. And **R-MR1 ⚠️ UNRULED**: Metal Road's printed moment is read as Buzzing Boost's
   use-time gate, so it can be used later the same turn and sweeps {M} attached to the Bench after the move. That affords,
   so Buzzing Boost's "exactly one board … REFUSES rather than affords" is withdrawn (D539).
 - **Suite.** `onMoveHpMeD610.test.ts` (22; Holes driven on retreat and a Switch) and a census D610 block (2). +19 mutant
@@ -30672,7 +30695,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   untyped gate), Seviper "Excited Power" (`damageBonusBeforeWRIf` 120), Mega Signal ×3 (search a Mega ex) and Jett
   (`drawCards.per` over the opponent's Mega ex).
 - **Dropped and named:** Latios "Lustrous Assist" (a named Active's move gate) and Wally's Compassion ×3 (all Energy to
-  the hand from the healed body). Tremendous Bomb, Ange Floette and Core Memory stay out (the brief). [🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory BUILT at D620 (WP26).]
+  the hand from the healed body). Tremendous Bomb, Ange Floette and Core Memory stay out (the brief). [🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory BUILT at D620 (WP26).] [🆕🆕🆕 D625 (D539): Wally's Compassion ×3 BUILT at D625 (`healChosen.energyToHandFromHealed`).]
 - **Readings.** None new; Jett with none in play inherits R-PX6 (`progress.md` NEXT).
 - **Suite.** `megaGatedMeD603.test.ts` (26) and a census D603 block (2). +25 mutant rows.
 - **Census.** Standard pool abilities **520 / 610**, trainers **364 / 447**; 906 `me` printings fully built.

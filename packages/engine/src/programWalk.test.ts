@@ -413,6 +413,14 @@ describe("the pool sweep, structurally", () => {
       // 🆕🆕🆕 D590 — Brambleghast `me02-047` "Prison Panic": its Confused sits inside the same
       // trigger-level `optional.then` (the confirm).
       "me02-047 trigger :: applyStatus",
+      // 🆕🆕🆕 D625 — Blowtorch `me02-086` / `-117` (`BLOWTORCH`): the NEW `chooseOneOffered`'s three
+      // one-op branches, which no enumerated gate descends.
+      "me02-086 trainer :: discardEnergy",
+      "me02-086 trainer :: discardStadium",
+      "me02-086 trainer :: discardTools",
+      "me02-117 trainer :: discardEnergy",
+      "me02-117 trainer :: discardStadium",
+      "me02-117 trainer :: discardTools",
       // 🆕🆕🆕 D582 — Team Rocket's Great Ball `me02.5-205`, a reprint-alias key on `sv10-175`'s
       // object: the same `coinFlipGate.otherwise` miss, one row per KEY.
       "me02.5-205 trainer :: searchDeck",
@@ -550,6 +558,10 @@ describe("the pool sweep, structurally", () => {
       }
     }
     expect([...carriers.entries()].map(([op, keys]) => [op, [...keys].sort()]).sort()).toEqual([
+      // 🆕🆕🆕 **D625 — THE SIXTH BRANCHING OP, AND ITS SUB-PROGRAM IS A FLAT LIST OF ONE-OP BRANCHES.**
+      // Blowtorch's `chooseOneOffered.branches` — each element one printed branch, picked at the step
+      // among the ones with a target (labels beside it). Flat by design, so this walk reaches it.
+      ["chooseOneOffered", ["branches"]],
       // 🆕 🛑 **`otherwise` ARRIVES, AND THE GAP D269 FLAGGED IS CLOSED AFTER
       // FORTY-EIGHT SLICES.** This entry read `["then"]` from D269 to D316, with a
       // comment saying the gap was *"real in the TYPE and vacuous in the POOL"*.

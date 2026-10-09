@@ -30,6 +30,7 @@ import {
 // NAMED Active's Bench-to-Active move) and Wally's Compassion ×3 (an all-Energy-to-hand consequent on
 // the healed body). Excluded by the brief: Tremendous Bomb ×2, Ange Floette, Core Memory (§9).
 // [🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory BUILT at D620 (WP26).]
+// [🆕🆕🆕 D625 (D539): Wally's Compassion ×3 BUILT at D625 (`healChosen.energyToHandFromHealed`).]
 
 const EXCITED_TURBO =
   "As often as you like during your turn, if you have any {R} Mega Evolution Pokémon ex in play, you may use this Ability. Attach a Basic {R} Energy card from your hand to 1 of your Benched {R} Pokémon.";
@@ -519,20 +520,19 @@ describe("D603 §8 — Jett: a card for each of your opponent's Mega Evolution P
 });
 
 describe("D603 §9 — the dropped and excluded texts stay unkeyed, and the version", () => {
-  it("Latios, Wally's Compassion ×3 and Ange Floette carry no program (🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory, excluded here, are keyed since D620)", () => {
+  it("Latios, ~~Wally's Compassion ×3~~ and Ange Floette carry no program (🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory, excluded here, are keyed since D620; 🆕🆕🆕 D625 (D539): Wally's Compassion ×3 is keyed since D625)", () => {
     for (const id of [
       "me01-101", // Latios "Lustrous Assist" — dropped
-      "me01-132", // Wally's Compassion — dropped
-      "me01-176",
-      "me01-186",
       "me04-075", // Ange Floette — excluded
     ])
       expect(programFor(id), id).toBeUndefined();
+    // 🆕🆕🆕 D625 — Wally's Compassion ×3, dropped here, is built by T1 (`trainersMeD625.test.ts`).
+    for (const id of ["me01-132", "me01-176", "me01-186"]) expect(programFor(id), id).toBeDefined();
     // 🆕🆕🆕 D620 — Tremendous Bomb ×2 and Core Memory are built by WP26 (`prizesToolsMeD620.test.ts`).
     for (const id of ["me05-082", "me05-113", "me03-070"]) expect(programFor(id), id).toBeDefined();
   });
 
-  it("is built at engine 0.507.0", () => {
-    expect(engineVersion).toBe("0.507.0");
+  it("is built at engine 0.508.0", () => {
+    expect(engineVersion).toBe("0.508.0");
   });
 });

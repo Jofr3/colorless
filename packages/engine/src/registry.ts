@@ -17802,7 +17802,8 @@ const SUNRISE: CardProgram = {
 //    "Lustrous Assist" (a gate on a NAMED Active's Bench-to-Active move) and Wally's Compassion
 //    `me01-132` / `-176` / `-186` (an all-Energy-to-hand consequent on the healed body). Excluded by
 //    the brief: Tremendous Bomb ×2, Ange Floette, Core Memory. `megaGatedMeD603.test.ts`.
-//    [🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory BUILT at D620 (WP26).] ──
+//    [🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory BUILT at D620 (WP26).]
+//    [🆕🆕🆕 D625 (D539): Wally's Compassion ×3 BUILT at D625 (`healChosen.energyToHandFromHealed`).] ──
 
 /** 🆕🆕🆕 **D603 — Oricorio ex `mep-024`, `me02-018` / `-110` "Excited Turbo"**: *"As often as you like
     during your turn, if you have any {R} Mega Evolution Pokémon ex in play, you may use this Ability.
@@ -18319,6 +18320,128 @@ const DAWN: CardProgram = {
     },
     { op: "shuffleDeck" },
   ],
+};
+
+// ── 🆕🆕🆕 D625 — THE REST OF THE `me` TRAINERS (T1): 7 texts / 13 `me` printings on seven NEW objects.
+//    Printed texts off the LOCAL D1 (2026-10-09); each printing has one text. New pieces: the `EffectOp`
+//    member `chooseOneOffered` (Blowtorch), `healChosen.energyToHandFromHealed` (Wally's Compassion) and
+//    `devolveChosen`'s `whose` / `pokemonType` / `depth` with the engine-written `bodyUid` / `shed` (Strange
+//    Timepiece). Special Red Card, Jumbo Ice Cream, Dark Bell and Great Haul Net are shipped vocabulary.
+//    `trainersMeD625.test.ts` plays each. ──
+
+/** 🆕🆕🆕 **D625 — Special Red Card `me04-082` / `-113` (Item)**: *"You can use this card only if your opponent
+    has 3 or fewer Prize cards remaining. / Your opponent shuffles their hand and puts it on the bottom of their
+    deck. If they put any cards on the bottom of their deck in this way, they draw 3 cards."* Iono's
+    `handRefresh` (`toBottom`, `onlyIfAnyMoved`) narrowed to `who: "opponent"` with a fixed 3, behind Lacey's
+    `opponentPrizesRemaining` set `[0, 1, 2, 3]` as the play gate. R-SRC1 ⚠️ UNRULED: an empty opponent hand
+    moves nothing and draws 0 (the card is still played). */
+const SPECIAL_RED_CARD: CardProgram = {
+  trainer: [
+    {
+      op: "handRefresh",
+      who: "opponent",
+      toBottom: true,
+      draw: { kind: "fixed", count: 3 },
+      onlyIfAnyMoved: true,
+    },
+  ],
+  trainerPlayableIf: { kind: "opponentPrizesRemaining", counts: [0, 1, 2, 3] },
+};
+
+/** 🆕🆕🆕 **D625 — Jumbo Ice Cream `me02-091`, `me04-109` (Item)**: *"Heal 80 damage from your Active Pokémon that
+    has 3 or more Energy attached."* Lumiose Galette's `heal self` at 80, behind `yourActiveEnergyAtLeast 3` (Energy
+    CARDS, D391) as the play gate. Potion's playability otherwise: R-JIC1 ⚠️ UNRULED — an undamaged Active with 3
+    Energy may take it and heals 0. */
+const JUMBO_ICE_CREAM: CardProgram = {
+  trainer: [{ op: "heal", target: "self", amount: 80 }],
+  trainerPlayableIf: { kind: "yourActiveEnergyAtLeast", count: 3 },
+};
+
+/** 🆕🆕🆕 **D625 — Dark Bell `me05-075` / `-106` (Item)**: *"Both Active non-{D} Pokémon are now Confused."* Two
+    `applyStatus confused`, the opponent's Active then the controller's, each in a `conditionGate` on the shipped
+    `…ActiveHasType Darkness` with an EMPTY `then` and the status in `otherwise` — the "non-{D}" negation at zero new
+    vocabulary (cheaper than a `…LacksType` member or an `exceptType` on `applyStatus`, measured). R-DB1 ⚠️
+    UNRULED: a body whose types include {D} (dual-type too) is spared; the controller's own Active is Confused too;
+    the effect is mandatory (no confirm), and the card stays playable when both Actives are {D}. */
+const DARK_BELL: CardProgram = {
+  trainer: [
+    {
+      op: "conditionGate",
+      cond: { kind: "opponentActiveHasType", type: "Darkness" },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [],
+      otherwise: [{ op: "applyStatus", target: "defender", status: "confused" }],
+    },
+    {
+      op: "conditionGate",
+      cond: { kind: "yourActiveHasType", type: "Darkness" },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [],
+      otherwise: [{ op: "applyStatus", target: "self", status: "confused" }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D625 — Wally's Compassion `me01-132` / `-176` / `-186` (Supporter)**: *"Heal all damage from 1 of your
+    Mega Evolution Pokémon ex. If you healed any damage in this way, put all Energy attached to that Pokémon into
+    your hand."* `healChosen` `"all"` over D603's `megaEvolutionEx` filter, with the NEW `energyToHandFromHealed`:
+    when the pick healed (it had damage), every attached Energy, Special included, goes to the hand. No Mega ex in
+    play refuses the play (`healChosenTargets`). R-WC1 ⚠️ UNRULED: an undamaged Mega ex may be picked; it heals 0
+    and keeps its Energy. */
+const WALLYS_COMPASSION: CardProgram = {
+  trainer: [
+    { op: "healChosen", amount: "all", filter: { kind: "megaEvolutionEx" }, energyToHandFromHealed: true },
+  ],
+};
+
+/** 🆕🆕🆕 **D625 — Blowtorch `me02-086` / `-117` (Item)**: *"You can use this card only if you discard a Basic {R}
+    Energy card from your hand. / Discard a Pokémon Tool or Special Energy card from 1 of your opponent's Pokémon,
+    or discard a Stadium in play."* Earthen Vessel's `payFromHand` 1 narrowed to Basic {R} Energy, then the NEW
+    `chooseOneOffered` over three branches with Kieran's button labels (D557): a Tool off the opponent's side
+    (`discardTools` 1, D543's declinable pick — so this branch CAN resolve to 0), a Special Energy off 1 of the
+    opponent's Pokémon (`discardEnergy opponentChosen specialEnergy`, mandatory) and a Stadium in play
+    (`discardStadium`). R-BT1 ⚠️ UNRULED: either player's Stadium counts; a branch with no target is not offered,
+    and the Item is unplayable when no branch has one. */
+const BLOWTORCH: CardProgram = {
+  trainer: [
+    { op: "payFromHand", count: 1, to: "discard", filter: { kind: "basicEnergy", energyType: "Fire" } },
+    {
+      op: "chooseOneOffered",
+      note: "Choose 1: discard a Pokémon Tool or a Special Energy card from 1 of your opponent's Pokémon, or discard a Stadium in play.",
+      branches: [
+        { op: "discardTools", count: 1 },
+        { op: "discardEnergy", from: "opponentChosen", filter: { kind: "specialEnergy" } },
+        { op: "discardStadium" },
+      ],
+      labels: ["Discard a Pokémon Tool", "Discard a Special Energy", "Discard the Stadium"],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D625 — Great Haul Net `me04-078` (Item)**: *"Choose 1 or both: • Shuffle up to 3 {W} Pokémon from your
+    discard pile into your deck. • Shuffle up to 3 Basic {W} Energy cards from your discard pile into your deck."*
+    Pal Pad's shape twice: two `discardPileRetrieval` `dest: "deck"` (max 3 each), then ONE `shuffleDeck`. R-GHN1
+    ⚠️ UNRULED: both bullets are offered in printed order and each is "up to", so either may answer 0 (choosing 1
+    is answering 0 on the other); a bullet whose pile has no match is skipped silently, and the Item stays playable
+    on an empty pile (Pal Pad's precedent — it then only shuffles). */
+const GREAT_HAUL_NET: CardProgram = {
+  trainer: [
+    { op: "discardPileRetrieval", filter: { kind: "typedPokemon", pokemonType: "Water" }, dest: "deck", max: 3 },
+    { op: "discardPileRetrieval", filter: { kind: "basicEnergy", energyType: "Water" }, dest: "deck", max: 3 },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** 🆕🆕🆕 **D625 — Strange Timepiece `me01-128` (Item)**: *"Devolve 1 of your evolved {P} Pokémon by putting any
+    number of Evolution cards on it into your hand. (That Pokémon can't evolve this turn.)"* `devolveChosen` on
+    the OWN side (`whose: "self"`), `pokemonType` Psychic, `depth: "any"`: pick the body (forced at one), then —
+    on a body with two Evolution cards — how many go to the hand (1 or 2). The body is stamped `turnPlayed =
+    state.turn`, the shipped "came into play this turn" bar, so it can't evolve again this turn and no new key is
+    persisted. R-ST1 ⚠️ UNRULED: "any number" is at least 1, taken from the top; a licence that lifts the §10 bar
+    (Forest of Vitality, a printed evolve-early Ability) lifts this one too; no own evolved {P} body refuses the
+    play. */
+const STRANGE_TIMEPIECE: CardProgram = {
+  trainer: [{ op: "devolveChosen", whose: "self", pokemonType: "Psychic", depth: "any" }],
 };
 
 // ── 🆕🆕🆕 D608 — WP30: TWO `30th` ATTACK OBJECTS, KEYED BY ID. Text off the LOCAL D1; both printed
@@ -19872,6 +19995,20 @@ const REGISTRY: Record<string, CardProgram> = {
   "me02-087": DAWN, // Dawn — search a Basic, a Stage 1 and a Stage 2 Pokémon
   "me02-118": DAWN, // Dawn
   "me02-129": DAWN, // Dawn
+  // 🆕🆕🆕 D625 — T1, the rest of the `me` Trainers: 13 keys / 7 objects, MID-MAP (`raw[last]` does not move).
+  "me04-082": SPECIAL_RED_CARD, // Special Red Card — opponent at 3 or fewer Prizes: their hand under, they draw 3
+  "me04-113": SPECIAL_RED_CARD, // Special Red Card
+  "me02-091": JUMBO_ICE_CREAM, // Jumbo Ice Cream — heal 80 from your Active with 3 or more Energy
+  "me04-109": JUMBO_ICE_CREAM, // Jumbo Ice Cream
+  "me05-075": DARK_BELL, // Dark Bell — both Active non-{D} Pokémon are now Confused
+  "me05-106": DARK_BELL, // Dark Bell
+  "me01-132": WALLYS_COMPASSION, // Wally's Compassion — heal all from a Mega ex; if healed, its Energy to hand
+  "me01-176": WALLYS_COMPASSION, // Wally's Compassion
+  "me01-186": WALLYS_COMPASSION, // Wally's Compassion
+  "me02-086": BLOWTORCH, // Blowtorch — discard a Basic {R}; then a Tool, a Special Energy or a Stadium
+  "me02-117": BLOWTORCH, // Blowtorch
+  "me04-078": GREAT_HAUL_NET, // Great Haul Net — up to 3 {W} Pokémon and up to 3 Basic {W} Energy back, shuffle
+  "me01-128": STRANGE_TIMEPIECE, // Strange Timepiece — devolve your evolved {P} Pokémon; it can't evolve this turn
   // 🆕🆕🆕 D608 — WP30: 5 `30th` ATTACK-only keys / 2 objects, MID-MAP (`raw[last]` does not move).
   // 🆕🆕🆕 D612 — 3 now: Stealthy Slash ×2 RETIRED (the normalised text is `mep-099`'s, reader-built).
   "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex

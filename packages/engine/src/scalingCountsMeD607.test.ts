@@ -479,6 +479,6 @@ describe("D607 §4 — the four texts on shipped members, on a board", () => {
 
 describe("D607 §5 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.507.0");
+    expect(engineVersion).toBe("0.508.0");
   });
 });

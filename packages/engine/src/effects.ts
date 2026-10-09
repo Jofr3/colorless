@@ -9747,8 +9747,28 @@ export type EffectOp =
       Active Pokémon is an evolved Pokémon, devolve it by putting the highest Stage Evolution card on it into
       your opponent's hand."* The candidates narrow to the Defending Pokémon (`devolveTargets` first, then
       §11, as above); the printed "If … evolved" is that narrowing, so an unevolved Active is the silent no-op.
-      One candidate at most, so it never parks and no v42 record holds the key. Absent = row 87 byte for byte. */
-  | { op: "devolveChosen"; defenderOnly?: true }
+      One candidate at most, so it never parks and no v42 record holds the key. Absent = row 87 byte for byte.
+
+      🆕🆕🆕 **D625 — THE OWN SIDE: Strange Timepiece `me01-128`** (Item), *"Devolve 1 of your evolved {P} Pokémon
+      by putting any number of Evolution cards on it into your hand. (That Pokémon can't evolve this turn.)"*
+      `whose: "self"` offers the controller's own evolved bodies (`ownDevolveTargets`), `pokemonType` narrows
+      them to a top card of that type (the in-play types), and `depth: "any"` makes the shed a choice of 1 up to
+      every Evolution card on the body (at least 1): a body with one Evolution card sheds it, a deeper one
+      SCHEDULES a labelled `optional` chain whose arms are the engine-written `{ whose: "self", bodyUid, shed }`
+      form, applied at once. Each shed card goes to the hand through `devolveBodyToHand`, and the body is then
+      stamped `turnPlayed = state.turn` — the shipped §10 "came into play this turn" bar, so it can't evolve this
+      turn (R-ST1 ⚠️ UNRULED). The own-side pick PARKS at two or more candidates (D608's precedent: optional keys
+      on a parking op); a 0.507 ROLLBACK resuming it devolves the picked body by one card, without the stamp, and
+      runs a parked depth arm as D540's opponent pick (NAMED). */
+  | {
+      op: "devolveChosen";
+      defenderOnly?: true;
+      whose?: "self";
+      pokemonType?: PokemonType;
+      depth?: "any";
+      bodyUid?: string;
+      shed?: number;
+    }
   /** 🆕🆕 **D380 — §7.3, THE STADIUM ZONE EMPTIED BY AN ATTACK.** *"Discard a
       Stadium in play."* — Hisuian Growlithe `sv06-099`/`sv06-181` "Blazing
       Destruction" (**no Energy cost**, no damage), Skarmory `sv06-119` "Big Storm"
@@ -9923,6 +9943,15 @@ export type EffectOp =
           `recordGate` (not descended there). AZ's switch also sets `demotedAsMoved` (R-AZT1), so a
           Palafin swapped by Zero to Hero is not pinned. Optional (D125). */
       targetRecorded?: EffectSlot;
+      /** 🆕🆕🆕 **D625 — the printed *"If you healed any damage in this way, put all Energy attached to that
+          Pokémon into your hand."*** Wally's Compassion `me01-132` / `-176` / `-186` (Supporter) — *"Heal all
+          damage from 1 of your Mega Evolution Pokémon ex. If you healed any damage in this way, …"*.
+          `discardEnergyFromHealed`'s two entrances and one helper (`healedRiderOps`): when the picked body
+          had damage before the heal (dealt > 0), it schedules `discardEnergy { from: "self", bodyUid,
+          filter: anyEnergy, count: "all", to: "hand" }` — every attached Energy, Special included, to the
+          controller's hand. An undamaged pick heals 0 and keeps its Energy (R-WC1 ⚠️ UNRULED). Optional
+          (D125); a 0.507 ROLLBACK resuming a parked pick ignores the key: it heals and moves nothing (NAMED). */
+      energyToHandFromHealed?: true;
     }
   /** Attach Basic Energy from a SOURCE zone (the controller's hand or discard
       pile) to a CHOSEN own in-play Pokémon — the §6 energy-acceleration Ability
@@ -11757,7 +11786,8 @@ export type EffectOp =
       from: "opponentActive" | "opponentChosen" | "yourActive" | "yours" | "yourBench" | "self";
       filter: CardFilter;
       /** 🆕🆕🆕 **D561 (V5) — THE BODY `"self"` NAMES, WHEN IT IS NOT THE PROGRAM'S OWN
-          CARD.** Engine-written only (never authored): Super Potion's *"discard an
+          CARD.** [🆕🆕🆕 D625 (D539): a second engine writer — Wally's Compassion's `healedEnergyToHandAnswered`
+          writes it with `from: "self"`, `count: "all"`, `to: "hand"`.] Engine-written only (never authored): Super Potion's *"discard an
           Energy from THAT Pokémon"* is the body its `healChosen` just healed, and a
           Trainer's `ctx.sourceUid` is no Pokémon at all. `healedDiscardAnswered`
           (interpreter.ts) writes the healed body's TOP uid here and `discardableEnergies`
@@ -13847,6 +13877,23 @@ export type EffectOp =
       /** Optional card faces for a binary card choice; resolution still uses the branches. */
       cards?: { yes: string; no?: string };
       targets?: PokemonRef[];
+    }
+  /** 🆕🆕🆕 **D625 — THE PRINTED *"Choose 1"* OVER BRANCHES THAT MAY HAVE NOTHING TO DO.** Blowtorch
+      `me02-086` / `-117` (Item): *"Discard a Pokémon Tool or Special Energy card from 1 of your opponent's
+      Pokémon, or discard a Stadium in play."* Each branch is ONE op (`branches[i]`, a flat op list so every
+      program walk descends it) with its button caption at `labels[i]`. At the step,
+      `offeredBranches` (interpreter.ts) keeps the branches with a target on the board (a `discardTools`,
+      `discardEnergy` or `discardStadium` that can act; any other op counts as acting). None is a no-op,
+      one runs as forced, two or more SCHEDULE D557's labelled `optional` chain (D560's
+      `recoverOneStatus` shape): `yes` is the first offered branch, `no` the rest. `programPlayable`
+      refuses the play when no branch is offered (R-BT1 ⚠️ UNRULED). The op never parks itself; what parks
+      is the shipped `optional`, so a v43 record can hold this op only in a `rest` behind an earlier park
+      (Blowtorch's fungible Basic {R} payment is forced). A NEW member (D125). */
+  | {
+      op: "chooseOneOffered";
+      note: string;
+      branches: EffectOp[];
+      labels: string[];
     };
 
 type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";
@@ -28864,7 +28911,8 @@ const DEVOLVE_EACH_TO_DECK = new RegExp(
 //
 // ⚠️ **A SECOND FIELD-FREE OP, NOT A PARAMETERISED ONE, AND D433's OWN REFUSAL IS THE
 // WARRANT.** (🆕🆕🆕 D616 (D539): ~~FIELD-FREE~~ WITHDRAWN as a live claim — `devolveChosen.defenderOnly`;
-// this anchor still emits the bare op.) That paragraph refused a `{ whose, count, dest }` op because rows 87 and
+// this anchor still emits the bare op.) (🆕🆕🆕 D625 (D539): and the refused `whose` / count axes now exist as
+// optional fields — Strange Timepiece, a Trainer, sets `whose: "self"` and `depth: "any"`; no attack row sets them.) That paragraph refused a `{ whose, count, dest }` op because rows 87 and
 // 88 vary on TWO axes at once and each field would carry a pool of ONE (D121's
 // precondition is two printings with ONE token varying). It refused a PARAMETER; it
 // did not refuse a SIBLING. Every token of THIS sentence is spent too — `1 of your

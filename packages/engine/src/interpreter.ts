@@ -2044,7 +2044,9 @@ function healedDiscardAnswered(state: GameState, ref: PokemonRef): EffectOp[] {
   ];
 }
 
-/** 🆕🆕🆕 D617 — every healed-body rider of one `healChosen` pick, in printed order: Super Potion's
+/** 🆕🆕🆕 D625 (D539): THREE riders now — Wally's Compassion's `energyToHandFromHealed` is the third
+    (`healedEnergyToHandAnswered`, gated on the pick's damage like the discard).
+    🆕🆕🆕 D617 — every healed-body rider of one `healChosen` pick, in printed order: Super Potion's
     discard (`healedDiscardAnswered`, D561) and Pokémon Center Lady's *"and it recovers from all
     Special Conditions"* — the field-free `clearStatus` (the controller's Active) when the pick IS the
     Active. A Benched pick carries no Special Condition, so it schedules nothing; the recovery does
@@ -2057,7 +2059,23 @@ function healedRiderOps(
   const discard = op.discardEnergyFromHealed === true ? healedDiscardAnswered(state, ref) : [];
   const recover: EffectOp[] =
     op.recoverHealed === true && ref.spot.spot === "active" ? [{ op: "clearStatus" }] : [];
-  return [...discard, ...recover];
+  // 🆕🆕🆕 D625 — Wally's Compassion: every attached Energy to the hand, only when the pick healed (R-WC1).
+  const toHand = op.energyToHandFromHealed === true ? healedEnergyToHandAnswered(state, ref) : [];
+  return [...discard, ...recover, ...toHand];
+}
+
+/** 🆕🆕🆕 D625 — Wally's Compassion's healed body, answered: `healedDiscardAnswered`'s shape with the
+    printed *"put all Energy attached to that Pokémon into your hand"* — `discardEnergy` `count: "all"`,
+    `to: "hand"`, `anyEnergy` (Special Energy included), addressed to the body by its TOP uid. `state` is the
+    board BEFORE the heal, so *"If you healed any damage"* is that body's damage above 0 (R-WC1). */
+function healedEnergyToHandAnswered(state: GameState, ref: PokemonRef): EffectOp[] {
+  const body = refPokemon(state, ref);
+  if (body === undefined || body.damage < 1) return [];
+  const uid = topUid(body);
+  if (uid === undefined) return [];
+  return [
+    { op: "discardEnergy", from: "self", filter: { kind: "anyEnergy" }, count: "all", to: "hand", bodyUid: uid },
+  ];
 }
 
 /** 🆕🆕🆕 D565 — Rocket Brain's FIRST answer: the same op, re-emitted with the source it
@@ -2236,8 +2254,16 @@ function continuationOps(
   // 🆕🆕🆕 D561 (V5) — THE SIXTH MEMBER: Super Potion's parked pick buys the discard
   // from THAT body, through the helper the forced ending uses.
   // 🆕🆕🆕 D617 — and Pokémon Center Lady's parked pick buys the recovery (`healedRiderOps`).
-  if (op.op === "healChosen" && (op.discardEnergyFromHealed === true || op.recoverHealed === true)) {
+  // 🆕🆕🆕 D625 — and Wally's Compassion's parked pick buys the Energy-to-hand move.
+  if (
+    op.op === "healChosen" &&
+    (op.discardEnergyFromHealed === true || op.recoverHealed === true || op.energyToHandFromHealed === true)
+  ) {
     return pickedPokemon(choice) ? healedRiderOps(before, choice.ref, op) : [];
+  }
+  // 🆕🆕🆕 D625 — Strange Timepiece's own-side PICK buys the shed (or the depth question).
+  if (op.op === "devolveChosen" && op.whose === "self" && op.bodyUid === undefined) {
+    return pickedPokemon(choice) ? ownDevolveAnswered(before, choice.ref, op) : [];
   }
   // 🆕 D316 — THE DECLINE NOW BUYS OPS TOO, and this line is the whole of it.
   // `otherwise` is the arm `coinFlipGate`, `conditionGate` and `recordGate` have
@@ -2416,6 +2442,10 @@ function stepOp(
     // no-op, 1 clears directly, 2 or 3 SCHEDULE the labelled binary chain (effects.ts
     // `recoverOneStatus`). The chain is built from the board AT THIS STEP, so it names
     // only conditions the Active really carries.
+    // 🆕🆕🆕 D625 — Blowtorch's *"Choose 1"*: only the branches with a target are offered, as the
+    // labelled binary chain (`chooseOneChain`); one offered branch runs, none is a no-op (R-BT1).
+    case "chooseOneOffered":
+      return { done: state, schedule: chooseOneChain(op.note, offeredBranches(state, ctx.seat, op)) };
     case "recoverOneStatus": {
       const active = state.players[ctx.seat].active;
       const present = active === null ? [] : presentStatuses(active.conditions);
@@ -5416,6 +5446,16 @@ function stepOp(
     // `resolveMidTurnKnockOuts`, never this line — `devolveEach`'s seam, and what
     // the op DOES owe here is the CAUSE (D414's stamp, inside the writer).
     case "devolveChosen": {
+      // 🆕🆕🆕 D625 — Strange Timepiece, the OWN side: the engine-written shed applies at once; the
+      // authored pick forces one body (its answer scheduled) or parks a `choosePokemon`.
+      if (op.whose === "self") {
+        if (op.bodyUid !== undefined) return { done: shedOwnBody(state, ctx, op.bodyUid, op.shed ?? 1, events) };
+        const own = ownDevolveTargets(state, ctx.seat, op.pokemonType);
+        const [only] = own;
+        if (only === undefined) return { done: state };
+        if (own.length === 1) return { done: state, schedule: ownDevolveAnswered(state, only, op) };
+        return parkOrForce(state, own, () => state, ownDevolveNote(op));
+      }
       // 🆕🆕🆕 D616 — `defenderOnly` (Devolution Ray): the evolved set narrowed to the Active, before §11.
       const evolved = devolveTargets(state, ctx.seat);
       const narrowed = op.defenderOnly === true ? evolved.filter((ref) => ref.spot.spot === "active") : evolved;
@@ -5467,7 +5507,11 @@ function stepOp(
       // uses (`continuationOps`), so a board of one and a board of six resolve the
       // printed sentence down one path (D216/D309). `parkOrForce`'s own ordering.
       // 🆕🆕🆕 D617 — Pokémon Center Lady's `recoverHealed` rides the same entrance (`healedRiderOps`).
-      if ((op.discardEnergyFromHealed === true || op.recoverHealed === true) && candidates.length === 1) {
+      // 🆕🆕🆕 D625 — and Wally's Compassion's `energyToHandFromHealed`.
+      if (
+        (op.discardEnergyFromHealed === true || op.recoverHealed === true || op.energyToHandFromHealed === true) &&
+        candidates.length === 1
+      ) {
         const forced = candidates[0] as PokemonRef;
         return {
           done: healChosen(state, forced, op.amount, ctx, events),
@@ -8646,6 +8690,8 @@ export function applyChoice(
     // prompt was ever written, and `validateChoice` refuses any ref that is not among
     // them, so a shielded body cannot reach this line.
     case "devolveChosen":
+      // 🆕🆕🆕 D625 — an own-side pick moves nothing here: its answer buys the shed (`continuationOps`).
+      if (op.whose === "self") return state;
       return pickedPokemon(choice) ? devolveBodyToHand(state, choice.ref, ctx, events) : state;
     case "moveCountersChosen": {
       // D216 — the two parks of one sentence, told apart by the same field
@@ -16101,6 +16147,9 @@ function devolveEach(state: GameState, ctx: EffectContext, events: GameEvent[]):
     `DAMAGE_DEALT` defect verbatim. The two are equal on every board this op reaches
     today, because `devolveTargets` only ever returns opponent refs; the seat is still
     read off the ref, so widening that funnel cannot silently mis-address a hand.
+    [🆕🆕🆕 D625 (D539): ~~"only ever returns opponent refs"~~ as the writer's whole reach is WITHDRAWN —
+    Strange Timepiece's `shedOwnBody` calls this writer on the controller's OWN bodies (`ownDevolveTargets`), and the
+    card reaches its owner's hand because the seat is read off `ref.seat`, exactly as this paragraph required.]
 
     ⚠️ **THE KO STRADDLE IS `devolveEach`'s, RE-RUN RATHER THAN ASSUMED** (D414/D428).
     Devolving can Knock Out by lowering the MAXIMUM: `isLethallyDamaged` is a
@@ -16258,6 +16307,141 @@ function devolveEachToHand(state: GameState, ctx: EffectContext, events: GameEve
     ⚠️ An EMPTY set reads as the printed possessive rather than "your": `parkOrForce`
     never builds a note for one (the empty arm is a silent no-op), so the default is
     chosen to be the printed sentence rather than the arm no board reaches. */
+/** 🆕🆕🆕 D625 — Strange Timepiece's offer: the controller's OWN evolved bodies (`stack.length >= 2`, §1.2's
+    identity rule, `devolveTargets`' test on the other side), narrowed to a top card of `pokemonType` read off
+    the in-play card (`inPlayCardOf`). Active first, then the Bench in index order. No §11 pass: the controller's
+    own Item is not an effect a shield stops. */
+function ownDevolveTargets(state: GameState, seat: Seat, pokemonType?: PokemonType): PokemonRef[] {
+  return ownInPlayRefs(state, seat).filter((ref) => {
+    const body = refPokemon(state, ref);
+    if (body === undefined || body.stack.length < 2) return false;
+    if (pokemonType === undefined) return true;
+    const uid = topUid(body);
+    const card = inPlayCardOf(state, body) ?? (uid === undefined ? undefined : cardOf(state, uid));
+    return (card?.types ?? []).includes(pokemonType);
+  });
+}
+
+/** 🆕🆕🆕 D625 — exported for `programPlayable` (cardplay.ts): may Strange Timepiece act? Some own body is on
+    offer and an opposing Milotic "Mentally Calm" does not stop the cards reaching the hand (D572). */
+export function ownDevolveAvailable(state: GameState, seat: Seat, pokemonType?: PokemonType): boolean {
+  return ownDevolveTargets(state, seat, pokemonType).length > 0 && !inPlayToHandBlocked(state, seat);
+}
+
+function ownDevolveNote(op: Extract<EffectOp, { op: "devolveChosen" }>): string {
+  const typed = op.pokemonType === undefined ? "" : `${op.pokemonType} `;
+  return `Devolve which of your evolved ${typed}Pokémon? Its Evolution cards go into your hand, and it can't evolve this turn.`;
+}
+
+/** 🆕🆕🆕 D625 — the own-side pick, answered (both endings: the forced one through `stepOp`'s `schedule`, the
+    parked one through `continuationOps`). `n` is the Evolution cards on the body (`stack.length - 1`). One card,
+    or no `depth`: the engine-written shed of 1. More, with `depth: "any"`: the labelled chain asking how many
+    (*"any number"*, at least 1). The shed op names the body by its TOP uid. */
+function ownDevolveAnswered(
+  state: GameState,
+  ref: PokemonRef,
+  op: Extract<EffectOp, { op: "devolveChosen" }>,
+): EffectOp[] {
+  const body = refPokemon(state, ref);
+  const uid = body === undefined ? undefined : topUid(body);
+  if (body === undefined || uid === undefined || body.stack.length < 2) return [];
+  const shedOp = (shed: number): EffectOp => ({ op: "devolveChosen", whose: "self", bodyUid: uid, shed });
+  const n = op.depth === "any" ? body.stack.length - 1 : 1;
+  const cards = (k: number) => (k === 1 ? "1 Evolution card" : `${k} Evolution cards`);
+  const chain = (k: number): EffectOp =>
+    k === n
+      ? shedOp(k)
+      : {
+          op: "optional",
+          note: "Put how many Evolution cards on it into your hand?",
+          labels: { yes: cards(k), no: k + 1 === n ? cards(n) : `${k + 1} to ${n} Evolution cards` },
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [shedOp(k)],
+          otherwise: [chain(k + 1)],
+        };
+  return [chain(1)];
+}
+
+/** 🆕🆕🆕 D625 — the engine-written shed: the own body whose TOP uid is `bodyUid` puts its top `shed` cards
+    into its owner's hand, one `devolveBodyToHand` step each (each its own `POKEMON_DEVOLVED`, the §10/§12
+    clear and the KO-cause stamp), never below its Basic. A body that shed anything is then stamped
+    `turnPlayed = state.turn`: *"That Pokémon can't evolve this turn"* is the shipped §10 bar (turn.ts
+    `evolve`, cardplay.ts Rare Candy) and no new key (R-ST1). A body no longer in play, or a devolve stopped
+    by Milotic, sheds and stamps nothing. */
+function shedOwnBody(
+  state: GameState,
+  ctx: EffectContext,
+  bodyUid: string,
+  shed: number,
+  events: GameEvent[],
+): GameState {
+  const ref = ownInPlayRefs(state, ctx.seat).find((r) => {
+    const own = refPokemon(state, r);
+    return own !== undefined && topUid(own) === bodyUid;
+  });
+  if (ref === undefined) return state;
+  let next = state;
+  for (let i = 0; i < shed; i++) {
+    const body = refPokemon(next, ref);
+    if (body === undefined || body.stack.length < 2) break;
+    const after = devolveBodyToHand(next, ref, ctx, events);
+    if (after === next) break;
+    next = after;
+  }
+  if (next === state) return state;
+  const body = refPokemon(next, ref);
+  if (body === undefined) return next;
+  const stamped: InPlayPokemon = { ...body, turnPlayed: next.turn };
+  const side = next.players[ref.seat];
+  const spot = ref.spot;
+  return withSide(
+    next,
+    ref.seat,
+    spot.spot === "active"
+      ? { ...side, active: stamped }
+      : { ...side, bench: side.bench.map((p, i) => (i === spot.index ? stamped : p)) },
+  );
+}
+
+/** 🆕🆕🆕 D625 — Blowtorch's offered branches (exported for `programPlayable`, so the refusal and the offer
+    cannot disagree): a branch is offered when its op has a target — a `discardTools` with a Tool on offer
+    (`discardableTools`), a `discardEnergy` with an Energy on offer (`discardableEnergies`), a
+    `discardStadium` with a Stadium in play (either player's, R-BT1); any other op counts as offered. The
+    §11 shield is not asked here (D557's `sweepAlternativesAllWhiff` precedent); the op files it when it
+    runs. Each entry pairs the op with its label. */
+export function offeredBranches(
+  state: GameState,
+  seat: Seat,
+  op: Extract<EffectOp, { op: "chooseOneOffered" }>,
+): { label: string; op: EffectOp }[] {
+  const acts = (branch: EffectOp): boolean => {
+    if (branch.op === "discardTools") return discardableTools(state, seat, branch.sides, branch.bodyUid).length > 0;
+    if (branch.op === "discardEnergy") return discardableEnergies(state, seat, branch).length > 0;
+    if (branch.op === "discardStadium") return state.stadium !== null;
+    return true;
+  };
+  return op.branches.flatMap((branch, i) => (acts(branch) ? [{ label: op.labels[i] ?? "", op: branch }] : []));
+}
+
+/** 🆕🆕🆕 D625 — the offered branches as D557's labelled binary chain (D560's `recoverOneStatus` shape): `yes`
+    is the first branch, `no` the rest joined by "or", recursively. One branch is its op alone; none is
+    nothing. */
+function chooseOneChain(note: string, offered: readonly { label: string; op: EffectOp }[]): EffectOp[] {
+  const [first, ...rest] = offered;
+  if (first === undefined) return [];
+  if (rest.length === 0) return [first.op];
+  return [
+    {
+      op: "optional",
+      note,
+      labels: { yes: first.label, no: rest.map((b) => b.label).join(" or ") },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [first.op],
+      otherwise: chooseOneChain(note, rest),
+    },
+  ];
+}
+
 function devolveChosenNote(seat: Seat, candidates: readonly PokemonRef[]): string {
   const ownSide = candidates.length > 0 && candidates.every((ref) => ref.seat === seat);
   const owner = ownSide ? "your" : "your opponent's";
@@ -17727,7 +17911,10 @@ function healTargetNoun(op: Extract<EffectOp, { op: "healChosen" }>): string {
   const noun = op.filter === undefined ? "Pokémon" : retrieveNoun(op.filter).plural;
   // 🆕🆕🆕 D617 — `recoverHealed` (Pokémon Center Lady): the pick also decides whether conditions clear.
   const rider = op.recoverHealed === true ? " It also recovers from all Special Conditions." : "";
-  return `Heal which of your ${zoneWord}${noun}${window}?${rider}`;
+  // 🆕🆕🆕 D625 — `energyToHandFromHealed` (Wally's Compassion): the pick also decides whose Energy moves.
+  const toHand =
+    op.energyToHandFromHealed === true ? " If it heals any damage, all its Energy goes into your hand." : "";
+  return `Heal which of your ${zoneWord}${noun}${window}?${rider}${toHand}`;
 }
 
 /** Gust: switch the OPPONENT's Active with their benched `ref` (Boss's Orders). */

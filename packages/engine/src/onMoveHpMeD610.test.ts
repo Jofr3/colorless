@@ -30,7 +30,7 @@ import {
 // `hpBonus.requiresEnergyCount` (plus `requiresEnergyType` widened to "special"). Left and named (§9):
 // Fall Back to Reload ×2, Last-Ditch Catch ×3, Luminous Wing ×4 (WP37b) and five passives.
 // Two new readings, both ⚠️ UNRULED: R-HL1 (§6), Holes resolves before Palafin's Zero to Hero, with no
-// Knock Out check between them; R-MR1 (§4), Metal Road's printed moment is Buzzing Boost's use-time gate,
+// Knock Out check between them [🆕🆕🆕 D625 (D610 MINOR 2): R-HL1 INVERTS D356's principle (turn.ts, Magearna "Auto Heal": the turn player's own effects resolve first when two triggers answer one moment), and its listed reversal "Zero to Hero first" IS D356's order. The departure is the reading because under D356's order Holes' subject has already gone to the deck and Holes does nothing; still UNRULED.]; R-MR1 (§4), Metal Road's printed moment is Buzzing Boost's use-time gate,
 // so a use later the same turn sweeps {M} attached to the Bench after the move.
 
 const SOLAR_TRANSFER =
@@ -625,7 +625,8 @@ describe("D610 §6 — Holes: 2 damage counters on the opponent's Active that mo
     expect(lethal.phase.kind === "ko:takePrizes" && lethal.phase.seat).toBe("p1");
   });
 
-  it("🛑 R-HL1 (UNRULED): Holes resolves BEFORE Palafin's Zero to Hero, with no Knock Out check between them", () => {
+  it("🛑 R-HL1 (UNRULED): Holes resolves BEFORE Palafin's Zero to Hero, with no Knock Out check between them (🆕🆕🆕 D625: this inverts D356's turn-player-first order; the reversal is D356's)", () => {
+    // [🆕🆕🆕 D625 (D610 MINOR 2): R-HL1 INVERTS D356's principle (turn.ts, Magearna "Auto Heal": the turn player's own effects resolve first when two triggers answer one moment), and its listed reversal "Zero to Hero first" IS D356's order. The departure is the reading because under D356's order Holes' subject has already gone to the deck and Holes does nothing; still UNRULED.]
     // p2's Palafin (100 HP) has 80 damage and retreats (one Energy pays the cost). Holes makes it
     // 100 — lethal on Palafin — and then Zero to Hero swaps Palafin ex (340 HP) in, the damage riding
     // along: no Knock Out and no Prize. The control without a Palafin ex in the deck (R-ZH2: the
@@ -728,7 +729,7 @@ describe("D610 §9 — what WP37 leaves, and the version", () => {
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["attack"]);
   });
 
-  it("is built at engine 0.507.0", () => {
-    expect(engineVersion).toBe("0.507.0");
+  it("is built at engine 0.508.0", () => {
+    expect(engineVersion).toBe("0.508.0");
   });
 });

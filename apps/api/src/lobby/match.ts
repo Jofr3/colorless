@@ -2159,6 +2159,18 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 43 AT D625 — T1 ADDS SEVEN TRAINER OBJECTS, ONE `EffectOp` MEMBER AND OPTIONAL OP KEYS; NO PROMPT,
+    PHASE, SIDE KEY, `InPlayPokemon` FIELD OR EVENT.** (Placed ABOVE the D624 block.) Every program is keyed by ID, so no
+    `cardPool` face is read differently: the 13 `me` faces in a v43 pool are unchanged and in-flight pools are safe. New
+    bytes that can ride a parked `EffectContinuation`: `healChosen.energyToHandFromHealed` (Wally's Compassion's parked
+    pick — a 0.507 rollback heals and moves no Energy), `devolveChosen` `whose` / `pokemonType` / `depth` and the
+    engine-written `bodyUid` / `shed` (Strange Timepiece's own-side pick and its depth `optional` — a 0.507 rollback resumes
+    the pick as D540's devolve of the picked body by one card with no `turnPlayed` stamp, and runs a parked depth arm as
+    D540's opponent-side pick), and `chooseOneOffered` (only ever in a `rest`, behind a park; Blowtorch's fungible Basic {R}
+    payment is forced, and what parks is the shipped `optional`). Optional op keys on parking ops need no bump (D608's
+    precedent); a new member is a widening (D125). "Can't evolve this turn" reuses the shipped `turnPlayed` stamp, so no
+    new persisted key. Each rollback reading is NAMED.
+
     🆕🆕🆕 **STAYS 43 AT D624 — WP31c ADDS ONE `CardFilter` MEMBER, ONE OPTIONAL OP KEY AND ONE NEW VALUE OF A
     PERSISTED FIELD; NO PROMPT, PHASE, SIDE KEY OR EVENT.** (Placed ABOVE the D623 block.) Chirp's
     `searchDeck` and Tail Generator's `attachFromDiscard` PARK, so `pokemonWithResistance` and

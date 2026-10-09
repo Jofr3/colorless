@@ -1053,7 +1053,7 @@ describe("§5 — Klinklang \"Emergency Rotation\" (the first in-hand Ability)",
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§6 — the version", () => {
-  it("the engine is 0.507.0", () => {
-    expect(engineVersion).toBe("0.507.0");
+  it("the engine is 0.508.0", () => {
+    expect(engineVersion).toBe("0.508.0");
   });
 });

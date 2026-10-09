@@ -650,6 +650,14 @@ describe("D621 §5 — Acerola's Mischief: one chosen body, no damage or effects
     expect(squall.state.players.p1.bench[0]?.damage).toBe(0);
     const lone = attack(endTurn(acerola(BRUTE, [], CROWN_EX).state, "p1"), "p2", 2);
     expect(lone.state.players.p1.active?.damage).toBe(0);
+    // 🆕🆕🆕 D625 (D622 MINOR 2) — the three `damage` lines above compare 0 with the 0 each body starts at, so they
+    // cannot tell "the shield stopped it" from "nothing was aimed there". The DAMAGE_DEALT rows can: every hit
+    // was aimed at the shielded body and PREVENTED, 0 dealt (Oil Salvo's six 20s, Severe Squall's 60 twice).
+    const rows = (events: readonly GameEvent[]) =>
+      events.flatMap((e) => (e.type === "DAMAGE_DEALT" ? [[e.base, e.prevented, e.dealt]] : []));
+    expect(rows(salvo.events)).toEqual(Array.from({ length: 6 }, () => [20, true, 0]));
+    expect(rows(squall.events)).toEqual([[60, true, 0]]);
+    expect(rows(lone.events)).toEqual([[60, true, 0]]);
   });
 
   it("R-AM2: the main hit keeps the forms apart — the bare tail (Yoga Kick) is stopped, the Feint form (Demolish) lands", () => {
@@ -739,6 +747,6 @@ describe("D621 §8 — the ids and the version", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.507.0");
+    expect(engineVersion).toBe("0.508.0");
   });
 });

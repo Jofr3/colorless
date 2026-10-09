@@ -51,6 +51,9 @@ import {
   // 🆕🆕🆕 D577 — Tyme's candidate funnel (R-TY1), so the grey-out and the offer agree.
   handPokemonUids,
   moveEnergyPlayable,
+  // 🆕🆕🆕 D625 — Blowtorch's branch offer and Strange Timepiece's own-side offer, so the refusal and the offer agree.
+  offeredBranches,
+  ownDevolveAvailable,
   resumeProgram,
   // 🆕🆕🆕 D565 — Ruffian's candidate funnel.
   ruffianBodies,
@@ -1449,6 +1452,14 @@ export function programPlayable(
     // guard here would be a second place that has to know which riders can empty
     // the set — the exact drift the sole-funnel rule exists to prevent.
     if (op.op === "healChosen" && healChosenTargets(state, seat, op).length === 0) return false;
+    // 🆕🆕🆕 D625 — Blowtorch's *"Choose 1"*: no branch with a target and the Item can only whiff (R-BT1);
+    // the op's own funnel answers, so the refusal and the offer cannot disagree.
+    if (op.op === "chooseOneOffered" && offeredBranches(state, seat, op).length === 0) return false;
+    // 🆕🆕🆕 D625 — Strange Timepiece: no own evolved body of the type, or Milotic stopping the cards reaching
+    // the hand, and the Item can only whiff (R-ST1). The opponent-side pick (an attack) is never asked here.
+    if (op.op === "devolveChosen" && op.whose === "self" && !ownDevolveAvailable(state, seat, op.pokemonType)) {
+      return false;
+    }
     // D294 — the BENCH arm's own public whiff, and it is a DIFFERENT fact from
     // the empty hand below. Bench SIZE is public at both seats, so "their Bench
     // is full" is a board statement and greying on it is the Catcher/Hammer
