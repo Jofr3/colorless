@@ -46,7 +46,7 @@ describe("D581 §1 — the catalog's Trainer faces, measured", () => {
     expect(faces.filter((f) => (f.attacks ?? []).length > 0)).toHaveLength(7);
   });
 
-  it("the Standard-legal ones are the four BUILT fossils, TM Fluorite, and five UNBUILT `me` faces", () => {
+  it("the Standard-legal ones are the four BUILT fossils, TM Fluorite, and five UNBUILT `me` faces (🆕🆕🆕 D620 (D539): four — Core Memory is built at D620)", () => {
     const legal = Object.entries(M.trainerFaces)
       .filter(([, f]) => f.legal)
       .map(([id]) => id)
@@ -65,7 +65,8 @@ describe("D581 §1 — the catalog's Trainer faces, measured", () => {
     ]);
     for (const id of legal) {
       const built = id.startsWith("sv");
-      expect(programFor(id) !== undefined, id).toBe(built);
+      // 🆕🆕🆕 D620 — Core Memory is keyed (WP26's `toolAttacksHolder`); its face is not a fossil's.
+      expect(programFor(id) !== undefined, id).toBe(built || id === CORE_MEMORY);
       if (M.trainerFaces[id]?.hp === 60) expect(FOSSIL_IDS.has(id), id).toBe(built);
     }
   });

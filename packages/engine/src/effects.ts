@@ -18306,6 +18306,11 @@ const OPPONENT_PRIZES_SCALE =
 // way.") by the tail.
 const OPPONENT_PRIZES_MULTIPLY =
   /^This attack does (\d+) damage for each Prize card your opponent has taken\.$/;
+// 🆕🆕🆕 D620 — the OWN-SIDE twin one possessive over ("…Prize card you have taken."): 2 `me` sentences /
+// 5 printings (Incessant Onslaught, Cheerful Flame ×2 at 70; Gobble Down ×2 at 80), read as `yourPrizesTaken`.
+// The 70 sentence is also Aegislash ex `sv04-135` / `-230` "Peerless Edge" (Expanded-only, LOCAL D1
+// 2026-10-09): the reader reads those two prints too; they are outside the Standard corpus and uncounted.
+const YOUR_PRIZES_MULTIPLY = /^This attack does (\d+) damage for each Prize card you have taken\.$/;
 // The retreat-cost READER pair — the first count source that reads a DERIVED
 // board value (continuous.ts effectiveRetreatCost on the DEFENDER) rather than a
 // raw field. Both sentences are printed verbatim on real cards, char-for-char
@@ -35818,6 +35823,12 @@ export interface AttackDamageBonus {
 export type DamageCountSource =
   | { kind: "damageCountersOnSelf" }
   | { kind: "opponentPrizesTaken" }
+  /** 🆕🆕🆕 **D620 — the ATTACKER's own taken Prizes** (`6 − your remaining pile`, types.ts `takenPrizes`
+      on the attacking seat): *"This attack does N damage for each Prize card you have taken."* — Luxray
+      `me03-028` "Incessant Onslaught" and Fuecoco ex `30th-015` / `-147` "Cheerful Flame" (70), Mega Mawile
+      ex `me01-094` / `-162` "Gobble Down" (80). The seat lives in the member NAME (D168), the sibling of
+      `opponentPrizesTaken`. The `×` fold only — no legal print spells the additive twin. */
+  | { kind: "yourPrizesTaken" }
   | { kind: "opponentActiveRetreatCost" }
   | { kind: "boardCondition"; cond: BoardCondition }
   | { kind: "damageCountersOnOpponentActive" }
@@ -36614,6 +36625,13 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
     // A printed 0 does nothing — left loud, the guard the additive rules carry.
     const per = Number(opponentPrizes[1]);
     if (per >= 1) return { per, count: { kind: "opponentPrizesTaken" } };
+  }
+  // 🆕🆕🆕 D620 — the attacker's OWN taken Prizes, directly after the arm it mirrors; the two anchors
+  // differ on a mandatory run of bytes (`you have` / `your opponent has`), so the order is legibility.
+  const yourPrizes = YOUR_PRIZES_MULTIPLY.exec(effect);
+  if (yourPrizes !== null) {
+    const per = Number(yourPrizes[1]);
+    if (per >= 1) return { per, count: { kind: "yourPrizesTaken" } };
   }
   const retreatCost = RETREAT_COST_MULTIPLY.exec(effect);
   if (retreatCost !== null) {
@@ -37596,6 +37614,11 @@ export interface AttackBonusConsequent {
       is a program reached through a READING, not a branch hanging off an
       `EffectOp` a walk can find. */
   ops: EffectOp[];
+  /** 🆕🆕🆕 **D620 — the printed BASE OVERRIDE**: *"If {clause}, this attack's base damage is N."*
+      (Mega Mawile ex `me01-094` / `-162` "Huge Bite", printed 260, N = 30). The YES arm's one hit is
+      `N` INSTEAD of the printed base (`bonus` is 0 and `ops` empty on this reading); the NO arm keeps
+      the printed base, as on every other reading. Absent everywhere else. */
+  baseOverride?: number;
 }
 
 const BONUS_CONSEQUENT_CONDITION = /^If (.+), this attack does (\d+) more damage, and (.+)$/;
@@ -37620,6 +37643,11 @@ const BONUS_CONSEQUENT_CONDITION_THEN =
   /^If (.+), this attack does (\d+) more damage\. Then, (.+)$/;
 const BONUS_CONSEQUENT_COIN =
   /^Flip a coin\. If heads, this attack does (\d+) more damage, and (.+)$/;
+/** 🆕🆕🆕 D620 — Huge Bite's whole sentence: the condition form with a base OVERRIDE for its
+    consequent. Disjoint from the two condition anchors above by `attack['’]s base damage is`
+    where they need `attack does`; the clause resolves through `boardConditionForClause`, so it
+    means here exactly what it means to `deriveAttackDamageBonus`. */
+const BASE_OVERRIDE_CONDITION = /^If (.+), this attack['’]s base damage is (\d+)\.$/;
 const CONSEQUENT_DISCARD_ALL_SELF_ENERGY = /^discard all Energy from this Pokémon\.$/;
 const CONSEQUENT_HEAL_SELF = /^heal (\d+) damage from this Pokémon\.$/;
 /** 🆕🆕 D382 — Ground Melter's consequent. LOWERCASE `discard` and the ANAPHORIC
@@ -37699,6 +37727,14 @@ export function deriveAttackBonusConsequent(text: string): AttackBonusConsequent
     const ops = bonusConsequentOps(coin[2] ?? "");
     return ops === null ? null : { decider: { kind: "coinFlip" }, bonus, ops };
   }
+  // 🆕🆕🆕 D620 — Huge Bite: a mapped clause and a printed N >= 1 (a printed 0 stays loud).
+  const override = BASE_OVERRIDE_CONDITION.exec(effect);
+  if (override !== null) {
+    const cond = boardConditionForClause(override[1] ?? "");
+    const baseOverride = Number(override[2]);
+    if (cond === null || baseOverride < 1) return null;
+    return { decider: { kind: "boardCondition", cond }, bonus: 0, ops: [], baseOverride };
+  }
   const condition =
     BONUS_CONSEQUENT_CONDITION.exec(effect) ?? BONUS_CONSEQUENT_CONDITION_THEN.exec(effect);
   if (condition === null) return null;
@@ -37747,7 +37783,10 @@ export function bonusConsequentProgram(reading: AttackBonusConsequent, base: num
   // `precheck` reported as two of this decision's rows going `1× → 2×`. The
   // destructured tuple is what keeps the local named `then` and the shorthand
   // splice below unchanged.
-  const [then, otherwise] = boostedArms(base, reading.bonus, reading.ops);
+  const [boosted, otherwise] = boostedArms(base, reading.bonus, reading.ops);
+  // 🆕🆕🆕 D620 — Huge Bite: the YES arm's hit is the printed override, not base + bonus.
+  const then: EffectOp[] =
+    reading.baseOverride === undefined ? boosted : [{ op: "damageDefender", amount: reading.baseOverride }];
   return reading.decider.kind === "coinFlip"
     ? [{ op: "coinFlipGate", then, otherwise }]
     : [{ op: "conditionGate", cond: reading.decider.cond, then, otherwise }];

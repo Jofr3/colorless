@@ -30237,6 +30237,25 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D620 — WP10 + WP26: prizes you have taken, Mega Mawile ex and the `me` Tools (engine 0.503.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D619 (`659c2fa9`), NOT committed.
+
+- **WP10 (reader rows).** effects.ts, the NEW `DamageCountSource.yourPrizesTaken` (attack.ts `takenPrizes` on the attacking seat):
+  Incessant Onslaught, Cheerful Flame ×2 (70×), Gobble Down ×2 (80×); the NEW `AttackBonusConsequent.baseOverride`: Huge Bite ×2
+  (260, or 30 on a damaged defender — `bonusConsequentProgram`'s YES arm deals the override).
+- **WP26 (five Tool objects).** Light Ball (`damageBonusBeforeWRIfTarget` + holder Pikachu ex), Punk Helmet ×2 (the NEW
+  `damageAttacker.holderType`), Team Rocket's Hypnotizer (a Tool `onDamagedByAttack` stage behind `yourActiveOwner`), Core Memory (the
+  NEW `toolAttacksHolder`, read by `attackMenuOf`) and Tremendous Bomb ×2 (the NEW `damageAttackerActiveThenDiscardIf`, read by
+  `deluxeBombOf`, which now takes the hit's `dealt`).
+- **Reading.** R-TRB1 ⚠️ UNRULED: the 240 threshold is one hit's `dealt`.
+- **Named approximation.** Hypnotizer inherits Klawf ex's (D101): its stage runs after the attack's program, so a switched-out
+  attacker's replacement is put Asleep. The 70× reader also reads Aegislash ex `sv04-135` / `-230` (Expanded-only, uncounted).
+- **Dropped.** Adversity Policy (a Weakness gate, a new `BoardCondition` member).
+- **Suite.** `prizesToolsMeD620.test.ts` (27) and a census D620 block (2). +25 mutant rows.
+- **Census.** Standard pool attacks **2,695 / 2,771**, abilities **561 / 610**, trainers **402 / 447**; 1095 `me` printings fully built (all 12 finished).
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
 ## D619 — WP12 (passive half) + WP15: attacker-gated reductions and named-Supporter conditions (engine 0.502.0, `MATCH_RECORD_VERSION` stays 42)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D618 (`d70e2058`), NOT committed.
@@ -30571,7 +30590,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   untyped gate), Seviper "Excited Power" (`damageBonusBeforeWRIf` 120), Mega Signal ×3 (search a Mega ex) and Jett
   (`drawCards.per` over the opponent's Mega ex).
 - **Dropped and named:** Latios "Lustrous Assist" (a named Active's move gate) and Wally's Compassion ×3 (all Energy to
-  the hand from the healed body). Tremendous Bomb, Ange Floette and Core Memory stay out (the brief).
+  the hand from the healed body). Tremendous Bomb, Ange Floette and Core Memory stay out (the brief). [🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory BUILT at D620 (WP26).]
 - **Readings.** None new; Jett with none in play inherits R-PX6 (`progress.md` NEXT).
 - **Suite.** `megaGatedMeD603.test.ts` (26) and a census D603 block (2). +25 mutant rows.
 - **Census.** Standard pool abilities **520 / 610**, trainers **364 / 447**; 906 `me` printings fully built.

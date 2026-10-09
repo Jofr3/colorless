@@ -341,6 +341,9 @@ function scaledAttackDamage(
       // Prizes the opponent has TAKEN (6 − their remaining pile, §8.1), read at
       // declaration before this attack's own KOs award any Prize.
       return takenPrizes(state, defenderSeat) * bonus.per;
+    case "yourPrizesTaken":
+      // 🆕🆕🆕 D620 — the arm above on the ATTACKING seat ("…Prize card you have taken"), read at declaration.
+      return takenPrizes(state, attackerSeat) * bonus.per;
     case "opponentActiveRetreatCost": {
       // The {C} in the DEFENDING Pokémon's Retreat Cost — the EFFECTIVE one, not
       // the printed number: `effectiveRetreatCost` already folds every modifier in
@@ -3947,7 +3950,7 @@ export function attack(
     // (triggers.ts `damagedToolTriggersOf`), BEHIND the Ability's stage (R-LH). Seeded
     // only when such a Tool is present, so every other board keeps its exact queue.
     if (dealt > 0) {
-      next = detonateDeluxeBomb(next, defenderSeat, defended, action.seat, events);
+      next = detonateDeluxeBomb(next, defenderSeat, defended, action.seat, dealt, events);
       damagedToolStages = damagedToolTriggersOf(next, defenderSeat, defenderUid).map(
         ({ toolUid }): PendingStage => ({ kind: "damagedTrigger", seat: defenderSeat, uid: toolUid }),
       );

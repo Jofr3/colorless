@@ -655,6 +655,20 @@ export interface PassiveEffects {
       interpreter.ts `detonateDeluxeBomb`, and discarded only when its counters were
       actually placed (R-DB). */
   damageAttackerActiveThenDiscard?: number;
+  /** 🆕🆕🆕 §9 (D620) — Tremendous Bomb `me05-082` / `-113`: *"If the Pokémon this card is attached
+      to isn't a Mega Evolution Pokémon ex, is in the Active Spot, and takes 240 or more damage from an
+      attack from your opponent's Mega Evolution Pokémon ex (even if this Pokémon is Knocked Out), place
+      12 damage counters on the Attacking Pokémon. If you placed any damage counters in this way,
+      discard this card."* Deluxe Bomb's field above behind three printed gates, read by the SAME scan
+      (`deluxeBombOf`) at the SAME two sites: `minDamage` against the hit's `dealt` (R-TRB1), `attacker`
+      against the attacking Active's in-play card, and `holderNot` against the holder's in-play card
+      (a match refuses). Catalog-only: never persisted. */
+  damageAttackerActiveThenDiscardIf?: {
+    amount: number;
+    minDamage: number;
+    attacker: CardFilter;
+    holderNot: CardFilter;
+  };
   /** §8.5 continuous OWN-SIDE seat-wide AURA: while this Pokémon is in play,
       EVERY one of its controller's in-play Pokémon takes this many HP less attack
       damage, after Weakness and Resistance (Hariyama sv02-113 "Arm Thrust
@@ -1158,8 +1172,17 @@ export interface PassiveEffects {
         Energy attached to this Pokémon"*: the amount is MULTIPLIED by
         `countAttachedEnergy(holder, type)` inside the fold (provision, D118 — a
         Special Energy providing {M} counts), so both read sites (attack.ts main hit,
-        interpreter.ts `reactToAttackDamage`) take a ZERO diff. 0 {M} Energy pays 0. */
-  damageAttacker?: { amount: number; requiresTool?: boolean; perAttachedEnergy?: BasicEnergyType };
+        interpreter.ts `reactToAttackDamage`) take a ZERO diff. 0 {M} Energy pays 0.
+
+      • `holderType` (🆕🆕🆕 D620, Punk Helmet `me02-092` / `-121`) — the printed *"the {D} Pokémon
+        this card is attached to"*: paid only while the holder's IN-PLAY types include it (the fold's
+        `holderTypes`, Rock Chestplate's and Thick Scale's gate). Absent = ungated, byte for byte. */
+  damageAttacker?: {
+    amount: number;
+    requiresTool?: boolean;
+    perAttachedEnergy?: BasicEnergyType;
+    holderType?: PokemonType;
+  };
   /** §8.1 KO-conditioned recoil — the SIBLING of `damageAttacker` above, and a
       sibling rather than an arm of it because the two consumers MUTUALLY REFUSE
       each other's payment (D155's rule, grounded in the READ sites):
@@ -4110,6 +4133,11 @@ export interface CardProgram {
       `attackGateOf` through the menu. Makes `toolCardSimulated` true. Catalog-only: never
       persisted. */
   toolAttacks?: true;
+  /** 🆕🆕🆕 **§7.4 (D620) — the HOLDER gate on `toolAttacks`**: Core Memory `me03-070`, *"The Mega Zygarde
+      ex this card is attached to can use the attack on this card."* `attackMenuOf` lists the Tool's
+      attacks only while the holder's TOP card matches this filter. Absent = any holder (Technical
+      Machine: Fluorite), byte for byte. Catalog-only: never persisted. */
+  toolAttacksHolder?: CardFilter;
   /** 🆕🆕🆕 **§7.4 (D578) — *"If this card is attached to 1 of your Pokémon, discard it at the
       end of your turn."*** — Technical Machine: Fluorite `sv08-188`. The Tool twin of
       `EnergyProgram.discardAtEndOfYourTurn` (Ignition Energy), read by flow.ts
@@ -17767,7 +17795,8 @@ const SUNRISE: CardProgram = {
 //    Texts off the LOCAL D1. Dropped and named (vocabulary beyond the brief): Latios `me01-101`
 //    "Lustrous Assist" (a gate on a NAMED Active's Bench-to-Active move) and Wally's Compassion
 //    `me01-132` / `-176` / `-186` (an all-Energy-to-hand consequent on the healed body). Excluded by
-//    the brief: Tremendous Bomb ×2, Ange Floette, Core Memory. `megaGatedMeD603.test.ts`. ──
+//    the brief: Tremendous Bomb ×2, Ange Floette, Core Memory. `megaGatedMeD603.test.ts`.
+//    [🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory BUILT at D620 (WP26).] ──
 
 /** 🆕🆕🆕 **D603 — Oricorio ex `mep-024`, `me02-018` / `-110` "Excited Turbo"**: *"As often as you like
     during your turn, if you have any {R} Mega Evolution Pokémon ex in play, you may use this Ability.
@@ -18127,6 +18156,75 @@ const FRILLED_GENERATOR: CardProgram = {
       ],
     },
   ],
+};
+
+// ── 🆕🆕🆕 D620 — WP10 + WP26: five Tool objects, 7 `me` printings. WP10's three attack texts (Incessant
+//    Onslaught, Cheerful Flame ×2, Mega Mawile ex ×2's Gobble Down and Huge Bite) are reader rows (effects.ts
+//    `yourPrizesTaken`, `AttackBonusConsequent.baseOverride`). New pieces: `damageAttacker.holderType`
+//    (Punk Helmet), `damageAttackerActiveThenDiscardIf` (Tremendous Bomb) and `toolAttacksHolder` (Core
+//    Memory). Texts off the LOCAL D1 (2026-10-09). Dropped and named: Adversity Policy `me04-074` (a
+//    holder-has-Weakness-to-the-opponent's-Active gate, a new `BoardCondition` member). `prizesToolsMeD620.test.ts`. ──
+
+/** 🆕🆕🆕 **D620 — Light Ball `me02.5-191` (Tool)**: *"Attacks used by the Pikachu ex this card is attached
+    to do 50 more damage to your opponent's Active Pokémon ex (before applying Weakness and Resistance)."*
+    Maximum Belt's row with Brave Bangle's `holder` clause (the exact name). */
+const LIGHT_BALL: CardProgram = {
+  passive: {
+    damageBonusBeforeWRIfTarget: { amount: 50, targetSuffix: "ex", holder: { kind: "byName", name: "Pikachu ex" } },
+  },
+};
+
+/** 🆕🆕🆕 **D620 — Punk Helmet `me02-092` / `-121` (Tool)**: *"If the {D} Pokémon this card is attached to is
+    in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is
+    Knocked Out), place 4 damage counters on the Attacking Pokémon."* Rocky Helmet's row at 4 counters
+    behind the NEW `holderType`. */
+const PUNK_HELMET: CardProgram = { passive: { damageAttacker: { amount: 40, holderType: "Darkness" } } };
+
+/** 🆕🆕🆕 **D620 — Team Rocket's Hypnotizer `me02.5-206` (Tool)**: *"If the Team Rocket's Pokémon this card is
+    attached to is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this
+    Team Rocket's Pokémon is Knocked Out), the Attacking Pokémon is now Asleep."* Lucky Helmet's stage
+    (`damagedToolTriggersOf`; the runner re-asks the holder is the Active) with Scorching Armor's program
+    behind `yourActiveOwner` — at run time the Active IS the holder. ⚠️ Inherited from Klawf ex (D101), as
+    Handheld Fan names it (D562): the stage runs after the attack's own program, so `target: "defender"` is
+    the attacker seat's CURRENT Active, not "the Attacking Pokémon" if that attack switched it out. */
+const TEAM_ROCKETS_HYPNOTIZER: CardProgram = {
+  triggered: [
+    {
+      name: "Team Rocket's Hypnotizer",
+      trigger: "onDamagedByAttack",
+      program: [
+        {
+          op: "conditionGate",
+          cond: { kind: "yourActiveOwner", owner: "Team Rocket" },
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [{ op: "applyStatus", target: "defender", status: "asleep" }],
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D620 — Core Memory `me03-070` (Tool)**: *"The Mega Zygarde ex this card is attached to can use the
+    attack on this card. (You still need the necessary Energy to use this attack.)"* — "Geobuster"
+    {F}{F}{F}{F} 350, *"Discard all Energy from this Pokémon."* (derived). Technical Machine: Fluorite's
+    `toolAttacks` behind the NEW `toolAttacksHolder`. */
+const CORE_MEMORY: CardProgram = {
+  toolAttacks: true,
+  toolAttacksHolder: { kind: "byName", name: "Mega Zygarde ex" },
+};
+
+/** 🆕🆕🆕 **D620 — Tremendous Bomb `me05-082` / `-113` (Tool)**: Deluxe Bomb's 12 counters behind the
+    printed gates (`damageAttackerActiveThenDiscardIf`, read by `deluxeBombOf`): 240 or more damage from
+    one hit (R-TRB1 ⚠️ UNRULED), an attacking Mega Evolution Pokémon ex, a holder that is not one. */
+const TREMENDOUS_BOMB: CardProgram = {
+  passive: {
+    damageAttackerActiveThenDiscardIf: {
+      amount: 120,
+      minDamage: 240,
+      attacker: { kind: "megaEvolutionEx" },
+      holderNot: { kind: "megaEvolutionEx" },
+    },
+  },
 };
 
 // ── 🆕🆕🆕 D608 — WP30: TWO `30th` ATTACK OBJECTS, KEYED BY ID. Text off the LOCAL D1; both printed
@@ -19655,6 +19753,14 @@ const REGISTRY: Record<string, CardProgram> = {
   "me02-097": THICK_FAT, // Dewgong
   "me02.5-064": FRILLED_GENERATOR, // Heliolisk — played Canari this turn: up to 2 Basic {L} from the deck to itself
   "me02.5-229": FRILLED_GENERATOR, // Heliolisk
+  // 🆕🆕🆕 D620 — WP26: 7 `me` Tool keys / 5 objects, MID-MAP (`raw[last]` does not move).
+  "me02.5-191": LIGHT_BALL, // Light Ball — a Pikachu ex holder does 50 more to an opposing Active ex
+  "me02-092": PUNK_HELMET, // Punk Helmet — a {D} Active holder damaged: 4 counters on the attacker
+  "me02-121": PUNK_HELMET, // Punk Helmet
+  "me02.5-206": TEAM_ROCKETS_HYPNOTIZER, // Team Rocket's Hypnotizer — a Team Rocket's Active holder damaged: the attacker Asleep
+  "me03-070": CORE_MEMORY, // Core Memory — a Mega Zygarde ex holder can use "Geobuster"
+  "me05-082": TREMENDOUS_BOMB, // Tremendous Bomb — 240+ from an opposing Mega ex: 12 counters, then discard
+  "me05-113": TREMENDOUS_BOMB, // Tremendous Bomb
   // 🆕🆕🆕 D608 — WP30: 5 `30th` ATTACK-only keys / 2 objects, MID-MAP (`raw[last]` does not move).
   // 🆕🆕🆕 D612 — 3 now: Stealthy Slash ×2 RETIRED (the normalised text is `mep-099`'s, reader-built).
   "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex

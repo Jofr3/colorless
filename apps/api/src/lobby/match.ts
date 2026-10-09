@@ -2159,6 +2159,16 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D620 — ONE COUNT MEMBER, ONE READING FIELD, THREE CATALOG KEYS.** (Placed ABOVE
+    the D619 block.) `DamageCountSource.yourPrizesTaken` and `AttackBonusConsequent.baseOverride` are READINGS
+    re-derived from the printed text at every declaration and never stored; Huge Bite's assembled program is a
+    `conditionGate` over two flat `damageDefender`s, shipped shapes that do not park. `damageAttacker.holderType`,
+    `damageAttackerActiveThenDiscardIf` and `toolAttacksHolder` are read off the registry at damage / menu time.
+    Team Rocket's Hypnotizer runs on the shipped Tool `damagedTrigger` stage (a Tool uid in `pending`, as Lucky
+    Helmet's). No `GameState`, `PendingStage`, prompt or wire key moves, and the 12 `me` faces in a v42
+    `cardPool` are unchanged. A 0.502 rollback just loses these programs (the D582 cost): a parked Hypnotizer
+    stage finds no Tool program and no Ability, and advances.
+
     🆕🆕🆕 **STAYS 42 AT D619 — ONE CATALOG PASSIVE FIELD, ONE ABILITY OBJECT, THREE CLAUSE ROWS AND ONE
     ANCHOR; `AttackerClass` IS NOT WIDENED.** (Placed ABOVE the D618 block.) `PassiveEffects
     .damageReductionAfterWRFromAttacker` (Sacred Charm, Thick Scale, Thick Fat) is read off the registry by

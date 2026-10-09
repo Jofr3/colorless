@@ -20266,6 +20266,17 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.502.0 → **0.503.0** (D620 — WP10 + WP26: PRIZES YOU HAVE TAKEN, MEGA MAWILE ex AND THE
+    `me` TOOLS, 8 TEXTS / 14 `me` UNITS ON 12 PRINTINGS; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT
+    D620")). effects.ts: the NEW `DamageCountSource.yourPrizesTaken` (`YOUR_PRIZES_MULTIPLY`; attack.ts
+    `takenPrizes` on the attacking seat) — Luxray "Incessant Onslaught", Fuecoco ex ×2 "Cheerful Flame", Mega
+    Mawile ex ×2 "Gobble Down"; the NEW `AttackBonusConsequent.baseOverride` (`BASE_OVERRIDE_CONDITION`) — Mega
+    Mawile ex ×2 "Huge Bite". registry.ts, five NEW Tool objects: Light Ball (`damageBonusBeforeWRIfTarget` +
+    `holder`), Punk Helmet ×2 (the NEW `damageAttacker.holderType`), Team Rocket's Hypnotizer (an
+    `onDamagedByAttack` Tool trigger behind `yourActiveOwner`), Core Memory (the NEW `toolAttacksHolder`, read by
+    `attackMenuOf`) and Tremendous Bomb ×2 (the NEW `damageAttackerActiveThenDiscardIf`, read by `deluxeBombOf`,
+    which now takes the hit's `dealt`; R-TRB1 UNRULED). Dropped and named: Adversity Policy (a Weakness gate).
+    `prizesToolsMeD620.test.ts`.)
     🆕🆕🆕 engineVersion 0.501.0 → **0.502.0** (D619 — WP12 (THE PASSIVE HALF) + WP15: ATTACKER-GATED
     REDUCTIONS AND NAMED-SUPPORTER CONDITIONS, 7 TEXTS / 10 `me` PRINTINGS; `MATCH_RECORD_VERSION` STAYS 42
     (apps/api match.ts "STAYS 42 AT D619")). registry.ts, the NEW `PassiveEffects.damageReductionAfterWRFromAttacker
@@ -25529,7 +25540,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.502.0";
+export const engineVersion = "0.503.0";
 
 export type {
   ApplyResult,

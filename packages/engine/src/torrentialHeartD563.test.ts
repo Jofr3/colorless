@@ -248,7 +248,7 @@ function render(events: GameEvent[], state: GameState): { who: string; text: str
 
 describe("§1 — the registry row: one activated Ability, two ops, two riders", () => {
   it("both printings share ONE object: once per turn, usable from the Bench, no `attack` key", () => {
-    expect(engineVersion).toBe("0.502.0");
+    expect(engineVersion).toBe("0.503.0");
     const row = programFor(FERALIGATR);
     expect(programFor(FERALIGATR_REPRINT)).toBe(row);
     expect(Object.keys(row ?? {})).toEqual(["abilities"]);

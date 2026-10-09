@@ -807,8 +807,8 @@ describe("D562 tools §5 — Deluxe Bomb, R-DB", () => {
   it("`deluxeBombOf` itself: an opposing attacker only", () => {
     const state = table({ defender: { id: WALL, tool: BOMB } });
     const holder = state.players.p2.active as InPlayPokemon;
-    expect(deluxeBombOf(state, holder, "p1").amount).toBe(120);
-    expect(deluxeBombOf(state, holder, "p2").amount).toBe(0);
+    expect(deluxeBombOf(state, holder, "p1", 10).amount).toBe(120);
+    expect(deluxeBombOf(state, holder, "p2", 10).amount).toBe(0);
   });
 
   it("the ACE SPEC classification is the CARD's (rarity), not the row's — Deluxe Bomb AND Survival Brace", () => {
@@ -994,8 +994,8 @@ describe("D562 tools §7 — Handheld Fan, R-HF", () => {
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D562 tools §8 — `MATCH_RECORD_VERSION` holds at 35, and every 0.445 rollback reading named", () => {
-  it("the engine is 0.502.0", () => {
-    expect(engineVersion).toBe("0.502.0");
+  it("the engine is 0.503.0", () => {
+    expect(engineVersion).toBe("0.503.0");
   });
 
   it("a parked Klawf with a Tool-uid stage queued behind it revives identically through JSON", () => {

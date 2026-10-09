@@ -544,8 +544,8 @@ describe("§9 — the bytes, and THE EIGHTH POSITION (`MATCH_RECORD_VERSION` 34 
     expect(applyAction(v34, { type: "attack", seat: "p1", index: REST }).ok).toBe(true);
   });
 
-  it("the engine is 0.502.0", () => {
-    expect(engineVersion).toBe("0.502.0");
+  it("the engine is 0.503.0", () => {
+    expect(engineVersion).toBe("0.503.0");
   });
 });
 

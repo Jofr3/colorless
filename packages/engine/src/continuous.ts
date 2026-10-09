@@ -326,16 +326,36 @@ export function deluxeBombOf(
   state: GameState,
   holder: InPlayPokemon,
   attackerSeat: Seat,
+  dealt: number,
 ): { amount: number; toolUids: readonly string[] } {
   let amount = 0;
   const toolUids: string[] = [];
   for (const { uid, passive } of opposedToolPassives(state, holder, attackerSeat)) {
-    const bomb = passive.damageAttackerActiveThenDiscard;
+    const bomb = passive.damageAttackerActiveThenDiscard ?? gatedBombOf(state, holder, attackerSeat, dealt, passive);
     if (bomb === undefined) continue;
     amount += bomb;
     toolUids.push(uid);
   }
   return { amount, toolUids };
+}
+
+/** 🆕🆕🆕 §9 (D620) — TREMENDOUS BOMB's three gates (`damageAttackerActiveThenDiscardIf`): the hit's
+    `dealt` reaches `minDamage` (R-TRB1: this one hit), the attacking Active's in-play card matches
+    `attacker`, and the holder's in-play card does NOT match `holderNot`. Its counters, or `undefined`. */
+function gatedBombOf(
+  state: GameState,
+  holder: InPlayPokemon,
+  attackerSeat: Seat,
+  dealt: number,
+  passive: PassiveEffects,
+): number | undefined {
+  const gated = passive.damageAttackerActiveThenDiscardIf;
+  if (gated === undefined || dealt < gated.minDamage) return undefined;
+  const attacking = state.players[attackerSeat].active;
+  const attackerCard = attacking === null ? undefined : inPlayCardOf(state, attacking);
+  const holderCard = inPlayCardOf(state, holder);
+  if (attackerCard === undefined || !matchesFilter(attackerCard, gated.attacker)) return undefined;
+  return holderCard === undefined || matchesFilter(holderCard, gated.holderNot) ? undefined : gated.amount;
 }
 
 /** 🆕🆕🆕 §12 (D562) — does the in-play Stadium shield `pokemon` from every Special
@@ -1859,7 +1879,12 @@ export function passivesOf(
     // amount MULTIPLIED by the holder's count of that type (provision, D118), here, so
     // both read sites take a zero diff. 0 {M} Energy pays 0.
     const recoil = passive.damageAttacker;
-    if (recoil !== undefined && (recoil.requiresTool !== true || hasTool)) {
+    if (
+      recoil !== undefined &&
+      (recoil.requiresTool !== true || hasTool) &&
+      // 🆕🆕🆕 D620 — Punk Helmet's "{D} Pokémon this card is attached to": the holder's in-play types.
+      (recoil.holderType === undefined || holderTypes.includes(recoil.holderType))
+    ) {
       const amount =
         recoil.perAttachedEnergy === undefined
           ? recoil.amount
@@ -3399,6 +3424,9 @@ export function attackMenuOf(
     const granted =
       tool === undefined || programFor(tool.id)?.toolAttacks !== true ? undefined : (tool.attacks ?? undefined);
     if (tool === undefined || granted === undefined) continue;
+    // 🆕🆕🆕 D620 — Core Memory's "The Mega Zygarde ex this card is attached to": the holder's TOP card.
+    const holderGate = programFor(tool.id)?.toolAttacksHolder;
+    if (holderGate !== undefined && !matchesFilter(top, holderGate)) continue;
     granted.forEach((attack, sourceIndex) => {
       menu.push({ attack, card: tool, sourceIndex, origin: "tool" });
     });

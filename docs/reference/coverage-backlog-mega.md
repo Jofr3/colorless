@@ -6,6 +6,25 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D620 update (engine 0.503.0) — WP10 + WP26
+
+8 texts / 14 `me` units on 12 printings (`prizesToolsMeD620.test.ts`). WP10: the NEW `DamageCountSource.yourPrizesTaken` on Luxray
+"Incessant Onslaught" `me03-028`, Fuecoco ex ×2 "Cheerful Flame" `30th-015` / `-147` and Mega Mawile ex ×2 "Gobble Down" `me01-094` /
+`-162`, and the NEW `AttackBonusConsequent.baseOverride` on Mega Mawile ex ×2 "Huge Bite". WP26, five Tool objects: Light Ball
+`me02.5-191`, Punk Helmet ×2 `me02-092` / `-121` (`damageAttacker.holderType`), Team Rocket's Hypnotizer `me02.5-206`, Core Memory
+`me03-070` (`toolAttacksHolder`) and Tremendous Bomb ×2 `me05-082` / `-113` (`damageAttackerActiveThenDiscardIf`, R-TRB1 UNRULED).
+**Finished:** all 12 (Mega Mawile ex ×2 is now fully built). **Dropped and named:** Adversity Policy `me04-074` (its "has Weakness to
+your opponent's Active Pokémon's type" gate is a new `BoardCondition` member).
+
+| Column | `me` built / units (D620) | Standard pool D620 |
+|---|---|---|
+| Attacks | 963 / 1,039 (+7) | **2,695 / 2,771** |
+| Abilities | 185 / 234 | **561 / 610** |
+| Trainers | 138 / 183 (+7) | **402 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1095** (1083 + 12).
+
 ## 🆕 D619 update (engine 0.502.0) — WP12 (the passive half) + WP15
 
 7 texts / 10 `me` printings (`attackerClassMeD619.test.ts`). WP12: the NEW attacker-gated post-W/R reduction
@@ -329,7 +348,7 @@ D582's `isMegaEvolutionPokemonEx`: `BoardCondition.yourMegaExInPlay { type? }` a
 heal 60 from 1), Excited Dash (Linoone; on the Bench, any Mega ex, switch with the Active), Excited Power (Seviper; {D} gate,
 +120 before W/R), Mega Signal ×3 (a Mega ex from the deck) and Jett (a card per opponent's Mega ex). **Finished:** all 11.
 **Dropped:** Latios `me01-101` "Lustrous Assist" (a gate on a named Active's Bench-to-Active move) and Wally's Compassion ×3
-(all Energy to the hand from the healed body). **Excluded by the brief:** Tremendous Bomb ×2, Ange Floette, Core Memory.
+(all Energy to the hand from the healed body). **Excluded by the brief:** Tremendous Bomb ×2, Ange Floette, Core Memory. [🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory BUILT at D620 (WP26).]
 
 | Column | `me` built / units (D603) | Standard pool D603 |
 |---|---|---|
@@ -792,13 +811,13 @@ group wins; the grouping is a reading aid, not a census figure).
 - 3× If your opponent has 3 or fewer Prize cards remaining, this attack does 90 more damage. [🆕🆕🆕 D586: BUILT]
 - 3× If your opponent's Active Pokémon has exactly 6 damage counters on it, that Pokémon is Knocked Out. [🆕🆕🆕 D609: BUILT]
 - 3× If your opponent's Pokémon is Knocked Out by damage from this attack, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.
-- 3× This attack does 70 damage for each Prize card you have taken.
+- 3× This attack does 70 damage for each Prize card you have taken. [🆕🆕🆕 D620: BUILT]
 - 2× If any of your Hop's Pokémon were Knocked Out by damage from an attack during your opponent's last turn, this attack does 100 more damage. [🆕🆕🆕 D593: BUILT]
 - 2× If you have exactly 30 cards in your hand, take 2 Prize cards. If you do, shuffle your hand into your deck. [🆕🆕🆕 D594: dropped from WP33a — `takePrize` queues behind the program, so the "if you do" shuffle would run first] [🆕🆕🆕 D600: dropped again from WP33b, same reason]
 - 2× If you have exactly 6 Prize cards remaining, this attack does 200 more damage. [🆕🆕🆕 D594: BUILT]
 - 2× If your opponent has 2 or fewer Prize cards remaining, this attack does 100 more damage. [🆕🆕🆕 D586: BUILT]
 - 2× Knock Out each of your opponent's Pokémon that has 50 HP or less remaining. [🆕🆕🆕 D609: WP36 rest]
-- 2× This attack does 80 damage for each Prize card you have taken.
+- 2× This attack does 80 damage for each Prize card you have taken. [🆕🆕🆕 D620: BUILT]
 - 1× During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), place 12 damage counters on the Attacking Pokémon. [🆕🆕🆕 D592: BUILT]
 - 1× Flip 3 coins. If all of them are heads, Knock Out 1 of your opponent's Pokémon.
 - 1× If your opponent's Pokémon is Knocked Out by damage from this attack, take 1 more Prize card. [🆕🆕🆕 D609: WP36 rest]
@@ -809,7 +828,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 3× Place 2 damage counters on your opponent's Active Pokémon for each card in your hand. [🆕🆕🆕 D600: BUILT]
 - 3× Your opponent's Active Pokémon is now Poisoned. During Pokémon Checkup, place 16 damage counters on that Pokémon instead of 1. [🆕🆕🆕 D592: BUILT]
 - 2× Flip a coin. If heads, search your deck for a Pokémon and switch it with this Pokémon. Any attached cards, damage counters, Special Conditions, turns in play, and any other effects remain on the new Pokémon. If you switched a Pokémon in this way, put this card into your deck. Then, shuffle your deck. [🆕🆕🆕 D605: dropped from WP34 — a deck Pokémon switched in for the attacker needs a new op]
-- 2× If your opponent's Active Pokémon already has any damage counters on it, this attack's base damage is 30.
+- 2× If your opponent's Active Pokémon already has any damage counters on it, this attack's base damage is 30. [🆕🆕🆕 D620: BUILT]
 - 2× Place 13 damage counters on 1 of your opponent's Pokémon. [🆕🆕🆕 D592: BUILT]
 - 2× This attack does 30 damage to 1 of your opponent's Pokémon for each damage counter on that Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em> [🆕🆕🆕 D608: BUILT]
 - 2× This attack does 40 damage for each damage counter on all of your Benched Rattata. [🆕🆕🆕 D607: BUILT]
@@ -1167,7 +1186,7 @@ At any time during your turn, you may discard this card from play.
 - 1× **Antique Skull Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat.
 
 At any time during your turn, you may discard this card from play.
-- 1× **Core Memory** — The Mega Zygarde ex this card is attached to can use the attack on this card. (You still need the necessary Energy to use this attack.)
+- 1× **Core Memory** — The Mega Zygarde ex this card is attached to can use the attack on this card. (You still need the necessary Energy to use this attack.) [🆕🆕🆕 D620: BUILT]
 
 ### Stadium — Mega Evolution-conditioned — 1 text(s) / 1 printing(s)
 
@@ -1231,16 +1250,16 @@ Discard an Energy from 1 of your opponent's Pokémon. [🆕🆕🆕 D588: BUILT]
 
 ### Tool — Mega Evolution-conditioned — 1 text(s) / 2 printing(s)
 
-- 2× **Tremendous Bomb** — If the Pokémon this card is attached to isn't a Mega Evolution Pokémon ex, is in the Active Spot, and takes 240 or more damage from an attack from your opponent's Mega Evolution Pokémon ex (even if this Pokémon is Knocked Out), place 12 damage counters on the Attacking Pokémon. If you placed any damage counters in this way, discard this card.
+- 2× **Tremendous Bomb** — If the Pokémon this card is attached to isn't a Mega Evolution Pokémon ex, is in the Active Spot, and takes 240 or more damage from an attack from your opponent's Mega Evolution Pokémon ex (even if this Pokémon is Knocked Out), place 12 damage counters on the Attacking Pokémon. If you placed any damage counters in this way, discard this card. [🆕🆕🆕 D620: BUILT]
 
 ### Tool — 7 text(s) / 9 printing(s)
 
-- 1× **Adversity Policy** — If the Pokémon this card is attached to has Weakness to your opponent's Active Pokémon's type, is in the Active Spot, and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), draw 3 cards.
+- 1× **Adversity Policy** — If the Pokémon this card is attached to has Weakness to your opponent's Active Pokémon's type, is in the Active Spot, and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), draw 3 cards. [🆕🆕🆕 D620: dropped — a holder-has-Weakness-to-the-opponent's-Active gate, a new `BoardCondition` member]
 - 1× **Backtrack Badge** — Once during your turn, after you flip any coins for an attack of the {C} Pokémon this card is attached to, you may ignore all results of those coin flips and begin flipping those coins again.
-- 1× **Light Ball** — Attacks used by the Pikachu ex this card is attached to do 50 more damage to your opponent's Active Pokémon ex (before applying Weakness and Resistance).
-- 2× **Punk Helmet** — If the {D} Pokémon this card is attached to is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 4 damage counters on the Attacking Pokémon.
+- 1× **Light Ball** — Attacks used by the Pikachu ex this card is attached to do 50 more damage to your opponent's Active Pokémon ex (before applying Weakness and Resistance). [🆕🆕🆕 D620: BUILT]
+- 2× **Punk Helmet** — If the {D} Pokémon this card is attached to is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 4 damage counters on the Attacking Pokémon. [🆕🆕🆕 D620: BUILT]
 - 2× **Sacred Charm** — The Pokémon this card is attached to takes 30 less damage from attacks from your opponent's Pokémon that have an Ability (after applying Weakness and Resistance). [🆕🆕🆕 D619: BUILT]
-- 1× **Team Rocket's Hypnotizer** — If the Team Rocket's Pokémon this card is attached to is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Team Rocket's Pokémon is Knocked Out), the Attacking Pokémon is now Asleep.
+- 1× **Team Rocket's Hypnotizer** — If the Team Rocket's Pokémon this card is attached to is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Team Rocket's Pokémon is Knocked Out), the Attacking Pokémon is now Asleep. [🆕🆕🆕 D620: BUILT]
 - 1× **Thick Scale** — The {N} Pokémon this card is attached to takes 50 less damage from attacks from your opponent's {G}, {R}, {W}, or {L} Pokémon (after applying Weakness and Resistance). [🆕🆕🆕 D619: BUILT]
 
 ## Special Energy — 8 unbuilt texts / 8 printings [🆕🆕🆕 D604: all 8 BUILT — see the D604 update]

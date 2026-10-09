@@ -12392,7 +12392,7 @@ function reactToAttackDamage(
     events,
   );
   return queueDamagedToolStages(
-    detonateDeluxeBomb(reacted, damagedSeat, damagedBody, attackerSeat, events),
+    detonateDeluxeBomb(reacted, damagedSeat, damagedBody, attackerSeat, damageTaken, events),
     damagedSeat,
     damagedUid,
   );
@@ -12503,9 +12503,11 @@ export function detonateDeluxeBomb(
   damagedSeat: Seat,
   damagedBody: InPlayPokemon,
   attackerSeat: Seat,
+  dealt: number,
   events: GameEvent[],
 ): GameState {
-  const bomb = deluxeBombOf(state, damagedBody, attackerSeat);
+  // 🆕🆕🆕 D620 — `dealt` is the hit's damage, for Tremendous Bomb's "takes 240 or more damage" (R-TRB1).
+  const bomb = deluxeBombOf(state, damagedBody, attackerSeat, dealt);
   const attacker = activeTop(state, attackerSeat);
   if (bomb.amount === 0 || attacker === null) return state;
   const bombed = withActive(state, attackerSeat, {

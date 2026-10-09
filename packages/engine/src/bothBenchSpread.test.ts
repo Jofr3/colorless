@@ -1084,7 +1084,9 @@ describe("D507 §8 — the FOUR-ZONE sibling is REFUSED, and the condition that 
     // untouched at 10.
     // 🆕🆕🆕 D612 — `damageDefender` 16 → 15: `INFERNO_X` is RETIRED (WP06's normaliser builds its text);
     // `spreadDamage` untouched at 10.
-    expect(producers("damageDefender")).toBe(15);
+    // 🆕🆕🆕 D620 — `damageDefender` 15 → 16: `bonusConsequentProgram`'s Huge Bite arm (`baseOverride`) is one
+    // more raw site; `spreadDamage` untouched at 10.
+    expect(producers("damageDefender")).toBe(16);
     expect(producers("spreadDamage")).toBe(10);
     expect(producers("damageDefender")).toBeGreaterThan(producers("spreadDamage") - 4);
   });
