@@ -700,8 +700,8 @@ describe("§8 — the census moves in exactly ONE summand", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§9 — the version question, asked at the durated address", () => {
-  it("the engine version is 0.505.0 and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.505.0");
+  it("the engine version is 0.506.0 and `manifest.version` agrees", () => {
+    expect(engineVersion).toBe("0.506.0");
   });
 
   it("🛑 the ADDRESS is `InPlayPokemon.attackBlock`, and the SERIALIZED ALPHABET is unchanged", () => {

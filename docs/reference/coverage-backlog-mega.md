@@ -6,6 +6,24 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D623 update (engine 0.506.0) — WP28b, the rest of the scaling count sources (`MATCH_RECORD_VERSION` stays 43)
+
+5 texts / 7 `me` printings, readers only (`scalingCountsMeD623.test.ts`). Three NEW `DamageCountSource` members over the attacker's
+Bench: Gourgeist ex `me04-041` / `-102` "Horrifying Rondo" (`damagedBenchedPokemon`), Armarouge `me05-012` / `-086` "Flame Legion"
+(`benchedPokemonWithEnergy`) and Igglybuff `30th-120` "Bouncy Circle" (`benchedPokemonWithMaxHp`, R-BOC1 UNRULED). Pikachu `30th-034`
+"Pika Chain" on the body-map key "Pikachu and Pikachu ex"; Kyogre `me01-034` "Riptide" on two readers (the discard count and the
+retrieval + shuffle tail). **Finished:** all 7. **Dropped and named:** Doublade ×3 `mep-067`, `me03-057` / `-098` (an own-hand
+partial reveal) and Okidogi `me02.5-122` (Prizes taken last turn; an MRV bump).
+
+| Column | `me` built / units (D623) | Standard pool D623 |
+|---|---|---|
+| Attacks | 970 / 1,039 (+7) | **2,702 / 2,771** |
+| Abilities | 185 / 234 | **561 / 610** |
+| Trainers | 154 / 183 | **418 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1118** (1111 + 7).
+
 ## 🆕 D622 update (engine 0.505.0) — fix-up: R-AM2 retired (`MATCH_RECORD_VERSION` stays 43)
 
 No printing moves column. The bare W/R tail now nulls Weakness and Resistance only (the NEW `damageChosen.wrOnly`): Arboliva ex "Oil
@@ -201,7 +219,7 @@ cardText.ts `normalizeCardText` at ingest (map.ts) and at read (cards.ts `cardOf
 are BUILT on shipped readers (`cardTextD612.test.ts`, census D612 block). `INFERNO_X` and `STEALTHY_SLASH` retired (their clean text
 is reader-built; R-IX1 resolved); Photon Bullets ×3 stays keyed. Still unbuilt, now as clean text in their packages: Elemental Blast
 `30th-121`, Lightning Crash `30th-051` (WP30), Charge-Up Dash `30th-042` (WP13), Overwriting Bolt `30th-040`, Pika Chain `30th-034`
-(WP28b), Kaboom Needles `30th-104` (WP30). The data gap below ("43 `me` rows carry tcgdex HTML") is closed on the LOCAL D1; the
+(WP28b) [🆕🆕🆕 D623: BUILT], Kaboom Needles `30th-104` (WP30). The data gap below ("43 `me` rows carry tcgdex HTML") is closed on the LOCAL D1; the
 remote D1 still needs the re-ingest, run with the D612 ingest code.
 
 | Column | `me` built / units (D612) | Standard pool D612 |
@@ -304,7 +322,7 @@ are literal cost-then-snipe compounds; Mandibuzz "Bone Sniper" uses the new `dam
 and Paldean Tauros "Raging Charge" (`pokemonInPlay`, new body-map keys), Raticate ×2 "Retaliatory Incisors"
 (`damageCountersOnYourBench` + a "Rattata" key), Tinkaton "Windup Swing" (the penalty fold over `energyOnOpponent`) and
 Beautifly ×2 "Energy Straw" (the comma-joined reveal, "Energy card" in the opponent's hand). **Finished:** all 14. **Left for
-WP28b** (7 texts / 11 printings): Doublade ×3, Kyogre `me01-034`, Igglybuff `30th-120`, Pikachu `30th-034` (WP06 markup), [🆕🆕🆕 D612: the markup is normalised; the sentence is still unread]
+WP28b** (7 texts / 11 printings) [🆕🆕🆕 D623 (D539): five are BUILT at D623 — Kyogre, Igglybuff, Pikachu `30th-034`, Armarouge ×2, Gourgeist ex ×2; Doublade ×3 and Okidogi are dropped and named there]: Doublade ×3, Kyogre `me01-034`, Igglybuff `30th-120`, Pikachu `30th-034` (WP06 markup), [🆕🆕🆕 D612: the markup is normalised; the sentence is still unread]
 Armarouge ×2, Gourgeist ex ×2, Okidogi `me02.5-122` — each tagged below.
 
 | Column | `me` built / units (D607) | Standard pool D607 |
@@ -856,7 +874,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), place 12 damage counters on the Attacking Pokémon. [🆕🆕🆕 D592: BUILT]
 - 1× Flip 3 coins. If all of them are heads, Knock Out 1 of your opponent's Pokémon.
 - 1× If your opponent's Pokémon is Knocked Out by damage from this attack, take 1 more Prize card. [🆕🆕🆕 D609: WP36 rest]
-- 1× This attack does 60 more damage for each Prize card your opponent took during their last turn. [🆕🆕🆕 D607: WP28b]
+- 1× This attack does 60 more damage for each Prize card your opponent took during their last turn. [🆕🆕🆕 D607: WP28b] [🆕🆕🆕 D623: dropped from WP28b — no state records the Prizes taken during the last turn; a persisted record is an MRV bump]
 
 ### Damage-counter placement and manipulation — 24 text(s) / 34 printing(s)
 
@@ -867,7 +885,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× Place 13 damage counters on 1 of your opponent's Pokémon. [🆕🆕🆕 D592: BUILT]
 - 2× This attack does 30 damage to 1 of your opponent's Pokémon for each damage counter on that Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em> [🆕🆕🆕 D608: BUILT]
 - 2× This attack does 40 damage for each damage counter on all of your Benched Rattata. [🆕🆕🆕 D607: BUILT]
-- 2× This attack does 50 more damage for each of your Benched Pokémon that has any damage counters on it. [🆕🆕🆕 D607: WP28b]
+- 2× This attack does 50 more damage for each of your Benched Pokémon that has any damage counters on it. [🆕🆕🆕 D607: WP28b] [🆕🆕🆕 D623: BUILT]
 - 1× Discard all Energy from this Pokémon and place 12 damage counters on 1 of your opponent's Pokémon. [🆕🆕🆕 D608: BUILT]
 - 1× Double the number of damage counters on each of your opponent's Pokémon. [🆕🆕🆕 D609: BUILT]
 - 1× During your opponent's next turn, whenever they attach an Energy card from their hand to the Defending Pokémon, place 8 damage counters on that Pokémon.
@@ -915,7 +933,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 4× Discard any amount of {R} Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way. [🆕🆕🆕 D597: BUILT]
 - 4× You may discard up to 4 Energy cards from your hand, and this attack does 40 more damage for each card you discarded in this way. [🆕🆕🆕 D597: BUILT]
 - 3× Discard up to 2 Energy cards from this Pokémon, and this attack does 120 damage for each card you discarded in this way. [🆕🆕🆕 D597: BUILT]
-- 3× Reveal any number of Honedge, Doublade, and Aegislash from your hand, and this attack does 60 damage for each card you revealed in this way. [🆕🆕🆕 D607: WP28b]
+- 3× Reveal any number of Honedge, Doublade, and Aegislash from your hand, and this attack does 60 damage for each card you revealed in this way. [🆕🆕🆕 D607: WP28b] [🆕🆕🆕 D623: dropped from WP28b — an own-hand pick that moves nothing plus a partial public reveal needs a new op and event]
 - 3× This attack does 50 damage for each type of Basic Energy attached to all of your Pokémon. [🆕🆕🆕 D607: BUILT]
 - 2× Discard any amount of [R] Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way. [🆕🆕🆕 D597: BUILT — keyed by id on `INFERNO_X`] [🆕🆕🆕 D612: the text is normalised to {R}, the key retired; reader-built]
 - 2× Discard the top 6 cards of your deck, and this attack does 100 damage for each Basic {W} Energy card that you discarded in this way. [🆕🆕🆕 D597: BUILT]
@@ -923,17 +941,17 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× This attack does 110 damage for each of your Beedrill and Beedrill ex in play. [🆕🆕🆕 D607: BUILT]
 - 2× This attack does 30 damage for each Energy attached to all Pokémon. [🆕🆕🆕 D607: BUILT]
 - 2× This attack does 30 damage for each {P} Energy attached to all of your Pokémon.
-- 2× This attack does 40 more damage for each of your Benched Pokémon that has any {R} Energy attached. [🆕🆕🆕 D607: WP28b]
+- 2× This attack does 40 more damage for each of your Benched Pokémon that has any {R} Energy attached. [🆕🆕🆕 D607: WP28b] [🆕🆕🆕 D623: BUILT]
 - 2× Your opponent reveals their hand, and this attack does 80 damage for each Energy card you find there. [🆕🆕🆕 D607: BUILT]
 - 1× Discard the top 6 cards of your deck, and this attack does 60 damage for each Basic {W} Energy card you discarded in this way. [🆕🆕🆕 D597: BUILT]
 - 1× Discard up to 2 Basic {M} Energy cards from your hand, and this attack does 40 damage for each card you discarded in this way. [🆕🆕🆕 D597: BUILT]
 - 1× Discard up to 2 Energy cards from your hand, and this attack does 60 damage for each card you discarded in this way. [🆕🆕🆕 D597: BUILT]
 - 1× Reveal the bottom 7 cards of your deck, and this attack does 50 damage for each Pokémon you find there that has the Bug Out attack. Then, shuffle any revealed Pokémon back into your deck. Discard the other cards.
-- 1× This attack does 20 damage for each Basic {W} Energy card in your discard pile. Then, shuffle those cards into your deck. [🆕🆕🆕 D607: WP28b]
-- 1× This attack does 30 damage for each of your Benched Pokémon that has a maximum HP of 30. [🆕🆕🆕 D607: WP28b]
+- 1× This attack does 20 damage for each Basic {W} Energy card in your discard pile. Then, shuffle those cards into your deck. [🆕🆕🆕 D607: WP28b] [🆕🆕🆕 D623: BUILT]
+- 1× This attack does 30 damage for each of your Benched Pokémon that has a maximum HP of 30. [🆕🆕🆕 D607: WP28b] [🆕🆕🆕 D623: BUILT]
 - 1× This attack does 30 more damage for each of your Benched Pokémon that has "Antique" in its name.
 - 1× This attack does 40 damage for each Pokémon Tool attached to all Pokémon. [🆕🆕🆕 D607: BUILT]
-- 1× This attack does 40 damage for each of your Pikachu and Pikachu &lt;em>ex&lt;/em> in play. [🆕🆕🆕 D607: WP28b]
+- 1× This attack does 40 damage for each of your Pikachu and Pikachu &lt;em>ex&lt;/em> in play. [🆕🆕🆕 D607: WP28b] [🆕🆕🆕 D623: BUILT]
 - 1× This attack does 60 less damage for each Energy attached to your opponent's Active Pokémon. [🆕🆕🆕 D607: BUILT]
 - 1× You may discard any number of Supporter cards that have "Team Rocket" in their name from your hand, and this attack does 60 damage for each card you discarded in this way.
 

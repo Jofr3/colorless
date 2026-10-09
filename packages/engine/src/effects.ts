@@ -19371,6 +19371,7 @@ const IN_PLAY_BODY_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
   // (🆕🆕🆕 D569 (D539): "now **9** / **31**" is STALE — D569's tenth key, "Ancient Pokémon"
   // (below), makes it **10** exact keys and **32** nouns; it carries no apostrophe either.)
   // (🆕🆕🆕 D607 (D539): 13 exact keys / 35 nouns since WP28a's three keys, none with an apostrophe.)
+  // (🆕🆕🆕 D623 (D539): 14 exact keys / 36 nouns since WP28b's key, none with an apostrophe.)
   //
   // 🛑 **AND THE COUNT IS *NOT* DERIVED FROM `IN_PLAY_BODY_NOUNS.size` — D539 CHECKED THE
   // CLAIM THAT SAID IT WAS AND WITHDREW IT** (`inPlayBodyFilter`'s doc block below, and
@@ -19400,14 +19401,14 @@ const IN_PLAY_BODY_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
   // `CLAUSE_POKEMON_TYPES`: it is a banner, not a type) — which means the "Ancient Pokémon"
   // witness `inPlayBodyFilter`'s doc gives for "the map refuses, not the regex" is SPENT
   // (annotated there). The exact keys are now **10** and the vocabulary **32** (10 exact + 11
-  // `POKEMON_TYPES` names + 11 `{X}` codes). (🆕🆕🆕 D607 (D539): 13 exact keys / 35 nouns since WP28a's three keys, none with an apostrophe.) Like every key here it is the vocabulary of the
+  // `POKEMON_TYPES` names + 11 `{X}` codes). (🆕🆕🆕 D607 (D539): 13 exact keys / 35 nouns since WP28a's three keys, none with an apostrophe.) (🆕🆕🆕 D623 (D539): 14 / 36 since WP28b's key.) Like every key here it is the vocabulary of the
   // sibling anchors too; the column prints "Ancient Pokémon" in no other sentence they reach
   // (measured over `legalAttackCorpus()` — the Benched Ancient heal/move are registry rows,
   // and Iron Moth's "attacks from Ancient Pokémon" is a different reader, still unbuilt).
   // (🆕🆕🆕 D575 (D539): ~~"still unbuilt"~~ — Iron Moth's sentence is BUILT at D575 by its OWN anchor,
   // `PREVENT_DAMAGE_FROM_ANCIENT`; it is still a different reader, so this key's vocabulary is unchanged)
   ["Ancient Pokémon", { kind: "bannerPokemon", banner: "Ancient" }],
-  // 🆕🆕🆕 D607 — WP28a: three more exact keys, so **13** exact keys and **35** nouns (13 + 11 + 11);
+  // 🆕🆕🆕 D607 — WP28a: three more exact keys, so **13** exact keys and **35** nouns (13 + 11 + 11) [🆕🆕🆕 D623 (D539): 14 / 36 since WP28b's key];
   // none carries an apostrophe. A Drifloon-shaped name pair (Beedrill ex "Rumbling Bees" — "Beedrill
   // ex" is the printed card name), a bare card name (Raticate's "Benched Rattata", Charjabug's shape)
   // and a quoted name fragment (Paldean Tauros "Raging Charge", `pokemonNameContaining`).
@@ -19423,6 +19424,18 @@ const IN_PLAY_BODY_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
   ],
   ["Rattata", { kind: "byName", name: "Rattata" }],
   ['Pokémon that has "Tauros" in its name', { kind: "pokemonNameContaining", fragment: "Tauros" }],
+  // 🆕🆕🆕 D623 — WP28b: the fourteenth exact key, so **14** exact keys and **36** nouns; no apostrophe.
+  // Pikachu `30th-034` "Pika Chain" — Beedrill's name-pair shape ("Pikachu ex" is the printed name).
+  [
+    "Pikachu and Pikachu ex",
+    {
+      kind: "anyOf",
+      filters: [
+        { kind: "byName", name: "Pikachu" },
+        { kind: "byName", name: "Pikachu ex" },
+      ],
+    },
+  ],
 ]);
 /** 🆕🆕🆕 **D492 — THE TWO CLASS NOUNS THIS COLUMN PRINTS IN A WHOLE-SIDE SPREAD'S
     TARGET SLOT**, and they are a SHORTLIST OVER `IN_PLAY_BODY_NOUNS` rather than a
@@ -19619,6 +19632,7 @@ const IN_PLAY_TYPED_NOUN = /^(.+) Pokémon$/;
     reading the map at this head; `benchNounScaling.test.ts` §5's hand list and hand sum were
     moved BY HAND to match, for the reason given below.)
     (🆕🆕🆕 D607 (D539): 13 exact keys / 35 nouns since WP28a's three keys, none with an apostrophe.)
+    (🆕🆕🆕 D623 (D539): 14 exact keys / 36 nouns since WP28b's key, none with an apostrophe.)
     🆕 **D539 — `30 nouns / 8 exact keys` UNTIL NOW**, and it is RE-DERIVED at the new
     count rather than incremented on faith: the ninth exact key is
     *"Drifloon and Drifblim"* and it carries no apostrophe either. ⚠️ **The rung that
@@ -20664,6 +20678,25 @@ const BOTH_SIDES_ENERGY_MULTIPLY =
   /^This attack does (\d+) damage for each Energy attached to all Pokémon\.$/;
 const BASIC_ENERGY_TYPES_MULTIPLY =
   /^This attack does (\d+) damage for each type of Basic Energy attached to all of your Pokémon\.$/;
+// 🆕🆕🆕 D623 — WP28b: three Bench-body counts narrowed by a BOARD fact (not a card fact, so no noun
+// map): Gourgeist ex "Horrifying Rondo" (damaged), Armarouge "Flame Legion" (any {R} Energy, by
+// provision — `hasAttachedEnergy`, D118's reading) and Igglybuff "Bouncy Circle" (maximum HP, R-BOC1).
+// The two `+` anchors also match `YOUR_BENCHED_NOUN_SCALE`, whose noun map refuses them, so their
+// arms' place after it carries no guard. Literal tails (one printing each, D121); the HP is captured because the member carries it.
+const YOUR_DAMAGED_BENCH_SCALE =
+  /^This attack does (\d+) more damage for each of your Benched Pokémon that has any damage counters on it\.$/;
+const YOUR_FIRE_BENCH_SCALE =
+  /^This attack does (\d+) more damage for each of your Benched Pokémon that has any \{R\} Energy attached\.$/;
+const YOUR_BENCH_MAX_HP_MULTIPLY =
+  /^This attack does (\d+) damage for each of your Benched Pokémon that has a maximum HP of (\d+)\.$/;
+// 🆕🆕🆕 D623 — WP28b: Kyogre "Riptide" (`me01-034`), read by TWO readers like Beautifly's reveal:
+// `deriveAttackDamageMultiplier` folds the count (`cardsInDiscardPile`) and `deriveAttackEffect`
+// emits the tail (`discardPileRetrieval { max: "all" }` + `shuffleDeck`, D538's pair). Both read
+// `RIPTIDE_PILE_FILTER`, so "those cards" is the counted population. The fold lands before the
+// program (§8), so the count is taken before the shuffle.
+const DISCARD_PILE_COUNT_THEN_SHUFFLE =
+  /^This attack does (\d+) damage for each Basic \{W\} Energy card in your discard pile\. Then, shuffle those cards into your deck\.$/;
+const RIPTIDE_PILE_FILTER: CardFilter = { kind: "basicEnergy", energyType: "Water" };
 // 🆕🆕🆕 **D543 — THE TOOL DISCARD AT THE PROGRAM TAIL, THE OTHER HALF OF THE
 // `/Pokémon Tool/` SWEEP THIS FILE HAS BEEN NAMING AS UNBUILT SINCE D406.**
 // *"Discard up to 2 Pokémon Tools from your opponent's Pokémon."* —
@@ -34253,6 +34286,15 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       return [{ op: "revealOpponentHand" }];
     }
   }
+  // 🆕🆕🆕 D623 — Kyogre "Riptide"'s tail; the fold is `deriveAttackDamageMultiplier`'s (the same
+  // anchor, the same printed-zero guard). A whiffed retrieval still shuffles (D538's posture).
+  match = DISCARD_PILE_COUNT_THEN_SHUFFLE.exec(effect);
+  if (match !== null && Number(match[1]) >= 1) {
+    return [
+      { op: "discardPileRetrieval", filter: RIPTIDE_PILE_FILTER, dest: "deck", max: "all" },
+      { op: "shuffleDeck" },
+    ];
+  }
   // ⚠️⚠️ D234 — the discard-pile attach, backlog row 9. ONE arm for twelve printed
   // sentences and 12 of the row's 17 legal printings; the census, the five it
   // refuses and the count-versus-expansion split are on the constants above.
@@ -36128,7 +36170,24 @@ export type DamageCountSource =
       `countBasicEnergyTypesInPlay`: Basic Energy CARDS only, each counted by the type it names
       (`energyProvidesOf`) — a Special Energy that provides a basic type adds no type.
       Two {W} and one {R} is 2. NULLARY. */
-  | { kind: "basicEnergyTypesOnYourBoard" };
+  | { kind: "basicEnergyTypesOnYourBoard" }
+  /** 🆕🆕🆕 **D623 — WP28b: THE ATTACKER'S BENCHED POKÉMON THAT HAVE ANY DAMAGE COUNTERS ON THEM.**
+      Gourgeist ex "Horrifying Rondo" (`me04-041`/`-102`, `30+`): *"…50 more damage for each of your
+      Benched Pokémon that has any damage counters on it."* Bodies, not counters (`damage > 0`); the
+      Active is not counted. NULLARY. */
+  | { kind: "damagedBenchedPokemon" }
+  /** 🆕🆕🆕 **D623 — WP28b: THE ATTACKER'S BENCHED POKÉMON WITH ANY ENERGY OF `energyType` ATTACHED.**
+      Armarouge "Flame Legion" (`me05-012`/`-086`, `40+`): *"…for each of your Benched Pokémon that has
+      any {R} Energy attached."* By PROVISION, continuous.ts `hasAttachedEnergy` (D118's reading of
+      the same printed clause on Scovillain): a wildcard Luminous Energy counts while it provides
+      every type. Bodies, not Energy cards. */
+  | { kind: "benchedPokemonWithEnergy"; energyType: BasicEnergyType }
+  /** 🆕🆕🆕 **D623 — WP28b: THE ATTACKER'S BENCHED POKÉMON WHOSE MAXIMUM HP IS EXACTLY `hp`.**
+      Igglybuff "Bouncy Circle" (`30th-120`, `30×`): *"…for each of your Benched Pokémon that has a
+      maximum HP of 30."* continuous.ts `effectiveMaxHp` — printed HP plus every HP modifier, the
+      figure the Knock Out test reads; a data-gap HP counts out. R-BOC1 ⚠️ UNRULED (equality, on the
+      modified figure). */
+  | { kind: "benchedPokemonWithMaxHp"; hp: number };
 
 /** WHOSE discard pile a `cardsInDiscardPile` count walks (D440). CONTROLLER-RELATIVE,
     like every other side-valued field in this vocabulary — `you` is the seat that
@@ -36314,6 +36373,17 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
     if (per >= 1 && filter !== null) {
       return { per, count: { kind: "yourBenchCount", filter } };
     }
+  }
+  // 🆕🆕🆕 D623 — WP28b: two Bench-body counts narrowed by a board fact (Gourgeist ex, Armarouge),
+  // asked AFTER the three bench arms above: `YOUR_BENCHED_NOUN_SCALE` also matches them and its map
+  // refuses them, so the order carries no guard.
+  const damagedBench = YOUR_DAMAGED_BENCH_SCALE.exec(effect);
+  if (damagedBench !== null && Number(damagedBench[1]) >= 1) {
+    return { per: Number(damagedBench[1]), count: { kind: "damagedBenchedPokemon" } };
+  }
+  const fireBench = YOUR_FIRE_BENCH_SCALE.exec(effect);
+  if (fireBench !== null && Number(fireBench[1]) >= 1) {
+    return { per: Number(fireBench[1]), count: { kind: "benchedPokemonWithEnergy", energyType: "Fire" } };
   }
   // 🆕🆕 D439 — the ATTACKER's bodies IN PLAY (Active + Bench), FILTERED by the
   // printed noun. Placed directly after the Bench trio it is the "in play" reading
@@ -37032,6 +37102,15 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
   // FOLD IS THE BARE ONE. D440's confound warning is about inferring the seat from
   // the fold; a seat that is a LITERAL of the anchor cannot be wrong about a
   // sentence, because a sentence naming the other pile does not reach this line.
+  // 🆕🆕🆕 D623 — Kyogre "Riptide": the count half of the shared anchor (the tail is
+  // `deriveAttackEffect`'s). Disjoint from `DISCARD_PILE_COUNT_MULTIPLY` by that anchor's `\.$`.
+  const riptide = DISCARD_PILE_COUNT_THEN_SHUFFLE.exec(effect);
+  if (riptide !== null && Number(riptide[1]) >= 1) {
+    return {
+      per: Number(riptide[1]),
+      count: { kind: "cardsInDiscardPile", seat: "you", filter: RIPTIDE_PILE_FILTER },
+    };
+  }
   const pileByAttackName = DISCARD_PILE_ATTACK_NAME_MULTIPLY.exec(effect);
   if (pileByAttackName !== null) {
     const per = Number(pileByAttackName[1]);
@@ -37163,6 +37242,14 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
   const energyTypes = BASIC_ENERGY_TYPES_MULTIPLY.exec(effect);
   if (energyTypes !== null && Number(energyTypes[1]) >= 1) {
     return { per: Number(energyTypes[1]), count: { kind: "basicEnergyTypesOnYourBoard" } };
+  }
+  // 🆕🆕🆕 D623 — Igglybuff "Bouncy Circle": two printed numbers, two positivity guards (D145).
+  const maxHpBench = YOUR_BENCH_MAX_HP_MULTIPLY.exec(effect);
+  if (maxHpBench !== null && Number(maxHpBench[1]) >= 1 && Number(maxHpBench[2]) >= 1) {
+    return {
+      per: Number(maxHpBench[1]),
+      count: { kind: "benchedPokemonWithMaxHp", hp: Number(maxHpBench[2]) },
+    };
   }
   return null;
 }

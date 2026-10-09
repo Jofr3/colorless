@@ -723,13 +723,17 @@ const COUNT_KINDS: Record<DamageCountSource["kind"], true> = {
   basicEnergyTypesOnYourBoard: true,
   // 🆕🆕🆕 D620 — WP10's `yourPrizesTaken` (Incessant Onslaught, Cheerful Flame, Gobble Down).
   yourPrizesTaken: true,
+  // 🆕🆕🆕 D623 — WP28b's three Bench-body members (Gourgeist ex, Armarouge, Igglybuff folds).
+  damagedBenchedPokemon: true,
+  benchedPokemonWithEnergy: true,
+  benchedPokemonWithMaxHp: true,
 };
 
 describe("D518 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is no carrier at all", () => {
   it("🛑 the union has TWENTY members, and the count is asked of the TYPE", () => {
     // 🆕🆕🆕 D600 (D539): "TWENTY" is the count at this slice, kept as written — 21 since WP14's
-    // `cardsInYourHand`. 🆕🆕🆕 D607: 24 since WP28a's three. 🆕🆕🆕 D620: 25 since WP10's `yourPrizesTaken`.
-    expect(Object.keys(COUNT_KINDS)).toHaveLength(25);
+    // `cardsInYourHand`. 🆕🆕🆕 D607: 24 since WP28a's three. 🆕🆕🆕 D620: 25 since WP10's `yourPrizesTaken`. 🆕🆕🆕 D623: 28 since WP28b's three.
+    expect(Object.keys(COUNT_KINDS)).toHaveLength(28);
     expect(COUNT_KINDS.specialConditionsOnOpponentActive).toBe(true);
   });
 
@@ -802,7 +806,7 @@ describe("D518 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is no carrier a
   });
 
   it("the engine version moved with the behaviour, and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.505.0");
-    expect(manifest.version).toBe("0.505.0");
+    expect(engineVersion).toBe("0.506.0");
+    expect(manifest.version).toBe("0.506.0");
   });
 });

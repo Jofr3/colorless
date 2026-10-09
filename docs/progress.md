@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-09 — build session #562 (**P3-M5 — D622, *FIX-UP — R-AM2 RETIRED: the bare W/R tail (Oil Salvo, Sonic Peridot, Severe Squall, Telekinesis — 4 texts / 8 printings) derives the new `damageChosen.wrOnly` and is stopped by every on-target prevention and reduction; only the Feint form (Twin Shotels) passes them; `MATCH_RECORD_VERSION` stays 43; D621's three MINOR findings fixed*** — engine 0.505.0, NOT committed; whole-corpus sweep PENDING)
+**Last updated:** 2026-10-09 — build session #563 (**P3-M5 — D623, *WP28b — THE REST OF THE SCALING COUNT SOURCES: 5 texts / 7 `me` printings — three new `DamageCountSource` members over the attacker's Bench (`damagedBenchedPokemon` Gourgeist ex ×2, `benchedPokemonWithEnergy` Armarouge ×2, `benchedPokemonWithMaxHp` Igglybuff, R-BOC1 UNRULED), the body-map key "Pikachu and Pikachu ex" (Pika Chain) and Kyogre "Riptide" on two readers (the discard count and D538's retrieval + shuffle tail); Doublade ×3 and Okidogi dropped and named; attacks 2,702 / 2,771, 1118 `me` printings fully built*** — engine 0.506.0, MRV 43, NOT committed; the whole-corpus sweep PENDING)
+
+**Last updated (was):** 2026-10-09 — build session #562 (**P3-M5 — D622, *FIX-UP — R-AM2 RETIRED: the bare W/R tail (Oil Salvo, Sonic Peridot, Severe Squall, Telekinesis — 4 texts / 8 printings) derives the new `damageChosen.wrOnly` and is stopped by every on-target prevention and reduction; only the Feint form (Twin Shotels) passes them; `MATCH_RECORD_VERSION` stays 43; D621's three MINOR findings fixed*** — engine 0.505.0, NOT committed; whole-corpus sweep PENDING)
 
 **Last updated (was):** 2026-10-09 — build session #561 (**P3-M5 — D621, *WP24c + WP23 — PERSISTED SIDE STATE: 5 texts / 16 `me` printings — Gladion's Final Battle ×3 and Premium Power Pro ×3 on the new `SideAttackBonus.attacker`, Acerola's Mischief ×4 on the new `PlayerSide.chosenAttackShield`, Roxie's Performance ×3 on the new `PlayerSide.sideRetreatLock`, Dawn ×3 on Larry's Skill's search; `MATCH_RECORD_VERSION` 42 → 43 with a v42 migration; R-GFB1 / R-AM1 / R-AM2 / R-RP1 [🆕🆕🆕 D622: R-AM2 retired] UNRULED; Iron Defender dropped (stacking on an overwritten persisted record); trainers 418 / 447, 1111 `me` printings fully built*** — engine 0.504.0, NOT committed; whole-corpus sweep PENDING)
 
@@ -869,6 +871,44 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-09, after D623)
+>
+> 🛑 **D623 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D622 = `4fbcc7ae`). D623 is WP28b of the Mega backlog. Next: a review of D623 (and a ruling on R-BOC1), then another package.
+>
+> ✅ **`bun run check` IS GREEN**: `Test Files 666 passed (666) / Tests 15832 passed (15832) / CHECK_EXIT=0` (D622: 665 / 15818; D623 adds `scalingCountsMeD623.test.ts` (12) and the census D623 block (2)).
+>
+> **(a) THE SLICE.** 5 attack texts / 7 `me` printings, reader rows only (no registry key); ids and texts verified on the LOCAL D1. effects.ts, three NEW `DamageCountSource` members on literal anchors, evaluated by attack.ts over the ATTACKER's Bench (bodies, the Active excluded): `damagedBenchedPokemon` — Gourgeist ex `me04-041` / `-102` "Horrifying Rondo" (`+`, `damage > 0`); `benchedPokemonWithEnergy { energyType }` — Armarouge `me05-012` / `-086` "Flame Legion" (`+`, `hasAttachedEnergy`, by provision as D118 reads Scovillain's clause); `benchedPokemonWithMaxHp { hp }` — Igglybuff `30th-120` "Bouncy Circle" (`×`, `effectiveMaxHp`, R-BOC1). The 14th body-map key "Pikachu and Pikachu ex" — Pikachu `30th-034` "Pika Chain" (`pokemonInPlay`). Kyogre `me01-034` "Riptide": ONE anchor (`DISCARD_PILE_COUNT_THEN_SHUFFLE`) read by the multiplier (`cardsInDiscardPile { you, Basic {W} }`) and by `deriveAttackEffect` (D538's `discardPileRetrieval { max: "all", dest: "deck" }` + `shuffleDeck`), both over `RIPTIDE_PILE_FILTER`; the fold is taken before the program runs, and a whiffed retrieval still shuffles (D538). A before/after dump of 18 attack readers over both corpora moves exactly these 5 sentences.
+>
+> **(b) DROPPED AND NAMED.** Doublade `mep-067`, `me03-057` / `-098` "Weaponized Swords" — "Reveal any number of … from your hand" needs an own-hand pick that moves nothing plus a partial public reveal (a new op, event and log row); Okidogi `me02.5-122` "Settle the Score" — no state records the Prizes the opponent took during their last turn, and a persisted record is an MRV bump.
+>
+> **(c) MRV STAYS 43** (match.ts "STAYS 43 AT D623"). The new members are fold-only (no op carries them); Riptide's tail is two shipped non-parking ops; no `cardPool` face changes — the 7 faces in a v43 pool only now read.
+>
+> | Column | `me` D623 | Standard pool D623 |
+> |---|---|---|
+> | Attacks | 970 / 1039 | **2702 / 2771** |
+> | Abilities | 185 / 234 | **561 / 610** |
+> | Trainers | 154 / 183 | **418 / 447** |
+> | Special Energy | 11 / 11 | **22 / 22** |
+>
+> **1118 `me` printings fully built** (1111 + 7; the other attacks those printings print — Ghostly Touch, Swirling Waves — were already reader-built). Census pins stepped: the D581 live tally (reader [373, 940], residue [53, 72]), `built` 959, the D581 headline 2,691 / 80, D582 960, D584 962, and every later block's live `- 7`; the D623 block. Other moved pins: COUNT_KINDS 25 → 28 (`damagedBodyScaling`, `specialConditionCount`), the body-map vocabulary 35 → 36 (`benchNounScaling` §5, by hand), the D523 producer counts `discardPileRetrieval` 5 → 6 and `shuffleDeck` 31 → 32 (`discardShuffleBack`).
+>
+> **D539 sweep.** Annotated in place: `scalingCountsMeD607.test.ts` §1's "WP28b stays unbuilt" (inverted per text) and its D612 Pika Chain comment, the D607 census header's "stay residue" (`censusAtHead.test.ts`), the D607 / D612 rows in decisions.md, D607's resume point (b) and its owed line, D612's resume point (b), simulator.md's D607 entry, coverage-backlog-mega.md (the D607 and D612 sections and the seven list rows), the body-map "13 / 35" copies (effects.ts ×4, `namedBodiesSpread`, `benchNounScaling`'s title, the D439 survivor's reason in mutants.ts).
+>
+> **(d) THE MUTATION RECORD.** +19 D623 rows (effects.ts 13, attack.ts 6): 5210 in all. precheck: 5210 mutants, the same 20 pre-existing broken rows. Probe `--decision D623`: 19 killed. Gate-witness probe (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed. Extra probe, every older row whose killers include a suite whose logic D623 changed (75 rows): 74 killed · 1 known (`D467-benched-noun-arm-moves-behind-the-shipped-one`, declared); the 5 other declared survivors whose `find` touches the slice's code (D470, D474, D502, D525 ×2) still survive as declared. Gates: residue-census §A 40/0/0, 640 + 0, §B 7, §C′ 34 over 379 spans in 2; opaque-anatomy §B 6, §C 11 co-markers, §E′ 1 of 4; splice and partition OK. `git status --porcelain` identical before and after every probe.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D616–D623; D581–D615 were PAID EXACTLY by the sweep of `7b1ab8d2`: 4944 killed · 47 known · 0 GAP · 20 errors over 5,011). Predicted: **5143 killed · 47 known survivor(s) · 0 GAP(S) · 20 error(s)** over **5,210** rows — 5191 + 19 = 5210; 5124 + 19 = 5143 killed; 47 survivors unchanged; 5143 + 47 + 20 = 5210. It assumes D616–D622's predictions hold. If it holds, D616–D623 close together. If it fails: an error count ≠ 20 means a broken `find` outside the pre-existing 20; a GAP on an older row means a moved pin (census chains, COUNT_KINDS, the D523 producer counts, the D607 §1 rung) was that row's only killer; a D623 survivor means the probe's view missed a second reader of a new member. A known count ≠ 47 means a declared survivor went RED (it reads `stale`, killed stays 5143); the six declared survivors whose `find` touches the slice's code were probed and still survive, so this branch is predicted not to fire.
+>
+> **Pending decisions (UNRULED readings):** NEW at D623:
+> - **R-BOC1 ⚠️ UNRULED** — Igglybuff "Bouncy Circle": *"has a maximum HP of 30"* is EXACT equality on the MODIFIED maximum HP (`effectiveMaxHp`: printed HP plus Tool, Stadium and passive modifiers — the figure the Knock Out test reads); a 30-HP Basic holding Bravery Charm (80) does not count, and a data-gap HP counts out. Reversal: compare the PRINTED HP (`hpOf` of the top card).
+>
+> R-GFB1, R-AM1, R-RP1 (D621) and the earlier readings stand as recorded in the archived blocks below.
+>
+> Still owed from the Mega backlog: as at D622 (below), less WP28b's five texts; Doublade ×3 and Okidogi are named in (b) (Okidogi owes an MRV step, as do WP12's four attack texts and Iron Defender).
+>
+> ---
+>
+> **ARCHIVED — the resume point D623 was built from, kept rather than overwritten** (D622 has since been committed on `mega-ingest` as `4fbcc7ae`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-09, after D622)
 >
 > 🛑 **D622 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D621 = `5b67aaa2`). D622 is a fix-up slice: R-AM2 retired and D621's three MINOR findings fixed. Next: a review of D622, then rulings on R-GFB1 / R-AM1 / R-RP1 (D621, below) and another package.
@@ -1208,7 +1248,7 @@
 >
 > **(a) THE SLICE.** cardText.ts (NEW) `normalizeCardText`: the energy-symbol `<span>` → `{X}` (an unknown class keeps its span), `<em>` / `</em>` stripped (a space-or-tab run after a spaced `<em>` with it), "[R]" → `{R}`, a type word before "Energy" / "Pokémon" (alone or in a ", " / " or " / " and " list) → its symbol, glued type words and one type word before "less" / "more" → symbols. Pure, idempotent, closed. `normalizedFace` applies it to every attack / Ability / rules text of a Card, memoised in a WeakMap, returning the SAME object when nothing changes. cards.ts `cardOfUid` reads every face through it, so a persisted v42 `cardPool` that holds tcgdex's raw text plays like a re-ingested row (the D581 / D583 lesson); apps/api ingest/map.ts writes every text through the same function (`textBlocks`, `rulesText`). The LOCAL D1 was re-ingested set by set (`mep`, `30th`, `30th-c`, `swsh10.5`): a before/after dump shows exactly 90 text columns on 87 rows changed (45 texts / 43 legal `me` rows; the rest `30th-c` and `swsh10.5`, not legal) and nothing else; every `sv` text is a fixed point (pinned over both corpora). `censusAttackCorpusMe.ts` is its statement re-run: 451 → 442 sentences, 43,900 → 41,838 characters, 1,039 printings (nine normalised sentences merge into rows the column already printed). 18 texts / 21 `30th` printings are now built by SHIPPED readers (no reader, op or field changed; one inherited reading now reaches new printings, R-BC1 below): Laser Flame, Hail ×2, Hydro Pump, Wormhole, Spark, Electrobullet, Targeted Spark, Fighting Lightning, Nitro Thunder, Electro Drift, Stiffen, Break Ground, Aura Sphere, Collision Course, Growl, Shield Press, Booming Call ×2, Screech, Shoot Meteors. registry.ts `INFERNO_X` (`mep-023` / `-029`) and `STEALTHY_SLASH` (`30th-021` / `-148`) are RETIRED: their normalised text is reader-built (R-IX1 RESOLVED). `PHOTON_BULLETS` ×3 stays: *"…each of your opponent's Pokémon ex. (…)"* is still read by no reader. The client shows the catalog text (`CardDetailDialog.tsx` renders `effect` as a string), so re-ingested rows read `{L}` like every `sv` card; the KV catalog `CACHE_VERSION` v7 → v8.
 >
-> **(b) STILL UNBUILT AFTER THE NORMALISER, NAMED** (6 texts / 6 printings, each needs reader vocabulary, not markup): Lugia `30th-121` "Elemental Blast" (three typed discards), Pikachu `30th-051` "Lightning Crash" (typed self-discard before the any-target hit, WP30 rest), Pikachu `30th-042` "Charge-Up Dash" (a deck source capped at heads, WP13), Pikachu `30th-040` "Overwriting Bolt" (Weakness retype to {L}), Pikachu `30th-034` "Pika Chain" (WP28b), Ferrothorn `30th-104` "Kaboom Needles" (a clause after the parenthetical, WP30 rest). The `30th` Ability faces with word forms (the Flapping trio, Flaring Magic, Sunrise, Scale Up, Nighttime Byway) were already keyed by id; their text now reads clean.
+> **(b) STILL UNBUILT AFTER THE NORMALISER, NAMED** (6 texts / 6 printings, each needs reader vocabulary, not markup): Lugia `30th-121` "Elemental Blast" (three typed discards), Pikachu `30th-051` "Lightning Crash" (typed self-discard before the any-target hit, WP30 rest), Pikachu `30th-042` "Charge-Up Dash" (a deck source capped at heads, WP13), Pikachu `30th-040` "Overwriting Bolt" (Weakness retype to {L}), Pikachu `30th-034` "Pika Chain" (WP28b) [🆕🆕🆕 D623 (D539): BUILT at D623], Ferrothorn `30th-104` "Kaboom Needles" (a clause after the parenthetical, WP30 rest). The `30th` Ability faces with word forms (the Flapping trio, Flaring Magic, Sunrise, Scale Up, Nighttime Byway) were already keyed by id; their text now reads clean.
 >
 > **(c) MRV STAYS 42** (match.ts "STAYS 42 AT D612"): no persisted shape moved; the read of a card row's TEXT changed, and `cardOfUid` covers a raw persisted face. Rollback to 0.494 is clean (a raw face plays as before; a clean re-ingested row is text 0.494's unchanged readers already build).
 >
@@ -1381,7 +1421,7 @@
 >
 > **(a) THE SLICE.** 8 attack texts / 14 `me` printings, readers only, no registry key. effects.ts: three NEW nullary `DamageCountSource` members on literal `×` anchors with attack.ts arms — `energyInPlayBothSides` (Delphox `mep-074` / `me04-013`, every Energy card on both boards), `toolsInPlayBothSides` (Bronzong `me02-072`, every Tool on both boards), `basicEnergyTypesOnYourBoard` (Sylveon ex `mep-100` / `30th-071` / `30th-153`; continuous.ts `countBasicEnergyTypesInPlay`, distinct types named by `energyProvidesOf`, so a Special or an unparsed Basic adds none). Four texts on shipped members: body-map keys "Beedrill and Beedrill ex" (Beedrill ex `me04-003` / `-098`), "Rattata" (Raticate `me03-061` / `-099`; `BENCH_COUNTER_FILTERED_MULTIPLY`'s noun widened to `((?!Pokémon\.)[^.]+)`) and `Pokémon that has "Tauros" in its name` (Paldean Tauros `me02-048`, `damagedOnly`); `OPPONENT_ENERGY_PENALTY` (Tinkaton `me01-098`, 240 − 60 per Energy on the opponent's Active, floored); the reveal anchor admits ", and this attack does" and `OPPONENT_HAND_NOUNS` gains "Energy card" → `anyEnergy` (Beautifly `me02.5-013` / `-219`). `sv` reader output byte-identical (before/after dump, 18 readers × both corpora: only the 8 target sentences moved). No new rules reading.
 >
-> **(b) LEFT FOR WP28b, NAMED** (7 texts / 11 printings, each needing vocabulary beyond this slice): Doublade ×3 "Weaponized Swords" (reveal any number from hand), Kyogre `me01-034` "Riptide" (discard count, then shuffle those back), Igglybuff `30th-120` "Bouncy Circle" (Benched max HP 30), Pikachu `30th-034` "Pika Chain" (tcgdex `<em>` markup — WP06), Armarouge `me05-012` / `-086` "Flame Legion" (Benched with {R} attached), Gourgeist ex `me04-041` / `-102` "Horrifying Rondo" (damaged Benched count), Okidogi `me02.5-122` "Settle the Score" (Prizes taken last turn — needs a record).
+> **(b) LEFT FOR WP28b, NAMED** (7 texts / 11 printings, each needing vocabulary beyond this slice) [🆕🆕🆕 D623 (D539): five are BUILT at D623 — Kyogre, Igglybuff, Pikachu `30th-034`, Armarouge ×2, Gourgeist ex ×2; Doublade ×3 and Okidogi are dropped and named there]: Doublade ×3 "Weaponized Swords" (reveal any number from hand), Kyogre `me01-034` "Riptide" (discard count, then shuffle those back), Igglybuff `30th-120` "Bouncy Circle" (Benched max HP 30), Pikachu `30th-034` "Pika Chain" (tcgdex `<em>` markup — WP06), Armarouge `me05-012` / `-086` "Flame Legion" (Benched with {R} attached), Gourgeist ex `me04-041` / `-102` "Horrifying Rondo" (damaged Benched count), Okidogi `me02.5-122` "Settle the Score" (Prizes taken last turn — needs a record).
 >
 > **(c) MRV STAYS 42** (match.ts "STAYS 42 AT D607"): the three members are produced only by the fold readers and read at declaration; no op field carries them. The 14 faces in a v42 `cardPool` are unchanged — only their attack text reads now.
 >
@@ -1400,7 +1440,7 @@
 >
 > **Pending decisions (UNRULED readings):** none new at D607 — each count is the printed noun over a shipped walk (CARDS for Energy, D193; top-card names, §1.2; the penalty floor, D163). R-LC1 / R-CF1 (D606), R-NZ1 / R-MP1 / R-KW1 (D605), R-TE1 / R-TP1 / R-NF1 (D604), R-PX6 (D603), R-GC2, R-GC3, R-TN1 (D601) and R-CW1 (D600) stand as recorded in the archived blocks below.
 >
-> Still owed from the Mega backlog: as at D606 (below), less WP28a's eight texts; WP28b's seven are (b) above.
+> Still owed from the Mega backlog: as at D606 (below), less WP28a's eight texts; WP28b's seven are (b) above. [🆕🆕🆕 D623 (D539): five are BUILT at D623 — Kyogre, Igglybuff, Pikachu `30th-034`, Armarouge ×2, Gourgeist ex ×2; Doublade ×3 and Okidogi are dropped and named there]
 >
 > ---
 >
@@ -35871,7 +35911,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D622, *fix-up — R-AM2 retired: the bare W/R tail (Oil Salvo, Sonic Peridot, Severe Squall, Telekinesis) derives the new `damageChosen.wrOnly` and no longer passes on-target preventions and reductions; D621's three MINOR findings fixed*** — engine 0.505.0, MRV 43, NOT committed; sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D623, *WP28b — the rest of the scaling count sources: 5 texts / 7 `me` printings (Gourgeist ex, Armarouge and Igglybuff on three new Bench-body count members, Pika Chain on a new body-map key, Kyogre "Riptide" on two readers); R-BOC1 UNRULED; Doublade and Okidogi dropped; attacks 2,702 / 2,771, 1118 `me` printings fully built*** — engine 0.506.0, MRV 43, NOT committed; sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D622, *fix-up — R-AM2 retired: the bare W/R tail (Oil Salvo, Sonic Peridot, Severe Squall, Telekinesis) derives the new `damageChosen.wrOnly` and no longer passes on-target preventions and reductions; D621's three MINOR findings fixed*** — engine 0.505.0, MRV 43, NOT committed; sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D621, *WP24c + WP23 — persisted side state: 5 texts / 16 `me` printings (Gladion's Final Battle and Premium Power Pro on the new `SideAttackBonus.attacker`, Acerola's Mischief on the new `chosenAttackShield`, Roxie's Performance on the new `sideRetreatLock`, Dawn on Larry's Skill's search); MRV 42 → 43 with a v42 migration; R-GFB1 / R-AM1 / R-AM2 / R-RP1 [🆕🆕🆕 D622: R-AM2 retired] UNRULED; Iron Defender dropped; trainers 418 / 447, 1111 `me` printings fully built*** — engine 0.504.0, MRV 43, NOT committed; sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D620, *WP10 + WP26 — prizes you have taken, Mega Mawile ex and the `me` Tools: 8 texts / 14 `me` units on 12 printings (the new `yourPrizesTaken` count and `baseOverride` reading; Light Ball, Punk Helmet, Team Rocket's Hypnotizer, Core Memory and Tremendous Bomb on five new Tool objects); R-TRB1 UNRULED; Adversity Policy dropped (a Weakness gate)*** — engine 0.503.0, MRV 42, NOT committed; sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D619, *WP12 (passive half) + WP15 — attacker-gated reductions and named-Supporter conditions: 7 texts / 10 `me` printings (Sacred Charm, Thick Scale and Thick Fat on the new `damageReductionAfterWRFromAttacker`; Frilled Generator and three attack texts on `youPlayedSupporterNamedThisTurn`); WP12's four attack texts dropped (MRV bump owed); attacks 2,688 / 2,771, abilities 561 / 610, trainers 395 / 447, 1083 `me` printings fully built*** — engine 0.502.0, MRV 42, NOT committed; the sweep PENDING) |
@@ -36109,6 +36150,17 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-09 — build session #563 (P3-M5 — D623)
+
+**WP28b — THE REST OF THE SCALING COUNT SOURCES. `MATCH_RECORD_VERSION` STAYS 43.**
+
+Built in the `luminous_ui-mega` worktree on D622 (`4fbcc7ae`); the main checkout was not touched. 5 attack texts / 7 `me` printings,
+reader rows only: three new `DamageCountSource` members over the attacker's Bench (Gourgeist ex ×2, Armarouge ×2, Igglybuff), the
+body-map key "Pikachu and Pikachu ex" (Pika Chain) and Kyogre "Riptide" on two readers over one filter (the discard-pile count and
+D538's retrieval + shuffle tail). R-BOC1 UNRULED (exact, modified max HP). Doublade ×3 and Okidogi dropped and named. D539: WP28b's
+unbuilt claims annotated. `scalingCountsMeD623.test.ts` (12), census D623 block (2). +19 mutant rows, all KILLED. Sweep PENDING
+(NEXT (0)). NOT committed.
 
 ### 2026-10-09 — build session #562 (P3-M5 — D622)
 

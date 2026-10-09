@@ -465,7 +465,7 @@ describe("D606 §6 — Celebratory Fanfare: heal 10 from each; if any healed, th
 });
 
 describe("D606 §7 — the version", () => {
-  it("is built at engine 0.505.0", () => {
-    expect(engineVersion).toBe("0.505.0");
+  it("is built at engine 0.506.0", () => {
+    expect(engineVersion).toBe("0.506.0");
   });
 });

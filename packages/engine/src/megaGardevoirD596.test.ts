@@ -385,7 +385,7 @@ describe("D596 §4 — Overflowing Wishes on a board", () => {
 });
 
 describe("D596 §5 — the version", () => {
-  it("is built at engine 0.505.0", () => {
-    expect(engineVersion).toBe("0.505.0");
+  it("is built at engine 0.506.0", () => {
+    expect(engineVersion).toBe("0.506.0");
   });
 });

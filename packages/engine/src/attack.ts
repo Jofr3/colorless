@@ -51,7 +51,10 @@ import {
   countEnergyInPlay,
   countToolsInPlay,
   effectiveAttackCost,
+  // 🆕🆕🆕 D623 — WP28b's two Bench predicates (Igglybuff's max HP, Armarouge's {R} Energy).
+  effectiveMaxHp,
   effectiveRetreatCost,
+  hasAttachedEnergy,
   firstTurnAttackBanned,
   installedAttackDebuffOf,
   installedNoWeakness,
@@ -636,6 +639,22 @@ function scaledAttackDamage(
     case "basicEnergyTypesOnYourBoard":
       // 🆕🆕🆕 D607 — WP28a: distinct Basic Energy types on the attacker's board (Sylveon ex).
       return countBasicEnergyTypesInPlay(state, attackerSeat) * bonus.per;
+    case "damagedBenchedPokemon":
+      // 🆕🆕🆕 D623 — WP28b: the attacker's Benched BODIES carrying any damage (Gourgeist ex).
+      return state.players[attackerSeat].bench.filter((p) => p.damage > 0).length * bonus.per;
+    case "benchedPokemonWithEnergy": {
+      // 🆕🆕🆕 D623 — WP28b: Benched bodies with any Energy of the type, by provision (Armarouge).
+      const { energyType } = bonus.count;
+      return (
+        state.players[attackerSeat].bench.filter((p) => hasAttachedEnergy(state, p, energyType)).length *
+        bonus.per
+      );
+    }
+    case "benchedPokemonWithMaxHp": {
+      // 🆕🆕🆕 D623 — WP28b: Benched bodies whose MODIFIED max HP is exactly `hp` (Igglybuff, R-BOC1).
+      const { hp } = bonus.count;
+      return state.players[attackerSeat].bench.filter((p) => effectiveMaxHp(state, p) === hp).length * bonus.per;
+    }
     case "pokemonInPlay": {
       // 🆕🆕 D439 — the ATTACKER's BODIES IN PLAY matching the printed noun
       // ("This attack does 30 damage for each of your {G} Pokémon in play.").

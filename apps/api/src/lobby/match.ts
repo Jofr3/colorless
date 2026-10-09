@@ -2159,6 +2159,13 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 43 AT D623 — WP28b ADDS THREE `DamageCountSource` MEMBERS AND ONE BODY-MAP KEY, NO OP,
+    PROMPT, KEY, STAGE OR EVENT.** (Placed ABOVE the D622 block.) The members are produced only by the
+    damage-fold readers and evaluated at declaration; nothing persisted names them. Kyogre "Riptide"'s tail
+    is the shipped `discardPileRetrieval { max: "all" }` + `shuffleDeck`, neither of which parks. No card
+    row is read differently: the 7 faces in a v43 `cardPool` are unchanged, only their attack TEXT reads
+    now. Rollback to 0.505: the five texts fall back to the unbuilt path; no in-flight state depends on them.
+
     🆕🆕🆕 **STAYS 43 AT D622 — ONE OPTIONAL OP KEY, ON THE FORM THAT CHANGED.** (Placed ABOVE the D621 block,
     D563's placement.) R-AM2 is retired: the bare W/R tail (Oil Salvo, Sonic Peridot, Severe Squall,
     Telekinesis) now derives `damageChosen.wrOnly` beside `ignoreWR`, and the interpreter reads `ignoreWR`

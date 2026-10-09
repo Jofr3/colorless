@@ -57,7 +57,7 @@ const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [ENERGY_STRAW, ["me02.5-013", "me02.5-219"]],
 ];
 
-/** WP28's other half (WP28b), named: each needs vocabulary beyond this slice. */
+/** WP28's other half (WP28b), named: each needs vocabulary beyond this slice. [🆕🆕🆕 D623 (D539): five are built at D623 — Kyogre, Igglybuff, Pikachu, Armarouge ×2, Gourgeist ex ×2; Doublade ×3 and Okidogi are dropped and named there.] */
 const WP28B: readonly (readonly [string, number])[] = [
   [
     "Reveal any number of Honedge, Doublade, and Aegislash from your hand, and this attack does 60 damage for each card you revealed in this way.",
@@ -65,7 +65,7 @@ const WP28B: readonly (readonly [string, number])[] = [
   ],
   ["This attack does 20 damage for each Basic {W} Energy card in your discard pile. Then, shuffle those cards into your deck.", 1],
   ["This attack does 30 damage for each of your Benched Pokémon that has a maximum HP of 30.", 1],
-  // 🆕🆕🆕 D612 — the `<em>` is normalised away (WP06); the clean sentence is still unread.
+  // 🆕🆕🆕 D612 — the `<em>` is normalised away (WP06); the clean sentence is still unread. [🆕🆕🆕 D623 (D539): WITHDRAWN — Pika Chain is read at D623, on the body-map key "Pikachu and Pikachu ex".]
   ["This attack does 40 damage for each of your Pikachu and Pikachu ex in play.", 1],
   ["This attack does 40 more damage for each of your Benched Pokémon that has any {R} Energy attached.", 2],
   ["This attack does 50 more damage for each of your Benched Pokémon that has any damage counters on it.", 2],
@@ -84,11 +84,13 @@ describe("D607 §1 — the texts: 8 attack sentences / 14 printings", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(14);
   });
 
-  it("WP28b stays unbuilt: 7 texts / 11 printings, named", () => {
+  it("WP28b stays unbuilt: 7 texts / 11 printings, named (🆕🆕🆕 D623 (D539): WITHDRAWN — five are built at D623; Doublade ×3 and Okidogi stay unbuilt)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
+    // 🆕🆕🆕 D623 — the two texts still unread; the other five are `scalingCountsMeD623.test.ts`'s.
+    const stillUnbuilt = new Set([WP28B[0]?.[0], WP28B[6]?.[0]]);
     for (const [text, n] of WP28B) {
       expect([text, me.get(text)]).toEqual([text, n]);
-      expect(resolvedByAnyReader(text), text).toBe(false);
+      expect(resolvedByAnyReader(text), text).toBe(!stillUnbuilt.has(text));
     }
     expect(WP28B.reduce((sum, [, n]) => sum + n, 0)).toBe(11);
   });
@@ -477,6 +479,6 @@ describe("D607 §4 — the four texts on shipped members, on a board", () => {
 
 describe("D607 §5 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.505.0");
+    expect(engineVersion).toBe("0.506.0");
   });
 });

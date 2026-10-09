@@ -30243,6 +30243,20 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D623 — WP28b: the rest of the scaling count sources (engine 0.506.0, `MATCH_RECORD_VERSION` stays 43)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D622 (`4fbcc7ae`), NOT committed.
+
+- **Three Bench-body counts.** NEW `DamageCountSource` members, each on a literal anchor, evaluated by attack.ts over the attacker's
+  Bench: `damagedBenchedPokemon` (Gourgeist ex ×2 "Horrifying Rondo"), `benchedPokemonWithEnergy` (Armarouge ×2 "Flame Legion", by
+  provision through `hasAttachedEnergy`) and `benchedPokemonWithMaxHp` (Igglybuff "Bouncy Circle", `effectiveMaxHp`, R-BOC1 UNRULED).
+- **Pika Chain.** The body-map key "Pikachu and Pikachu ex" on the shipped `pokemonInPlay` fold (14 keys / 36 nouns).
+- **Riptide.** One anchor, two readers over one filter: the `cardsInDiscardPile` fold and D538's `discardPileRetrieval` +
+  `shuffleDeck` tail. The count is taken before the shuffle.
+- **Dropped and named.** Doublade ×3 (own-hand partial reveal) and Okidogi (Prizes taken last turn, an MRV bump).
+- **MRV stays 43.** Fold-only members, a non-parking tail, no `cardPool` face change (match.ts "STAYS 43 AT D623").
+- **Suite.** `scalingCountsMeD623.test.ts` (12) and a census D623 block (2). +19 mutant rows. Sweep PENDING.
+
 ## D622 — fix-up: R-AM2 retired, the bare W/R tail is W/R only (engine 0.505.0, `MATCH_RECORD_VERSION` stays 43)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D621 (`5b67aaa2`), NOT committed.
@@ -30565,7 +30579,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   (`energyOnOpponent` active) and the comma-joined reveal with an "Energy card" hand noun. No op, prompt, key or event.
 - **8 texts / 14 `me` printings.** Delphox ×2, Bronzong, Sylveon ex ×3, Beedrill ex ×2, Paldean Tauros, Raticate ×2,
   Tinkaton, Beautifly ×2 — all fully built. `sv` reader output byte-identical.
-- **Left for WP28b.** Doublade ×3, Kyogre, Igglybuff, Pikachu `30th-034` (WP06 markup), Armarouge ×2, Gourgeist ex ×2, Okidogi.
+- **Left for WP28b.** Doublade ×3, Kyogre, Igglybuff, Pikachu `30th-034` (WP06 markup), Armarouge ×2, Gourgeist ex ×2, Okidogi. [🆕🆕🆕 D623 (D539): five are BUILT at D623 — Kyogre, Igglybuff, Pikachu `30th-034`, Armarouge ×2, Gourgeist ex ×2; Doublade ×3 and Okidogi are dropped and named there]
 - **Readings.** None new.
 - **Suite.** `scalingCountsMeD607.test.ts` (14) and a census D607 block (2). +15 mutant rows; four rows re-pointed.
 - **Census.** Standard pool attacks **2,614 / 2,771**; 949 `me` printings fully built.

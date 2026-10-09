@@ -20269,6 +20269,15 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.505.0 → **0.506.0** (D623 — WP28b: THE REST OF THE SCALING COUNT SOURCES, 5 TEXTS /
+    7 `me` PRINTINGS; `MATCH_RECORD_VERSION` STAYS 43 (apps/api match.ts "STAYS 43 AT D623")). effects.ts: three NEW
+    `DamageCountSource` members, evaluated by attack.ts — `damagedBenchedPokemon` (Gourgeist ex ×2 "Horrifying
+    Rondo"), `benchedPokemonWithEnergy` (Armarouge ×2 "Flame Legion", by `hasAttachedEnergy`) and
+    `benchedPokemonWithMaxHp` (Igglybuff "Bouncy Circle", `effectiveMaxHp`, R-BOC1 UNRULED); the body-map key
+    "Pikachu and Pikachu ex" (Pikachu `30th-034` "Pika Chain"); Kyogre "Riptide" read by two readers on one
+    anchor — the `cardsInDiscardPile` fold and the shipped `discardPileRetrieval` + `shuffleDeck` tail. Dropped and
+    named: Doublade ×3 (an own-hand partial reveal) and Okidogi (a per-turn Prize record, an MRV bump).
+    `scalingCountsMeD623.test.ts`.)
     🆕🆕🆕 engineVersion 0.504.0 → **0.505.0** (D622 — FIX-UP: R-AM2 RETIRED, THE BARE W/R TAIL IS W/R ONLY;
     `MATCH_RECORD_VERSION` STAYS 43 (apps/api match.ts "STAYS 43 AT D622")). effects.ts: the NEW optional
     `damageChosen.wrOnly`, set beside `ignoreWR` by the three bare-tail readers (`CHOSEN_ANY_TARGET` without the
@@ -25564,7 +25573,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.505.0";
+export const engineVersion = "0.506.0";
 
 export type {
   ApplyResult,

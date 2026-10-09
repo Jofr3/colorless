@@ -960,7 +960,7 @@ describe("§8 — the surface, the version, and the mechanisms this slice did no
     expect(attackReaderSurface()).toContain("deriveAttackEffect");
   });
 
-  it("engineVersion is 0.505.0 and `manifest.version` agrees", () => {
+  it("engineVersion is 0.506.0 and `manifest.version` agrees", () => {
     // 🆕🆕🆕 D477 — 0.374.0 → **0.375.0**, and the bump is owed for BEHAVIOUR: five legal
     // printings that derived to `null` and fell to the loud `ATTACK_EFFECT_SKIPPED` path
     // now pay a §8 cost and park a benched snipe. **`MATCH_RECORD_VERSION` STAYS 29** on
@@ -971,7 +971,7 @@ describe("§8 — the surface, the version, and the mechanisms this slice did no
     // count}` is `SELF_DISCARD_N` / `TYPED_SELF_DISCARD`'s output and `damageChosen
     // {target:"opponentBench", …}` is `ALSO_BENCHED_SNIPE`'s. No new op, no new op FIELD,
     // no new op VALUE — so there is no byte for a version to be about.
-    expect(engineVersion).toBe("0.505.0");
+    expect(engineVersion).toBe("0.506.0");
     expect(manifest.version).toBe(engineVersion);
   });
 
