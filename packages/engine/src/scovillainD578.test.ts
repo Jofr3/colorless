@@ -214,8 +214,8 @@ function damageRow(events: readonly GameEvent[]): Extract<GameEvent, { type: "DA
 const SCOV_SPOT: Spot = { id: SCOVILLAIN, under: [CAPSAKID] };
 
 describe("D578 Scovillain §0 — the version", () => {
-  it("is built at engine 0.495.0", () => {
-    expect(engineVersion).toBe("0.495.0");
+  it("is built at engine 0.496.0", () => {
+    expect(engineVersion).toBe("0.496.0");
   });
 });
 
@@ -448,6 +448,8 @@ const ALLOWLIST: Record<string, string> = {
   "filter · attack.ts · benchBodies · inPlayCardOf(state, p) · filter": E,
   "filter · attack.ts · copySources · card · { kind: \"ownerPokemon\", owner }": B,
   "filter · attack.ts · scaledAttackDamage · inPlayCardOf(state, p) · filter": E,
+  // 🆕🆕🆕 D613 — the Bench destination's noun test; its callers hand it a deck / discard / hand card.
+  "filter · cards.ts · benchMatches · card · filter": `${P} — a card an effect puts onto the Bench, from a pile`,
   "filter · cards.ts · matchesFilter · card · inner": `${E} or ${P} — the caller's card, recursed`,
   "filter · cards.ts · matchesFilter · card · { kind: \"anyPokemon\" }": B,
   "filter · cards.ts · matchesFilter · card · { kind: \"supporter\" }": B,

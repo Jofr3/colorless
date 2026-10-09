@@ -17977,7 +17977,9 @@ const SWIRLING_PROSE: CardProgram = {
     Active Pokémon moves to the Bench during their turn, place 2 damage counters on that Pokémon."*
     Lava Zone's moment with Gnawing Curse's consequent (`damageSubject` 20 on the body that moved,
     `ctx.subjectUid`). No spot clause, so it fires from the Bench too. The KO the counters may cause is
-    the mover's sweep (retreat: turn.ts; a switch: `settleProgram`). */
+    the mover's sweep (retreat: turn.ts; a switch: `settleProgram`). [🆕🆕🆕 D613 (D539): INCOMPLETE as
+    written — Jet Energy's switch (turn.ts `attachEnergy`) runs outside any program, and until D613 no
+    sweep followed it. It now runs the mid-turn sweep itself (`switchSweepBenchBasicD613.test.ts` §1).] */
 const HOLES: CardProgram = {
   triggered: [
     {

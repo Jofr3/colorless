@@ -294,13 +294,20 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
     onAttach?.kind === "benchSearch"
       ? [{ op: "searchDeck", filter: onAttach.filter, dest: "bench", max: onAttach.max }, { op: "shuffleDeck" }]
       : undefined;
+  // 🆕🆕🆕 D613 — `switched` records that the rider MOVED a body: `switchInto` runs the
+  // `onActiveMovedToBench` triggers (Team Rocket's Dugtrio "Holes" puts 2 damage counters on the
+  // body that moved), and this is the one `switchInto` route outside a program, so no
+  // `settleProgram` sweep follows it. The Knock Out check below runs whenever it is true.
+  let switched = false;
   if (onAttach?.kind === "switchIfBenched" && action.target.spot === "bench") {
-    next = switchInto(
+    const moved = switchInto(
       next,
       action.seat,
       { seat: action.seat, spot: { spot: "bench", index: action.target.index } },
       events,
     );
+    switched = moved !== next;
+    next = moved;
   }
   // D261 — the §6.1 union's SECOND arm: Enriching Energy sv08-191, "When you
   // attach this card from your hand to a Pokémon, draw 4 cards." A GUARD and not a
@@ -390,7 +397,9 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
       events,
       atAttach,
     );
-    if (watched !== next) {
+    // 🆕🆕🆕 D613 — `|| switched`: a Jet Energy switch can make the moved body lethal (Holes, D610)
+    // with no watched trigger answering the attach, and D610 left that Knock Out unchecked.
+    if (watched !== next || switched) {
       next = watched;
       // 🆕🆕🆕 D604 — the search's settle runs the mid-turn sweep once it is done (R-TP1).
       if (benchSearch !== undefined) return searchAfterAttach(next, action.seat, benchSearch, endsTurn, events);

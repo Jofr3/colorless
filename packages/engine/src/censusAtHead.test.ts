@@ -23,6 +23,7 @@ import {
   splitAttackGateClause,
   splitAttackTrailingClause,
 } from "./effects";
+import { namesItsCard } from "./cards";
 import { programFor, registryCardIds } from "./registry";
 
 // 0.149.0 → 0.149.1 — D233, THE CENSUS RE-DERIVED AT HEAD: rows 9-16 of
@@ -13852,5 +13853,66 @@ describe("D612 — WP06's markup normaliser, and the Standard pool it builds, me
     expect(POPULATION_D581.attackUnits - 2661).toBe(110);
     // The 1005 base is CARRIED (D611's pin); the 21 are the printings above, each now fully built.
     expect(1005 + Object.keys(MARKUP_BUILT_D612).length).toBe(1026);
+  });
+});
+
+// ── 🆕🆕🆕 D613 — THE BENCH NOUNS, MEASURED ──────────────────────────────────────────────────────────
+// Every derived attack program over both committed legal corpora, and every registry program, whose op
+// puts a card onto the Bench (`dest: "bench"`), sorted by its noun: a Basic-only noun, a noun that names
+// its card (`namesItsCard`, the printed permission D613 keeps), or a CLASS noun that admitted any stage
+// before D613 (now Basic only). LOCAL D1 2026-10-09; Rabsca "Revival Blessing" ×3 (`legal_standard = 0`)
+// is the one affected text outside the corpora.
+type BenchNoun = "basic" | "named" | "class";
+const benchNounOf = (filter: { kind: string; stage?: string; filters?: readonly unknown[] }): BenchNoun => {
+  const basic = (f: { kind: string; stage?: string; filters?: readonly unknown[] }): boolean =>
+    f.kind === "basicPokemon" ||
+    ((f.kind === "typedPokemon" || f.kind === "ownerPokemon") && f.stage === "basic") ||
+    (f.kind === "anyOf" && (f.filters ?? []).every((inner) => basic(inner as typeof f)));
+  if (basic(filter)) return "basic";
+  return namesItsCard(filter as Parameters<typeof namesItsCard>[0]) ? "named" : "class";
+};
+const benchOps = (program: unknown, out: { op: string; filter: { kind: string } }[]) => {
+  if (Array.isArray(program)) for (const v of program) benchOps(v, out);
+  else if (program !== null && typeof program === "object") {
+    const o = program as Record<string, unknown>;
+    if (typeof o.op === "string" && o.dest === "bench") {
+      out.push({ op: o.op, filter: (o.filter as { kind: string } | undefined) ?? { kind: "anyCard" } });
+    }
+    for (const v of Object.values(o)) benchOps(v, out);
+  }
+};
+
+describe("D613 — the bench nouns: Basic only unless the noun names its card, measured", () => {
+  const sweep = (corpus: readonly (readonly [number, string])[], noun: BenchNoun) =>
+    corpus.flatMap(([n, text]) => {
+      const found: { op: string; filter: { kind: string } }[] = [];
+      benchOps(deriveAttackEffect(text), found);
+      return found.some((op) => benchNounOf(op.filter) === noun) ? [[n, text] as const] : [];
+    });
+
+  it("the CLASS nouns D613 narrows: King's Order ×3, Summoning Gate ×2, Cinnabar Lure ×2 and Booming Call ×2 (9 legal printings)", () => {
+    expect(sweep(legalAttackCorpus(), "class").map(([n, t]) => [n, t.slice(0, 30)]).sort()).toEqual([
+      [2, "Look at the top 10 cards of yo"],
+      [2, "Look at the top 8 cards of you"],
+      [3, "Put up to 3 {W} Pokémon from y"],
+    ]);
+    expect(sweep(meAttackCorpus(), "class")).toEqual([[2, "Put up to 3 {N} Pokémon from your discard pile onto your Bench."]]);
+  });
+
+  it("the NAMED nouns it keeps: Charjabug, Froakie, Grubbin, Pikachu, Duskull ×3 and Lampent (8 legal printings)", () => {
+    const named = [...sweep(legalAttackCorpus(), "named"), ...sweep(meAttackCorpus(), "named")];
+    expect(named.reduce((sum, [n]) => sum + n, 0)).toBe(8);
+    expect(named).toHaveLength(6);
+  });
+
+  it("no registry program benches through a CLASS noun; the named ones are Maushold, Ninjask ×2, Silcoon and Team Rocket's Koffing", () => {
+    const byNoun: Record<BenchNoun, string[]> = { basic: [], named: [], class: [] };
+    for (const id of registryCardIds()) {
+      const found: { op: string; filter: { kind: string } }[] = [];
+      benchOps(programFor(id), found);
+      for (const op of found) byNoun[benchNounOf(op.filter)].push(id);
+    }
+    expect(byNoun.class).toEqual([]);
+    expect([...new Set(byNoun.named)].sort()).toEqual(["me01-017", "me01-137", "me02.5-012", "sv08-158", "sv10-125"]);
   });
 });

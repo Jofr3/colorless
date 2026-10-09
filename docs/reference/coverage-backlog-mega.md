@@ -6,6 +6,14 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D613 update (engine 0.496.0) — fix-up: the Jet Energy switch's Knock Out check, Basic-only bench placement
+
+No new printing is built and no count moves. Two rule fixes on built cards: Holes ×2 (Team Rocket's Dugtrio, D610) now
+Knocks Out a body made lethal by a Jet Energy switch (turn.ts `attachEnergy` runs the mid-turn sweep), and an effect that
+puts Pokémon onto the Bench takes Basic Pokémon only unless its noun names its card (cards.ts `benchMatches`). The `me` text
+this corrects is Booming Call ×2 (`30th-109` / `-156`, R-BC1 retired); the named Stage 1 benches (Lampent, Ninjask's Shedinja,
+Silcoon / Cascoon) keep working. R-BN1 UNRULED (a name fragment counts as a name). `switchSweepBenchBasicD613.test.ts`.
+
 ## 🆕 D612 update (engine 0.495.0) — the tcgdex markup normaliser (WP06)
 
 cardText.ts `normalizeCardText` at ingest (map.ts) and at read (cards.ts `cardOfUid`); the LOCAL D1's `mep`, `30th`, `30th-c` and
@@ -631,7 +639,7 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### Markup only — builds once tcgdex's HTML / `[X]` tokens are normalised (an ingest fix, not a reader) — 18 text(s) / 21 printing(s)
 
-- 2× Put up to 3 &lt;span class="energy-symbol Dragon" title="Dragon">Dragon&lt;/span> Pokémon from your discard pile onto your Bench. [🆕🆕🆕 D612: BUILT — WP06; R-BC1 UNRULED, any stage may be benched (D238's reading)]
+- 2× Put up to 3 &lt;span class="energy-symbol Dragon" title="Dragon">Dragon&lt;/span> Pokémon from your discard pile onto your Bench. [🆕🆕🆕 D612: BUILT — WP06; R-BC1 UNRULED, any stage may be benched (D238's reading)] [🆕🆕🆕 D613 (D539): WITHDRAWN — bench placement is Basic only unless the noun names its card (cards.ts `benchMatches`); R-BC1 is retired, Booming Call benches Basic {N} Pokémon only]
 - 2× This attack also does 20 damage to 1 of your opponent's Benched Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em> [🆕🆕🆕 D612: BUILT — WP06]
 - 2× This attack does 30 damage to each of your opponent's Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em> [🆕🆕🆕 D612: BUILT — WP06]
 - 1× Discard 2 &lt;span class="energy-symbol Fighting" title="Fighting">Fighting&lt;/span> Energy from this Pokémon. [🆕🆕🆕 D612: BUILT — WP06]

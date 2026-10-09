@@ -922,6 +922,32 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
   }
 }
 
+/** 🆕🆕🆕 D613 — DOES THE PRINTED NOUN NAME ITS CARD? A `byName` noun ("a Shedinja", "up to 3
+    Charjabug"), a name fragment ("Pokémon that have \"Koffing\" in their name") or an `anyOf` of
+    only such nouns ("a Silcoon or a Cascoon", "Maushold and Maushold ex"). This is the printed
+    permission `benchMatches` reads: a card that names the Pokémon it puts onto the Bench may put
+    an Evolution card there. Every other noun is a class ("{W} Pokémon", "Pokémon"). An empty
+    `anyOf` names nothing. R-BN1 ⚠️ UNRULED: the name FRAGMENT is read as naming its card too; moot on
+    today's pool (every card with "Koffing" or "Rotom" in its name is a Basic). Reversal: drop the
+    `pokemonNameContaining` arm. */
+export function namesItsCard(filter: CardFilter): boolean {
+  if (filter.kind === "byName" || filter.kind === "pokemonNameContaining") return true;
+  return filter.kind === "anyOf" && filter.filters.length > 0 && filter.filters.every(namesItsCard);
+}
+
+/** 🆕🆕🆕 D613 — `matchesFilter` for a card an effect puts ONTO THE BENCH (§7: only Basic Pokémon
+    can be put onto the Bench unless the card says otherwise). A Pokémon card that is not Basic is
+    refused unless the noun names its card (`namesItsCard`: Ninjask's "a Shedinja", Charjabug's
+    "up to 3 Charjabug"). A non-Pokémon card that matches is the filter's business, as before
+    (`BENCHABLE_RETRIEVAL_KINDS`, effects.ts). Read off the FILTER and not off a new op field, so
+    a program persisted in a v42 `MatchRecord` (a parked Cast-Off Shell confirm holds its
+    `searchDeck` op) reads the same permission after the deploy. Retires R-BC1 and D238's
+    any-stage reading. */
+export function benchMatches(card: Card | undefined, filter: CardFilter): boolean {
+  if (card === undefined || !matchesFilter(card, filter)) return false;
+  return card.category !== "Pokemon" || card.stage === "Basic" || namesItsCard(filter);
+}
+
 export interface ParsedDamage {
   /** The numeric part — what M2 applies. */
   base: number;

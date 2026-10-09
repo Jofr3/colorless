@@ -30237,6 +30237,25 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D613 — fix-up: the Jet Energy switch's Knock Out check and Basic-only bench placement (engine 0.496.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D612 (`662f1911`), NOT committed.
+
+- **The Jet sweep (D610's open review finding).** turn.ts `attachEnergy`: Jet Energy's `switchIfBenched` rider is the one
+  `switchInto` route outside a program; the mid-turn Knock Out sweep now runs whenever it moved a body, so Holes counters that
+  make the moved body lethal Knock it Out. Every other `switchInto` route is a program (`settleProgram` / `finishAttack`), and
+  `retreat` sweeps itself.
+- **Basic-only bench placement (R-BC1 / D238 retired).** cards.ts `benchMatches` / `namesItsCard`: an effect that puts a card
+  onto the Bench admits Basic Pokémon only unless its noun names its card. Asked by interpreter.ts at `searchDeck` (and its
+  `orElse`), `discardRetrievalCandidates`, `lookAtTopN` and `bottomFromOpponentHand`. Corrected: King's Order ×3, Booming Call ×2,
+  Revival Blessing ×3, Summoning Gate ×2, Cinnabar Lure ×2. Kept: the named Stage 1 benches (Charjabug, Lampent, Maushold,
+  Shedinja, Silcoon / Cascoon). The permission is read off the filter, so a persisted program needs no new field.
+- **Readings.** R-BN1 ⚠️ UNRULED: a name fragment ("Koffing" in their name) counts as naming its card; moot today.
+- **Suite.** `switchSweepBenchBasicD613.test.ts` (17) and a census D613 block (3). +15 mutant rows, all killed; one D357 row
+  re-pointed.
+- **Census.** Unchanged (no printing newly built).
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
 ## D612 — WP06: the tcgdex markup normaliser (engine 0.495.0, `MATCH_RECORD_VERSION` stays 42)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D611 (`9aa0ec4c`), NOT committed.
@@ -30254,6 +30273,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   `progress.md` NEXT (b)).
 - **Readings.** R-BC1 (UNRULED): Booming Call ×2 (`30th-109` / `-156`) benches any-stage {N} Pokémon from the discard — D238's
   Kingdra ex reading, now on 2 more printings. Reversal: `stage: "basic"` on a bench destination's typed noun.
+  [🆕🆕🆕 D613 (D539): WITHDRAWN — bench placement is Basic only unless the noun names its card (cards.ts `benchMatches`); R-BC1 is retired, Booming Call benches Basic {N} Pokémon only]
 - **Suite.** `cardTextD612.test.ts` (24), two map.test rungs and a census D612 block (3). +23 mutant rows, all killed; 3 retired.
 - **Census.** Standard pool attacks **2,661 / 2,771**; 1026 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

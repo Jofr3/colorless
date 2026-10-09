@@ -367,8 +367,8 @@ describe("§1 — the prints and the registry rows", () => {
     expect(programFor(WATCHTOWER)).toEqual({ stadium: { disableAbilities: { side: "both", targetType: "Colorless" } } });
   });
 
-  it("the engine is 0.495.0", () => {
-    expect(engineVersion).toBe("0.495.0");
+  it("the engine is 0.496.0", () => {
+    expect(engineVersion).toBe("0.496.0");
   });
 });
 

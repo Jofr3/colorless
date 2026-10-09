@@ -20265,6 +20265,16 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.495.0 → **0.496.0** (D613 — FIX-UP: THE JET ENERGY SWITCH'S KNOCK OUT CHECK
+    AND BASIC-ONLY BENCH PLACEMENT; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT
+    D613")). turn.ts `attachEnergy`: Jet Energy's `switchIfBenched` rider is the one `switchInto` route
+    outside a program, and the mid-turn Knock Out sweep now runs whenever it moved a body (Team Rocket's
+    Dugtrio "Holes" counters were never checked there — D610's open review finding). cards.ts (NEW)
+    `benchMatches` / `namesItsCard`: an effect that puts a card onto the Bench admits Basic Pokémon only
+    unless the printed noun names its card; asked by interpreter.ts at `searchDeck`, its `orElse` search,
+    `discardRetrievalCandidates`, `lookAtTopN` and `bottomFromOpponentHand`. Kingdra ex ×3, Salamence ex
+    ×2, Rabsca ×3, Reuniclus ×2 and Tatsugiri ex ×2 now bench Basics only; R-BC1 and D238's any-stage
+    reading retired. `switchSweepBenchBasicD613.test.ts`.)
     🆕🆕🆕 engineVersion 0.494.0 → **0.495.0** (D612 — WP06: THE tcgdex MARKUP NORMALISER;
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D612")). cardText.ts (NEW):
     `normalizeCardText` rewrites tcgdex's `<em>` / energy-symbol `<span>` HTML, "[R]" tokens and type
@@ -20275,7 +20285,8 @@ import type { GameState, Seat } from "./types";
     into the LOCAL D1 (90 text columns on 87 rows; every `sv` text is a fixed point). 18 `me` attack
     texts / 21 printings become reader-built; registry.ts `INFERNO_X` (R-IX1 resolved) and
     `STEALTHY_SLASH` RETIRED as redundant (`PHOTON_BULLETS` stays: its normalised text is still
-    unread). R-BC1 UNRULED: Booming Call ×2 inherits D238's any-stage bench reading.
+    unread). R-BC1 UNRULED: Booming Call ×2 inherits D238's any-stage bench reading. [🆕🆕🆕 D613 (D539):
+    WITHDRAWN — bench placement is Basic only unless the noun names its card; R-BC1 retired.]
     `censusAttackCorpusMe.ts` regenerated (451 → 442 sentences). `cardTextD612.test.ts`.)
     🆕🆕🆕 engineVersion 0.493.0 → **0.494.0** (D611 — WP21: THE REST OF THE `me` ACTIVATED ABILITIES,
     PLUS DRAGONAIR; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D611")).
@@ -25450,7 +25461,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.495.0";
+export const engineVersion = "0.496.0";
 
 export type {
   ApplyResult,

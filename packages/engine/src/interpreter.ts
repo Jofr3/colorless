@@ -3,6 +3,8 @@ import {
   activeTop,
   applyDamageModifier,
   attacksOf,
+  // 🆕🆕🆕 D613 — the Bench destination's noun test (Basic only unless the noun names its card).
+  benchMatches,
   // 🆕 D374 — the FIRST uid→Card resolution in this file. Every other name read here
   // goes through `topCardOf` (a Pokémon's identity is its stack TOP, §1.2); an
   // ATTACHED Energy is a bare uid with no stack, so it resolves through the same
@@ -1359,8 +1361,13 @@ export function discardRetrievalCandidates(
   record: EffectRecord = {},
 ): string[] {
   const barred = new Set(op.exclude === undefined ? [] : recorded(record, op.exclude));
+  // 🆕🆕🆕 D613 — a Bench destination asks `benchMatches`: Kingdra ex "King's Order" and Salamence ex
+  // "Booming Call" ("{W}" / "{N} Pokémon") and Rabsca "Revival Blessing" bench Basic Pokémon only.
   return state.players[seat].discard.filter(
-    (uid) => !barred.has(uid) && matchesFilter(cardOf(state, uid), op.filter),
+    (uid) =>
+      !barred.has(uid) &&
+      matchesFilter(cardOf(state, uid), op.filter) &&
+      (op.dest !== "bench" || benchMatches(cardOf(state, uid), op.filter)),
   );
 }
 
@@ -3253,8 +3260,13 @@ function stepOp(
             : g.filter,
         max: i === 0 && op.maxRecorded !== undefined ? recorded(record, op.maxRecorded).length : g.max,
       }));
+      // 🆕🆕🆕 D613 — a Bench destination asks `benchMatches` (Basic only unless the noun names its
+      // card) on the group sizes and, one line below the union, on the offer; every other
+      // destination is `matchesFilter`, byte for byte.
+      const onBench = (uid: string, filter: CardFilter) =>
+        op.dest !== "bench" || benchMatches(cardOf(state, uid), filter);
       const groupMatches = (filter: CardFilter) =>
-        state.players[ctx.seat].deck.filter((uid) => matchesFilter(cardOf(state, uid), filter));
+        state.players[ctx.seat].deck.filter((uid) => matchesFilter(cardOf(state, uid), filter) && onBench(uid, filter));
       // The union is taken in DECK ORDER off the deck itself, one pass, so a uid
       // matching two filters appears exactly once in the offer — the caps below
       // are what make it count against both (effects.ts states the rule).
@@ -3262,6 +3274,7 @@ function stepOp(
         .filter((uid) =>
         groups.some((g) => matchesFilter(cardOf(state, uid), g.filter)),
         )
+        .filter((uid) => groups.some((g) => onBench(uid, g.filter)))
         // 🆕🆕🆕 D565 — Impromptu Carrier's attach offers SIMULATED Tools only (R-IC1),
         // through the ONE predicate `attachTool` asks (`toolCardSimulated`), and only while
         // the program's own body has a free Tool slot (§7.4: an occupied slot offers
@@ -3727,8 +3740,9 @@ function stepOp(
       // candidates, the Bench clamp, the destination and the reveal row all read `lookOwner`,
       // so the five move together; the CONTROLLER still answers (no `decider`).
       const top = lookWindow(state.players[lookOwner(op, ctx)].deck, op);
+      // 🆕🆕🆕 D613 — a Bench destination asks `benchMatches` (Basic only unless the noun names its card).
       const matches = (uid: string, filter: CardFilter) =>
-        matchesFilter(cardOf(state, uid), filter);
+        op.dest === "bench" ? benchMatches(cardOf(state, uid), filter) : matchesFilter(cardOf(state, uid), filter);
       const also = op.also;
       const candidates = top.filter(
         (uid) => matches(uid, op.filter) || (also !== undefined && matches(uid, also.filter)),
@@ -14823,6 +14837,8 @@ function bottomFromOpponentHandOffer(
   const candidates: string[] = [];
   for (const uid of hand) {
     if (op.filter !== undefined && !matchesFilter(cardOf(state, uid), op.filter)) continue;
+    // 🆕🆕🆕 D613 — onto their Bench, Basic only (every printing already says "Basic Pokémon").
+    if (op.dest === "bench" && !benchMatches(cardOf(state, uid), op.filter ?? { kind: "anyCard" })) continue;
     const key = cardIdentity(state, uid);
     const already = kept.get(key) ?? 0;
     if (already >= cap) continue;
@@ -19715,7 +19731,8 @@ function searchDeckOrElse(
   const matching = (filter: CardFilter) =>
     deck.filter((uid) => {
       const card = cardOf(state, uid);
-      return card !== undefined && matchesFilter(card, filter);
+      // 🆕🆕🆕 D613 — a Bench destination asks `benchMatches` (no printing benches here today).
+      return card !== undefined && (op.dest === "bench" ? benchMatches(card, filter) : matchesFilter(card, filter));
     });
   const firstMatches = matching(op.filter);
   const firstMax =

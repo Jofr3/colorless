@@ -2159,6 +2159,17 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D613 — TWO RULE FIXES, NO PERSISTED SHAPE.** (Placed ABOVE the D612 block.)
+    (1) turn.ts `attachEnergy` runs the mid-turn Knock Out sweep after a Jet Energy switch: control
+    flow only. A v42 record saved on 0.495 with a lethal body left in play by that route keeps it until
+    the next sweep (any mid-turn sweep or the Checkup collects every lethal body). (2) Bench placement
+    is Basic only unless the printed noun names its card (cards.ts `benchMatches`). The permission is
+    read off the `CardFilter`, which a persisted program already carries (a parked Cast-Off Shell
+    confirm holds its `searchDeck` op), so no op gained a field. A bench `chooseCards` prompt parked on
+    0.495 keeps its persisted candidates and is validated against them, so that one answer may still
+    bench an Evolution card; a bench op that has not run yet reads the new rule. Rollback to 0.495 is
+    clean: the shapes are the same and the any-stage reading returns.
+
     🆕🆕🆕 **STAYS 42 AT D612 — WP06 CHANGES HOW A CARD ROW'S TEXT IS READ, NOT ANY PERSISTED SHAPE.**
     (Placed ABOVE the D611 block.) The D581 / D583 lesson applies: a v42 `cardPool` persists whole
     Card faces, so a match created before the remote re-ingest holds tcgdex's RAW text (`<em>`,
