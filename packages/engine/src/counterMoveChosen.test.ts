@@ -551,6 +551,10 @@ describe("§11 — the block refuses an ACTIVE destination and has no business w
     // wrong question — and answering it would refuse a move the printed block
     // never touched, on the evidence of a different Pokémon. A build that kept the
     // gate unconditional fails HERE and passes the case above.
+    // [🆕🆕🆕 D621 (D539): ~~"Active-Spot fact by construction"~~ / ~~"unconditional fails HERE"~~ —
+    // WITHDRAWN: the gate IS unconditional since D621 but asked ON the destination body (Acerola's
+    // Mischief's shield follows its body to the Bench, R-AM1), so this unshielded Benched body still
+    // takes the pile; a build asking the ACTIVE's block of a Benched destination fails HERE.]
     const first = declare(blockedBoard(), CHOSEN_INDEX);
     const done = mustApply(first.state, pick(P2_BENCH_0));
     expect(done.state.players.p2.bench[0]?.damage).toBe(PILE);

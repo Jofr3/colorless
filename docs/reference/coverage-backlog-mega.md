@@ -6,6 +6,32 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D621 update (engine 0.504.0) — WP24c + WP23 (persisted side state, `MATCH_RECORD_VERSION` 42 → 43)
+
+5 texts / 16 `me` printings (`sideStateMeD621.test.ts`). The NEW optional `SideAttackBonus.attacker`: Gladion's Final Battle ×3
+`me05-077` / `-108` / `-118` (Cassiopeia's last-card gate, +80 for attackers without a Rule Box, R-GFB1 UNRULED) and Premium Power
+Pro ×3 `me01-124` / `-174`, `me02.5-199` (+30 for {F} attackers, read on the in-play types; two Items stack). The NEW REQUIRED
+`PlayerSide.chosenAttackShield` (op `installChosenAttackShield`): Acerola's Mischief ×4 `me01-113` / `-165` / `-183`, `me02.5-180`
+(R-AM1 UNRULED: the shield follows the body to the Bench and through evolution). The NEW REQUIRED `PlayerSide.sideRetreatLock` (op
+`lockSideRetreat`): Roxie's Performance ×3 `me04-081` / `-112` / `-121` (R-RP1 UNRULED: read live). Dawn ×3 `me02-087` / `-118` /
+`-129` is Larry's Skill's `also` search by stage. A v42 match record is MIGRATED (two `null` side keys, no D1 read). **Finished:** all
+16. **Dropped and named:** Iron Defender ×2 `me01-118` / `me05-110` — an Item whose two plays stack on `sideDamageReduction`, a
+record D564 overwrites; it needs that persisted record made a summed list. WP12's four attack texts (D619) did not ride the bump.
+Review fix: the shield is honoured against PLACED counters on a Benched body too (`placeSnipe`'s put-counter Bench arm and a
+counter move's Benched destination now ask §11 of that body), so Dragapult ex "Phantom Dive" cannot put counters on it.
+Second review fix: the shield ends when its body leaves play (R-AM1 made true). Known gap, R-AM2 UNRULED: an `ignoreWR` snipe or
+spread from a Pokémon ex passes it — Arboliva ex "Oil Salvo", Flygon ex "Sonic Peridot" and Vaporeon ex "Severe Squall" land
+through it under D400/D492's reading of the bare W/R tail (splitting that tail from the Feint form is a separate slice).
+
+| Column | `me` built / units (D621) | Standard pool D621 |
+|---|---|---|
+| Attacks | 963 / 1,039 | **2,695 / 2,771** |
+| Abilities | 185 / 234 | **561 / 610** |
+| Trainers | 154 / 183 (+16) | **418 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1111** (1095 + 16).
+
 ## 🆕 D620 update (engine 0.503.0) — WP10 + WP26
 
 8 texts / 14 `me` units on 12 printings (`prizesToolsMeD620.test.ts`). WP10: the NEW `DamageCountSource.yourPrizesTaken` on Luxray
@@ -34,7 +60,7 @@ Generator" `me02.5-064` / `-229` and three clause-table rows on D564's `youPlaye
 ex "Wicked Impact" `me02.5-162`, Espurr "Buddy Attack" `me04-036`, Hippowdon "Twister Spewing" `me03-040` (a gated mill).
 **Finished:** all 10. **Dropped and named:** WP12's four attack texts / 5 printings — Heatran "Lava Wall" `me05-007`, Manectric
 "Flashing Barrier" `me05-024` / `-089`, Deoxys "Psy Protection" `me04-033`, Bronzong "Metal Block" `me05-064`: a new attacker class
-(Burned / Evolution / has an Ability) on persisted next-turn state owes `MATCH_RECORD_VERSION` 42 → 43 (pay it with WP24c / WP23).
+(Burned / Evolution / has an Ability) on persisted next-turn state owes `MATCH_RECORD_VERSION` 42 → 43 (pay it with WP24c / WP23). [🆕🆕🆕 D621 (D539): D621 paid 42 → 43 for WP24c / WP23 only; these four still owe a bump.]
 
 | Column | `me` built / units (D619) | Standard pool D619 |
 |---|---|---|
@@ -74,7 +100,7 @@ gate on Prism Tower in play, a second Stadium the same turn, and a named HP bonu
 **Left for WP24c** (3 texts / 10 printings, one `MATCH_RECORD_VERSION` bump with a migration): Gladion's Final Battle ×3
 `me05-077` / `-108` / `-118` (an attacker filter on the persisted side-wide bonus, plus a last-card gate), Acerola's Mischief ×4
 `me01-113` / `-165` / `-183` / `me02.5-180` (a next-turn shield against ex on a chosen body) and Roxie's Performance ×3
-`me04-081` / `-112` / `-121` (a next-turn Poisoned-can't-retreat side lock).
+`me04-081` / `-112` / `-121` (a next-turn Poisoned-can't-retreat side lock). [🆕🆕🆕 D621: all 10 BUILT.]
 
 | Column | `me` built / units (D617) | Standard pool D617 |
 |---|---|---|
@@ -402,7 +428,7 @@ Sableye, Zarude ×2. **Dropped:** Celebration ×2 (the take-then-shuffle order).
 six-name play gate) and Emma ×2 (reveal, then a card per Pokémon in the opponent's hand — the new `drawCards.per` member).
 **Still open in WP24 (named):** AZ's Tranquility ×3 (heal the demoted ex), Gladion's Final Battle ×3 (an attacker filter on
 the side-wide bonus), Grimsley's Move ×2 (a "not your first turn" gate), Gwynn ×3 (a draw per recorded card), Naveen ×2
-(an uncapped hand discard and a deck-not-empty gate); WP24b: Acerola's Mischief ×4, Roxie's Performance ×3. [🆕🆕🆕 D617: AZ's Tranquility, Grimsley's Move, Gwynn and Naveen BUILT by WP24b, above, with Pokémon Center Lady; Gladion's Final Battle, Acerola's Mischief and Roxie's Performance left for WP24c.]
+(an uncapped hand discard and a deck-not-empty gate); WP24b: Acerola's Mischief ×4, Roxie's Performance ×3. [🆕🆕🆕 D617: AZ's Tranquility, Grimsley's Move, Gwynn and Naveen BUILT by WP24b, above, with Pokémon Center Lady; Gladion's Final Battle, Acerola's Mischief and Roxie's Performance left for WP24c.] [🆕🆕🆕 D621: those three BUILT.]
 
 | Column | `me` built / units (D599) | Standard pool D599 |
 |---|---|---|
@@ -619,7 +645,7 @@ Rosa's Encouragement ×3 (`morePrizesThanOpponent` + `attachEnergyFrom` discard 
 `AttachTargetRiders.stage2Only`), Rust Syndicate Grunt ×2 (last-turn-KO gate + `discardEnergy` `opponentChosen`),
 Waitress (`attachFromTop` 6 / 1), Hole-Digging Shovel (`discardDeckTop self 2`) and Lumiose Galette (`heal self` 20 +
 `recoverOneStatus`). **Dropped:** Pokémon Center Lady (its recovery addresses the healed body — a second `healChosen`
-rider). [🆕🆕🆕 D617: BUILT, `healChosen.recoverHealed`.] Dawn ×3 stays WP23.
+rider). [🆕🆕🆕 D617: BUILT, `healChosen.recoverHealed`.] Dawn ×3 stays WP23. [🆕🆕🆕 D621: BUILT.]
 
 | Column | `me` built / units (D588) | Standard pool D588 |
 |---|---|---|
@@ -638,7 +664,7 @@ rider). [🆕🆕🆕 D617: BUILT, `healChosen.recoverHealed`.] Dawn ×3 stays W
 Firebreather ×2 (Shivery Chill's search at {R} / 7), Fighting Gong ×3 (Ethan's Adventure's `anyOf` at 1), Tarragon ×2
 (Lana's Aid's `anyOf` retrieval at {F} / 4), Poké Pad ×3 (Master Ball with `noRuleBox`), Energy Swatter (Ortega's
 first op, `anyEnergy`) and Repel (`opponentSwitchOut`). Two engine lines: Energy Swatter's caption arm and Repel's
-empty-Bench play gate. Nothing dropped from the brief; Premium Power Pro and Iron Defender stay out (WP23).
+empty-Bench play gate. Nothing dropped from the brief; Premium Power Pro and Iron Defender stay out (WP23). [🆕🆕🆕 D621: Premium Power Pro BUILT; Iron Defender dropped.]
 
 | Column | `me` built / units (D587) | Standard pool D587 |
 |---|---|---|
@@ -1155,11 +1181,11 @@ Discard a Pokémon Tool or Special Energy card from 1 of your opponent's Pokémo
 • Shuffle up to 3 {W} Pokémon from your discard pile into your deck.
 • Shuffle up to 3 Basic {W} Energy cards from your discard pile into your deck.
 - 1× **Hole-Digging Shovel** — Discard the top 2 cards of your deck. [🆕🆕🆕 D588: BUILT]
-- 2× **Iron Defender** — During your opponent's next turn, all of your {M} Pokémon take 30 less damage from attacks from your opponent's Pokémon (after applying Weakness and Resistance). (This includes new Pokémon that come into play.)
+- 2× **Iron Defender** — During your opponent's next turn, all of your {M} Pokémon take 30 less damage from attacks from your opponent's Pokémon (after applying Weakness and Resistance). (This includes new Pokémon that come into play.) [🆕🆕🆕 D621: dropped — two plays stack on D564's overwritten `sideDamageReduction`]
 - 2× **Jumbo Ice Cream** — Heal 80 damage from your Active Pokémon that has 3 or more Energy attached.
 - 1× **Lumiose Galette** — Heal 20 damage and remove a Special Condition from your Active Pokémon. [🆕🆕🆕 D588: BUILT]
 - 3× **Poké Pad** — Search your deck for a Pokémon that doesn't have a Rule Box, reveal it, and put it into your hand. Then, shuffle your deck. (Pokémon ex, Pokémon V, etc. have Rule Boxes.) [🆕🆕🆕 D587: BUILT]
-- 3× **Premium Power Pro** — During this turn, attacks used by your {F} Pokémon do 30 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).
+- 3× **Premium Power Pro** — During this turn, attacks used by your {F} Pokémon do 30 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance). [🆕🆕🆕 D621: BUILT]
 - 1× **Repel** — Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.) [🆕🆕🆕 D587: BUILT]
 - 2× **Special Red Card** — You can use this card only if your opponent has 3 or fewer Prize cards remaining.
 
@@ -1217,18 +1243,18 @@ Each Mega Floette ex in play (both yours and your opponent's) gets +150 HP. [�
 - 3× **AZ's Tranquility** — Switch your Active Pokémon with 1 of your Benched Pokémon. If you moved a Pokémon ex to your Bench in this way, heal 80 damage from that Pokémon. [🆕🆕🆕 D599: DROPPED — heal the demoted body, gated on it being an ex] [🆕🆕🆕 D617: BUILT]
 - 4× **Acerola's Mischief** — You can use this card only if your opponent has 2 or fewer Prize cards remaining.
 
-Choose 1 of your Pokémon in play. During your opponent's next turn, prevent all damage from and effects of attacks done to that Pokémon by your opponent's Pokémon ex.
+Choose 1 of your Pokémon in play. During your opponent's next turn, prevent all damage from and effects of attacks done to that Pokémon by your opponent's Pokémon ex. [🆕🆕🆕 D621: BUILT]
 - 2× **Anthea & Concordia** — You can use this card only if you have N's Darmanitan, N's Zoroark ex, N's Vanilluxe, N's Klinklang, N's Reshiram, and N's Zekrom in play.
 
 During this turn, if your opponent's Active Pokémon is Knocked Out by damage from an attack used by your N's Pokémon, take 3 more Prize cards. [🆕🆕🆕 D599: BUILT]
 - 3× **Canari** — You can use this card only if you discard another card from your hand.
 
 Search your deck for up to 4 {L} Pokémon, reveal them, and put them into your hand. Then, shuffle your deck. [🆕🆕🆕 D588: BUILT]
-- 3× **Dawn** — Search your deck for a Basic Pokémon, a Stage 1 Pokémon, and a Stage 2 Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.
+- 3× **Dawn** — Search your deck for a Basic Pokémon, a Stage 1 Pokémon, and a Stage 2 Pokémon, reveal them, and put them into your hand. Then, shuffle your deck. [🆕🆕🆕 D621: BUILT]
 - 2× **Emma** — Your opponent reveals their hand, and you draw a card for each Pokémon you find there. [🆕🆕🆕 D599: BUILT]
 - 2× **Firebreather** — Search your deck for up to 7 Basic {R} Energy cards, reveal them, and put them into your hand. Then, shuffle your deck. [🆕🆕🆕 D587: BUILT]
 - 3× **Gladion's Final Battle** — You can use this card only when it is the last card in your hand.
-During this turn, attacks used by your Pokémon that don't have a Rule Box do 80 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance). (Pokémon ex, Pokémon V, etc. have Rule Boxes.) [🆕🆕🆕 D599: DROPPED — the last-card gate ships (D554); the side bonus needs an attacker filter]
+During this turn, attacks used by your Pokémon that don't have a Rule Box do 80 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance). (Pokémon ex, Pokémon V, etc. have Rule Boxes.) [🆕🆕🆕 D599: DROPPED — the last-card gate ships (D554); the side bonus needs an attacker filter] [🆕🆕🆕 D621: BUILT, `SideAttackBonus.attacker`]
 - 2× **Grimsley's Move** — Look at the top 7 cards of your deck and put a {D} Pokémon you find there onto your Bench. Shuffle the other cards and put them on the bottom of your deck. You can't use this card during your first turn. [🆕🆕🆕 D599: DROPPED — a "not your first turn" play gate] [🆕🆕🆕 D617: BUILT]
 - 3× **Gwynn** — Discard up to 2 Pokémon that don't have a Rule Box from your hand, and draw 3 cards for each card you discarded in this way. (Pokémon ex, Pokémon V, etc. have Rule Boxes.) [🆕🆕🆕 D599: DROPPED — a draw per recorded card] [🆕🆕🆕 D617: BUILT]
 - 3× **Jacinthe** — Heal 150 damage from 1 of your {P} Pokémon. [🆕🆕🆕 D587: BUILT]
@@ -1241,7 +1267,7 @@ During this turn, attacks used by your Pokémon that don't have a Rule Box do 80
 - 3× **Rosa's Encouragement** — You can use this card only if you have more Prize cards remaining than your opponent.
 
 Attach up to 2 Basic Energy cards from your discard pile to 1 of your Stage 2 Pokémon. [🆕🆕🆕 D588: BUILT]
-- 3× **Roxie's Performance** — During your opponent's next turn, their Poisoned Pokémon can't retreat. (This includes newly Poisoned Pokémon.)
+- 3× **Roxie's Performance** — During your opponent's next turn, their Poisoned Pokémon can't retreat. (This includes newly Poisoned Pokémon.) [🆕🆕🆕 D621: BUILT]
 - 2× **Rust Syndicate Grunt** — You can use this card only if any of your Pokémon were Knocked Out during your opponent's last turn.
 
 Discard an Energy from 1 of your opponent's Pokémon. [🆕🆕🆕 D588: BUILT]

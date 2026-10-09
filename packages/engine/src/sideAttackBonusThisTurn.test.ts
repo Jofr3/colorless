@@ -477,10 +477,10 @@ describe("§8 — the seat guard, and sources SUMMED", () => {
   it("the helper pays the TURN'S OWNER and nobody else", () => {
     const state = played().state;
     expect(state.phase).toEqual({ kind: "turn:action", seat: "p1" });
-    expect(sideAttackBonusThisTurn(state, "p1", cardOf("d556-wall-ex"))).toBe(BONUS);
-    expect(sideAttackBonusThisTurn(state, "p2", cardOf("d556-wall-ex"))).toBe(0);
-    expect(sideAttackBonusThisTurn(state, "p1", cardOf("d556-wall"))).toBe(0);
-    expect(sideAttackBonusThisTurn(state, "p1", undefined)).toBe(0);
+    expect(sideAttackBonusThisTurn(state, "p1", cardOf("d556-wall-ex"), null)).toBe(BONUS);
+    expect(sideAttackBonusThisTurn(state, "p2", cardOf("d556-wall-ex"), null)).toBe(0);
+    expect(sideAttackBonusThisTurn(state, "p1", cardOf("d556-wall"), null)).toBe(0);
+    expect(sideAttackBonusThisTurn(state, "p1", undefined, null)).toBe(0);
   });
 
   it("🛑 a hit run for the OTHER seat mid-turn onto P1's Active ex is NOT paid P1's bonus", () => {
@@ -544,8 +544,8 @@ describe("§9 — the bytes, and THE EIGHTH POSITION (`MATCH_RECORD_VERSION` 34 
     expect(applyAction(v34, { type: "attack", seat: "p1", index: REST }).ok).toBe(true);
   });
 
-  it("the engine is 0.503.0", () => {
-    expect(engineVersion).toBe("0.503.0");
+  it("the engine is 0.504.0", () => {
+    expect(engineVersion).toBe("0.504.0");
   });
 });
 

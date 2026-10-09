@@ -461,7 +461,7 @@ describe("D586 §8 — Infernal Slash: discard 4 Basic {R} from hand, or the att
 });
 
 describe("D586 §9 — the version", () => {
-  it("is built at engine 0.503.0", () => {
-    expect(engineVersion).toBe("0.503.0");
+  it("is built at engine 0.504.0", () => {
+    expect(engineVersion).toBe("0.504.0");
   });
 });

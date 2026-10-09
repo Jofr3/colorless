@@ -3377,7 +3377,7 @@ export function attack(
     const bonus =
       attackerPreWRBonus(next, attackerBody, action.seat, defenderCard) +
       boostedAttackDamage(next, attackerBody, printedIndex) +
-      sideAttackBonusThisTurn(next, action.seat, defenderCard);
+      sideAttackBonusThisTurn(next, action.seat, defenderCard, attackerBody);
     // §8.5 step 5, the OTHER pre-W/R term (D149) — the printed "attacks used by
     // the Defending Pokémon do {N} less damage (before applying Weakness and
     // Resistance)", installed onto THIS attacker's body by the opponent's

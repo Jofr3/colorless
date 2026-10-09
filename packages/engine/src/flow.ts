@@ -2812,6 +2812,29 @@ export function discardMisplacedEnergy(state: GameState, events: GameEvent[]): G
   return next;
 }
 
+/** 🆕🆕🆕 §11 (D621, review fix) — Acerola's Mischief's shield ENDS WHEN ITS BODY LEAVES PLAY
+    (R-AM1). The record is keyed by the body's base uid, and a card that leaves play and is put
+    back is a NEW Pokémon with the same uid, so the key alone cannot tell them apart: this state
+    check clears a seat's `chosenAttackShield` whose uid is no longer the base card of one of that
+    seat's in-play bodies. Run by index.ts `applyAction` on every accepted action (D578's net), so
+    a body scooped and replayed in the installer's turn is unshielded. ⚠️ A body that left play
+    and came back inside ONE action would keep it (no such printed route is known). Returns
+    `state` ITSELF when nothing changes. Emits nothing (no wire field, no row). */
+export function clearDepartedChosenShields(state: GameState): GameState {
+  let next = state;
+  for (const seat of SEATS) {
+    const side = next.players[seat];
+    const record = side.chosenAttackShield;
+    // `undefined` is an UNMIGRATED v42 side: skipped, NOT written `null` — a write here would be the
+    // soft landing D124 forbids (the reader, `attackBlockOf`, still throws on it at the first attack).
+    if (record === null || record === undefined) continue;
+    const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+    if (bodies.some((body) => body.stack[0] === record.uid)) continue;
+    next = withSide(next, seat, { ...side, chosenAttackShield: null });
+  }
+  return next;
+}
+
 /** 🆕🆕🆕 §7.4 (D578) — Technical Machine: Fluorite's *"If this card is attached to 1 of your
     Pokémon, discard it at the end of your turn."* — `discardEndOfTurnEnergy`'s Tool twin: every
     attached Tool carrying `toolDiscardAtEndOfYourTurn` on `seat`'s bodies (the TURN OWNER's —

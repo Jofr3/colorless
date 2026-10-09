@@ -571,7 +571,7 @@ describe("§3 — no new persisted byte, in three directions", () => {
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.503.0");
+    expect(engineVersion).toBe("0.504.0");
   });
 });
 

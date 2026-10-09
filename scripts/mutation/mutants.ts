@@ -6247,7 +6247,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.503.0";',
+    find: 'export const engineVersion = "0.504.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -11457,8 +11457,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577 stepped the constant 39 → 40; the patch is still ONE step back.
     // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540) — D579 stepped the constant 40 → 41; the patch is still ONE step back.
     // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540) — D583 stepped the constant 41 → 42; the patch is still ONE step back.
-    find: "export const MATCH_RECORD_VERSION = 42;",
-    replace: "export const MATCH_RECORD_VERSION = 41;",
+    // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540) — D621 stepped the constant 42 → 43; the patch is still ONE step back.
+    find: "export const MATCH_RECORD_VERSION = 43;",
+    replace: "export const MATCH_RECORD_VERSION = 42;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a
@@ -29574,8 +29575,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577 stepped the constant 39 → 40; the patch is still ONE step back.
     // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540) — D579 stepped the constant 40 → 41; the patch is still ONE step back.
     // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540) — D583 stepped the constant 41 → 42; the patch is still ONE step back.
-    find: "export const MATCH_RECORD_VERSION = 42;\n",
-    replace: "export const MATCH_RECORD_VERSION = 41;\n",
+    // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540) — D621 stepped the constant 42 → 43; the patch is still ONE step back.
+    find: "export const MATCH_RECORD_VERSION = 43;\n",
+    replace: "export const MATCH_RECORD_VERSION = 42;\n",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ────────────────────────────────────────────────────────────────────────────
@@ -34505,8 +34507,9 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     // 🆕🆕🆕 D556 - RE-TRANSCRIBED off the bytes (D540): D556's side-wide term now follows the fold
     //    on the same expression, so the anchor carries it and the patch drops ONLY the D546 fold.
-    find: "      : attackerPreWRBonus(state, attacker.active, ctx.seat, target.card) +\n        everyAttackBoostOf(state, attacker.active) +\n        sideAttackBonusThisTurn(state, ctx.seat, target.card);",
-    replace: "      : attackerPreWRBonus(state, attacker.active, ctx.seat, target.card) +\n        sideAttackBonusThisTurn(state, ctx.seat, target.card);",
+    // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the call now passes the attacking body (`SideAttackBonus.attacker`); the mutation and its claim are unchanged.
+    find: "      : attackerPreWRBonus(state, attacker.active, ctx.seat, target.card) +\n        everyAttackBoostOf(state, attacker.active) +\n        sideAttackBonusThisTurn(state, ctx.seat, target.card, attacker.active);",
+    replace: "      : attackerPreWRBonus(state, attacker.active, ctx.seat, target.card) +\n        sideAttackBonusThisTurn(state, ctx.seat, target.card, attacker.active);",
     expectKilledBy: ["packages/engine/src/everyAttackBoost.test.ts"],
   },
   {
@@ -34967,7 +34970,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 30, the row's own pre-bump value.
     // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
     // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 42;",
+    // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 43 since D621; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 43;",
     // 🆕🆕🆕 D549 - RE-ANCHORED AGAIN off the bytes (D540): D549's block now sits between
     //    D548's doc tail and the constant, so the anchor is D549's last two lines and the
     //    patch drops the constant THREE steps, to D547's pre-bump 30.
@@ -35170,7 +35174,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 31, the row's own pre-bump value.
     // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
     // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 42;",
+    // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 43 since D621; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 43;",
     // 🆕🆕🆕 D549 - RE-ANCHORED off the bytes onto D549's doc tail; the patch drops the
     //    constant TWO steps, to D548's pre-bump 31 (a different patch from
     //    `D549-record-version-not-bumped`, one step, same anchor).
@@ -35671,7 +35676,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 32, the row's own pre-bump value.
     // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
     // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 42;",
+    // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 43 since D621; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 43;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 32;",
     expectKilledBy: ["packages/engine/src/sideAttackLock.test.ts", "apps/api/src/lobby/match.test.ts"],
   },
@@ -36266,7 +36272,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 33, the row's own pre-bump value.
     // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
     // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 42;",
+    // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 43 since D621; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 43;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 33;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -36921,7 +36928,8 @@ export const MUTANTS: Mutant[] = [
     what: "attack.ts's main hit stops summing the this-turn side-wide bonus: Black Belt's Training installs and Strike still does 50 into an Active ex. Killed by §3's 90 / 180 / 60 rungs and §5/§7.",
     file: "packages/engine/src/attack.ts",
     // 🆕🆕🆕 D578 — RE-ANCHORED, the claim unchanged (D414): the named buff is keyed on the PRINTED index (`printedIndex`).
-    find: "      boostedAttackDamage(next, attackerBody, printedIndex) +\n      sideAttackBonusThisTurn(next, action.seat, defenderCard);",
+    // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the call now passes the attacking body (`SideAttackBonus.attacker`); the mutation and its claim are unchanged.
+    find: "      boostedAttackDamage(next, attackerBody, printedIndex) +\n      sideAttackBonusThisTurn(next, action.seat, defenderCard, attackerBody);",
     replace: "      boostedAttackDamage(next, attackerBody, printedIndex);",
     expectKilledBy: ["packages/engine/src/sideAttackBonusThisTurn.test.ts"],
   },
@@ -36930,8 +36938,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D556",
     what: "the main hit matches the bonus's `target` against the ATTACKING card instead of the defender (D245's rider read at the wrong end): a non-ex attacker into an Active ex gets 0. Killed by §3.",
     file: "packages/engine/src/attack.ts",
-    find: "      sideAttackBonusThisTurn(next, action.seat, defenderCard);",
-    replace: "      sideAttackBonusThisTurn(next, action.seat, topCardOf(next, attackerBody));",
+    // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the call now passes the attacking body (`SideAttackBonus.attacker`); the mutation and its claim are unchanged.
+    find: "      sideAttackBonusThisTurn(next, action.seat, defenderCard, attackerBody);",
+    replace: "      sideAttackBonusThisTurn(next, action.seat, topCardOf(next, attackerBody), attackerBody);",
     expectKilledBy: ["packages/engine/src/sideAttackBonusThisTurn.test.ts"],
   },
   {
@@ -36939,7 +36948,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D556",
     what: "`snipeActive` stops folding the side-wide bonus: a chosen 30 landing on the Active ex stays 30 where the card says 70. Killed by §4's Active-snipe rung — the second read site is driven on its own board (D432's reason).",
     file: "packages/engine/src/interpreter.ts",
-    find: "        everyAttackBoostOf(state, attacker.active) +\n        sideAttackBonusThisTurn(state, ctx.seat, target.card);",
+    // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the call now passes the attacking body (`SideAttackBonus.attacker`); the mutation and its claim are unchanged.
+    find: "        everyAttackBoostOf(state, attacker.active) +\n        sideAttackBonusThisTurn(state, ctx.seat, target.card, attacker.active);",
     replace: "        everyAttackBoostOf(state, attacker.active);",
     expectKilledBy: ["packages/engine/src/sideAttackBonusThisTurn.test.ts"],
   },
@@ -36957,8 +36967,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D556",
     what: "🛑 the reader loses its seat guard: the bag describes the TURN'S OWNER, and a hit run for the other seat mid-turn is paid the owner's +40 (types.ts's named SEAT hazard). Killed by §8's helper rung and its board rung (P2's 30 onto P1's Active ex reads 70).",
     file: "packages/engine/src/continuous.ts",
-    find: "  if (phaseViewOf(state, seat).activeSeat !== seat) return 0;\n  let total = 0;\n  for (const bonus of state.allowances.sideAttackBonuses) {",
-    replace: "  let total = 0;\n  for (const bonus of state.allowances.sideAttackBonuses) {",
+    // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the reader resolves the attacker card before the loop; the mutation and its claim are unchanged.
+    find: "  if (phaseViewOf(state, seat).activeSeat !== seat) return 0;\n  const attackerCard = attackerBody === null ? undefined : inPlayCardOf(state, attackerBody);\n  let total = 0;\n  for (const bonus of state.allowances.sideAttackBonuses) {",
+    replace: "  const attackerCard = attackerBody === null ? undefined : inPlayCardOf(state, attackerBody);\n  let total = 0;\n  for (const bonus of state.allowances.sideAttackBonuses) {",
     expectKilledBy: ["packages/engine/src/sideAttackBonusThisTurn.test.ts"],
   },
   {
@@ -36966,8 +36977,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D556",
     what: "the reader is routed through §9: any Ability lock in play (`disabledAbilityUids`) cancels the bonus, as it would a `passivesOf` aura. A Trainer's installation is not an Ability. Killed by §7 (Ting-Lu ex's Cursed Land on the attacker, Strike still 90).",
     file: "packages/engine/src/continuous.ts",
-    find: "  if (phaseViewOf(state, seat).activeSeat !== seat) return 0;\n  let total = 0;\n  for (const bonus of state.allowances.sideAttackBonuses) {",
-    replace: "  if (phaseViewOf(state, seat).activeSeat !== seat || disabledAbilityUids(state).size > 0) return 0;\n  let total = 0;\n  for (const bonus of state.allowances.sideAttackBonuses) {",
+    // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the reader resolves the attacker card before the loop; the mutation and its claim are unchanged.
+    find: "  if (phaseViewOf(state, seat).activeSeat !== seat) return 0;\n  const attackerCard = attackerBody === null ? undefined : inPlayCardOf(state, attackerBody);\n  let total = 0;\n  for (const bonus of state.allowances.sideAttackBonuses) {",
+    replace: "  if (phaseViewOf(state, seat).activeSeat !== seat || disabledAbilityUids(state).size > 0) return 0;\n  const attackerCard = attackerBody === null ? undefined : inPlayCardOf(state, attackerBody);\n  let total = 0;\n  for (const bonus of state.allowances.sideAttackBonuses) {",
     expectKilledBy: ["packages/engine/src/sideAttackBonusThisTurn.test.ts"],
   },
   {
@@ -36975,8 +36987,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D556",
     what: "the installer REPLACES the bag instead of appending: sources stop being summed (`seatPreWRDamageBonus`'s rule). Killed by §8's two-installs rung (130, and three entries on the bag).",
     file: "packages/engine/src/interpreter.ts",
-    find: "      sideAttackBonuses: [\n        ...state.allowances.sideAttackBonuses,\n        { amount: op.amount, target: op.target },\n      ],",
-    replace: "      sideAttackBonuses: [{ amount: op.amount, target: op.target }],",
+    // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the entry spreads the optional `attacker`; the mutation and its claim are unchanged.
+    find: "      sideAttackBonuses: [\n        ...state.allowances.sideAttackBonuses,\n        { amount: op.amount, target: op.target, ...attacker },\n      ],",
+    replace: "      sideAttackBonuses: [{ amount: op.amount, target: op.target, ...attacker }],",
     expectKilledBy: ["packages/engine/src/sideAttackBonusThisTurn.test.ts"],
   },
   {
@@ -37203,7 +37216,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 34, the row's own pre-bump value.
     // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
     // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 42;",
+    // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 43 since D621; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 43;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 34;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -40555,7 +40569,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 35, the row's own pre-bump value.
     // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
     // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 42;",
+    // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 43 since D621; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 43;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 35;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -43416,7 +43431,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 36, the row's own pre-bump value.
     // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
     // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 42;",
+    // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 43 since D621; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 43;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 36;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -44854,7 +44870,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 37, the row's own pre-bump value.
     // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
     // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 42;",
+    // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 43 since D621; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 43;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 37;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -46306,7 +46323,8 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 **`MATCH_RECORD_VERSION` STAYS 40 WHILE THE FOURTEENTH POSITION LANDS** — this deploy accepts a v40 record with no `GameState.recentAttackers` and throws at its first attack's end (D326), and a 0.462 rollback silently drops a live +150 window. Killed by match.test.ts's pin and Koraidon §5's raw-source rung.",
     file: "apps/api/src/lobby/match.ts",
     // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): D583 stepped the constant 41 → 42; the patch still writes 40, the claim unchanged.
-    find: "export const MATCH_RECORD_VERSION = 42;",
+    // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): D621 stepped the constant 42 → 43; the patch still writes 40, the claim unchanged.
+    find: "export const MATCH_RECORD_VERSION = 43;",
     replace: "export const MATCH_RECORD_VERSION = 40;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts", "packages/engine/src/koraidonD579.test.ts"],
   },
@@ -46975,8 +46993,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D583",
     what: "the migrated record keeps version 41: `readMatchRecord` refuses it, so the DO would re-migrate on every read. Killed by poolMigrationD583's gate rung.",
     file: "apps/api/src/lobby/match.ts",
-    find: "  return { ...record, version: MATCH_RECORD_VERSION, state: { ...record.state, cardPool } };",
-    replace: "  return { ...record, version: MIGRATABLE_MATCH_RECORD_VERSION, state: { ...record.state, cardPool } };",
+    // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the return builds `state` first (the D621 side keys); the mutation and its claim are unchanged.
+    find: "  return { ...record, version: MATCH_RECORD_VERSION, state };",
+    replace: "  return { ...record, version: MIGRATABLE_MATCH_RECORD_VERSION, state };",
     expectKilledBy: ["apps/api/src/lobby/poolMigrationD583.test.ts"],
   },
   {
@@ -46984,7 +47003,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D583",
     what: "the migration gate drops its version test: a v40 (or v43) record is migrated and stamped v42 instead of retired. Killed by poolMigrationD583's every-other-version rung.",
     file: "apps/api/src/lobby/match.ts",
-    find: "  if ((raw as { version?: unknown }).version !== MIGRATABLE_MATCH_RECORD_VERSION) return null;\n",
+    // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the gate admits v41 OR v42 since D621; deleting it still admits every version.
+    find: "  if (version !== MIGRATABLE_MATCH_RECORD_VERSION && version !== SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION) return null;\n",
     replace: "",
     expectKilledBy: ["apps/api/src/lobby/poolMigrationD583.test.ts"],
   },
@@ -54671,5 +54691,303 @@ export const MUTANTS: Mutant[] = [
     find: "  \"me02.5-206\", // Team Rocket's Hypnotizer\n",
     replace: "",
     expectKilledBy: ["packages/engine/src/censusAtHead.test.ts"],
+  },
+  // ── 🆕🆕🆕 D621 — WP24c + WP23, persisted side state (MRV 43). Every replace names only identifiers its target file binds. ──
+  {
+    id: "D621-bonus-attacker-ignored",
+    decision: "D621",
+    what: "The side bonus never reads its printed attacker noun: a Pokémon ex gets Gladion's +80 and a {C} attacker Premium Power Pro's +30. Killed by sideStateMeD621 §3/§4.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (bonus.attacker !== undefined && !matchesFilter(attackerCard, bonus.attacker)) continue;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-bonus-attacker-entry-dropped",
+    decision: "D621",
+    what: "The installer drops the op's `attacker` from the bag entry: the bonus pays every attacker. Killed by sideStateMeD621 §3/§4.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const attacker = op.attacker === undefined ? {} : { attacker: op.attacker };",
+    replace: "  const attacker = {};",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-shield-unread",
+    decision: "D621",
+    what: "`attackBlockOf` never asks the chosen-body shield: Acerola's Mischief protects nothing. Killed by sideStateMeD621 §5.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (chosen !== null) return chosen;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-shield-damage-only",
+    decision: "D621",
+    what: "The synthesized shield refuses damage only: the opposing ex's Paralysis lands. Killed by sideStateMeD621 §5.",
+    file: "packages/engine/src/continuous.ts",
+    find: "effects: true, fromClass: record.fromClass }",
+    replace: "effects: false, fromClass: record.fromClass }",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-shield-read-on-top-uid",
+    decision: "D621",
+    what: "The reader keys the shield on the TOP card: an evolved chosen body loses it (R-AM1). Killed by sideStateMeD621 §5.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  const base = pokemon.stack[0];",
+    replace: "  const base = topUid(pokemon);",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-shield-any-attacker",
+    decision: "D621",
+    what: "The shield ignores its printed class: a non-ex attack is refused too. Killed by sideStateMeD621 §5.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    return attackerMatchesClass(attacker, record.fromClass)\n      ? { turn: record.turn, effects: true",
+    replace: "    return true\n      ? { turn: record.turn, effects: true",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-shield-window-unchecked",
+    decision: "D621",
+    what: "The shield's turn stamp is not compared: it lasts forever. Killed by sideStateMeD621 §5's two-turns-later case.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (record === null || record.turn !== state.turn || record.uid !== base) continue;",
+    replace: "    if (record === null || record.uid !== base) continue;",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-shield-install-plus-two",
+    decision: "D621",
+    what: "The shield is stamped for the installer's own next turn: the opponent's attack lands. Killed by sideStateMeD621 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "chosenAttackShield: { turn: state.turn + 1, uid: base",
+    replace: "chosenAttackShield: { turn: state.turn + 2, uid: base",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-shield-install-top-uid",
+    decision: "D621",
+    what: "The installer records the TOP uid: an already-evolved body is not matched by the base-keyed reader. Killed by sideStateMeD621 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const base = body?.stack[0];",
+    replace: "  const base = body === undefined ? undefined : topUid(body);",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-shield-offers-opponent",
+    decision: "D621",
+    what: "The pick is offered over the OPPONENT's bodies. Killed by sideStateMeD621 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        ownInPlayRefs(state, ctx.seat),\n        (ref) => installChosenAttackShield(",
+    replace: "        ownInPlayRefs(state, otherSeat(ctx.seat)),\n        (ref) => installChosenAttackShield(",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-shield-answer-ignored",
+    decision: "D621",
+    what: "The parked pick's answer installs nothing. Killed by sideStateMeD621 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "return pickedPokemon(choice) ? installChosenAttackShield(state, choice.ref, op, ctx, events) : state;",
+    replace: "return state;",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-retreat-lock-unread",
+    decision: "D621",
+    what: "`retreatLocked` never asks Roxie's side record: a Poisoned Active retreats. Killed by sideStateMeD621 §6.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (sideRetreatLocked(state, pokemon)) return true;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-retreat-lock-any-condition",
+    decision: "D621",
+    what: "The lock ignores the printed Poisoned filter: every Active is locked. Killed by sideStateMeD621 §6.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (uid === undefined || pokemon.conditions.poisonDamage <= 0) return false;",
+    replace: "  if (uid === undefined) return false;",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-retreat-lock-window",
+    decision: "D621",
+    what: "The lock's turn stamp is not compared: it lasts forever. Killed by sideStateMeD621 §6.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (lock === null || lock.turn !== state.turn) continue;",
+    replace: "    if (lock === null) continue;",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-retreat-lock-own-side",
+    decision: "D621",
+    what: "Roxie's Performance locks the PLAYER's own side. Killed by sideStateMeD621 §6.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const victim = otherSeat(ctx.seat);\n  events.push({ type: \"SIDE_RETREAT_LOCKED\"",
+    replace: "  const victim = ctx.seat;\n  events.push({ type: \"SIDE_RETREAT_LOCKED\"",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-gladion-gate-dropped",
+    decision: "D621",
+    what: "Gladion's Final Battle loses its last-card gate. Killed by sideStateMeD621 §2/§3.",
+    file: "packages/engine/src/registry.ts",
+    find: "const GLADIONS_FINAL_BATTLE: CardProgram = {\n  trainerPlayableIf: { kind: \"yourHandExactly\", count: 1 },\n",
+    replace: "const GLADIONS_FINAL_BATTLE: CardProgram = {\n",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-ppp-colorless",
+    decision: "D621",
+    what: "Premium Power Pro boosts {C} attackers instead of {F}. Killed by sideStateMeD621 §2/§4.",
+    file: "packages/engine/src/registry.ts",
+    find: "attacker: { kind: \"typedPokemon\", pokemonType: \"Fighting\" },",
+    replace: "attacker: { kind: \"typedPokemon\", pokemonType: \"Colorless\" },",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-acerola-three-or-fewer",
+    decision: "D621",
+    what: "Acerola's Mischief is playable at 3 Prizes left. Killed by sideStateMeD621 §2/§5.",
+    file: "packages/engine/src/registry.ts",
+    find: "  trainerPlayableIf: { kind: \"opponentPrizesRemaining\", counts: [0, 1, 2] },\n  trainer: [{ op: \"installChosenAttackShield\"",
+    replace: "  trainerPlayableIf: { kind: \"opponentPrizesRemaining\", counts: [0, 1, 2, 3] },\n  trainer: [{ op: \"installChosenAttackShield\"",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-dawn-stage2-dropped",
+    decision: "D621",
+    what: "Dawn's Stage 2 group is dropped. Killed by sideStateMeD621 §2/§7.",
+    file: "packages/engine/src/registry.ts",
+    find: "        { filter: { kind: \"stagePokemon\", stage: \"Stage2\" }, max: 1 },\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-migration-v42-refused",
+    decision: "D621",
+    what: "A v42 record is not migratable: it would be retired. Killed by sideStateMigrationD621.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "  if (version !== MIGRATABLE_MATCH_RECORD_VERSION && version !== SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION) return null;",
+    replace: "  if (version !== MIGRATABLE_MATCH_RECORD_VERSION) return null;",
+    expectKilledBy: ["apps/api/src/lobby/sideStateMigrationD621.test.ts"],
+  },
+  {
+    id: "D621-migration-keys-skipped",
+    decision: "D621",
+    what: "The migration restamps the version without writing the two side keys: the first attack throws. Killed by sideStateMigrationD621.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "  const state = withD621SideKeys({ ...record.state, cardPool });",
+    replace: "  const state = { ...record.state, cardPool };",
+    expectKilledBy: ["apps/api/src/lobby/sideStateMigrationD621.test.ts"],
+  },
+  {
+    id: "D621-migration-v42-asks-d1",
+    decision: "D621",
+    what: "A v42 record's load asks D1 for an empty pool. Killed by sideStateMigrationD621's never-asked loader.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "  const fresh = ids.length === 0 ? {} : await loadPool(ids);",
+    replace: "  const fresh = await loadPool(ids);",
+    expectKilledBy: ["apps/api/src/lobby/sideStateMigrationD621.test.ts"],
+  },
+  {
+    id: "D621-migration-v42-pool-refreshed",
+    decision: "D621",
+    what: "A v42 record's Trainer faces are refreshed too. Killed by sideStateMigrationD621 (the pool is untouched).",
+    file: "apps/api/src/lobby/match.ts",
+    find: "  if (record.version === MIGRATABLE_MATCH_RECORD_VERSION) {",
+    replace: "  if (record.version >= MIGRATABLE_MATCH_RECORD_VERSION) {",
+    expectKilledBy: ["apps/api/src/lobby/sideStateMigrationD621.test.ts"],
+  },
+  {
+    id: "D621-log-attacker-branch-inverted",
+    decision: "D621",
+    what: "The boosted row's attacker branch is inverted: Gladion's row reads as every attacker's. Killed by sideStateMeD621 §3.",
+    file: "packages/engine/src/log.ts",
+    find: "        ...(event.attacker === undefined",
+    replace: "        ...(event.attacker !== undefined",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-empty-side-keys-dropped",
+    decision: "D621",
+    what: "`emptySide` writes neither D621 key: every attack reads `undefined` and throws. Killed by sideStateMeD621.",
+    file: "packages/engine/src/setup.ts",
+    find: "    chosenAttackShield: null,\n    sideRetreatLock: null,\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-census-key-unrecorded",
+    decision: "D621",
+    what: "The D621 census list forgets Dawn: the partition and the 154 no longer hold. Killed by the census D621 block.",
+    file: "packages/engine/src/censusAtHead.test.ts",
+    find: "  ...[\"me02-087\", \"me02-118\", \"me02-129\"], // Dawn\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D621-bench-placement-unshielded",
+    decision: "D621",
+    what: "`placeSnipe`'s put-counter Bench arm stops asking the §11 funnel (D150's recorded gap reopened): Phantom Dive's counters land on the Acerola-shielded Benched body, and a Mist-style aura's Benched holder takes a put-counter pick (D450's asymmetry). Killed by sideStateMeD621 §5 and counterPutChosen §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (effectRefused(next, benchVictim, ctx, events, pokemon)) {\n        bench.push(pokemon);\n        continue;\n      }\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts", "packages/engine/src/counterPutChosen.test.ts"],
+  },
+  {
+    id: "D621-move-destination-active-only",
+    decision: "D621",
+    what: "`moveCountersFromBench` asks the §11 funnel only of an Active destination (the pre-D621 gate): a counter move onto the Acerola-shielded Benched body lands. Killed by sideStateMeD621 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (effectRefused(state, dest.seat, ctx, events, target)) {\n",
+    replace: "  if (dest.spot.spot === \"active\" && effectRefused(state, dest.seat, ctx, events)) {\n",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-shield-outlives-its-body",
+    decision: "D621",
+    what: "`applyAction` never clears a departed body's shield (R-AM1): a body scooped and replayed in the installer's turn keeps Acerola's Mischief. Killed by sideStateMeD621 §5.",
+    file: "packages/engine/src/index.ts",
+    find: "  const cleared = clearDepartedChosenShields(swept);",
+    replace: "  const cleared = swept;",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-shield-clear-reads-top-uid",
+    decision: "D621",
+    what: "The departed-body check compares the TOP uid: an evolved shielded body loses Acerola's Mischief on the evolve. Killed by sideStateMeD621 §5.",
+    file: "packages/engine/src/flow.ts",
+    find: "    if (bodies.some((body) => body.stack[0] === record.uid)) continue;",
+    replace: "    if (bodies.some((body) => topUid(body) === record.uid)) continue;",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-clear-lands-an-unmigrated-side",
+    decision: "D621",
+    what: "The departed-body check treats an absent key as a departed record and writes `null`: an unmigrated v42 state is silently migrated at setup and its first attack no longer throws (D124's soft landing). Killed by sideStateMigrationD621.",
+    file: "packages/engine/src/flow.ts",
+    find: "    if (record === null || record === undefined) continue;",
+    replace: "    if (record === null) continue;",
+    expectKilledBy: ["apps/api/src/lobby/sideStateMigrationD621.test.ts"],
+  },
+  {
+    id: "D621-bench-snipe-block-under-ignoreWR",
+    decision: "D621",
+    what: "`placeSnipe` asks the §11 block OUTSIDE its `ignoreWR` guard (R-AM2 reversed at one site): Twin Shotels' Feint form is stopped by Acerola's Mischief on a Benched body. Killed by sideStateMeD621 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          attackDamageBlocked(next, pokemon, attackerCard, wouldDeal, ctx))) ||",
+    replace: "          false)) || attackDamageBlocked(next, pokemon, attackerCard, wouldDeal, ctx) ||",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
+  },
+  {
+    id: "D621-active-snipe-block-under-ignoreWR",
+    decision: "D621",
+    what: "`snipeActive` asks the §11 block OUTSIDE its `ignoreWR` guard (R-AM2 reversed at one site): Twin Shotels' Feint form is stopped by Acerola's Mischief on the Active. Killed by sideStateMeD621 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        attackDamageBlocked(state, target.active, attacker?.card, wouldDeal, ctx))) ||",
+    replace: "        false)) || attackDamageBlocked(state, target.active, attacker?.card, wouldDeal, ctx) ||",
+    expectKilledBy: ["packages/engine/src/sideStateMeD621.test.ts"],
   },
 ];

@@ -214,8 +214,8 @@ function damageRow(events: readonly GameEvent[]): Extract<GameEvent, { type: "DA
 const SCOV_SPOT: Spot = { id: SCOVILLAIN, under: [CAPSAKID] };
 
 describe("D578 Scovillain §0 — the version", () => {
-  it("is built at engine 0.503.0", () => {
-    expect(engineVersion).toBe("0.503.0");
+  it("is built at engine 0.504.0", () => {
+    expect(engineVersion).toBe("0.504.0");
   });
 });
 
@@ -468,6 +468,8 @@ const ALLOWLIST: Record<string, string> = {
   "filter · continuous.ts · countEnergyInPlay · inPlayCardOf(state, holder) · filter": E,
   "filter · continuous.ts · energyMayBeAttachedTo · topCardOf(state, holder) · { kind: \"ownerPokemon\", owner }": B,
   "filter · continuous.ts · groupShieldedFromAttackEffects · targetTop · filter": E,
+  // 🆕🆕🆕 D621 — Gladion's Final Battle / Premium Power Pro's attacker noun, on the attacker's `inPlayCardOf`.
+  "filter · continuous.ts · sideAttackBonusThisTurn · attackerCard · bonus.attacker": E,
   "filter · continuous.ts · koEnergyRescueUids · cardOfUid(state, uid) · { kind: \"basicEnergy\", energyType }": `${P} — an Energy card`,
   "filter · continuous.ts · koEnergyRescueUids · inPlayCardOf(state, body) · { kind: \"typedPokemon\", pokemonType: rescued }": E,
   "filter · continuous.ts · opposingRetreatSurcharge · targetTop · aura.target": E,

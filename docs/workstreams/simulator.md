@@ -11431,7 +11431,10 @@ body *"for the reason these sites must be TOTAL rather than case-covering"* (the
 interpreter's own words, three lines away). **Unreachable today** — a wide block can
 only ever be live on an Active — so this slice, whose constraint was test-only, left
 it and wrote it down with its line number. One line plus one probe board whenever
-someone next touches `placeSnipe`.
+someone next touches `placeSnipe`. [🆕🆕🆕 D621 (D539): ~~"a wide block can only ever be live
+on an Active"~~ — WITHDRAWN: Acerola's Mischief's shield follows its body to the Bench (R-AM1).
+D621 added the line (`effectRefused` on the picked Benched body) and the probe board
+(`sideStateMeD621.test.ts` §5, Phantom Dive's shape).]
 
 ### That the harness is pinned to the ENGINE, not to itself
 - Dropping `attackEffectRefused` from `preventRetreat` (interpreter.ts) **fails 2**.
@@ -20727,6 +20730,9 @@ literal**, so a rename owes a `MATCH_RECORD_VERSION` bump.
 this seat's **ACTIVE**?* A §11 block is an Active-Spot fact by construction, so on
 a BENCHED destination it is the wrong question, and answering it would refuse a
 move the printed block never touched on the evidence of a different Pokémon.
+[🆕🆕🆕 D621 (D539): ~~"an Active-Spot fact by construction"~~ — WITHDRAWN: Acerola's Mischief's
+shield follows its body to the Bench (R-AM1). Since D621 the gate is asked of every destination,
+ON the destination body.]
 Driven in **both** directions on ONE board. `moveCountersToDefender` is
 byte-identical (its destination is always an Active), and both ops now share ONE
 write site (`moveCountersFromBench`) — which is the only way "two rows, one number"
@@ -29935,7 +29941,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **One new field.** `AttachTargetRiders.stage2Only?: true`, declared on `attachEnergyFrom`, read in `attachEnergyTargets`
   through `isStage2Pokemon` (the in-play card's printed stage), captioned "Stage 2 Pokémon" by `attachTargetNoun`.
 - **Dropped.** Pokémon Center Lady `me01-123`: "it recovers from all Special Conditions" addresses the healed body, which
-  needs a second `healChosen` rider. Dawn ×3 stays WP23.
+  needs a second `healChosen` rider. Dawn ×3 stays WP23 [🆕🆕🆕 D621 (D539): built at D621].
 - **Brief deviation.** Rosa rides `attachEnergyFrom` (Oricorio's / Philippe's op for "up to 2 … to 1 of your"), not
   `attachFromDiscard`.
 - **Suite.** `trainerParamsMeD588.test.ts` (24): each program against its twin or its derived sentence, and a board per
@@ -30177,10 +30183,10 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   `supporterKoPrizeBonus { 3, ownerPokemon N }`, read by flow.ts `briarPrizeBonus`; a six-name `allOf` play gate) and
   Emma ×2 (`revealOpponentHand`, then `drawCards` with the NEW `per` member `cardsInOpponentHand`, `anyPokemon`).
 - **The one new piece** is that `per` member (interpreter.ts `countCardsInHand` on the opponent's hand). The last-card
-  gate was already shipped (`yourHandExactly 1`, D554), but Gladion's Final Battle still needs an attacker filter.
+  gate was already shipped (`yourHandExactly 1`, D554), but Gladion's Final Battle still needs an attacker filter [🆕🆕🆕 D621 (D539): built at D621].
 - **No op, persisted member, prompt or event.** Emma's program never parks.
 - **Dropped and named:** AZ's Tranquility ×3, Gladion's Final Battle ×3, Grimsley's Move ×2, Gwynn ×3, Naveen ×2
-  (each needs vocabulary beyond the brief; `decisions.md` D599). Acerola's Mischief ×4 and Roxie's Performance ×3 are WP24b. [🆕🆕🆕 D617 (D539): ~~WP24b~~ — WP24b (D617) built four other texts and Pokémon Center Lady; these two are WP24c, with Gladion's Final Battle.]
+  (each needs vocabulary beyond the brief; `decisions.md` D599). Acerola's Mischief ×4 and Roxie's Performance ×3 are WP24b. [🆕🆕🆕 D617 (D539): ~~WP24b~~ — WP24b (D617) built four other texts and Pokémon Center Lady; these two are WP24c, with Gladion's Final Battle.] [🆕🆕🆕 D621 (D539): all three built at D621.]
 - **Readings (UNRULED).** R-AC1, R-EM1, R-EM2 (`progress.md` NEXT).
 - **Suite.** `supportersMeD599.test.ts` (19) and `lookAlikeShowD580.test.ts` §8 (Emma through the copy). +16 mutant rows.
 - **Census.** Standard pool Trainers **360 / 447**; 874 `me` printings fully built.
@@ -30235,6 +30241,35 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Readings.** None new; each open point inherits a shipped one (`progress.md` NEXT).
 - **Suite.** `activatedMeD602.test.ts` (22) and a census D602 block (3). +21 mutant rows.
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D621 — WP24c + WP23: persisted side state (engine 0.504.0, `MATCH_RECORD_VERSION` 42 → 43)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D620 (`6448679e`), NOT committed.
+
+- **Bonus attacker filter.** The NEW optional `SideAttackBonus.attacker` (`boostSideAttacksThisTurn.attacker`), read by
+  `sideAttackBonusThisTurn` on the attacker's `inPlayCardOf`: Gladion's Final Battle ×3 (Cassiopeia's last-card gate, +80 for
+  attackers without a Rule Box) and Premium Power Pro ×3 (+30 for {F}; an Item, so two plays stack).
+- **Chosen-body shield.** The NEW REQUIRED `PlayerSide.chosenAttackShield` and op `installChosenAttackShield` (a `choosePokemon`
+  park): Acerola's Mischief ×4, behind `opponentPrizesRemaining` [0, 1, 2]. `attackBlockOf` asks it first, as an `{ effects: true }`
+  block keyed by the body's base uid.
+- **Side retreat lock.** The NEW REQUIRED `PlayerSide.sideRetreatLock` and op `lockSideRetreat`: Roxie's Performance ×3, read by
+  `retreatLocked` against the body's live Poisoned state.
+- **Dawn ×3.** Larry's Skill's `also` search by stage (Basic, Stage 1, Stage 2), no new vocabulary.
+- **MRV 42 → 43 with a migration.** `migrateMatchRecord` writes both side keys as `null` on a v42 record (no D1 read) and on a v41
+  one (after D583's Trainer refresh). A rollback to MRV 42 retires v43 records. No wire shape moves.
+- **Readings.** R-GFB1, R-AM1, R-AM2, R-RP1 ⚠️ UNRULED (`progress.md` NEXT).
+- **Second review fix.** R-AM1's "ends when it leaves play" is now true: flow.ts `clearDepartedChosenShields`, run by
+  `applyAction`, clears a record whose base uid is no longer in play on its seat. R-AM2 is recorded, not fixed: an `ignoreWR`
+  snipe or spread from a Pokémon ex passes the shield (right for Iron Crown ex's Feint form; for the bare tail it follows
+  D400/D492's reading, so Oil Salvo, Sonic Peridot and Severe Squall land through it). The main hit splits the two forms.
+- **D150's gap, closed (review fix).** R-AM1 puts a wide block on a Benched body, so `placeSnipe`'s put-counter Bench arm and
+  `moveCountersFromBench`'s Benched destination now call `effectRefused` on that body (Phantom Dive into a shielded Benched body:
+  60 before, 0 now). D142's reading; it also closes D450's put-counter PICK asymmetry for the bench effects auras.
+- **Dropped.** Iron Defender ×2: two plays stack on D564's overwritten `sideDamageReduction` (a persisted retype). WP12's four
+  attack texts did not ride the bump.
+- **Suite.** `sideStateMeD621.test.ts` (39), `sideStateMigrationD621.test.ts` (9) and a census D621 block (2). +33 mutant rows.
+- **Census.** Standard pool trainers **418 / 447** (attacks and abilities unchanged); 1111 `me` printings fully built (all 16 finished).
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
 ## D620 — WP10 + WP26: prizes you have taken, Mega Mawile ex and the `me` Tools (engine 0.503.0, `MATCH_RECORD_VERSION` stays 42)
@@ -30317,7 +30352,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   can't-draw gate is an empty deck. R-NV2 ⚠️ UNRULED: a 5+ card hand may keep every card and draw 0.
 - **Dropped (WP24c).** Gladion's Final Battle (an attacker filter on the persisted side-wide bonus), Acerola's Mischief (a
   next-turn shield against ex on a chosen body), Roxie's Performance (a next-turn Poisoned-can't-retreat side lock): each
-  changes persisted side state, so the three share one future `MATCH_RECORD_VERSION` bump with a migration.
+  changes persisted side state, so the three share one future `MATCH_RECORD_VERSION` bump with a migration [🆕🆕🆕 D621 (D539): built at D621, MRV 42 → 43].
 - **Suite.** `supportersMeD617.test.ts` (35) and a census D617 block (2). +29 mutant rows, all killed; eight older rows
   re-pointed (D335 Rika, D489 ×3, D561 ×3, D565 ×1). Lady's prompt names the recovery. D539: payFromHand's uncapped claim, `drawCards.per`'s member claim, `recordDemoted`'s
   one reader, census D613's class-noun claim and the D588 / D599 unkeyed pins annotated.

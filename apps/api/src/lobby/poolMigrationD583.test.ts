@@ -123,8 +123,8 @@ function attackNames(state: GameState): string[] {
 }
 
 describe("D583 — the version and the gate", () => {
-  it("MATCH_RECORD_VERSION is 42 and the one migratable version is 41", () => {
-    expect(MATCH_RECORD_VERSION).toBe(42);
+  it("MATCH_RECORD_VERSION is 42 (🆕🆕🆕 43 since D621) and the one migratable version is 41 (🆕🆕🆕 D621 (D539): the one POOL-refreshed version; v42 is migrated with no D1 read, sideStateMigrationD621.test.ts)", () => {
+    expect(MATCH_RECORD_VERSION).toBe(43);
     expect(MIGRATABLE_MATCH_RECORD_VERSION).toBe(41);
   });
 
@@ -133,20 +133,22 @@ describe("D583 — the version and the gate", () => {
     expect(readMatchRecord(old)).toBeNull();
     expect(migratablePoolIdsOf(old)?.sort()).toEqual([BODY, FOSSIL, TM].sort());
     const migrated = migrateMatchRecord(old, { [TM]: FRESH_TM, [FOSSIL]: FRESH_FOSSIL, [BODY]: BODY_CARD });
-    expect(migrated?.version).toBe(42);
+    expect(migrated?.version).toBe(43); // 🆕🆕🆕 D621 — 42 → 43 (the migration lands on this build's version).
     expect(readMatchRecord(migrated)).not.toBeNull();
   });
 
-  it("every other version is neither read nor migrated (v40, v42, v43, none)", () => {
+  it("every other version is neither read nor migrated (v40, v42, v43, none) (🆕🆕🆕 D621 (D539): v40, v44 and none; v42 IS migrated now, v43 is this build's own)", () => {
     const old = v41Record();
-    for (const version of [40, 43]) {
+    for (const version of [40, 44]) {
       expect(readMatchRecord({ ...old, version })).toBeNull();
       expect(migratablePoolIdsOf({ ...old, version })).toBeNull();
       expect(migrateMatchRecord({ ...old, version }, {})).toBeNull();
     }
-    // A v42 record is this build's own: read, never migrated.
-    expect(migratablePoolIdsOf({ ...old, version: 42 })).toBeNull();
-    expect(migrateMatchRecord({ ...old, version: 42 }, {})).toBeNull();
+    // A v42 record is this build's own: read, never migrated. [🆕🆕🆕 D621 (D539): WITHDRAWN — v42 is
+    // migrated with no pool ids (no D1 read), and v43 is this build's own.]
+    expect(migratablePoolIdsOf({ ...old, version: 42 })).toEqual([]);
+    expect(migrateMatchRecord({ ...old, version: 42 }, {})?.version).toBe(43);
+    expect(readMatchRecord({ ...old, version: 43 })).not.toBeNull();
     const { version: _version, ...unversioned } = old;
     expect(migratablePoolIdsOf(unversioned)).toBeNull();
     for (const raw of [null, undefined, 41, "x"]) expect(migratablePoolIdsOf(raw)).toBeNull();
@@ -227,7 +229,7 @@ function fakeSlot(value: unknown) {
 const FRESH_POOL = { [TM]: FRESH_TM, [FOSSIL]: FRESH_FOSSIL, [BODY]: BODY_CARD };
 
 describe("D583 — the DO's read migrates a v41 record, writes it back, and re-reads after the D1 load", () => {
-  it("a v41 record: D1 is asked for its pool ids, the v42 record is written once, and its TM grants Fluorite", async () => {
+  it("a v41 record: D1 is asked for its pool ids, the v42 (🆕🆕🆕 v43 since D621) record is written once, and its TM grants Fluorite", async () => {
     const { slot, api } = fakeSlot(v41Record());
     const asked: string[][] = [];
     const load = await loadMatchRecord(api, async (ids) => {
@@ -239,7 +241,7 @@ describe("D583 — the DO's read migrates a v41 record, writes it back, and re-r
     expect(load.record.version).toBe(MATCH_RECORD_VERSION);
     expect(slot.puts).toEqual([load.record]);
     expect(attackNames(tmOnActive(load.record.state))).toEqual(["Tap", "Fluorite"]);
-    // The next read finds the v42 record: no second D1 load, no second write.
+    // The next read finds the v42 (🆕🆕🆕 D621: v43) record: no second D1 load, no second write.
     const again = await loadMatchRecord(api, async () => {
       throw new Error("D1 asked twice");
     });
@@ -247,7 +249,7 @@ describe("D583 — the DO's read migrates a v41 record, writes it back, and re-r
     expect(slot.puts).toHaveLength(1);
   });
 
-  it("a v42 record is read as-is; a v40 record is stale; an empty slot is none — D1 never asked, nothing written", async () => {
+  it("a v42 (🆕🆕🆕 D621: v43 — the migrated record) record is read as-is; a v40 record is stale; an empty slot is none — D1 never asked, nothing written", async () => {
     const never = async (): Promise<Record<string, Card>> => {
       throw new Error("D1 asked");
     };

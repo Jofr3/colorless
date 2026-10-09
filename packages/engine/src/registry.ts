@@ -2202,7 +2202,9 @@ export interface PassiveEffects {
 
       ⚠️ **AND ITS TARGET CAN BE ON THE BENCH, WHICH IS WHAT MAKES IT THE FIRST
       LIVE BENCH ARM THIS FUNNEL HAS EVER HAD.** D253's and D254's effects halves
-      are structurally dead because every ATTACK-borne op aims at an Active. A
+      are structurally dead because every ATTACK-borne op aims at an Active [🆕🆕🆕 D621 (D539):
+      WITHDRAWN — `counterEachAll` (D450) and `placeSnipe`'s put-counter Bench arm (D621) ask the
+      funnel of a Benched body]. A
       Trainer does not: Crushing Hammer's `opponentChosen` discard and Boss's
       Orders' gust both name a BENCHED body. So `effectRefused` had to stop
       resolving `state.players[seat].active` and start taking the target, and this
@@ -16940,7 +16942,7 @@ const REPEL: CardProgram = { trainer: [{ op: "opponentSwitchOut" }] };
 //    twin's and plays each program on a board. Pokémon Center Lady `me01-123` is NOT keyed: "it
 //    recovers from all Special Conditions" needs a `healChosen` rider on the healed body (new
 //    vocabulary beyond the brief) [🆕🆕🆕 D617 (D539): keyed since D617, `POKEMON_CENTER_LADY`]. Dawn ×3 stays
-//    out (a multi-slot search, WP23). ──
+//    out (a multi-slot search, WP23) [🆕🆕🆕 D621 (D539): keyed since D621, `DAWN` — Larry's Skill's `also`]. ──
 
 /** Canari `me02.5-185` / `-257` / `-291` (Supporter) — *"You can use this card only if you discard
     another card from your hand. / Search your deck for up to 4 {L} Pokémon, reveal them, and put
@@ -17048,7 +17050,8 @@ const LUMIOSE_GALETTE: CardProgram = {
 //    turn" play gate), Gwynn (a draw per recorded card) and Naveen (an uncapped declinable hand
 //    discard and a deck-not-empty play gate). Acerola's Mischief and Roxie's Performance are
 //    WP24b. [🆕🆕🆕 D617 (D539): AZ's Tranquility, Grimsley's Move, Gwynn and Naveen are built at D617 (WP24b);
-//    Gladion's Final Battle, Acerola's Mischief and Roxie's Performance stay unbuilt.] ──
+//    Gladion's Final Battle, Acerola's Mischief and Roxie's Performance stay unbuilt [🆕🆕🆕 D621 (D539): built at
+//    D621 (WP24c)].] ──
 
 /** Anthea & Concordia `me02.5-182` / `-254` (Supporter) — *"You can use this card only if you
     have N's Darmanitan, N's Zoroark ex, N's Vanilluxe, N's Klinklang, N's Reshiram, and N's Zekrom
@@ -17096,7 +17099,7 @@ const EMMA: CardProgram = {
 //    named: Gladion's Final Battle (an ATTACKER filter on the persisted side-wide bonus), Acerola's
 //    Mischief (a next-turn shield against ex on a chosen body) and Roxie's Performance (a next-turn
 //    Poisoned-can't-retreat side lock) — each changes persisted side state, so each waits for one
-//    `MATCH_RECORD_VERSION` bump with a migration (WP24c). ──
+//    `MATCH_RECORD_VERSION` bump with a migration (WP24c). [🆕🆕🆕 D621 (D539): built at D621, MRV 42 → 43.] ──
 
 /** Pokémon Center Lady `me01-123` (Supporter) — *"Heal 60 damage from 1 of your Pokémon, and it
     recovers from all Special Conditions."* `healChosen` 60 with the NEW `recoverHealed`: a picked
@@ -18225,6 +18228,93 @@ const TREMENDOUS_BOMB: CardProgram = {
       holderNot: { kind: "megaEvolutionEx" },
     },
   },
+};
+
+// ── 🆕🆕🆕 D621 — WP24c + WP23: PERSISTED SIDE STATE, 16 `me` printings / 5 texts on five NEW objects.
+//    New pieces: `SideAttackBonus.attacker` (Gladion's Final Battle, Premium Power Pro), the ops
+//    `installChosenAttackShield` (Acerola's Mischief) and `lockSideRetreat` (Roxie's Performance) on the
+//    NEW `PlayerSide.chosenAttackShield` / `sideRetreatLock` — `MATCH_RECORD_VERSION` 42 → 43 with a v42
+//    migration (apps/api match.ts). Dawn is Larry's Skill's `also` search. Texts off the LOCAL D1
+//    (2026-10-09); `sideStateMeD621.test.ts` plays each. Dropped and named: Iron Defender `me01-118` /
+//    `me05-110` — an Item, so two plays STACK, and `PlayerSide.sideDamageReduction` is one OVERWRITTEN
+//    record (D564); a typed filter alone would pay 30 for two plays. It needs that record made a summed
+//    list (a retype of a persisted field), beyond this brief. ──
+
+/** 🆕🆕🆕 **D621 — Gladion's Final Battle `me05-077` / `-108` / `-118` (Supporter)**: *"You can use this
+    card only when it is the last card in your hand. / During this turn, attacks used by your Pokémon that
+    don't have a Rule Box do 80 more damage to your opponent's Active Pokémon (before applying Weakness and
+    Resistance)."* Cassiopeia's gate (`yourHandExactly` 1, checked while the card is still in hand, D554)
+    and Black Belt's Training's op at 80 over any defender, with the NEW `attacker` noun (`noRuleBox`),
+    read on the attacker's in-play card at each hit (R-GFB1 ⚠️ UNRULED: a body that evolves into a Rule
+    Box Pokémon later in the turn is no longer boosted). */
+const GLADIONS_FINAL_BATTLE: CardProgram = {
+  trainerPlayableIf: { kind: "yourHandExactly", count: 1 },
+  trainer: [
+    {
+      op: "boostSideAttacksThisTurn",
+      amount: 80,
+      target: { kind: "anyPokemon" },
+      attacker: { kind: "anyPokemon", noRuleBox: true },
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D621 — Premium Power Pro `me01-124` / `-174`, `me02.5-199` (Item)**: *"During this turn,
+    attacks used by your {F} Pokémon do 30 more damage to your opponent's Active Pokémon (before applying
+    Weakness and Resistance)."* Gladion's op at 30 with `typedPokemon` {F}, the attacker's IN-PLAY types
+    (Carbink's Double Type counts). An Item: two plays are two entries, SUMMED (the bag's D556 rule). */
+const PREMIUM_POWER_PRO: CardProgram = {
+  trainer: [
+    {
+      op: "boostSideAttacksThisTurn",
+      amount: 30,
+      target: { kind: "anyPokemon" },
+      attacker: { kind: "typedPokemon", pokemonType: "Fighting" },
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D621 — Acerola's Mischief `me01-113` / `-165` / `-183`, `me02.5-180` (Supporter)**: *"You can
+    use this card only if your opponent has 2 or fewer Prize cards remaining. / Choose 1 of your Pokémon in
+    play. During your opponent's next turn, prevent all damage from and effects of attacks done to that
+    Pokémon by your opponent's Pokémon ex."* The gate is `opponentPrizesRemaining` [0, 1, 2]; the op parks a
+    pick over your in-play bodies and writes the side's `chosenAttackShield` on that body's base uid, class
+    `ex` — D575's exact printed class (a Mega Evolution Pokémon ex is one). R-AM1 ⚠️ UNRULED: the shield
+    follows the body to the Bench and through evolution (a Trainer's effect, not an attack's) and ends when
+    the body leaves play (flow.ts `clearDepartedChosenShields`). R-AM2 ⚠️ UNRULED: an `ignoreWR` snipe or
+    spread passes it, as it passes every on-target prevent (continuous.ts `attackBlockOf`'s note). */
+const ACEROLAS_MISCHIEF: CardProgram = {
+  trainerPlayableIf: { kind: "opponentPrizesRemaining", counts: [0, 1, 2] },
+  trainer: [{ op: "installChosenAttackShield", fromClass: { stage: "ex" } }],
+};
+
+/** 🆕🆕🆕 **D621 — Roxie's Performance `me04-081` / `-112` / `-121` (Supporter)**: *"During your
+    opponent's next turn, their Poisoned Pokémon can't retreat. (This includes newly Poisoned Pokémon.)"*
+    The NEW `lockSideRetreat` on the opponent's side, read live by `retreatLocked` (R-RP1 ⚠️ UNRULED).
+    No play gate: the lock installs on any board (a whiff when nothing is Poisoned). */
+const ROXIES_PERFORMANCE: CardProgram = {
+  trainer: [{ op: "lockSideRetreat", status: "poisoned" }],
+};
+
+/** 🆕🆕🆕 **D621 — Dawn `me02-087` / `-118` / `-129` (Supporter)**: *"Search your deck for a Basic Pokémon, a
+    Stage 1 Pokémon, and a Stage 2 Pokémon, reveal them, and put them into your hand. Then, shuffle your
+    deck."* Larry's Skill's three-noun `also` search (D336) without its hand discard: `basicPokemon`, then
+    `stagePokemon` Stage1 and Stage2, one each — three disjoint stages, so no overlap rule fires. */
+const DAWN: CardProgram = {
+  trainer: [
+    {
+      op: "searchDeck",
+      filter: { kind: "basicPokemon" },
+      dest: "hand",
+      max: 1,
+      reveal: true,
+      also: [
+        { filter: { kind: "stagePokemon", stage: "Stage1" }, max: 1 },
+        { filter: { kind: "stagePokemon", stage: "Stage2" }, max: 1 },
+      ],
+    },
+    { op: "shuffleDeck" },
+  ],
 };
 
 // ── 🆕🆕🆕 D608 — WP30: TWO `30th` ATTACK OBJECTS, KEYED BY ID. Text off the LOCAL D1; both printed
@@ -19761,6 +19851,23 @@ const REGISTRY: Record<string, CardProgram> = {
   "me03-070": CORE_MEMORY, // Core Memory — a Mega Zygarde ex holder can use "Geobuster"
   "me05-082": TREMENDOUS_BOMB, // Tremendous Bomb — 240+ from an opposing Mega ex: 12 counters, then discard
   "me05-113": TREMENDOUS_BOMB, // Tremendous Bomb
+  // 🆕🆕🆕 D621 — WP24c + WP23: 16 `me` Trainer keys / 5 objects, MID-MAP (`raw[last]` does not move).
+  "me05-077": GLADIONS_FINAL_BATTLE, // Gladion's Final Battle — last card in hand: no-Rule-Box attackers +80 this turn
+  "me05-108": GLADIONS_FINAL_BATTLE, // Gladion's Final Battle
+  "me05-118": GLADIONS_FINAL_BATTLE, // Gladion's Final Battle
+  "me01-124": PREMIUM_POWER_PRO, // Premium Power Pro — {F} attackers +30 this turn
+  "me01-174": PREMIUM_POWER_PRO, // Premium Power Pro
+  "me02.5-199": PREMIUM_POWER_PRO, // Premium Power Pro
+  "me01-113": ACEROLAS_MISCHIEF, // Acerola's Mischief — one chosen body: no damage or effects from opposing ex next turn
+  "me01-165": ACEROLAS_MISCHIEF, // Acerola's Mischief
+  "me01-183": ACEROLAS_MISCHIEF, // Acerola's Mischief
+  "me02.5-180": ACEROLAS_MISCHIEF, // Acerola's Mischief
+  "me04-081": ROXIES_PERFORMANCE, // Roxie's Performance — the opponent's Poisoned Pokémon can't retreat next turn
+  "me04-112": ROXIES_PERFORMANCE, // Roxie's Performance
+  "me04-121": ROXIES_PERFORMANCE, // Roxie's Performance
+  "me02-087": DAWN, // Dawn — search a Basic, a Stage 1 and a Stage 2 Pokémon
+  "me02-118": DAWN, // Dawn
+  "me02-129": DAWN, // Dawn
   // 🆕🆕🆕 D608 — WP30: 5 `30th` ATTACK-only keys / 2 objects, MID-MAP (`raw[last]` does not move).
   // 🆕🆕🆕 D612 — 3 now: Stealthy Slash ×2 RETIRED (the normalised text is `mep-099`'s, reader-built).
   "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex

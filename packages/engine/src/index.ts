@@ -29,7 +29,7 @@ import {
   useAbility,
   useStadiumAbility,
 } from "./cardplay";
-import { concede, discardMisplacedEnergy } from "./flow";
+import { clearDepartedChosenShields, concede, discardMisplacedEnergy } from "./flow";
 import {
   chooseFirstPlayer,
   setupDrawExtra,
@@ -6289,7 +6289,10 @@ import type { GameState, Seat } from "./types";
     question, and answering it would refuse a move the printed block never
     touched, on the evidence of a different Pokémon. Driven in BOTH directions on
     ONE board. `moveCountersToDefender` is byte-identical, because its destination
-    is always an Active.
+    is always an Active. [🆕🆕🆕 D621 (D539): ~~"a §11 block is an Active-Spot fact by
+    construction"~~ — WITHDRAWN: Acerola's Mischief's shield follows its body to the Bench (R-AM1).
+    The gate is now asked of EVERY destination, ON the destination body (`moveCountersFromBench`);
+    an Active destination asks what it always asked.]
 
     **`MATCH_RECORD_VERSION` STAYS 12**, derived rather than assumed. The op PARKS
     twice and `EffectContinuation.pendingOp` is persisted, so `fromBench` DOES
@@ -20266,6 +20269,16 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.503.0 → **0.504.0** (D621 — WP24c + WP23: PERSISTED SIDE STATE, 5 TEXTS / 16 `me`
+    PRINTINGS; `MATCH_RECORD_VERSION` 42 → 43 WITH A v42 MIGRATION (apps/api match.ts "42 → 43 AT D621")). types.ts:
+    the NEW optional `SideAttackBonus.attacker` (read by continuous.ts `sideAttackBonusThisTurn` on the attacker's
+    in-play card — Gladion's Final Battle ×3, Premium Power Pro ×3) and the NEW REQUIRED `PlayerSide`
+    `chosenAttackShield` (the NEW op `installChosenAttackShield`, read FIRST by `attackBlockOf` — Acerola's
+    Mischief ×4, R-AM1 / R-AM2 UNRULED; flow.ts `clearDepartedChosenShields`, run by `applyAction`, ends it when
+    its body leaves play) and `sideRetreatLock` (the NEW op `lockSideRetreat`, read by `retreatLocked` —
+    Roxie's Performance ×3, R-RP1 UNRULED); events `CHOSEN_ATTACK_SHIELD_INSTALLED`, `SIDE_RETREAT_LOCKED`.
+    registry.ts: Dawn ×3 is Larry's Skill's `also` search by stage. Dropped and named: Iron Defender ×2 (an Item
+    whose two plays stack on D564's overwritten `sideDamageReduction`). `sideStateMeD621.test.ts`.)
     🆕🆕🆕 engineVersion 0.502.0 → **0.503.0** (D620 — WP10 + WP26: PRIZES YOU HAVE TAKEN, MEGA MAWILE ex AND THE
     `me` TOOLS, 8 TEXTS / 14 `me` UNITS ON 12 PRINTINGS; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT
     D620")). effects.ts: the NEW `DamageCountSource.yourPrizesTaken` (`YOUR_PRIZES_MULTIPLY`; attack.ts
@@ -20309,7 +20322,8 @@ import type { GameState, Seat } from "./types";
     "shuffledBottom"`, `notYourFirstTurn`), Gwynn ×3 (`payFromHand` any/cap 2 `noRuleBox` filing
     `discarded`, then `drawCards` 3 with the NEW `per` member `recorded`) and Naveen ×2 (`payFromHand` at
     the NEW `cap: "any"`, `drawUntilHandSize` 5, the NEW `BoardCondition` `yourDeckNotEmpty`). Dropped and
-    named: Gladion's Final Battle, Acerola's Mischief, Roxie's Performance (persisted side state, WP24c).
+    named: Gladion's Final Battle, Acerola's Mischief, Roxie's Performance (persisted side state, WP24c)
+    [🆕🆕🆕 D621: all three built at 0.504.0].
     `supportersMeD617.test.ts`.)
     🆕🆕🆕 engineVersion 0.498.0 → **0.499.0** (D616 — WP31b: THE SECOND PART OF THE `me` DECK / HAND /
     DISCARD / ENERGY MISC; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D616")).
@@ -20485,7 +20499,8 @@ import type { GameState, Seat } from "./types";
     objects: Anthea & Concordia ×2 (Briar's `supporterKoPrizeBonus` at 3 on `ownerPokemon` N, a
     six-name `allOf` play gate) and Emma ×2 (`revealOpponentHand`, then `drawCards` with the NEW
     third `per` member `cardsInOpponentHand`, counted by `countCardsInHand`). AZ's Tranquility,
-    Gladion's Final Battle, Grimsley's Move, Gwynn and Naveen dropped and named. D539: D516's
+    Gladion's Final Battle, Grimsley's Move, Gwynn and Naveen dropped and named [🆕🆕🆕 D617 / D621: all built
+    since]. D539: D516's
     "only evaluator" claim on `cardsInOpponentHand` withdrawn in place across the tree.
     `supportersMeD599.test.ts`.)
     🆕🆕🆕 engineVersion 0.481.0 → **0.482.0** (D598 — WP32: KO / DAMAGE-TAKEN ABILITIES;
@@ -25540,7 +25555,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.503.0";
+export const engineVersion = "0.504.0";
 
 export type {
   ApplyResult,
@@ -25844,7 +25859,11 @@ export function applyAction(state: GameState, action: GameAction): ApplyResult {
   // without running a program step or draining `advance` (flow.ts `discardMisplacedEnergy`, which
   // hands the SAME state back when nothing moves — so every other result is returned as is).
   const swept = discardMisplacedEnergy(result.state, result.events);
-  return swept === result.state ? result : ok(swept, result.events);
+  // 🆕🆕🆕 D621 (review fix, R-AM1) — and Acerola's Mischief's shield ends with its body: a
+  // record whose base uid is no longer in play on its seat is cleared (flow.ts
+  // `clearDepartedChosenShields`, the identity when nothing changes).
+  const cleared = clearDepartedChosenShields(swept);
+  return cleared === result.state ? result : ok(cleared, result.events);
 }
 
 /** `applyAction`'s dispatch, before the D578 state check. */

@@ -746,7 +746,9 @@ export type GameEvent =
       defender noun, carried as the rule's own `CardFilter` (log.ts renders it through
       `retrieveNoun`, the one noun reader). Emitted even when no ex is Active (R1: the
       play whiffs visibly). Not persisted (D141). */
-  | { type: "SIDE_ATTACKS_BOOSTED"; seat: Seat; amount: number; target: CardFilter }
+  /** 🆕🆕🆕 D621 — `attacker` is the printed attacker noun when the print has one (Gladion's Final
+      Battle, Premium Power Pro); ABSENT = every attacker. */
+  | { type: "SIDE_ATTACKS_BOOSTED"; seat: Seat; amount: number; target: CardFilter; attacker?: CardFilter }
   /** 🆕🆕🆕 §8.5 (D564) — a Supporter installed a SIDE-WIDE post-W/R reduction for the
       opponent's next turn (Jasmine's Gaze: *"During your opponent's next turn, all of your
       Pokémon take 30 less damage from attacks from your opponent's Pokémon (after applying
@@ -754,6 +756,13 @@ export type GameEvent =
       NO `uid`, `SIDE_ATTACKS_LOCKED`'s reason: the record is on the SIDE, and a Pokémon
       that comes into play afterwards is covered too. Not persisted (D141). */
   | { type: "SIDE_DAMAGE_REDUCTION_INSTALLED"; seat: Seat; amount: number }
+  /** 🆕🆕🆕 §11 (D621) — Acerola's Mischief shielded `seat`'s chosen body `uid` (its TOP card at the
+      install) from the damage and effects of attacks by `fromClass` for the opponent's next turn.
+      `fromClass` is a fresh copy. Not persisted (D141). */
+  | { type: "CHOSEN_ATTACK_SHIELD_INSTALLED"; seat: Seat; uid: string; fromClass: AttackerClass }
+  /** 🆕🆕🆕 §11 (D621) — Roxie's Performance locked the retreat of `seat`'s `status` Pokémon (the
+      VICTIM's seat) for that seat's next turn. Not persisted (D141). */
+  | { type: "SIDE_RETREAT_LOCKED"; seat: Seat; status: "poisoned" }
   /** 🆕🆕🆕 §11 (D575) — an attack installed a SIDE-WIDE, class-filtered damage block on
       `seat`'s `banner` Pokémon for the opponent's next turn (Miraidon `sv08-069` "C.O.D.E.:
       Protect"). `uid` is the SOURCE (the printed "this Pokémon" of the terminator);

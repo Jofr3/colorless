@@ -5266,8 +5266,11 @@ export type EffectOp =
       `DAMAGE_DEALT.bonus` (D155's one-field-per-step rule). Only a hit that already
       does damage gets it (Vitality Band's rule); a Bench hit never does (the printed
       *"Active Pokémon"*). Never parks, consumes no rng, emits `SIDE_ATTACKS_BOOSTED`
-      (not persisted, D141). docs/decisions.md D556. */
-  | { op: "boostSideAttacksThisTurn"; amount: number; target: CardFilter }
+      (not persisted, D141). docs/decisions.md D556.
+      🆕🆕🆕 **D621 — `attacker`**, the printed ATTACKER noun (types.ts `SideAttackBonus.attacker`):
+      Gladion's Final Battle (`anyPokemon` + `noRuleBox`, 80) and Premium Power Pro (`typedPokemon`
+      {F}, 30, an Item — so two plays are two summed entries). ABSENT = every attacker. */
+  | { op: "boostSideAttacksThisTurn"; amount: number; target: CardFilter; attacker?: CardFilter }
   /** §8/§11 (D157) — BAR ONE **CHOSEN** ATTACK on the OPPONENT's Active for that
       Pokémon's next turn ("Choose 1 of your opponent's Active Pokémon's attacks.
       During your opponent's next turn, that Pokémon can't use that attack.", 2
@@ -7541,6 +7544,18 @@ export type EffectOp =
       are covered, overwrite semantics named there). Never parks. Emits
       `SIDE_DAMAGE_REDUCTION_INSTALLED` (not persisted, D141). */
   | { op: "installSideDamageReductionNextTurn"; amount: number }
+  /** 🆕🆕🆕 **D621 — Acerola's Mischief `me01-113`/`-165`/`-183`, `me02.5-180` (Supporter)**:
+      *"Choose 1 of your Pokémon in play. During your opponent's next turn, prevent all damage from
+      and effects of attacks done to that Pokémon by your opponent's Pokémon ex."* — PARKS a
+      `choosePokemon` over the controller's in-play bodies (forced on one) and writes the chosen
+      body's BASE uid to `PlayerSide.chosenAttackShield { turn: state.turn + 1, uid, fromClass }`
+      (types.ts `ChosenAttackShield`, R-AM1). Emits `CHOSEN_ATTACK_SHIELD_INSTALLED`. */
+  | { op: "installChosenAttackShield"; fromClass: AttackerClass }
+  /** 🆕🆕🆕 **D621 — Roxie's Performance `me04-081`/`-112`/`-121` (Supporter)**: *"During your
+      opponent's next turn, their Poisoned Pokémon can't retreat. (This includes newly Poisoned
+      Pokémon.)"* — stamps the OPPONENT's side with `sideRetreatLock { turn: state.turn + 1, status }`
+      (types.ts `SideRetreatLock`, R-RP1). Never parks. Emits `SIDE_RETREAT_LOCKED`. */
+  | { op: "lockSideRetreat"; status: "poisoned" }
   /** 🆕🆕🆕 **D564 — Caretaker `sv06-144`/`-203`**: *"… shuffle this Caretaker into your deck
       instead of discarding it."* — moves the PLAYED card (`EffectContext.playedUid`, set by
       `playTrainer` alone; NOT `sourceUid`, D222) from the controller's discard pile, where

@@ -722,6 +722,45 @@ export interface SideAttackBlock {
   fromClass: AttackerClass;
 }
 
+/** 🆕🆕🆕 §11 (D621) — a SUPPORTER-installed next-turn shield on ONE chosen body: Acerola's
+    Mischief `me01-113` / `-165` / `-183`, `me02.5-180` (*"Choose 1 of your Pokémon in play. During
+    your opponent's next turn, prevent all damage from and effects of attacks done to that Pokémon by
+    your opponent's Pokémon ex."*). Written by `installChosenAttackShield` (interpreter.ts) on the
+    INSTALLER's side, `turn: state.turn + 1`; read by continuous.ts `attackBlockOf` (FIRST, as a
+    synthesized `{ effects: true }` block: no other block refuses more for the attacker it names).
+
+    ⚠️ ON THE SIDE AND KEYED BY THE BODY's BASE uid (`stack[0]`), NOT A STAMP ON THE BODY: it is a
+    Trainer's effect, not an attack's, so §10's shed (switching, evolving) does not end it — R-AM1
+    ⚠️ UNRULED: the shield follows the chosen Pokémon to the Bench, through evolution and devolution,
+    and ends when it leaves play — flow.ts `clearDepartedChosenShields` clears a record whose uid is no
+    longer a base card in play on its seat, on every accepted action (the uid alone cannot tell a
+    replayed card from the old Pokémon). OVERWRITE on a second install (one Supporter per turn, one
+    window). */
+export interface ChosenAttackShield {
+  /** The single turn this shield is live on — the installer's opponent's next turn. */
+  turn: number;
+  /** The chosen body's BASE card uid (`stack[0]`), stable through evolution and devolution. */
+  uid: string;
+  /** The printed attacker class ("by your opponent's Pokémon ex"). */
+  fromClass: AttackerClass;
+}
+
+/** 🆕🆕🆕 §11 (D621) — a SUPPORTER-installed next-turn RETREAT lock on the OPPONENT's whole side,
+    filtered by a Special Condition: Roxie's Performance `me04-081` / `-112` / `-121` (*"During your
+    opponent's next turn, their Poisoned Pokémon can't retreat. (This includes newly Poisoned
+    Pokémon.)"*). Written by `lockSideRetreat` (interpreter.ts) on the VICTIM's side, `turn:
+    state.turn + 1`; read by continuous.ts `retreatLocked` — so the §11 gate, the wire's retreat
+    offer and the HUD see it with no edit — against the body's LIVE conditions at each ask (R-RP1
+    ⚠️ UNRULED: a body Poisoned after the play is locked; a cured one may retreat). Retreat only:
+    switch effects never ask `retreatLocked`. A record on the SIDE for `SideAttackLock`'s reason (the
+    printed reminder covers bodies that become Poisoned later). OVERWRITE on a second install. */
+export interface SideRetreatLock {
+  /** The single turn this lock is live on — the installer's opponent's next turn. */
+  turn: number;
+  /** The printed Special Condition a body must have to be locked ("their Poisoned Pokémon"). */
+  status: "poisoned";
+}
+
 /** 🆕🆕🆕 §6.2/§11 (D575) — the DEFENDING Pokémon's next-turn HAND-ATTACH mark, written by
     the `markHandAttach` op on the opponent's Active, stamped `state.turn + 1` (the victim's
     own turn). Two printed consequents on one window:
@@ -2190,6 +2229,19 @@ export interface PlayerSide {
       REQUIRED (not `?`): `MATCH_RECORD_VERSION` 37 → 38 (the ELEVENTH position at match.ts) —
       a 0.458 rollback would silently drop a live C.O.D.E.: Protect window. */
   sideAttackBlock: SideAttackBlock | null;
+  /** 🆕🆕🆕 §11 (D621) — Acerola's Mischief's shield on one chosen body of this seat (see
+      `ChosenAttackShield` above), or `null`. Written by `installChosenAttackShield`, read by
+      continuous.ts `attackBlockOf`. No wire field (the D564/D575 display debt).
+
+      REQUIRED (not `?`): `MATCH_RECORD_VERSION` 42 → 43 (the SIXTEENTH position at match.ts) —
+      a v42 record is MIGRATED by writing `null` here (`migrateMatchRecord`). */
+  chosenAttackShield: ChosenAttackShield | null;
+  /** 🆕🆕🆕 §11 (D621) — Roxie's Performance's retreat lock on this seat's Poisoned Pokémon (see
+      `SideRetreatLock` above), or `null`. Written by `lockSideRetreat` onto the VICTIM's side, read
+      by continuous.ts `retreatLocked`. No wire field: the retreat offer already reads the lock.
+
+      REQUIRED (not `?`): `MATCH_RECORD_VERSION` 42 → 43, migrated as `chosenAttackShield` is. */
+  sideRetreatLock: SideRetreatLock | null;
   active: InPlayPokemon | null;
   /** Dense (no empty slots), capped at BENCH_MAX. (🆕🆕🆕 D577 (D539): *"capped at BENCH_MAX"*
       is WITHDRAWN as the whole rule, kept as written — the cap is continuous.ts
@@ -2292,6 +2344,8 @@ export interface TurnAllowances {
       Black Belt's Training can write at most ONE entry, so the sum has one term on
       every legal board — the array is for the NEXT producer (an Item or a second
       printing), not for this one; the summing is still driven with two entries.
+      🆕🆕🆕 D621 — that producer arrived: Premium Power Pro (an Item, two plays = two summed
+      entries) and Gladion's Final Battle, both with the printed `attacker` noun.
 
       ⚠️ **THE SEAT HAZARD, NAMED (`abilitiesUsed`'s paragraph above, and effects.ts
       `youPlayedSupporterThisTurn`)**: this bag describes the TURN'S OWNER only, so
@@ -2372,6 +2426,12 @@ export interface TurnAllowances {
 export interface SideAttackBonus {
   amount: number;
   target: CardFilter;
+  /** 🆕🆕🆕 §8.5 (D621) — the printed ATTACKER noun, matched on the attacking body's in-play card
+      (`inPlayCardOf`): Gladion's Final Battle's *"your Pokémon that don't have a Rule Box"*,
+      Premium Power Pro's *"your {F} Pokémon"*. ABSENT = every attacker (Black Belt's Training,
+      and every v42 entry). PERSISTED in the bag: a 0.503 reader would ignore it and pay every
+      attacker, so it rides `MATCH_RECORD_VERSION` 42 → 43. */
+  attacker?: CardFilter;
 }
 
 export function freshAllowances(): TurnAllowances {

@@ -556,7 +556,7 @@ describe("§3 — TWO REQUIRED fields on a shipped op, and the record version do
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.503.0");
+    expect(engineVersion).toBe("0.504.0");
   });
 });
 
@@ -752,6 +752,8 @@ describe("§7 — the prevention gate, asked PER BODY", () => {
     // block), so the put-counter PICK is gated on the Active alone. A FOLD has no
     // candidate list and no prompt: it touches, so every body it touches is asked. The
     // asymmetry is real, it is the snipe's to resolve, and this rung is the record of it.
+    // [🆕🆕🆕 D621 (D539): WITHDRAWN — RESOLVED: the put-counter Bench arm asks the funnel of the
+    // picked body since D621 (`counterPutChosen.test.ts` §5, `sideStateMeD621.test.ts` §5).]
   });
 
   it("the refusal is asked AFTER the narrowing, so a body the sentence never names is silent", () => {

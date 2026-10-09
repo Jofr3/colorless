@@ -1133,7 +1133,9 @@ export function passivesOf(
       benched holder; the EFFECTS half is Active-scoped because
       `attackEffectRefused` resolves `state.players[seat].active` and every op that
       consults it aims at an Active. That asymmetry is the FUNNEL's shape, not this
-      field's. */
+      field's. [🆕🆕🆕 D621 (D539): ~~"every op that consults it aims at an Active"~~ — WITHDRAWN
+      (already false for `counterEachAll` since D450): the funnel takes a target since D259, and
+      `placeSnipe`'s put-counter Bench arm asks it of the PICKED Benched body since D621.] */
   preventDamageAndEffectsFromSpecialEnergy: boolean;
   /** §8.5 + §11 (D253) — the WIDE prevention again, this time with NO attacker
       property at all and a HOLDER-ZONE gate instead. Poltchageist `sv06-020`/
@@ -2626,6 +2628,11 @@ export function attackBlockOf(
   // written before it existed is retired by MATCH_RECORD_VERSION rather than
   // read benignly here — which is the whole reason that constant was bumped
   // (D124's rule, and its argument against exactly this kind of soft landing).
+  // 🆕🆕🆕 D621 — Acerola's Mischief's chosen-body shield (types.ts `ChosenAttackShield`) is asked
+  // FIRST: it refuses damage AND effects with no cap, so for an attacker of its class no other block
+  // refuses more, and returning it first keeps the `?.effects` callers right.
+  const chosen = chosenAttackShieldOf(state, pokemon, attacker);
+  if (chosen !== null) return chosen;
   const block = pokemon.attackBlock;
   // 🆕🆕🆕 D575 — the SIDE-WIDE block (Miraidon "C.O.D.E.: Protect") is the second answer, asked
   // whenever the body's own block does not apply: two independent installations, either of
@@ -2673,6 +2680,38 @@ function sideAttackBlockOf(
     if (bannerOf(topCardOf(state, pokemon)) !== record.banner) return null;
     return attackerMatchesClass(attacker, record.fromClass)
       ? { turn: record.turn, effects: false, fromClass: record.fromClass }
+      : null;
+  }
+  return null;
+}
+
+/** 🆕🆕🆕 §11 (D621) — the chosen-body arm of `attackBlockOf`: a side whose live `chosenAttackShield`
+    names this body's BASE uid (`stack[0]` — R-AM1: it follows the body through switching, evolving
+    and devolving) and an attacker of the printed class (`attackerMatchesClass`). The answer is a
+    synthesized `{ effects: true }` block (the print's "damage from and effects of"), no cap. An
+    unreadable attacker protects LESS, the body arm's polarity. A body that left play is a new
+    Pokémon: flow.ts `clearDepartedChosenShields` clears its record on the action that removed it.
+
+    ⚠️ R-AM2 (UNRULED) — this arm is reached through `attackDamageBlocked`, which `placeSnipe` and
+    `snipeActive` ask INSIDE their `ignoreWR` guard with every on-target prevent. So an `ignoreWR`
+    snipe or spread from a Pokémon ex is not stopped. Right for the Feint form (Iron Crown ex "Twin
+    Shotels", *"…or by any effects on those Pokémon"*); for the BARE tail it follows D400/D492's
+    reading that `ignoreWR` also nulls effects on the target, so Arboliva ex "Oil Salvo", Flygon ex
+    "Sonic Peridot" and Vaporeon ex "Severe Squall" land through the shield. The main hit keeps the
+    two forms apart (`damageSuppression.targetEffects`), so a bare-tail main hit (Medicham ex "Yoga
+    Kick") is stopped. Pinned by `sideStateMeD621.test.ts` §5. */
+function chosenAttackShieldOf(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  attacker: Card | undefined,
+): AttackBlock | null {
+  const base = pokemon.stack[0];
+  if (base === undefined || attacker === undefined) return null;
+  for (const seat of SEATS) {
+    const record = state.players[seat].chosenAttackShield;
+    if (record === null || record.turn !== state.turn || record.uid !== base) continue;
+    return attackerMatchesClass(attacker, record.fromClass)
+      ? { turn: record.turn, effects: true, fromClass: record.fromClass }
       : null;
   }
   return null;
@@ -3167,7 +3206,8 @@ export function attackFlipLocked(state: GameState, pokemon: InPlayPokemon): bool
     [🆕🆕🆕 D576 (D539): ~~"two fields and one question"~~ — the THIRD source ARRIVED and this
     function took it, as written: an Antique Fossil's printed "can't retreat" (`isFossilTop`,
     R-FO4), so turn.ts's gate, `redactedRetreatOf` and GameHud's `canRetreat` read it with no
-    edit; the fact now has two fields and one card rule]
+    edit; the fact now has two fields and one card rule] [🆕🆕🆕 D621: and a FOURTH, Roxie's Performance's
+    side record (`sideRetreatLocked`), taken here the same way]
     the old question — D222's defect verbatim, whose recorded remedy is *route them
     through the one helper instead*.
 
@@ -3190,7 +3230,26 @@ export function retreatLocked(state: GameState, pokemon: InPlayPokemon): boolean
   // function's own reason for existing. A card RULE, so no lock lifts it; the TOP card only
   // (an evolved fossil retreats normally, R-FO6). Switch effects never ask it (R-FO4).
   if (isFossilTop(state, pokemon)) return true;
+  // 🆕🆕🆕 D621 — and the FOURTH: Roxie's Performance's SIDE record (types.ts `SideRetreatLock`), read
+  // against the body's LIVE conditions (R-RP1: a body Poisoned after the play is locked too).
+  if (sideRetreatLocked(state, pokemon)) return true;
   return pokemon.retreatBlocked || pokemon.retreatLockedTurn === state.turn;
+}
+
+/** 🆕🆕🆕 §11 (D621) — is `pokemon` locked by its SIDE's live `sideRetreatLock` (Roxie's Performance)?
+    The side is the one holding the body (by top uid); the record's stamp must be the current turn and
+    the body must have the printed Special Condition NOW (`poisonDamage > 0` is Poisoned, types.ts). */
+function sideRetreatLocked(state: GameState, pokemon: InPlayPokemon): boolean {
+  const uid = topUid(pokemon);
+  if (uid === undefined || pokemon.conditions.poisonDamage <= 0) return false;
+  for (const seat of SEATS) {
+    const side = state.players[seat];
+    const lock = side.sideRetreatLock;
+    if (lock === null || lock.turn !== state.turn) continue;
+    const onSide = (side.active !== null && topUid(side.active) === uid) || side.bench.some((b) => topUid(b) === uid);
+    if (onSide) return true;
+  }
+  return false;
 }
 
 /** §4 (D277) — is `pokemon` FORBIDDEN from attacking right now by the first-turn
@@ -3678,10 +3737,17 @@ export function sideAttackBonusThisTurn(
   state: GameState,
   seat: Seat,
   defenderCard: Card | undefined,
+  /** 🆕🆕🆕 D621 — the ATTACKING body, for an entry's printed `attacker` noun (Gladion's Final
+      Battle, Premium Power Pro), matched on its IN-PLAY card (`inPlayCardOf`: a retyped body's
+      in-play types). `null` fails every attacker filter (`matchesFilter`'s conservative
+      direction) and passes an entry with none. */
+  attackerBody: InPlayPokemon | null,
 ): number {
   if (phaseViewOf(state, seat).activeSeat !== seat) return 0;
+  const attackerCard = attackerBody === null ? undefined : inPlayCardOf(state, attackerBody);
   let total = 0;
   for (const bonus of state.allowances.sideAttackBonuses) {
+    if (bonus.attacker !== undefined && !matchesFilter(attackerCard, bonus.attacker)) continue;
     if (matchesFilter(defenderCard, bonus.target)) total += bonus.amount;
   }
   return total;
@@ -4995,7 +5061,10 @@ export function benchShieldedFromDamage(
     Guarded for TOTALITY, not for coverage, and carrying NO mutant: an unkillable
     mutant is a corpus defect rather than coverage (D253's rule, second
     application). The day an op aims an effect at a benched body, the refusal is
-    already where it belongs. */
+    already where it belongs. [🆕🆕🆕 D621 (D539): ~~"STRUCTURALLY DEAD AT ITS ONLY READ SITE"~~ —
+    WITHDRAWN (already false for `counterEachAll` since D450): `placeSnipe`'s put-counter Bench arm
+    asks the funnel of the PICKED Benched body since D621, so a Rabsca-shielded Bench refuses
+    Phantom Dive's / Land Scoop's placed counters.] */
 export function benchShieldedFromEffects(state: GameState, pokemon: InPlayPokemon): boolean {
   return benchShieldScan(state, pokemon, "effects", "all");
 }

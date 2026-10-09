@@ -31,6 +31,7 @@ import {
 // + `yourDeckNotEmpty`). Texts measured on the LOCAL D1, 2026-10-09, `legal_standard = 1` on every
 // row; driven on the real ids in a LOCAL `cardPool` (D275). Gladion's Final Battle, Acerola's
 // Mischief and Roxie's Performance stay unkeyed (each changes persisted side state — WP24c).
+// [🆕🆕🆕 D621 (D539): ~~"stay unkeyed"~~ — keyed since D621, WP24c, `sideStateMeD621.test.ts`.]
 
 const LADY = "me01-123";
 const AZ = "me04-076";
@@ -67,7 +68,8 @@ const TEXTS: readonly (readonly [readonly string[], string, string])[] = [
   ],
 ];
 
-/** The WP24 printings still unkeyed after this slice (persisted side state — WP24c). */
+/** The WP24 printings still unkeyed after this slice (persisted side state — WP24c). [🆕🆕🆕 D621 (D539):
+    keyed since D621 (WP24c, sideStateMeD621.test.ts).] */
 const NOT_KEYED: Readonly<Record<string, readonly string[]>> = {
   "Gladion's Final Battle": ["me05-077", "me05-108", "me05-118"],
   "Acerola's Mischief": ["me01-113", "me01-165", "me01-183", "me02.5-180"],
@@ -90,10 +92,10 @@ describe("D617 §1 — the faces: 11 `me` printings / 5 texts, one object per te
     expect(objects.size).toBe(5);
   });
 
-  it("the other 10 WP24 printings (3 texts) stay unkeyed", () => {
+  it("the other 10 WP24 printings (3 texts) ~~stay unkeyed~~ (🆕🆕🆕 D621 (D539): WITHDRAWN — WP24c keys all 10)", () => {
     const ids = Object.values(NOT_KEYED).flat();
     expect(ids).toHaveLength(10);
-    for (const id of ids) expect(programFor(id), id).toBeUndefined();
+    for (const id of ids) expect(programFor(id), id).toBeDefined();
   });
 });
 
@@ -628,6 +630,6 @@ describe("D617 §9 — the ids and the version", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.503.0");
+    expect(engineVersion).toBe("0.504.0");
   });
 });

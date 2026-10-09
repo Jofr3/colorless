@@ -2484,6 +2484,18 @@ function stepOp(
     // 🆕🆕🆕 D564 — the NEXT-TURN side-wide reduction (Jasmine's Gaze), on the SIDE.
     case "installSideDamageReductionNextTurn":
       return { done: installSideDamageReductionNextTurn(state, op, ctx, events) };
+    // 🆕🆕🆕 D621 — Acerola's Mischief: the controller picks ONE of their in-play bodies (forced on
+    // one), and the shield is written on the SIDE keyed by that body's base uid (types.ts).
+    case "installChosenAttackShield":
+      return parkOrForce(
+        state,
+        ownInPlayRefs(state, ctx.seat),
+        (ref) => installChosenAttackShield(state, ref, op, ctx, events),
+        chosenAttackShieldNote(op),
+      );
+    // 🆕🆕🆕 D621 — Roxie's Performance: the NEXT-TURN retreat lock on the OPPONENT's side.
+    case "lockSideRetreat":
+      return { done: lockSideRetreat(state, op, ctx, events) };
     // 🆕🆕🆕 D575 — the MRV-38 attack slice's four ops (docs/decisions.md D575).
     case "installSideAttackBlock":
       return { done: installSideAttackBlock(state, op, ctx, events) };
@@ -3048,7 +3060,8 @@ function stepOp(
       // body whose "prevent all effects of Item and Supporter cards your opponent plays"
       // covers it, or a benched Fraxure would take the counters (the Bench leg of
       // `placeSnipe` asks no shield [🆕🆕🆕 D618 (D539): no §11 shield — it asks Battle Cage's
-      // `benchCountersCaged` since D618]). Asked only for an Item/Supporter invocation, so
+      // `benchCountersCaged` since D618] [🆕🆕🆕 D621 (D539): WITHDRAWN — it asks the §11 funnel of
+      // the picked body since D621; the filter here still keeps the shielded body out of the OFFER]). Asked only for an Item/Supporter invocation, so
       // every Ability and attack producer takes the byte-identical unfiltered set.
       // [🆕🆕🆕 D614 (D539): WITHDRAWN for Abilities — see below; attacks still take it.]
       // 🆕🆕🆕 D614 — and on the ABILITY channel too: a placed counter is an Ability's effect (Cursed
@@ -8591,6 +8604,9 @@ export function applyChoice(
       return pickedPokemon(choice)
         ? healChosen(state, choice.ref, op.amount, ctx, events)
         : state;
+    // 🆕🆕🆕 D621 — Acerola's Mischief's parked pick (`healChosen`'s single-pick shape).
+    case "installChosenAttackShield":
+      return pickedPokemon(choice) ? installChosenAttackShield(state, choice.ref, op, ctx, events) : state;
     case "moveCountersToDefender":
       // D138 — the parked half of the counter move. Same shape as `healChosen`'s
       // single-pick arm above and for the same reason: `validateChoice` matches
@@ -9502,7 +9518,8 @@ function lockSideAttacks(
     `sideAttackBonusThisTurn` at both pre-W/R sites.
 
     APPENDED, NEVER MERGED — sources are summed (types.ts). The bag belongs to the turn's
-    owner, and the only producer is a Supporter, which only the turn's owner can play
+    owner, and the only producer is a Supporter [🆕🆕🆕 D621 (D539): ~~"a Supporter"~~ — or an Item,
+    Premium Power Pro; the argument is unchanged], which only the turn's owner can play
     (cardplay.ts `playTrainer`'s gate), so `ctx.seat` IS that owner here; the READ is
     seat-guarded because it is the side that meets other seats (types.ts). NO
     `effectRefused` gate — `lockSideAttacks`'s argument (D549 R5): the object is a SIDE,
@@ -9515,14 +9532,16 @@ function boostSideAttacksThisTurn(
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
-  events.push({ type: "SIDE_ATTACKS_BOOSTED", seat: ctx.seat, amount: op.amount, target: op.target });
+  // 🆕🆕🆕 D621 — the printed ATTACKER noun rides the entry and the row when the print has one.
+  const attacker = op.attacker === undefined ? {} : { attacker: op.attacker };
+  events.push({ type: "SIDE_ATTACKS_BOOSTED", seat: ctx.seat, amount: op.amount, target: op.target, ...attacker });
   return {
     ...state,
     allowances: {
       ...state.allowances,
       sideAttackBonuses: [
         ...state.allowances.sideAttackBonuses,
-        { amount: op.amount, target: op.target },
+        { amount: op.amount, target: op.target, ...attacker },
       ],
     },
   };
@@ -9545,6 +9564,57 @@ function installSideDamageReductionNextTurn(
   return withSide(state, ctx.seat, {
     ...side,
     sideDamageReduction: { turn: state.turn + 1, amount: op.amount },
+  });
+}
+
+/** 🆕🆕🆕 §11 (D621) — INSTALL Acerola's Mischief on the picked body: write the controller's
+    `chosenAttackShield { turn: state.turn + 1, uid: <the body's BASE uid>, fromClass }` (types.ts
+    `ChosenAttackShield`; the opponent form's `+ 1`). OVERWRITES a standing record (one Supporter per
+    turn). A ref that no longer resolves installs nothing. Read by continuous.ts `attackBlockOf`. */
+function installChosenAttackShield(
+  state: GameState,
+  ref: PokemonRef,
+  op: Extract<EffectOp, { op: "installChosenAttackShield" }>,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const body = refPokemon(state, ref);
+  const base = body?.stack[0];
+  const top = body === undefined ? undefined : topUid(body);
+  if (base === undefined || top === undefined) return state;
+  events.push({ type: "CHOSEN_ATTACK_SHIELD_INSTALLED", seat: ctx.seat, uid: top, fromClass: { ...op.fromClass } });
+  return withSide(state, ctx.seat, {
+    ...state.players[ctx.seat],
+    chosenAttackShield: { turn: state.turn + 1, uid: base, fromClass: { ...op.fromClass } },
+  });
+}
+
+/** 🆕🆕🆕 D621 — Acerola's Mischief's dialog caption: the printed sentence, the class spelled as
+    printed ("Pokémon ex"; the other two members for totality). */
+function chosenAttackShieldNote(op: Extract<EffectOp, { op: "installChosenAttackShield" }>): string {
+  const noun =
+    op.fromClass.stage === "ex"
+      ? "Pokémon ex"
+      : `${op.fromClass.stage === "basic" ? "Basic" : "Ancient"} Pokémon`;
+  return `Choose 1 of your Pokémon in play. During your opponent's next turn, prevent all damage from and effects of attacks done to that Pokémon by your opponent's ${noun}.`;
+}
+
+/** 🆕🆕🆕 §11 (D621) — INSTALL Roxie's Performance: stamp the OPPONENT's side with
+    `sideRetreatLock { turn: state.turn + 1, status }` (types.ts `SideRetreatLock`). OVERWRITES a
+    standing record (one Supporter per turn). NO `effectRefused` gate — `lockSideAttacks`'
+    argument (D549 R5): the object is a SIDE, not a Pokémon. Read by continuous.ts `retreatLocked`
+    against each body's live conditions. Never parks; no rng. */
+function lockSideRetreat(
+  state: GameState,
+  op: Extract<EffectOp, { op: "lockSideRetreat" }>,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const victim = otherSeat(ctx.seat);
+  events.push({ type: "SIDE_RETREAT_LOCKED", seat: victim, status: op.status });
+  return withSide(state, victim, {
+    ...state.players[victim],
+    sideRetreatLock: { turn: state.turn + 1, status: op.status },
   });
 }
 
@@ -10901,7 +10971,13 @@ function installRecoil(
     side arm cost no new read site here (D253/D254: a deadness argued from today's
     op set is a fact about the op set, not a rule of the game). The side arm's
     synthesized block has `effects: false`, so D150's *"a wide block can only ever
-    be live on an Active"* still holds.)
+    be live on an Active"* still holds.) [🆕🆕🆕 D621 (D539): ~~"still holds"~~ — WITHDRAWN: Acerola's
+    Mischief's chosen-body shield (`PlayerSide.chosenAttackShield`, `attackBlockOf`'s first arm) is a
+    synthesized `{ effects: true }` block that follows its body to the Bench (R-AM1), so a wide block
+    can now be live on a Benched body; `sideStateMeD621.test.ts` §5 drives an ex snipe into one. And
+    D150's recorded consequence is FIXED here, not left: `placeSnipe`'s put-counter Bench arm and
+    `moveCountersFromBench`'s Benched destination now ask `effectRefused` of that body (§5: Phantom
+    Dive's placed counters and a counter move onto the shielded Benched body are refused).]
 
     It takes the ATTACKING CARD too, since D146: a block may be narrowed to
     attacks "from Basic Pokémon", and `attackBlockOf` resolves that against the
@@ -11051,6 +11127,10 @@ function effectRefusedOn(
   // spelling, so the point holds. And the "Bench-arm argument above" it leans on is
   // withdrawn for the side-wide block (see `attackDamageBlocked`'s D575 note); the
   // guard-anyway half of it, the half this line uses, stands.)
+  // (🆕🆕🆕 D621 (D539): ~~"a block that carries a filter never has `effects: true`"~~ — WITHDRAWN:
+  // Acerola's Mischief's synthesized shield is `{ effects: true, fromClass: ex }`, so this line now
+  // sees a FILTERED wide block off a real card, and the filter is honoured here (R-AM1's §5 test:
+  // an ex's Paralysis refused, a non-ex's lands).)
   //
   // ⚠️ D240 — AND THE DAMAGE AMOUNT IS `undefined` HERE ON PURPOSE, WHICH IS THE
   // ONE SITE OF THE FIVE WHERE IT IS. This gate is about an EFFECT — a status, a
@@ -11090,6 +11170,9 @@ function effectRefusedOn(
   // forced switch at a BENCHED body, the refusal is already where it belongs. No
   // mutant is authored against this disjunct for exactly the same reason — one
   // could not be killed, and an unkillable mutant is a corpus defect, not coverage.
+  // [🆕🆕🆕 D621 (D539): ~~"every op that consults this funnel aims at an Active"~~ and both
+  // deadness notes here — WITHDRAWN (already false for `counterEachAll` since D450): `placeSnipe`'s
+  // put-counter Bench arm asks this funnel of the PICKED Benched body since D621.]
   //
   // 🛑 D254 ADDS A THIRD AURA CHANNEL AND IT IS DEAD FOR THE SECOND ONE'S REASON,
   // NOT ITS OWN. Rabsca `sv05-024` "Spherical Shield" refuses effects done to a
@@ -11758,6 +11841,17 @@ function placeSnipe(
       // and since 0.89.0 Ting-Lu ex's "Land Scoop"): flat, no W/R and no reduction
       // passive (a placed counter is not "damage from an attack"). `source` is the
       // producer's, never this function's — see the doc block.
+      // 🆕🆕🆕 D621 — THE §11 EFFECTS FUNNEL, ON THE PICKED BODY (D150's recorded gap, closed): a
+      // placed counter is an effect of the attack, refused by the effects half and nothing else
+      // (`damageActive`'s D142 reading, `counterEachAll`'s order). Reachable since D621: Acerola's
+      // Mischief's shield follows its body to the Bench (R-AM1), so Dragapult ex "Phantom Dive"'s
+      // counters on a shielded Benched body are refused; the bench auras (`benchShieldedFromEffects`,
+      // `preventDamageAndEffectsWhileBenched`, Mist Energy) are asked here too. An own-Bench pick
+      // (D447) is never refused (the funnel's seat guard).
+      if (effectRefused(next, benchVictim, ctx, events, pokemon)) {
+        bench.push(pokemon);
+        continue;
+      }
       // 🆕🆕🆕 D618 — Battle Cage: the counters do not land on the Benched pick (R-BCG2).
       if (benchCountersCaged(next, benchVictim, ctx)) {
         bench.push(pokemon);
@@ -12084,7 +12178,7 @@ function snipeActive(
       ? 0
       : attackerPreWRBonus(state, attacker.active, ctx.seat, target.card) +
         everyAttackBoostOf(state, attacker.active) +
-        sideAttackBonusThisTurn(state, ctx.seat, target.card);
+        sideAttackBonusThisTurn(state, ctx.seat, target.card, attacker.active);
   // D149 — the pre-W/R DEBUFF on the attacker, subtracted beside its bonus. NOT
   // bypassed by `ignoreWR`: Feint Attack's "not affected by … any effects on that
   // Pokémon" scopes the TARGET, and this is an effect on the ATTACKER — the same
@@ -13467,6 +13561,11 @@ function moveCountersToDefender(
     touched, on the evidence of a completely different Pokémon. The gate is
     therefore consulted exactly when the destination IS an Active — which for
     `moveCountersToDefender` is always, so its behaviour is byte-identical.
+    [🆕🆕🆕 D621 (D539): ~~"a §11 block is an Active-Spot fact by construction"~~ — WITHDRAWN:
+    Acerola's Mischief's chosen-body shield follows its body to the Bench (R-AM1), and the funnel's
+    aura half (`benchShieldedFromEffects`, Mist Energy) was always a per-body question. So the gate
+    is now asked of EVERY destination, on the destination body itself; an Active destination asks
+    exactly what it asked before (the default target IS the Active).]
 
     The seat handed to the gate is the DESTINATION's, not `otherSeat(ctx.seat)`.
     Both printings aim at the opponent, so the two are the same value today;
@@ -13500,7 +13599,8 @@ function moveCountersFromBench(
   // while the counters never arrive would launder damage off the attacker's own
   // board — the one outcome this op's doc block says two different numbers must
   // never produce. Checked BEFORE the HEALED row for exactly that reason.
-  if (dest.spot.spot === "active" && effectRefused(state, dest.seat, ctx, events)) {
+  // 🆕🆕🆕 D621 — asked of EVERY destination, on the destination body (see the doc block's D539 note).
+  if (effectRefused(state, dest.seat, ctx, events, target)) {
     return state;
   }
   // 🆕🆕🆕 D618 — Battle Cage: a move onto a Benched body is refused WHOLE, before the HEALED row (R-BCG1).

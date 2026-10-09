@@ -695,7 +695,7 @@ describe("§3 — a new PRODUCER of a shipped literal, and the record version do
   });
 
   it("the engine version moved", () => {
-    expect(engineVersion).toBe("0.503.0");
+    expect(engineVersion).toBe("0.504.0");
   });
 });
 
@@ -910,6 +910,10 @@ describe("§5 — the prevention gate, on the axis the two printed spellings act
     // all, and `snipeTargets` deliberately excludes `unshieldedRefs` (its own doc block).
     // That is the SHIPPED behaviour of every put-counter snipe since Hawlucha, inherited
     // here rather than changed by a slice whose subject is the reader.
+    // [🆕🆕🆕 D621 (D539): ~~"the BENCH arm is NOT gated"~~ — WITHDRAWN: D621 closed D150's
+    // recorded gap (Acerola's Mischief's shield follows its body to the Bench, R-AM1), so the
+    // `!deals` bench branch now asks the same §11 effects funnel on the PICKED body. The body is
+    // still OFFERED (the half below that stands); the placement on it is refused with a row.]
     const { state: parked } = mustApply(
       fielded(8, { defender: "fix-unaware", bench: ["fix-unaware"] }),
       { type: "attack", seat: "p1", index: IDX.bare },
@@ -925,7 +929,9 @@ describe("§5 — the prevention gate, on the axis the two printed spellings act
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[1] as PokemonRef] },
     });
-    expect(onBench.state.players.p2.bench[0]?.damage).toBe(20);
+    expect(onBench.state.players.p2.bench[0]?.damage).toBe(0);
+    expect(find(onBench.events, "ATTACK_EFFECT_PREVENTED")).toMatchObject({ seat: "p2" });
+    expect(find(onBench.events, "COUNTERS_PLACED")).toBeUndefined();
   });
 });
 

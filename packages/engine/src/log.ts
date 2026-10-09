@@ -896,9 +896,16 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     // bag is wiped at the next `startTurn`. The defender noun is the rule's own filter
     // read through `retrieveNoun` (plural: "Pokémon ex"), never a second spelling, and
     // the printed parenthetical is kept because it is the part that decides the number.
+    // 🆕🆕🆕 D621 — an attacker noun (Gladion's Final Battle, Premium Power Pro) names the attackers.
     case "SIDE_ATTACKS_BOOSTED":
       return row(event.seat, [
-        plain(`Pokémon's attacks do ${event.amount} more damage to the opponent's Active `),
+        ...(event.attacker === undefined
+          ? [plain(`Pokémon's attacks do ${event.amount} more damage to the opponent's Active `)]
+          : [
+              plain("attacks by "),
+              strong(retrieveNoun(event.attacker).plural),
+              plain(` do ${event.amount} more damage to the opponent's Active `),
+            ]),
         strong(retrieveNoun(event.target).plural),
         plain(" this turn (before Weakness and Resistance)"),
       ]);
@@ -938,6 +945,19 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     case "PRIZE_LOOKED_AT":
       return row(event.actor, [
         plain(`looked at ${names[event.seat]}'s face-down Prize ${event.index + 1}`),
+      ]);
+    // 🆕🆕🆕 §11 — Acerola's Mischief (D621): the chosen body named, the class read through the one renderer.
+    case "CHOSEN_ATTACK_SHIELD_INSTALLED":
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(
+          ` is protected from damage and effects of attacks by ${attackerClassNoun(event.fromClass)} during the opponent's next turn`,
+        ),
+      ]);
+    // 🆕🆕🆕 §11 — Roxie's Performance (D621), filed under the LOCKED side, victim-voiced.
+    case "SIDE_RETREAT_LOCKED":
+      return row(event.seat, [
+        plain("Poisoned Pokémon can't retreat during their next turn, including newly Poisoned Pokémon"),
       ]);
     case "SIDE_DAMAGE_REDUCTION_INSTALLED":
       return row(event.seat, [

@@ -29,7 +29,7 @@ import {
 // row; driven on the real ids in a LOCAL `cardPool` (D275). The WP24 texts this slice does NOT key
 // are pinned unbuilt in §1 (five dropped, two left for WP24b). 🆕🆕🆕 D617 (D539): four of the five dropped
 // are built at D617 (WP24b) and §1 pins them keyed; Gladion's Final Battle, Acerola's Mischief and Roxie's
-// Performance stay unkeyed.
+// Performance stay unkeyed. [🆕🆕🆕 D621 (D539): ~~"stay unkeyed"~~ — built at D621 (WP24c); §1 pins all 20 keyed.]
 
 const ANTHEA = "me02.5-182";
 const EMMA = "me04-077";
@@ -75,16 +75,12 @@ describe("D599 §1 — the faces: 4 `me` printings / 2 texts, one object per tex
     expect(objects.size).toBe(2);
   });
 
-  it("the other 20 WP24 printings (7 texts) ~~stay unkeyed~~ (🆕🆕🆕 D617 (D539): WITHDRAWN — WP24b keys 9 of them: AZ's Tranquility, Grimsley's Move, Gwynn and Naveen; Gladion's Final Battle, Acerola's Mischief and Roxie's Performance stay unkeyed)", () => {
+  it("the other 20 WP24 printings (7 texts) ~~stay unkeyed~~ (🆕🆕🆕 D617 (D539): WITHDRAWN — WP24b keys 9 of them: AZ's Tranquility, Grimsley's Move, Gwynn and Naveen; ~~Gladion's Final Battle, Acerola's Mischief and Roxie's Performance stay unkeyed~~ 🆕🆕🆕 D621 (D539): WITHDRAWN — WP24c keys those three: all 20 are keyed)", () => {
     const ids = Object.values(NOT_KEYED).flat();
     expect(ids).toHaveLength(20);
     // 🆕🆕🆕 D617 — the four texts WP24b built (supportersMeD617.test.ts) are keyed now.
-    const builtAtD617 = ["AZ's Tranquility", "Grimsley's Move", "Gwynn", "Naveen"];
-    for (const [name, list] of Object.entries(NOT_KEYED))
-      for (const id of list) {
-        if (builtAtD617.includes(name)) expect(programFor(id), id).toBeDefined();
-        else expect(programFor(id), id).toBeUndefined();
-      }
+    // 🆕🆕🆕 D621 — and the three WP24c built (sideStateMeD621.test.ts): every text here is keyed.
+    for (const id of ids) expect(programFor(id), id).toBeDefined();
   });
 });
 

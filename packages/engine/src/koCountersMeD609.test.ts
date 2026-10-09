@@ -417,6 +417,6 @@ describe("D609 §6 — Sneaky Placement: 1 counter on 1 of the opponent's Pokém
 
 describe("D609 §7 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.503.0");
+    expect(engineVersion).toBe("0.504.0");
   });
 });
