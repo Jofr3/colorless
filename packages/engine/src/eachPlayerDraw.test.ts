@@ -869,7 +869,7 @@ describe("D491 §9 — the version question, asked at the address that persists"
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.504.0");
+    expect(engineVersion).toBe("0.505.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

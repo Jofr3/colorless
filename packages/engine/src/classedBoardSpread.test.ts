@@ -122,8 +122,20 @@ import {
 // the opposite of the one above: the over-reach is well pinned, and a successor who wants
 // to split `ignoreWR` into two flags must move SIX rungs and make a RULES call about the
 // bare wording. That is the scope line, not a defect.
+//
+// 🆕🆕🆕 D622 (D539): THE SPLIT IS MADE. The bare tail now carries `wrOnly` beside `ignoreWR`
+// and nulls Weakness and Resistance only (R-AM2 retired, the printed reading); the over-reach
+// above is WITHDRAWN. §8 moves to `[100, 70, 100, 0, 100]` (Rock Chestplate applies) and §9's
+// derived op differs from the v29 bytes in `count` and `wrOnly`.
 
 const SPREAD_SEED = 492_0492;
+/** 🆕🆕🆕 D622 — §8's four `DAMAGE_DEALT` rows as `[dealt, reduction]`, in event order. */
+const DEALT_D622 = [
+  [100, undefined],
+  [70, 30],
+  [100, undefined],
+  [100, undefined],
+];
 
 /** Corpus FILE LINE 616, byte for byte — 2 legal printings. */
 const EX_60 =
@@ -328,6 +340,7 @@ const program = (amount: number, filter: EffectOp extends never ? never : unknow
     source: "attack",
     deals: true,
     ignoreWR: true,
+    wrOnly: true, // 🆕🆕🆕 D622 — the bare tail: W/R only (R-AM2 retired)
     filter: filter as never,
   },
 ];
@@ -907,13 +920,16 @@ describe("D492 §8 — `counterEachAll` names the same set and is still the wron
     // `ignoreWR` it does not: `placeSnipe` reads `seatDamageReduction(…, "othersOnly")`
     // and nulls both the catalog and installed halves, so Rock Chestplate's −30 on a
     // benched holder moves NO number. The board below carries that Tool and reads 100.
+    // [🆕🆕🆕 D622 (D539): WITHDRAWN — the bare tail is `wrOnly` and nulls no effect on the
+    // target, so the Tool's −30 applies: the holder reads 70, its row `reduction: 30`. The
+    // EVENT shape below is still the discriminator.]
     // **The discriminator that survives is the EVENT**, and it is asserted as a shape:
     // a `DAMAGE_DEALT` carrying `base`, an explicit `weakness: null` / `resistance: null`
     // and a `dealt`, which `COUNTERS_PLACED` has no fields for at all.
     let board = spreadTable("d492-wall-ex", MIXED_BENCH);
     board = attachToolFromDeck(board, "p2", 0, "sv01-192");
     const { state, events } = swing(board, HIT_EX_V);
-    expect(damageVector(state, "p2")).toEqual([100, 100, 100, 0, 100]);
+    expect(damageVector(state, "p2")).toEqual([100, 70, 100, 0, 100]);
     expect(eventTypes(events)).not.toContain("COUNTERS_PLACED");
     const rows = events.filter((e) => e.type === "DAMAGE_DEALT");
     expect(rows).toHaveLength(4);
@@ -924,8 +940,11 @@ describe("D492 §8 — `counterEachAll` names the same set and is still the wron
       expect(row.base).toBe(100);
       expect(row.weakness).toBeNull();
       expect(row.resistance).toBeNull();
-      expect(row.dealt).toBe(100);
     }
+    // 🆕🆕🆕 D622 — the Tool holder's row carries the reduction; the other three land whole.
+    expect(rows.map((row) => (row.type === "DAMAGE_DEALT" ? [row.dealt, row.reduction] : null))).toEqual(
+      DEALT_D622,
+    );
   });
 });
 
@@ -961,7 +980,7 @@ describe("D492 §9 — the widened quantifier over a v29 record", () => {
     filter: EX_V_FILTER,
   } as unknown as EffectOp;
 
-  it("🛑 the two ops differ in exactly ONE key, which is what makes this a claim about the quantifier", () => {
+  it("🛑 the two ops differ in exactly ONE key, which is what makes this a claim about the quantifier (🆕🆕🆕 D622 (D539): and in `wrOnly`, which no v29 writer wrote)", () => {
     const derived = (deriveAttackEffect(EX_V_100) as EffectOp[])[0];
     if (derived === undefined) throw new Error("expected a program");
     const differing = Object.keys(derived).filter(
@@ -969,7 +988,7 @@ describe("D492 §9 — the widened quantifier over a v29 record", () => {
         JSON.stringify((derived as unknown as Record<string, unknown>)[k]) !==
         JSON.stringify((V29_SNIPE as unknown as Record<string, unknown>)[k]),
     );
-    expect(differing).toEqual(["count"]);
+    expect(differing).toEqual(["count", "wrOnly"]);
     // The v29 bytes survive a JSON round trip unchanged — this is what a record holds.
     expect(JSON.parse(JSON.stringify(V29_SNIPE))).toEqual(V29_SNIPE);
   });
@@ -1004,9 +1023,9 @@ describe("D492 §9 — the widened quantifier over a v29 record", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D492 §10 — the residue this slice moved, and the engine version", () => {
-  it("engineVersion is 0.504.0 and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.504.0");
-    expect(manifest.version).toBe("0.504.0");
+  it("engineVersion is 0.505.0 and `manifest.version` agrees", () => {
+    expect(engineVersion).toBe("0.505.0");
+    expect(manifest.version).toBe("0.505.0");
   });
 
   it("🛑 the reader surface is still THIRTEEN, derived from the module", () => {

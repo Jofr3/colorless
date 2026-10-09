@@ -57,6 +57,7 @@ const ONE: EffectOp = {
   source: "attack",
   deals: true,
   ignoreWR: true,
+  wrOnly: true, // 🆕🆕🆕 D622 — the bare tail: W/R only (R-AM2 retired); the sibling sets it too
 };
 const PROGRAM: EffectOp[] = [ONE, ONE, ONE, ONE, ONE, ONE];
 
@@ -518,6 +519,7 @@ describe("D535 §2 — the NEGATIVE CONTROLS, and the siblings measured in BOTH 
         source: "attack",
         deals: true,
         ignoreWR: true,
+        wrOnly: true, // 🆕🆕🆕 D622
       },
     ]);
     // `COUNTER_SPREAD_ON_OPPONENT` — its own sentence, unchanged: N ops at the §12 unit,
@@ -575,12 +577,13 @@ describe("D535 §3 — the PERSISTED BYTES: the version claim, driven rather tha
       "op",
       "source",
       "target",
+      "wrOnly", // 🆕🆕🆕 D622 — the optional key this line exists to catch, added on purpose
     ]);
     // …and the TAIL still carries the remaining FIVE ops, each the same literal.
     expect(cont.rest).toHaveLength(5);
     expect(cont.rest).toEqual([ONE, ONE, ONE, ONE, ONE]);
     expect(bytes).toContain(
-      '"pendingOp":{"op":"damageChosen","target":"opponentAny","amount":20,"count":1,"source":"attack","deals":true,"ignoreWR":true}',
+      '"pendingOp":{"op":"damageChosen","target":"opponentAny","amount":20,"count":1,"source":"attack","deals":true,"ignoreWR":true,"wrOnly":true}',
     );
     // …and resuming FROM THE BYTES is the same board as resuming live.
     const fromBytes = pick(revived, 0);
@@ -746,15 +749,20 @@ describe("D535 §6 — `ignoreWR` and `deals` ON THE BOARD", () => {
   // is also why D535's *"NO RUNG DRIVES IT"* was false about the repo even while it was
   // true about this suite. `D535-ignore-wr-keeps-the-target-reduction` names these rungs
   // as a SECOND witness rather than as the only one.
-  it("🆕 RIDE-ALONG — the BENCH read site: `ignoreWR` nulls a benched Bouffalant's `damageReductionAfterWR`, so two picks land the full 40", () => {
+  //
+  // 🆕🆕🆕 D622 (D539): THE READING ABOVE IS WITHDRAWN. The bare tail carries `wrOnly` and nulls
+  // Weakness and Resistance only (R-AM2 retired), so Bouffer's −20 now APPLIES at both read
+  // sites: each 20 hit is cancelled and the two picks land 0. The two rungs keep their boards and
+  // flip their number; the old titles are kept, struck through.
+  it("🆕 RIDE-ALONG — the BENCH read site: ~~`ignoreWR` nulls a benched Bouffalant's `damageReductionAfterWR`, so two picks land the full 40~~ (🆕🆕🆕 D622: `wrOnly` keeps it, so two picks land 0)", () => {
     const { state } = walk(attack(board(43, WALL, [BOUFFALANT])).state, [1, 1]);
-    // 40, not 0: Bouffer's −20 would cancel each 20 hit exactly.
-    expect(state.players.p2.bench[0]?.damage).toBe(40);
+    // 0, not 40: Bouffer's −20 cancels each 20 hit exactly.
+    expect(state.players.p2.bench[0]?.damage).toBe(0);
   });
 
-  it("🆕 RIDE-ALONG — the ACTIVE read site: the same nulling one function over, on the opponent's Active", () => {
+  it("🆕 RIDE-ALONG — the ACTIVE read site: ~~the same nulling~~ (🆕🆕🆕 D622: the same reduction kept) one function over, on the opponent's Active", () => {
     const { state } = walk(attack(board(47, BOUFFALANT, [FILLERS[1]])).state, [0, 0]);
-    expect(state.players.p2.active?.damage).toBe(40);
+    expect(state.players.p2.active?.damage).toBe(0);
   });
 
   it("the FLAT control: the same board WITHOUT the flag would differ — driven on the sibling the engine already ships", () => {
@@ -769,6 +777,7 @@ describe("D535 §6 — `ignoreWR` and `deals` ON THE BOARD", () => {
     // …and the D535 op differs from it by EXACTLY that key.
     expect(Object.keys(ONE).filter((k) => !Object.keys(flat?.[0] ?? {}).includes(k))).toEqual([
       "ignoreWR",
+      "wrOnly", // 🆕🆕🆕 D622
     ]);
   });
 });
@@ -833,7 +842,7 @@ describe("D535 §8 — the POPULATION RUNG and the version", () => {
   });
 
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
-    expect(engineVersion).toBe("0.504.0");
+    expect(engineVersion).toBe("0.505.0");
     expect(manifest.version).toBe(engineVersion);
     expect(raw("/index.ts")).toContain("engineVersion 0.419.0 → **0.420.0** (D535");
   });

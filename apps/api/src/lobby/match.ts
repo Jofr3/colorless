@@ -2159,6 +2159,19 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 43 AT D622 — ONE OPTIONAL OP KEY, ON THE FORM THAT CHANGED.** (Placed ABOVE the D621 block,
+    D563's placement.) R-AM2 is retired: the bare W/R tail (Oil Salvo, Sonic Peridot, Severe Squall,
+    Telekinesis) now derives `damageChosen.wrOnly` beside `ignoreWR`, and the interpreter reads `ignoreWR`
+    alone as the Feint form. The address: a `damageChosen` op a record holds — `phase.cont.pendingOp` /
+    `cont.rest` (Oil Salvo's six picks, Telekinesis's one; the two spreads never park) or any other stored op
+    list. ⑴ **AN IN-FLIGHT v43 PARK** holds the op without the key, so it resumes under the reading it was parked with — the bare hit passes on-target
+    preventions and reductions for the rest of that one attack (driven in engine `bareTailD622.test.ts` §4).
+    No parked Feint op changes meaning, because the marker sits on the bare form: had it been a new key on
+    the Feint form, every in-flight Twin Shotels park would have lost its bypass, and the version would be
+    owed. ⑵ **A 0.504 ROLLBACK** ignores the key and reads the bare op as before (the over-reach), an
+    inert reading of a shipped shape. No `GameState`, `PendingStage`, prompt or wire key moves, and no
+    `cardPool` face changes (the program is derived from the text at declaration).
+
     🆕🆕🆕 **42 → 43 AT D621 — THE SIXTEENTH POSITION, AND THE SECOND MIGRATION: TWO REQUIRED `PlayerSide`
     KEYS AND ONE OPTIONAL BAG KEY, EACH A PLAYED EFFECT.** (Placed ABOVE the D620 block, D563's placement, so the
     declaration's anchor lines stay byte-identical.) The addresses, named first (D456's rule):

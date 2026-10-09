@@ -6,6 +6,14 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D622 update (engine 0.505.0) — fix-up: R-AM2 retired (`MATCH_RECORD_VERSION` stays 43)
+
+No printing moves column. The bare W/R tail now nulls Weakness and Resistance only (the NEW `damageChosen.wrOnly`): Arboliva ex "Oil
+Salvo" `sv10-023` / `-207`, Flygon ex "Sonic Peridot" `sv08-106` / `-222`, Vaporeon ex "Severe Squall" `sv08.5-023` / `-149` and
+Sigilyph "Telekinesis" `sv10.5w-038` / `-121` are stopped by Acerola's Mischief and every on-target prevention, and take reductions.
+Iron Crown ex "Twin Shotels" (the Feint form) still passes them. The `me` column prints none of these texts. `bareTailD622.test.ts`.
+The D621 table below stands.
+
 ## 🆕 D621 update (engine 0.504.0) — WP24c + WP23 (persisted side state, `MATCH_RECORD_VERSION` 42 → 43)
 
 5 texts / 16 `me` printings (`sideStateMeD621.test.ts`). The NEW optional `SideAttackBonus.attacker`: Gladion's Final Battle ×3
@@ -22,6 +30,7 @@ counter move's Benched destination now ask §11 of that body), so Dragapult ex "
 Second review fix: the shield ends when its body leaves play (R-AM1 made true). Known gap, R-AM2 UNRULED: an `ignoreWR` snipe or
 spread from a Pokémon ex passes it — Arboliva ex "Oil Salvo", Flygon ex "Sonic Peridot" and Vaporeon ex "Severe Squall" land
 through it under D400/D492's reading of the bare W/R tail (splitting that tail from the Feint form is a separate slice).
+[🆕🆕🆕 D622 (D539): split at D622 — R-AM2 retired, the bare tail is stopped.]
 
 | Column | `me` built / units (D621) | Standard pool D621 |
 |---|---|---|

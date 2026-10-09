@@ -715,8 +715,8 @@ describe("§8 — the census moves in exactly ONE summand", () => {
     expect(programFor("fix-deflock")).toBeUndefined();
   });
 
-  it("engineVersion is 0.504.0", () => {
-    expect(engineVersion).toBe("0.504.0");
+  it("engineVersion is 0.505.0", () => {
+    expect(engineVersion).toBe("0.505.0");
   });
 
   it("the demonstrator costs ZERO `FIXTURE_POOL` ids (D414/D452)", () => {

@@ -30243,6 +30243,21 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D622 — fix-up: R-AM2 retired, the bare W/R tail is W/R only (engine 0.505.0, `MATCH_RECORD_VERSION` stays 43)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D621 (`5b67aaa2`), NOT committed.
+
+- **The split.** The NEW optional `damageChosen.wrOnly`, set beside `ignoreWR` by the three bare-tail readers: Oil Salvo, Sonic
+  Peridot, Severe Squall, Telekinesis (4 texts / 8 `sv` printings; the `me` column prints none). `placeSnipe` reads
+  `ignoreWR && !wrOnly` as the Feint guard; `snipeActive` nulls only Weakness and Resistance for `wrOnly`. The bare hit is now stopped
+  by Acerola's shield and every on-target prevent, and takes reductions. Twin Shotels (the Feint form) is unchanged.
+- **MRV stays 43.** The key sits on the bare form, so an in-flight v43 park keeps its old reading for that attack and no Feint park
+  changes meaning (match.ts "STAYS 43 AT D622").
+- **D621's MINOR findings.** D539 copies annotated (Rabsca, `preventDamageAndEffectsWhileBenched`, D253 / D254); the R-AM2 bullet's
+  `> ` prefix; the migration test's lambda.
+- **Suite.** `bareTailD622.test.ts` (12); the over-reach rungs flipped (`classedBoardSpread`, `pickWithReplacement`,
+  `sideStateMeD621`). +10 mutant rows. Sweep PENDING.
+
 ## D621 — WP24c + WP23: persisted side state (engine 0.504.0, `MATCH_RECORD_VERSION` 42 → 43)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D620 (`6448679e`), NOT committed.
@@ -30258,11 +30273,12 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Dawn ×3.** Larry's Skill's `also` search by stage (Basic, Stage 1, Stage 2), no new vocabulary.
 - **MRV 42 → 43 with a migration.** `migrateMatchRecord` writes both side keys as `null` on a v42 record (no D1 read) and on a v41
   one (after D583's Trainer refresh). A rollback to MRV 42 retires v43 records. No wire shape moves.
-- **Readings.** R-GFB1, R-AM1, R-AM2, R-RP1 ⚠️ UNRULED (`progress.md` NEXT).
+- **Readings.** R-GFB1, R-AM1, R-AM2, R-RP1 ⚠️ UNRULED (`progress.md` NEXT). [🆕🆕🆕 D622: R-AM2 retired.]
 - **Second review fix.** R-AM1's "ends when it leaves play" is now true: flow.ts `clearDepartedChosenShields`, run by
   `applyAction`, clears a record whose base uid is no longer in play on its seat. R-AM2 is recorded, not fixed: an `ignoreWR`
   snipe or spread from a Pokémon ex passes the shield (right for Iron Crown ex's Feint form; for the bare tail it follows
   D400/D492's reading, so Oil Salvo, Sonic Peridot and Severe Squall land through it). The main hit splits the two forms.
+  [🆕🆕🆕 D622 (D539): FIXED — the bare tail carries `wrOnly` and is stopped; R-AM2 retired.]
 - **D150's gap, closed (review fix).** R-AM1 puts a wide block on a Benched body, so `placeSnipe`'s put-counter Bench arm and
   `moveCountersFromBench`'s Benched destination now call `effectRefused` on that body (Phantom Dive into a shielded Benched body:
   60 before, 0 now). D142's reading; it also closes D450's put-counter PICK asymmetry for the bench effects auras.

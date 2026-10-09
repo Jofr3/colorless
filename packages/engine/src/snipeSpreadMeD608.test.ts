@@ -264,11 +264,12 @@ describe("D608 §2 — the readings", () => {
     expect(deriveAttackEffect(normalizeCardText(STEALTHY_SLASH_EM))).toEqual(anyTarget);
   });
 
-  it("Photon Bullets is D492's filtered spread WITHOUT `ignoreWR`", () => {
+  it("Photon Bullets is D492's filtered spread WITHOUT `ignoreWR` (🆕🆕🆕 D622: or `wrOnly`)", () => {
     const shipped = deriveAttackEffect(
       "This attack does 50 damage to each of your opponent's Pokémon ex. This attack's damage isn't affected by Weakness or Resistance.",
     );
-    const { ignoreWR: _dropped, ...withoutIgnore } = (shipped?.[0] ?? {}) as Record<string, unknown>;
+    // 🆕🆕🆕 D622 — the bare tail's `wrOnly` goes with `ignoreWR`: Photon Bullets prints no W/R tail.
+    const { ignoreWR: _dropped, wrOnly: _bare, ...withoutIgnore } = (shipped?.[0] ?? {}) as Record<string, unknown>;
     for (const id of ["30th-064", "30th-151", "30th-157"]) {
       expect(programFor(id)?.attack?.[0], id).toEqual([withoutIgnore]);
     }
@@ -608,6 +609,6 @@ describe("D608 §7 — Stealthy Slash and Photon Bullets on a board", () => {
 
 describe("D608 §8 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.504.0");
+    expect(engineVersion).toBe("0.505.0");
   });
 });

@@ -172,7 +172,9 @@ describe("D621 — what the migration writes", () => {
 describe("D621 — on a board: the unmigrated v42 state throws at the first attack; the migrated one plays", () => {
   it("an attack reads `chosenAttackShield` on both sides: undefined throws, null plays", () => {
     const old = oldRecord(42);
-    expect(() => applyAction(p1Turn(old.state), { type: "attack", seat: "p1", index: 0 })).toThrow(TypeError);
+    // 🆕🆕🆕 D622 — the setup runs OUTSIDE the lambda, so the throw pinned is the FIRST ATTACK's.
+    const turn = p1Turn(old.state);
+    expect(() => applyAction(turn, { type: "attack", seat: "p1", index: 0 })).toThrow(TypeError);
     const migrated = migrateMatchRecord(old, {});
     if (migrated === null) throw new Error("not migrated");
     const hit = applyAction(p1Turn(migrated.state), { type: "attack", seat: "p1", index: 0 });

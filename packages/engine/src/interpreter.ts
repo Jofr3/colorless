@@ -3099,6 +3099,7 @@ function stepOp(
               op.source,
               ctx,
               events,
+              op.wrOnly === true,
             );
           }
           return { done: next };
@@ -3109,7 +3110,7 @@ function stepOp(
           const [flipped, faces] = flipCoinsFor(state, candidates.length, ctx, events);
           const hit = candidates.filter((_, index) => faces[index] === "heads");
           return {
-            done: placeSnipe(flipped, hit, amount, op.deals === true, op.ignoreWR === true, op.source, ctx, events),
+            done: placeSnipe(flipped, hit, amount, op.deals === true, op.ignoreWR === true, op.source, ctx, events, op.wrOnly === true),
           };
         }
         // 🆕🆕🆕 D605 — Target Together with one candidate: the pick is forced, then the coins.
@@ -3126,6 +3127,7 @@ function stepOp(
             op.source,
             ctx,
             events,
+            op.wrOnly === true,
           ),
         };
       }
@@ -8718,6 +8720,7 @@ export function applyChoice(
             op.source,
             ctx,
             events,
+            op.wrOnly === true,
           );
         }
         return resumed;
@@ -8741,6 +8744,8 @@ export function applyChoice(
             op.source,
             ctx,
             events,
+            // 🆕🆕🆕 D622 — the parked op's own `wrOnly`: a v43 park lacks it and keeps its old reading.
+            op.wrOnly === true,
           )
         : state;
     case "attachEnergyFrom":
@@ -11678,7 +11683,7 @@ function perHeadsHit(
 ): GameState {
   const [flipped, faces] = flipCoinsFor(state, countPokemonInPlay(state, ctx.seat, filter), ctx, events);
   const heads = faces.filter((face) => face === "heads").length;
-  return placeSnipe(flipped, refs, amount * heads, op.deals === true, op.ignoreWR === true, op.source, ctx, events);
+  return placeSnipe(flipped, refs, amount * heads, op.deals === true, op.ignoreWR === true, op.source, ctx, events, op.wrOnly === true);
 }
 
 function placeSnipe(
@@ -11686,13 +11691,22 @@ function placeSnipe(
   refs: readonly PokemonRef[],
   amount: number,
   deals: boolean,
-  ignoreWR: boolean,
+  printedIgnoreWR: boolean,
   source: "ability" | "attack" | "trainer", // 🆕🆕🆕 D557 — Venture Bomb's Item placement
   ctx: EffectContext,
   events: GameEvent[],
+  wrOnly: boolean, // 🆕🆕🆕 D622 — the op's `wrOnly` (the bare W/R tail)
 ): GameState {
   if (amount <= 0) return state;
   const opponent = otherSeat(ctx.seat);
+  // 🆕🆕🆕 D622 — R-AM2 RETIRED. `ignoreWR` below is the FEINT form only (*"…or by any effects on
+  // that/those Pokémon"*): every use in this function and in `snipeActive` skips effects on the
+  // target. The bare tail (`wrOnly`) skips Weakness and Resistance and nothing else, so it takes the
+  // plain hit's path here — every on-target prevention (Acerola's Mischief's shield, `attackDamageBlocked`,
+  // the catalog prevents), reduction, Berry and coin shield applies — and hands `wrOnly` to
+  // `snipeActive` for the Active pick. On a Benched pick the bare tail is the plain hit exactly (§8.5:
+  // no W/R on the Bench).
+  const ignoreWR = printedIgnoreWR && !wrOnly;
   // The Active target — `opponentAny` only (Fezandipiti ex "Cruel Arrow",
   // Ninetales sv03-029 "Nine-Tailed Dance"). §8.5: Weakness/Resistance apply ONLY
   // to the Active/Defending Pokémon, so a chosen HIT that lands on the Active goes
@@ -11716,7 +11730,7 @@ function placeSnipe(
   let next = state;
   if (refs.some((r) => r.seat === opponent && r.spot.spot === "active")) {
     next = deals
-      ? snipeActive(next, amount, ignoreWR, ctx, events)
+      ? snipeActive(next, amount, ignoreWR, ctx, events, wrOnly)
       : damageActive(next, amount, source, ctx, events);
   }
   // 🆕🆕🆕 **D539 — THE ATTACKER'S OWN ACTIVE, AND IT IS A THIRD LEG THAT THE
@@ -12147,6 +12161,10 @@ function snipeActive(
   ignoreWR: boolean,
   ctx: EffectContext,
   events: GameEvent[],
+  // 🆕🆕🆕 D622 — the bare W/R tail: Weakness and Resistance are skipped, every effect on the target
+  // applies (`ignoreWR` is then false — `placeSnipe` reads the pair). Defaulted for the two
+  // `damageDefender` callers, whose hit always goes through W/R.
+  wrOnly = false,
 ): GameState {
   const opponent = otherSeat(ctx.seat);
   // 🆕🆕🆕 D578 — both spots as IN-PLAY cards (`activeInPlay`): Weakness / Resistance and the
@@ -12232,7 +12250,8 @@ function snipeActive(
   // of the table), beneath the retype exactly as at the main hit. `ignoreWR` already nulls
   // it with the rest of Weakness. Driven on its OWN board (`abilityBundleD559.test.ts`),
   // D432's reason.
-  const weakness = noWeakness
+  // 🆕🆕🆕 D622 — the bare tail (`wrOnly`) nulls Weakness and Resistance, and only those.
+  const weakness = noWeakness || wrOnly
     ? null
     : weaknessOf(
         attacker.card,
@@ -12241,7 +12260,7 @@ function snipeActive(
         seatWeaknessRewrite(state, opponent, target.card),
       );
   const resistance =
-    ignoreWR || attacker === null ? null : resistanceOf(attacker.card, target.card);
+    ignoreWR || wrOnly || attacker === null ? null : resistanceOf(attacker.card, target.card);
   // The pre-W/R clamp is attack.ts's, for its reason verbatim: an attack does not
   // do negative damage, and the printed parenthetical puts the subtraction here.
   const afterWR = Math.max(

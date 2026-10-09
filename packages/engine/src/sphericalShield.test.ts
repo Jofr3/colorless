@@ -73,6 +73,7 @@ import {
 //   • interpreter.ts snipeActive  — DEAD (`target.active`)
 //   • interpreter.ts attackEffect — DEAD (`state.players[seat].active`)
 //     Refused
+//       [🆕🆕🆕 D622 (D539): WITHDRAWN for `attackEffectRefused` — LIVE since D259 (a gust names a Benched body) and D621 (`placeSnipe`'s put-counter Bench arm asks it of the PICKED Benched body).]
 // All five are guarded (TOTAL, not case-covering); the three dead ones carry NO
 // mutants, because an unkillable mutant is a corpus defect rather than coverage.
 //
@@ -495,7 +496,8 @@ describe("the DEAD read sites — guarded for totality, asserted rather than ass
   // this field could meet there is one where its TARGET clause is false. Yawn
   // lands. The disjunct is written at that site anyway, so the day an op aims an
   // effect at a benched body the guard is already there.
-  it("attackEffectRefused: the Active is put to Sleep — no reachable board today", () => {
+  // [🆕🆕🆕 D622 (D539): WITHDRAWN for `attackEffectRefused` — the effects funnel takes a target since D259 (a gust names a Benched body) and since D621 `placeSnipe`'s put-counter Bench arm asks it of the PICKED Benched body, so the effects half is live there.]
+  it("attackEffectRefused: the Active is put to Sleep — no reachable board on this Active-aimed op (🆕🆕🆕 D622 (D539): ~~today~~ — live at a gust or a put-counter Bench pick)", () => {
     const state = holderBenched();
     deepFreeze(state);
     const { state: done, events } = mustApply(state, yawn);

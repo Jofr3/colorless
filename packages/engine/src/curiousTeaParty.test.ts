@@ -60,8 +60,11 @@ import {
 //   • interpreter.ts snipeActive   — DEAD (`target.active`)
 //   • interpreter.ts attackEffect  — DEAD (`state.players[seat].active`)
 //     Refused
+//       [🆕🆕🆕 D622 (D539): WITHDRAWN for `attackEffectRefused` — LIVE since D259 (a gust names a Benched body) and D621 (`placeSnipe`'s put-counter Bench arm asks it of the PICKED Benched body).]
 // The printed sentence's EFFECTS half is therefore structurally unreachable on
-// today's op set. All five are guarded anyway (the arms are TOTAL, not
+// today's op set.
+// [🆕🆕🆕 D622 (D539): WITHDRAWN for `attackEffectRefused` — the effects funnel takes a target since D259 (a gust names a Benched body) and since D621 `placeSnipe`'s put-counter Bench arm asks it of the PICKED Benched body, so the effects half is live there.]
+// All five are guarded anyway (the arms are TOTAL, not
 // case-covering) and the three dead ones carry NO mutants, because an unkillable
 // mutant is a corpus defect rather than coverage.
 //
@@ -356,7 +359,8 @@ describe("Curious Tea Party — the ACTIVE holder prevents NOTHING", () => {
   // false. Yawn lands. That is not a bug in the printing's reading — it is a
   // measured fact about today's op set, and the disjunct is written at that site
   // anyway so the day an op aims an effect at a benched body the guard is there.
-  it("is put to Sleep — the EFFECTS half has no reachable board today", () => {
+  // [🆕🆕🆕 D622 (D539): WITHDRAWN for `attackEffectRefused` — the effects funnel takes a target since D259 (a gust names a Benched body) and since D621 `placeSnipe`'s put-counter Bench arm asks it of the PICKED Benched body, so the effects half is live there.]
+  it("is put to Sleep — the EFFECTS half has no reachable board on this Active-aimed op (🆕🆕🆕 D622 (D539): ~~today~~ — live at a gust or a put-counter Bench pick)", () => {
     const state = active();
     deepFreeze(state);
 

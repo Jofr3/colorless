@@ -695,10 +695,10 @@ describe("§8 — the persisted record cannot hold this op", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§9 — the version, and what it is owed for", () => {
-  it("engineVersion is 0.504.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.505.0 and the bump is owed for BEHAVIOUR", () => {
     // A sentence that derived to `null` derives to a two-op program, and a new `EffectOp`
     // member runs in the interpreter. That is behaviour, so the bump is owed.
-    expect(engineVersion).toBe("0.504.0");
+    expect(engineVersion).toBe("0.505.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

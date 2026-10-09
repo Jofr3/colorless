@@ -1170,7 +1170,11 @@ export function passivesOf(
       construction, and the two that can ever be true are the BENCH arms, spread
       and `placeSnipe`. Written at all five because the deadness is a fact about
       today's op set and not a rule: the day an op aims an effect at a benched
-      body, the guard is already where it must be. The MUTANTS are authored only
+      body, the guard is already where it must be. [🆕🆕🆕 D622 (D539): ~~"`attackEffectRefused`
+      resolves `state.players[seat].active` too — so this field is FALSE at all three"~~ — WITHDRAWN for
+      the effects funnel: it takes a target since D259 (a gust names a Benched body), and since D621
+      `placeSnipe`'s put-counter Bench arm asks it of the PICKED Benched body, so the effects half is
+      live there. The two DAMAGE arms named dead stay dead.] The MUTANTS are authored only
       at the two live arms, because a mutant at a dead one could not be killed.
 
       A BOOLEAN, by the standing rule its four siblings settled: the gate names no
@@ -2699,7 +2703,11 @@ function sideAttackBlockOf(
     reading that `ignoreWR` also nulls effects on the target, so Arboliva ex "Oil Salvo", Flygon ex
     "Sonic Peridot" and Vaporeon ex "Severe Squall" land through the shield. The main hit keeps the
     two forms apart (`damageSuppression.targetEffects`), so a bare-tail main hit (Medicham ex "Yoga
-    Kick") is stopped. Pinned by `sideStateMeD621.test.ts` §5. */
+    Kick") is stopped. Pinned by `sideStateMeD621.test.ts` §5.
+    [🆕🆕🆕 D622 (D539): R-AM2 RETIRED — the bare tail now carries `wrOnly`, and `placeSnipe` reads
+    `ignoreWR && !wrOnly` as its guard, so Oil Salvo, Sonic Peridot, Severe Squall (and Sigilyph
+    "Telekinesis") are stopped by this shield and by every on-target prevent; only the Feint form
+    passes. `bareTailD622.test.ts`.] */
 function chosenAttackShieldOf(
   state: GameState,
   pokemon: InPlayPokemon,

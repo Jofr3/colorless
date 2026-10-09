@@ -6834,8 +6834,27 @@ export type EffectOp =
           hit skips BOTH the target's Weakness/Resistance AND its `damageReductionAfterWR`
           passive (the "any effects on that Pokémon" half). The ATTACKER's own pre-W/R
           bonus is an effect on the ATTACKER, not the target, so it still applies. Only
-          the `opponentAny` reader sets it (Feint Attack targets any Pokémon). */
+          the `opponentAny` reader sets it (Feint Attack targets any Pokémon).
+          🆕🆕🆕 D622 (D539): ~~"Only the `opponentAny` reader sets it"~~ — three readers set it
+          (`CHOSEN_ANY_TARGET`, `ATTACK_PICK_WITH_REPLACEMENT_SNIPE`, `SPREAD_EACH_CLASSED_OPPONENT_POKEMON`),
+          and ALONE it now means the Feint form only; the bare tail adds `wrOnly` below. */
       ignoreWR?: true;
+      /** 🆕🆕🆕 D622 — R-AM2 RETIRED: THE BARE W/R TAIL, KEPT APART FROM THE FEINT FORM. *"This
+          attack's damage isn't affected by Weakness or Resistance."* (and D535's *"This damage
+          isn't …"*) prints no *"or by any effects on …"* clause, so it nulls Weakness and Resistance
+          and NOTHING ELSE: every prevention, reduction, Berry, vulnerability and coin shield on the
+          target applies as to a plain hit. Set beside `ignoreWR` by the three bare-tail readers
+          (Oil Salvo, Sonic Peridot, Severe Squall, Telekinesis: 4 texts / 8 legal printings);
+          `ignoreWR` without it is the Feint form (Twin Shotels). The interpreter reads the pair
+          as `const ignoreWR = printedIgnoreWR && !wrOnly` in `placeSnipe` and as `snipeActive`'s
+          `wrOnly` parameter.
+          ⚠️ **THE MARKER IS ON THE BARE FORM, NOT THE FEINT ONE, SO `MATCH_RECORD_VERSION` STAYS
+          43.** A v43 record can park one of these ops (Oil Salvo's six picks, Telekinesis's one) in
+          `phase.cont`; it lacks the key and resumes under the reading it was parked with (the
+          old over-reach, for the rest of that one attack). A Feint op never needed a new key, so no
+          parked Feint op can lose its bypass. A 0.504 rollback ignores the key: the over-reach
+          again, an inert reading of a shipped shape. `true` AND NOT `boolean`, like the riders above. */
+      wrOnly?: true;
       /** 🆕🆕 **D437 — THE PRINTED PER-BODY NARROWING**: *"…to 1 of your opponent's
           Benched Pokémon **that has any damage counters on it**."* (corpus row 528,
           1 sentence / 3 legal printings). It narrows the CANDIDATE SET inside
@@ -17538,7 +17557,8 @@ const CONDITIONAL_BENCH_SNIPE = new RegExp(`^If (.+), this ${ALSO_BENCHED_SNIPE_
 // Umbreon "Feint Attack"'s "This attack's damage isn't affected by Weakness or
 // Resistance[, or by any effects on that Pokémon]." (sv03-130), which sets `ignoreWR`.
 // The ", or by any effects on that Pokémon" clause is optional so both the modern SV
-// wording and the bare classic one derive the same flag. Refuses the "Benched"-only
+// wording and the bare classic one derive the same flag. [🆕🆕🆕 D622 (D539): the same `ignoreWR`;
+// the bare one ALSO sets `wrOnly` (W/R only, effects on the target apply — R-AM2 retired).] Refuses the "Benched"-only
 // snipes (that clause names the zone) and Pawmot ex / Magikarp (a leading discard
 // cost / coin flip, off the `^This attack does` anchor).
 // 🆕🆕 D400 — AND THE ARITY IS CAPTURED HERE TOO, WITH THE TAIL'S NUMBER REQUIRED TO
@@ -17666,6 +17686,7 @@ const CHOSEN_ANY_TARGET = new RegExp(
 // *"or by any effects on that Pokémon"* the modern SV wording spells and THIS print
 // does NOT — so following the siblings is a READING and is marked as one here, with
 // :15881's pointer, so a successor who disagrees finds all three sites at once.
+// [🆕🆕🆕 D622 (D539): WITHDRAWN — the bare W/R tail carries `wrOnly` beside `ignoreWR` since D622 and nulls Weakness and Resistance only; effects on the target apply. R-AM2 retired. All three sites set it.]
 // ⚠️ **THIS ROW'S TAIL IS THE BARE `"This damage"` FORM, NOT `"This attack's damage"`,
 // AND THAT SPELLING IS UNIQUE TO IT** over all 640 rows (measured:
 // `/(^|\. )This damage isn['’]t affected by Weakness or Resistance/` → 1 sentence / 2
@@ -19466,6 +19487,7 @@ const SPREAD_EACH_CLASS_NOUNS: readonly string[] = ["Pokémon ex and Pokémon V"
     or Resistance."*, 2 printings) has been deriving `ignoreWR: true` off the bare form
     since D400. Following it is a READING with one shipped sibling, and the sibling is
     named here so a successor who disagrees can find both sites at once.
+    [🆕🆕🆕 D622 (D539): WITHDRAWN — the bare W/R tail carries `wrOnly` beside `ignoreWR` since D622 and nulls Weakness and Resistance only; effects on the target apply. R-AM2 retired. This anchor's op sets it.]
 
     ⚠️ **NO PARENTHETICAL ALTERNATIVE, AND NO OPTIONAL TAIL.** The W/R sentence is
     MANDATORY in this pattern: made optional it would claim
@@ -30413,6 +30435,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           amount,
           count: "all",
           source: "attack",
+          // 🆕🆕🆕 D622 — the bare tail: W/R only, effects on the target apply (R-AM2 retired).
+          wrOnly: true,
           deals: true,
           ignoreWR: true,
           filter: classFilter,
@@ -30819,6 +30843,9 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
               source: "attack",
               deals: true,
               ignoreWR: true,
+              // 🆕🆕🆕 D622 — no "or by any effects on that/those Pokémon" clause (group 5): the
+              // bare tail (Sigilyph "Telekinesis"), W/R only. R-AM2 retired.
+              ...(number === undefined ? { wrOnly: true as const } : {}),
             },
           ];
     }
@@ -30879,7 +30906,9 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         // (`COUNTERS_PLACED`) — effects.ts:5438.
         deals: true as const,
         // The bare W/R tail, read as `CHOSEN_ANY_TARGET` has read it since D400.
+        // [🆕🆕🆕 D622 (D539): and since D622 that reading is W/R ONLY — `wrOnly` below, R-AM2 retired.]
         ignoreWR: true as const,
+        wrOnly: true as const,
       }));
     }
   }
@@ -37169,7 +37198,9 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
     That field is an OP member (one writer — `CHOSEN_ANY_TARGET`'s group 2 — 🆕🆕 D400:
     group 3 now, the count having taken 2 — Umbreon
     "Feint Attack" sv03-130; two read paths — `placeSnipe`'s bench arm and
-    `snipeActive`) and the main hit HAS NO OP: this sentence is the whole printed
+    `snipeActive`) [🆕🆕🆕 D622 (D539): WITHDRAWN "one writer" — three readers set it, and the
+    bare-tail ones also set `wrOnly` (W/R only, effects on the target apply — R-AM2 retired)]
+    and the main hit HAS NO OP: this sentence is the whole printed
     effect of an attack whose damage is its `damage` field. It is also ONE boolean
     where three are needed — Feint Attack prints all three objects at once, so a
     shared field could never express "Resistance only". SIBLING, not shared. */

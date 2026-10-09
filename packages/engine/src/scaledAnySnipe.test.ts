@@ -485,9 +485,11 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
       source: "attack",
       deals: true,
       ignoreWR: true,
+      wrOnly: true, // 🆕🆕🆕 D622 — the bare tail: W/R only (R-AM2 retired)
     });
     // …and the RIDER-FREE claim, driven rather than eyeballed: the key set is EXACTLY these
-    // seven, so a scaling rider added later reddens this line by name.
+    // seven, so a scaling rider added later reddens this line by name. [🆕🆕🆕 D622 (D539):
+    // ~~"seven"~~ — eight: `wrOnly` is not a scaling rider, it splits the W/R tail's two forms.]
     expect(Object.keys(SIX?.[0] ?? {}).sort()).toEqual([
       "amount",
       "count",
@@ -496,6 +498,7 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
       "op",
       "source",
       "target",
+      "wrOnly",
     ]);
   });
 });
@@ -695,7 +698,7 @@ describe("§3 — a new optional rider on a PERSISTED op, and the record version
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.504.0");
+    expect(engineVersion).toBe("0.505.0");
   });
 });
 

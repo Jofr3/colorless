@@ -123,6 +123,8 @@ describe("deriveAttackEffect — the any-target snipe ('does N to 1 of your oppo
     // sv03-130 (Obsidian Flames), VERBATIM: the second sentence sets `ignoreWR`. The
     // "or by any effects on that Pokémon" clause is optional, so the bare classic
     // wording derives the SAME flag — this was a `toBeNull()` near-miss before 0.46.0.
+    // [🆕🆕🆕 D622 (D539): the bare wording ALSO sets `wrOnly` — W/R only, effects on the target
+    // apply (R-AM2 retired); the Feint wording keeps `ignoreWR` alone.]
     expect(
       deriveAttackEffect(
         "This attack does 50 damage to 1 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance, or by any effects on that Pokémon.",
@@ -135,7 +137,16 @@ describe("deriveAttackEffect — the any-target snipe ('does N to 1 of your oppo
         "This attack does 50 damage to 1 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance.",
       ),
     ).toEqual([
-      { op: "damageChosen", target: "opponentAny", amount: 50, count: 1, source: "attack", deals: true, ignoreWR: true },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 50,
+        count: 1,
+        source: "attack",
+        deals: true,
+        ignoreWR: true,
+        wrOnly: true,
+      },
     ]);
   });
 

@@ -165,7 +165,7 @@ const RAIDER = "d621-raider"; // a non-ex attacker: 60 + Paralyzed; a 30 snipe
 const RAIDER_EX = "d621-raider-ex"; // "D621 Raider ex", the same attacks
 const MEGA = "d621-mega"; // "Mega D621 ex", a Mega Evolution Pokémon ex, the same attacks
 const FILLER = "d621-filler";
-const CROWN_EX = "d621-crown-ex"; // "D621 Crown ex": the `ignoreWR` attacks of five real Pokémon ex (R-AM2)
+const CROWN_EX = "d621-crown-ex"; // "D621 Crown ex": the `ignoreWR` attacks of five real Pokémon ex (R-AM2, retired at D622)
 const SCOOP_UP = "sv06-162"; // Scoop Up Cyclone (D561): a body leaves play by a real action
 
 const HIT = 50;
@@ -609,6 +609,7 @@ describe("D621 §5 — Acerola's Mischief: one chosen body, no damage or effects
   });
 
   // ── R-AM2 (UNRULED): `ignoreWR` attacks from a Pokémon ex, both forms, both channels ──
+  // [🆕🆕🆕 D622 (D539): R-AM2 is RETIRED — the bare tail is stopped (`wrOnly`); the Feint form still passes.]
 
   /** Picks `refs` at every parked prompt of `foe`'s attack `index` (one pick per prompt when `each`). */
   function crown(window: GameState, index: number, refs: unknown[], each = false) {
@@ -638,14 +639,17 @@ describe("D621 §5 — Acerola's Mischief: one chosen body, no damage or effects
     expect(all(active.events, "ATTACK_EFFECT_PREVENTED")).toHaveLength(0);
   });
 
-  it("R-AM2: the BARE tail passes it too, by D400/D492's reading of `ignoreWR` — Oil Salvo and Severe Squall land (the recorded gap)", () => {
+  // 🆕🆕🆕 D622 (D539): R-AM2 RETIRED. The rung below pinned the gap ("Oil Salvo and Severe Squall
+  // land", 120 / 60 / 60); the bare tail is `wrOnly` since D622 and the shield stops it. Same boards,
+  // flipped numbers; `bareTailD622.test.ts` drives all four bare texts and the in-flight v43 park.
+  it("R-AM2 ~~the BARE tail passes it too, by D400/D492's reading of `ignoreWR`~~ (🆕🆕🆕 D622: retired) — Oil Salvo and Severe Squall are stopped by the shield", () => {
     const salvo = crown(benchShielded(CROWN_EX), 1, [bench(0)], true);
-    expect(salvo.state.players.p1.bench[0]?.damage).toBe(120);
+    expect(salvo.state.players.p1.bench[0]?.damage).toBe(0);
     const parked = acerola(PLAIN, [BRUTE], CROWN_EX).state;
     const squall = attack(endTurn(must(applyAction(parked, pickRef("p1", bench(0)))), "p1"), "p2", 2);
-    expect(squall.state.players.p1.bench[0]?.damage).toBe(60);
+    expect(squall.state.players.p1.bench[0]?.damage).toBe(0);
     const lone = attack(endTurn(acerola(BRUTE, [], CROWN_EX).state, "p1"), "p2", 2);
-    expect(lone.state.players.p1.active?.damage).toBe(60);
+    expect(lone.state.players.p1.active?.damage).toBe(0);
   });
 
   it("R-AM2: the main hit keeps the forms apart — the bare tail (Yoga Kick) is stopped, the Feint form (Demolish) lands", () => {
@@ -735,6 +739,6 @@ describe("D621 §8 — the ids and the version", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.504.0");
+    expect(engineVersion).toBe("0.505.0");
   });
 });

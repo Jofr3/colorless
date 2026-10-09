@@ -2129,6 +2129,9 @@ export interface PassiveEffects {
       is STRUCTURALLY DEAD there (`attackEffectRefused` resolves
       `state.players[seat].active`, so a Bench-scoped refusal has no reachable
       board today); it is written for TOTALITY and carries no mutant, D253's rule.
+      [🆕🆕🆕 D622 (D539): ~~"STRUCTURALLY DEAD"~~ — WITHDRAWN: the funnel takes a target since D259 (a
+      gust names a Benched body), and since D621 `placeSnipe`'s put-counter Bench arm asks it of the
+      PICKED Benched body (Phantom Dive's counters), so this effects half is live at both.]
 
       A BOOLEAN, by the standing rule its siblings settled: the gate names no
       VALUE, so an OR over N sources is lossless. §9-suppressible per SOURCE
@@ -18282,7 +18285,8 @@ const PREMIUM_POWER_PRO: CardProgram = {
     `ex` — D575's exact printed class (a Mega Evolution Pokémon ex is one). R-AM1 ⚠️ UNRULED: the shield
     follows the body to the Bench and through evolution (a Trainer's effect, not an attack's) and ends when
     the body leaves play (flow.ts `clearDepartedChosenShields`). R-AM2 ⚠️ UNRULED: an `ignoreWR` snipe or
-    spread passes it, as it passes every on-target prevent (continuous.ts `attackBlockOf`'s note). */
+    spread passes it, as it passes every on-target prevent (continuous.ts `attackBlockOf`'s note).
+    [🆕🆕🆕 D622 (D539): R-AM2 RETIRED — only the Feint form passes it; the bare W/R tail (`wrOnly`) is stopped.] */
 const ACEROLAS_MISCHIEF: CardProgram = {
   trainerPlayableIf: { kind: "opponentPrizesRemaining", counts: [0, 1, 2] },
   trainer: [{ op: "installChosenAttackShield", fromClass: { stage: "ex" } }],

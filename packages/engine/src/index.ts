@@ -8874,7 +8874,7 @@ import type { GameState, Seat } from "./types";
     ANYWAY.** §8 aims an attack at an ACTIVE, so `attack.ts`'s main hit,
     `snipeActive` and `attackEffectRefused` can never see the flag true — the
     printed sentence's EFFECTS half is structurally unreachable on today's op set,
-    which is ASSERTED rather than assumed. The arms stay TOTAL; the corpus authors
+    which is ASSERTED rather than assumed. [🆕🆕🆕 D622 (D539): WITHDRAWN for `attackEffectRefused` — the effects funnel takes a target since D259 (a gust names a Benched body) and since D621 `placeSnipe`'s put-counter Bench arm asks it of the PICKED Benched body, so the effects half is live there.] The arms stay TOTAL; the corpus authors
     mutants only at the two LIVE bench arms, because an unkillable mutant is a
     corpus defect rather than coverage.
 
@@ -20269,12 +20269,20 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.504.0 → **0.505.0** (D622 — FIX-UP: R-AM2 RETIRED, THE BARE W/R TAIL IS W/R ONLY;
+    `MATCH_RECORD_VERSION` STAYS 43 (apps/api match.ts "STAYS 43 AT D622")). effects.ts: the NEW optional
+    `damageChosen.wrOnly`, set beside `ignoreWR` by the three bare-tail readers (`CHOSEN_ANY_TARGET` without the
+    "or by any effects on …" clause, `ATTACK_PICK_WITH_REPLACEMENT_SNIPE`, `SPREAD_EACH_CLASSED_OPPONENT_POKEMON`) —
+    Oil Salvo, Sonic Peridot, Severe Squall, Telekinesis, 4 texts / 8 printings. interpreter.ts `placeSnipe` reads
+    `ignoreWR && !wrOnly` as the Feint form and hands `wrOnly` to `snipeActive`, which nulls only Weakness and
+    Resistance for it: every on-target prevention, reduction, Berry and coin shield now applies to the bare tail.
+    Twin Shotels (the Feint form) is unchanged. `bareTailD622.test.ts`.)
     🆕🆕🆕 engineVersion 0.503.0 → **0.504.0** (D621 — WP24c + WP23: PERSISTED SIDE STATE, 5 TEXTS / 16 `me`
     PRINTINGS; `MATCH_RECORD_VERSION` 42 → 43 WITH A v42 MIGRATION (apps/api match.ts "42 → 43 AT D621")). types.ts:
     the NEW optional `SideAttackBonus.attacker` (read by continuous.ts `sideAttackBonusThisTurn` on the attacker's
     in-play card — Gladion's Final Battle ×3, Premium Power Pro ×3) and the NEW REQUIRED `PlayerSide`
     `chosenAttackShield` (the NEW op `installChosenAttackShield`, read FIRST by `attackBlockOf` — Acerola's
-    Mischief ×4, R-AM1 / R-AM2 UNRULED; flow.ts `clearDepartedChosenShields`, run by `applyAction`, ends it when
+    Mischief ×4, R-AM1 / R-AM2 UNRULED [🆕🆕🆕 D622 (D539): R-AM2 retired at 0.505.0]; flow.ts `clearDepartedChosenShields`, run by `applyAction`, ends it when
     its body leaves play) and `sideRetreatLock` (the NEW op `lockSideRetreat`, read by `retreatLocked` —
     Roxie's Performance ×3, R-RP1 UNRULED); events `CHOSEN_ATTACK_SHIELD_INSTALLED`, `SIDE_RETREAT_LOCKED`.
     registry.ts: Dawn ×3 is Larry's Skill's `also` search by stage. Dropped and named: Iron Defender ×2 (an Item
@@ -22873,7 +22881,7 @@ import type { GameState, Seat } from "./types";
     (`effects.ts:5438`), `ignoreWR` because the BARE W/R tail has set that flag since D400 (corpus
     FILE LINE 620, 2 printings) and D492's spread reads it the same way at :15881 — a READING with
     two shipped siblings, re-stated rather than assumed, ⚠️ including its side effect of nulling
-    `damageReductionAfterWR`, which THIS print does not spell. ⚠️ **THE DECIDED DISCREPANCY (D421),
+    `damageReductionAfterWR`, which THIS print does not spell. [🆕🆕🆕 D622 (D539): WITHDRAWN — the bare W/R tail carries `wrOnly` beside `ignoreWR` since D622 and nulls Weakness and Resistance only; effects on the target apply. R-AM2 retired.] ⚠️ **THE DECIDED DISCREPANCY (D421),
     PINNED IN §7 RATHER THAN PAPERED OVER**: the print reads *choose six times, THEN damage* and the
     engine INTERLEAVES pick and hit. The final board is IDENTICAL — `snipeTargets` applies no HP
     filter and a program op never sweeps Knock Outs (the sweep is `finishAttack`'s epilogue after
@@ -25278,7 +25286,8 @@ import type { GameState, Seat } from "./types";
     and `anyTargetSnipe.test.ts` twice), and D536's ride-along added TWO more in
     `pickWithReplacement.test.ts` on purpose. The REASONING above stands — splitting the
     flag is a RULES call about the bare wording and moves D400's, D492's and D535's boards
-    at once — only the claim about coverage was wrong.)
+    at once — only the claim about coverage was wrong. [🆕🆕🆕 D622 (D539): WITHDRAWN — the bare W/R tail carries `wrOnly` beside `ignoreWR` since D622 and nulls Weakness and Resistance only; effects on the target apply. R-AM2 retired. The boards named
+    here moved at 0.505.0.])
     🆕🆕🆕 engineVersion 0.385.0 → **0.386.0** (D491 — THE ONLY DRAW IN THE COLUMN
     WHOSE PRINTED SUBJECT IS NOT THE CONTROLLER. `censusAttackCorpus.ts` **FILE LINE 199** —
     *"Each player draws 3 cards."*, **1 sentence / 1 legal printing**, claimed WHOLE by
@@ -25555,7 +25564,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.504.0";
+export const engineVersion = "0.505.0";
 
 export type {
   ApplyResult,

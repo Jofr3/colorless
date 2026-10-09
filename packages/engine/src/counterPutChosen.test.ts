@@ -549,6 +549,7 @@ describe("§2 — two arms, and the prefix that is the whole safety property", (
       source: "attack",
       deals: true,
       ignoreWR: true,
+      wrOnly: true, // 🆕🆕🆕 D622 — the bare tail: W/R only (R-AM2 retired)
     });
     // ⚠️ **AND THE DISCRIMINATOR IS `deals`, NOT THE OP NAME.** Both families derive
     // `damageChosen`; this suite's arms leave `deals` ABSENT (a placed counter,
@@ -695,7 +696,7 @@ describe("§3 — a new PRODUCER of a shipped literal, and the record version do
   });
 
   it("the engine version moved", () => {
-    expect(engineVersion).toBe("0.504.0");
+    expect(engineVersion).toBe("0.505.0");
   });
 });
 
