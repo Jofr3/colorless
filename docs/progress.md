@@ -1,5 +1,7 @@
 # Progress — living status
 
+**2026-10-09 targeted fix:** Arven (5 rotated printings) and Miraidon ex’s Tandem Unit (6 matching printings) now simulate in existing decks. No match-record format change. Uses existing search/filter/once-per-turn mechanics. `arvenMiraidon.test.ts` covers the searches, limits, per-copy use, Bench capacity, and Photon Blaster’s existing attack lock. Validation recorded in the session log below.
+
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
@@ -34603,6 +34605,8 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+- **2026-10-09** — User-requested Arven and Miraidon ex support: added shared registry programs for five Arven and six Tandem Unit printings, overriding the earlier Standard-only authoring scope for these requested cards. Updated the census’s rotated partition (+11; Standard totals unchanged) and stale Arven exclusions. Added 22 regression tests. Validation: typecheck and lint passed; full suite ran 630 files / 14,855 tests (14,851 passed, four inventory/count audits failed before their updates). All four failed files pass after the updates; focused reruns passed 184 tests across eight files, including the new card tests and the affected audit suites. Existing broader resume work is unchanged.
 
 ### 2026-10-05 — build session #520 (P3-M5 — D580)
 

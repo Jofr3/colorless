@@ -7626,9 +7626,10 @@ export type EffectOp =
           | 4 | 1 | 1 | Secret Box `sv06-163` |
 
           `5 + 2 + 1 = 8` and `0 + 2 + 1 = 3` ✅. **So the arity axis starts at TWO
-          and its 2 is OUT OF STANDARD** — Arven is measured and deliberately NOT
-          built, D187's rule that a registry row is keyed by card id and legality
-          is a hard filter on it. A field spelled as a second `also` object, or as
+          and its 2 is OUT OF STANDARD** — Arven was deliberately left unbuilt at
+          D336 under D187's Standard-only scope. User-requested support on 2026-10-09
+          adds its five rotated printings using this same two-group shape. A field
+          spelled as a second `also` object, or as
           a fixed triple, would be the D331 shape upside-down: it would refuse the
           FOUR the catalog actually prints in Standard.
 

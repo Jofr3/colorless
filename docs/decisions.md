@@ -610,3 +610,7 @@ decision log, so a reader arriving here would otherwise conclude the project sto
 deciding things in August. **It did not; the trail moved.** D369 records the fact
 rather than back-filling sixty rows, and adds its own row above so the file is at
 least current at the head. **Read `docs/progress.md`'s session log for D309–D368.**
+
+### 2026-10-09 — Requested rotated-card support
+
+The user explicitly requested Arven and Miraidon ex. Support their existing-deck printings even though they rotated out of Standard, refining D187’s authoring scope for these cards. Arven uses `searchDeck.also` for separate Item/Tool caps and reveal; Tandem Unit uses the existing Basic Lightning filter, Bench destination, and per-body once-per-turn allowance. Five Arven ids and six Tandem Unit ids share one program per text; other Miraidon ex variants keep their own effects. Photon Blaster already derives its damage and next-turn lock. No new ops, state fields, or match-record version are needed.
