@@ -214,6 +214,6 @@ describe("§3 — the gate the new prompt rides, and the version", () => {
   });
 
   it("engineVersion", () => {
-    expect(engineVersion).toBe("0.497.0");
+    expect(engineVersion).toBe("0.498.0");
   });
 });

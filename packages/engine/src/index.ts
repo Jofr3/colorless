@@ -20266,6 +20266,15 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.497.0 → **0.498.0** (D615 — WP31a: THE FIRST PART OF THE `me` DECK / HAND /
+    DISCARD / ENERGY MISC; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D615")).
+    effects.ts arm 6e-ter, eight literal anchors onto shipped programs: Trick Portal (`lookAtTopN` → Bench)
+    and Fruity Aroma (`lookAtTopN` → hand, `reveal`), Pika-Pika Parade ×3 (Precious Trolley's `searchDeck`),
+    Gentle Light ×3 (Picnic Basket's `healEachAll`; R-GLT1 UNRULED), Nitpick ×2 (`handRefresh` `who:
+    "opponent"`), Flames of Revival (`discardPileRetrieval` Basic → Bench), Miraculous Shine (`devolveEach`
+    with the NEW `toHand`; interpreter.ts `devolveEachToHand` over `devolveBodyToHand`) and Cold Cyclone
+    (`moveEnergy` `selfToBench`, `providesEnergy`). 13 `me` attack printings. WP31's other 17 texts stay
+    for WP31b / WP31c. `deckHandMiscMeD615.test.ts`.)
     🆕🆕🆕 engineVersion 0.496.0 → **0.497.0** (D614 — WP37b: THE ABILITY-EFFECT SHIELD, MEGA CLEFABLE EX
     "LUMINOUS WING"; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D614")). registry.ts
     `LUMINOUS_WING` (`passive.preventAbilityEffects`, NEW) on `mep-072`, `me03-031` / `-103` / `-119`.
@@ -25474,7 +25483,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.497.0";
+export const engineVersion = "0.498.0";
 
 export type {
   ApplyResult,

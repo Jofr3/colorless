@@ -30237,6 +30237,29 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D615 — WP31a: the first part of the `me` deck / hand / discard / Energy misc (engine 0.498.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D614 (`5dace4c0`), NOT committed.
+
+- **The readings.** effects.ts arm 6e-ter, eight literal anchors onto shipped programs: Trick Portal (`lookAtTopN` → Bench,
+  `max: "any"`), Fruity Aroma (`lookAtTopN` → hand, `reveal`), Pika-Pika Parade ×3 (Precious Trolley's `searchDeck`), Gentle
+  Light ×3 (Picnic Basket's `healEachAll`), Nitpick ×2 (`handRefresh` `who: "opponent"`, draw 4), Flames of Revival
+  (`discardPileRetrieval` Basic Pokémon → Bench), Miraculous Shine (`devolveEach` with the NEW `toHand`; interpreter.ts
+  `devolveEachToHand` runs `devolveChosen`'s writer on each body of the sweep's §11-filtered offer) and Cold Cyclone
+  (`moveEnergy` `selfToBench` with `providesEnergy`). Reader output is byte-identical over both corpora but for the 8 sentences.
+- **Reading.** R-GLT1 ⚠️ UNRULED, to be asked: Gentle Light's heal is not refused by a §11 effects shield on an opponent's
+  body. Built on `healEachAll` as it stands (it consults none); no precedent — Picnic Basket is a Trainer and never meets an
+  attack shield, and the shield's literal "all effects of attacks" covers a heal.
+- **Review fixes.** B1: `devolveEachToHand` reads `wasLethal` off the starting board and stamps `koByEffect` after the whole
+  sweep (`devolveEach`'s straddle), so a Vibrant Dance aura lost mid-sweep stamps the same bodies in either order. Cold Cyclone
+  is declinable under D443's recorded `moveFloor` approximation (`min` pinned absent).
+- **Suite.** `deckHandMiscMeD615.test.ts` (26) and a census D615 block (2). +30 mutant rows, all killed. Re-pointed in place:
+  `boardHeal.test.ts` / `chosenHeal.test.ts` (Picnic Basket's words now an attack), `devolveChosen.test.ts` §2 (the
+  "each … hand" hybrid is printed), `discardShuffleBack.test.ts` producer counts, census D591 / D613 rungs.
+- **Census.** Standard pool attacks **2,674 / 2,771**; 1043 `me` printings fully built (all 13 finished). WP31's other 17
+  texts / 22 printings stay for WP31b / WP31c.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
 ## D614 — WP37b: the Ability-effect shield, Mega Clefable ex "Luminous Wing" (engine 0.497.0, `MATCH_RECORD_VERSION` stays 42)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D613 (`55ccb609`), NOT committed.

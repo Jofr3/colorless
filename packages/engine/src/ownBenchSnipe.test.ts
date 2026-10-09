@@ -392,7 +392,7 @@ describe("§3 — `damageChosen.target` has three members, and the record versio
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.497.0");
+    expect(engineVersion).toBe("0.498.0");
   });
 });
 

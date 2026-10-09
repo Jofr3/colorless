@@ -9590,7 +9590,9 @@ export type EffectOp =
       identity rule, `evolveOnto`'s APPEND read backwards), and "shuffling … into your
       opponent's deck" is the destination and the shuffle. Nothing varies, so nothing
       is captured (D104's minimal shape, `discardStadium`'s and `installNoWeakness`'s
-      verdict verbatim).
+      verdict verbatim). (🆕🆕🆕 D615 (D539): ~~"FIELD-FREE"~~ WITHDRAWN as a live claim — Miraculous
+      Shine varies the destination, so the op carries the optional `toHand` (below); row 88 still
+      captures nothing, as stated.)
 
       ⚠️ **IT IS THE FIRST OP THAT CAN KNOCK A POKÉMON OUT BY LOWERING ITS
       MAXIMUM, AND §8.1 CATCHES IT WITH NO NEW MECHANISM.** `isLethallyDamaged` is a
@@ -9608,8 +9610,15 @@ export type EffectOp =
       v27 deploy DID write still means what it meant. No `InPlayPokemon` field is added
       (`stack` has been there since M4), no `GameState` field, no `PendingStage`
       inhabitant, and the op never parks — so nothing it produces reaches `phase.cont`.
-      Driven in BOTH directions in `devolveEach.test.ts` §9. */
-  | { op: "devolveEach" }
+      Driven in BOTH directions in `devolveEach.test.ts` §9.
+
+      🆕🆕🆕 **D615 — `toHand`: Espeon `30th-069` "Miraculous Shine"**, *"Devolve each of your opponent's
+      evolved Pokémon by putting the highest Stage Evolution card on it into your opponent's hand."* The
+      SECOND printing of the sweep, varying in ONE token (the destination) — D121's precondition, met — so
+      the refused parameter is now a field. Each devolved card goes to its owner's HAND through
+      `devolveChosen`'s writer (`devolveBodyToHand`), no shuffle; the offer, §11 and the KO-cause stamp
+      (`wasLethal` read before the sweep, stamped after it) are the sweep's own. Absent = row 88 byte for byte. Never parks, so no v42 record holds it. */
+  | { op: "devolveEach"; toHand?: true }
   /** 🆕🆕🆕 **D540 — THE SAME DEVOLUTION WITH A PICK IN IT.**
       *"Devolve 1 of your opponent's evolved Pokémon by putting the highest Stage
       Evolution card on it into your opponent's hand."* — **1 sentence / 1 legal
@@ -17991,6 +18000,29 @@ const LEAST_HP_ANY_KO =
 // N's Vanilluxe "Snow Coating": `counterEachAll` with `perDamageCounterOnTarget` (10 per counter).
 const DOUBLE_OPPONENT_COUNTERS =
   /^Double the number of damage counters on each of your opponent['’]s Pokémon\.$/;
+// 🆕🆕🆕 D615 — WP31a, eight literal `me` anchors (LOCAL D1, 2026-10-09), none printed in legal `sv`, each
+// onto a shipped op (arm 6e-ter). Mega Delphox ex "Trick Portal": `ATTACK_LOOK_TOP_BENCH`'s sentence with
+// the comma join.
+const LOOK_TOP_COMMA_BENCH =
+  /^Look at the top (\d+) cards of your deck, and you may put any number of Pokémon you find there onto your Bench\. Shuffle the other cards back into your deck\.$/;
+// Tropius "Fruity Aroma": the same look into the HAND, revealed (Roto-Stick's `max: "any"` + `reveal`).
+const LOOK_TOP_COMMA_REVEAL_HAND =
+  /^Look at the top (\d+) cards of your deck, and you may reveal any number of Pokémon you find there and put them into your hand\. Shuffle the other cards back into your deck\.$/;
+// Pikachu ex "Pika-Pika Parade" ×3: Precious Trolley's program (`searchDeck` Basic → Bench, `max: "any"`).
+const SEARCH_ANY_BASIC_TO_BENCH =
+  /^Search your deck for any number of Basic Pokémon and put them onto your Bench\. Then, shuffle your deck\.$/;
+// Mega Floette ex "Gentle Light" ×3: Picnic Basket's `healEachAll` (R-GLT1).
+const HEAL_EACH_BOTH_SIDES = /^Heal (\d+) damage from each Pokémon \(both yours and your opponent['’]s\)\.$/;
+// Scraggy "Nitpick" ×2: `handRefresh` on the opponent alone (Distorted Future's `who`), a fixed draw.
+const OPPONENT_SHUFFLES_HAND_DRAWS = /^Your opponent shuffles their hand into their deck and draws (\d+) cards\.$/;
+// Ho-Oh "Flames of Revival": `discardPileRetrieval` of Basic Pokémon onto the Bench.
+const RETRIEVE_BASIC_TO_BENCH = /^Put up to (\d+) Basic Pokémon from your discard pile onto your Bench\.$/;
+// Espeon "Miraculous Shine": `DEVOLVE_EACH_TO_DECK`'s sweep into the HAND (`devolveEach.toHand`).
+// One literal, not `DEVOLVE_CHOSEN_TO_HAND`'s two-line template (its D540 mutant rows quote that tail line).
+const DEVOLVE_EACH_TO_HAND =
+  /^Devolve each of your opponent['’]s evolved Pokémon by putting the highest Stage Evolution card on it into your opponent['’]s hand\.$/;
+// Frosmoth "Cold Cyclone": `ATTACK_MOVE_BASIC_ENERGY_SELF_TO_BENCH` with a typed noun (`providesEnergy`).
+const MOVE_TYPED_ENERGY_SELF_TO_BENCH = /^Move a \{([A-Z])\} Energy from this Pokémon to 1 of your Benched Pokémon\.$/;
 
 
 // D131 — the UNCONDITIONAL MILL, both directions on ONE anchor: "Discard the top
@@ -29692,6 +29724,64 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         perDamageCounterOnTarget: true,
       },
     ];
+  }
+
+  // 6e-ter. 🆕🆕🆕 D615 — WP31a's eight deck / hand / discard / Energy sentences, each a shipped op's
+  //     program (the anchors' block beside D609's). Every printed count keeps its family's guard.
+  match = LOOK_TOP_COMMA_BENCH.exec(effect);
+  if (match !== null) {
+    const benchWindow = Number(match[1]);
+    if (benchWindow >= 1 && benchWindow <= MAX_PRINTED_LOOK_WINDOW) {
+      return [
+        { op: "lookAtTopN", n: benchWindow, filter: { kind: "anyPokemon" }, max: "any", dest: "bench" },
+        { op: "shuffleDeck" },
+      ];
+    }
+  }
+  match = LOOK_TOP_COMMA_REVEAL_HAND.exec(effect);
+  if (match !== null) {
+    const handWindow = Number(match[1]);
+    if (handWindow >= 1 && handWindow <= MAX_PRINTED_LOOK_WINDOW) {
+      return [
+        { op: "lookAtTopN", n: handWindow, filter: { kind: "anyPokemon" }, max: "any", reveal: true },
+        { op: "shuffleDeck" },
+      ];
+    }
+  }
+  if (SEARCH_ANY_BASIC_TO_BENCH.test(effect)) {
+    return [
+      { op: "searchDeck", filter: { kind: "basicPokemon" }, dest: "bench", max: "any" },
+      { op: "shuffleDeck" },
+    ];
+  }
+  match = HEAL_EACH_BOTH_SIDES.exec(effect);
+  if (match !== null) {
+    const healedEach = Number(match[1]);
+    if (healedEach >= 1) return [{ op: "healEachAll", amount: healedEach }];
+  }
+  match = OPPONENT_SHUFFLES_HAND_DRAWS.exec(effect);
+  if (match !== null) {
+    const opponentDraws = Number(match[1]);
+    if (opponentDraws >= 1) {
+      return [{ op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: opponentDraws } }];
+    }
+  }
+  match = RETRIEVE_BASIC_TO_BENCH.exec(effect);
+  if (match !== null) {
+    const revived = Number(match[1]);
+    if (revived >= 1 && revived <= MAX_PRINTED_ATTACH_COUNT) {
+      return [{ op: "discardPileRetrieval", filter: { kind: "basicPokemon" }, dest: "bench", max: revived }];
+    }
+  }
+  if (DEVOLVE_EACH_TO_HAND.test(effect)) return [{ op: "devolveEach", toHand: true }];
+  match = MOVE_TYPED_ENERGY_SELF_TO_BENCH.exec(effect);
+  if (match !== null) {
+    const movedType = ENERGY_TYPE_BY_CODE[match[1] ?? ""];
+    if (movedType !== undefined) {
+      return [
+        { op: "moveEnergy", filter: { kind: "providesEnergy", energyType: movedType }, max: 1, route: "selfToBench" },
+      ];
+    }
   }
 
   // 6f. 🆕🆕 D420 — "Discard {N} Basic {X} Energy cards from your hand." / "Discard a

@@ -290,7 +290,9 @@ describe("the anchor — 7 printings, 2 clauses, one sentence", () => {
       // RE-POINTED rather than deleted, and each now makes a stronger claim than its
       // null did: a build where this arm's `each of your` loosened to `1 of your`
       // would fail here whether or not any other reader existed.
-      if (index <= 3) {
+      // 🆕🆕🆕 D615 — and index 6 (Picnic Basket's words) lands on a neighbour too: WP31a's
+      // `HEAL_EACH_BOTH_SIDES` (Mega Floette ex "Gentle Light" prints them), `healEachAll`.
+      if (index <= 3 || index === 6) {
         expect(deriveAttackEffect(text)).not.toContainEqual(
           expect.objectContaining({ op: "healEach" }),
         );
@@ -308,7 +310,9 @@ describe("the anchor — 7 printings, 2 clauses, one sentence", () => {
     // your opponent's)" is `healEachAll`, a different op with a different blast
     // radius. This arm must not reach it — and the board case below asserts the same
     // boundary from the other side, on a damaged opponent that stays damaged.
-    expect(deriveAttackEffect(REAL_NEAR_MISSES[6])).toBeNull();
+    // 🆕🆕🆕 D615 (D539): ~~`toBeNull()`~~ — the sentence is an ATTACK now too (Gentle Light ×3) and derives
+    // to that different op, `healEachAll`, by its own anchor; this arm still does not reach it.
+    expect(deriveAttackEffect(REAL_NEAR_MISSES[6])).toEqual([{ op: "healEachAll", amount: 30 }]);
   });
 
   it("is DISJOINT from the bare self-heal — neither anchor can claim the other", () => {

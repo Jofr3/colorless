@@ -458,6 +458,9 @@ describe("the anchor — 10 printings, 7 clauses, one regex with two captures", 
 
   it("refuses the FOUR real catalog rows that share its words — one of them re-pointed at D427", () => {
     for (const text of REAL_NEAR_MISSES) {
+      // 🆕🆕🆕 D615 — Picnic Basket's words (index 2) derive WP31a's `healEachAll` now (Gentle Light); the
+      // claim this loop makes for it is "not a `healChosen`", pinned below.
+      if (text === REAL_NEAR_MISSES[2]) continue;
       expect(deriveAttackEffect(text)).toBeNull();
     }
     // SAGUARO IS THE ONE THAT MATTERS, and it is a sharper trap here than in
@@ -470,7 +473,9 @@ describe("the anchor — 10 printings, 7 clauses, one regex with two captures", 
     // PICNIC BASKET is the SEAT boundary in text form, and the widest radius in the
     // family — `healEachAll` heals BOTH boards. Nothing about "1 of your" may reach
     // it, and nothing about it may reach here.
-    expect(deriveAttackEffect(REAL_NEAR_MISSES[2])).toBeNull();
+    // 🆕🆕🆕 D615 (D539): ~~`toBeNull()`~~ — it is an attack sentence too now (Gentle Light ×3), read by its
+    // own anchor as `healEachAll`; nothing about "1 of your" reaches it.
+    expect(deriveAttackEffect(REAL_NEAR_MISSES[2])).toEqual([{ op: "healEachAll", amount: 30 }]);
   });
 
   it("leaves the two NEIGHBOURING heal anchors their own strings — a SHAPE claim", () => {

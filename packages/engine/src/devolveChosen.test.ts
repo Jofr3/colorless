@@ -437,7 +437,19 @@ describe("§2 — anchor × string, all four cells", () => {
     expect(eachIntoHand).not.toBe(SENTENCE);
     expect(eachIntoHand).not.toBe(SWEEP_SENTENCE);
     expect(deriveAttackEffect(oneOfIntoDeck)).toBeNull();
-    expect(deriveAttackEffect(eachIntoHand)).toBeNull();
+    // 🆕🆕🆕 D615 (D539): ~~`eachIntoHand` derives to NULL~~ — that hybrid is PRINTED (Espeon `30th-069`
+    // "Miraculous Shine") and is claimed EARLIER by WP31a's arm 6e-ter (`DEVOLVE_EACH_TO_HAND`) as
+    // `devolveEach` with `toHand`, so it can no longer reach 41-bis and leg (b) cannot go red through it.
+    expect(eachIntoHand).toBe(
+      "Devolve each of your opponent's evolved Pokémon by putting the highest Stage Evolution card on it into your opponent's hand.",
+    );
+    expect(deriveAttackEffect(eachIntoHand)).toEqual([{ op: "devolveEach", toHand: true }]);
+    // (b) re-measured (D615 review M4): row 88's head AND verb with only the destination moved to "hand".
+    // 6e-ter refuses it (its verb is "putting"), 41-ter refuses it (`1 of`), so a NULL here is 41-bis
+    // refusing a tail that is not its `deck` — killed by `D615-devolve-deck-anchor-loses-destination`.
+    const eachShuffledIntoHand = SWEEP_SENTENCE.replace("your opponent's deck.", "your opponent's hand.");
+    expect(eachShuffledIntoHand).not.toBe(SWEEP_SENTENCE);
+    expect(deriveAttackEffect(eachShuffledIntoHand)).toBeNull();
   });
 
   it("🛑 TOKEN 2 IS THE AXIS — the two sentences differ there and nowhere in the head", () => {
@@ -1017,7 +1029,7 @@ describe("🛑 §10 — the persisted `pendingOp`, over the serialized bytes", (
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.497.0");
+    expect(engineVersion).toBe("0.498.0");
   });
 });
 

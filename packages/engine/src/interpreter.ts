@@ -5321,7 +5321,8 @@ function stepOp(
     // `resolveMidTurnKnockOuts`, never this line. What it DOES owe here is the CAUSE —
     // see `devolveEach` for D414's `koByEffect` stamp and the `wasLethal` conjunct.
     case "devolveEach":
-      return { done: devolveEach(state, ctx, events) };
+      // 🆕🆕🆕 D615 — `toHand` (Miraculous Shine): the sweep's offer, `devolveChosen`'s writer per body.
+      return { done: op.toHand === true ? devolveEachToHand(state, ctx, events) : devolveEach(state, ctx, events) };
     // 🆕🆕🆕 D540 — THE SAME DEVOLUTION WITH A PICK IN IT, corpus row 87, and the
     // arm is three shipped pieces with nothing between them — `knockOutChosen`'s
     // byte template one op over:
@@ -15957,6 +15958,50 @@ function devolveBodyToHand(
       ? { ...committed, active: marked }
       : { ...committed, bench: committed.bench.map((p, i) => (i === spot.index ? marked : p)) },
   );
+}
+
+/** 🆕🆕🆕 **D615 — `devolveEach.toHand`'s WRITER** (Espeon "Miraculous Shine"): `devolveEach`'s offer
+    (`devolveTargets` through §11's `unshieldedRefs`), then `devolveBodyToHand` on each body in board
+    order — the card to its owner's hand, no shuffle, no `rngState` draw. A body only ever loses its
+    own top card, so the refs taken up front stay valid.
+
+    ⚠️ **THE KO CAUSE IS `devolveEach`'s, NOT PER BODY (D615 review B1).** `wasLethal` is asked of the
+    STARTING board for every body before any devolves, and the `koByEffect` stamp is asked of the
+    COMMITTED board after the whole sweep — `devolveEach`'s straddle, so the two sweeps stamp the same
+    bodies on the same board. Asked per body mid-sweep, an earlier body's devolve (a Ludicolo
+    `sv09-037` losing Vibrant Dance's +40) could make a later body lethal before its own turn, and that
+    body would go unstamped and read as *"Knocked Out by damage from an attack"* in one board order and
+    not the other. `devolveBodyToHand`'s own per-body stamp still runs; it can only stamp a body this
+    pass also stamps, because the sweep only lowers maxima and moves no damage. */
+function devolveEachToHand(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
+  const refs = unshieldedRefs(state, devolveTargets(state, ctx.seat), ctx, events);
+  const lethalBefore = refs.map((ref) => {
+    const side = state.players[ref.seat];
+    const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
+    return body === null || body === undefined || isLethallyDamaged(state, body);
+  });
+  let next = state;
+  for (const ref of refs) next = devolveBodyToHand(next, ref, ctx, events);
+  // 🛑 ASKED OF THE COMMITTED BOARD AFTER THE WHOLE SWEEP — `devolveEach`'s stamp pass.
+  refs.forEach((ref, i) => {
+    if (lethalBefore[i] === true) return;
+    const side = next.players[ref.seat];
+    const spot = ref.spot;
+    const body = spot.spot === "active" ? side.active : side.bench[spot.index];
+    if (body === null || body === undefined) return;
+    if (!isLethallyDamaged(next, body)) return;
+    const marker = koByEffectMarker(next.turn);
+    if (body.markers.includes(marker)) return;
+    const marked: InPlayPokemon = { ...body, markers: [...body.markers, marker] };
+    next = withSide(
+      next,
+      ref.seat,
+      spot.spot === "active"
+        ? { ...side, active: marked }
+        : { ...side, bench: side.bench.map((p, j) => (j === spot.index ? marked : p)) },
+    );
+  });
+  return next;
 }
 
 /** 🆕🆕🆕 **D540 — THE PRINTED NOUN FOR A `devolveChosen`'s CANDIDATES**, in the card's

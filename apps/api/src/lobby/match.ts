@@ -2159,6 +2159,15 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D615 — EIGHT READER ANCHORS ONTO SHIPPED PROGRAMS AND ONE OPTIONAL OP FIELD.**
+    (Placed ABOVE the D614 block.) `devolveEach.toHand` (Miraculous Shine) is an optional key on an op
+    that never parks, so no v42 record can hold it. The other seven sentences derive shipped op shapes
+    (`lookAtTopN`, `searchDeck`, `discardPileRetrieval` and `moveEnergy` can ride `phase.cont.pendingOp`
+    exactly as their `sv` twins do). No card row is read differently: the 13 `me` faces in a v42
+    `cardPool` are unchanged, and the attack text is read at attack time, so an in-flight match builds
+    them on deploy. Rollback to 0.497: the texts fall back to the unbuilt path; a parked pick resumes on
+    the shipped op it parked with.
+
     🆕🆕🆕 **STAYS 42 AT D614 — A WIDENED UNION AND A NEW EVENT, NO REQUIRED FIELD.** (Placed ABOVE the
     D613 block.) `EffectContext.invokedBy` gains `"ability"`, which a parked Ability program writes into
     `phase.cont.ctx`: an OPTIONAL key's new member, a widening (D125 / D259). A continuation parked on

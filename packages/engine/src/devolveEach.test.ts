@@ -42,7 +42,8 @@ import { koByEffectMarker } from "./types";
 //
 // **1 sentence / 3 legal printings** — `censusAttackCorpus.ts` row 88. ONE anchor
 // (`DEVOLVE_EACH_TO_DECK`), ONE arm in `deriveAttackEffect` (41-bis), ONE
-// field-free `EffectOp` (`devolveEach`), ONE `stepOp` case, ONE interpreter
+// field-free `EffectOp` (`devolveEach`; 🆕🆕🆕 D615: no longer field-free — the optional `toHand`, Miraculous
+// Shine's hand destination; row 88 still sets none), ONE `stepOp` case, ONE interpreter
 // sweep, ONE new event (`POKEMON_DEVOLVED`) with ONE log row, ONE new
 // `STATUS_CLEARED` reason (`"devolved"`) with ONE log row, and ONE function MOVED
 // (`isLethallyDamaged`, flow.ts → continuous.ts, re-exported).
@@ -78,7 +79,9 @@ import { koByEffectMarker } from "./types";
 //
 // 🆕🆕🆕 **D540 — THE FIRST HALF OF THAT PARAGRAPH IS THE WARRANT FOR THE SLICE THAT
 // EXPIRED THE SECOND.** What it refused is a PARAMETERISED op, and that refusal stands
-// exactly as written. What it did NOT refuse is a SECOND FIELD-FREE op, which is the
+// exactly as written. (🆕🆕🆕 D615 (D539): ~~"stands exactly as written"~~ WITHDRAWN — a second
+// SWEEP printing varying only the destination (Espeon "Miraculous Shine", hand) met D121's warrant, and
+// `devolveEach` now carries the optional `toHand`; `devolveChosen` stays its own op.) What it did NOT refuse is a SECOND FIELD-FREE op, which is the
 // door it left open and named (*"the two ops share … in interpreter.ts rather than one
 // widening into the other"*). 🛑 **The sentence that read *"Row 87 is left unbuilt and
 // used as this suite's loud-path witness (§10)"* HAS EXPIRED**: row 87 is BUILT as
@@ -1133,7 +1136,7 @@ describe("§11 — the version prediction is DRIVEN, not asserted", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.497.0");
+    expect(engineVersion).toBe("0.498.0");
   });
 });
 

@@ -6,6 +6,30 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D615 update (engine 0.498.0) — the first part of the deck / hand / discard / Energy misc (WP31a)
+
+8 attack texts / 13 `me` printings on eight literal anchors onto shipped programs (`deckHandMiscMeD615.test.ts`): Trick Portal
+`me05-008` and Fruity Aroma `me05-001` (`lookAtTopN`), Pika-Pika Parade ×3 `mep-107`, `30th-053` / `-149` (Precious Trolley's
+`searchDeck`), Gentle Light ×3 `me04-035` / `-101` / `-117` (Picnic Basket's `healEachAll`), Nitpick ×2 `30th-094` / `-140`
+(`handRefresh` on the opponent), Flames of Revival `me04-010` (`discardPileRetrieval`), Miraculous Shine `30th-069`
+(`devolveEach.toHand`, NEW) and Cold Cyclone `me02.5-053` (typed `moveEnergy`). **Finished:** all 13 cards (Mega Delphox ex,
+Pikachu ex ×3, Mega Floette ex ×3 and Frosmoth among them). One new reading (UNRULED): R-GLT1, Gentle Light's heal is not
+refused by a §11 shield (`progress.md` NEXT). **Left for WP31b / WP31c** (17 texts / 22 printings): Dedenne "Tail Generator" ×2
+`me03-029` / `-093`, Regice ex "Ice Prison" `me02.5-048`, Lugia "Elemental Blast" `30th-121`, Furfrou "Hand Trim" `me03-067`,
+Morpeko "Select a Snack" ×2, Delibird "Pleasing Present" `me04-018`, Meloetta "Soothing Melody" ×2, Claydol "Devolution Ray" ×2,
+Volcanion "Backfire" `me01-025`, Shaymin "Send Flowers" `me03-003`, Fletchling "Chirp" `me03-066`, Sudowoodo "Trials and
+Trip-ulations" `me04-043`, Celebi "Traverse Time" `me01-012`, Dialga "Reversed Clock" `30th-103`, Rotom "Roto Call"
+`me02.5-092`, Eevee "Fetch and Hide" `30th-116` and Thievul "Skill Thief" ×2 `me05-054` / `-092`.
+
+| Column | `me` built / units (D615) | Standard pool D615 |
+|---|---|---|
+| Attacks | 942 / 1,039 (+13) | **2,674 / 2,771** |
+| Abilities | 181 / 234 | **557 / 610** |
+| Trainers | 109 / 183 | **373 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1043** (1030 + 13).
+
 ## 🆕 D614 update (engine 0.497.0) — the Ability-effect shield (WP37b)
 
 1 Ability text / 4 `me` printings on one new object (`abilityShieldMeD614.test.ts`): Mega Clefable ex `mep-072`, `me03-031` /
@@ -433,7 +457,7 @@ exact name; a Basic Energy of the printed type from the hand to itself), Lunar C
 Basic {F}, draw 3, one Lunar Cycle per turn) and Flaring Magic ×2 (Delphox; pay a Basic {R}, draw until 7). No new op,
 member or field; nothing dropped. **Finished:** Mega Kangaskhan ex ×4, Moltres ×3, Zapdos ×3, Articuno `mep-097`,
 Lunatone ×3. Still waiting on an attack: Delphox ×2 "Energized Storm", Frosmoth "Cold Cyclone", and the `30th` Articuno ×2
-"Hail" (tcgdex's `<em>` markup, WP06). [🆕🆕🆕 D607: Delphox ×2's "Energized Storm" is BUILT (WP28a); both are fully built.] [🆕🆕🆕 D612: Hail ×2 is BUILT — WP06 normalised the text.]
+"Hail" (tcgdex's `<em>` markup, WP06). [🆕🆕🆕 D607: Delphox ×2's "Energized Storm" is BUILT (WP28a); both are fully built.] [🆕🆕🆕 D612: Hail ×2 is BUILT — WP06 normalised the text.] [🆕🆕🆕 D615: Frosmoth's "Cold Cyclone" is BUILT (WP31a); Frosmoth is fully built.]
 
 | Column | `me` built / units (D591) | Standard pool D591 |
 |---|---|---|
@@ -818,7 +842,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× Shuffle all Energy attached to this Pokémon into your deck, and this attack does 220 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: BUILT]
 - 1× Discard all &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy from this Pokémon, and this attack does 90 damage to 1 of your opponent's Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em> [🆕🆕🆕 D608: WP30 rest] [🆕🆕🆕 D612: the markup is normalised (WP06); the clean text still needs a reader]
 - 1× If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: WP30 rest]
-- 1× Move a {W} Energy from this Pokémon to 1 of your Benched Pokémon.
+- 1× Move a {W} Energy from this Pokémon to 1 of your Benched Pokémon. [🆕🆕🆕 D615: BUILT — declinable, D443's recorded `moveFloor` approximation]
 - 1× This attack does 140 damage to 1 of your opponent's Pokémon. If you don't have 10 or more Basic {F} Energy cards in your discard pile, this attack does nothing. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: WP30 rest]
 - 1× This attack does 20 damage to 1 of your opponent's Pokémon for each {G} Energy attached to this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: WP30 rest]
 - 1× This attack does 20 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) Your opponent's Active Pokémon is now Asleep. [🆕🆕🆕 D608: WP30 rest]
@@ -846,21 +870,21 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### Hand, deck and discard-pile effects — 21 text(s) / 29 printing(s)
 
-- 3× Search your deck for any number of Basic Pokémon and put them onto your Bench. Then, shuffle your deck.
+- 3× Search your deck for any number of Basic Pokémon and put them onto your Bench. Then, shuffle your deck. [🆕🆕🆕 D615: BUILT]
 - 3× Your opponent reveals their hand, and you discard a card you find there. [🆕🆕🆕 D592: BUILT]
 - 2× Discard the top 3 cards of your deck and put 1 of them into your hand.
 - 2× If you don't have exactly 7 cards in your hand, this attack does nothing. [🆕🆕🆕 D586: BUILT]
 - 2× If your opponent's Active Pokémon is an evolved Pokémon, devolve it by putting the highest Stage Evolution card on it into your opponent's hand.
-- 2× Your opponent shuffles their hand into their deck and draws 4 cards.
+- 2× Your opponent shuffles their hand into their deck and draws 4 cards. [🆕🆕🆕 D615: BUILT]
 - 1× Choose a random card from your opponent's hand, and your opponent reveals that card and shuffles it into their deck. [🆕🆕🆕 D592: BUILT]
-- 1× Devolve each of your opponent's evolved Pokémon by putting the highest Stage Evolution card on it into your opponent's hand.
+- 1× Devolve each of your opponent's evolved Pokémon by putting the highest Stage Evolution card on it into your opponent's hand. [🆕🆕🆕 D615: BUILT]
 - 1× Discard random cards from your opponent's hand until they have 5 cards in their hand.
 - 1× Discard the top card of your deck, and if that card is a Supporter card, use the effect of that card as the effect of this attack.
 - 1× If you played Tarragon from your hand during this turn, discard the top 3 cards of your opponent's deck.
 - 1× If your opponent has a Stadium in play, discard it. If you do, your opponent can't play any Stadium cards from their hand during their next turn.
-- 1× Look at the top 6 cards of your deck, and you may reveal any number of Pokémon you find there and put them into your hand. Shuffle the other cards back into your deck.
-- 1× Look at the top 9 cards of your deck, and you may put any number of Pokémon you find there onto your Bench. Shuffle the other cards back into your deck.
-- 1× Put up to 3 Basic Pokémon from your discard pile onto your Bench.
+- 1× Look at the top 6 cards of your deck, and you may reveal any number of Pokémon you find there and put them into your hand. Shuffle the other cards back into your deck. [🆕🆕🆕 D615: BUILT]
+- 1× Look at the top 9 cards of your deck, and you may put any number of Pokémon you find there onto your Bench. Shuffle the other cards back into your deck. [🆕🆕🆕 D615: BUILT]
+- 1× Put up to 3 Basic Pokémon from your discard pile onto your Bench. [🆕🆕🆕 D615: BUILT]
 - 1× Search your deck for up to 2 Pokémon with {F} Resistance, reveal them, and put them into your hand. Then, shuffle your deck.
 - 1× Search your deck for up to 2 Transformation Tome cards, reveal them, and put them into your hand. Then, shuffle your deck.
 - 1× Search your deck for up to 3 in any combination of {G} Pokémon and Stadium cards, reveal them, and put them into your hand. Then, shuffle your deck.
@@ -875,7 +899,7 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### Other — 4 text(s) / 8 printing(s)
 
-- 3× Heal 30 damage from each Pokémon (both yours and your opponent's).
+- 3× Heal 30 damage from each Pokémon (both yours and your opponent's). [🆕🆕🆕 D615: BUILT]
 - 2× Heal 120 damage from 1 of your Benched {P} Pokémon.
 - 2× If you don't have Lunatone on your Bench, this attack does nothing. This attack's damage isn't affected by Weakness or Resistance. [🆕🆕🆕 D594: BUILT]
 - 1× This Pokémon does 30 damage to itself. [🆕🆕🆕 D592: BUILT]

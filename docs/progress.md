@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-09 — build session #554 (**P3-M5 — D614, *WP37b — THE ABILITY-EFFECT SHIELD: Mega Clefable ex ×4 "Luminous Wing" on the new `passive.preventAbilityEffects`; `EffectContext.invokedBy` gains `"ability"` at every Pokémon-Ability `runProgram` site and the §11 funnel refuses an opponent's Ability's effects on the holder (new `ABILITY_EFFECT_PREVENTED`); `damageChosen` / Adrena-Brain / `damageSubject` widened onto the funnel; the Ability share of a recoil and Magma Surge's extra counters refused; R-LW1 / R-LW2 UNRULED; abilities 557 / 610, 1030 `me` printings fully built*** — engine 0.497.0, MRV 42, NOT committed; the whole-corpus sweep PENDING; remote re-ingest still owed before deploy)
+**Last updated:** 2026-10-09 — build session #555 (**P3-M5 — D615, *WP31a — THE FIRST PART OF THE `me` DECK / HAND / DISCARD / ENERGY MISC: 8 attack texts / 13 `me` printings on eight literal anchors onto shipped programs — Trick Portal and Fruity Aroma (`lookAtTopN`), Pika-Pika Parade ×3 (Precious Trolley's `searchDeck`), Gentle Light ×3 (Picnic Basket's `healEachAll`, R-GLT1 UNRULED), Nitpick ×2 (`handRefresh` on the opponent), Flames of Revival (`discardPileRetrieval`), Miraculous Shine (the new `devolveEach.toHand`) and Cold Cyclone (typed `moveEnergy`); WP31's other 17 texts named for WP31b / WP31c; attacks 2,674 / 2,771, 1043 `me` printings fully built*** — engine 0.498.0, MRV 42, NOT committed; the whole-corpus sweep PENDING; remote re-ingest still owed before deploy)
+
+**Last updated (was):** 2026-10-09 — build session #554 (**P3-M5 — D614, *WP37b — THE ABILITY-EFFECT SHIELD: Mega Clefable ex ×4 "Luminous Wing" on the new `passive.preventAbilityEffects`; `EffectContext.invokedBy` gains `"ability"` at every Pokémon-Ability `runProgram` site and the §11 funnel refuses an opponent's Ability's effects on the holder (new `ABILITY_EFFECT_PREVENTED`); `damageChosen` / Adrena-Brain / `damageSubject` widened onto the funnel; the Ability share of a recoil and Magma Surge's extra counters refused; R-LW1 / R-LW2 UNRULED; abilities 557 / 610, 1030 `me` printings fully built*** — engine 0.497.0, MRV 42, NOT committed; the whole-corpus sweep PENDING; remote re-ingest still owed before deploy)
 
 **Last updated (was):** 2026-10-09 — build session #553 (**P3-M5 — D613, *FIX-UP — THE JET ENERGY SWITCH'S KNOCK OUT CHECK AND BASIC-ONLY BENCH PLACEMENT: turn.ts `attachEnergy` runs the mid-turn sweep after a Jet Energy switch (D610's open review finding: Holes counters were never Knock-Out-checked there); cards.ts `benchMatches` — an effect benches Basic Pokémon only unless its noun names its card (King's Order ×3, Booming Call ×2, Revival Blessing ×3, Summoning Gate ×2, Cinnabar Lure ×2 corrected; R-BC1 and D238's any-stage reading retired; R-BN1 UNRULED); no count moves*** — engine 0.496.0, MRV 42, NOT committed; the whole-corpus sweep PENDING; remote re-ingest still owed before deploy)
 
@@ -853,6 +855,41 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-09, after D615)
+>
+> 🛑 **D615 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D614 = `5dace4c0`). D615 is WP31a of the Mega backlog (the first 8 of WP31's 25 texts). Next: a review of D615 (and a ruling on R-GLT1), then WP31b / WP31c or another package, or the landing of D581–D615 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is a symlink to the main checkout's local D1). The D612 deploy order still stands (below).
+>
+> ✅ **`bun run check` IS GREEN**: `Test Files 657 passed (657) / Tests 15597 passed (15597) / CHECK_EXIT=0` (D614: 656 / 15569; D615 adds `deckHandMiscMeD615.test.ts` (26) and the census D615 block (2)).
+>
+> **REVIEW FIXES (D615 review B1, M1–M4).** B1: `devolveEachToHand` asked the KO-cause `wasLethal` per body mid-sweep, so a body made lethal by an EARLIER body's devolve (Ludicolo `sv09-037` losing Vibrant Dance's +40) went unstamped and read as "Knocked Out by damage from an attack" in one board order only. It now reads `wasLethal` off the starting board for every body and stamps after the whole sweep, `devolveEach`'s straddle; §8 drives the HP-aura board in both orders (`lastKoMarks.byAttack` false), +2 mutant rows. M1: Cold Cyclone joins the `moveEnergy` family's recorded approximation (D443, `moveFloor`: a non-"all" `max` is declinable — the printed "Move a {W} Energy" is offered optional); §9 pins `min` absent. M2: R-GLT1's reasoning rewritten (no precedent; to be asked). M3: stale claims annotated (D591 test title and census header / title, progress.md D591's "not finished" list, `devolveEach.test.ts`'s "field-free" and "refusal stands", effects.ts's FIELD-FREE heading). M4: `devolveChosen.test.ts` §2 leg (b) re-measured on a splice 6e-ter cannot claim (row 88 with only `deck` → `hand`), +1 mutant row (`D615-devolve-deck-anchor-loses-destination`).
+>
+> **(a) THE SLICE.** effects.ts arm 6e-ter, eight literal anchors (LOCAL D1, `legal_standard = 1`), each onto a shipped program: Trick Portal `me05-008` (`lookAtTopN` → Bench, `max: "any"`; Basic only under D613), Fruity Aroma `me05-001` (`lookAtTopN` → hand, `max: "any"`, `reveal`), Pika-Pika Parade `mep-107` / `30th-053` / `-149` (Precious Trolley's `searchDeck`), Gentle Light `me04-035` / `-101` / `-117` (Picnic Basket's `healEachAll`), Nitpick `30th-094` / `-140` (`handRefresh` `who: "opponent"`, draw 4), Flames of Revival `me04-010` (`discardPileRetrieval` Basic Pokémon → Bench), Miraculous Shine `30th-069` (`devolveEach` with the NEW optional `toHand`; interpreter.ts `devolveEachToHand` = the sweep's §11-filtered offer through `devolveChosen`'s writer, no shuffle) and Cold Cyclone `me02.5-053` (`moveEnergy` `selfToBench`, `providesEnergy`). Reader output byte-identical over both corpora but for the 8 sentences.
+>
+> **(b) MRV STAYS 42** (match.ts "STAYS 42 AT D615"): `toHand` rides an op that never parks; the other programs are shipped shapes. The 13 faces in a v42 `cardPool` are unchanged and the text is read at attack time, so an in-flight match builds them on deploy.
+>
+> | Column | `me` D615 | Standard pool D615 |
+> |---|---|---|
+> | Attacks | 942 / 1039 | **2674 / 2771** |
+> | Abilities | 181 / 234 | **557 / 610** |
+> | Trainers | 109 / 183 | **373 / 447** |
+> | Special Energy | 11 / 11 | **22 / 22** |
+>
+> **1043 `me` printings fully built** (1030 + 13; every other text on the 13 cards was built, Frosmoth's Ability since D591). Census pins stepped: the D581 tally (reader [345, 899] → [353, 912], residue [81, 113] → [73, 100]) and headline (2,650 → 2,663), the live `readerBuilt` rungs of D582–D612 (a leading `- 13`), D591's Cold Cyclone rung, D613's class-noun sweep (Trick Portal). Version tax: 268 occurrences in 164 files stepped, plus the declaration and `package.json`; the D614 heading kept.
+>
+> **D539 sweep.** Annotated in place: `boardHeal.test.ts` and `chosenHeal.test.ts` (Picnic Basket's words "derive to nothing" — now `healEachAll` as an attack), `devolveChosen.test.ts` §2 (the "each … into your opponent's hand" hybrid derives NULL — it is printed now), `discardShuffleBack.test.ts`'s producer counts (3 → 4, 24 → 27), census D591 ("Cold Cyclone" unbuilt) and D613 (the class nouns).
+>
+> **(c) THE MUTATION RECORD.** +30 D615 rows (effects.ts 24, interpreter.ts 6): 5011 in all. precheck: 5011 mutants, the same 20 pre-existing broken rows (`DEVOLVE_EACH_TO_HAND` is one literal so D540's three rows on `DEVOLVE_CHOSEN_TO_HAND`'s tail line stay unique). Probe `run.ts --decision D615 --allow-dirty`: 30 killed · 0 known · 0 GAP · 0 error, tree byte-identical after. GATE-WITNESS `--only` over the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows: 18 killed. After the review fixes, `--decision D540` 20 killed and `--decision D433` 17 killed, 0 known / GAP / error. Adjacent families `--only` (257 rows of D132–D135, D229/D230, D237/D238, D241/D244, D268, D333–D335, D340, D414, D433, D441–D443, D479, D516, D523, D540, D554, D613): 255 killed · 2 known survivors (D334's two declared) · 0 GAP · 0 error. residue-census-gate, opaque-anatomy-gate, splice-gate, partition-gate: OK.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D581–D614's too). Predicted: **4944 killed · 47 known survivor(s) · 0 GAP(S) · 20 error(s)** over **5,011** rows — 4981 + 30 = 5011; 4914 + 30 = 4944 killed; 47 survivors unchanged; 4944 + 47 + 20 = 5011. It assumes D614's prediction holds. If it holds, D581–D615 close together. If it fails: an error count ≠ 20 means a broken `find` outside the pre-existing 20; a GAP on an older row means one of the eight anchors (arm 6e-ter sits early) now masks a mutated later arm that a near-miss used to catch (start with the D132–D135 heal, D230 bench-search, D237/D238 retrieval, D241/D333 look, D229 move and D433/D540 devolve rows); a D615 survivor means an anchor's pin moved (start with `deckHandMiscMeD615.test.ts` §2).
+>
+> **Pending decisions (UNRULED readings):** **R-GLT1 (NEW, UNRULED — ASK IT)** — Mega Floette ex "Gentle Light" heals every damaged body on both sides, and a §11 "prevent all effects of attacks" shield on an opponent's body does NOT refuse the heal. Built on the op as it stands (`healEachAll` consults no shield), NOT on a precedent: Picnic Basket is a Trainer and never meets an attack shield, and the literal shield text ("all effects of attacks … done to this Pokémon") covers a heal, so the opposite reading is at least as strong. Reversal: call `effectRefused` per opponent body when `ctx.invokedBy === "attack"`. Carried: as at D614 (below).
+>
+> Still owed from the Mega backlog: as at D614 (below), less WP31a. WP31's rest (17 texts / 22 printings, named in `deckHandMiscMeD615.test.ts` §1 and `coverage-backlog-mega.md` D615) is WP31b / WP31c. Nearest to shipped vocabulary: Soothing Melody ×2 (`healChosen` with a Benched typed filter), Backfire (`discardEnergy` to the hand at a typed count of 2), Devolution Ray ×2 (an Active-only devolve behind an evolved gate), Roto Call (a name-fragment bench search), Trials and Trip-ulations (a two-word card name).
+>
+> ---
+>
+> **ARCHIVED — the resume point D615 was built from, kept rather than overwritten** (D614 has since been committed on `mega-ingest` as `5dace4c0`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-09, after D614)
 >
 > 🛑 **D614 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D613 = `55ccb609`). D614 is WP37b of the Mega backlog (Luminous Wing). Next: a review of D614 (and rulings on R-LW1 / R-LW2), then another package — WP17 (Hide 'n' Sneak ×4) can now reuse the piece — or the landing of D581–D614 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is a symlink to the main checkout's local D1). The D612 deploy order still stands (below).
@@ -1621,7 +1658,7 @@
 > | Trainers | 92 / 183 | **356 / 447** |
 > | Special Energy | 3 / 11 | **14 / 22** |
 >
-> **796 `me` printings fully built** (782 + 14: Mega Kangaskhan ex ×4, Moltres ×3, Zapdos ×3, Articuno `mep-097`, Lunatone ×3). Not finished, each waiting on an attack: Delphox ×2 "Energized Storm", Frosmoth "Cold Cyclone", Articuno `30th-018` / `-132` "Hail" (tcgdex `<em>` markup, WP06). [🆕🆕🆕 D607: Delphox ×2's "Energized Storm" is BUILT (WP28a); both are fully built.] Registry 1181 → 1200, non-attack 1021 → 1040. Other pins moved: `flipTheScript.test.ts` (shared-scope +7, `playableIf` +12), `callBell.test.ts` (Ability `allOf` 0 → 9 ids), `requirementFloor.test.ts` (`allOf` 15 → 24 ids, 5 → 8 sites), `reprintAliasMeD582.test.ts` `KEYED_AT_D591`, the five registry-length pins.
+> **796 `me` printings fully built** (782 + 14: Mega Kangaskhan ex ×4, Moltres ×3, Zapdos ×3, Articuno `mep-097`, Lunatone ×3). Not finished, each waiting on an attack: Delphox ×2 "Energized Storm", Frosmoth "Cold Cyclone", Articuno `30th-018` / `-132` "Hail" (tcgdex `<em>` markup, WP06). [🆕🆕🆕 D607: Delphox ×2's "Energized Storm" is BUILT (WP28a); both are fully built.] [🆕🆕🆕 D612: the `30th` Hail faces are BUILT (WP06). 🆕🆕🆕 D615: Frosmoth's "Cold Cyclone" is BUILT (WP31a) — all 19 are fully built.] Registry 1181 → 1200, non-attack 1021 → 1040. Other pins moved: `flipTheScript.test.ts` (shared-scope +7, `playableIf` +12), `callBell.test.ts` (Ability `allOf` 0 → 9 ids), `requirementFloor.test.ts` (`allOf` 15 → 24 ids, 5 → 8 sites), `reprintAliasMeD582.test.ts` `KEYED_AT_D591`, the five registry-length pins.
 >
 > **(c) THE MUTATION RECORD.** +23 D591 rows (4459 in all). precheck: 4459 mutants, the same 20 pre-existing broken rows (none in a D591 file). Probe `run.ts --decision D591 --allow-dirty`: 23 killed · 0 known · 0 GAP · 0 error, tree byte-identical after. Gate-witness `--only` (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed · 0 error. Gates: residue-census, opaque-anatomy, splice, partition all OK.
 >
@@ -35583,7 +35620,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D614, *WP37b — the Ability-effect shield: Mega Clefable ex ×4 "Luminous Wing" (`passive.preventAbilityEffects`, `invokedBy: "ability"`, the new `ABILITY_EFFECT_PREVENTED`); R-LW1 / R-LW2 UNRULED; abilities 557 / 610, 1030 `me` printings fully built*** — engine 0.497.0, MRV 42, NOT committed; the sweep PENDING; remote re-ingest owed) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D615, *WP31a — the first part of the `me` deck / hand / discard / Energy misc: 8 attack texts / 13 `me` printings on shipped programs (two looks, Precious Trolley's search, Picnic Basket's heal, the opponent's hand refresh, a Basic retrieval, the new `devolveEach.toHand`, a typed Energy move); R-GLT1 UNRULED; attacks 2,674 / 2,771, 1043 `me` printings fully built*** — engine 0.498.0, MRV 42, NOT committed; the sweep PENDING; remote re-ingest owed) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D614, *WP37b — the Ability-effect shield: Mega Clefable ex ×4 "Luminous Wing" (`passive.preventAbilityEffects`, `invokedBy: "ability"`, the new `ABILITY_EFFECT_PREVENTED`); R-LW1 / R-LW2 UNRULED; abilities 557 / 610, 1030 `me` printings fully built*** — engine 0.497.0, MRV 42, NOT committed; the sweep PENDING; remote re-ingest owed) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D613, *fix-up — the Jet Energy switch now runs the mid-turn Knock Out sweep (Holes, D610's review finding); bench placement is Basic only unless the noun names its card (R-BC1 / D238 retired, R-BN1 UNRULED); no count moves*** — engine 0.496.0, MRV 42, NOT committed; the sweep PENDING; remote re-ingest owed) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D610, *WP37a — the first part of the `me` on-move / as-often / HP passives: 8 texts / 16 `me` printings on seven new objects (Solar Transfer, Bubble Gathering, Metal Road, Swirling Prose, Holes, Scale Up, Tyrannically Gutsy) over the new `hpBonus.requiresEnergyCount`; WP37's other 8 texts named; abilities 536 / 610*** — engine 0.493.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D609, *WP36 — the `me` KO / damage-counter attacks: 4 attack texts / 8 `me` printings (Terminal Period's exact-counter gate, Bring Down's least-HP Knock Out on either side, Snow Coating's doubled counters, the singular counter put); Soul Destroyer and Mysterious Signal named; R-BD1 UNRULED; attacks 2,640 / 2,771*** — engine 0.492.0, MRV 42, NOT committed; the sweep PENDING) |
@@ -35813,6 +35851,17 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-09 — build session #555 (P3-M5 — D615)
+
+**WP31a — THE FIRST PART OF THE `me` DECK / HAND / DISCARD / ENERGY MISC. `MATCH_RECORD_VERSION` STAYS 42.**
+
+Built in the `luminous_ui-mega` worktree on D614 (`5dace4c0`); the main checkout was not touched. Ids `git grep`-ped and the
+texts read off the LOCAL D1 first. 8 attack texts / 13 `me` printings on eight literal anchors (effects.ts arm 6e-ter), each a
+shipped program; the one new field is `devolveEach.toHand` (interpreter.ts `devolveEachToHand`). R-GLT1 UNRULED. All 13 cards
+finished (1043 `me` printings). WP31's other 17 texts / 22 printings named for WP31b / WP31c. `deckHandMiscMeD615.test.ts` (26),
+census D615 block (2). +30 mutant rows, all KILLED. Review fixes (B1: the hand sweep's KO cause asked before the sweep and
+stamped after it, as `devolveEach`; M1–M4) in NEXT. Sweep PENDING (NEXT (0)). NOT committed.
 
 ### 2026-10-09 — build session #554 (P3-M5 — D614)
 
