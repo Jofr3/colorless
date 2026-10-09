@@ -2159,6 +2159,19 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D617 — FIVE SUPPORTER OBJECTS, FOUR OPTIONAL OP KEYS, ONE `per` MEMBER, ONE `cap`
+    VALUE AND ONE `BoardCondition` MEMBER.** (Placed ABOVE the D616 block.) No `GameState`, `PendingStage`,
+    prompt or wire key moves; what is new can only ride a parked `EffectContinuation`: `healChosen`
+    `recoverHealed` (Pokémon Center Lady's park — a 0.499 rollback resumes it as a heal with no recovery) and
+    `targetRecorded` (AZ's Tranquility, in the `rest` of a parked switch — a 0.499 rollback ignores the pin
+    and offers every ex in play, the heal then forced or parked; it also ignores the parked switch's
+    `switchActive.demotedAsMoved` (R-AZT1), which only matters once the pin is read), `drawCards.per` `{ kind: "recorded" }`
+    (Gwynn, in the `rest` of its parked discard — a 0.499 rollback's `perCount` is `undefined`, the count
+    `NaN`, nothing drawn) and `payFromHand.cap: "any"` (Naveen, persisted only as a park whose `max` is already
+    resolved — unchanged on rollback). `yourDeckNotEmpty` is a `trainerPlayableIf`, read at play and never
+    persisted. The 11 `me` faces in a v42 `cardPool` are unchanged. Each rollback reading is NAMED (D561's
+    precedent: optional keys, no version).
+
     🆕🆕🆕 **STAYS 42 AT D616 — NINE READER ANCHORS ONTO SHIPPED PROGRAMS AND ONE OPTIONAL OP FIELD.**
     (Placed ABOVE the D615 block.) `devolveChosen.defenderOnly` (Devolution Ray) narrows the offer to the
     Defending Pokémon, at most one candidate, so the op is forced or a no-op and never parks: no v42 record

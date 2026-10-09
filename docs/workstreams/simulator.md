@@ -30180,7 +30180,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   gate was already shipped (`yourHandExactly 1`, D554), but Gladion's Final Battle still needs an attacker filter.
 - **No op, persisted member, prompt or event.** Emma's program never parks.
 - **Dropped and named:** AZ's Tranquility ×3, Gladion's Final Battle ×3, Grimsley's Move ×2, Gwynn ×3, Naveen ×2
-  (each needs vocabulary beyond the brief; `decisions.md` D599). Acerola's Mischief ×4 and Roxie's Performance ×3 are WP24b.
+  (each needs vocabulary beyond the brief; `decisions.md` D599). Acerola's Mischief ×4 and Roxie's Performance ×3 are WP24b. [🆕🆕🆕 D617 (D539): ~~WP24b~~ — WP24b (D617) built four other texts and Pokémon Center Lady; these two are WP24c, with Gladion's Final Battle.]
 - **Readings (UNRULED).** R-AC1, R-EM1, R-EM2 (`progress.md` NEXT).
 - **Suite.** `supportersMeD599.test.ts` (19) and `lookAlikeShowD580.test.ts` §8 (Emma through the copy). +16 mutant rows.
 - **Census.** Standard pool Trainers **360 / 447**; 874 `me` printings fully built.
@@ -30235,6 +30235,29 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Readings.** None new; each open point inherits a shipped one (`progress.md` NEXT).
 - **Suite.** `activatedMeD602.test.ts` (22) and a census D602 block (3). +21 mutant rows.
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D617 — WP24b: five more WP24 Supporters (engine 0.500.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D616 (`48f9c661`), NOT committed.
+
+- **The programs.** registry.ts, five new objects on 11 `me` Supporter ids: Pokémon Center Lady (`healChosen` 60 + the NEW
+  `recoverHealed`; a picked Active also gets `clearStatus`, through `healedRiderOps`, the helper Super Potion's discard now
+  shares), AZ's Tranquility ×3 (Scramble Switch's demoted filing plus the NEW `demotedAsMoved`, a `recordGate`,
+  `healChosen` 80 pinned by the NEW `targetRecorded` and narrowed to `suffixPokemon ex`), Grimsley's Move ×2 (shipped `lookAtTopN` → Bench {D}, `restTo:
+  "shuffledBottom"`, `notYourFirstTurn`), Gwynn ×3 (declinable `payFromHand` cap 2 over `anyPokemon noRuleBox`, then
+  `drawCards` 3 with the NEW `per` member `recorded`) and Naveen ×2 (`payFromHand` at the NEW `cap: "any"`,
+  `drawUntilHandSize` 5, the NEW `BoardCondition` `yourDeckNotEmpty`).
+- **Readings.** R-AZT1 ⚠️ UNRULED: AZ's ex test reads the card moved, so a non-ex Palafin that Zero to Hero swaps for
+  Palafin ex is not healed (`demotedAsMoved` skips D565's re-key). R-GW1 ⚠️ UNRULED: Gwynn plays on a hand with no eligible Pokémon (draws 0). R-NV1 ⚠️ UNRULED: Naveen's
+  can't-draw gate is an empty deck. R-NV2 ⚠️ UNRULED: a 5+ card hand may keep every card and draw 0.
+- **Dropped (WP24c).** Gladion's Final Battle (an attacker filter on the persisted side-wide bonus), Acerola's Mischief (a
+  next-turn shield against ex on a chosen body), Roxie's Performance (a next-turn Poisoned-can't-retreat side lock): each
+  changes persisted side state, so the three share one future `MATCH_RECORD_VERSION` bump with a migration.
+- **Suite.** `supportersMeD617.test.ts` (35) and a census D617 block (2). +29 mutant rows, all killed; eight older rows
+  re-pointed (D335 Rika, D489 ×3, D561 ×3, D565 ×1). Lady's prompt names the recovery. D539: payFromHand's uncapped claim, `drawCards.per`'s member claim, `recordDemoted`'s
+  one reader, census D613's class-noun claim and the D588 / D599 unkeyed pins annotated.
+- **Census.** Standard pool trainers **384 / 447**; 1065 `me` printings fully built (all 11 finished).
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
 ## D616 — WP31b: the second part of the `me` deck / hand / discard / Energy misc (engine 0.499.0, `MATCH_RECORD_VERSION` stays 42)

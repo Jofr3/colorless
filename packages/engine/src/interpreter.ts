@@ -1635,6 +1635,8 @@ function describeBranch(ops: readonly EffectOp[]): string | null {
           // 🆕🆕🆕 D599 — Emma's member is SILENT here (null): its one program draws at top
           // level and no gate branch holds it, so a caption would be a line no board reaches.
           if (op.per.kind === "cardsInOpponentHand") return null;
+          // 🆕🆕🆕 D617 — Gwynn's `recorded` member is silent too, for the same reason.
+          if (op.per.kind === "recorded") return null;
           parts.push(
             op.per.kind === "opponentBenchCount"
               ? "draw a card for each of your opponent's Benched Pokémon"
@@ -2037,6 +2039,22 @@ function healedDiscardAnswered(state: GameState, ref: PokemonRef): EffectOp[] {
   ];
 }
 
+/** 🆕🆕🆕 D617 — every healed-body rider of one `healChosen` pick, in printed order: Super Potion's
+    discard (`healedDiscardAnswered`, D561) and Pokémon Center Lady's *"and it recovers from all
+    Special Conditions"* — the field-free `clearStatus` (the controller's Active) when the pick IS the
+    Active. A Benched pick carries no Special Condition, so it schedules nothing; the recovery does
+    not depend on how much was healed. `state` is the board BEFORE the heal (the discard reads it). */
+function healedRiderOps(
+  state: GameState,
+  ref: PokemonRef,
+  op: Extract<EffectOp, { op: "healChosen" }>,
+): EffectOp[] {
+  const discard = op.discardEnergyFromHealed === true ? healedDiscardAnswered(state, ref) : [];
+  const recover: EffectOp[] =
+    op.recoverHealed === true && ref.spot.spot === "active" ? [{ op: "clearStatus" }] : [];
+  return [...discard, ...recover];
+}
+
 /** 🆕🆕🆕 D565 — Rocket Brain's FIRST answer: the same op, re-emitted with the source it
     now knows (`counterSourceAnswered`'s shape, one op over). ONE helper for both endings
     of question 1 — the forced one via `stepOp`'s `schedule`, the parked one via
@@ -2212,8 +2230,9 @@ function continuationOps(
   const op = cont.pendingOp;
   // 🆕🆕🆕 D561 (V5) — THE SIXTH MEMBER: Super Potion's parked pick buys the discard
   // from THAT body, through the helper the forced ending uses.
-  if (op.op === "healChosen" && op.discardEnergyFromHealed === true) {
-    return pickedPokemon(choice) ? healedDiscardAnswered(before, choice.ref) : [];
+  // 🆕🆕🆕 D617 — and Pokémon Center Lady's parked pick buys the recovery (`healedRiderOps`).
+  if (op.op === "healChosen" && (op.discardEnergyFromHealed === true || op.recoverHealed === true)) {
+    return pickedPokemon(choice) ? healedRiderOps(before, choice.ref, op) : [];
   }
   // 🆕 D316 — THE DECLINE NOW BUYS OPS TOO, and this line is the whole of it.
   // `otherwise` is the arm `coinFlipGate`, `conditionGate` and `recordGate` have
@@ -3178,6 +3197,10 @@ function stepOp(
           // hand (revealed by the op before), scanned by the attack fold's own walk.
           case "cardsInOpponentHand":
             return countCardsInHand(state, otherSeat(ctx.seat), per.filter);
+          // 🆕🆕🆕 D617 — Gwynn's *"for each card you discarded in this way"*: the uids the
+          // program's payment filed under the slot (a decline filed `[]`).
+          case "recorded":
+            return recorded(record, per.slot).length;
         }
       })();
       const count = op.count * perCount;
@@ -4651,7 +4674,8 @@ function stepOp(
             kind: "chooseCards",
             candidates,
             min: 0,
-            max: Math.min(op.cap, candidates.length),
+            // 🆕🆕🆕 D617 — `cap: "any"` (Naveen's *"any number of cards"*): every match.
+            max: op.cap === "any" ? candidates.length : Math.min(op.cap, candidates.length),
             dest: op.to,
             note: payFromHandNote(op),
           },
@@ -5382,7 +5406,7 @@ function stepOp(
       // op in the family whose gate did not exist before its first rider: an
       // unnarrowed `healChosen` cannot have an empty candidate set at any legal
       // board, so nothing had to agree with anything until now.
-      const candidates = healChosenTargets(state, ctx.seat, op);
+      const candidates = healChosenTargets(state, ctx.seat, op, record);
       const zoneWord = op.zone === "bench" ? "Benched " : "";
       if (op.upTo !== undefined) {
         // The printed "up to N … each" (Saguaro). §8.6 clamps the ASK to the
@@ -5407,11 +5431,12 @@ function stepOp(
       // its discard handed on through `schedule`, by the SAME helper the parked ending
       // uses (`continuationOps`), so a board of one and a board of six resolve the
       // printed sentence down one path (D216/D309). `parkOrForce`'s own ordering.
-      if (op.discardEnergyFromHealed === true && candidates.length === 1) {
+      // 🆕🆕🆕 D617 — Pokémon Center Lady's `recoverHealed` rides the same entrance (`healedRiderOps`).
+      if ((op.discardEnergyFromHealed === true || op.recoverHealed === true) && candidates.length === 1) {
         const forced = candidates[0] as PokemonRef;
         return {
           done: healChosen(state, forced, op.amount, ctx, events),
-          schedule: healedDiscardAnswered(state, forced),
+          schedule: healedRiderOps(state, forced, op),
         };
       }
       return parkOrForce(
@@ -5989,6 +6014,9 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // start of the next. 2 / 3 / 4 are driven rather than described — `<` is green
       // at 2 and wrong at 3, `===` is green at 3 and wrong at 2.
       return state.players[seat].deck.length <= cond.count;
+    case "yourDeckNotEmpty":
+      // 🆕🆕🆕 D617 — Naveen's printed gate, the flat complement of `yourDeckAtMost 0` (R-NV1).
+      return state.players[seat].deck.length > 0;
     case "yourActiveEnergyAtLeast": {
       // 🆕🆕 D383 — the payability of Wellspring Mask Ogerpon ex's printed cost
       // ("You may shuffle 3 Energy attached to this Pokémon into your deck"),
@@ -7607,6 +7635,9 @@ export function conditionNote(cond: BoardCondition): string {
       // singular branch would be a shape nothing can reach (D205's unreachable-shape
       // rule). "or fewer" is the printed comparator spelled as printed.
       return `you have ${cond.count} or fewer cards in your deck`;
+    case "yourDeckNotEmpty":
+      // 🆕🆕🆕 D617 — Naveen's gate (*"If you can't draw any cards in this way"*), R-NV1.
+      return "you have at least 1 card in your deck";
     case "yourActiveEnergyAtLeast":
       // 🆕🆕 D383 — built from the parameter, and the pronoun is dropped exactly as
       // every sibling drops it (D116). The plural is unconditional for
@@ -13751,7 +13782,8 @@ function switchWithDeckNamed(
     that switched its own Active and FILED the demoted body (`switchActive.recordDemoted`,
     Scramble Switch) reads that filing AFTER `switchInto` returned — and by then Zero to
     Hero has put the filed uid into the deck. Re-keyed at the filing, so "the Pokémon you
-    moved to your Bench" is the body that is on the Bench.
+    moved to your Bench" is the body that is on the Bench. (🆕🆕🆕 D617: a filing with
+    `demotedAsMoved` — AZ's Tranquility, R-AZT1 — skips the re-key: it asks which card was moved.)
 
     🆕🆕🆕 **D566 — THE CENSUS RE-RUN FOR THE SECOND SWAP EVENT (`POKEMON_SWAPPED_FROM_DISCARD`,
     Ogre's Mask) FOUND NO HOLDER, SO THIS HELPER DOES NOT READ IT.** The swap runs inside an
@@ -16913,7 +16945,8 @@ function handCostCandidates(
   // ("how many copies of one interchangeable class could a pick possibly want")
   // spelled by the field the printed *"up to N"* lands in. `discardEnergy`'s own
   // reason for keeping `count` copies rather than one, verbatim.
-  const keepPer = op.count === "any" ? op.cap : op.count;
+  // 🆕🆕🆕 D617 — `cap: "any"` (Naveen) keeps every copy: the pick may take the whole hand.
+  const keepPer = op.count !== "any" ? op.count : op.cap === "any" ? Number.POSITIVE_INFINITY : op.cap;
   for (const uid of state.players[seat].hand) {
     if (uid === excludeUid) continue;
     const card = cardOf(state, uid);
@@ -16998,6 +17031,8 @@ export function handCostPhrase(
   // 3" while the op lost its `cap` is a byte string this deploy cannot write (D457).
   // PLURAL unconditionally: the column prints no "up to 1", and inventing a singular
   // branch for it would be a rung nothing can reach (D205).
+  // 🆕🆕🆕 D617 — Naveen's uncapped arm prints *"any number of cards"*.
+  if (op.count === "any" && op.cap === "any") return `any number of ${other ? "other " : ""}${plural}`;
   if (op.count === "any") return `up to ${op.cap} ${other ? "other " : ""}${plural}`;
   if (op.count > 1) return `${op.count} ${other ? "other " : ""}${plural}`;
   // "a card" → "another card"; no printed card pairs `other` with a filter, but
@@ -17074,7 +17109,7 @@ function switchOwn(
     and the record and the event log can never disagree about whether a switch
     occurred. */
 function switchRecording(
-  op: { recordAs?: EffectSlot; recordDemoted?: true },
+  op: { recordAs?: EffectSlot; recordDemoted?: true; demotedAsMoved?: true },
   move: (into: GameEvent[]) => GameState,
   events: GameEvent[],
   record: EffectRecord,
@@ -17095,8 +17130,11 @@ function switchRecording(
       op.recordAs,
       // 🆕🆕🆕 D565 — re-keyed through `swappedUid`: Zero to Hero may have swapped the
       // demoted body's top card in place, inside `switchInto`, before this filing.
+      // 🆕🆕🆕 D617 — unless `demotedAsMoved` (AZ's Tranquility, R-AZT1): the card the switch moved.
       emitted.flatMap((event) =>
-        event.type === "POKEMON_SWITCHED" ? [swappedUid(event.wasActive, emitted)] : [],
+        event.type === "POKEMON_SWITCHED"
+          ? [op.demotedAsMoved === true ? event.wasActive : swappedUid(event.wasActive, emitted)]
+          : [],
       ),
     );
   }
@@ -17433,8 +17471,19 @@ export function healChosenTargets(
   state: GameState,
   seat: Seat,
   op: Extract<EffectOp, { op: "healChosen" }>,
+  /** 🆕🆕🆕 D617 — the program's record, read only by `targetRecorded` (AZ's Tranquility). A caller
+      without one (cardplay.ts `programPlayable`) reads an empty slot: no candidate. */
+  record?: EffectRecord,
 ): PokemonRef[] {
-  const zoned = op.zone === "bench" ? ownBenchRefs(state, seat) : ownInPlayRefs(state, seat);
+  const zonedAll = op.zone === "bench" ? ownBenchRefs(state, seat) : ownInPlayRefs(state, seat);
+  // 🆕🆕🆕 D617 — `targetRecorded`: only a body whose stack holds a uid the slot filed (the demoted
+  // body AZ's switch filed), `moveEnergy.sourceRecorded`'s stack test.
+  const slot = op.targetRecorded;
+  const filed = slot === undefined ? undefined : new Set(record === undefined ? [] : recorded(record, slot));
+  const zoned =
+    filed === undefined
+      ? zonedAll
+      : zonedAll.filter((ref) => (refPokemon(state, ref)?.stack ?? []).some((uid) => filed.has(uid)));
   // 🆕🆕🆕 D569 — Supportive Singing's printed BANNER subgroup ("your Benched Ancient
   // Pokémon"), a conjunct over the same set; absent = byte-identical (`filteredRefs`).
   const banded = filteredRefs(state, zoned, op.filter);
@@ -17475,7 +17524,9 @@ function healTargetNoun(op: Extract<EffectOp, { op: "healChosen" }>): string {
       : ` that has ${op.remainingHpAtMost} HP or less remaining`;
   // 🆕🆕🆕 D569 — the filter's printed plural noun ("Ancient Pokémon"); absent = "Pokémon".
   const noun = op.filter === undefined ? "Pokémon" : retrieveNoun(op.filter).plural;
-  return `Heal which of your ${zoneWord}${noun}${window}?`;
+  // 🆕🆕🆕 D617 — `recoverHealed` (Pokémon Center Lady): the pick also decides whether conditions clear.
+  const rider = op.recoverHealed === true ? " It also recovers from all Special Conditions." : "";
+  return `Heal which of your ${zoneWord}${noun}${window}?${rider}`;
 }
 
 /** Gust: switch the OPPONENT's Active with their benched `ref` (Boss's Orders). */

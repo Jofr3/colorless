@@ -2178,6 +2178,12 @@ export type BoardCondition =
       milled themselves to zero and then attacks is inside the rules until their next
       turn begins. The boundary is driven at 2, 3 and 4 rather than described. */
   | { kind: "yourDeckAtMost"; count: number }
+  /** 🆕🆕🆕 **D617 — YOUR DECK HOLDS AT LEAST ONE CARD**, a FLAT member (`notYourFirstTurn`'s
+      precedent: no `not` combinator over `yourDeckAtMost 0`). Naveen `me03-079` / `-112`'s
+      printed gate, *"(If you can't draw any cards in this way, you can't use this card.)"*: the
+      card lets you discard any number of cards first, so a draw "until you have 5" can always
+      draw unless the deck is empty (R-NV1 ⚠️ UNRULED). A deck's SIZE is public. */
+  | { kind: "yourDeckNotEmpty" }
   /** 🆕🆕 **D372 — THE TWO ACTIVE BODIES CARRY THE SAME NUMBER OF ENERGY CARDS.**
       *"If this Pokémon and your opponent's Active Pokémon have the same amount of
       Energy attached, this attack does 100 more damage."* and the same clause at
@@ -7455,7 +7461,8 @@ export type EffectOp =
       (`HandRefreshDraw`'s D516 argument, which is why the rider admits exactly the one
       member a Trainer prints [🆕🆕🆕 D599 (D539): "exactly the one member" is WITHDRAWN as a
       count, kept as written — D569 admitted `pokemonInPlay` and D599 `cardsInOpponentHand`;
-      each is still a member a Trainer prints, admitted one at a time]). OPTIONAL (D135): every shipped producer omits it and
+      each is still a member a Trainer prints, admitted one at a time; 🆕🆕🆕 D617 (D539): and the
+      members are no longer all `DamageCountSource`'s — Gwynn's `recorded` reads the program's record]). OPTIONAL (D135): every shipped producer omits it and
       draws the byte-identical `count`. `drawCards` never parks ITSELF, but it RIDES a
       parked op's `rest`: Morty's own `payFromHand 1` parks whenever the hand holds two
       or more non-interchangeable cost candidates, and the stored continuation is
@@ -7488,7 +7495,17 @@ export type EffectOp =
             interpreter.ts `countCardsInHand` (the attack fold's own). Read at resolve, after
             the program's `revealOpponentHand`. Neither op of Emma's program parks, so
             this `drawCards` never rides a `rest` and the member is never persisted. */
-        | Extract<DamageCountSource, { kind: "cardsInOpponentHand" }>;
+        | Extract<DamageCountSource, { kind: "cardsInOpponentHand" }>
+        /** 🆕🆕🆕 **D617 — Gwynn `me05-078` / `-109` / `-119`**: *"Discard up to 2 Pokémon that don't
+            have a Rule Box from your hand, and draw 3 cards for each card you discarded in this
+            way."* The FOURTH `per` member and the first that is NOT a `DamageCountSource`: the
+            number of uids the program's earlier op filed under `slot` (the declinable
+            `payFromHand`'s `recordAs`), read at resolve. A decline files `[]` and draws 0. The
+            payment PARKS, so this `drawCards` rides its `rest` and IS persisted: a 0.499
+            ROLLBACK resuming that park meets an unknown member — its `perCount` switch returns
+            `undefined` and the count is `NaN`, so nothing is drawn (NAMED, D560's `"all"`
+            precedent). */
+        | { kind: "recorded"; slot: EffectSlot };
     }
   /** "Draw cards until you have `size` cards in your hand" (Grusha) — draw
       `size − hand.length`, i.e. nothing at all when the hand already holds
@@ -8548,7 +8565,8 @@ export type EffectOp =
           MEMBER**: the union names WHAT KIND of thing a program files (paid / moved /
           discarded — 🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands; 🆕🆕🆕 D579 (D539): SIX members now — `"placed"`, the first whose entries are NOT distinct cards (it files a COUNT as repeated top uids, one per damage counter placed); the argument here rests on what a slot NAMES, not on its entries being distinct cards, so it still stands), and both ends of a switch are "moved" — a `"demoted"` slot would
           put the END into the ADDRESS, so a second switch-reading op could file the
-          other end under the same name. Read by `moveEnergy.sourceRecorded`.
+          other end under the same name. Read by `moveEnergy.sourceRecorded` [🆕🆕🆕 D617: and by
+          `healChosen.targetRecorded` — AZ's Tranquility heals the demoted body].
           `MATCH_RECORD_VERSION` holds at 35 (optional, absent = D206's filing); the
           0.444 ROLLBACK reading is NAMED: a 0.444 reader ignores this key AND
           `moveEnergy.sourceRecorded` alike — it files the PROMOTED body (which only
@@ -8560,6 +8578,16 @@ export type EffectOp =
           Bench, and the move whiffs (the source and destination coincide)"~~ — a mixed
           reader that stripped this key alone; WITHDRAWN.) */
       recordDemoted?: true;
+      /** 🆕🆕🆕 **D617 — THE DEMOTED FILING READS THE CARD THE SWITCH MOVED** (with `recordDemoted`
+          only): the filed uid is NOT re-keyed through D565's `swappedUid`. AZ's Tranquility asks *"If
+          you moved a Pokémon ex to your Bench in this way"* — WHICH CARD was moved, not which body is
+          on the Bench now (Scramble Switch's question, which keeps the re-key). A non-ex Palafin
+          demoted and then swapped by Zero to Hero for a Palafin ex files the Palafin, which is in the
+          deck by the time `healChosen.targetRecorded` reads the slot: no body is pinned and nothing is
+          healed (R-AZT1 ⚠️ UNRULED). Without a swap the two filings are the same uid. Optional (D125);
+          the switch parks, so this key is persisted: a 0.499 ROLLBACK ignores it together with
+          `targetRecorded` (NAMED there). */
+      demotedAsMoved?: true;
     }
   /** Gust: switch one of the OPPONENT's Benched Pokémon into their Active spot
       (Boss's Orders). PARKS on the opponent-bench choice unless forced.
@@ -9820,6 +9848,29 @@ export type EffectOp =
           a parked pick is validated against the PROMPT, so the rider is never re-read at the
           apply. */
       filter?: CardFilter;
+      /** 🆕🆕🆕 **D617 — the printed *"and it recovers from all Special Conditions"*** on the healed
+          body: Pokémon Center Lady `me01-123` (Supporter) — *"Heal 60 damage from 1 of your
+          Pokémon, and it recovers from all Special Conditions."* `discardEnergyFromHealed`'s
+          two entrances (the forced pick through `stepOp`'s `schedule`, the parked one through
+          `continuationOps`), one helper (`healedRiderOps`): a picked ACTIVE schedules the
+          field-free `clearStatus` (all five conditions, the controller's Active). A Benched pick
+          schedules nothing — a Benched Pokémon carries no Special Condition (moving to the Bench
+          clears them). Unconditional on the heal: an undamaged pick heals 0 and still recovers
+          (the print has no *"If you healed any damage"*). Optional (D125); a 0.499 ROLLBACK
+          resuming a parked pick ignores the key: it heals 60 and clears nothing (NAMED). */
+      recoverHealed?: true;
+      /** 🆕🆕🆕 **D617 — THE CANDIDATE PINNED TO A RECORDED BODY** (`moveEnergy.sourceRecorded`'s
+          shape on this op): AZ's Tranquility `me04-076` / `-106` / `-120` (Supporter) — *"Switch your
+          Active Pokémon with 1 of your Benched Pokémon. If you moved a Pokémon ex to your Bench in
+          this way, heal 80 damage from that Pokémon."* The candidates are the controller's bodies
+          whose stack holds a uid filed under this slot (Scramble Switch's `switchActive
+          { recordAs, recordDemoted }` files the demoted body), narrowed by `filter` (`suffixPokemon
+          ex`) — so at most one candidate, forced or a no-op, never parked. Read in
+          `healChosenTargets` off the program's record; a caller with no record (cardplay.ts
+          `programPlayable`) gets no candidate, which is why the one producer sits inside a
+          `recordGate` (not descended there). AZ's switch also sets `demotedAsMoved` (R-AZT1), so a
+          Palafin swapped by Zero to Hero is not pinned. Optional (D125). */
+      targetRecorded?: EffectSlot;
     }
   /** Attach Basic Energy from a SOURCE zone (the controller's hand or discard
       pile) to a CHOSEN own in-play Pokémon — the §6 energy-acceleration Ability
@@ -12846,7 +12897,10 @@ export type EffectOp =
       printed nowhere at all"~~ is WITHDRAWN outside the attack column this paragraph
       measured — Perrin, a SUPPORTER, prints *"Reveal up to 2 Pokémon in your hand and
       put them into your deck"*, so `to` below gains `"deckBottom"`. The arm stays
-      separate for the uncapped half of the argument, which stands.) Admitting either would be authoring a card (D190b), and a flat widening
+      separate for the uncapped half of the argument, which stands. 🆕🆕🆕 D617 (D539): ~~"no printing spells
+      this way"~~ for the uncapped half is WITHDRAWN too — Naveen `me03-079`/`-112`, a SUPPORTER, prints
+      *"you may discard any number of cards from your hand"*, so `cap` below gains `"any"`; the arm stays
+      separate, and `cap` stays REQUIRED.) Admitting either would be authoring a card (D190b), and a flat widening
       would admit both silently. Measured over `legalAttackCorpus()`'s 640 sentences
       (the `legal_standard = 1` attack column, and NOT the ability or trainer columns —
       D310's limit, stated): the only printed declinable hand discard in it is this one,
@@ -12891,8 +12945,15 @@ export type EffectOp =
       /** The declinable quantifier — `discardEnergy.count`'s word for the same fact. */
       count: "any";
       /** The printed *"up to N"* ceiling. REQUIRED on this arm (see the block above);
-          the pick is 0..min(cap, matches) and always declinable. */
-      cap: number;
+          the pick is 0..min(cap, matches) and always declinable.
+          🆕🆕🆕 **D617 — `"any"`, THE PRINTED *"any number of cards"***: Naveen `me03-079` /
+          `-112` (Supporter) — *"Before drawing cards, you may discard any number of cards from
+          your hand."* No ceiling: the pick is 0..every match. Still REQUIRED, so an author states
+          the uncapped reading out loud. The block above's *"An uncapped declinable hand discard is
+          'Discard your hand' … and no printing spells this way"* is WITHDRAWN (D539) by this
+          printing. The op is the first of its program, so it is persisted only as a PARK whose
+          `max` was resolved when it was built: a 0.499 ROLLBACK resumes it unchanged. */
+      cap: number | "any";
       /** Narrowed to the discard: no printed declinable payment goes under a deck.
           🆕🆕🆕 D561 (V1) — WITHDRAWN (D539): Perrin `sv06-160`/`-209`/`-220` prints
           one — *"Reveal up to 2 Pokémon in your hand and put them into your deck."*

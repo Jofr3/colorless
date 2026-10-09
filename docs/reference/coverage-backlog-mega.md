@@ -6,6 +6,27 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D617 update (engine 0.500.0) — five more WP24 Supporters (WP24b)
+
+5 texts / 11 `me` Supporter printings on five new objects (`supportersMeD617.test.ts`): Pokémon Center Lady `me01-123`
+(`healChosen` 60 + `recoverHealed`, NEW), AZ's Tranquility ×3 `me04-076` / `-106` / `-120` (the demoted ex healed 80,
+`healChosen.targetRecorded`, NEW), Grimsley's Move ×2 `me02-090` / `-120` (shipped `lookAtTopN` + `notYourFirstTurn`), Gwynn ×3
+`me05-078` / `-109` / `-119` (`drawCards.per` `recorded`, NEW) and Naveen ×2 `me03-079` / `-112` (`payFromHand.cap: "any"` and
+`yourDeckNotEmpty`, NEW). **Finished:** all 11 cards. New readings (UNRULED): R-AZT1 (AZ with Palafin's Zero to Hero), R-GW1, R-NV1, R-NV2 (`progress.md` NEXT).
+**Left for WP24c** (3 texts / 10 printings, one `MATCH_RECORD_VERSION` bump with a migration): Gladion's Final Battle ×3
+`me05-077` / `-108` / `-118` (an attacker filter on the persisted side-wide bonus, plus a last-card gate), Acerola's Mischief ×4
+`me01-113` / `-165` / `-183` / `me02.5-180` (a next-turn shield against ex on a chosen body) and Roxie's Performance ×3
+`me04-081` / `-112` / `-121` (a next-turn Poisoned-can't-retreat side lock).
+
+| Column | `me` built / units (D617) | Standard pool D617 |
+|---|---|---|
+| Attacks | 953 / 1,039 | **2,685 / 2,771** |
+| Abilities | 181 / 234 | **557 / 610** |
+| Trainers | 120 / 183 (+11) | **384 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1065** (1054 + 11).
+
 ## 🆕 D616 update (engine 0.499.0) — the second part of the deck / hand / discard / Energy misc (WP31b)
 
 9 attack texts / 11 `me` printings on nine literal anchors onto shipped programs (`deckHandMiscMeD616.test.ts`): Regice ex "Ice
@@ -322,7 +343,7 @@ Sableye, Zarude ×2. **Dropped:** Celebration ×2 (the take-then-shuffle order).
 six-name play gate) and Emma ×2 (reveal, then a card per Pokémon in the opponent's hand — the new `drawCards.per` member).
 **Still open in WP24 (named):** AZ's Tranquility ×3 (heal the demoted ex), Gladion's Final Battle ×3 (an attacker filter on
 the side-wide bonus), Grimsley's Move ×2 (a "not your first turn" gate), Gwynn ×3 (a draw per recorded card), Naveen ×2
-(an uncapped hand discard and a deck-not-empty gate); WP24b: Acerola's Mischief ×4, Roxie's Performance ×3.
+(an uncapped hand discard and a deck-not-empty gate); WP24b: Acerola's Mischief ×4, Roxie's Performance ×3. [🆕🆕🆕 D617: AZ's Tranquility, Grimsley's Move, Gwynn and Naveen BUILT by WP24b, above, with Pokémon Center Lady; Gladion's Final Battle, Acerola's Mischief and Roxie's Performance left for WP24c.]
 
 | Column | `me` built / units (D599) | Standard pool D599 |
 |---|---|---|
@@ -539,7 +560,7 @@ Rosa's Encouragement ×3 (`morePrizesThanOpponent` + `attachEnergyFrom` discard 
 `AttachTargetRiders.stage2Only`), Rust Syndicate Grunt ×2 (last-turn-KO gate + `discardEnergy` `opponentChosen`),
 Waitress (`attachFromTop` 6 / 1), Hole-Digging Shovel (`discardDeckTop self 2`) and Lumiose Galette (`heal self` 20 +
 `recoverOneStatus`). **Dropped:** Pokémon Center Lady (its recovery addresses the healed body — a second `healChosen`
-rider). Dawn ×3 stays WP23.
+rider). [🆕🆕🆕 D617: BUILT, `healChosen.recoverHealed`.] Dawn ×3 stays WP23.
 
 | Column | `me` built / units (D588) | Standard pool D588 |
 |---|---|---|
@@ -1134,7 +1155,7 @@ Each Mega Floette ex in play (both yours and your opponent's) gets +150 HP.
 
 ### Supporter — 22 text(s) / 55 printing(s)
 
-- 3× **AZ's Tranquility** — Switch your Active Pokémon with 1 of your Benched Pokémon. If you moved a Pokémon ex to your Bench in this way, heal 80 damage from that Pokémon. [🆕🆕🆕 D599: DROPPED — heal the demoted body, gated on it being an ex]
+- 3× **AZ's Tranquility** — Switch your Active Pokémon with 1 of your Benched Pokémon. If you moved a Pokémon ex to your Bench in this way, heal 80 damage from that Pokémon. [🆕🆕🆕 D599: DROPPED — heal the demoted body, gated on it being an ex] [🆕🆕🆕 D617: BUILT]
 - 4× **Acerola's Mischief** — You can use this card only if your opponent has 2 or fewer Prize cards remaining.
 
 Choose 1 of your Pokémon in play. During your opponent's next turn, prevent all damage from and effects of attacks done to that Pokémon by your opponent's Pokémon ex.
@@ -1149,15 +1170,15 @@ Search your deck for up to 4 {L} Pokémon, reveal them, and put them into your h
 - 2× **Firebreather** — Search your deck for up to 7 Basic {R} Energy cards, reveal them, and put them into your hand. Then, shuffle your deck. [🆕🆕🆕 D587: BUILT]
 - 3× **Gladion's Final Battle** — You can use this card only when it is the last card in your hand.
 During this turn, attacks used by your Pokémon that don't have a Rule Box do 80 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance). (Pokémon ex, Pokémon V, etc. have Rule Boxes.) [🆕🆕🆕 D599: DROPPED — the last-card gate ships (D554); the side bonus needs an attacker filter]
-- 2× **Grimsley's Move** — Look at the top 7 cards of your deck and put a {D} Pokémon you find there onto your Bench. Shuffle the other cards and put them on the bottom of your deck. You can't use this card during your first turn. [🆕🆕🆕 D599: DROPPED — a "not your first turn" play gate]
-- 3× **Gwynn** — Discard up to 2 Pokémon that don't have a Rule Box from your hand, and draw 3 cards for each card you discarded in this way. (Pokémon ex, Pokémon V, etc. have Rule Boxes.) [🆕🆕🆕 D599: DROPPED — a draw per recorded card]
+- 2× **Grimsley's Move** — Look at the top 7 cards of your deck and put a {D} Pokémon you find there onto your Bench. Shuffle the other cards and put them on the bottom of your deck. You can't use this card during your first turn. [🆕🆕🆕 D599: DROPPED — a "not your first turn" play gate] [🆕🆕🆕 D617: BUILT]
+- 3× **Gwynn** — Discard up to 2 Pokémon that don't have a Rule Box from your hand, and draw 3 cards for each card you discarded in this way. (Pokémon ex, Pokémon V, etc. have Rule Boxes.) [🆕🆕🆕 D599: DROPPED — a draw per recorded card] [🆕🆕🆕 D617: BUILT]
 - 3× **Jacinthe** — Heal 150 damage from 1 of your {P} Pokémon. [🆕🆕🆕 D587: BUILT]
 - 4× **Lillie's Determination** — Shuffle your hand into your deck. Then, draw 6 cards. If you have exactly 6 Prize cards remaining, draw 8 cards instead. [🆕🆕🆕 D588: BUILT]
 - 3× **Lt. Surge's Bargain** — Ask your opponent if each player may take a Prize card. If yes, each player takes a Prize card. If no, you draw 4 cards.
 - 2× **Misty's Vitality** — Search your deck for up to 4 Basic {W} Energy cards and attach them to 1 of your Pokémon. Then, shuffle your deck. Your turn ends. [🆕🆕🆕 D588: BUILT]
-- 2× **Naveen** — Draw cards until you have 5 cards in your hand. Before drawing cards, you may discard any number of cards from your hand. (If you can't draw any cards in this way, you can't use this card.) [🆕🆕🆕 D599: DROPPED — an uncapped declinable hand discard and a deck-not-empty gate]
+- 2× **Naveen** — Draw cards until you have 5 cards in your hand. Before drawing cards, you may discard any number of cards from your hand. (If you can't draw any cards in this way, you can't use this card.) [🆕🆕🆕 D599: DROPPED — an uncapped declinable hand discard and a deck-not-empty gate] [🆕🆕🆕 D617: BUILT]
 - 2× **Philippe** — Attach up to 2 Basic {M} Energy cards from your discard pile to 1 of your {M} Pokémon. [🆕🆕🆕 D587: BUILT]
-- 1× **Pokémon Center Lady** — Heal 60 damage from 1 of your Pokémon, and it recovers from all Special Conditions. [🆕🆕🆕 D588: DROPPED — the recovery addresses the healed body; needs a `healChosen` rider]
+- 1× **Pokémon Center Lady** — Heal 60 damage from 1 of your Pokémon, and it recovers from all Special Conditions. [🆕🆕🆕 D588: DROPPED — the recovery addresses the healed body; needs a `healChosen` rider] [🆕🆕🆕 D617: BUILT]
 - 3× **Rosa's Encouragement** — You can use this card only if you have more Prize cards remaining than your opponent.
 
 Attach up to 2 Basic Energy cards from your discard pile to 1 of your Stage 2 Pokémon. [🆕🆕🆕 D588: BUILT]

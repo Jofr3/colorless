@@ -20266,6 +20266,18 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.499.0 → **0.500.0** (D617 — WP24b: FIVE MORE `me` SUPPORTERS, 5 TEXTS / 11
+    PRINTINGS; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D617")). registry.ts, five
+    NEW objects: Pokémon Center Lady (`healChosen` 60 + the NEW `recoverHealed`: a picked Active also gets
+    the field-free `clearStatus`, through `healedRiderOps`, Super Potion's two entrances), AZ's Tranquility
+    ×3 (Scramble Switch's demoted filing with the NEW `switchActive.demotedAsMoved` — the card moved, not
+    re-keyed through D565's `swappedUid`, R-AZT1 — a `recordGate`, `healChosen` 80 pinned by the NEW
+    `targetRecorded` and narrowed to `suffixPokemon ex`), Grimsley's Move ×2 (`lookAtTopN` 7 → Bench `{D}`, `restTo:
+    "shuffledBottom"`, `notYourFirstTurn`), Gwynn ×3 (`payFromHand` any/cap 2 `noRuleBox` filing
+    `discarded`, then `drawCards` 3 with the NEW `per` member `recorded`) and Naveen ×2 (`payFromHand` at
+    the NEW `cap: "any"`, `drawUntilHandSize` 5, the NEW `BoardCondition` `yourDeckNotEmpty`). Dropped and
+    named: Gladion's Final Battle, Acerola's Mischief, Roxie's Performance (persisted side state, WP24c).
+    `supportersMeD617.test.ts`.)
     🆕🆕🆕 engineVersion 0.498.0 → **0.499.0** (D616 — WP31b: THE SECOND PART OF THE `me` DECK / HAND /
     DISCARD / ENERGY MISC; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D616")).
     effects.ts arm 6e-quater, nine literal anchors onto shipped programs: Ice Prison (`discardEnergy` 2 +
@@ -20568,7 +20580,8 @@ import type { GameState, Seat } from "./types";
     program at 20). One new rider: `AttachTargetRiders.stage2Only` (effects.ts, declared on
     `attachEnergyFrom`), read in interpreter.ts `attachEnergyTargets` through `isStage2Pokemon` and
     captioned by `attachTargetNoun` ("Stage 2 Pokémon"). Pokémon Center Lady `me01-123` is NOT keyed
-    (a heal-then-recover rider on the healed body is beyond the brief). Census: Standard pool trainers
+    (a heal-then-recover rider on the healed body is beyond the brief) [🆕🆕🆕 D617 (D539): keyed since D617 on
+    `healChosen.recoverHealed`]. Census: Standard pool trainers
     356 / 447 (attacks 2480 / 2771, abilities 452 / 610, special energy 14 / 22 unmoved); 762 `me`
     printings fully built. `trainerParamsMeD588.test.ts`.)
     🆕🆕🆕 engineVersion 0.470.0 → **0.471.0** (D587 — WP04: TRAINER PARAMETERS I;
@@ -25493,7 +25506,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.499.0";
+export const engineVersion = "0.500.0";
 
 export type {
   ApplyResult,

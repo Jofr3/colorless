@@ -16874,7 +16874,8 @@ const REPEL: CardProgram = { trainer: [{ op: "opponentSwitchOut" }] };
 //    off the LOCAL D1 (2026-10-07); `trainerParamsMeD588.test.ts` rebuilds each face from its
 //    twin's and plays each program on a board. Pokémon Center Lady `me01-123` is NOT keyed: "it
 //    recovers from all Special Conditions" needs a `healChosen` rider on the healed body (new
-//    vocabulary beyond the brief). Dawn ×3 stays out (a multi-slot search, WP23). ──
+//    vocabulary beyond the brief) [🆕🆕🆕 D617 (D539): keyed since D617, `POKEMON_CENTER_LADY`]. Dawn ×3 stays
+//    out (a multi-slot search, WP23). ──
 
 /** Canari `me02.5-185` / `-257` / `-291` (Supporter) — *"You can use this card only if you discard
     another card from your hand. / Search your deck for up to 4 {L} Pokémon, reveal them, and put
@@ -16981,7 +16982,8 @@ const LUMIOSE_GALETTE: CardProgram = {
 //    Final Battle (an ATTACKER filter on the side-wide bonus), Grimsley's Move (a "not your first
 //    turn" play gate), Gwynn (a draw per recorded card) and Naveen (an uncapped declinable hand
 //    discard and a deck-not-empty play gate). Acerola's Mischief and Roxie's Performance are
-//    WP24b. ──
+//    WP24b. [🆕🆕🆕 D617 (D539): AZ's Tranquility, Grimsley's Move, Gwynn and Naveen are built at D617 (WP24b);
+//    Gladion's Final Battle, Acerola's Mischief and Roxie's Performance stay unbuilt.] ──
 
 /** Anthea & Concordia `me02.5-182` / `-254` (Supporter) — *"You can use this card only if you
     have N's Darmanitan, N's Zoroark ex, N's Vanilluxe, N's Klinklang, N's Reshiram, and N's Zekrom
@@ -17019,6 +17021,103 @@ const EMMA: CardProgram = {
     { op: "revealOpponentHand" },
     { op: "drawCards", count: 1, per: { kind: "cardsInOpponentHand", filter: { kind: "anyPokemon" } } },
   ],
+};
+
+// ── 🆕🆕🆕 D617 — WP24b: FIVE MORE WP24 SUPPORTERS, 11 `me` printings / 5 texts on five NEW objects.
+//    New pieces: `healChosen.recoverHealed` (Pokémon Center Lady) and `healChosen.targetRecorded`
+//    (AZ's Tranquility), `drawCards.per`'s fourth member `recorded` (Gwynn), `payFromHand.cap: "any"`
+//    and the `BoardCondition` `yourDeckNotEmpty` (Naveen). Grimsley's Move is shipped vocabulary.
+//    Printed texts off the LOCAL D1 (2026-10-09); `supportersMeD617.test.ts` plays each. Dropped and
+//    named: Gladion's Final Battle (an ATTACKER filter on the persisted side-wide bonus), Acerola's
+//    Mischief (a next-turn shield against ex on a chosen body) and Roxie's Performance (a next-turn
+//    Poisoned-can't-retreat side lock) — each changes persisted side state, so each waits for one
+//    `MATCH_RECORD_VERSION` bump with a migration (WP24c). ──
+
+/** Pokémon Center Lady `me01-123` (Supporter) — *"Heal 60 damage from 1 of your Pokémon, and it
+    recovers from all Special Conditions."* `healChosen` 60 with the NEW `recoverHealed`: a picked
+    Active also recovers from every Special Condition (`clearStatus`); a Benched body has none. The
+    recovery does not wait on the heal (an undamaged Active may be picked to cure it). */
+const POKEMON_CENTER_LADY: CardProgram = {
+  trainer: [{ op: "healChosen", amount: 60, recoverHealed: true }],
+};
+
+/** AZ's Tranquility `me04-076` / `-106` / `-120` (Supporter) — *"Switch your Active Pokémon with 1 of
+    your Benched Pokémon. If you moved a Pokémon ex to your Bench in this way, heal 80 damage from that
+    Pokémon."* Scramble Switch (`SCRAMBLE_SWITCH`)'s switch filing the DEMOTED body, then the §9.2
+    gate, then `healChosen` 80 pinned to that body by the NEW `targetRecorded` and narrowed to a
+    Pokémon ex (`suffixPokemon ex`, which a Mega Evolution Pokémon ex also is): at most one
+    candidate, so it never parks. An empty Bench refuses the play (`switchActive`'s §7 line).
+    `demotedAsMoved` (R-AZT1 ⚠️ UNRULED): the ex test reads the card MOVED, so a non-ex Palafin that
+    Zero to Hero swaps for Palafin ex on the Bench is not healed. */
+const AZS_TRANQUILITY: CardProgram = {
+  trainer: [
+    { op: "switchActive", recordAs: "moved", recordDemoted: true, demotedAsMoved: true },
+    {
+      op: "recordGate",
+      slot: "moved",
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [
+        {
+          op: "healChosen",
+          amount: 80,
+          targetRecorded: "moved",
+          filter: { kind: "suffixPokemon", suffix: "ex" },
+        },
+      ],
+    },
+  ],
+};
+
+/** Grimsley's Move `me02-090` / `-120` (Supporter) — *"Look at the top 7 cards of your deck and put a
+    {D} Pokémon you find there onto your Bench. Shuffle the other cards and put them on the bottom of
+    your deck. You can't use this card during your first turn."* `lookAtTopN` 7 → Bench, one `{D}`
+    Pokémon (a Bench destination admits a Basic only — `benchMatches`, D613), the rest shuffled under
+    the deck (`restTo: "shuffledBottom"`, Metal Maker's), behind D611's `notYourFirstTurn`. */
+const GRIMSLEYS_MOVE: CardProgram = {
+  trainer: [
+    {
+      op: "lookAtTopN",
+      n: 7,
+      filter: { kind: "typedPokemon", pokemonType: "Darkness" },
+      max: 1,
+      dest: "bench",
+      restTo: "shuffledBottom",
+    },
+  ],
+  trainerPlayableIf: { kind: "notYourFirstTurn" },
+};
+
+/** Gwynn `me05-078` / `-109` / `-119` (Supporter) — *"Discard up to 2 Pokémon that don't have a Rule
+    Box from your hand, and draw 3 cards for each card you discarded in this way."* The declinable
+    `payFromHand` (cap 2, `anyPokemon noRuleBox`) filing `discarded`, then `drawCards` 3 per filed
+    card through the NEW `per` member `recorded`. Discarding none draws none, and the card stays
+    playable on such a hand (R-GW1 ⚠️ UNRULED; Perrin's D561 reading). */
+const GWYNN: CardProgram = {
+  trainer: [
+    {
+      op: "payFromHand",
+      count: "any",
+      cap: 2,
+      to: "discard",
+      filter: { kind: "anyPokemon", noRuleBox: true },
+      recordAs: "discarded",
+    },
+    { op: "drawCards", count: 3, per: { kind: "recorded", slot: "discarded" } },
+  ],
+};
+
+/** Naveen `me03-079` / `-112` (Supporter) — *"Draw cards until you have 5 cards in your hand. Before
+    drawing cards, you may discard any number of cards from your hand. (If you can't draw any cards in
+    this way, you can't use this card.)"* The declinable `payFromHand` at the NEW `cap: "any"`, then
+    Grusha's `drawUntilHandSize` 5, behind the NEW `yourDeckNotEmpty` (R-NV1 ⚠️ UNRULED: with the
+    discard first, a draw is possible exactly when the deck holds a card; R-NV2 ⚠️ UNRULED: a player
+    whose hand already holds 5 or more may keep it and draw 0). */
+const NAVEEN: CardProgram = {
+  trainer: [
+    { op: "payFromHand", count: "any", cap: "any", to: "discard" },
+    { op: "drawUntilHandSize", size: 5 },
+  ],
+  trainerPlayableIf: { kind: "yourDeckNotEmpty" },
 };
 
 /** 🆕🆕🆕 **D589 — Mega Greninja ex `mep-081` / `me04-022` / `-100` / `-116` / `-122` (5 legal
@@ -19254,6 +19353,19 @@ const REGISTRY: Record<string, CardProgram> = {
   "me02.5-254": ANTHEA_AND_CONCORDIA, // Anthea & Concordia
   "me04-077": EMMA, // Emma — reveal, then a card per Pokémon in the opponent's hand (`per` cardsInOpponentHand)
   "me04-107": EMMA, // Emma
+  // 🆕🆕🆕 D617 — WP24b: 11 Supporter printings / 5 texts, MID-MAP (`raw[last]` does not move).
+  // `supportersMeD617.test.ts` plays all five.
+  "me01-123": POKEMON_CENTER_LADY, // Pokémon Center Lady — heal 60, a picked Active recovers (`recoverHealed`)
+  "me04-076": AZS_TRANQUILITY, // AZ's Tranquility — switch; heal 80 from the demoted body if it is an ex
+  "me04-106": AZS_TRANQUILITY, // AZ's Tranquility
+  "me04-120": AZS_TRANQUILITY, // AZ's Tranquility
+  "me02-090": GRIMSLEYS_MOVE, // Grimsley's Move — top 7, a {D} Pokémon to the Bench, rest under; not turn one
+  "me02-120": GRIMSLEYS_MOVE, // Grimsley's Move
+  "me05-078": GWYNN, // Gwynn — discard up to 2 non-Rule-Box Pokémon, draw 3 each (`per` recorded)
+  "me05-109": GWYNN, // Gwynn
+  "me05-119": GWYNN, // Gwynn
+  "me03-079": NAVEEN, // Naveen — discard any number, draw to 5; a non-empty deck to play
+  "me03-112": NAVEEN, // Naveen
   // 🆕🆕🆕 D589 — WP08: Mega Greninja ex ×5 "Mortal Shuriken", MID-MAP (`raw[last]` does not move).
   // Non-attack keys: "Ninja Spinner" keeps deriving. `optionalCostMeD589.test.ts` drives the Ability.
   "mep-081": MORTAL_SHURIKEN, // Mega Greninja ex — Meowscarada ex `sv02-015`'s shape at {W}, 60, `opponentAny`, Active only
