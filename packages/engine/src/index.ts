@@ -20269,6 +20269,15 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.506.0 → **0.507.0** (D624 — WP31c: THE REST OF THE `me` DECK / HAND / DISCARD / ENERGY
+    MISC, 5 TEXTS / 7 `me` PRINTINGS; `MATCH_RECORD_VERSION` STAYS 43 (apps/api match.ts "STAYS 43 AT D624")).
+    effects.ts arm 6e-sexies, five literal anchors: Tail Generator ×2 (`attachFromDiscard` with the NEW `max`
+    value `"opponentEnergyInPlay"`), Hand Trim (`randomFromOpponentHand` with the NEW `untilHandSize`), Select a
+    Snack ×2 (Explorer's Guidance's `lookAtTopN` program, revealed, R-SAS1 UNRULED), Send Flowers
+    (`attachFromDeck` `anyEnergy` onto a Benched {G} body) and Chirp (`searchDeck` over the NEW `CardFilter`
+    member `pokemonWithResistance`). Dropped and named: Lugia "Elemental Blast" (a matched multi-type discard),
+    Delibird "Pleasing Present" (an opponent-chosen attach) and Thievul "Skill Thief" ×2 (a hand-gated copy over
+    the opponent's whole board). `deckHandMiscMeD624.test.ts`.)
     🆕🆕🆕 engineVersion 0.505.0 → **0.506.0** (D623 — WP28b: THE REST OF THE SCALING COUNT SOURCES, 5 TEXTS /
     7 `me` PRINTINGS; `MATCH_RECORD_VERSION` STAYS 43 (apps/api match.ts "STAYS 43 AT D623")). effects.ts: three NEW
     `DamageCountSource` members, evaluated by attack.ts — `damagedBenchedPokemon` (Gourgeist ex ×2 "Horrifying
@@ -25573,7 +25582,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.506.0";
+export const engineVersion = "0.507.0";
 
 export type {
   ApplyResult,

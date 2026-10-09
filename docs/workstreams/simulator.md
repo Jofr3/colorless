@@ -30243,6 +30243,22 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D624 — WP31c: the rest of the `me` deck / hand / discard / Energy misc (engine 0.507.0, `MATCH_RECORD_VERSION` stays 43)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D623 (`3a3026a4`), NOT committed.
+
+- **Tail Generator ×2.** `attachFromDiscard` with the NEW `max: "opponentEnergyInPlay"`, resolved by `discardAttachCeiling` to the
+  Energy cards on the opponent's board when the op runs; {L} hosts; "up to" stands; its own caption.
+- **Hand Trim.** `randomFromOpponentHand` with the NEW optional `untilHandSize`: `max(0, hand − 5)` independent random takes.
+- **Select a Snack ×2.** Explorer's Guidance's `lookAtTopN` program (exact 1 of 3, the rest discarded), revealed. R-SAS1 UNRULED.
+- **Send Flowers.** `attachFromDeck` of any Energy card onto 1 Benched {G} body, then the shuffle.
+- **Chirp.** `searchDeck` over the NEW `CardFilter` member `pokemonWithResistance` (the printed Resistance type, D371's read).
+- **Dropped and named.** Elemental Blast (a matched multi-type discard), Pleasing Present (an opponent-answered attach), Skill Thief ×2
+  (a whole-board copy source plus a hand gate).
+- **MRV stays 43.** Additions only; the two parked shapes are never re-read by their apply (`eachAttachTopUp`, the `each` apply, does read `max`, but `"opponentEnergyInPlay"` is never set beside `each`) (match.ts "STAYS 43 AT D624").
+- **Suite.** `deckHandMiscMeD624.test.ts` (22) and a census D624 block (2). +21 mutant rows; seven D568 / D569 rows re-pointed onto
+  the resolved `max`. Census: attacks **2,709 / 2,771**, 1125 `me` printings fully built. Sweep PENDING.
+
 ## D623 — WP28b: the rest of the scaling count sources (engine 0.506.0, `MATCH_RECORD_VERSION` stays 43)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D622 (`4fbcc7ae`), NOT committed.
@@ -30404,10 +30420,11 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   your deck for a card" attack derivations still shuffle on a zero pick, unchanged.
 - **Dropped (WP31c).** Elemental Blast needs a matched multi-type discard (Legacy Energy fills any slot); Send Flowers a deck
   attach of any Energy; Chirp a Resistance filter; Tail Generator, Hand Trim, Select a Snack, Pleasing Present, Skill Thief.
+  [🆕🆕🆕 D624 (D539): Tail Generator, Hand Trim, Select a Snack, Send Flowers and Chirp are BUILT at D624.]
 - **Suite.** `deckHandMiscMeD616.test.ts` (31) and a census D616 block (2). +32 mutant rows, all killed; two D540 rows
   re-pointed onto the narrowed set. D539: `devolveChosen`'s FIELD-FREE claims annotated; D615 §1, census D613 and `discardShuffleBack.test.ts`'s producer counts stepped.
 - **Census.** Standard pool attacks **2,685 / 2,771**; 1054 `me` printings fully built (all 11 finished). WP31's other 8 texts /
-  11 printings stay for WP31c.
+  11 printings stay for WP31c [🆕🆕🆕 D624 (D539): 5 / 7 built at D624; 3 / 4 stay].
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
 ## D615 — WP31a: the first part of the `me` deck / hand / discard / Energy misc (engine 0.498.0, `MATCH_RECORD_VERSION` stays 42)
@@ -30430,7 +30447,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   `boardHeal.test.ts` / `chosenHeal.test.ts` (Picnic Basket's words now an attack), `devolveChosen.test.ts` §2 (the
   "each … hand" hybrid is printed), `discardShuffleBack.test.ts` producer counts, census D591 / D613 rungs.
 - **Census.** Standard pool attacks **2,674 / 2,771**; 1043 `me` printings fully built (all 13 finished). WP31's other 17
-  texts / 22 printings stay for WP31b / WP31c.
+  texts / 22 printings stay for WP31b / WP31c [🆕🆕🆕 D624 (D539): 14 / 18 built by D616 and D624; 3 / 4 stay].
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
 ## D614 — WP37b: the Ability-effect shield, Mega Clefable ex "Luminous Wing" (engine 0.497.0, `MATCH_RECORD_VERSION` stays 42)

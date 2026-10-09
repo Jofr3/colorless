@@ -1451,6 +1451,8 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
       anyEnergy: { kind: "anyEnergy" },
       specialEnergy: { kind: "specialEnergy" },
       providesEnergy: { kind: "providesEnergy", energyType: "Grass" },
+      // 🆕🆕🆕 D624 — Fletchling "Chirp"'s noun; the alphabet gate fired an EIGHTH time.
+      pokemonWithResistance: { kind: "pokemonWithResistance", type: "Fighting" },
     };
     // **NINETEEN BEFORE D446, TWENTY-ONE AFTER, TWENTY-TWO AFTER D466, TWENTY-THREE
     // AFTER D510, TWENTY-FOUR AFTER D512.** The count is
@@ -1495,7 +1497,11 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
     // `switch`es — `matchesFilter`, `retrieveNoun` — were written first). The CAST holds no Mega ex,
     // so the member answers false to all of it: its ANTI-VACUITY is carried by
     // `megaGatedMeD603.test.ts` (a Mega ex, a plain ex and a "Mega"-named Trainer).
-    expect(Object.keys(EVERY_KIND)).toHaveLength(28);
+    // 🆕🆕🆕 **D624 — AN EIGHTH TIME, 28 → 29**: adding `pokemonWithResistance` made `tsc` fail HERE with
+    // `TS2741: Property 'pokemonWithResistance' is missing` and nowhere else in `packages/**` (the
+    // `switch`es — `matchesFilter`, `retrieveNoun` — were written first). Its ANTI-VACUITY is carried by
+    // `deckHandMiscMeD624.test.ts` (a {F}-resistant Pokémon, a {G}-resistant one and a Trainer).
+    expect(Object.keys(EVERY_KIND)).toHaveLength(29);
     // 🛑 **THE BYTES.** Each filter is written out and read back the way
     // `MatchRecord.state` is, and `matchesFilter` must give the IDENTICAL answer over
     // a cast that spans every category the catalog has — a Pokémon with a rule box
@@ -1681,7 +1687,7 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.506.0");
+    expect(engineVersion).toBe("0.507.0");
   });
 });
 

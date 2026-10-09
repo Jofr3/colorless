@@ -900,6 +900,11 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
     case "anyEnergy":
       // Any Energy card — Basic OR Special (Poppy moves "up to 2 Energy").
       return isEnergyCard(card);
+    case "pokemonWithResistance":
+      // 🆕🆕🆕 D624 — Fletchling "Chirp"'s *"Pokémon with {F} Resistance"*: the printed entry's `type`
+      // alone (D371's read, `opponentActiveHasResistance`), on a Pokémon. `resistances` is null on
+      // Trainers and Energy, hence the `?? []`; the category conjunct is kept for a fossil row.
+      return card.category === "Pokemon" && (card.resistances ?? []).some((entry) => entry.type === filter.type);
     case "specialEnergy":
       // A SPECIAL Energy only (Giacomo / Mawile) — the exact complement of
       // `basicEnergy` inside `anyEnergy`, ~~off the catalog's own tag~~

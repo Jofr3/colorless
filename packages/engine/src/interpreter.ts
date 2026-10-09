@@ -4202,7 +4202,9 @@ function stepOp(
       // 🆕🆕🆕 D568 — Glass Trumpet: the compound `attachCards` park over the DISCARD PILE
       // (`attachFromDeck`'s shape, the op's doc). Nothing to put back and no record, so a
       // dead end simply returns the board; the Item's play gate already refused a board
-      // where this can only whiff (`programPlayable`).
+      // where this can only whiff (`programPlayable`). (🆕🆕🆕 D624: an ATTACK reaches this op
+      // now — Tail Generator — with no play gate, so its whiff, a ceiling of 0 included, is this
+      // same silent dead end.)
       const { candidates, targets, max } = attachFromDiscardOffer(state, ctx.seat, op);
       if (candidates.length === 0 || targets.length === 0 || max <= 0) return { done: state };
       // 🆕🆕🆕 D569 — Reboot Pod's "to EACH of your Future Pokémon": a pile that collapses to
@@ -4212,14 +4214,15 @@ function stepOp(
       // (1 Psychic, 3 Future bodies) still has a decision — WHICH Future Pokémon get the
       // cards is the player's, under the printed sentence — so it parks on the same
       // `attachCards` prompt as a mixed pile (D569 final review).
+      const ceiling = discardAttachCeiling(state, ctx.seat, op);
       if (
         op.each === true &&
-        candidates.length >= targets.length * op.max &&
+        candidates.length >= targets.length * ceiling &&
         new Set(candidates.map((uid) => cardIdentity(state, uid))).size === 1
       ) {
         return { done: eachAttachTopUp(state, op, [], ctx, events) };
       }
-      const perTarget = op.each === true ? op.max : op.maxPerTarget;
+      const perTarget = op.each === true ? ceiling : op.maxPerTarget;
       return {
         park: {
           kind: "attachCards",
@@ -4227,7 +4230,7 @@ function stepOp(
           targets,
           max,
           ...(perTarget === undefined ? {} : { maxPerTarget: perTarget }),
-          note: op.each === true ? attachEachFromDiscardNote(op) : attachFromDiscardNote(op),
+          note: op.each === true ? attachEachFromDiscardNote(op) : attachFromDiscardNote(op, ceiling),
         },
       };
     }
@@ -4858,7 +4861,10 @@ function stepOp(
     case "randomFromOpponentHand":
       // D232 — the FIRST op whose outcome is drawn from `rngState`. Never parks:
       // "random" is precisely the absence of a chooser, so neither seat is asked.
-      return { done: randomFromOpponentHand(state, op, ctx, events, record) };
+      if (op.untilHandSize === undefined) return { done: randomFromOpponentHand(state, op, ctx, events, record) };
+      // 🆕🆕🆕 D624 — Hand Trim: the take is read off the opponent's hand once, then each card is its own
+      // D232 draw (`randomFromOpponentHand` unchanged, called with the key dropped).
+      return { done: randomDiscardDownTo(state, op, op.untilHandSize, ctx, events, record) };
     case "opponentDiscardsFromHand": {
       // 🆕🆕 D426 — the OPPONENT-CHOOSES half of the same family, and the ONE park
       // in this engine that shows a player their OWN hidden hand on the OTHER
@@ -15346,6 +15352,23 @@ function randomFromOpponentHand(
   return { ...withSide(state, owner, { ...side, hand, deck }), rngState: shuffled };
 }
 
+/** 🆕🆕🆕 D624 — Furfrou "Hand Trim": `max(0, hand − size)` independent random takes off the opponent's
+    hand, the count read ONCE before the first. A hand at or under `size` takes nothing and draws no rng. */
+function randomDiscardDownTo(
+  state: GameState,
+  op: Extract<EffectOp, { op: "randomFromOpponentHand" }>,
+  size: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+  record: EffectRecord,
+): GameState {
+  const single: Extract<EffectOp, { op: "randomFromOpponentHand" }> = { op: "randomFromOpponentHand", to: op.to };
+  const take = Math.max(0, state.players[otherSeat(ctx.seat)].hand.length - size);
+  let next = state;
+  for (let n = 0; n < take; n += 1) next = randomFromOpponentHand(next, single, ctx, events, record);
+  return next;
+}
+
 /** 🆕 D299 — Take `ref` (a BENCH ref, on either board) off the board with every
     card attached to it and put the whole pile into its OWNER's `dest`.
 
@@ -18382,15 +18405,16 @@ export function attachFromDiscardOffer(
   op: Extract<EffectOp, { op: "attachFromDiscard" }>,
 ): { candidates: string[]; targets: PokemonRef[]; max: number } {
   const targets = attachEnergyTargets(state, seat, op);
+  const ceiling = discardAttachCeiling(state, seat, op);
   // The reachable total: "up to `max`", and never more than one per offered body.
   // 🆕🆕🆕 D569 — under `each` (Reboot Pod) `max` is the PER-BODY count, so the total is
   // `max` for EVERY offered body.
   const reach =
     op.each === true
-      ? op.max * targets.length
+      ? ceiling * targets.length
       : op.maxPerTarget === undefined
-        ? op.max
-        : Math.min(op.max, targets.length * op.maxPerTarget);
+        ? ceiling
+        : Math.min(ceiling, targets.length * op.maxPerTarget);
   const kept = new Map<string, number>();
   const candidates: string[] = [];
   const pile = state.players[seat].discard;
@@ -18403,6 +18427,17 @@ export function attachFromDiscardOffer(
     candidates.push(uid);
   }
   return { candidates, targets, max: Math.min(reach, candidates.length) };
+}
+
+/** 🆕🆕🆕 D624 — an `attachFromDiscard`'s printed ceiling as a number: the printed count, or Tail
+    Generator's *"the amount of Energy attached to all of your opponent's Pokémon"* — `countEnergyInPlay`
+    over the opponent's board (cards, the `energyOnOpponent` board read), taken when the op runs. */
+function discardAttachCeiling(
+  state: GameState,
+  seat: Seat,
+  op: Extract<EffectOp, { op: "attachFromDiscard" }>,
+): number {
+  return op.max === "opponentEnergyInPlay" ? countEnergyInPlay(state, otherSeat(seat), null) : op.max;
 }
 
 /** 🆕🆕🆕 D569 — Reboot Pod's MANDATORY "to each of your Future Pokémon" (R-PX1 ⚠️ UNRULED):
@@ -18431,8 +18466,9 @@ function eachAttachTopUp(
     matchesFilter(cardOf(given.state, uid), op.filter),
   );
   const fill: { uid: string; to: PokemonRef }[] = [];
+  const perBody = discardAttachCeiling(state, ctx.seat, op);
   for (const to of attachEnergyTargets(given.state, ctx.seat, op)) {
-    for (let n = landed.get(refKeyOf(to)) ?? 0; n < op.max; n += 1) {
+    for (let n = landed.get(refKeyOf(to)) ?? 0; n < perBody; n += 1) {
       const uid = pile.shift();
       if (uid === undefined) break;
       fill.push({ uid, to });
@@ -20753,8 +20789,12 @@ function attachFromDeckNote(op: Extract<EffectOp, { op: "attachFromDeck" }>): st
 /** 🆕🆕🆕 D568 — Glass Trumpet's caption: *"Choose up to 2 of your Benched Colorless
     Pokémon and attach a Basic Energy card from your discard pile to each of them."* —
     the printed sentence with the brace code written out (`attachTargetNoun`, D238). */
-function attachFromDiscardNote(op: Extract<EffectOp, { op: "attachFromDiscard" }>): string {
-  const { singular } = retrieveNoun(op.filter);
+function attachFromDiscardNote(op: Extract<EffectOp, { op: "attachFromDiscard" }>, ceiling: number): string {
+  const { singular, plural } = retrieveNoun(op.filter);
+  // 🆕🆕🆕 D624 — Tail Generator's printed sentence, the resolved ceiling spelled beside its source.
+  if (op.max === "opponentEnergyInPlay") {
+    return `Choose up to ${ceiling} ${plural} from your discard pile (the amount of Energy attached to all of your opponent's Pokémon) and attach them to your ${attachTargetNoun(op)} in any way you like.`;
+  }
   return `Choose up to ${op.max} of your ${attachTargetNoun(op)} and attach ${singular} from your discard pile to each of them.`;
 }
 
@@ -21144,6 +21184,9 @@ export function retrieveNoun(filter: CardFilter): { singular: string; plural: st
       };
     case "anyEnergy":
       return { singular: "an Energy card", plural: "Energy cards" };
+    case "pokemonWithResistance":
+      // 🆕🆕🆕 D624 — Fletchling "Chirp"'s noun, the type written out (D238), invariant in number.
+      return { singular: `a Pokémon with ${filter.type} Resistance`, plural: `Pokémon with ${filter.type} Resistance` };
     case "specialEnergy":
       return { singular: "a Special Energy card", plural: "Special Energy cards" };
     case "byName": {

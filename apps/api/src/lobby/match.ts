@@ -2159,6 +2159,16 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 43 AT D624 — WP31c ADDS ONE `CardFilter` MEMBER, ONE OPTIONAL OP KEY AND ONE NEW VALUE OF A
+    PERSISTED FIELD; NO PROMPT, PHASE, SIDE KEY OR EVENT.** (Placed ABOVE the D623 block.) Chirp's
+    `searchDeck` and Tail Generator's `attachFromDiscard` PARK, so `pokemonWithResistance` and
+    `max: "opponentEnergyInPlay"` can sit in `phase.cont.pendingOp`; both are pure additions (D125 / D538) that no
+    v43 record written by 0.506 can hold, and neither apply re-reads them (the answer is validated against the
+    parked prompt; `eachAttachTopUp`, the `each` apply, does read `max`, but `"opponentEnergyInPlay"` is never
+    set beside `each`). `randomFromOpponentHand.untilHandSize` never parks. No card row is read differently: the 7
+    faces in a v43 `cardPool` are unchanged, only their attack TEXT reads now. Rollback to 0.506: the five texts
+    fall back to the unbuilt path; a parked Chirp or Tail Generator resumes on its prompt as parked.
+
     🆕🆕🆕 **STAYS 43 AT D623 — WP28b ADDS THREE `DamageCountSource` MEMBERS AND ONE BODY-MAP KEY, NO OP,
     PROMPT, KEY, STAGE OR EVENT.** (Placed ABOVE the D622 block.) The members are produced only by the
     damage-fold readers and evaluated at declaration; nothing persisted names them. Kyogre "Riptide"'s tail

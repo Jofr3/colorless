@@ -48,7 +48,8 @@ import {
 // a composition that matches.* Three shipped ops touch the opponent's hidden hand:
 //   · `opponentDiscardsFromHand { count }` — a STATIC count, UNFILTERED, and answered by
 //     the OPPONENT. The printed quantity here is a predicate, not a number.
-//   · `randomFromOpponentHand { to }` — one card, chosen by the RNG.
+//   · `randomFromOpponentHand { to }` — one card, chosen by the RNG (🆕🆕🆕 D624 (D539): ~~one
+//     card~~ — or `max(0, hand − untilHandSize)` cards, each its own RNG draw, under Hand Trim).
 //   · `bottomFromOpponentHand { filter, dest: "discard" }` — **the near-miss, and it takes
 //     the same `filter` into the same pile.** 🛑 **On any board whose opponent hand holds
 //     exactly ONE matching card the two are BYTE-IDENTICAL**: a single-class offer
@@ -695,10 +696,10 @@ describe("§8 — the persisted record cannot hold this op", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§9 — the version, and what it is owed for", () => {
-  it("engineVersion is 0.506.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.507.0 and the bump is owed for BEHAVIOUR", () => {
     // A sentence that derived to `null` derives to a two-op program, and a new `EffectOp`
     // member runs in the interpreter. That is behaviour, so the bump is owed.
-    expect(engineVersion).toBe("0.506.0");
+    expect(engineVersion).toBe("0.507.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

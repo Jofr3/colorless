@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-09 — build session #563 (**P3-M5 — D623, *WP28b — THE REST OF THE SCALING COUNT SOURCES: 5 texts / 7 `me` printings — three new `DamageCountSource` members over the attacker's Bench (`damagedBenchedPokemon` Gourgeist ex ×2, `benchedPokemonWithEnergy` Armarouge ×2, `benchedPokemonWithMaxHp` Igglybuff, R-BOC1 UNRULED), the body-map key "Pikachu and Pikachu ex" (Pika Chain) and Kyogre "Riptide" on two readers (the discard count and D538's retrieval + shuffle tail); Doublade ×3 and Okidogi dropped and named; attacks 2,702 / 2,771, 1118 `me` printings fully built*** — engine 0.506.0, MRV 43, NOT committed; the whole-corpus sweep PENDING)
+**Last updated:** 2026-10-09 — build session #564 (**P3-M5 — D624, *WP31c — THE REST OF THE `me` DECK / HAND / DISCARD / ENERGY MISC: 5 texts / 7 `me` printings — Tail Generator ×2 (`attachFromDiscard` at the new count-scaled `max: "opponentEnergyInPlay"`), Hand Trim (the new `randomFromOpponentHand.untilHandSize`), Select a Snack ×2 (Explorer's Guidance's program, R-SAS1 UNRULED), Send Flowers (`attachFromDeck` of any Energy) and Chirp (the new `CardFilter` `pokemonWithResistance`); Elemental Blast, Pleasing Present and Skill Thief ×2 dropped and named; attacks 2,709 / 2,771, 1125 `me` printings fully built*** — engine 0.507.0, MRV 43, NOT committed; the whole-corpus sweep PENDING)
+
+**Last updated (was):** 2026-10-09 — build session #563 (**P3-M5 — D623, *WP28b — THE REST OF THE SCALING COUNT SOURCES: 5 texts / 7 `me` printings — three new `DamageCountSource` members over the attacker's Bench (`damagedBenchedPokemon` Gourgeist ex ×2, `benchedPokemonWithEnergy` Armarouge ×2, `benchedPokemonWithMaxHp` Igglybuff, R-BOC1 UNRULED), the body-map key "Pikachu and Pikachu ex" (Pika Chain) and Kyogre "Riptide" on two readers (the discard count and D538's retrieval + shuffle tail); Doublade ×3 and Okidogi dropped and named; attacks 2,702 / 2,771, 1118 `me` printings fully built*** — engine 0.506.0, MRV 43, NOT committed; the whole-corpus sweep PENDING)
 
 **Last updated (was):** 2026-10-09 — build session #562 (**P3-M5 — D622, *FIX-UP — R-AM2 RETIRED: the bare W/R tail (Oil Salvo, Sonic Peridot, Severe Squall, Telekinesis — 4 texts / 8 printings) derives the new `damageChosen.wrOnly` and is stopped by every on-target prevention and reduction; only the Feint form (Twin Shotels) passes them; `MATCH_RECORD_VERSION` stays 43; D621's three MINOR findings fixed*** — engine 0.505.0, NOT committed; whole-corpus sweep PENDING)
 
@@ -871,6 +873,44 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-09, after D624)
+>
+> 🛑 **D624 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D623 = `3a3026a4`). D624 is WP31c of the Mega backlog, the last part of WP31. Next: a review of D624 (and a ruling on R-SAS1), then another package.
+>
+> ✅ **`bun run check` IS GREEN**: `Test Files 667 passed (667) / Tests 15856 passed (15856) / CHECK_EXIT=0` (D623: 666 / 15832; D624 adds `deckHandMiscMeD624.test.ts` (22) and the census D624 block (2)).
+>
+> **(a) THE SLICE.** 5 attack texts / 7 `me` printings, reader rows only (no registry key); ids and texts verified on the LOCAL D1. effects.ts arm 6e-sexies, five literal anchors: Dedenne `me03-029` / `-093` "Tail Generator" = `attachFromDiscard { basicEnergy {L}, targetType Lightning }` at the NEW `max: "opponentEnergyInPlay"` (interpreter.ts `discardAttachCeiling`: `countEnergyInPlay` over the opponent's board, cards, read when the op runs; still "up to"); Furfrou `me03-067` "Hand Trim" = `randomFromOpponentHand { to: "discard", untilHandSize: 5 }` (NEW key: `max(0, hand − 5)` independent D232 draws, the count read once; a hand of 5 or fewer draws no rng); Morpeko `30th-061` / `-135` "Select a Snack" = Explorer's Guidance's `lookAtTopN { n: 3, anyCard, max: 1, exact, restTo: "discard" }` plus `reveal` (R-SAS1); Shaymin `me03-003` "Send Flowers" = `attachFromDeck { anyEnergy, max: 1, benchOnly, targetType Grass }` + `shuffleDeck` (a Special Energy is offered, D246's reading of "an Energy card"); Fletchling `me03-066` "Chirp" = `searchDeck { pokemonWithResistance Fighting, max 2, reveal }` + `shuffleDeck` (NEW `CardFilter` member, read off `Card.resistances` by type as D371 reads it; `matchesFilter` and `retrieveNoun` arms; the alphabet gate 28 → 29).
+>
+> **(b) DROPPED AND NAMED.** Lugia `30th-121` "Elemental Blast" — three sequential typed discards let a wildcard Energy fill one slot and dodge another; it needs a matched multi-type discard (a choice validated as a matching). Delibird `me04-018` "Pleasing Present" — an attach park answered by the OPPONENT first, then the controller, both optional. Thievul `me05-054` / `-092` "Skill Thief" — a copy source over the opponent's whole board (D573's `useAttackAs.from` reads one body) plus a hand-empty gate: two pieces.
+>
+> **(c) MRV STAYS 43** (match.ts "STAYS 43 AT D624"). Chirp's `searchDeck` and Tail Generator's `attachFromDiscard` park, so the new filter member and the new `max` value can sit in `phase.cont.pendingOp`; both are pure additions no v43 record written by 0.506 can hold, and neither apply re-reads them (`eachAttachTopUp`, the `each` apply, does read `max`, but `"opponentEnergyInPlay"` is never set beside `each`). `untilHandSize` never parks. No `cardPool` face changes.
+>
+> | Column | `me` D624 | Standard pool D624 |
+> |---|---|---|
+> | Attacks | 977 / 1039 | **2709 / 2771** |
+> | Abilities | 185 / 234 | **561 / 610** |
+> | Trainers | 154 / 183 | **418 / 447** |
+> | Special Energy | 11 / 11 | **22 / 22** |
+>
+> **1125 `me` printings fully built** (1118 + 7; the one other effect text those printings print — Dedenne "Thunder Shock" — was already reader-built). Census pins stepped: the D581 live tally (reader [378, 947], residue [48, 65]), `built` 966, the D581 headline 2,698 / 73, D582 967, D584 969, and every later block's live `- 7`; the D624 block. Other moved pins: `CardFilter` kinds 28 → 29 (`bodiesInPlayScaling`), the D523 `shuffleDeck` producer count 32 → 34 (`discardShuffleBack`).
+>
+> **D539 sweep.** Annotated in place: the WP31c rest lists in `deckHandMiscMeD615.test.ts` / `deckHandMiscMeD616.test.ts` (inverted per text), D232's "ONE CARD" heading and its "NO `count`" / "told apart by `to`" premises (effects.ts), the two `randomFromOpponentHand` "one card" enumerations (effects.ts, `opponentHandSweep.test.ts`), events.ts's "leaks exactly one card", D232's decisions.md row and progress.md's D483 enumeration, the `attachFromDiscard` dead-end comment (interpreter.ts: an attack reaches it now), the D615 / D616 rows in decisions.md, D615 / D616's resume points, simulator.md's D615 / D616 entries, coverage-backlog-mega.md's D615 / D616 sections. Seven D568 / D569 mutant rows on `attachFromDiscard` are re-pointed onto `ceiling` / `perBody` (the resolved `max`), the same mutations, all KILLED.
+>
+> **(d) THE MUTATION RECORD.** +21 D624 rows (effects.ts 14, cards.ts 2, interpreter.ts 5): 5231 in all. precheck: 5231 mutants, the same 20 pre-existing broken rows. Probe `--decision D624`: 21 killed. The 7 re-pointed rows: 7 killed. Gate-witness probe (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed. Extra probe, the 115 older rows on the ops and code D624 touches (D232, D567–D569, and every `find` naming `randomFromOpponentHand` / `attachFromDiscard` / `anyEnergy` / the 6e-quinquies arm; the pre-broken `D568-trumpet-riders-ignored` excluded): 115 killed. Gates: residue-census §A 40/0/0, 640 + 0, §B 7, §C′ 34 over 379 spans in 2; opaque-anatomy §B 6, §C 11 co-markers, §E′ 1 of 4; splice and partition OK. `git status --porcelain` identical before and after every probe.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D616–D624; D581–D615 were PAID EXACTLY by the sweep of `7b1ab8d2`: 4944 killed · 47 known · 0 GAP · 20 errors over 5,011). Predicted: **5164 killed · 47 known survivor(s) · 0 GAP(S) · 20 error(s)** over **5,231** rows — 5210 + 21 = 5231; 5143 + 21 = 5164 killed; 47 survivors unchanged; 5164 + 47 + 20 = 5231. It assumes D616–D623's predictions hold. If it holds, D616–D624 close together. If it fails: an error count ≠ 20 means a broken `find` outside the pre-existing 20; a GAP on an older row means a moved pin (the census chains, the `CardFilter` count, the D523 `shuffleDeck` count, the WP31 rest-list rungs) was that row's only killer; a D624 survivor means the probe's view missed a second reader of a new piece. A known count ≠ 47 means a declared survivor went RED (it reads `stale`, killed stays 5164).
+>
+> **Pending decisions (UNRULED readings):** NEW at D624:
+> - **R-SAS1 ⚠️ UNRULED** — Morpeko "Select a Snack": *"Discard the top 3 cards of your deck and put 1 of them into your hand"* is read as Explorer's Guidance's program — look at the top 3, take exactly 1 (revealed), discard the other 2. The three cards are never in the discard pile together, which no shipped effect can observe (nothing reacts to a card entering the discard pile from the deck); the kept card is named in the log (`DECK_TOP_REVEALED`, pinned in §5; the prompt caption is Explorer's Guidance's shared `lookNote`, which does not say the other 2 are discarded — also pinned). Reversal: mill all 3 (`discardDeckTop`), then a mandatory 1-card `discardPileRetrieval` limited to the milled uids.
+>
+> R-BOC1 (D623), R-GFB1, R-AM1, R-RP1 (D621) and the earlier readings stand as recorded in the archived blocks below.
+>
+> Still owed from the Mega backlog: as at D623 (below), less WP31c's five texts; WP31 is closed except Elemental Blast, Pleasing Present and Skill Thief ×2, named in (b).
+>
+> ---
+>
+> **ARCHIVED — the resume point D624 was built from, kept rather than overwritten** (D623 has since been committed on `mega-ingest` as `3a3026a4`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-09, after D623)
 >
 > 🛑 **D623 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D622 = `4fbcc7ae`). D623 is WP28b of the Mega backlog. Next: a review of D623 (and a ruling on R-BOC1), then another package.
@@ -1140,7 +1180,7 @@
 >
 > **Pending decisions (UNRULED readings):** **R-RCL1 (NEW, UNRULED — ASK IT)** — Rotom "Roto Call": the printed "You may search … Then, shuffle your deck." is an `optional` confirm, and a "no" neither searches nor shuffles (the D590 optional-trigger rule: a forced shuffle is a possible downside). The shipped "You may search your deck for any number of Fennel cards …" and "You may search your deck for a card …" attack derivations carry no confirm (a zero pick still shuffles), and they are NOT changed, so the two families now differ. Reversal: drop the `optional` wrapper (Fennel's shape), or align Fennel's family to it. Carried: R-GLT1 and as at D615 (below).
 >
-> Still owed from the Mega backlog: as at D615 (below), less WP31b. WP31c is 8 texts / 11 printings (named in `deckHandMiscMeD616.test.ts` §1 and `coverage-backlog-mega.md` D616), each needing new vocabulary: Tail Generator ×2, Elemental Blast (a matched multi-type discard: Legacy Energy can fill any slot), Hand Trim, Select a Snack ×2, Pleasing Present, Send Flowers (a deck attach of any Energy), Chirp (a Resistance filter), Skill Thief ×2.
+> Still owed from the Mega backlog: as at D615 (below), less WP31b. WP31c is 8 texts / 11 printings (named in `deckHandMiscMeD616.test.ts` §1 and `coverage-backlog-mega.md` D616), each needing new vocabulary: Tail Generator ×2, Elemental Blast (a matched multi-type discard: Legacy Energy can fill any slot), Hand Trim, Select a Snack ×2, Pleasing Present, Send Flowers (a deck attach of any Energy), Chirp (a Resistance filter), Skill Thief ×2. [🆕🆕🆕 D624 (D539): 5 texts / 7 printings BUILT at D624 — Tail Generator ×2, Hand Trim, Select a Snack ×2, Send Flowers, Chirp; Elemental Blast, Pleasing Present and Skill Thief ×2 are dropped and named there.]
 >
 > ---
 >
@@ -1175,7 +1215,7 @@
 >
 > **Pending decisions (UNRULED readings):** **R-GLT1 (NEW, UNRULED — ASK IT)** — Mega Floette ex "Gentle Light" heals every damaged body on both sides, and a §11 "prevent all effects of attacks" shield on an opponent's body does NOT refuse the heal. Built on the op as it stands (`healEachAll` consults no shield), NOT on a precedent: Picnic Basket is a Trainer and never meets an attack shield, and the literal shield text ("all effects of attacks … done to this Pokémon") covers a heal, so the opposite reading is at least as strong. Reversal: call `effectRefused` per opponent body when `ctx.invokedBy === "attack"`. Carried: as at D614 (below).
 >
-> Still owed from the Mega backlog: as at D614 (below), less WP31a. WP31's rest (17 texts / 22 printings, named in `deckHandMiscMeD615.test.ts` §1 and `coverage-backlog-mega.md` D615) is WP31b / WP31c. Nearest to shipped vocabulary: Soothing Melody ×2 (`healChosen` with a Benched typed filter), Backfire (`discardEnergy` to the hand at a typed count of 2), Devolution Ray ×2 (an Active-only devolve behind an evolved gate), Roto Call (a name-fragment bench search), Trials and Trip-ulations (a two-word card name).
+> Still owed from the Mega backlog: as at D614 (below), less WP31a. WP31's rest (17 texts / 22 printings, named in `deckHandMiscMeD615.test.ts` §1 and `coverage-backlog-mega.md` D615) is WP31b / WP31c [🆕🆕🆕 D624 (D539): WP31b built 9 / 11 at D616 and WP31c 5 / 7 at D624; Elemental Blast, Pleasing Present and Skill Thief ×2 stay, named at D624]. Nearest to shipped vocabulary: Soothing Melody ×2 (`healChosen` with a Benched typed filter), Backfire (`discardEnergy` to the hand at a typed count of 2), Devolution Ray ×2 (an Active-only devolve behind an evolved gate), Roto Call (a name-fragment bench search), Trials and Trip-ulations (a two-word card name).
 >
 > ---
 >
@@ -35911,7 +35951,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D623, *WP28b — the rest of the scaling count sources: 5 texts / 7 `me` printings (Gourgeist ex, Armarouge and Igglybuff on three new Bench-body count members, Pika Chain on a new body-map key, Kyogre "Riptide" on two readers); R-BOC1 UNRULED; Doublade and Okidogi dropped; attacks 2,702 / 2,771, 1118 `me` printings fully built*** — engine 0.506.0, MRV 43, NOT committed; sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D624, *WP31c — the rest of the `me` deck / hand / discard / Energy misc: 5 texts / 7 `me` printings (Tail Generator on a count-scaled discard attach, Hand Trim on a hand-size random discard, Select a Snack on Explorer's Guidance's program, Send Flowers, Chirp on a new Resistance filter); R-SAS1 UNRULED; Elemental Blast, Pleasing Present and Skill Thief dropped; attacks 2,709 / 2,771, 1125 `me` printings fully built*** — engine 0.507.0, MRV 43, NOT committed; sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D623, *WP28b — the rest of the scaling count sources: 5 texts / 7 `me` printings (Gourgeist ex, Armarouge and Igglybuff on three new Bench-body count members, Pika Chain on a new body-map key, Kyogre "Riptide" on two readers); R-BOC1 UNRULED; Doublade and Okidogi dropped; attacks 2,702 / 2,771, 1118 `me` printings fully built*** — engine 0.506.0, MRV 43, NOT committed; sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D622, *fix-up — R-AM2 retired: the bare W/R tail (Oil Salvo, Sonic Peridot, Severe Squall, Telekinesis) derives the new `damageChosen.wrOnly` and no longer passes on-target preventions and reductions; D621's three MINOR findings fixed*** — engine 0.505.0, MRV 43, NOT committed; sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D621, *WP24c + WP23 — persisted side state: 5 texts / 16 `me` printings (Gladion's Final Battle and Premium Power Pro on the new `SideAttackBonus.attacker`, Acerola's Mischief on the new `chosenAttackShield`, Roxie's Performance on the new `sideRetreatLock`, Dawn on Larry's Skill's search); MRV 42 → 43 with a v42 migration; R-GFB1 / R-AM1 / R-AM2 / R-RP1 [🆕🆕🆕 D622: R-AM2 retired] UNRULED; Iron Defender dropped; trainers 418 / 447, 1111 `me` printings fully built*** — engine 0.504.0, MRV 43, NOT committed; sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D620, *WP10 + WP26 — prizes you have taken, Mega Mawile ex and the `me` Tools: 8 texts / 14 `me` units on 12 printings (the new `yourPrizesTaken` count and `baseOverride` reading; Light Ball, Punk Helmet, Team Rocket's Hypnotizer, Core Memory and Tremendous Bomb on five new Tool objects); R-TRB1 UNRULED; Adversity Policy dropped (a Weakness gate)*** — engine 0.503.0, MRV 42, NOT committed; sweep PENDING) |
@@ -36151,6 +36192,17 @@ Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅
 
 ## Session log
 
+### 2026-10-09 — build session #564 (P3-M5 — D624)
+
+**WP31c — THE REST OF THE `me` DECK / HAND / DISCARD / ENERGY MISC. `MATCH_RECORD_VERSION` STAYS 43.**
+
+Built in the `luminous_ui-mega` worktree on D623 (`3a3026a4`); the main checkout was not touched. 5 attack texts / 7 `me` printings,
+reader rows only, one small piece each where one was needed: Tail Generator ×2 (`attachFromDiscard.max: "opponentEnergyInPlay"`),
+Hand Trim (`randomFromOpponentHand.untilHandSize`), Chirp (`CardFilter.pokemonWithResistance`); Select a Snack ×2 (Explorer's
+Guidance's program, R-SAS1 UNRULED) and Send Flowers ride shipped ops. Elemental Blast, Pleasing Present and Skill Thief ×2 dropped
+and named. D539: WP31c's unbuilt claims and D232's one-card claims annotated; seven D568 / D569 rows re-pointed. `deckHandMiscMeD624.test.ts` (22), census D624
+block (2). +21 mutant rows, all KILLED. Sweep PENDING (NEXT (0)). NOT committed.
+
 ### 2026-10-09 — build session #563 (P3-M5 — D623)
 
 **WP28b — THE REST OF THE SCALING COUNT SOURCES. `MATCH_RECORD_VERSION` STAYS 43.**
@@ -36244,7 +36296,7 @@ NOT committed.
 Built in the `luminous_ui-mega` worktree on D615 (`7b1ab8d2`); the main checkout was not touched. Ids `git grep`-ped and the
 texts read off the LOCAL D1 first. 9 attack texts / 11 `me` printings on nine literal anchors (effects.ts arm 6e-quater), each a
 shipped program; the one new field is `devolveChosen.defenderOnly`. R-RCL1 UNRULED. All 11 cards finished (1054 `me` printings).
-WP31's other 8 texts / 11 printings named for WP31c (Elemental Blast and Send Flowers dropped as needing new vocabulary).
+WP31's other 8 texts / 11 printings named for WP31c (Elemental Blast and Send Flowers dropped as needing new vocabulary). [🆕🆕🆕 D624 (D539): 5 / 7 BUILT at D624, Send Flowers among them.]
 `deckHandMiscMeD616.test.ts` (31), census D616 block (2). +32 mutant rows, all KILLED; two D540 rows re-pointed. Sweep PENDING
 (NEXT (0)). NOT committed.
 
@@ -36255,7 +36307,7 @@ WP31's other 8 texts / 11 printings named for WP31c (Elemental Blast and Send Fl
 Built in the `luminous_ui-mega` worktree on D614 (`5dace4c0`); the main checkout was not touched. Ids `git grep`-ped and the
 texts read off the LOCAL D1 first. 8 attack texts / 13 `me` printings on eight literal anchors (effects.ts arm 6e-ter), each a
 shipped program; the one new field is `devolveEach.toHand` (interpreter.ts `devolveEachToHand`). R-GLT1 UNRULED. All 13 cards
-finished (1043 `me` printings). WP31's other 17 texts / 22 printings named for WP31b / WP31c. `deckHandMiscMeD615.test.ts` (26),
+finished (1043 `me` printings). WP31's other 17 texts / 22 printings named for WP31b / WP31c [🆕🆕🆕 D624 (D539): 14 / 18 built by D616 and D624; 3 / 4 stay]. `deckHandMiscMeD615.test.ts` (26),
 census D615 block (2). +30 mutant rows, all KILLED. Review fixes (B1: the hand sweep's KO cause asked before the sweep and
 stamped after it, as `devolveEach`; M1–M4) in NEXT. Sweep PENDING (NEXT (0)). NOT committed.
 
@@ -48935,7 +48987,8 @@ came out identically unbuilt — the decision between them was made on PRICE, no
 
 **(1) 🛑 THE COMPOSITION QUESTION WAS DRIVEN, AND D483's COUNTERWEIGHT BIT AT THE CHEAPEST BOARD.**
 Three shipped ops touch the opponent's hidden hand. `opponentDiscardsFromHand` carries a STATIC,
-UNFILTERED count answered by the opponent; `randomFromOpponentHand` takes one card by RNG; and
+UNFILTERED count answered by the opponent; `randomFromOpponentHand` takes one card by RNG (🆕🆕🆕 D624 (D539): ~~one card~~ — or
+`max(0, hand − untilHandSize)` cards under Hand Trim); and
 `bottomFromOpponentHand { filter, dest: "discard" }` is the **near-miss** — it takes the **same
 `CardFilter` into the same pile**. ⚠️ **On an opponent hand holding exactly ONE matching card the
 two are BYTE-IDENTICAL, and neither parks** (a single-class offer auto-resolves under the M1

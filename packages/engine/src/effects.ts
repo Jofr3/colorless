@@ -765,7 +765,14 @@ export type CardFilter =
       where a hand-written `"Colorless"` would otherwise have compiled.
       (`basicEnergy.energyType` beside it is still a bare string — a wider,
       pre-existing hole in a filter this slice did not touch.) */
-  | { kind: "providesEnergy"; energyType: BasicEnergyType };
+  | { kind: "providesEnergy"; energyType: BasicEnergyType }
+  /** 🆕🆕🆕 **D624 — A POKÉMON THAT PRINTS A RESISTANCE TO `type`.** Fletchling `me03-066` "Chirp":
+      *"Search your deck for up to 2 Pokémon with {F} Resistance, reveal them, and put them into your
+      hand."* Read off `Card.resistances` by the entry's `type` alone, as `BoardCondition.
+      opponentActiveHasResistance` reads it (D371), never through §8.5's `resistanceOf`, which asks
+      whether a Resistance applies to an attacker. A card-only predicate, so it answers on a deck card.
+      A new member (D125): a v43 record cannot hold it. */
+  | { kind: "pokemonWithResistance"; type: PokemonType };
 
 /** The name under which one op files WHAT IT MOVED so that a LATER op in the
     same program can read it — the interpreter's op→op data flow (the running
@@ -11491,7 +11498,16 @@ export type EffectOp =
   | {
       op: "attachFromDiscard";
       filter: CardFilter;
-      max: number;
+      /** 🆕🆕🆕 **D624 — `"opponentEnergyInPlay"`, THE COUNT-SCALED CEILING: Dedenne `me03-029` / `-093`
+          "Tail Generator"**, *"Choose Basic {L} Energy cards from your discard pile up to the amount of
+          Energy attached to all of your opponent's Pokémon and attach them to your {L} Pokémon in any way
+          you like."* Resolved at the park to `countEnergyInPlay` over the opponent's board (Active + Bench,
+          cards, D193 / D118's reading), so the reachable total follows that board; still "up to" (a short
+          or empty answer stands). Never beside `each` or `maxPerTarget`. A pure addition to the field's
+          value domain (D538's `"all"` precedent): no v43 record holds it, and the non-`each` apply never
+          reads `max` (the `each` apply, `eachAttachTopUp`, does read it through `discardAttachCeiling`;
+          `"opponentEnergyInPlay"` never reaches it only because it is never set beside `each`). */
+      max: number | "opponentEnergyInPlay";
       maxPerTarget?: number;
       targetType?: string;
       benchOnly?: true;
@@ -13246,9 +13262,12 @@ export type EffectOp =
       the log's "revealed their hand — no cards" row has existed (unreached from
       an attack) since M5. */
   | { op: "revealOpponentHand" }
-  /** ⚠️⚠️ D232 — ONE CARD TAKEN AT RANDOM OUT OF THE OPPONENT'S HAND, and the
+  /** ⚠️⚠️ D232 — ONE CARD TAKEN AT RANDOM OUT OF THE OPPONENT'S HAND (🆕🆕🆕 D624 (D539): ~~ONE CARD~~ withdrawn
+      as the op's whole scope — `untilHandSize` (Hand Trim, below) repeats the one-card take), and the
       FIRST op in this engine whose OUTCOME is drawn from `rngState` rather than
-      read off the board. Two printed sentences, one op, told apart by `to`:
+      read off the board. Two printed sentences, one op, told apart by `to` (🆕🆕🆕 D624 (D539): ~~told
+      apart by `to`~~ no longer the whole rule — Hand Trim's sentence, below, shares `to: "discard"` and
+      is told apart by `untilHandSize`):
         · `discard` — "Discard a random card from your opponent's hand." (**8
           legal**: Mienfoo `sv07-083`, Espeon ex `sv08.5-034`/`-155`/`svp-175`,
           Tyranitar ex `sv08.5-064`, Team Rocket's Chingling `sv10-085`, Liepard
@@ -13260,7 +13279,9 @@ export type EffectOp =
       ONE FIELD, TWO VALUES, BOTH PRINTED — the falsifiability test D231 wrote
       down: a `to` with only one reachable value would be an unkillable mutant.
 
-      **NO `count`.** Every Standard-legal printing takes exactly one card; the
+      **NO `count`.** ~~Every Standard-legal printing takes exactly one card~~ (🆕🆕🆕 D624 (D539):
+      withdrawn — Furfrou `me03-067` "Hand Trim" is legal and takes `max(0, hand − 5)` cards through
+      this op's `untilHandSize`; still no printed NUMBER, so still no `count`); the
       only "Choose 2 random cards…" printing in the whole 3,786-row catalog is
       ROTATED. D104's minimal-shape rule: a field no printing can set is a field
       whose absent branch nothing drives.
@@ -13305,7 +13326,20 @@ export type EffectOp =
       so no swap is offered. *"ONE FIELD, TWO VALUES"* above now reads THREE; each value is
       printed and each is killable (D231's test, still passed). Both widenings OPTIONAL /
       additive (D125): a pre-D567 record is byte-identical. */
-  | { op: "randomFromOpponentHand"; to: "discard" | "deck" | "reveal"; recordAs?: EffectSlot }
+  | {
+      op: "randomFromOpponentHand";
+      to: "discard" | "deck" | "reveal";
+      recordAs?: EffectSlot;
+      /** 🆕🆕🆕 **D624 — THE COUNT READ OFF THE HAND: Furfrou `me03-067` "Hand Trim"**, *"Discard random
+          cards from your opponent's hand until they have 5 cards in their hand."* The op runs
+          `max(0, hand − untilHandSize)` times (the hand read once, at resolve), each run its own
+          `randomIndex` draw and `RANDOM_CARD_TAKEN` row, so a hand of `untilHandSize` or fewer takes nothing
+          and draws no rng. Printed with `to: "discard"` only, never beside `recordAs`. D232's "NO `count`"
+          above still holds (its "exactly one card" premise withdrawn there): the take is the hand's,
+          not a printed number. The op never parks, so no
+          v43 record holds the key (D125). */
+      untilHandSize?: number;
+    }
   /** 🆕🆕 **D426 — THE OPPONENT DISCARDS `count` CARDS FROM THEIR OWN HAND, AND
       *THEY* CHOOSE WHICH.** Two printed sentences, one op, told apart by the
       count — measured over the committed `legal_standard = 1` attack column
@@ -13561,7 +13595,8 @@ export type EffectOp =
       opponent's hidden hand and none of them spells this:
         · `opponentDiscardsFromHand { count }` — a STATIC count, UNFILTERED, and
           answered by the opponent. The printed count here is not a number at all.
-        · `randomFromOpponentHand { to }` — one card, chosen by the RNG.
+        · `randomFromOpponentHand { to }` — one card, chosen by the RNG (🆕🆕🆕 D624 (D539): ~~one
+          card~~ — or `max(0, hand − untilHandSize)` cards, each its own RNG draw, under Hand Trim).
         · `bottomFromOpponentHand { filter, dest: "discard" }` — the near-miss, and
           it takes the SAME `filter` this op takes into the SAME pile. 🛑 **On any
           board whose opponent hand holds exactly ONE matching card the two are
@@ -18169,6 +18204,22 @@ const REVEAL_BOTTOM_ITEM =
 // 🆕🆕🆕 D619 — WP15, Hippowdon "Twister Spewing" (`me03-040`, LOCAL D1): a clause-table gate over the
 // opponent-side mill (arm 6e-quinquies). The clause is looked up, not captured as a name.
 const CLAUSE_GATED_OPPONENT_MILL = /^If (.+), discard the top (\d+) cards of your opponent['’]s deck\.$/;
+// 🆕🆕🆕 D624 — WP31c, five more literal `me` anchors (LOCAL D1, 2026-10-09), none printed in legal `sv`
+// (arm 6e-sexies). Dedenne "Tail Generator" ×2: `attachFromDiscard` at the count-scaled ceiling (NEW).
+const DISCARD_ATTACH_UP_TO_OPPONENT_ENERGY =
+  /^Choose Basic \{([A-Z])\} Energy cards from your discard pile up to the amount of Energy attached to all of your opponent['’]s Pokémon and attach them to your \{([A-Z])\} Pokémon in any way you like\.$/;
+// Furfrou "Hand Trim": the random discard down to a printed hand size (`untilHandSize`, NEW).
+const RANDOM_DISCARD_OPPONENT_HAND_DOWN_TO =
+  /^Discard random cards from your opponent['’]s hand until they have (\d+) cards in their hand\.$/;
+// Morpeko "Select a Snack" ×2: Explorer's Guidance's program (`lookAtTopN` exact, the rest discarded),
+// the kept card revealed (R-SAS1).
+const MILL_TOP_KEEP_ONE = /^Discard the top (\d+) cards of your deck and put 1 of them into your hand\.$/;
+// Shaymin "Send Flowers": `attachFromDeck` of ANY Energy card onto a typed Benched body.
+const SEARCH_ENERGY_ATTACH_BENCHED_TYPED =
+  /^Search your deck for an Energy card and attach it to 1 of your Benched \{([A-Z])\} Pokémon\. Then, shuffle your deck\.$/;
+// Fletchling "Chirp": a revealed hand search over the NEW `pokemonWithResistance` filter.
+const SEARCH_POKEMON_WITH_RESISTANCE =
+  /^Search your deck for up to (\d+) Pokémon with \{([A-Z])\} Resistance, reveal them, and put them into your hand\. Then, shuffle your deck\.$/;
 
 
 // D131 — the UNCONDITIONAL MILL, both directions on ONE anchor: "Discard the top
@@ -30100,6 +30151,59 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "discardDeckTop", whose: "opponent", count: milled }],
         },
+      ];
+    }
+  }
+
+  // 6e-sexies. 🆕🆕🆕 D624 — WP31c's five sentences; the new pieces are `attachFromDiscard.max`
+  //     `"opponentEnergyInPlay"`, `randomFromOpponentHand.untilHandSize` and the `pokemonWithResistance` filter.
+  match = DISCARD_ATTACH_UP_TO_OPPONENT_ENERGY.exec(effect);
+  if (match !== null) {
+    const attachedType = ENERGY_TYPE_BY_CODE[match[1] ?? ""];
+    const hostType = POKEMON_TYPE_BY_CODE[match[2] ?? ""];
+    if (attachedType !== undefined && hostType !== undefined) {
+      return [
+        {
+          op: "attachFromDiscard",
+          filter: { kind: "basicEnergy", energyType: attachedType },
+          max: "opponentEnergyInPlay",
+          targetType: hostType,
+        },
+      ];
+    }
+  }
+  match = RANDOM_DISCARD_OPPONENT_HAND_DOWN_TO.exec(effect);
+  if (match !== null) {
+    const keptInHand = Number(match[1]);
+    if (keptInHand >= 1) return [{ op: "randomFromOpponentHand", to: "discard", untilHandSize: keptInHand }];
+  }
+  match = MILL_TOP_KEEP_ONE.exec(effect);
+  if (match !== null) {
+    const window = Number(match[1]);
+    if (window >= 2 && window <= MAX_PRINTED_ATTACH_COUNT) {
+      return [
+        { op: "lookAtTopN", n: window, filter: { kind: "anyCard" }, max: 1, exact: true, reveal: true, restTo: "discard" },
+      ];
+    }
+  }
+  match = SEARCH_ENERGY_ATTACH_BENCHED_TYPED.exec(effect);
+  if (match !== null) {
+    const benchedType = POKEMON_TYPE_BY_CODE[match[1] ?? ""];
+    if (benchedType !== undefined) {
+      return [
+        { op: "attachFromDeck", filter: { kind: "anyEnergy" }, max: 1, benchOnly: true, targetType: benchedType },
+        { op: "shuffleDeck" },
+      ];
+    }
+  }
+  match = SEARCH_POKEMON_WITH_RESISTANCE.exec(effect);
+  if (match !== null) {
+    const found = Number(match[1]);
+    const resisted = POKEMON_TYPE_BY_CODE[match[2] ?? ""];
+    if (resisted !== undefined && found >= 1 && found <= MAX_PRINTED_ATTACH_COUNT) {
+      return [
+        { op: "searchDeck", filter: { kind: "pokemonWithResistance", type: resisted }, dest: "hand", max: found, reveal: true },
+        { op: "shuffleDeck" },
       ];
     }
   }

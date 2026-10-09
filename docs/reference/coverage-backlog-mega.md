@@ -6,6 +6,25 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D624 update (engine 0.507.0) — WP31c, the rest of the deck / hand / discard / Energy misc (`MATCH_RECORD_VERSION` stays 43)
+
+5 texts / 7 `me` printings, readers only (`deckHandMiscMeD624.test.ts`): Dedenne "Tail Generator" ×2 `me03-029` / `-093`
+(`attachFromDiscard` at the NEW `max: "opponentEnergyInPlay"`), Furfrou "Hand Trim" `me03-067` (`randomFromOpponentHand` with the NEW
+`untilHandSize`), Morpeko "Select a Snack" ×2 `30th-061` / `-135` (Explorer's Guidance's `lookAtTopN`, R-SAS1 UNRULED), Shaymin "Send
+Flowers" `me03-003` (`attachFromDeck` of any Energy onto a Benched {G} body) and Fletchling "Chirp" `me03-066` (the NEW `CardFilter`
+`pokemonWithResistance`). **Finished:** all 7. **Dropped and named:** Lugia "Elemental Blast" `30th-121` (a matched multi-type discard),
+Delibird "Pleasing Present" `me04-018` (an attach answered by the opponent first) and Thievul "Skill Thief" ×2 `me05-054` / `-092` (a
+whole-board copy source plus a hand gate). WP31 is closed but for those three.
+
+| Column | `me` built / units (D624) | Standard pool D624 |
+|---|---|---|
+| Attacks | 977 / 1,039 (+7) | **2,709 / 2,771** |
+| Abilities | 185 / 234 | **561 / 610** |
+| Trainers | 154 / 183 | **418 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1125** (1118 + 7).
+
 ## 🆕 D623 update (engine 0.506.0) — WP28b, the rest of the scaling count sources (`MATCH_RECORD_VERSION` stays 43)
 
 5 texts / 7 `me` printings, readers only (`scalingCountsMeD623.test.ts`). Three NEW `DamageCountSource` members over the attacker's
@@ -147,7 +166,7 @@ Meloetta "Soothing Melody" ×2 `mep-026` / `me02-040` (`healChosen` Bench + `typ
 Rotom "Roto Call" `me02.5-092` (`optional` over a name-fragment Bench search), Dialga "Reversed Clock" `30th-103` (Super Rod's
 program), Celebi "Traverse Time" `me01-012` (`anyOf` search) and Eevee "Fetch and Hide" `30th-116` (`bottomFromOpponentHand`
 Item). **Finished:** all 11 cards. One new reading (UNRULED): R-RCL1, Roto Call's decline does not shuffle (`progress.md` NEXT).
-**Left for WP31c** (8 texts / 11 printings): Dedenne "Tail Generator" ×2 `me03-029` / `-093` (a count-scaled discard attach),
+**Left for WP31c** (8 texts / 11 printings) [🆕🆕🆕 D624: 5 texts / 7 printings BUILT by WP31c, above — Tail Generator ×2, Hand Trim, Select a Snack ×2, Send Flowers, Chirp; Elemental Blast, Pleasing Present and Skill Thief ×2 dropped and named]: Dedenne "Tail Generator" ×2 `me03-029` / `-093` (a count-scaled discard attach),
 Lugia "Elemental Blast" `30th-121` (a matched multi-type discard), Furfrou "Hand Trim" `me03-067` (a random discard to a hand
 size), Morpeko "Select a Snack" ×2 `30th-061` / `-135` (a mill with a pick), Delibird "Pleasing Present" `me04-018` (an attach
 for both players), Shaymin "Send Flowers" `me03-003` (a deck attach of any Energy), Fletchling "Chirp" `me03-066` (a Resistance
@@ -170,7 +189,7 @@ filter) and Thievul "Skill Thief" ×2 `me05-054` / `-092` (a gated copy of an op
 (`handRefresh` on the opponent), Flames of Revival `me04-010` (`discardPileRetrieval`), Miraculous Shine `30th-069`
 (`devolveEach.toHand`, NEW) and Cold Cyclone `me02.5-053` (typed `moveEnergy`). **Finished:** all 13 cards (Mega Delphox ex,
 Pikachu ex ×3, Mega Floette ex ×3 and Frosmoth among them). One new reading (UNRULED): R-GLT1, Gentle Light's heal is not
-refused by a §11 shield (`progress.md` NEXT). **Left for WP31b / WP31c** (17 texts / 22 printings; [🆕🆕🆕 D616: 9 texts / 11 printings BUILT by WP31b, above — 8 / 11 left for WP31c]): Dedenne "Tail Generator" ×2
+refused by a §11 shield (`progress.md` NEXT). **Left for WP31b / WP31c** (17 texts / 22 printings; [🆕🆕🆕 D616: 9 texts / 11 printings BUILT by WP31b, above — 8 / 11 left for WP31c] [🆕🆕🆕 D624: 5 / 7 of those BUILT by WP31c; 3 / 4 stay]): Dedenne "Tail Generator" ×2
 `me03-029` / `-093`, Regice ex "Ice Prison" `me02.5-048`, Lugia "Elemental Blast" `30th-121`, Furfrou "Hand Trim" `me03-067`,
 Morpeko "Select a Snack" ×2, Delibird "Pleasing Present" `me04-018`, Meloetta "Soothing Melody" ×2, Claydol "Devolution Ray" ×2,
 Volcanion "Backfire" `me01-025`, Shaymin "Send Flowers" `me03-003`, Fletchling "Chirp" `me03-066`, Sudowoodo "Trials and

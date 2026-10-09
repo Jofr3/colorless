@@ -41,7 +41,7 @@ import {
 //   Traverse Time         — `searchDeck` `anyOf` {G} Pokémon / Stadium → hand, revealed.
 //   Fetch and Hide        — `bottomFromOpponentHand` over an Item.
 //
-// WP31's other 8 texts / 11 printings stay for WP31c, named in §1.
+// WP31's other 8 texts / 11 printings stay for WP31c, named in §1 [🆕🆕🆕 D624 (D539): 5 / 7 BUILT by WP31c; 3 / 4 stay].
 
 const ICE_PRISON = "Discard 2 Energy from this Pokémon, and your opponent's Active Pokémon is now Paralyzed.";
 const BACKFIRE = "Put 2 {R} Energy attached to this Pokémon into your hand.";
@@ -116,6 +116,9 @@ const WP31_REST: readonly (readonly [string, readonly string[], string])[] = [
   ],
 ];
 
+/** 🆕🆕🆕 D624 — the first printing of each WP31_REST text WP31c builds (`deckHandMiscMeD624.test.ts`). */
+const BUILT_AT_D624: ReadonlySet<string> = new Set(["me03-029", "me03-067", "30th-061", "me03-003", "me03-066"]);
+
 describe("D616 §1 — the texts", () => {
   it("9 sentences / 11 printings, each a row of the committed `me` corpus, none printed in legal `sv`, each now read", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
@@ -129,13 +132,15 @@ describe("D616 §1 — the texts", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(11);
   });
 
-  it("WP31's rest stays unbuilt: 8 texts / 11 printings, named", () => {
+  it("WP31's rest stays unbuilt: 8 texts / 11 printings, named (🆕🆕🆕 D624: 5 of them / 7 printings are built — WP31c; 3 / 4 stay)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, ids] of WP31_REST) {
       expect([text, me.get(text)]).toEqual([text, ids.length]);
-      expect(resolvedByAnyReader(text), text).toBe(false);
+      // 🆕🆕🆕 D624 (D539): WP31c reads five of these; Elemental Blast, Pleasing Present and Skill Thief stay unbuilt.
+      expect(resolvedByAnyReader(text), text).toBe(BUILT_AT_D624.has(ids[0] ?? ""));
       for (const id of ids) expect(programFor(id)?.attack, id).toBeUndefined();
     }
+    expect(WP31_REST.filter(([, ids]) => BUILT_AT_D624.has(ids[0] ?? "")).flatMap(([, ids]) => ids)).toHaveLength(7);
     expect(WP31_REST).toHaveLength(8);
     expect(WP31_REST.flatMap(([, ids]) => ids)).toHaveLength(11);
   });
@@ -709,6 +714,6 @@ describe("D616 §11 — Fetch and Hide: an Item from the opponent's hand to the 
 
 describe("D616 §12 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.506.0");
+    expect(engineVersion).toBe("0.507.0");
   });
 });

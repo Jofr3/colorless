@@ -214,8 +214,8 @@ function damageRow(events: readonly GameEvent[]): Extract<GameEvent, { type: "DA
 const SCOV_SPOT: Spot = { id: SCOVILLAIN, under: [CAPSAKID] };
 
 describe("D578 Scovillain §0 — the version", () => {
-  it("is built at engine 0.506.0", () => {
-    expect(engineVersion).toBe("0.506.0");
+  it("is built at engine 0.507.0", () => {
+    expect(engineVersion).toBe("0.507.0");
   });
 });
 

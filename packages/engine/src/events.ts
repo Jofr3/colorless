@@ -2044,6 +2044,8 @@ export type GameEvent =
       whole HAND was revealed first. Here nothing but this one card is ever seen —
       a random discard leaks exactly one card and the rest of the hand stays shut,
       which is the printed difference between this family and the reveal one.
+      (🆕🆕🆕 D624 (D539): one card PER ROW — Furfrou "Hand Trim"'s `untilHandSize` emits one
+      row per card it takes, each its own RNG draw; the rest of the hand still stays shut.)
 
       `actor` is the ENERGY_DISCARDED / CARD_TO_BOTTOM_OF_DECK precedent: `seat`
       owns the hand and the destination, `actor` caused it. NEVER EMITTED FOR AN
