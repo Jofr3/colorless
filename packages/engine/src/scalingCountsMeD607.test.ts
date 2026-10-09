@@ -65,7 +65,8 @@ const WP28B: readonly (readonly [string, number])[] = [
   ],
   ["This attack does 20 damage for each Basic {W} Energy card in your discard pile. Then, shuffle those cards into your deck.", 1],
   ["This attack does 30 damage for each of your Benched Pokémon that has a maximum HP of 30.", 1],
-  ["This attack does 40 damage for each of your Pikachu and Pikachu <em>ex</em> in play.", 1],
+  // 🆕🆕🆕 D612 — the `<em>` is normalised away (WP06); the clean sentence is still unread.
+  ["This attack does 40 damage for each of your Pikachu and Pikachu ex in play.", 1],
   ["This attack does 40 more damage for each of your Benched Pokémon that has any {R} Energy attached.", 2],
   ["This attack does 50 more damage for each of your Benched Pokémon that has any damage counters on it.", 2],
   ["This attack does 60 more damage for each Prize card your opponent took during their last turn.", 1],
@@ -476,6 +477,6 @@ describe("D607 §4 — the four texts on shipped members, on a board", () => {
 
 describe("D607 §5 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.494.0");
+    expect(engineVersion).toBe("0.495.0");
   });
 });

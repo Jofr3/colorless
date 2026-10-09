@@ -203,6 +203,62 @@ describe("mapCard", () => {
     expect(mapCard(tcgdexCardSchema.parse(cardEnergySpecial)).energyType).toBe("Special");
   });
 
+  // 🆕 D612 — every printed text goes through the engine's `normalizeCardText` (map.ts header).
+  // The raw texts are LOCAL D1 rows as tcgdex served them before the D612 re-ingest.
+  it("writes tcgdex's markup in the `sv` spelling: attacks, Abilities and a Trainer's effect", () => {
+    const base = tcgdexCardSchema.parse(cardPokemonAbility);
+    if (base.category !== "Pokemon") throw new Error("fixture is a Pokémon");
+    const row = mapCard({
+      ...base,
+      abilities: [{ type: "Ability", name: "Nighttime Byway", effect: "Your Active Pokémon's Retreat Cost is ColorlessColorless less." }],
+      attacks: [
+        { cost: ["Colorless"], name: "Tackle", damage: 10 },
+        {
+          cost: ["Water"],
+          name: "Hydro Pump",
+          effect:
+            'This attack does 30 more damage for each <span class="energy-symbol Water" title="Water">Water</span> Energy attached to this Pokémon. <em>(Hi.)</em>',
+        },
+        { cost: ["Fire"], name: "Inferno X", effect: "Discard any amount of [R] Energy from among your Pokémon." },
+      ],
+    });
+    expect(row.abilitiesJson).toEqual([
+      { type: "Ability", name: "Nighttime Byway", effect: "Your Active Pokémon's Retreat Cost is {C}{C} less." },
+    ]);
+    expect(row.attacksJson).toEqual([
+      { cost: ["Colorless"], name: "Tackle", damage: 10 },
+      { cost: ["Water"], name: "Hydro Pump", effect: "This attack does 30 more damage for each {W} Energy attached to this Pokémon. (Hi.)" },
+      { cost: ["Fire"], name: "Inferno X", effect: "Discard any amount of {R} Energy from among your Pokémon." },
+    ]);
+    const trainer = tcgdexCardSchema.parse(cardTrainer);
+    if (trainer.category !== "Trainer") throw new Error("fixture is a Trainer");
+    expect(mapCard({ ...trainer, effect: "Attach a Basic Fire Energy card." }).effect).toBe("Attach a Basic {R} Energy card.");
+    // A clean `sv` row maps byte for byte as before.
+    expect(mapCard(base).attacksJson).toEqual(base.attacks);
+    expect(mapCard(base).abilitiesJson).toEqual(base.abilities);
+  });
+
+  // 🆕 D612 — the other two write sites: an Energy's rules text and a Trainer's printed attack. No
+  // Energy or Technical Machine row in the LOCAL D1 carries markup today; these texts are the
+  // verbatim fixtures with one tcgdex spelling spliced in, so a revert of either site to raw is seen.
+  it("writes an Energy's rules text and a Trainer's printed attack in the `sv` spelling", () => {
+    const energy = tcgdexCardSchema.parse(cardEnergySpecial);
+    if (energy.category !== "Energy") throw new Error("fixture is an Energy");
+    expect(mapCard({ ...energy, effect: "This card provides ColorlessColorless Energy." }).effect).toBe(
+      "This card provides {C}{C} Energy.",
+    );
+    const tm = tcgdexCardSchema.parse(cardTrainerTm);
+    if (tm.category !== "Trainer") throw new Error("fixture is a Trainer");
+    const attacks = (tm.attacks ?? []).map((attack) => ({ ...attack, effect: `${attack.effect} <em>(Hi.)</em>` }));
+    expect(mapCard({ ...tm, attacks }).attacksJson).toEqual([
+      {
+        cost: ["Grass", "Water", "Psychic"],
+        name: "Fluorite",
+        effect: "Discard all Energy from this Pokémon, and heal all damage from each of your Tera Pokémon. (Hi.)",
+      },
+    ]);
+  });
+
   it("energyTypeOf: no text keeps the tag; blank text is no text; a sentinel is still NULL", () => {
     expect(energyTypeOf("Normal", undefined)).toBe("Normal");
     expect(energyTypeOf("Normal", "")).toBe("Normal");

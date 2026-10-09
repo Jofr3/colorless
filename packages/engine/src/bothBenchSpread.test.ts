@@ -1082,7 +1082,9 @@ describe("D507 §8 — the FOUR-ZONE sibling is REFUSED, and the condition that 
     // 🆕🆕🆕 D597 — `damageDefender` 13 → 16: effects.ts arm 10d's `commaHit`, the `handDiscard` case of
     // `discardScaledBoostProgram` and registry.ts `INFERNO_X` are three more raw sites; `spreadDamage`
     // untouched at 10.
-    expect(producers("damageDefender")).toBe(16);
+    // 🆕🆕🆕 D612 — `damageDefender` 16 → 15: `INFERNO_X` is RETIRED (WP06's normaliser builds its text);
+    // `spreadDamage` untouched at 10.
+    expect(producers("damageDefender")).toBe(15);
     expect(producers("spreadDamage")).toBe(10);
     expect(producers("damageDefender")).toBeGreaterThan(producers("spreadDamage") - 4);
   });

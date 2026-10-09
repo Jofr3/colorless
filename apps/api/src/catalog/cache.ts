@@ -65,8 +65,16 @@ const CACHE_TTL_SECONDS = 3600;
     attack for up to a TTL after the deploy. The bump makes 0.465 start cold;
     it closes both only when the remote re-ingest has FINISHED before the
     deploy (a v7 entry written against the old rows is the same hour again).
-    [🆕🆕🆕 D582 (D539): *"the match pool"* is WITHDRAWN for the ONLINE match — its Durable Object reads the pool from D1 directly (lobby/cardPool.ts `loadCardPool`) and never touches this cache; only the LOCAL match fetches through `/cards/:id`. And the pool is PERSISTED in every match (`GameState.cardPool`), so a match created before the re-ingest keeps the old rows for its whole life whatever this cache holds — a FOURTH window, named in apps/api lobby/match.ts "STAYS 41 AT D582".] [🆕🆕🆕 D583: CLOSED for the ONLINE match — `MATCH_RECORD_VERSION` 41 → 42 migrates a v41 record, re-reading its pool's Trainer faces from D1 on first load (apps/api match.ts "41 → 42 AT D583"); the remote re-ingest must still FINISH before the deploy.] */
-const CACHE_VERSION = "v7";
+    [🆕🆕🆕 D582 (D539): *"the match pool"* is WITHDRAWN for the ONLINE match — its Durable Object reads the pool from D1 directly (lobby/cardPool.ts `loadCardPool`) and never touches this cache; only the LOCAL match fetches through `/cards/:id`. And the pool is PERSISTED in every match (`GameState.cardPool`), so a match created before the re-ingest keeps the old rows for its whole life whatever this cache holds — a FOURTH window, named in apps/api lobby/match.ts "STAYS 41 AT D582".] [🆕🆕🆕 D583: CLOSED for the ONLINE match — `MATCH_RECORD_VERSION` 41 → 42 migrates a v41 record, re-reading its pool's Trainer faces from D1 on first load (apps/api match.ts "41 → 42 AT D583"); the remote re-ingest must still FINISH before the deploy.]
+    v7→v8: D612, the v3→v4 kind again — same shape, different bytes. The ingest writes
+    every card text through the engine's markup normaliser (ingest/map.ts →
+    `normalizeCardText`): tcgdex's `<em>` / energy-symbol `<span>` HTML, "[R]" and type
+    words become `{R}`-style text on 87 rows (`mep`, `30th`, `30th-c`, `swsh10.5`). A v7
+    `/cards/:id` body cached before the remote re-ingest would keep showing the raw tags
+    in the card dialog (and feed the LOCAL match its raw face — the engine reads that the
+    same, cards.ts `cardOfUid`) for up to a TTL. As at v7, it closes only when the remote
+    re-ingest has FINISHED before the deploy. */
+const CACHE_VERSION = "v8";
 
 /**
  * KV key for a request URL: version + path + query, with the query keys

@@ -23,6 +23,7 @@ import {
 // (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-08, `legal_standard = 1`; no id was
 // referenced anywhere in the tree before this slice. The `30th` faces spell the Energy type as a
 // word ("Basic Fire Energy card") where the `mep` faces print "{R}": the same sentence, one object.
+// [🆕🆕🆕 D612: the ingest now writes the word form as "{R}" too (cardText.ts, WP06).]
 // No `me` row is a fixture, so the printed faces are carried HERE.
 
 const RUN_ERRAND =
@@ -543,18 +544,20 @@ describe("D591 §6 — Flaring Magic: a Basic {R} Energy paid, draw until 7, onc
 });
 
 describe("D591 §7 — the printed attacks these keys carry, and the version", () => {
-  it("the attacks left unbuilt are Delphox's, Frosmoth's and the `30th` Hail's markup — five printings (🆕🆕🆕 D607: Delphox's is built — WP28a; three left)", () => {
+  it("the attacks left unbuilt are Delphox's, Frosmoth's and the `30th` Hail's markup — five printings (🆕🆕🆕 D607: Delphox's is built — WP28a; three left; 🆕🆕🆕 D612: Hail's is built — WP06; one left)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     expect(me.get("This attack does 30 damage for each Energy attached to all Pokémon.")).toBe(2);
     expect(me.get("Move a {W} Energy from this Pokémon to 1 of your Benched Pokémon.")).toBe(1);
+    // 🆕🆕🆕 D612 — the `<em>` is normalised away (WP06): the two `30th` Hail printings join the clean
+    // sentence's row (1 → 3), which a reader builds.
     expect(
       me.get(
-        "This attack does 30 damage to each of your opponent's Pokémon. <em>(Don't apply Weakness and Resistance for Benched Pokémon.)</em>",
+        "This attack does 30 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       ),
-    ).toBe(2);
+    ).toBe(3);
   });
 
-  it("is built at engine 0.494.0", () => {
-    expect(engineVersion).toBe("0.494.0");
+  it("is built at engine 0.495.0", () => {
+    expect(engineVersion).toBe("0.495.0");
   });
 });

@@ -17425,28 +17425,9 @@ const NEEDLY_ARMOR: CardProgram = {
   passive: { damageAttacker: { amount: 30, perAttachedEnergy: "Grass" } },
 };
 
-// ── 🆕🆕🆕 D597 — WP29: THE TWO `mep` MEGA CHARIZARD X ex, KEYED BY ID. Text off the LOCAL D1. ──
-
-/** 🆕🆕🆕 **D597 — Mega Charizard X ex `mep-023` / `mep-029` "Inferno X"** (attack index **0**,
-    {R}{R}, "90×"): *"Discard any amount of [R] Energy from among your Pokémon, and this attack does
-    90 damage for each card you discarded in this way."* — the `me02` printings' sentence with
-    tcgdex's "[R]" for "{R}" (markup, WP06), so effects.ts `COMMA_DISCARD_SCALED_DAMAGE` cannot read
-    it. This is that arm's program for the `{R}` sentence, byte for byte (`discardScaledMeD597.test.ts`
-    pins the equality). A program that deals the damage drops the printed base (attack.ts). */
-const INFERNO_X: CardProgram = {
-  attack: {
-    0: [
-      {
-        op: "discardEnergy",
-        from: "yours",
-        filter: { kind: "providesEnergy", energyType: "Fire" },
-        count: "any",
-        recordAs: "discarded",
-      },
-      { op: "damageDefender", per: 90, count: "discarded" },
-    ],
-  },
-};
+// ── 🆕🆕🆕 D597 — WP29: THE TWO `mep` MEGA CHARIZARD X ex, KEYED BY ID. ──
+// 🆕🆕🆕 D612 — `INFERNO_X` RETIRED: tcgdex's "[R]" is normalised to {R} (cardText.ts, at ingest
+// and at read), so the text is the `me02` sentence and `COMMA_DISCARD_SCALED_DAMAGE` builds it.
 
 // ── 🆕🆕🆕 D598 — WP32: KO / DAMAGE-TAKEN ABILITIES. Texts off the LOCAL D1. `koAbilitiesMeD598.test.ts`. ──
 
@@ -17880,8 +17861,11 @@ const CELEBRATORY_FANFARE: CardProgram = {
   },
 };
 
-// ── 🆕🆕🆕 D608 — WP30: TWO `30th` ATTACK OBJECTS, KEYED BY ID. Text off the LOCAL D1; both print
-//    tcgdex's `<em>` markup (WP06), so no reader claims them. `snipeSpreadMeD608.test.ts`. ──
+// ── 🆕🆕🆕 D608 — WP30: TWO `30th` ATTACK OBJECTS, KEYED BY ID. Text off the LOCAL D1; both printed
+//    tcgdex's `<em>` markup (WP06), so no reader claimed them. `snipeSpreadMeD608.test.ts`.
+//    🆕🆕🆕 D612 — ONE now: the normaliser (cardText.ts) strips the `<em>`. Stealthy Slash's text is
+//    then `mep-099`'s and reader-built, so `STEALTHY_SLASH` is RETIRED; Photon Bullets' normalised
+//    text (*"…each of your opponent's Pokémon ex. (…)"*) is still read by no reader, so it stays. ──
 
 /** 🆕🆕🆕 **D608 — Mewtwo ex `30th-064` / `-151` / `-157` "Photon Bullets"** (attack index **0**,
     {P}{P}, no printed damage): *"This attack does 50 damage to each of your opponent's Pokémon
@@ -17900,25 +17884,6 @@ const PHOTON_BULLETS: CardProgram = {
         source: "attack",
         deals: true,
         filter: { kind: "suffixPokemon", suffix: "ex" },
-      },
-    ],
-  },
-};
-
-/** 🆕🆕🆕 **D608 — Greninja ex `30th-021` / `-148` "Stealthy Slash"** (attack index **0**, {W}): the
-    `mep-099` sentence with its parenthetical in `<em>`. effects.ts `BENCHED_SNIPE_TARGET_COUNTERS`'s
-    `opponentAny` program for that sentence, byte for byte (the suite pins the equality). */
-const STEALTHY_SLASH: CardProgram = {
-  attack: {
-    0: [
-      {
-        op: "damageChosen",
-        target: "opponentAny",
-        amount: 30,
-        count: 1,
-        source: "attack",
-        deals: true,
-        perDamageCounterOnTarget: true,
       },
     ],
   },
@@ -19319,8 +19284,8 @@ const REGISTRY: Record<string, CardProgram> = {
   "me03-027": FIGHTING_ROAR, // Luxio "Fighting Roar" — evolve early if the opponent's Active is a Pokémon ex
   "me04-007": NEEDLY_ARMOR, // Chesnaught "Needly Armor" — 3 counters per {G} Energy on the Attacking Pokémon
   // 🆕🆕🆕 D597 — WP29: the two "[R]" Inferno X, ATTACK-only keys, MID-MAP (`raw[last]` does not move).
-  "mep-023": INFERNO_X, // Mega Charizard X ex "Inferno X" (attack 0) — the `me02` sentence with tcgdex's "[R]"
-  "mep-029": INFERNO_X, // Mega Charizard X ex
+  // 🆕🆕🆕 D612 — RETIRED: the markup normaliser (cardText.ts) reads "[R]" as {R}, so effects.ts
+  // `COMMA_DISCARD_SCALED_DAMAGE` builds `mep-023` / `-029` off the text (R-IX1 resolved).
   // 🆕🆕🆕 D598 — WP32: 13 Ability keys / 6 objects, MID-MAP (`raw[last]` does not move). `koAbilitiesMeD598.test.ts`.
   "me02-056": SHADOWY_CONCEALMENT, // Mega Gengar ex — 1 fewer Prize for a {D} body KO'd by an ex's attack
   "me02.5-125": SHADOWY_CONCEALMENT, // Mega Gengar ex
@@ -19379,11 +19344,10 @@ const REGISTRY: Record<string, CardProgram> = {
   "mep-028": CELEBRATORY_FANFARE, // Celebratory Fanfare — heal 10 from each; healed any: the turn ends
   "mep-120": CELEBRATORY_FANFARE, // Celebratory Fanfare
   // 🆕🆕🆕 D608 — WP30: 5 `30th` ATTACK-only keys / 2 objects, MID-MAP (`raw[last]` does not move).
+  // 🆕🆕🆕 D612 — 3 now: Stealthy Slash ×2 RETIRED (the normalised text is `mep-099`'s, reader-built).
   "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex
   "30th-151": PHOTON_BULLETS, // Mewtwo ex
   "30th-157": PHOTON_BULLETS, // Mewtwo ex
-  "30th-021": STEALTHY_SLASH, // Greninja ex "Stealthy Slash" (attack 0) — 30 per counter on the chosen body
-  "30th-148": STEALTHY_SLASH, // Greninja ex
   // 🆕🆕🆕 D610 — WP37a: 16 non-attack keys / 7 objects, MID-MAP (`raw[last]` does not move).
   "me01-003": SOLAR_TRANSFER, // Mega Venusaur ex — as often as you like: a Basic {G} between your Pokémon
   "me01-155": SOLAR_TRANSFER, // Mega Venusaur ex

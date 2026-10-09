@@ -25128,7 +25128,8 @@ const ENERGY_DISCARD_SCALED_DAMAGE = new RegExp(
 //   1  "…up to 2 Basic {M} Energy cards from your hand, and … 40 …"    (Skarmory `me05-060`)
 //   1  "…up to 2 Energy cards from your hand, and … 60 …"              (Mawile `me03-032`)
 // (The two `mep` Mega Charizard X ex print "[R]" — tcgdex markup, WP06 — and are keyed BY ID on
-// registry.ts `INFERNO_X`, which is this arm's own program.) The zone is the free parameter the
+// registry.ts `INFERNO_X`, which is this arm's own program.) [🆕🆕🆕 D612: the key is RETIRED — cardText.ts
+// normalises "[R]" to {R} at ingest and at read, so this arm reads all six printings.] The zone is the free parameter the
 // D402 block allows (every value is a board action the engine performs): "among your Pokémon" is
 // `discardEnergy` from `yours`, "this Pokémon" from `yourActive`, and "your hand" is the
 // declinable `payFromHand` arm (D489), which REQUIRES the printed "up to N" — so "any amount of

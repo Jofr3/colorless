@@ -6,6 +6,25 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D612 update (engine 0.495.0) — the tcgdex markup normaliser (WP06)
+
+cardText.ts `normalizeCardText` at ingest (map.ts) and at read (cards.ts `cardOfUid`); the LOCAL D1's `mep`, `30th`, `30th-c` and
+`swsh10.5` re-ingested, the `me` corpus regenerated (451 → 442 sentences). The 18 "markup only" texts / 21 `30th` printings below
+are BUILT on shipped readers (`cardTextD612.test.ts`, census D612 block). `INFERNO_X` and `STEALTHY_SLASH` retired (their clean text
+is reader-built; R-IX1 resolved); Photon Bullets ×3 stays keyed. Still unbuilt, now as clean text in their packages: Elemental Blast
+`30th-121`, Lightning Crash `30th-051` (WP30), Charge-Up Dash `30th-042` (WP13), Overwriting Bolt `30th-040`, Pika Chain `30th-034`
+(WP28b), Kaboom Needles `30th-104` (WP30). The data gap below ("43 `me` rows carry tcgdex HTML") is closed on the LOCAL D1; the
+remote D1 still needs the re-ingest, run with the D612 ingest code.
+
+| Column | `me` built / units (D612) | Standard pool D612 |
+|---|---|---|
+| Attacks | 929 / 1,039 (+21) | **2,661 / 2,771** |
+| Abilities | 177 / 234 | **553 / 610** |
+| Trainers | 109 / 183 | **373 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1026** (1005 + 21).
+
 ## 🆕 D611 update (engine 0.494.0) — the rest of the activated Abilities (WP21), plus Dragonair
 
 9 Ability texts / 17 `me` printings keyed on nine new `abilities` objects (`activatedMeD611.test.ts`). On shipped ops: Nighttime
@@ -75,7 +94,7 @@ is the shipped arity (Mega Eelektross ex ×3 "Split Bomb", Ambipom ×2 "Dual Tai
 skeleton with a `defenderStatus` payoff (inner confirm); Mega Skarmory ex ×2 "Sonic Ripper" and Spectrier "Phantasmal Barrage"
 are literal cost-then-snipe compounds; Mandibuzz "Bone Sniper" uses the new `damageChosen.specialEnergyOnly`; Greninja ex
 `mep-099` "Stealthy Slash" is the counter-scaled snipe at `opponentAny`. Keyed (`<em>` markup): Mewtwo ex ×3 "Photon Bullets"
-(the ex-only spread, no `ignoreWR`) and Greninja ex `30th-021` / `-148`. **Finished:** all 15 cards. **WP30 rest, named**
+(the ex-only spread, no `ignoreWR`) and Greninja ex `30th-021` / `-148`. [🆕🆕🆕 D612: the `<em>` is normalised; Stealthy Slash ×2 is unkeyed and reader-built, Photon Bullets ×3 stays keyed] **Finished:** all 15 cards. **WP30 rest, named**
 (8 texts / 8 printings): Pikachu `30th-051` (markup + typed discard), Mismagius `me02.5-086` (gated counters), Coalossal
 `me02.5-120` (discard-pile gate behind a snipe), Genesect `me02-008` / Seaking `me05-014` (typed per-Energy snipe), Frosmoth
 `me01-043` / Ferrothorn `30th-104` (a clause after the parenthetical), Deoxys `me04-032` (extra-Energy gate on a bench snipe).
@@ -97,7 +116,7 @@ are literal cost-then-snipe compounds; Mandibuzz "Bone Sniper" uses the new `dam
 and Paldean Tauros "Raging Charge" (`pokemonInPlay`, new body-map keys), Raticate ×2 "Retaliatory Incisors"
 (`damageCountersOnYourBench` + a "Rattata" key), Tinkaton "Windup Swing" (the penalty fold over `energyOnOpponent`) and
 Beautifly ×2 "Energy Straw" (the comma-joined reveal, "Energy card" in the opponent's hand). **Finished:** all 14. **Left for
-WP28b** (7 texts / 11 printings): Doublade ×3, Kyogre `me01-034`, Igglybuff `30th-120`, Pikachu `30th-034` (WP06 markup),
+WP28b** (7 texts / 11 printings): Doublade ×3, Kyogre `me01-034`, Igglybuff `30th-120`, Pikachu `30th-034` (WP06 markup), [🆕🆕🆕 D612: the markup is normalised; the sentence is still unread]
 Armarouge ×2, Gourgeist ex ×2, Okidogi `me02.5-122` — each tagged below.
 
 | Column | `me` built / units (D607) | Standard pool D607 |
@@ -265,7 +284,7 @@ Cord" ×2 (an Energy move off the dying body), Spiritomb "Spiteful Swirl" ×2 an
 Eater: the `me` comma spelling of D402's `×` fold (`COMMA_DISCARD_SCALED_DAMAGE`; the hand zone is D489's declinable
 `payFromHand`). Hammer-lanche ×2, Iceberg Breaker: D488's mill on the typed "Basic {W} Energy card" noun. Shooting
 Moons ×4: `deriveAttackDiscardScaledBoost`'s new `handDiscard` member. The two "[R]" Inferno X `mep-023` / `-029`:
-keyed on `INFERNO_X`. **Finished:** Mega Charizard X ex ×6, Mega Abomasnow ex ×2, Mega Diancie ex ×3, Avalugg
+keyed on `INFERNO_X` [🆕🆕🆕 D612: RETIRED — WP06 normalises the text]. **Finished:** Mega Charizard X ex ×6, Mega Abomasnow ex ×2, Mega Diancie ex ×3, Avalugg
 `me04-024`, Skarmory `me05-060`, Mawile `me03-032`. Mega Clefable ex ×4 still wait on "Luminous Wing".
 **Still open in WP29 (named):** Mega Eelektross ex "Disaster Shock" ×3 (status payoff; Split Bomb is WP30) [🆕🆕🆕 D608: both BUILT — WP30], Slowpoke
 "All-You-Can-Yeet" `me05-029`, Team Rocket's Honchkrow "Rocket Feathers" `me02.5-127`, Pawmot "Voltaic Fist"
@@ -307,7 +326,7 @@ Energizing Sketch (any Basic Energy from the discard to the Bench, one per heads
 Smeargle (Tyrantrum ×2 still wait on Tyrannically Gutsy [🆕🆕🆕 D610 (D539): no longer — built at D610]). **Dropped:** Challenging Delivery (the bench search reads
 "a Pokémon" as a card name; only a Basic may go onto the Bench, so it needs a Basic bench-search arm), Hyper Lariat (a threshold bonus needs a new coin
 member), All-You-Can-Grab, Gormandizer and Charge-Up Dash (a deck source capped at the heads count; Charge-Up Dash also
-needs WP06), Reversing Gust (the shuffled body may be the Active) and Jet of Ink (a two-coin flip lock).
+needs WP06 [🆕🆕🆕 D612: done]), Reversing Gust (the shuffled body may be the Active) and Jet of Ink (a two-coin flip lock).
 
 | Column | `me` built / units (D595) | Standard pool D595 |
 |---|---|---|
@@ -388,7 +407,7 @@ exact name; a Basic Energy of the printed type from the hand to itself), Lunar C
 Basic {F}, draw 3, one Lunar Cycle per turn) and Flaring Magic ×2 (Delphox; pay a Basic {R}, draw until 7). No new op,
 member or field; nothing dropped. **Finished:** Mega Kangaskhan ex ×4, Moltres ×3, Zapdos ×3, Articuno `mep-097`,
 Lunatone ×3. Still waiting on an attack: Delphox ×2 "Energized Storm", Frosmoth "Cold Cyclone", and the `30th` Articuno ×2
-"Hail" (tcgdex's `<em>` markup, WP06). [🆕🆕🆕 D607: Delphox ×2's "Energized Storm" is BUILT (WP28a); both are fully built.]
+"Hail" (tcgdex's `<em>` markup, WP06). [🆕🆕🆕 D607: Delphox ×2's "Energized Storm" is BUILT (WP28a); both are fully built.] [🆕🆕🆕 D612: Hail ×2 is BUILT — WP06 normalised the text.]
 
 | Column | `me` built / units (D591) | Standard pool D591 |
 |---|---|---|
@@ -598,7 +617,7 @@ Legal rows: `sv` 2,021 (18 sets) + `me` 1,266 (9 sets; `30th-c` is not Standard-
   carry no `effect` in tcgdex; 43 `me` rows carry tcgdex HTML (`<span class="energy-symbol …">`,
   `<em>`) and 2 carry `[R]`-style tokens in their text — the `sv` rows carry none. Normalising
   that markup at ingest would build 18 of the residue's attack sentences (21 printings) with no
-  reader work, and would stop the client from showing the raw tags. **The `suffix` column**
+  reader work, and would stop the client from showing the raw tags. [🆕🆕🆕 D612: normalised at ingest and at read on the LOCAL D1 — WP06.] **The `suffix` column**
   is inconsistent across the `me` sets: of the 239 legal `me` "… ex" printings, tcgdex tags
   148 `ex`, 70 `EX` (`30th`, `me04`, `me05`) and 21 none (`me02`), so `/cards?suffix=ex` (the
   deck builder's suffix chip) misses 91 of them, and `/facets` now offers `EX` (plus `GX`,
@@ -612,24 +631,24 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### Markup only — builds once tcgdex's HTML / `[X]` tokens are normalised (an ingest fix, not a reader) — 18 text(s) / 21 printing(s)
 
-- 2× Put up to 3 &lt;span class="energy-symbol Dragon" title="Dragon">Dragon&lt;/span> Pokémon from your discard pile onto your Bench.
-- 2× This attack also does 20 damage to 1 of your opponent's Benched Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em>
-- 2× This attack does 30 damage to each of your opponent's Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em>
-- 1× Discard 2 &lt;span class="energy-symbol Fighting" title="Fighting">Fighting&lt;/span> Energy from this Pokémon.
-- 1× Discard 2 &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy from this Pokémon.
-- 1× Discard all Energy from this Pokémon, and this attack does 120 damage to 1 of your opponent's Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em>
-- 1× During your next turn, the Defending Pokémon takes 30 more damage from attacks &lt;em>(after applying Weakness and Resistance)&lt;/em>.
-- 1× During your opponent's next turn, attacks used by the Defending Pokémon do 30 less damage &lt;em>(before applying Weakness and Resistance)&lt;/em>.
-- 1× During your opponent's next turn, this Pokémon takes 50 less damage from attacks &lt;em>(after applying Weakness and Resistance)&lt;/em>.
-- 1× During your opponent's next turn, this Pokémon takes 60 less damage from attacks &lt;em>(after applying Weakness and Resistance)&lt;/em>.
-- 1× If this Pokémon has any &lt;span class="energy-symbol Fire" title="Fire">Fire&lt;/span> Energy attached, this attack does 80 more damage.
-- 1× If this Pokémon has any &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy attached, this attack does 80 more damage.
-- 1× If your opponent's Active Pokémon is a Pokémon &lt;em>ex&lt;/em>, this attack does 80 more damage.
-- 1× Switch this Pokémon with 1 of your Benched Pokémon. If you do, switch out your opponent's Active Pokémon to the Bench. &lt;em>(Your opponent chooses the new Active Pokémon.)&lt;/em>
-- 1× This attack also does 20 damage to each of your Benched Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em>
-- 1× This attack also does 60 damage to 1 of your opponent's Benched Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em>
-- 1× This attack does 20 damage to 1 of your opponent's Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em>
-- 1× This attack does 30 more damage for each &lt;span class="energy-symbol Water" title="Water">Water&lt;/span> Energy attached to this Pokémon.
+- 2× Put up to 3 &lt;span class="energy-symbol Dragon" title="Dragon">Dragon&lt;/span> Pokémon from your discard pile onto your Bench. [🆕🆕🆕 D612: BUILT — WP06; R-BC1 UNRULED, any stage may be benched (D238's reading)]
+- 2× This attack also does 20 damage to 1 of your opponent's Benched Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em> [🆕🆕🆕 D612: BUILT — WP06]
+- 2× This attack does 30 damage to each of your opponent's Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em> [🆕🆕🆕 D612: BUILT — WP06]
+- 1× Discard 2 &lt;span class="energy-symbol Fighting" title="Fighting">Fighting&lt;/span> Energy from this Pokémon. [🆕🆕🆕 D612: BUILT — WP06]
+- 1× Discard 2 &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy from this Pokémon. [🆕🆕🆕 D612: BUILT — WP06]
+- 1× Discard all Energy from this Pokémon, and this attack does 120 damage to 1 of your opponent's Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em> [🆕🆕🆕 D612: BUILT — WP06]
+- 1× During your next turn, the Defending Pokémon takes 30 more damage from attacks &lt;em>(after applying Weakness and Resistance)&lt;/em>. [🆕🆕🆕 D612: BUILT — WP06]
+- 1× During your opponent's next turn, attacks used by the Defending Pokémon do 30 less damage &lt;em>(before applying Weakness and Resistance)&lt;/em>. [🆕🆕🆕 D612: BUILT — WP06]
+- 1× During your opponent's next turn, this Pokémon takes 50 less damage from attacks &lt;em>(after applying Weakness and Resistance)&lt;/em>. [🆕🆕🆕 D612: BUILT — WP06]
+- 1× During your opponent's next turn, this Pokémon takes 60 less damage from attacks &lt;em>(after applying Weakness and Resistance)&lt;/em>. [🆕🆕🆕 D612: BUILT — WP06]
+- 1× If this Pokémon has any &lt;span class="energy-symbol Fire" title="Fire">Fire&lt;/span> Energy attached, this attack does 80 more damage. [🆕🆕🆕 D612: BUILT — WP06]
+- 1× If this Pokémon has any &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy attached, this attack does 80 more damage. [🆕🆕🆕 D612: BUILT — WP06]
+- 1× If your opponent's Active Pokémon is a Pokémon &lt;em>ex&lt;/em>, this attack does 80 more damage. [🆕🆕🆕 D612: BUILT — WP06]
+- 1× Switch this Pokémon with 1 of your Benched Pokémon. If you do, switch out your opponent's Active Pokémon to the Bench. &lt;em>(Your opponent chooses the new Active Pokémon.)&lt;/em> [🆕🆕🆕 D612: BUILT — WP06]
+- 1× This attack also does 20 damage to each of your Benched Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em> [🆕🆕🆕 D612: BUILT — WP06]
+- 1× This attack also does 60 damage to 1 of your opponent's Benched Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em> [🆕🆕🆕 D612: BUILT — WP06]
+- 1× This attack does 20 damage to 1 of your opponent's Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em> [🆕🆕🆕 D612: BUILT — WP06]
+- 1× This attack does 30 more damage for each &lt;span class="energy-symbol Water" title="Water">Water&lt;/span> Energy attached to this Pokémon. [🆕🆕🆕 D612: BUILT — WP06]
 
 ### Knock Out / Prize clauses — 16 text(s) / 36 printing(s)
 
@@ -692,7 +711,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× Flip 2 coins. If both of them are heads, this attack does 100 more damage. [🆕🆕🆕 D595: dropped from WP13 — a bonus behind a coin threshold needs a new `AttackCoinFlip` member]
 - 1× Flip 3 coins. Attach an amount of Basic Energy up to the number of heads from your discard pile to your Benched Pokémon in any way you like. [🆕🆕🆕 D595: BUILT]
 - 1× Flip a coin until you get tails. Search your deck for a number of cards up to the number of heads and put them into your hand. Then, shuffle your deck. [🆕🆕🆕 D595: dropped from WP13 — a deck source capped at the heads count]
-- 1× Flip a coin until you get tails. Search your deck for an amount of Basic &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy up to the number of heads and attach it to this Pokémon. Then, shuffle your deck. [🆕🆕🆕 D595: dropped from WP13 — a deck source capped at the heads count, and WP06's markup]
+- 1× Flip a coin until you get tails. Search your deck for an amount of Basic &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy up to the number of heads and attach it to this Pokémon. Then, shuffle your deck. [🆕🆕🆕 D595: dropped from WP13 — a deck source capped at the heads count, and WP06's markup] [🆕🆕🆕 D612: the markup is normalised (WP06); the clean text still needs a reader]
 - 1× Flip a coin until you get tails. Search your deck for an amount of Basic Energy up to the number of heads and attach it to this Pokémon. Then, shuffle your deck. [🆕🆕🆕 D595: dropped from WP13 — a deck source capped at the heads count]
 - 1× Flip a coin. If heads, choose 1 of your opponent's Pokémon. Shuffle that Pokémon and all attached cards into their deck. [🆕🆕🆕 D595: dropped from WP13 — `returnBenched` cannot take the Active]
 - 1× Flip a coin. If heads, choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition. [🆕🆕🆕 D605: BUILT]
@@ -709,7 +728,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 3× Discard up to 2 Energy cards from this Pokémon, and this attack does 120 damage for each card you discarded in this way. [🆕🆕🆕 D597: BUILT]
 - 3× Reveal any number of Honedge, Doublade, and Aegislash from your hand, and this attack does 60 damage for each card you revealed in this way. [🆕🆕🆕 D607: WP28b]
 - 3× This attack does 50 damage for each type of Basic Energy attached to all of your Pokémon. [🆕🆕🆕 D607: BUILT]
-- 2× Discard any amount of [R] Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way. [🆕🆕🆕 D597: BUILT — keyed by id on `INFERNO_X`]
+- 2× Discard any amount of [R] Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way. [🆕🆕🆕 D597: BUILT — keyed by id on `INFERNO_X`] [🆕🆕🆕 D612: the text is normalised to {R}, the key retired; reader-built]
 - 2× Discard the top 6 cards of your deck, and this attack does 100 damage for each Basic {W} Energy card that you discarded in this way. [🆕🆕🆕 D597: BUILT]
 - 2× This attack does 10 damage for each card in your hand. [🆕🆕🆕 D600: BUILT]
 - 2× This attack does 110 damage for each of your Beedrill and Beedrill ex in play. [🆕🆕🆕 D607: BUILT]
@@ -761,7 +780,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips 2 coins. If either of them is tails, that attack doesn't happen. [🆕🆕🆕 D595: dropped from WP13 — `flipLockAttack` is one coin and field-free]
 - 1× During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Burned Pokémon.
 - 1× During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Pokémon that have an Ability.
-- 1× The Defending Pokémon's Weakness is now &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> until the end of your next turn. &lt;em>(Apply Weakness as ×2.)&lt;/em>
+- 1× The Defending Pokémon's Weakness is now &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> until the end of your next turn. &lt;em>(Apply Weakness as ×2.)&lt;/em> [🆕🆕🆕 D612: the markup is normalised (WP06); the clean text still needs a reader]
 
 ### Spread / snipe damage — 15 text(s) / 27 printing(s)
 
@@ -771,7 +790,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× Discard 2 Energy from this Pokémon, and this attack does 60 damage to each of 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: BUILT]
 - 2× If you have no cards in your hand, choose an attack from 1 of your opponent's Pokémon in play and use it as this attack.
 - 2× Shuffle all Energy attached to this Pokémon into your deck, and this attack does 220 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: BUILT]
-- 1× Discard all &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy from this Pokémon, and this attack does 90 damage to 1 of your opponent's Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em> [🆕🆕🆕 D608: WP30 rest]
+- 1× Discard all &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy from this Pokémon, and this attack does 90 damage to 1 of your opponent's Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em> [🆕🆕🆕 D608: WP30 rest] [🆕🆕🆕 D612: the markup is normalised (WP06); the clean text still needs a reader]
 - 1× If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: WP30 rest]
 - 1× Move a {W} Energy from this Pokémon to 1 of your Benched Pokémon.
 - 1× This attack does 140 damage to 1 of your opponent's Pokémon. If you don't have 10 or more Basic {F} Energy cards in your discard pile, this attack does nothing. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: WP30 rest]
@@ -796,7 +815,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 3× You may discard 2 {L} Energy from this Pokémon and make your opponent's Active Pokémon Paralyzed. [🆕🆕🆕 D608: BUILT]
 - 2× Discard 4 Basic {R} Energy cards from your hand. If you can't discard 4 cards in this way, this attack does nothing. [🆕🆕🆕 D586: BUILT]
 - 1× Discard 2 Energy from this Pokémon, and your opponent's Active Pokémon is now Paralyzed.
-- 1× Discard a &lt;span class="energy-symbol Fire" title="Fire">Fire&lt;/span> Energy, a &lt;span class="energy-symbol Water" title="Water">Water&lt;/span> Energy, and a &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy from this Pokémon.
+- 1× Discard a &lt;span class="energy-symbol Fire" title="Fire">Fire&lt;/span> Energy, a &lt;span class="energy-symbol Water" title="Water">Water&lt;/span> Energy, and a &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy from this Pokémon. [🆕🆕🆕 D612: the markup is normalised (WP06); the clean text still needs a reader]
 - 1× Shuffle up to 3 in any combination of Pokémon and Basic Energy cards from your discard pile into your deck.
 
 ### Hand, deck and discard-pile effects — 21 text(s) / 29 printing(s)

@@ -21,8 +21,15 @@
 //   Trainer branch dropped them and the engine hand-wrote the faces;
 // - `*_url` columns keep the tcgdex ORIGIN base URLs (extensionless, §4.4);
 // - `*Json` fields stay raw objects here — ./sql.ts JSON.stringifies them
-//   into the SQL text (these rows never pass through Drizzle's json mode).
+//   into the SQL text (these rows never pass through Drizzle's json mode);
+// - 🆕 D612 — every printed TEXT (an attack's or Ability's `effect`, a Trainer's or
+//   Energy's `effect`) is written through the engine's `normalizeCardText`: tcgdex's
+//   `<em>` / energy-symbol `<span>` HTML, "[R]" tokens and type words ("Basic Fire
+//   Energy", "ColorlessColorless") become the `sv` spelling ({R}, {C}{C}). The
+//   engine reads a persisted raw face through the same function (cards.ts
+//   `cardOfUid`), so a row ingested before D612 still plays right.
 
+import { normalizeCardText } from "@luminous/engine";
 import type { TcgdexCard, TcgdexSerie, TcgdexSet } from "@luminous/schema";
 import type { cards, series, sets } from "../db/schema";
 import { normalizeSentinel } from "../sentinel";
@@ -100,8 +107,8 @@ export function mapCard(card: TcgdexCard): CardRow {
         evolveFrom: normalizeSentinel(card.evolveFrom),
         typesJson: card.types ?? null,
         retreat: card.retreat ?? null,
-        abilitiesJson: card.abilities ?? null,
-        attacksJson: card.attacks ?? null,
+        abilitiesJson: textBlocks(card.abilities),
+        attacksJson: textBlocks(card.attacks),
         weaknessesJson: card.weaknesses ?? null,
         resistancesJson: card.resistances ?? null,
       };
@@ -111,18 +118,32 @@ export function mapCard(card: TcgdexCard): CardRow {
         // 🆕 D581 — the printed Pokémon face (header): null when not printed,
         // exactly as on the Pokémon branch.
         hp: card.hp ?? null,
-        abilitiesJson: card.abilities ?? null,
-        attacksJson: card.attacks ?? null,
+        abilitiesJson: textBlocks(card.abilities),
+        attacksJson: textBlocks(card.attacks),
         trainerType: normalizeSentinel(card.trainerType),
-        effect: card.effect ?? null,
+        effect: rulesText(card.effect),
       };
     case "Energy":
       return {
         ...base,
         energyType: energyTypeOf(card.energyType, card.effect),
-        effect: card.effect ?? null,
+        effect: rulesText(card.effect),
       };
   }
+}
+
+/** 🆕 D612 — a Trainer's / Energy's rules text, normalised (null when not printed). */
+function rulesText(effect: string | undefined): string | null {
+  return effect === undefined ? null : normalizeCardText(effect);
+}
+
+/** 🆕 D612 — the printed attacks / Abilities with each `effect` normalised (null when not
+    printed). A block without an `effect` is kept as tcgdex sent it. */
+function textBlocks<T extends { effect?: string }>(blocks: T[] | undefined): T[] | null {
+  if (blocks === undefined) return null;
+  return blocks.map((block) =>
+    block.effect === undefined ? block : { ...block, effect: normalizeCardText(block.effect) },
+  );
 }
 
 /** 🆕🆕🆕 D583 — the Energy subtype the row stores. tcgdex tags `energyType: "Normal"` on 14

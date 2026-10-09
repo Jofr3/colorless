@@ -4103,7 +4103,9 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // `INFERNO_X` (index 0; tcgdex prints "[R]"), counted in the D597 block.
     // 🆕🆕🆕 D608 — and five more: Mewtwo ex ×3 "Photon Bullets" and Greninja ex ×2 "Stealthy Slash" (the
     // `30th` `<em>` faces) on the new `PHOTON_BULLETS` / `STEALTHY_SLASH` (index 0), counted in the D608 block.
-    const meAlias = ["me02.5-178", "30th-073", "30th-136", "mep-006", "me03-062", "me03-107", "me03-121", "me04-030", ...KEYED_ATTACK_ME_D597, ...KEYED_ATTACK_ME_D608];
+    // 🆕🆕🆕 D612 — and four fewer: `INFERNO_X` ×2 and `STEALTHY_SLASH` ×2 are RETIRED (WP06's normaliser
+    // builds their text), so `RETIRED_ATTACK_KEYS_D612` leaves the list; Photon Bullets ×3 stays keyed.
+    const meAlias = ["me02.5-178", "30th-073", "30th-136", "mep-006", "me03-062", "me03-107", "me03-121", "me04-030", ...KEYED_ATTACK_ME_D597, ...KEYED_ATTACK_ME_D608].filter((id) => !RETIRED_ATTACK_KEYS_D612.includes(id));
     const legalKeys = [...new Set(REGISTRY_ATTACKS.map(([id]) => id))];
     expect(attackRegistryIds().sort()).toEqual([...legalKeys, ...rotated, ...trainerGranted, ...meAlias].sort());
     // ⚠️ Twelve KEYS carrying thirteen ROWS — Lillie's Comfey authors two printed
@@ -8674,7 +8676,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // `registryCardIds()` — EVERY key including `fix-*` — AND IT IS NOT
     // `BUILT.attack`'s READER-KEYED RAW SUMMAND**; D321 lost a clause by asserting
     // this number could not move, and it moved by 3 that session too.
-    expect(raw.length).toBe(1301); // 🆕🆕🆕 D611 — +17, WP21's and Dragonair's activated Ability keys (MID-MAP), all non-attack (`nonAttackRegistryIds()` 1112 → 1129; `CENSUS_ME_POKEMON_D611`). 🆕🆕🆕 D610 — +16, WP37a's Ability / trigger / passive keys (MID-MAP), all non-attack (`nonAttackRegistryIds()` 1096 → 1112; `CENSUS_ME_POKEMON_D610`). 🆕🆕🆕 D608 — +5, WP30's `30th` attack-only keys (MID-MAP), none non-attack (`nonAttackRegistryIds()` stays 1096; `KEYED_ATTACK_ME_D608`). 🆕🆕🆕 D606 — +9, WP25a's Stadium keys (MID-MAP), all non-attack (`nonAttackRegistryIds()` 1087 → 1096; `CENSUS_ME_TRAINER_D606`). 🆕🆕🆕 D604 — +8, WP18's typed Special Energy keys (MID-MAP), all non-attack (`nonAttackRegistryIds()` 1079 → 1087; `CENSUS_ME_ENERGY_D604`). 🆕🆕🆕 D603 — +11, WP11's Mega-gated keys (MID-MAP), all non-attack (`nonAttackRegistryIds()` 1068 → 1079; `CENSUS_ME_POKEMON_D603` + `CENSUS_ME_TRAINER_D603`). 🆕🆕🆕 D602 — +9, WP20b's activated Ability keys (MID-MAP), all non-attack (`nonAttackRegistryIds()` 1059 → 1068; `CENSUS_ME_POKEMON_D602`). 🆕🆕🆕 D599 — +4, WP24a's Supporter keys (MID-MAP), all non-attack (`nonAttackRegistryIds()` 1055 → 1059; `CENSUS_ME_TRAINER_D599`). 🆕🆕🆕 D598 — +13, WP32's Ability keys (MID-MAP), all non-attack (`nonAttackRegistryIds()` 1042 → 1055; `CENSUS_ME_POKEMON_D598`). 🆕🆕🆕 D597 — +2, WP29's Inferno X keys `mep-023` / `mep-029` (MID-MAP), ATTACK-only (`nonAttackRegistryIds()` unmoved; `KEYED_ATTACK_ME_D597`). 🆕🆕🆕 D594 — +2, WP33a's Luxio `me03-027` and Chesnaught `me04-007` (MID-MAP), both non-attack (`nonAttackRegistryIds()` 1040 → 1042; `CENSUS_ME_POKEMON_D594`). 🆕🆕🆕 D593 — +5, WP07's "Fade Out" keys (Drifblim, Meowth ex ×3, Emolga; MID-MAP), every one ATTACK-only, so `nonAttackRegistryIds()` stands at 1040. 🆕🆕🆕 D591 — +19, WP20a's activated Ability keys (MID-MAP), every one non-attack (`nonAttackRegistryIds()` 1021 → 1040; `CENSUS_ME_POKEMON_D591`). 🆕🆕🆕 D590 — +13, WP05's on-evolve Ability keys (MID-MAP), every one non-attack (`nonAttackRegistryIds()` 1008 → 1021; `CENSUS_ME_POKEMON_D590`). 🆕🆕🆕 D589 — +5, WP08's Mega Greninja ex ×5 "Mortal Shuriken" (MID-MAP), every one non-attack (`nonAttackRegistryIds()` 1003 → 1008; `CENSUS_ME_POKEMON_D589`). 🆕🆕🆕 D588 — +17, WP22's Trainer parameter copies (MID-MAP), every one non-attack (`nonAttackRegistryIds()` 986 → 1003; `CENSUS_ME_TRAINER_D588`). 🆕🆕🆕 D587 — +19, WP04's Trainer parameter copies (MID-MAP), every one non-attack (`nonAttackRegistryIds()` 967 → 986; `CENSUS_ME_TRAINER_D587`). 🆕🆕🆕 D586 — +2, Carbink `me02.5-117` / `-242` on `DOUBLE_TYPE_FP` (MID-MAP), non-attack (`nonAttackRegistryIds()` 965 → 967; `CENSUS_ME_POKEMON_D586`). 🆕🆕🆕 D585 — +19, WP19's parameter copies (MID-MAP), every one non-attack (`nonAttackRegistryIds()` below steps by 19 too, 946 → 965; `CENSUS_ME_POKEMON_D585`). 🆕🆕🆕 D584 — +18, the `me` alias tier 2 (MID-MAP): 16 non-attack keys (`nonAttackRegistryIds()` below steps by 16, 930 → 946, every one in the D584 census lists) and Drifloon `30th-073` / `-136`, ATTACK-only (`FLOAT_UP`). 🆕🆕🆕 D583 — +1, Team Rocket's Energy `me02.5-217` on `sv10-182`'s object (MID-MAP; non-attack, so `nonAttackRegistryIds()` steps by 1 too). 🆕🆕🆕 D582 — +99, the Mega Evolution serie's reprint-alias tier: 99 REAL `me` ids on EXISTING program objects, MID-MAP; Terapagos `me02.5-178` is ATTACK-only, so `nonAttackRegistryIds()` below steps by 98 (831 → 929), every one in `CENSUS_ME_ALIAS_D582`. 🆕🆕🆕 D580 — +2, TWO REAL catalog ids and no `fix-*` key (Iron Treads `sv05-118`, a `passive`-only row, and Mr. Mime `sv05-063`, an ATTACK-only row — so `nonAttackRegistryIds()` below steps by ONE, 830 → 831, and the two lines part by one again), both inserted MID-MAP (D395/D396), so the last-key rung does not move. 🆕🆕🆕 D579 — +1, ONE REAL catalog id and no `fix-*` key (Walking Wake `sv06-063`, an ATTACK-only row — so `nonAttackRegistryIds()` below stands still at 830 and the two lines part by one), inserted MID-MAP (D395/D396), so the last-key rung does not move. 🆕🆕🆕 D578 — +6, SIX REAL catalog ids and no `fix-*` key (Scovillain ex `sv08-037` / `sv08-216`, Technical Machine: Fluorite `sv08-188`, Relicanth `sv05-084` / `sv05-173`, Team Rocket's Energy `sv10-182`; the D578 suites drive a LOCAL `cardPool`), inserted MID-MAP after D577's rows, so `raw[last]` stays put (`sv09-107`, re-read by the join). // 🆕🆕🆕 D577 — +6, SIX REAL catalog ids and no `fix-*` key (Area Zero Underdepths `sv07-131` / `sv07-174` / `sv08.5-094`, Boomerang Energy `sv06-166`, Tyme `sv08-190` / `sv08.5-143`; the D577 suites drive a LOCAL `cardPool`), inserted MID-MAP after D576's rows, so `raw[last]` stays put (`sv09-107`, re-read). 🆕🆕🆕 D576 — +4, FOUR REAL catalog ids and no `fix-*` key (the Antique Fossils `sv07-129` / `sv10.5b-080` / `sv07-130` / `sv10.5w-079`; the D576 suite drives a LOCAL `cardPool`), inserted MID-MAP after D572's rows, so `raw[last]` stays put (`sv09-107`, re-read). 🆕🆕🆕 D574 — +1, ONE REAL catalog id and no `fix-*` key (Malamar `sv06.5-034`, an ATTACK-only row; the suite drives a LOCAL `cardPool`), inserted MID-MAP beside Xerosic's Machinations, so `raw[last]` stays put (`sv09-107`, re-read). 🆕🆕🆕 D572 — +6, SIX REAL catalog ids and no `fix-*` key (the new suite drives a LOCAL `cardPool`), inserted MID-MAP after D571's rows (D395/D396), so `raw[last]` stays put (`sv09-107`, re-read). // 🆕🆕🆕 D571 — +6, SIX REAL catalog ids and no `fix-*` key (the new suite drives a LOCAL `cardPool`), inserted MID-MAP after D570's rows (D395/D396), so `raw[last]` stays put (`sv09-107`, re-read). // 🆕🆕🆕 D570 — +7, SEVEN REAL catalog ids and no `fix-*` key (the new suite drives a LOCAL `cardPool`), inserted MID-MAP after D569's rows (D395/D396), so `raw[last]` stays put (`sv09-107`, re-read). // 🆕🆕🆕 D569 — +14, FOURTEEN REAL catalog ids and no `fix-*` key (the new suite drives a LOCAL `cardPool`), inserted MID-MAP after `sv08-161` (D395/D396), so `raw[last]` stays put (`sv09-107`, re-read). // 🆕🆕🆕 D568 — +17, SEVENTEEN REAL catalog ids and no `fix-*` key (the new suite drives a LOCAL `cardPool`), inserted MID-MAP after `sv07-136` (D395/D396), so `raw[last]` stays put (`sv09-107`, re-read). // 🆕🆕🆕 D567 — +4, FOUR REAL catalog ids and no `fix-*` key (the new suite drives a LOCAL `cardPool`), inserted MID-MAP after `sv10-180` (D395/D396), so `raw[last]` stays put (`sv09-107`, re-read). // 🆕🆕🆕 D566 — +9, NINE REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv06-060` (D395/D396), so `raw[last]` stays put (`sv09-107`, re-read). // 🆕🆕🆕 D565 — +8, EIGHT REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv06.5-029` (D395/D396), so `raw[last]` stays put (`sv09-107`, re-read). // 🆕🆕🆕 D564 — +9, NINE REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv08.5-151` (D395/D396), so `raw[last]` stays put (`sv09-107`, re-read). // 🆕🆕🆕 D563 — +11, ELEVEN REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv08.5-108` (D395/D396), so `raw[last]` stays put. // 🆕🆕🆕 D562 — +14, FOURTEEN REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv05-156` (D395/D396), so `raw[last]` stays put. // 🆕🆕🆕 D561 — +15, FIFTEEN REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv07-006` (D395/D396), so `raw[last]` stays put. // 🆕🆕🆕 D560 — +17, SEVENTEEN REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv09-082` (D395/D396), so `raw[last]` does NOT move. This line and the one below step TOGETHER. // 🆕🆕🆕 D559 — +15, FIFTEEN REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv05-212` (D395/D396), so `raw[last]` does NOT move. This line and the one below step TOGETHER. // 🆕🆕🆕 D558 — +18, EIGHTEEN REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv10.5w-085` (D395/D396), so `raw[last]` does NOT move. This line and the one below step TOGETHER. // 🆕🆕🆕 D557 — +19, NINETEEN REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `svp-149` (D395/D396), so `raw[last]` does NOT move. This line and the one below step TOGETHER. // 🆕🆕🆕 D556 — +19, NINETEEN REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv06-138` (D395/D396), so `raw[last]` does NOT move. This line and the one below step TOGETHER. // 🆕🆕🆕 D555 — +20, TWENTY REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv06.5-094` (D395/D396), so `raw[last]` does NOT move. This line and the one below step TOGETHER. // 🆕🆕🆕 D554 — +15, FIFTEEN REAL catalog ids and no `fix-*` key (`deckSearchTrainers.test.ts` drives a LOCAL `cardPool`), inserted MID-MAP after `sv10-033` (D395/D396), so `raw[last]` does NOT move. This line and the one below step TOGETHER. // 🆕🆕🆕 D553 — +12, TWELVE REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv10.5b-169` (D395/D396's precedent), so the `raw[last]` rung below and `autoHeal.test.ts`'s baton do NOT move. This line and the one below step TOGETHER. // 🆕🆕 D396 — +3 (Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156`, THREE bare `attackGate` keys sharing ONE program object at index 1 — REAL catalog ids and no `fix-*` demonstrator, because `angeliteCancel.test.ts` drives a LOCAL `cardPool`. ⚠️ **THE ID LINE STEPS BY 3 AND THE OBJECT COUNT BY 1**, which is the reprint idiom: three keys, one value) // 🆕🆕 D395 — +1 (Miltank `sv08.5-081`, ONE bare `attackGate` key at index 1 — a REAL catalog id and no `fix-*` demonstrator, because `rolloutGate.test.ts` drives a LOCAL `cardPool` per D275's idiom; `sv08.5` is not among `catalogManifest`'s six sets, so a shared-pool body would have owed a `fix-*` key here as well) // 🆕🆕 D391 — +1 (`fix-grassdouble`, the FIXTURE Special providing `{G}{G}`: the first `EnergyProgram.provides` row to spell ONE type TWICE, and the only board where a CARD count and a UNIT count disagree under a typed filter — a `fix-*` key, so no catalog printing moved with it) // 🆕🆕 D356 — +1 (ONE real catalog id and NOT ONE `fix-*` key: `autoHeal.test.ts` drives a LOCAL `cardPool` and asserts by id that nothing reached `FIXTURE_POOL`), for the SIXTEENTH slice running on which this and `nonAttackRegistryIds()` step together and stay 0 apart. // 🆕🆕 D355 — +1 (ONE real catalog id and NOT ONE `fix-*` key: `energyCoin.test.ts` drives a LOCAL `cardPool` and asserts by id in §6 that nothing reaches `FIXTURE_POOL`), so this line and the one below step TOGETHER and stay 0 apart for the FIFTEENTH slice running. ⚠️ AND THE LOCAL POOL IS AGAIN THE ONLY OPTION THAT COSTS NOTHING: `sv10.5b` is not among `catalogManifest`'s six sets (978 rows, re-read rather than recalled), so a shared-pool body would have owed a `fix-energycoin` key here as well. THE KEY IS THE SET, NOT THE SURFACE. // 🆕🆕 D354 — +1 (ONE real catalog id and NOT ONE `fix-*` key: `xBoot.test.ts` drives a LOCAL `cardPool` and asserts by id in §6 that nothing reaches `FIXTURE_POOL`), so this line and the one below step TOGETHER and stay 0 apart for the FOURTEENTH slice running. ⚠️ AND THE LOCAL POOL IS AGAIN THE ONLY OPTION THAT COSTS NOTHING: `sv10` is not among `catalogManifest`'s six sets (978 rows, re-read rather than recalled), so a shared-pool body would have owed a `fix-metagross` key here as well. THE KEY IS THE SET, NOT THE SURFACE. // 🆕🆕 D353 — +2 (two real catalog ids and NOT ONE `fix-*` key: `spikeClad.test.ts` drives a LOCAL `cardPool` and asserts by id in §8 that nothing reaches `FIXTURE_POOL`), so this line and the one below step TOGETHER and stay 0 apart for the THIRTEENTH slice running. // 🆕🆕 D352 — +3 (three real catalog ids and NOT ONE `fix-*` key: `metalMaker.test.ts` drives a LOCAL `cardPool` and asserts by id in §8 that nothing reached `FIXTURE_POOL`), so this line and `nonAttackRegistryIds()` below step by the SAME amount and stay 0 apart for the TWELFTH slice running. ⚠️ AND THE LOCAL POOL IS THE ONLY OPTION THAT COSTS NOTHING AGAIN: none of `svp`, `sv05` or `sv06` is among `catalogManifest`'s six sets, so shared-pool bodies would have owed `fix-metang` AND `fix-morpeko` here as well. THE KEY IS THE SET, NOT THE SURFACE. // 🆕🆕 D351 — +3 (three real catalog ids and NOT ONE `fix-*` key: `pyroDance.test.ts` drives a LOCAL `cardPool` and asserts by id in §7 that nothing reached `FIXTURE_POOL`), so this line and `nonAttackRegistryIds()` below step by the SAME amount and stay 0 apart for the ELEVENTH slice running. // 🆕🆕 D350 — +3 (three real catalog ids, and NOT ONE `fix-*` key: `invitingWink.test.ts` drives a LOCAL `cardPool` and asserts by id in §7 that nothing reached `FIXTURE_POOL`), so this line and `nonAttackRegistryIds()` below step by the SAME amount and stay 0 apart for the TENTH slice running. // 🆕🆕 D349 — +6 (six real catalog ids, and NOT ONE `fix-*` key: `remainingHpWindow.test.ts` drives a LOCAL `cardPool` and asserts by id in §6 that nothing reached `FIXTURE_POOL`), so this line and the one below step by the SAME amount and stay **0** wide for the NINTH slice running. // 🆕🆕 D347 +3 AND THE TWO LINES ARE **0** WIDE FOR THE EIGHTH SLICE RUNNING — 3 real catalog ids (Yanmega ex `sv10-003`/`sv10-206`/`sv10-228`) and **NO** `fix-*` demonstrator, because `buzzingBoost.test.ts` seats every body on a LOCAL `cardPool` (D275's idiom) and `sv10` is not one of `catalogManifest`'s six sets. // 🆕🆕 D346 +3 AND THE TWO LINES ARE **0** WIDE FOR THE SEVENTH SLICE RUNNING — 3 real catalog ids (Magneton `svp-153`/`svp-159`/`sv08-059`) and **NO** `fix-*` demonstrator key, because `overvoltDischarge.test.ts` drives all three off a LOCAL `cardPool` (D275's idiom) and asserts, id by id, that nothing it defines reached `FIXTURE_POOL`. ⚠️ AND THE LOCAL POOL IS AGAIN THE ONLY OPTION THAT COSTS NOTHING: neither `svp` nor `sv08` is among `catalogManifest`'s six sets, so shared-pool bodies would have owed a `fix-magneton` key here as well. THE KEY IS THE SET, NOT THE SURFACE. // 🆕🆕 D345 +6 AND THE TWO LINES ARE **0** WIDE FOR THE SIXTH SLICE RUNNING — 6 real catalog ids (Dusclops ×3, Dusknoir ×3) and **NO** `fix-*` demonstrator key, because `cursedBlast.test.ts` drives both printings off a LOCAL `cardPool` (D275's idiom). ⚠️ AND HERE THE LOCAL POOL IS THE ONLY OPTION THAT COSTS NOTHING FOR THE SECOND SLICE RUNNING: `sv08.5` is not among `catalogManifest`'s six sets, so shared-pool bodies would have owed a `fix-dusclops` AND a `fix-dusknoir` key on this line as well. THE KEY IS THE SET, NOT THE SURFACE — and note the split inside this row, which no earlier slice has had: `sv06.5` IS one of the six, so FOUR of these six ids could have gone in the shared pool and two could not. **A ROW CAN BE HALF-ADMISSIBLE, WHICH IS WHY THE RULE IS PER CARD AND NOT PER PRINTING.** ⚠️ **AND THIS IS THE BIGGEST STEP THIS LINE HAS TAKEN SINCE D335** — six printings on two sentences, where the last five slices moved it by 1, 3, 1, 3 and 3. // 🆕 D344 +1 AND THE TWO LINES ARE **0** WIDE FOR THE FIFTH SLICE RUNNING — 1 real catalog id (`sv08-171`) and **NO** `fix-*` demonstrator key, because `deductionKit.test.ts` drives the Item off a LOCAL `cardPool` (D275's idiom). ⚠️ AND HERE THE LOCAL POOL IS THE ONLY OPTION THAT COSTS NOTHING: `sv08` is not among `catalogManifest`'s six sets, so a shared-pool body would have owed a `fix-deductionkit` key on this line as well. THE KEY IS THE SET, NOT THE SURFACE. ⚠️ **AND THIS IS THE SMALLEST STEP THIS LINE HAS TAKEN SINCE D339** — a one-printing card moves it by one, where the last four slices moved it by 3, 3, 3 and 4.  // 🆕🆕 D342 +3 AND THE TWO LINES ARE **0** WIDE FOR THE FOURTH SLICE RUNNING — 3 real catalog ids (`sv05-145`/`sv05-198`/`sv08.5-104`) and **NO** `fix-*` demonstrator key at all, because `derivedSearchTopOrder.test.ts` drives a LOCAL `cardPool` (D275's idiom) and owes the shared fixture pool nothing. ⚠️ THE STEP IS THE NUMBER OF REGISTRY KEYS AND NOT THE SIZE OF THE ROW: this row is 4 legal printings and only 3 of them are keyed here — Dialga `sv08-135` is read by a deriver and authors no key. 🆕 D340 +3 AND THE TWO LINES ARE **0** WIDE FOR THE THIRD SLICE RUNNING — 3 real catalog ids (Froslass `sv06-053`/`sv06-174`/`svp-117`) and **NO** `fix-*` demonstrator key at all, because `freezingShroud.test.ts` drives the real ids on a LOCAL `cardPool` (D275's idiom) and adds NOTHING to `FIXTURE_POOL`. ⚠️ **AND HERE THE LOCAL POOL IS LOAD-BEARING TWICE OVER**: neither `sv06` nor `svp` is among `catalogManifest`'s six sets, so a shared-pool body would have owed a `fix-froslass` key AND reddened `revealClause`'s `swept.size` — which is exactly what D335's `fix-drakloak`, also a POKÉMON and also `sv06`, had to pay. THE KEY IS THE SET, NOT THE SURFACE. 🆕 D339 +1 AND THE TWO LINES ARE **0** WIDE FOR THE SECOND SLICE RUNNING — 1 real catalog id (Maushold `sv08-158`) and **NO** `fix-*` demonstrator key at all, because `familialMarch.test.ts` drives the real id on a LOCAL `cardPool` (D275's idiom) and adds NOTHING to `FIXTURE_POOL`. ⚠️ **AND HERE THE LOCAL POOL WAS NOT A PREFERENCE BUT THE ONLY OPTION**: `sv08-158` is the ONLY Standard-legal `Maushold` in the catalog and `Maushold ex` has no legal printing at all (`sv04-155`/`sv04-233` both `legal_standard = 0`, and `sv01-161`/`sv02-168`/`sv02-226`/`sv04.5-074`/`sv04.5-210` likewise), so there is no legal catalog body for EITHER member of the union to reach for — both are driven from local bodies. THE KEY IS THE SET, NOT THE SURFACE, and `sv08` is not among `catalogManifest`'s six sets, so a shared-pool body would have owed a `fix-*` key AND reddened `revealClause`'s `swept.size`. 🆕 D338 +2 AND THE TWO LINES ARE **0** WIDE FOR THE FIRST TIME IN NINE SLICES — 2 real catalog ids (Heatmor `sv10.5w-019`/`-104`) and **NO** `fix-*` demonstrator key at all, because `lickingCatch.test.ts` drives the real ids on a LOCAL `cardPool` (D275's idiom) and adds NOTHING to `FIXTURE_POOL`. ⚠️ **THAT IS A CENSUS DECISION, NOT A TIDINESS ONE**: `catalogManifest.test.ts` classifies every real-looking fixture id against a generated manifest of six sets and `sv10.5w` is not one of them, so a shared-pool body would have owed a `fix-*` key AND reddened `revealClause`'s `swept.size` — the two costs D337 paid. THE KEY IS THE SET, NOT THE SURFACE, and the cheapest way to owe neither is to put nothing in the shared pool. 🆕 D337 +4 AND THE TWO LINES ARE 1 WIDE AGAIN — 3 real catalog ids (Ethan's Adventure ×3) PLUS **ONE** `fix-*` demonstrator key, one per CARD: `catalogManifest.test.ts` classifies every real-looking fixture id against a generated manifest of six sets (sv01/sv02/sv03/sv06.5/sve/swsh10.5) and `sv10` is not one of them. THE KEY IS THE SET, NOT THE SURFACE, and ONE card owes ONE key where D333/D335/D336 each owed two. 🆕 D336 +5 AND THE TWO LINES ARE 2 WIDE AGAIN — 3 real catalog ids (Larry's Skill ×2, Secret Box ×1) PLUS **TWO** `fix-*` demonstrator keys, one per CARD: `catalogManifest.test.ts` classifies every real-looking fixture id against a generated manifest of six sets (sv01/sv02/sv03/sv06.5/sve/swsh10.5) and neither `sv08.5` nor `sv06` is one of them, so BOTH Trainers are keyed `fix-*`. THE KEY IS THE SET, NOT THE SURFACE. 🆕 D335 +7 AND THE TWO LINES ARE **2** WIDE THIS SESSION, THE WIDEST THEY HAVE BEEN — 5 real catalog ids (Drakloak ×2, Rika ×3) PLUS **TWO** `fix-*` demonstrator keys, and the second one is the finding: `fix-drakloak` is a POKÉMON, which D327's rule says needs no demonstrator, and it needs one anyway because `catalogManifest.test.ts` classifies every real-looking fixture id against a generated manifest of six sets and `sv06` is not one of them. **THE KEY IS THE SET, NOT THE SURFACE.** 🆕 D334 +4 AND THE TWO LINES STEP BY DIFFERENT AMOUNTS FOR THE FIFTH SLICE RUNNING — 3 real catalog ids (Explorer's Guidance ×3) PLUS the 1 `fix-explorersguidance` demonstrator key its suite drives, one per CARD: D326/D330/D331/D332/D333's mechanism, a Trainer played against `FIXTURE_POOL` owes a `fix-*` body, and this slice owes ONE where D333 owed two. 🆕 D333 +5 AND THE TWO LINES STEP BY DIFFERENT AMOUNTS FOR THE FOURTH SLICE RUNNING — 3 real catalog ids (Roto-Stick ×1, Bug Catching Set ×2) PLUS the 2 `fix-*` demonstrator keys the two new suites drive, one per CARD: D326/D330/D331/D332's mechanism, a Trainer played against `FIXTURE_POOL` owes a `fix-*` body, and this is the first slice in the run to owe TWO of them. 🆕 D332 +5 AND THE TWO LINES STEP BY DIFFERENT AMOUNTS FOR THE THIRD SLICE RUNNING — 4 real catalog ids (Drayton ×4) PLUS the 1 `fix-drayton` demonstrator key its suite drives: D326/D330/D331's mechanism, a Trainer played against `FIXTURE_POOL` owes a `fix-*` body. 🆕 D331 +4 AND THE TWO LINES STEP BY DIFFERENT AMOUNTS AGAIN — 3 real catalog ids (Lisia's Appeal ×3) PLUS the 1 `fix-lisiasappeal` demonstrator key its suite drives, which is D326/D330's mechanism: a Trainer played against `FIXTURE_POOL` owes a `fix-*` body. 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281; 617 at D325; D326 +4 (Archer sv10-170/-223 AND the two `fix-*` keys its suite plays through — `registryCardIds()` counts EVERY key); D327 +6 (Food Prep ×4 + Hustle Play ×2, and NO `fix-*` key — every one of the six is a REAL catalog id its suite plays through a local `Card`, D190's idiom); **D330 +5 and the two lines STEP BY DIFFERENT AMOUNTS AGAIN** — 3 real catalog ids (Florges + Petrel ×2) PLUS the 2 `fix-*` demonstrator keys its suite drives, which is D326's mechanism and not D327's: a Trainer played against `FIXTURE_POOL` owes a `fix-*` body and a Pokémon driven on a local `cardPool` does not, and this slice has one of each
+    expect(raw.length).toBe(1297); // 🆕🆕🆕 D612 — −4, the retired attack-only keys `INFERNO_X` ×2 and `STEALTHY_SLASH` ×2 (`RETIRED_ATTACK_KEYS_D612`; WP06's normaliser builds their text), none non-attack (`nonAttackRegistryIds()` stays 1129). 🆕🆕🆕 D611 — +17, WP21's and Dragonair's activated Ability keys (MID-MAP), all non-attack (`nonAttackRegistryIds()` 1112 → 1129; `CENSUS_ME_POKEMON_D611`). 🆕🆕🆕 D610 — +16, WP37a's Ability / trigger / passive keys (MID-MAP), all non-attack (`nonAttackRegistryIds()` 1096 → 1112; `CENSUS_ME_POKEMON_D610`). 🆕🆕🆕 D608 — +5, WP30's `30th` attack-only keys (MID-MAP), none non-attack (`nonAttackRegistryIds()` stays 1096; `KEYED_ATTACK_ME_D608`). 🆕🆕🆕 D606 — +9, WP25a's Stadium keys (MID-MAP), all non-attack (`nonAttackRegistryIds()` 1087 → 1096; `CENSUS_ME_TRAINER_D606`). 🆕🆕🆕 D604 — +8, WP18's typed Special Energy keys (MID-MAP), all non-attack (`nonAttackRegistryIds()` 1079 → 1087; `CENSUS_ME_ENERGY_D604`). 🆕🆕🆕 D603 — +11, WP11's Mega-gated keys (MID-MAP), all non-attack (`nonAttackRegistryIds()` 1068 → 1079; `CENSUS_ME_POKEMON_D603` + `CENSUS_ME_TRAINER_D603`). 🆕🆕🆕 D602 — +9, WP20b's activated Ability keys (MID-MAP), all non-attack (`nonAttackRegistryIds()` 1059 → 1068; `CENSUS_ME_POKEMON_D602`). 🆕🆕🆕 D599 — +4, WP24a's Supporter keys (MID-MAP), all non-attack (`nonAttackRegistryIds()` 1055 → 1059; `CENSUS_ME_TRAINER_D599`). 🆕🆕🆕 D598 — +13, WP32's Ability keys (MID-MAP), all non-attack (`nonAttackRegistryIds()` 1042 → 1055; `CENSUS_ME_POKEMON_D598`). 🆕🆕🆕 D597 — +2, WP29's Inferno X keys `mep-023` / `mep-029` (MID-MAP), ATTACK-only (`nonAttackRegistryIds()` unmoved; `KEYED_ATTACK_ME_D597`). 🆕🆕🆕 D594 — +2, WP33a's Luxio `me03-027` and Chesnaught `me04-007` (MID-MAP), both non-attack (`nonAttackRegistryIds()` 1040 → 1042; `CENSUS_ME_POKEMON_D594`). 🆕🆕🆕 D593 — +5, WP07's "Fade Out" keys (Drifblim, Meowth ex ×3, Emolga; MID-MAP), every one ATTACK-only, so `nonAttackRegistryIds()` stands at 1040. 🆕🆕🆕 D591 — +19, WP20a's activated Ability keys (MID-MAP), every one non-attack (`nonAttackRegistryIds()` 1021 → 1040; `CENSUS_ME_POKEMON_D591`). 🆕🆕🆕 D590 — +13, WP05's on-evolve Ability keys (MID-MAP), every one non-attack (`nonAttackRegistryIds()` 1008 → 1021; `CENSUS_ME_POKEMON_D590`). 🆕🆕🆕 D589 — +5, WP08's Mega Greninja ex ×5 "Mortal Shuriken" (MID-MAP), every one non-attack (`nonAttackRegistryIds()` 1003 → 1008; `CENSUS_ME_POKEMON_D589`). 🆕🆕🆕 D588 — +17, WP22's Trainer parameter copies (MID-MAP), every one non-attack (`nonAttackRegistryIds()` 986 → 1003; `CENSUS_ME_TRAINER_D588`). 🆕🆕🆕 D587 — +19, WP04's Trainer parameter copies (MID-MAP), every one non-attack (`nonAttackRegistryIds()` 967 → 986; `CENSUS_ME_TRAINER_D587`). 🆕🆕🆕 D586 — +2, Carbink `me02.5-117` / `-242` on `DOUBLE_TYPE_FP` (MID-MAP), non-attack (`nonAttackRegistryIds()` 965 → 967; `CENSUS_ME_POKEMON_D586`). 🆕🆕🆕 D585 — +19, WP19's parameter copies (MID-MAP), every one non-attack (`nonAttackRegistryIds()` below steps by 19 too, 946 → 965; `CENSUS_ME_POKEMON_D585`). 🆕🆕🆕 D584 — +18, the `me` alias tier 2 (MID-MAP): 16 non-attack keys (`nonAttackRegistryIds()` below steps by 16, 930 → 946, every one in the D584 census lists) and Drifloon `30th-073` / `-136`, ATTACK-only (`FLOAT_UP`). 🆕🆕🆕 D583 — +1, Team Rocket's Energy `me02.5-217` on `sv10-182`'s object (MID-MAP; non-attack, so `nonAttackRegistryIds()` steps by 1 too). 🆕🆕🆕 D582 — +99, the Mega Evolution serie's reprint-alias tier: 99 REAL `me` ids on EXISTING program objects, MID-MAP; Terapagos `me02.5-178` is ATTACK-only, so `nonAttackRegistryIds()` below steps by 98 (831 → 929), every one in `CENSUS_ME_ALIAS_D582`. 🆕🆕🆕 D580 — +2, TWO REAL catalog ids and no `fix-*` key (Iron Treads `sv05-118`, a `passive`-only row, and Mr. Mime `sv05-063`, an ATTACK-only row — so `nonAttackRegistryIds()` below steps by ONE, 830 → 831, and the two lines part by one again), both inserted MID-MAP (D395/D396), so the last-key rung does not move. 🆕🆕🆕 D579 — +1, ONE REAL catalog id and no `fix-*` key (Walking Wake `sv06-063`, an ATTACK-only row — so `nonAttackRegistryIds()` below stands still at 830 and the two lines part by one), inserted MID-MAP (D395/D396), so the last-key rung does not move. 🆕🆕🆕 D578 — +6, SIX REAL catalog ids and no `fix-*` key (Scovillain ex `sv08-037` / `sv08-216`, Technical Machine: Fluorite `sv08-188`, Relicanth `sv05-084` / `sv05-173`, Team Rocket's Energy `sv10-182`; the D578 suites drive a LOCAL `cardPool`), inserted MID-MAP after D577's rows, so `raw[last]` stays put (`sv09-107`, re-read by the join). // 🆕🆕🆕 D577 — +6, SIX REAL catalog ids and no `fix-*` key (Area Zero Underdepths `sv07-131` / `sv07-174` / `sv08.5-094`, Boomerang Energy `sv06-166`, Tyme `sv08-190` / `sv08.5-143`; the D577 suites drive a LOCAL `cardPool`), inserted MID-MAP after D576's rows, so `raw[last]` stays put (`sv09-107`, re-read). 🆕🆕🆕 D576 — +4, FOUR REAL catalog ids and no `fix-*` key (the Antique Fossils `sv07-129` / `sv10.5b-080` / `sv07-130` / `sv10.5w-079`; the D576 suite drives a LOCAL `cardPool`), inserted MID-MAP after D572's rows, so `raw[last]` stays put (`sv09-107`, re-read). 🆕🆕🆕 D574 — +1, ONE REAL catalog id and no `fix-*` key (Malamar `sv06.5-034`, an ATTACK-only row; the suite drives a LOCAL `cardPool`), inserted MID-MAP beside Xerosic's Machinations, so `raw[last]` stays put (`sv09-107`, re-read). 🆕🆕🆕 D572 — +6, SIX REAL catalog ids and no `fix-*` key (the new suite drives a LOCAL `cardPool`), inserted MID-MAP after D571's rows (D395/D396), so `raw[last]` stays put (`sv09-107`, re-read). // 🆕🆕🆕 D571 — +6, SIX REAL catalog ids and no `fix-*` key (the new suite drives a LOCAL `cardPool`), inserted MID-MAP after D570's rows (D395/D396), so `raw[last]` stays put (`sv09-107`, re-read). // 🆕🆕🆕 D570 — +7, SEVEN REAL catalog ids and no `fix-*` key (the new suite drives a LOCAL `cardPool`), inserted MID-MAP after D569's rows (D395/D396), so `raw[last]` stays put (`sv09-107`, re-read). // 🆕🆕🆕 D569 — +14, FOURTEEN REAL catalog ids and no `fix-*` key (the new suite drives a LOCAL `cardPool`), inserted MID-MAP after `sv08-161` (D395/D396), so `raw[last]` stays put (`sv09-107`, re-read). // 🆕🆕🆕 D568 — +17, SEVENTEEN REAL catalog ids and no `fix-*` key (the new suite drives a LOCAL `cardPool`), inserted MID-MAP after `sv07-136` (D395/D396), so `raw[last]` stays put (`sv09-107`, re-read). // 🆕🆕🆕 D567 — +4, FOUR REAL catalog ids and no `fix-*` key (the new suite drives a LOCAL `cardPool`), inserted MID-MAP after `sv10-180` (D395/D396), so `raw[last]` stays put (`sv09-107`, re-read). // 🆕🆕🆕 D566 — +9, NINE REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv06-060` (D395/D396), so `raw[last]` stays put (`sv09-107`, re-read). // 🆕🆕🆕 D565 — +8, EIGHT REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv06.5-029` (D395/D396), so `raw[last]` stays put (`sv09-107`, re-read). // 🆕🆕🆕 D564 — +9, NINE REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv08.5-151` (D395/D396), so `raw[last]` stays put (`sv09-107`, re-read). // 🆕🆕🆕 D563 — +11, ELEVEN REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv08.5-108` (D395/D396), so `raw[last]` stays put. // 🆕🆕🆕 D562 — +14, FOURTEEN REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv05-156` (D395/D396), so `raw[last]` stays put. // 🆕🆕🆕 D561 — +15, FIFTEEN REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv07-006` (D395/D396), so `raw[last]` stays put. // 🆕🆕🆕 D560 — +17, SEVENTEEN REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv09-082` (D395/D396), so `raw[last]` does NOT move. This line and the one below step TOGETHER. // 🆕🆕🆕 D559 — +15, FIFTEEN REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv05-212` (D395/D396), so `raw[last]` does NOT move. This line and the one below step TOGETHER. // 🆕🆕🆕 D558 — +18, EIGHTEEN REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv10.5w-085` (D395/D396), so `raw[last]` does NOT move. This line and the one below step TOGETHER. // 🆕🆕🆕 D557 — +19, NINETEEN REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `svp-149` (D395/D396), so `raw[last]` does NOT move. This line and the one below step TOGETHER. // 🆕🆕🆕 D556 — +19, NINETEEN REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv06-138` (D395/D396), so `raw[last]` does NOT move. This line and the one below step TOGETHER. // 🆕🆕🆕 D555 — +20, TWENTY REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv06.5-094` (D395/D396), so `raw[last]` does NOT move. This line and the one below step TOGETHER. // 🆕🆕🆕 D554 — +15, FIFTEEN REAL catalog ids and no `fix-*` key (`deckSearchTrainers.test.ts` drives a LOCAL `cardPool`), inserted MID-MAP after `sv10-033` (D395/D396), so `raw[last]` does NOT move. This line and the one below step TOGETHER. // 🆕🆕🆕 D553 — +12, TWELVE REAL catalog ids and no `fix-*` key (both new suites drive a LOCAL `cardPool`), inserted MID-MAP after `sv10.5b-169` (D395/D396's precedent), so the `raw[last]` rung below and `autoHeal.test.ts`'s baton do NOT move. This line and the one below step TOGETHER. // 🆕🆕 D396 — +3 (Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156`, THREE bare `attackGate` keys sharing ONE program object at index 1 — REAL catalog ids and no `fix-*` demonstrator, because `angeliteCancel.test.ts` drives a LOCAL `cardPool`. ⚠️ **THE ID LINE STEPS BY 3 AND THE OBJECT COUNT BY 1**, which is the reprint idiom: three keys, one value) // 🆕🆕 D395 — +1 (Miltank `sv08.5-081`, ONE bare `attackGate` key at index 1 — a REAL catalog id and no `fix-*` demonstrator, because `rolloutGate.test.ts` drives a LOCAL `cardPool` per D275's idiom; `sv08.5` is not among `catalogManifest`'s six sets, so a shared-pool body would have owed a `fix-*` key here as well) // 🆕🆕 D391 — +1 (`fix-grassdouble`, the FIXTURE Special providing `{G}{G}`: the first `EnergyProgram.provides` row to spell ONE type TWICE, and the only board where a CARD count and a UNIT count disagree under a typed filter — a `fix-*` key, so no catalog printing moved with it) // 🆕🆕 D356 — +1 (ONE real catalog id and NOT ONE `fix-*` key: `autoHeal.test.ts` drives a LOCAL `cardPool` and asserts by id that nothing reached `FIXTURE_POOL`), for the SIXTEENTH slice running on which this and `nonAttackRegistryIds()` step together and stay 0 apart. // 🆕🆕 D355 — +1 (ONE real catalog id and NOT ONE `fix-*` key: `energyCoin.test.ts` drives a LOCAL `cardPool` and asserts by id in §6 that nothing reaches `FIXTURE_POOL`), so this line and the one below step TOGETHER and stay 0 apart for the FIFTEENTH slice running. ⚠️ AND THE LOCAL POOL IS AGAIN THE ONLY OPTION THAT COSTS NOTHING: `sv10.5b` is not among `catalogManifest`'s six sets (978 rows, re-read rather than recalled), so a shared-pool body would have owed a `fix-energycoin` key here as well. THE KEY IS THE SET, NOT THE SURFACE. // 🆕🆕 D354 — +1 (ONE real catalog id and NOT ONE `fix-*` key: `xBoot.test.ts` drives a LOCAL `cardPool` and asserts by id in §6 that nothing reaches `FIXTURE_POOL`), so this line and the one below step TOGETHER and stay 0 apart for the FOURTEENTH slice running. ⚠️ AND THE LOCAL POOL IS AGAIN THE ONLY OPTION THAT COSTS NOTHING: `sv10` is not among `catalogManifest`'s six sets (978 rows, re-read rather than recalled), so a shared-pool body would have owed a `fix-metagross` key here as well. THE KEY IS THE SET, NOT THE SURFACE. // 🆕🆕 D353 — +2 (two real catalog ids and NOT ONE `fix-*` key: `spikeClad.test.ts` drives a LOCAL `cardPool` and asserts by id in §8 that nothing reaches `FIXTURE_POOL`), so this line and the one below step TOGETHER and stay 0 apart for the THIRTEENTH slice running. // 🆕🆕 D352 — +3 (three real catalog ids and NOT ONE `fix-*` key: `metalMaker.test.ts` drives a LOCAL `cardPool` and asserts by id in §8 that nothing reached `FIXTURE_POOL`), so this line and `nonAttackRegistryIds()` below step by the SAME amount and stay 0 apart for the TWELFTH slice running. ⚠️ AND THE LOCAL POOL IS THE ONLY OPTION THAT COSTS NOTHING AGAIN: none of `svp`, `sv05` or `sv06` is among `catalogManifest`'s six sets, so shared-pool bodies would have owed `fix-metang` AND `fix-morpeko` here as well. THE KEY IS THE SET, NOT THE SURFACE. // 🆕🆕 D351 — +3 (three real catalog ids and NOT ONE `fix-*` key: `pyroDance.test.ts` drives a LOCAL `cardPool` and asserts by id in §7 that nothing reached `FIXTURE_POOL`), so this line and `nonAttackRegistryIds()` below step by the SAME amount and stay 0 apart for the ELEVENTH slice running. // 🆕🆕 D350 — +3 (three real catalog ids, and NOT ONE `fix-*` key: `invitingWink.test.ts` drives a LOCAL `cardPool` and asserts by id in §7 that nothing reached `FIXTURE_POOL`), so this line and `nonAttackRegistryIds()` below step by the SAME amount and stay 0 apart for the TENTH slice running. // 🆕🆕 D349 — +6 (six real catalog ids, and NOT ONE `fix-*` key: `remainingHpWindow.test.ts` drives a LOCAL `cardPool` and asserts by id in §6 that nothing reached `FIXTURE_POOL`), so this line and the one below step by the SAME amount and stay **0** wide for the NINTH slice running. // 🆕🆕 D347 +3 AND THE TWO LINES ARE **0** WIDE FOR THE EIGHTH SLICE RUNNING — 3 real catalog ids (Yanmega ex `sv10-003`/`sv10-206`/`sv10-228`) and **NO** `fix-*` demonstrator, because `buzzingBoost.test.ts` seats every body on a LOCAL `cardPool` (D275's idiom) and `sv10` is not one of `catalogManifest`'s six sets. // 🆕🆕 D346 +3 AND THE TWO LINES ARE **0** WIDE FOR THE SEVENTH SLICE RUNNING — 3 real catalog ids (Magneton `svp-153`/`svp-159`/`sv08-059`) and **NO** `fix-*` demonstrator key, because `overvoltDischarge.test.ts` drives all three off a LOCAL `cardPool` (D275's idiom) and asserts, id by id, that nothing it defines reached `FIXTURE_POOL`. ⚠️ AND THE LOCAL POOL IS AGAIN THE ONLY OPTION THAT COSTS NOTHING: neither `svp` nor `sv08` is among `catalogManifest`'s six sets, so shared-pool bodies would have owed a `fix-magneton` key here as well. THE KEY IS THE SET, NOT THE SURFACE. // 🆕🆕 D345 +6 AND THE TWO LINES ARE **0** WIDE FOR THE SIXTH SLICE RUNNING — 6 real catalog ids (Dusclops ×3, Dusknoir ×3) and **NO** `fix-*` demonstrator key, because `cursedBlast.test.ts` drives both printings off a LOCAL `cardPool` (D275's idiom). ⚠️ AND HERE THE LOCAL POOL IS THE ONLY OPTION THAT COSTS NOTHING FOR THE SECOND SLICE RUNNING: `sv08.5` is not among `catalogManifest`'s six sets, so shared-pool bodies would have owed a `fix-dusclops` AND a `fix-dusknoir` key on this line as well. THE KEY IS THE SET, NOT THE SURFACE — and note the split inside this row, which no earlier slice has had: `sv06.5` IS one of the six, so FOUR of these six ids could have gone in the shared pool and two could not. **A ROW CAN BE HALF-ADMISSIBLE, WHICH IS WHY THE RULE IS PER CARD AND NOT PER PRINTING.** ⚠️ **AND THIS IS THE BIGGEST STEP THIS LINE HAS TAKEN SINCE D335** — six printings on two sentences, where the last five slices moved it by 1, 3, 1, 3 and 3. // 🆕 D344 +1 AND THE TWO LINES ARE **0** WIDE FOR THE FIFTH SLICE RUNNING — 1 real catalog id (`sv08-171`) and **NO** `fix-*` demonstrator key, because `deductionKit.test.ts` drives the Item off a LOCAL `cardPool` (D275's idiom). ⚠️ AND HERE THE LOCAL POOL IS THE ONLY OPTION THAT COSTS NOTHING: `sv08` is not among `catalogManifest`'s six sets, so a shared-pool body would have owed a `fix-deductionkit` key on this line as well. THE KEY IS THE SET, NOT THE SURFACE. ⚠️ **AND THIS IS THE SMALLEST STEP THIS LINE HAS TAKEN SINCE D339** — a one-printing card moves it by one, where the last four slices moved it by 3, 3, 3 and 4.  // 🆕🆕 D342 +3 AND THE TWO LINES ARE **0** WIDE FOR THE FOURTH SLICE RUNNING — 3 real catalog ids (`sv05-145`/`sv05-198`/`sv08.5-104`) and **NO** `fix-*` demonstrator key at all, because `derivedSearchTopOrder.test.ts` drives a LOCAL `cardPool` (D275's idiom) and owes the shared fixture pool nothing. ⚠️ THE STEP IS THE NUMBER OF REGISTRY KEYS AND NOT THE SIZE OF THE ROW: this row is 4 legal printings and only 3 of them are keyed here — Dialga `sv08-135` is read by a deriver and authors no key. 🆕 D340 +3 AND THE TWO LINES ARE **0** WIDE FOR THE THIRD SLICE RUNNING — 3 real catalog ids (Froslass `sv06-053`/`sv06-174`/`svp-117`) and **NO** `fix-*` demonstrator key at all, because `freezingShroud.test.ts` drives the real ids on a LOCAL `cardPool` (D275's idiom) and adds NOTHING to `FIXTURE_POOL`. ⚠️ **AND HERE THE LOCAL POOL IS LOAD-BEARING TWICE OVER**: neither `sv06` nor `svp` is among `catalogManifest`'s six sets, so a shared-pool body would have owed a `fix-froslass` key AND reddened `revealClause`'s `swept.size` — which is exactly what D335's `fix-drakloak`, also a POKÉMON and also `sv06`, had to pay. THE KEY IS THE SET, NOT THE SURFACE. 🆕 D339 +1 AND THE TWO LINES ARE **0** WIDE FOR THE SECOND SLICE RUNNING — 1 real catalog id (Maushold `sv08-158`) and **NO** `fix-*` demonstrator key at all, because `familialMarch.test.ts` drives the real id on a LOCAL `cardPool` (D275's idiom) and adds NOTHING to `FIXTURE_POOL`. ⚠️ **AND HERE THE LOCAL POOL WAS NOT A PREFERENCE BUT THE ONLY OPTION**: `sv08-158` is the ONLY Standard-legal `Maushold` in the catalog and `Maushold ex` has no legal printing at all (`sv04-155`/`sv04-233` both `legal_standard = 0`, and `sv01-161`/`sv02-168`/`sv02-226`/`sv04.5-074`/`sv04.5-210` likewise), so there is no legal catalog body for EITHER member of the union to reach for — both are driven from local bodies. THE KEY IS THE SET, NOT THE SURFACE, and `sv08` is not among `catalogManifest`'s six sets, so a shared-pool body would have owed a `fix-*` key AND reddened `revealClause`'s `swept.size`. 🆕 D338 +2 AND THE TWO LINES ARE **0** WIDE FOR THE FIRST TIME IN NINE SLICES — 2 real catalog ids (Heatmor `sv10.5w-019`/`-104`) and **NO** `fix-*` demonstrator key at all, because `lickingCatch.test.ts` drives the real ids on a LOCAL `cardPool` (D275's idiom) and adds NOTHING to `FIXTURE_POOL`. ⚠️ **THAT IS A CENSUS DECISION, NOT A TIDINESS ONE**: `catalogManifest.test.ts` classifies every real-looking fixture id against a generated manifest of six sets and `sv10.5w` is not one of them, so a shared-pool body would have owed a `fix-*` key AND reddened `revealClause`'s `swept.size` — the two costs D337 paid. THE KEY IS THE SET, NOT THE SURFACE, and the cheapest way to owe neither is to put nothing in the shared pool. 🆕 D337 +4 AND THE TWO LINES ARE 1 WIDE AGAIN — 3 real catalog ids (Ethan's Adventure ×3) PLUS **ONE** `fix-*` demonstrator key, one per CARD: `catalogManifest.test.ts` classifies every real-looking fixture id against a generated manifest of six sets (sv01/sv02/sv03/sv06.5/sve/swsh10.5) and `sv10` is not one of them. THE KEY IS THE SET, NOT THE SURFACE, and ONE card owes ONE key where D333/D335/D336 each owed two. 🆕 D336 +5 AND THE TWO LINES ARE 2 WIDE AGAIN — 3 real catalog ids (Larry's Skill ×2, Secret Box ×1) PLUS **TWO** `fix-*` demonstrator keys, one per CARD: `catalogManifest.test.ts` classifies every real-looking fixture id against a generated manifest of six sets (sv01/sv02/sv03/sv06.5/sve/swsh10.5) and neither `sv08.5` nor `sv06` is one of them, so BOTH Trainers are keyed `fix-*`. THE KEY IS THE SET, NOT THE SURFACE. 🆕 D335 +7 AND THE TWO LINES ARE **2** WIDE THIS SESSION, THE WIDEST THEY HAVE BEEN — 5 real catalog ids (Drakloak ×2, Rika ×3) PLUS **TWO** `fix-*` demonstrator keys, and the second one is the finding: `fix-drakloak` is a POKÉMON, which D327's rule says needs no demonstrator, and it needs one anyway because `catalogManifest.test.ts` classifies every real-looking fixture id against a generated manifest of six sets and `sv06` is not one of them. **THE KEY IS THE SET, NOT THE SURFACE.** 🆕 D334 +4 AND THE TWO LINES STEP BY DIFFERENT AMOUNTS FOR THE FIFTH SLICE RUNNING — 3 real catalog ids (Explorer's Guidance ×3) PLUS the 1 `fix-explorersguidance` demonstrator key its suite drives, one per CARD: D326/D330/D331/D332/D333's mechanism, a Trainer played against `FIXTURE_POOL` owes a `fix-*` body, and this slice owes ONE where D333 owed two. 🆕 D333 +5 AND THE TWO LINES STEP BY DIFFERENT AMOUNTS FOR THE FOURTH SLICE RUNNING — 3 real catalog ids (Roto-Stick ×1, Bug Catching Set ×2) PLUS the 2 `fix-*` demonstrator keys the two new suites drive, one per CARD: D326/D330/D331/D332's mechanism, a Trainer played against `FIXTURE_POOL` owes a `fix-*` body, and this is the first slice in the run to owe TWO of them. 🆕 D332 +5 AND THE TWO LINES STEP BY DIFFERENT AMOUNTS FOR THE THIRD SLICE RUNNING — 4 real catalog ids (Drayton ×4) PLUS the 1 `fix-drayton` demonstrator key its suite drives: D326/D330/D331's mechanism, a Trainer played against `FIXTURE_POOL` owes a `fix-*` body. 🆕 D331 +4 AND THE TWO LINES STEP BY DIFFERENT AMOUNTS AGAIN — 3 real catalog ids (Lisia's Appeal ×3) PLUS the 1 `fix-lisiasappeal` demonstrator key its suite drives, which is D326/D330's mechanism: a Trainer played against `FIXTURE_POOL` owes a `fix-*` body. 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281; 617 at D325; D326 +4 (Archer sv10-170/-223 AND the two `fix-*` keys its suite plays through — `registryCardIds()` counts EVERY key); D327 +6 (Food Prep ×4 + Hustle Play ×2, and NO `fix-*` key — every one of the six is a REAL catalog id its suite plays through a local `Card`, D190's idiom); **D330 +5 and the two lines STEP BY DIFFERENT AMOUNTS AGAIN** — 3 real catalog ids (Florges + Petrel ×2) PLUS the 2 `fix-*` demonstrator keys its suite drives, which is D326's mechanism and not D327's: a Trainer played against `FIXTURE_POOL` owes a `fix-*` body and a Pokémon driven on a local `cardPool` does not, and this slice has one of each
     expect(nonAttackRegistryIds().length).toBe(1129); // 🆕🆕🆕 D611 — +17: the WP21 keys (`CENSUS_ME_POKEMON_D611`). 🆕🆕🆕 D610 — +16: the WP37a keys (`CENSUS_ME_POKEMON_D610`). 🆕🆕🆕 D606 — +9: the WP25a Stadium keys (`CENSUS_ME_TRAINER_D606`). 🆕🆕🆕 D604 — +8: the WP18 Special Energy keys (`CENSUS_ME_ENERGY_D604`). 🆕🆕🆕 D603 — +11: the WP11 keys (`CENSUS_ME_POKEMON_D603`, `CENSUS_ME_TRAINER_D603`). 🆕🆕🆕 D602 — +9: the WP20b Ability keys (`CENSUS_ME_POKEMON_D602`). 🆕🆕🆕 D599 — +4: the WP24a Supporter keys (`CENSUS_ME_TRAINER_D599`). 🆕🆕🆕 D598 — +13: the WP32 Ability keys (`CENSUS_ME_POKEMON_D598`). 🆕🆕🆕 D594 — +2: Luxio and Chesnaught (`CENSUS_ME_POKEMON_D594`). 🆕🆕🆕 D591 — +19: the WP20a activated Ability keys (`CENSUS_ME_POKEMON_D591`). 🆕🆕🆕 D590 — +13: the WP05 on-evolve keys (`CENSUS_ME_POKEMON_D590`). 🆕🆕🆕 D589 — +5: Mega Greninja ex ×5 (`CENSUS_ME_POKEMON_D589`). 🆕🆕🆕 D588 — +17: the WP22 Trainer keys (`CENSUS_ME_TRAINER_D588`). 🆕🆕🆕 D587 — +19: the WP04 Trainer keys (`CENSUS_ME_TRAINER_D587`). 🆕🆕🆕 D586 — +2: Carbink ×2 "Double Type" (`CENSUS_ME_POKEMON_D586`). 🆕🆕🆕 D585 — +19: the WP19 Pokémon keys (`CENSUS_ME_POKEMON_D585`), one printed Ability each. 🆕🆕🆕 D584 — +16: the tier-2 non-attack keys (14 Pokémon + Ultra Ball ×2 — see `CENSUS_ME_POKEMON_D584` / `CENSUS_ME_TRAINER_D584`; Drifloon ×2 is attack-only and stays out). 🆕🆕🆕 D583 — +1: Team Rocket's Energy `me02.5-217` (`energy`). 🆕🆕🆕 D582 — +98: the `me` alias tier's non-attack keys (Terapagos `me02.5-178` is attack-only and stays out). 🆕🆕🆕 D580 — +1: Iron Treads `sv05-118` (`passive`); Mr. Mime `sv05-063` is attack-only and stays out. 🆕🆕🆕 D578 — +6: all six new keys carry a non-attack key (`passive` ×4, `energy` ×1, and TM Fluorite's `toolAttacks` / `toolDiscardAtEndOfYourTurn` beside its `attack` key — so it is in BOTH pools, the cover rung's overlap), so `raw.length` and this line move together. // 🆕🆕🆕 D577 — +6, all six new keys are non-attack (`stadium` ×3, `energy` ×1, `trainer` ×2; no `attack` key), so `raw.length` and this line move together. // 🆕🆕🆕 D576 — +4, all four new keys are non-attack (`playAsPokemon` + `passive`; no `attack` key), so `raw.length` and this line move together. // 🆕🆕🆕 D572 — +6, all six new keys are non-attack (`abilities` ×3, `passive` ×2, `benchFromHand` ×1; no `attack` key), so `raw.length` and this line move together. // 🆕🆕🆕 D571 — +4, not +6: four of the six new keys are non-attack (Iron Thorns ex ×3 `passive`, Ignition Energy `energy`), and two author an `attack` key (Destructo-Press ×2) — so `raw.length` and this line move 6 and 4 and stand TWO apart. // 🆕🆕🆕 D570 — +7, all seven new keys are non-attack (`passive.attackTwiceIf`; no `attack` key). // 🆕🆕🆕 D569 — +8, not +14: eight of the fourteen new keys are non-attack (Iron Crown ex ×6 `passive`, Awakening Drum and Reboot Pod `trainer`), and six author an `attack` key (Peak Acceleration ×2, Land Collapse ×2, Supportive Singing, Perplexing Transfer) — so `raw.length` and this line move 14 and 8 and stand SIX apart. // 🆕🆕🆕 D568 — +16, not +17: sixteen of the seventeen new keys are non-attack (seven `abilities`/`passive`/`triggered`, nine `trainer`/`passive`), and Terapagos `sv08-161` authors an `attack` key — so `raw.length` and this line move 17 and 16 and stand ONE apart for the first time since D267's attack rows. // 🆕🆕🆕 D567 — +4, and all four programs are non-attack (three `trainer`, one `stadium`), so the two lines stay 0 apart. // 🆕🆕🆕 D566 — +9, and all six programs are non-attack (two `trainer`, three `triggered`, one `stadium`), so the two lines stay 0 apart. // 🆕🆕🆕 D565 — +8, and all five programs are non-attack (two `abilities`, two `triggered`, one `trainer`), so the two lines stay 0 apart. // 🆕🆕🆕 D564 — +9, and all five programs are non-attack (two `trainer` keys, two `stadium` keys, one `abilities`), so the two lines stay 0 apart. // 🆕🆕🆕 D563 — +11, and all five programs are non-attack (four `passive`-or-`intoPlayOnlyVia` keys, one `abilities`), so the two lines stay 0 apart. // 🆕🆕🆕 D562 — +14, and all twelve programs are non-attack (ten `passive`/`triggered` Tool keys, two `stadium` keys), so the two lines stay 0 apart. // 🆕🆕🆕 D561 — +15, and all nine programs are non-attack (seven `trainer` keys, two `stadium` keys), so the two lines stay 0 apart. // 🆕🆕🆕 D560 — +17, and all eleven programs are non-attack (five `triggered`, two `abilities`, four `passive`), so the two lines stay 0 apart. // 🆕🆕🆕 D559 — +15, and all seven programs are non-attack (seven `passive` keys), so the two lines stay 0 apart. // 🆕🆕🆕 D558 — +18, and all twelve programs are non-attack (six `passive`, five `stadium`, one `trainer`), so the two lines stay 0 apart. // 🆕🆕🆕 D557 — +19, and all eleven programs are non-attack (eleven `trainer` keys), so the two lines stay 0 apart. // 🆕🆕🆕 D556 — +19, and all seven programs are non-attack (six `trainer` keys and one `triggered`), so the two lines stay 0 apart. // 🆕🆕🆕 D555 — +20, and all twelve programs are non-attack (a `trainer`, `abilities` or `triggered` key each), so the two lines stay 0 apart. // 🆕🆕🆕 D554 — +15, and all nine programs are non-attack (a `trainer` key each, plus `trainerEndsTurn` / `trainerPlayableIf` on two), so the two lines stay 0 apart. // 🆕🆕🆕 D553 — +12, and all seven programs are non-attack (ONE `abilities` key each), so the two lines stay 0 apart. // 🆕🆕 D396 — +3, and all three programs are non-attack: a bare `attackGate` apiece, so the two lines step TOGETHER and stay 0 apart // 🆕🆕 D395 — +1, and the new program is non-attack: a bare `attackGate`, so the two lines step TOGETHER and stay 0 apart // 🆕🆕 D356 — +1, and the new program is non-attack (ONE `triggered` key, asserted by KEY SET in `autoHeal.test.ts` §1 — which is also what keeps `BUILT.attack`'s registry summand still). // 🆕🆕 D355 — +1, and the new program is non-attack (ONE `trainer` key, asserted by shape in `energyCoin.test.ts` §3), so the two pools agree. 🛑 THE THREE-RUNG WARNING WAS RE-READ BEFORE EDITING FOR THE SEVENTH SLICE RUNNING: this figure, `CENSUS_TRAINER_LEGAL.length` and the four-list closure below are rungs on one number — and D355 owed a FOURTH, `TRAINER_SUBTYPE_TALLY.Item`, which is D344's named miss and was on the prediction this time. // 🆕🆕 D354 — +1, and the new program is non-attack (ONE `abilities` key, asserted by KEY SET in `xBoot.test.ts` §1), so the two pools agree. 🛑 THE THREE-RUNG WARNING WAS RE-READ BEFORE EDITING FOR THE SIXTH SLICE RUNNING: this figure, `CENSUS_POKEMON_LEGAL.length` and the four-list closure below are rungs on one number, and all of them were on D354's prediction. // 🆕🆕 D353 — +2, and the ONE new program is non-attack (a single `triggered` key, asserted by KEY SET in `spikeClad.test.ts` §1), so both ids join this pool and the two lines stay 0 apart. // 🆕🆕 D352 — +3, and BOTH new programs are non-attack (ONE `abilities` key each, asserted by KEY SET in `metalMaker.test.ts` §1), so the two pools agree. 🛑 THE THREE-RUNG WARNING WAS RE-READ BEFORE EDITING FOR THE FIFTH SLICE RUNNING: this figure, `CENSUS_POKEMON_LEGAL.length` and the four-list closure below are rungs on one number, and all of them were on this slice's prediction because the prediction was built by grepping the FILE. // 🆕🆕 D351 — +3, and the new program is non-attack (ONE `abilities` key, asserted by KEY SET in `pyroDance.test.ts` §1), so the two pools agree. // 🆕🆕 D350 — +3, and the new program is non-attack (ONE `triggered` Ability), so the two pools agree. // 🆕🆕 D349 — +6, and BOTH new programs are non-attack (a `triggered` Ability and a `trainer`), so the two pools agree. 🛑 THE THREE-RUNG WARNING WAS RE-READ BEFORE EDITING FOR THE FOURTH SLICE RUNNING: this figure, `CENSUS_POKEMON_LEGAL.length`/`CENSUS_TRAINER_LEGAL.length` and the four-list closure below are rungs on one number, and all of them were on this slice's prediction because the prediction was built by grepping the FILE. // 🆕🆕 D347 +3 (all three are real catalog ids and NONE is a `fix-*` key, so this line and the one above step by the SAME amount — the two are **0** wide, as they have been since D338, now for the EIGHTH slice running). 🛑 **THE THREE-RUNG WARNING D342 WROTE HERE WAS RE-READ BEFORE EDITING FOR THE THIRD SLICE RUNNING**: this figure, `CENSUS_POKEMON_LEGAL.length` and the four-list closure below are three rungs on one number, and all three were on this slice's prediction because the prediction was built by grepping every `expect(` hit of each NAME across the whole test tree. // 🆕🆕 D346 +3 (all three are real catalog ids and NONE is a `fix-*` key, so this line and the one above step by the SAME amount — the two are **0** wide, as they have been since D338, now for the SEVENTH slice running). 🛑 **AND THE THREE-RUNG WARNING D342 WROTE HERE WAS RE-READ BEFORE EDITING FOR THE SECOND SLICE RUNNING**: this figure, `CENSUS_POKEMON_LEGAL.length` and the four-list closure below are three rungs on one number, and all three were on this slice's prediction because the prediction was built by grepping every hit of each NAME across the whole test tree. // 🆕🆕 D345 +6 (all six are real catalog ids and NONE is a `fix-*` key, so this line and the one above step by the SAME amount — the two are **0** wide, as they have been since D338, now for the SIXTH slice running). 🛑 **AND THE THREE-RUNG WARNING D342 WROTE HERE WAS RE-READ BEFORE EDITING RATHER THAN AFTER**: this figure, `CENSUS_POKEMON_LEGAL.length` and the four-list closure below are three rungs on one number, and this slice moves the POKÉMON list where D342 moved the TRAINER one. // 🆕 D344 +1 (a real catalog id and NOT a `fix-*` key, so this line and the one above step by the SAME amount — the two are **0** wide, as they have been since D338). // 🆕🆕 D342 +3 (all three are real catalog ids and NONE is a `fix-*` key, so this line and the one above step by the SAME amount — the two are equal only when a slice owes no demonstrator). 🛑 **THIS IS THE THIRD SITE OF THE SAME +3 AND D342\'S PREDICTION ENUMERATED ONLY THE FIRST**: `CENSUS_TRAINER_LEGAL.length`, this live pool count, and the four-list closure `.toBe(531)` two cases below are three rungs on one number, and a moving-list that names the LIST does not thereby name the POOL the list partitions. 🆕 D340 +3 (all three are real catalog ids and NONE is a `fix-*` key, so this line and the one above step by the SAME amount — the two are **0** wide, as they were at D338 and D339). 🆕 D337 +3 (the ONE `fix-*` key is filtered out here and counted above — the whole difference between these two lines, and it is back to 1 wide this session after three slices at 2). 🆕 D336 +3 (BOTH `fix-*` keys are filtered out here and counted above — the whole difference between these two lines, and it is 2 wide this session, as it was at D333 and D335). 🆕 D335 +5 (BOTH `fix-*` keys are filtered out here and counted above — the whole difference between these two lines, and it is 2 wide this session where it has been 1 or 2 for five). 🆕 D334 +3 (the `fix-*` key is filtered out here and counted above — the whole difference between these two lines, and it is back to 1 wide this session after D333's 2). 🆕 D333 +3 (both `fix-*` keys are filtered out here and counted above — the whole difference between these two lines, and it is 2 wide this session where it has been 1 for three). 🆕 D332 +4 (the `fix-drayton` key is filtered out here and counted above — the whole difference between these two lines). 🆕 D331 +3 (the `fix-*` key is filtered out here and counted above — the whole difference between these two lines). 425/428/432/433/446 at D277-D281; D324 +6; D326 +2; D327 +6; D330 +3 (the `fix-*` pair is filtered out here and counted above — the whole difference between these two lines)
   });
 
@@ -11597,15 +11599,20 @@ function meArm(text: string): "reader" | "gate" | "trailing" | "registryText" | 
 }
 
 describe("D581 — the Standard pool after the Mega Evolution ingest, measured (sv + me)", () => {
-  it("the `me` corpus is the transcription its provenance names: 451 sentences / 1,039 printings / 43,900 characters", () => {
+  it("the `me` corpus is the transcription its provenance names: 451 sentences / 1,039 printings / 43,900 characters (🆕🆕🆕 D612: 442 / 1,039 / 41,838 — the statement re-run after WP06's re-ingest)", () => {
     const me = meAttackCorpus();
-    expect(me.length).toBe(451);
+    // 🆕🆕🆕 D612 — 451 → 442 sentences and 43,900 → 41,838 characters: the corpus is the statement
+    // RE-RUN after WP06's normalising re-ingest. Of the 27 markup sentences, nine now equal a
+    // sentence the column already printed and merge into it; 18 stay separate. The printing total
+    // does not move.
+    expect(me.length).toBe(442);
     expect(me.reduce((sum, [n]) => sum + n, 0)).toBe(POPULATION_ME.attackUnits);
-    expect(me.reduce((sum, [, text]) => sum + text.length, 0)).toBe(43900);
+    expect(me.reduce((sum, [, text]) => sum + text.length, 0)).toBe(41838);
     // 158 sentences (550 printings) are ALSO printed in the `sv` column; 293 (489) are new.
+    // 🆕🆕🆕 D612 — 163 (563) shared and 279 (476) new: the normalised texts match `sv` sentences.
     const sv = new Set(legalAttackCorpus().map(([, text]) => text));
     const shared = me.filter(([, text]) => sv.has(text));
-    expect([shared.length, shared.reduce((sum, [n]) => sum + n, 0)]).toEqual([158, 550]);
+    expect([shared.length, shared.reduce((sum, [n]) => sum + n, 0)]).toEqual([163, 563]);
   });
 
   it("the D581 population is the `sv` pool PLUS the `me` pool, on every column", () => {
@@ -11668,14 +11675,16 @@ describe("D581 — the Standard pool after the Mega Evolution ingest, measured (
         ...KEYED_ATTACK_ME_D608,
         ...CENSUS_ME_POKEMON_D610,
         ...CENSUS_ME_POKEMON_D611,
-      ].sort(),
+      ]
+        .filter((id) => !RETIRED_ATTACK_KEYS_D612.includes(id)) // 🆕🆕🆕 D612 — minus the four retired attack keys
+        .sort(),
     );
     // The shape check the line above relies on: it really does recognise the serie's ids.
     for (const id of ["me01-001", "me02.5-210", "mep-001", "mee-008", "30th-126"]) expect(ME_ID.test(id), id).toBe(true);
     for (const id of ["sv01-001", "svp-001", "sve-001", "fix-energy"]) expect(ME_ID.test(id), id).toBe(false);
   });
 
-  it("BUILT over the `me` attack column, LIVE: 728 of 1,039 printings (262 of 451 sentences) (🆕🆕🆕 D586: 745 / 270 live — the title's figures are the D581 baseline; 🆕🆕🆕 D589: 754 / 274 live; 🆕🆕🆕 D590: 757 / 275 live; 🆕🆕🆕 D592: 775 / 286 live; 🆕🆕🆕 D593: 785 / 294 live; 🆕🆕🆕 D594: 793 / 298 live; 🆕🆕🆕 D595: 804 / 306 live; 🆕🆕🆕 D596: 818 / 309 live; 🆕🆕🆕 D597: 834 / 316 live; 🆕🆕🆕 D600: 846 / 323 live; 🆕🆕🆕 D605: 858 / 328 live; 🆕🆕🆕 D607: 872 / 336 live; 🆕🆕🆕 D608: 885 / 343 live; 🆕🆕🆕 D609: 893 / 347 live)", () => {
+  it("BUILT over the `me` attack column, LIVE: 728 of 1,039 printings (262 of 451 sentences) (🆕🆕🆕 D586: 745 / 270 live — the title's figures are the D581 baseline; 🆕🆕🆕 D589: 754 / 274 live; 🆕🆕🆕 D590: 757 / 275 live; 🆕🆕🆕 D592: 775 / 286 live; 🆕🆕🆕 D593: 785 / 294 live; 🆕🆕🆕 D594: 793 / 298 live; 🆕🆕🆕 D595: 804 / 306 live; 🆕🆕🆕 D596: 818 / 309 live; 🆕🆕🆕 D597: 834 / 316 live; 🆕🆕🆕 D600: 846 / 323 live; 🆕🆕🆕 D605: 858 / 328 live; 🆕🆕🆕 D607: 872 / 336 live; 🆕🆕🆕 D608: 885 / 343 live; 🆕🆕🆕 D609: 893 / 347 live; 🆕🆕🆕 D612: 918 / 358 live, over 442 sentences)", () => {
     type Tally = [sentences: number, printings: number];
     const tally: Record<"reader" | "gate" | "trailing" | "registryText" | "residue", Tally> = {
       reader: [0, 0],
@@ -11722,8 +11731,11 @@ describe("D581 — the Standard pool after the Mega Evolution ingest, measured (
     // (text-keyed; keyed BY ID in the D608 block). MEASURED.
     // 🆕🆕🆕 D609 — reader [330, 866] → [334, 874] and residue [105, 146] → [101, 138]: WP36's four
     // KO / damage-counter sentences (8 printings). MEASURED.
+    // 🆕🆕🆕 D612 — reader [334, 874] → [345, 899] and residue [101, 138] → [81, 113]: WP06's normalised
+    // corpus. 25 printings move to the readers (21 newly built, plus Inferno X ×2 and Stealthy Slash ×2,
+    // whose by-id keys are retired); nine sentences merge, so the sentence counts move by less. MEASURED.
     expect(tally).toEqual({
-      reader: [334, 874],
+      reader: [345, 899],
       gate: [4, 5],
       trailing: [9, 14],
       // A REGISTRY sentence printed on a `me` id: not built (no row names the id). The three
@@ -11740,10 +11752,10 @@ describe("D581 — the Standard pool after the Mega Evolution ingest, measured (
       // [🆕🆕🆕 D593: "Fade Out" ×5 is BUILT — keyed BY ID on three new objects at each printed index
       // (`BALLOON_RETURN`, `TUCK_TAIL`, `SKY_RETURN`); the D593 block counts it. This tally stays text-keyed.]
       registryText: [3, 8],
-      residue: [101, 138],
+      residue: [81, 113],
     });
     const built = tally.reader[1] + tally.gate[1] + tally.trailing[1];
-    expect(built).toBe(893); // 🆕🆕🆕 D609 — 885 → 893 (+8, WP36). 🆕🆕🆕 D608 — 872 → 885 (+13, WP30). 🆕🆕🆕 D607 — 858 → 872 (+14, WP28a). 🆕🆕🆕 D605 — 846 → 858 (+12, WP34). 🆕🆕🆕 D600 — 834 → 846 (+12, WP14 + WP33b). 🆕🆕🆕 D597 — 818 → 834 (+16, WP29's seven sentences). 🆕🆕🆕 D596 — 804 → 818 (+14, WP09's three sentences). 🆕🆕🆕 D595 — 793 → 804 (+11, WP13's coin sentences). 🆕🆕🆕 D594 — 785 → 793 (+8, WP33a's rows). 🆕🆕🆕 D586 — 728 → 745 (+17, WP03's clause rows). 🆕🆕🆕 D589 — 745 → 754 (+9, WP08). 🆕🆕🆕 D590 — 754 → 757 (+3, WP05's self-shuffle). 🆕🆕🆕 D592 — 757 → 775 (+18, WP02). 🆕🆕🆕 D593 — 775 → 785 (+10, WP07's rows).
+    expect(built).toBe(918); // 🆕🆕🆕 D612 — 893 → 918 (+25, WP06: 21 new, 4 formerly keyed). 🆕🆕🆕 D609 — 885 → 893 (+8, WP36). 🆕🆕🆕 D608 — 872 → 885 (+13, WP30). 🆕🆕🆕 D607 — 858 → 872 (+14, WP28a). 🆕🆕🆕 D605 — 846 → 858 (+12, WP34). 🆕🆕🆕 D600 — 834 → 846 (+12, WP14 + WP33b). 🆕🆕🆕 D597 — 818 → 834 (+16, WP29's seven sentences). 🆕🆕🆕 D596 — 804 → 818 (+14, WP09's three sentences). 🆕🆕🆕 D595 — 793 → 804 (+11, WP13's coin sentences). 🆕🆕🆕 D594 — 785 → 793 (+8, WP33a's rows). 🆕🆕🆕 D586 — 728 → 745 (+17, WP03's clause rows). 🆕🆕🆕 D589 — 745 → 754 (+9, WP08). 🆕🆕🆕 D590 — 754 → 757 (+3, WP05's self-shuffle). 🆕🆕🆕 D592 — 757 → 775 (+18, WP02). 🆕🆕🆕 D593 — 775 → 785 (+10, WP07's rows).
     expect(built + tally.registryText[1] + tally.residue[1]).toBe(POPULATION_ME.attackUnits);
     // Every `me` sentence the `sv` column ALSO prints is built, except those three: the
     // whole unbuilt `me` residue is text the `sv` pool never printed.
@@ -11752,7 +11764,7 @@ describe("D581 — the Standard pool after the Mega Evolution ingest, measured (
     expect(unbuiltShared).toEqual([]);
   });
 
-  it("the D581 headline: attacks 2,460 / 2,771, abilities 376 / 610, trainers 264 / 447, special energy 11 / 22 (🆕🆕🆕 D586: the live attack figure is 2,477 — the title is the D581 baseline; 🆕🆕🆕 D589: 2,486; 🆕🆕🆕 D590: 2,489; 🆕🆕🆕 D592: 2,507; 🆕🆕🆕 D593: 2,517; 🆕🆕🆕 D594: 2,525; 🆕🆕🆕 D595: 2,536; 🆕🆕🆕 D596: 2,550; 🆕🆕🆕 D597: 2,566; 🆕🆕🆕 D600: 2,578; 🆕🆕🆕 D605: 2,590; 🆕🆕🆕 D607: 2,604; 🆕🆕🆕 D608: 2,617; 🆕🆕🆕 D609: 2,625)", () => {
+  it("the D581 headline: attacks 2,460 / 2,771, abilities 376 / 610, trainers 264 / 447, special energy 11 / 22 (🆕🆕🆕 D586: the live attack figure is 2,477 — the title is the D581 baseline; 🆕🆕🆕 D589: 2,486; 🆕🆕🆕 D590: 2,489; 🆕🆕🆕 D592: 2,507; 🆕🆕🆕 D593: 2,517; 🆕🆕🆕 D594: 2,525; 🆕🆕🆕 D595: 2,536; 🆕🆕🆕 D596: 2,550; 🆕🆕🆕 D597: 2,566; 🆕🆕🆕 D600: 2,578; 🆕🆕🆕 D605: 2,590; 🆕🆕🆕 D607: 2,604; 🆕🆕🆕 D608: 2,617; 🆕🆕🆕 D609: 2,625; 🆕🆕🆕 D612: 2,650)", () => {
     const meBuiltAttack = meAttackCorpus().reduce((sum, [n, text]) => {
       const a = meArm(text);
       return a === "reader" || a === "gate" || a === "trailing" ? sum + n : sum;
@@ -11772,8 +11784,10 @@ describe("D581 — the Standard pool after the Mega Evolution ingest, measured (
     // 🆕🆕🆕 D607 — 2,590 → 2,604 and 181 → 167: WP28a's 14.
     // 🆕🆕🆕 D608 — 2,604 → 2,617 and 167 → 154: WP30's 13 reader-built (the 5 keyed are the D608 block's).
     // 🆕🆕🆕 D609 — 2,617 → 2,625 and 154 → 146: WP36's 8.
-    expect(BUILT.attack + meBuiltAttack).toBe(2625);
-    expect(POPULATION_D581.attackUnits - (BUILT.attack + meBuiltAttack)).toBe(146);
+    // 🆕🆕🆕 D612 — 2,625 → 2,650 and 146 → 121: WP06's 25 (21 new; the 4 formerly keyed were the D597 /
+    // D608 blocks' and are reader-built now).
+    expect(BUILT.attack + meBuiltAttack).toBe(2650);
+    expect(POPULATION_D581.attackUnits - (BUILT.attack + meBuiltAttack)).toBe(121);
     // The non-attack `sv` halves are WHOLE (D580: every legal `sv` ability unit, Trainer and
     // Special Energy is built — the join of `nonAttackRegistryIds()` against the catalog), and
     // the `me` halves are ZERO (the registry holds no `me` id — the rung above).
@@ -11943,7 +11957,7 @@ describe("D582 — the `me` reprint-alias tier and the Standard pool it builds, 
       const a = meArm(text);
       return a === "reader" || a === "gate" || a === "trailing" ? sum + n : sum;
     }, 0);
-    expect(readerBuilt + 1).toBe(894); // 🆕🆕🆕 D609 — 886 → 894 (WP36's +8 reader-built). 🆕🆕🆕 D608 — 873 → 886 (WP30's +13 reader-built). 🆕🆕🆕 D607 — 859 → 873 (WP28a's +14 reader-built). 🆕🆕🆕 D605 — 847 → 859 (WP34's +12 reader-built). 🆕🆕🆕 D600 — 835 → 847 (WP14 + WP33b's +12 reader-built). 🆕🆕🆕 D597 — 819 → 835 (WP29's +16 reader-built). 🆕🆕🆕 D596 — 805 → 819 (WP09's +14). 🆕🆕🆕 D595 — 794 → 805 (WP13's +11). 🆕🆕🆕 D594 — 786 → 794 (WP33a's +8). 🆕🆕🆕 D586 — 729 → 746: the readers' 728 is 745 live (WP03's +17). 🆕🆕🆕 D589 — 746 → 755 (WP08's +9). 🆕🆕🆕 D590 — 755 → 758 (WP05's +3). 🆕🆕🆕 D592 — 758 → 776 (WP02's +18). 🆕🆕🆕 D593 — 776 → 786 (WP07's +10 row-built).
+    expect(readerBuilt + 1).toBe(919); // 🆕🆕🆕 D612 — 894 → 919 (WP06's +25 reader-built: 21 new, 4 formerly keyed). 🆕🆕🆕 D609 — 886 → 894 (WP36's +8 reader-built). 🆕🆕🆕 D608 — 873 → 886 (WP30's +13 reader-built). 🆕🆕🆕 D607 — 859 → 873 (WP28a's +14 reader-built). 🆕🆕🆕 D605 — 847 → 859 (WP34's +12 reader-built). 🆕🆕🆕 D600 — 835 → 847 (WP14 + WP33b's +12 reader-built). 🆕🆕🆕 D597 — 819 → 835 (WP29's +16 reader-built). 🆕🆕🆕 D596 — 805 → 819 (WP09's +14). 🆕🆕🆕 D595 — 794 → 805 (WP13's +11). 🆕🆕🆕 D594 — 786 → 794 (WP33a's +8). 🆕🆕🆕 D586 — 729 → 746: the readers' 728 is 745 live (WP03's +17). 🆕🆕🆕 D589 — 746 → 755 (WP08's +9). 🆕🆕🆕 D590 — 755 → 758 (WP05's +3). 🆕🆕🆕 D592 — 758 → 776 (WP02's +18). 🆕🆕🆕 D593 — 776 → 786 (WP07's +10 row-built).
     // Abilities: the 41 Pokémon keys that print one Ability each (recorded: the LOCAL D1's
     // `json_each(abilities_json)` over these ids returns 41 units). Numel `me02.5-027` / `-223` are
     // NOT here (review round): Heatran's program logs Armarouge's "Scorching Armor".
@@ -12053,7 +12067,7 @@ describe("D584 — the `me` alias tier 2 and the Standard pool it builds, measur
       return a === "reader" || a === "gate" || a === "trailing" ? sum + n : sum;
     }, 0);
     // The readers' 728, Prism Charge `me02.5-178` (D582) and the two Float Up keys.
-    expect(readerBuilt + 1 + keyed.length).toBe(896); // 🆕🆕🆕 D609 — 888 → 896 (WP36's +8 reader-built). 🆕🆕🆕 D608 — 875 → 888 (WP30's +13 reader-built). 🆕🆕🆕 D607 — 861 → 875 (WP28a's +14 reader-built). 🆕🆕🆕 D605 — 849 → 861 (WP34's +12 reader-built). 🆕🆕🆕 D600 — 837 → 849 (WP14 + WP33b's +12 reader-built). 🆕🆕🆕 D597 — 821 → 837 (WP29's +16 reader-built). 🆕🆕🆕 D596 — 807 → 821 (WP09's +14). 🆕🆕🆕 D595 — 796 → 807 (WP13's +11). 🆕🆕🆕 D594 — 788 → 796 (WP33a's +8). 🆕🆕🆕 D586 — 731 → 748 (WP03's +17 reader printings). 🆕🆕🆕 D589 — 748 → 757 (WP08's +9). 🆕🆕🆕 D590 — 757 → 760 (WP05's +3). 🆕🆕🆕 D592 — 760 → 778 (WP02's +18). 🆕🆕🆕 D593 — 778 → 788 (WP07's +10 row-built; its 5 keys are the D593 block's).
+    expect(readerBuilt + 1 + keyed.length).toBe(921); // 🆕🆕🆕 D612 — 896 → 921 (WP06's +25 reader-built: 21 new, 4 formerly keyed). 🆕🆕🆕 D609 — 888 → 896 (WP36's +8 reader-built). 🆕🆕🆕 D608 — 875 → 888 (WP30's +13 reader-built). 🆕🆕🆕 D607 — 861 → 875 (WP28a's +14 reader-built). 🆕🆕🆕 D605 — 849 → 861 (WP34's +12 reader-built). 🆕🆕🆕 D600 — 837 → 849 (WP14 + WP33b's +12 reader-built). 🆕🆕🆕 D597 — 821 → 837 (WP29's +16 reader-built). 🆕🆕🆕 D596 — 807 → 821 (WP09's +14). 🆕🆕🆕 D595 — 796 → 807 (WP13's +11). 🆕🆕🆕 D594 — 788 → 796 (WP33a's +8). 🆕🆕🆕 D586 — 731 → 748 (WP03's +17 reader printings). 🆕🆕🆕 D589 — 748 → 757 (WP08's +9). 🆕🆕🆕 D590 — 757 → 760 (WP05's +3). 🆕🆕🆕 D592 — 760 → 778 (WP02's +18). 🆕🆕🆕 D593 — 778 → 788 (WP07's +10 row-built; its 5 keys are the D593 block's).
     // Abilities: the 14 tier-2 Pokémon keys print one Ability each (LOCAL D1 `json_each`).
     expect(41 + CENSUS_ME_POKEMON_D584.length).toBe(55);
     expect(CENSUS_ME_TRAINER_D582.length + CENSUS_ME_TRAINER_D584.length).toBe(56);
@@ -12193,9 +12207,9 @@ describe("D586 — WP03's clause rows and Carbink, and the Standard pool they bu
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
     // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
-    expect(readerBuilt - 9 - 3 - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8).toBe(745);
+    expect(readerBuilt - 25 - 9 - 3 - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8).toBe(745);
     // The readers' 745, Prism Charge `me02.5-178` (D582) and Float Up ×2 (D584).
-    expect(readerBuilt - 9 - 3 - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2).toBe(748);
+    expect(readerBuilt - 25 - 9 - 3 - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2).toBe(748);
     expect(POPULATION_ME.attackUnits - 748).toBe(291);
     expect(41 + CENSUS_ME_POKEMON_D584.length + CENSUS_ME_POKEMON_D585.length + CENSUS_ME_POKEMON_D586.length).toBe(76);
     expect(POPULATION_ME.abilityUnits - 76).toBe(158);
@@ -12377,9 +12391,9 @@ describe("D589 — WP08's optional-cost rows and Mortal Shuriken, and the Standa
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
     // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
-    expect(readerBuilt - 3 - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8).toBe(754);
+    expect(readerBuilt - 25 - 3 - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8).toBe(754);
     // The readers' 754, Prism Charge `me02.5-178` (D582) and Float Up ×2 (D584).
-    expect(readerBuilt - 3 - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2).toBe(757);
+    expect(readerBuilt - 25 - 3 - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2).toBe(757);
     expect(POPULATION_ME.attackUnits - 757).toBe(282);
     const meAbilities =
       41 +
@@ -12464,9 +12478,9 @@ describe("D590 — WP05's on-evolve Abilities and the self-shuffle, and the Stan
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
     // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
-    expect(readerBuilt - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8).toBe(757);
+    expect(readerBuilt - 25 - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8).toBe(757);
     // The readers' 757, Prism Charge `me02.5-178` (D582) and Float Up ×2 (D584).
-    expect(readerBuilt - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2).toBe(760);
+    expect(readerBuilt - 25 - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2).toBe(760);
     expect(POPULATION_ME.attackUnits - 760).toBe(279);
     const meAbilities =
       41 +
@@ -12558,7 +12572,7 @@ describe("D591 — WP20a's activated Abilities, and the Standard pool they build
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
     // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
-    expect(readerBuilt - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2).toBe(760);
+    expect(readerBuilt - 25 - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2).toBe(760);
     const meAbilities =
       41 +
       CENSUS_ME_POKEMON_D584.length +
@@ -12626,9 +12640,9 @@ describe("D592 — WP02's wording drift and Corrosive Liquid, and the Standard p
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
     // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
-    expect(readerBuilt - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8).toBe(775);
+    expect(readerBuilt - 25 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8).toBe(775);
     // The readers' 775, Prism Charge `me02.5-178` (D582) and Float Up ×2 (D584).
-    expect(readerBuilt - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2).toBe(778);
+    expect(readerBuilt - 25 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2).toBe(778);
     expect(POPULATION_ME.attackUnits - 778).toBe(261);
     expect(BUILT.attack + 778).toBe(2510);
     expect(POPULATION_D581.attackUnits - 2510).toBe(261);
@@ -12691,9 +12705,9 @@ describe("D593 — WP07's clause rows and the Fade Out objects, and the Standard
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
     // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
-    expect(readerBuilt - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8).toBe(785);
+    expect(readerBuilt - 25 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8).toBe(785);
     // The readers' 785, Prism Charge `me02.5-178` (D582), Float Up ×2 (D584) and Fade Out ×5 (D593).
-    expect(readerBuilt - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length).toBe(793);
+    expect(readerBuilt - 25 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length).toBe(793);
     expect(POPULATION_ME.attackUnits - 793).toBe(246);
     expect(BUILT.attack + 793).toBe(2525);
     expect(POPULATION_D581.attackUnits - 2525).toBe(246);
@@ -12755,9 +12769,9 @@ describe("D594 — WP33a's condition rows and two Abilities, and the Standard po
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
     // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
-    expect(readerBuilt - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8).toBe(793);
+    expect(readerBuilt - 25 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8).toBe(793);
     // The readers' 793, Prism Charge `me02.5-178` (D582), Float Up ×2 (D584) and Fade Out ×5 (D593).
-    expect(readerBuilt - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length).toBe(801);
+    expect(readerBuilt - 25 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length).toBe(801);
     expect(POPULATION_ME.attackUnits - 801).toBe(238);
     expect(BUILT.attack + 801).toBe(2533);
     expect(POPULATION_D581.attackUnits - 2533).toBe(238);
@@ -12821,9 +12835,9 @@ describe("D595 — WP13's coin-gate compositions, and the Standard pool they bui
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
     // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
-    expect(readerBuilt - 14 - 16 - 12 - 12 - 14 - 13 - 8).toBe(804);
+    expect(readerBuilt - 25 - 14 - 16 - 12 - 12 - 14 - 13 - 8).toBe(804);
     // The readers' 804, Prism Charge `me02.5-178` (D582), Float Up ×2 (D584) and Fade Out ×5 (D593).
-    expect(readerBuilt - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length).toBe(812);
+    expect(readerBuilt - 25 - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length).toBe(812);
     expect(POPULATION_ME.attackUnits - 812).toBe(227);
     expect(BUILT.attack + 812).toBe(2544);
     expect(POPULATION_D581.attackUnits - 2544).toBe(227);
@@ -12868,9 +12882,9 @@ describe("D596 — WP09's Mega Gardevoir ex and Xerneas texts, and the Standard 
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
     // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
-    expect(readerBuilt - 16 - 12 - 12 - 14 - 13 - 8).toBe(818);
+    expect(readerBuilt - 25 - 16 - 12 - 12 - 14 - 13 - 8).toBe(818);
     // The readers' 818, Prism Charge `me02.5-178` (D582), Float Up ×2 (D584) and Fade Out ×5 (D593).
-    expect(readerBuilt - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length).toBe(826);
+    expect(readerBuilt - 25 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length).toBe(826);
     expect(POPULATION_ME.attackUnits - 826).toBe(213);
     expect(BUILT.attack + 826).toBe(2558);
     expect(POPULATION_D581.attackUnits - 2558).toBe(213);
@@ -12883,7 +12897,7 @@ describe("D596 — WP09's Mega Gardevoir ex and Xerneas texts, and the Standard 
 // (`COMMA_DISCARD_SCALED_DAMAGE`: Inferno X ×4, Garland Ray ×3, Steel Cutter, Double Eater), D488's
 // mill arm on the typed Basic noun (Hammer-lanche ×2, Iceberg Breaker) and the `handDiscard` member of
 // `deriveAttackDiscardScaledBoost` (Shooting Moons ×4). Two attack-only registry keys: the "[R]"
-// Inferno X `mep-023` / `mep-029` on `INFERNO_X`. LOCAL D1, 2026-10-08. 14 printings become fully
+// Inferno X `mep-023` / `mep-029` on `INFERNO_X` [🆕🆕🆕 D612: RETIRED — the text normalises to the {R} row]. LOCAL D1, 2026-10-08. 14 printings become fully
 // built (843 → 857 `me` printings; Mega Clefable ex ×4 still wait on "Luminous Wing").
 // `discardScaledMeD597.test.ts`.
 
@@ -12906,18 +12920,22 @@ describe("D597 — WP29's discard-scaled attacks, and the Standard pool they bui
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     const sv = new Set(legalAttackCorpus().map(([, text]) => text));
     for (const [text, n] of DISCARD_ROWS_D597) {
-      expect([text, me.get(text)]).toEqual([text, n]);
+      // 🆕🆕🆕 D612 — Inferno X's row is 6 live: the two `mep` "[R]" printings normalise into it (WP06).
+      const merged = text.startsWith("Discard any amount of {R} Energy") ? n + KEYED_ATTACK_ME_D597.length : n;
+      expect([text, me.get(text)]).toEqual([text, merged]);
       expect([text, meArm(text)]).toEqual([text, "reader"]);
       expect(sv.has(text), text).toBe(false);
     }
     expect(DISCARD_ROWS_D597.reduce((sum, [, n]) => sum + n, 0)).toBe(16);
   });
 
-  it("\"[R]\" Inferno X ×2: two attack-only keys, one per printing of the residue sentence", () => {
-    const bracket = meAttackCorpus().filter(([, text]) => text.startsWith("Discard any amount of [R] Energy"));
-    expect(bracket.map(([n]) => n)).toEqual([KEYED_ATTACK_ME_D597.length]);
-    expect(meArm(bracket[0]?.[1] ?? "")).toBeNull();
-    for (const id of KEYED_ATTACK_ME_D597) expect(Object.keys(programFor(id) ?? {}), id).toEqual(["attack"]);
+  it("~~\"[R]\" Inferno X ×2: two attack-only keys, one per printing of the residue sentence~~ (🆕🆕🆕 D612: WITHDRAWN — the \"[R]\" text is normalised away and both keys are retired; the printings are reader-built)", () => {
+    // 🆕🆕🆕 D612 (D539): the corpus no longer prints "[R]" (WP06's re-ingest), and `INFERNO_X` is
+    // retired: neither printing is a registry key, and both are counted in the reader tally.
+    const bracket = meAttackCorpus().filter(([, text]) => text.includes("[R]"));
+    expect(bracket).toEqual([]);
+    for (const id of KEYED_ATTACK_ME_D597) expect(programFor(id), id).toBeUndefined();
+    expect(RETIRED_ATTACK_KEYS_D612).toEqual(expect.arrayContaining([...KEYED_ATTACK_ME_D597]));
   });
 
   it("BUILT over the `me` pool: attacks 844 / 1,039; the D597 headline: attacks 2,576 / 2,771", () => {
@@ -12930,10 +12948,10 @@ describe("D597 — WP29's discard-scaled attacks, and the Standard pool they bui
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
     // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
-    expect(readerBuilt - 12 - 12 - 14 - 13 - 8).toBe(834);
+    expect(readerBuilt - 25 - 12 - 12 - 14 - 13 - 8).toBe(834);
     // The readers' 834, Prism Charge `me02.5-178` (D582), Float Up ×2 (D584), Fade Out ×5 (D593) and
     // Inferno X ×2 (D597).
-    expect(readerBuilt - 12 - 12 - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length).toBe(844);
+    expect(readerBuilt - 25 - 12 - 12 - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length).toBe(844);
     expect(POPULATION_ME.attackUnits - 844).toBe(195);
     expect(BUILT.attack + 844).toBe(2576);
     expect(POPULATION_D581.attackUnits - 2576).toBe(195);
@@ -13001,7 +13019,7 @@ describe("D598 — WP32's KO / damage-taken Abilities, and the Standard pool the
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
     // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
-    expect(readerBuilt - 12 - 12 - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length).toBe(844);
+    expect(readerBuilt - 25 - 12 - 12 - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length).toBe(844);
   });
 });
 
@@ -13087,10 +13105,10 @@ describe("D600 — WP14 + WP33b's hand count and bonus conditions, and the Stand
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
     // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
-    expect(readerBuilt - 12 - 14 - 13 - 8).toBe(846);
+    expect(readerBuilt - 25 - 12 - 14 - 13 - 8).toBe(846);
     // The readers' 846, Prism Charge `me02.5-178` (D582), Float Up ×2 (D584), Fade Out ×5 (D593) and
     // Inferno X ×2 (D597).
-    expect(readerBuilt - 12 - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length).toBe(856);
+    expect(readerBuilt - 25 - 12 - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length).toBe(856);
     expect(POPULATION_ME.attackUnits - 856).toBe(183);
     expect(BUILT.attack + 856).toBe(2588);
     expect(POPULATION_D581.attackUnits - 2588).toBe(183);
@@ -13321,10 +13339,10 @@ describe("D605 — WP34's coin texts, and the Standard pool they build, measured
     // 🆕🆕🆕 D607 — the readers' 858 is 872 live (WP28a's +14); the D605 figures below are its own.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
     // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
-    expect(readerBuilt - 14 - 13 - 8).toBe(858);
+    expect(readerBuilt - 25 - 14 - 13 - 8).toBe(858);
     // The readers' 858, Prism Charge `me02.5-178` (D582), Float Up ×2 (D584), Fade Out ×5 (D593) and
     // Inferno X ×2 (D597).
-    expect(readerBuilt - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length).toBe(868);
+    expect(readerBuilt - 25 - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length).toBe(868);
     expect(POPULATION_ME.attackUnits - 868).toBe(171);
     expect(BUILT.attack + 868).toBe(2600);
     expect(POPULATION_D581.attackUnits - 2600).toBe(171);
@@ -13422,10 +13440,10 @@ describe("D607 — WP28a's scaling count sources, and the Standard pool they bui
     }, 0);
     // 🆕🆕🆕 D608 — the readers' 872 is 885 live (WP30's +13); the D607 figures below are its own.
     // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
-    expect(readerBuilt - 13 - 8).toBe(872);
+    expect(readerBuilt - 25 - 13 - 8).toBe(872);
     // The readers' 872, Prism Charge `me02.5-178` (D582), Float Up ×2 (D584), Fade Out ×5 (D593) and
     // Inferno X ×2 (D597).
-    expect(readerBuilt - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length).toBe(882);
+    expect(readerBuilt - 25 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length).toBe(882);
     expect(POPULATION_ME.attackUnits - 882).toBe(157);
     expect(BUILT.attack + 882).toBe(2614);
     expect(POPULATION_D581.attackUnits - 2614).toBe(157);
@@ -13477,23 +13495,28 @@ describe("D608 — WP30's snipe / spread wording, and the Standard pool it build
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     const sv = new Set(legalAttackCorpus().map(([, text]) => text));
     for (const [text, n] of SNIPE_ROWS_D608) {
-      expect([text, me.get(text)]).toEqual([text, n]);
+      // 🆕🆕🆕 D612 — Stealthy Slash's row is 3 live: the two `30th` `<em>` printings normalise into it.
+      const merged = text.startsWith("This attack does 30 damage to 1 of your opponent's Pokémon for each damage counter") ? n + 2 : n;
+      expect([text, me.get(text)]).toEqual([text, merged]);
       expect([text, meArm(text)]).toEqual([text, "reader"]);
       expect(sv.has(text), text).toBe(false);
     }
     expect(SNIPE_ROWS_D608.reduce((sum, [, n]) => sum + n, 0)).toBe(13);
   });
 
-  it("the two `<em>` sentences: five attack-only keys, one per printing, the text still residue", () => {
-    const em = meAttackCorpus().filter(
-      ([, text]) =>
-        text.startsWith("This attack does 50 damage to each of your opponent's Pokémon <em>ex</em>.") ||
-        text ===
-          "This attack does 30 damage to 1 of your opponent's Pokémon for each damage counter on that Pokémon. <em>(Don't apply Weakness and Resistance for Benched Pokémon.)</em>",
+  it("the two `<em>` sentences: five attack-only keys, one per printing, the text still residue (🆕🆕🆕 D612: three — Stealthy Slash ×2's keys are retired, its normalised text reader-built; Photon Bullets ×3 stays keyed)", () => {
+    // 🆕🆕🆕 D612 (D539): no `<em>` is left in the corpus (WP06). Photon Bullets' normalised sentence is
+    // still residue, so its three keys stay; Stealthy Slash's is `mep-099`'s reader-built row above.
+    expect(meAttackCorpus().filter(([, text]) => text.includes("<em>"))).toEqual([]);
+    const photon = meAttackCorpus().filter(([, text]) =>
+      text.startsWith("This attack does 50 damage to each of your opponent's Pokémon ex."),
     );
-    expect(em.reduce((sum, [n]) => sum + n, 0)).toBe(KEYED_ATTACK_ME_D608.length);
-    for (const [, text] of em) expect(meArm(text)).toBeNull();
-    for (const id of KEYED_ATTACK_ME_D608) expect(Object.keys(programFor(id) ?? {}), id).toEqual(["attack"]);
+    expect(photon.map(([n]) => n)).toEqual([3]);
+    for (const [, text] of photon) expect(meArm(text)).toBeNull();
+    for (const id of KEYED_ATTACK_ME_D608) {
+      if (RETIRED_ATTACK_KEYS_D612.includes(id)) expect(programFor(id), id).toBeUndefined();
+      else expect(Object.keys(programFor(id) ?? {}), id).toEqual(["attack"]);
+    }
   });
 
   it("BUILT over the `me` pool: attacks 900 / 1,039; the D608 headline: attacks 2,632 / 2,771 (964 `me` printings fully built)", () => {
@@ -13502,11 +13525,11 @@ describe("D608 — WP30's snipe / spread wording, and the Standard pool it build
       return a === "reader" || a === "gate" || a === "trailing" ? sum + n : sum;
     }, 0);
     // 🆕🆕🆕 D609 — the readers' 885 is 893 live (WP36's +8); the D608 figures below are its own.
-    expect(readerBuilt - 8).toBe(885);
+    expect(readerBuilt - 25 - 8).toBe(885);
     // The readers' 885, Prism Charge `me02.5-178` (D582), Float Up ×2 (D584), Fade Out ×5 (D593),
     // Inferno X ×2 (D597) and the five D608 keys.
     expect(
-      readerBuilt - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length + KEYED_ATTACK_ME_D608.length,
+      readerBuilt - 25 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length + KEYED_ATTACK_ME_D608.length,
     ).toBe(900);
     expect(POPULATION_ME.attackUnits - 900).toBe(139);
     expect(BUILT.attack + 900).toBe(2632);
@@ -13562,11 +13585,11 @@ describe("D609 — WP36's KO / damage-counter attacks, and the Standard pool the
       const a = meArm(text);
       return a === "reader" || a === "gate" || a === "trailing" ? sum + n : sum;
     }, 0);
-    expect(readerBuilt).toBe(893);
+    expect(readerBuilt - 25).toBe(893); // 🆕🆕🆕 D612 — the readers' 893 is 918 live (WP06's +25).
     // The readers' 893, Prism Charge `me02.5-178` (D582), Float Up ×2 (D584), Fade Out ×5 (D593),
     // Inferno X ×2 (D597) and the five D608 keys.
     expect(
-      readerBuilt + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length + KEYED_ATTACK_ME_D608.length,
+      readerBuilt - 25 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length + KEYED_ATTACK_ME_D608.length,
     ).toBe(908);
     expect(POPULATION_ME.attackUnits - 908).toBe(131);
     expect(BUILT.attack + 908).toBe(2640);
@@ -13741,5 +13764,93 @@ describe("D611 — WP21's activated Abilities, and the Standard pool they build,
     for (const [id, text] of Object.entries(ATTACK_EFFECT_D611)) {
       if (text !== "") expect(["reader", "gate", "trailing"], id).toContain(meArm(text));
     }
+  });
+});
+
+// ── 🆕🆕🆕 D612 — WP06: THE tcgdex MARKUP NORMALISER, MEASURED ─────────────────────────────────────────
+//
+// cardText.ts `normalizeCardText` rewrites tcgdex's `<em>` / energy-symbol `<span>` HTML, "[R]" and type
+// words in the `sv` spelling, at ingest (apps/api ingest/map.ts) and at read (cards.ts `cardOfUid`). The
+// LOCAL D1's `mep`, `30th`, `30th-c` and `swsh10.5` were re-ingested (2026-10-09) and `censusAttackCorpusMe.ts`
+// is the statement re-run (451 → 442 sentences; nine normalised sentences merge into rows the column
+// already printed). 18 attack texts / 21 `30th` printings become reader-built, and every other text those
+// 21 cards print was already built, so all 21 become fully built (1005 → 1026 `me` printings). The four
+// by-id attack keys D597 / D608 added for markup faces are RETIRED (their text is reader-built now);
+// Photon Bullets ×3 stays keyed (its normalised sentence is still read by no reader). `cardTextD612.test.ts`.
+
+/** The by-id attack keys D612 retires: Inferno X `mep-023` / `-029` and Stealthy Slash `30th-021` / `-148`. */
+const RETIRED_ATTACK_KEYS_D612: readonly string[] = ["mep-023", "mep-029", "30th-021", "30th-148"];
+
+/** The 21 `30th` printings D612 builds, with the one normalised attack text each was waiting on
+    (LOCAL D1 after the re-ingest, `json_each(attacks_json)`). */
+const MARKUP_BUILT_D612: Readonly<Record<string, string>> = {
+  "30th-014": "If this Pokémon has any {L} Energy attached, this attack does 80 more damage.",
+  "30th-018": "This attack does 30 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+  "30th-132": "This attack does 30 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+  "30th-019": "This attack does 30 more damage for each {W} Energy attached to this Pokémon.",
+  "30th-020":
+    "Switch this Pokémon with 1 of your Benched Pokémon. If you do, switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
+  "30th-025": "This attack also does 20 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+  "30th-057": "This attack also does 20 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+  "30th-038": "This attack does 20 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+  "30th-049": "If your opponent's Active Pokémon is a Pokémon ex, this attack does 80 more damage.",
+  "30th-056": "If this Pokémon has any {R} Energy attached, this attack does 80 more damage.",
+  "30th-062": "Discard 2 {L} Energy from this Pokémon.",
+  "30th-079": "During your opponent's next turn, this Pokémon takes 60 less damage from attacks (after applying Weakness and Resistance).",
+  "30th-082": "This attack also does 20 damage to each of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+  "30th-083": "This attack also does 60 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+  "30th-086": "Discard 2 {F} Energy from this Pokémon.",
+  "30th-087":
+    "During your opponent's next turn, attacks used by the Defending Pokémon do 30 less damage (before applying Weakness and Resistance).",
+  "30th-107": "During your opponent's next turn, this Pokémon takes 50 less damage from attacks (after applying Weakness and Resistance).",
+  "30th-109": "Put up to 3 {N} Pokémon from your discard pile onto your Bench.",
+  "30th-156": "Put up to 3 {N} Pokémon from your discard pile onto your Bench.",
+  "30th-110": "During your next turn, the Defending Pokémon takes 30 more damage from attacks (after applying Weakness and Resistance).",
+  "30th-124":
+    "Discard all Energy from this Pokémon, and this attack does 120 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+};
+
+describe("D612 — WP06's markup normaliser, and the Standard pool it builds, measured", () => {
+  it("18 normalised texts / 21 printings, each a `me` corpus row and reader-built; no markup is left in the corpus", () => {
+    const ids = Object.keys(MARKUP_BUILT_D612);
+    expect(ids).toHaveLength(21);
+    expect(new Set(Object.values(MARKUP_BUILT_D612)).size).toBe(18);
+    const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
+    for (const [id, text] of Object.entries(MARKUP_BUILT_D612)) {
+      expect(ME_ID.test(id), id).toBe(true);
+      expect(me.has(text), text).toBe(true);
+      expect([id, meArm(text)]).toEqual([id, "reader"]);
+      expect(programFor(id)?.attack, id).toBeUndefined();
+    }
+    expect(meAttackCorpus().filter(([, text]) => /<|\[[A-Z]\]/.test(text))).toEqual([]);
+  });
+
+  it("the four retired keys: unkeyed, their normalised text reader-built; Photon Bullets ×3 stays keyed", () => {
+    for (const id of RETIRED_ATTACK_KEYS_D612) expect(programFor(id), id).toBeUndefined();
+    for (const text of [
+      "Discard any amount of {R} Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way.",
+      "This attack does 30 damage to 1 of your opponent's Pokémon for each damage counter on that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+    ]) {
+      expect(meArm(text), text).toBe("reader");
+    }
+    for (const id of ["30th-064", "30th-151", "30th-157"]) expect(Object.keys(programFor(id) ?? {}), id).toEqual(["attack"]);
+  });
+
+  it("BUILT over the `me` pool: attacks 929 / 1,039; the D612 headline: attacks 2,661 / 2,771 (1026 `me` printings fully built)", () => {
+    const readerBuilt = meAttackCorpus().reduce((sum, [n, text]) => {
+      const a = meArm(text);
+      return a === "reader" || a === "gate" || a === "trailing" ? sum + n : sum;
+    }, 0);
+    expect(readerBuilt).toBe(918);
+    // The readers' 918 (the four formerly keyed printings among them), Prism Charge `me02.5-178` (D582),
+    // Float Up ×2 (D584), Fade Out ×5 (D593) and Photon Bullets ×3 (D608).
+    const keyed = KEYED_ATTACK_ME_D608.filter((id) => !RETIRED_ATTACK_KEYS_D612.includes(id));
+    expect(keyed).toEqual(["30th-064", "30th-151", "30th-157"]);
+    expect(readerBuilt + 1 + 2 + KEYED_ATTACK_ME_D593.length + keyed.length).toBe(929);
+    expect(POPULATION_ME.attackUnits - 929).toBe(110);
+    expect(BUILT.attack + 929).toBe(2661);
+    expect(POPULATION_D581.attackUnits - 2661).toBe(110);
+    // The 1005 base is CARRIED (D611's pin); the 21 are the printings above, each now fully built.
+    expect(1005 + Object.keys(MARKUP_BUILT_D612).length).toBe(1026);
   });
 });

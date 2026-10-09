@@ -2,6 +2,7 @@ import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
+import { normalizeCardText } from "./cardText";
 import { deriveAttackEffect, deriveAttackOptionalCostBoost, optionalCostBoostProgram } from "./effects";
 import type { GameAction, GameEvent, GameState, PokemonRef, Seat } from "./index";
 import { applyAction, createGame, engineVersion } from "./index";
@@ -33,7 +34,8 @@ import {
 //   Sonic Ripper ×2, Phantasmal Barrage — two literal cost-then-snipe compounds.
 //   Bone Sniper — the new `damageChosen.specialEnergyOnly` board narrowing.
 //   Stealthy Slash ×3 — `BENCHED_SNIPE_TARGET_COUNTERS` without "Benched" is `opponentAny`; the two
-//                  `30th` faces are keyed (`STEALTHY_SLASH`).
+//                  `30th` faces are keyed (`STEALTHY_SLASH`). [🆕🆕🆕 D612: the key is RETIRED — WP06's
+//                  normaliser strips the `<em>`, so the `30th` faces read `mep-099`'s sentence.]
 //   Photon Bullets ×3 — the ex-only spread, keyed (`PHOTON_BULLETS`): D492's op without `ignoreWR`.
 
 const SPLIT_BOMB =
@@ -66,7 +68,9 @@ const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [PHANTASMAL_BARRAGE, ["me02.5-098"]],
 ];
 
-/** [markup text, the keyed `30th` ids, the registry object's attack index 0]. */
+/** [markup text, the keyed `30th` ids, the registry object's attack index 0].
+    🆕🆕🆕 D612 — the RAW tcgdex texts: the corpus now holds their normalised forms (WP06), and a
+    persisted pre-D612 face still carries these (§7 drives them through `cardOfUid`). */
 const KEYED: readonly (readonly [string, readonly string[]])[] = [
   [PHOTON_BULLETS, ["30th-064", "30th-151", "30th-157"]],
   [STEALTHY_SLASH_EM, ["30th-021", "30th-148"]],
@@ -75,8 +79,9 @@ const KEYED: readonly (readonly [string, readonly string[]])[] = [
 /** WP30's rest, named: each needs vocabulary beyond this slice (8 texts / 8 printings). */
 const WP30_REST: readonly (readonly [string, string])[] = [
   // tcgdex markup (WP06) AND a typed self-discard in front of the any-target hit.
+  // 🆕🆕🆕 D612 — the normalised text (WP06): the markup is gone; the typed self-discard stays unread.
   [
-    "Discard all <span class=\"energy-symbol Lightning\" title=\"Lightning\">Lightning</span> Energy from this Pokémon, and this attack does 90 damage to 1 of your opponent's Pokémon. <em>(Don't apply Weakness and Resistance for Benched Pokémon.)</em>",
+    "Discard all {L} Energy from this Pokémon, and this attack does 90 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
     "30th-051",
   ],
   // a Special-Condition gate in front of a counter placement on the Bench.
@@ -104,7 +109,7 @@ const WP30_REST: readonly (readonly [string, string])[] = [
     "me01-043",
   ],
   [
-    "This attack does 50 damage to each of your opponent's Pokémon. <em>(Don't apply Weakness and Resistance for Benched Pokémon.) </em>This Pokémon also does 130 damage to itself.",
+    "This attack does 50 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) This Pokémon also does 130 damage to itself.",
     "30th-104",
   ],
   // an extra-Energy gate (a count source, not a `BoardCondition`) on a bench snipe.
@@ -119,7 +124,8 @@ describe("D608 §1 — the texts", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     const sv = new Set(legalAttackCorpus().map(([, text]) => text));
     for (const [text, ids] of SENTENCES) {
-      expect([text, me.get(text)]).toEqual([text, ids.length]);
+      // 🆕🆕🆕 D612 — Stealthy Slash's row is 3: the two `30th` faces normalise into it (WP06).
+      expect([text, me.get(text)]).toEqual([text, text === STEALTHY_SLASH ? ids.length + 2 : ids.length]);
       expect(sv.has(text), text).toBe(false);
       expect(resolvedByAnyReader(text), text).toBe(true);
     }
@@ -127,12 +133,22 @@ describe("D608 §1 — the texts", () => {
     expect(new Set(SENTENCES.flatMap(([, ids]) => ids)).size).toBe(10);
   });
 
-  it("the two markup sentences: unread, keyed by id at attack index 0, 5 printings", () => {
+  it("the two markup sentences: unread, keyed by id at attack index 0, 5 printings (🆕🆕🆕 D612: normalised — Photon Bullets ×3 still unread and keyed; Stealthy Slash ×2 read, its key retired)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, ids] of KEYED) {
-      expect([text, me.get(text)]).toEqual([text, ids.length]);
+      // 🆕🆕🆕 D612 — the raw text is gone from the corpus; its normalised form is the row.
+      expect(me.has(text), text).toBe(false);
+      const clean = normalizeCardText(text);
+      expect([clean, me.get(clean)]).toEqual([clean, text === PHOTON_BULLETS ? ids.length : ids.length + 1]);
       expect(resolvedByAnyReader(text), text).toBe(false);
-      for (const id of ids) expect(Object.keys(programFor(id)?.attack ?? {}), id).toEqual(["0"]);
+      if (text === PHOTON_BULLETS) {
+        expect(resolvedByAnyReader(clean), clean).toBe(false);
+        for (const id of ids) expect(Object.keys(programFor(id)?.attack ?? {}), id).toEqual(["0"]);
+      } else {
+        expect(clean).toBe(STEALTHY_SLASH);
+        expect(resolvedByAnyReader(clean), clean).toBe(true);
+        for (const id of ids) expect(programFor(id), id).toBeUndefined();
+      }
     }
   });
 
@@ -219,7 +235,7 @@ describe("D608 §2 — the readings", () => {
     expect(deriveAttackEffect(PHANTASMAL_BARRAGE.replace("12", "0"))).toBeNull();
   });
 
-  it("Stealthy Slash is `opponentAny`; the Benched sentence keeps `opponentBench`; the keyed program is the reader's", () => {
+  it("Stealthy Slash is `opponentAny`; the Benched sentence keeps `opponentBench`; the keyed program is the reader's (🆕🆕🆕 D612: the key is retired — the raw `30th` text normalises to the reader's sentence)", () => {
     const anyTarget = deriveAttackEffect(STEALTHY_SLASH);
     expect(anyTarget).toEqual([
       {
@@ -243,7 +259,9 @@ describe("D608 §2 — the readings", () => {
         perDamageCounterOnTarget: true,
       },
     ]);
-    for (const id of ["30th-021", "30th-148"]) expect(programFor(id)?.attack?.[0], id).toEqual(anyTarget);
+    // 🆕🆕🆕 D612 — no key: the `30th` text, normalised, IS the reader's sentence.
+    for (const id of ["30th-021", "30th-148"]) expect(programFor(id), id).toBeUndefined();
+    expect(deriveAttackEffect(normalizeCardText(STEALTHY_SLASH_EM))).toEqual(anyTarget);
   });
 
   it("Photon Bullets is D492's filtered spread WITHOUT `ignoreWR`", () => {
@@ -561,6 +579,8 @@ describe("D608 §6 — Bone Sniper: only a body with a Special Energy attached",
 });
 
 describe("D608 §7 — Stealthy Slash and Photon Bullets on a board", () => {
+  // 🆕🆕🆕 D612 — `30th-021`'s face here is the RAW `<em>` text (a persisted pre-D612 pool face): it
+  // plays through cards.ts `cardOfUid`'s normaliser on the reader's program, with no registry key.
   for (const id of ["mep-099", "30th-021"]) {
     it(`${id}: 30 per counter on the CHOSEN body — the Active with Weakness, a Benched body flat`, () => {
       let state = table(id, [[W, 1]], TARGET_W, [FILLER]);
@@ -588,6 +608,6 @@ describe("D608 §7 — Stealthy Slash and Photon Bullets on a board", () => {
 
 describe("D608 §8 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.494.0");
+    expect(engineVersion).toBe("0.495.0");
   });
 });

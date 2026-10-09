@@ -3,6 +3,7 @@ import type { Attack, Card } from "@luminous/schema";
 import type { ApplyResult } from "./actions";
 import { err } from "./actions";
 import { type Banner, bannerOf } from "./banners";
+import { normalizedFace } from "./cardText";
 import { FOSSIL_IDS, fossilPokemonCard } from "./fossils";
 // TYPE-ONLY, and it must stay that way: effects.ts imports no engine module at
 // runtime (only `import type { StatusName } from "./events"`), and events.ts in
@@ -22,10 +23,18 @@ import type { GameState, InPlayPokemon, Seat } from "./types";
 // Pokémon" (R-FO2). So a fossil uid that is a card of an IN-PLAY STACK reads as its
 // synthesized Pokémon face, and the catalog Item everywhere else. The fossil-id test runs
 // FIRST, so every other lookup pays one `Set.has` (this is the engine's hottest read).
+//
+// 🆕🆕🆕 D612 — AND IT READS EVERY FACE THROUGH THE MARKUP NORMALISER (cardText.ts). tcgdex prints
+// HTML (`<em>`, `<span class="energy-symbol …">`), "[R]" and type words ("Basic Fire Energy",
+// "ColorlessColorless") in 95 texts on 87 rows (`mep`, `30th`, `30th-c`, `swsh10.5`; LOCAL D1
+// 2026-10-09); the ingest now writes them in the `sv`
+// spelling, and a persisted `GameState.cardPool` that still holds a raw face is read the same way
+// here. Memoised per face object, and the SAME object when nothing changes (every `sv` face).
 export function cardOfUid(state: GameState, uid: string): Card | undefined {
   const id = state.cardIdByUid[uid];
   if (id === undefined) return undefined;
-  const card = state.cardPool[id];
+  const pooled = state.cardPool[id];
+  const card = pooled === undefined ? undefined : normalizedFace(pooled);
   if (card === undefined || !FOSSIL_IDS.has(id)) return card;
   return uidInPlayStack(state, uid) ? fossilPokemonCard(card) : card;
 }

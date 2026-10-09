@@ -20265,6 +20265,18 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.494.0 → **0.495.0** (D612 — WP06: THE tcgdex MARKUP NORMALISER;
+    `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D612")). cardText.ts (NEW):
+    `normalizeCardText` rewrites tcgdex's `<em>` / energy-symbol `<span>` HTML, "[R]" tokens and type
+    words ("Basic Fire Energy", "ColorlessColorless", "cost Colorless less") in the `sv` spelling; cards.ts
+    `cardOfUid` reads every face through `normalizedFace` (memoised; the same object when nothing
+    changes), so a persisted v42 `cardPool` face reads like a re-ingested row. apps/api ingest/map.ts
+    writes every text through the same function; `mep`, `30th`, `30th-c` and `swsh10.5` re-ingested
+    into the LOCAL D1 (90 text columns on 87 rows; every `sv` text is a fixed point). 18 `me` attack
+    texts / 21 printings become reader-built; registry.ts `INFERNO_X` (R-IX1 resolved) and
+    `STEALTHY_SLASH` RETIRED as redundant (`PHOTON_BULLETS` stays: its normalised text is still
+    unread). R-BC1 UNRULED: Booming Call ×2 inherits D238's any-stage bench reading.
+    `censusAttackCorpusMe.ts` regenerated (451 → 442 sentences). `cardTextD612.test.ts`.)
     🆕🆕🆕 engineVersion 0.493.0 → **0.494.0** (D611 — WP21: THE REST OF THE `me` ACTIVATED ABILITIES,
     PLUS DRAGONAIR; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D611")).
     registry.ts: nine NEW objects over 17 printings — Nighttime Maneuvers ×3 (Crobat; Active, any card to
@@ -20306,8 +20318,8 @@ import type { GameState, Seat } from "./types";
     "Sonic Ripper" ×2, Mandibuzz "Bone Sniper", Spectrier "Phantasmal Barrage"); the new
     `damageChosen.specialEnergyOnly` narrowing (interpreter.ts `snipeTargets` / `snipeNote`);
     `BENCHED_SNIPE_TARGET_COUNTERS` without "Benched" is `opponentAny` (Greninja ex `mep-099`).
-    registry.ts: `PHOTON_BULLETS` (Mewtwo ex ×3) and `STEALTHY_SLASH` (Greninja ex ×2), five `30th`
-    attack-only keys (`<em>` markup). 18 `me` attack printings. `snipeSpreadMeD608.test.ts`.)
+    registry.ts: `PHOTON_BULLETS` (Mewtwo ex ×3) and `STEALTHY_SLASH` (Greninja ex ×2) [🆕🆕🆕 D612: `STEALTHY_SLASH` RETIRED], five `30th`
+    attack-only keys (`<em>` markup) [🆕🆕🆕 D612: three remain, `PHOTON_BULLETS` ×3]. 18 `me` attack printings. `snipeSpreadMeD608.test.ts`.)
     🆕🆕🆕 engineVersion 0.489.0 → **0.490.0** (D607 — WP28a: THE FIRST HALF OF THE SCALING COUNT
     SOURCES; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D607")). effects.ts: three
     NEW nullary `DamageCountSource` members on three literal `×` anchors — `energyInPlayBothSides`
@@ -20407,7 +20419,7 @@ import type { GameState, Seat } from "./types";
     ×4 (`discardEnergy` from `yours`), Garland Ray ×3 (from `yourActive`), Steel Cutter and Double Eater
     (D489's declinable `payFromHand`); `milledCardFilter` reads "Basic {W} Energy card" (Hammer-lanche ×2,
     Iceberg Breaker); `deriveAttackDiscardScaledBoost` gains a FOURTH member, `handDiscard` (Shooting
-    Moons ×4, the printed base kept); registry.ts `INFERNO_X` keys the two "[R]" `mep` printings. NO new
+    Moons ×4, the printed base kept); registry.ts `INFERNO_X` keys the two "[R]" `mep` printings [🆕🆕🆕 D612: RETIRED]. NO new
     op, field or member of a persisted union. 8 texts / 18 printings; the `sv` reader output is
     byte-identical. Census: Standard pool attacks 2,576 / 2,771; 857 `me` printings fully built.
     `discardScaledMeD597.test.ts`.)
@@ -25438,7 +25450,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.494.0";
+export const engineVersion = "0.495.0";
 
 export type {
   ApplyResult,
@@ -25489,6 +25501,8 @@ export {
   weaknessOf,
 } from "./cards";
 export type { DamageModifier, ParsedDamage, PokemonSuffix, PreventedAttackerClass } from "./cards";
+// 🆕🆕🆕 D612 — the tcgdex markup normaliser, shared with the ingest (apps/api ingest/map.ts).
+export { normalizeCardText } from "./cardText";
 export {
   alliedRetreatDiscount,
   attackBlockOf,

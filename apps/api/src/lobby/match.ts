@@ -2159,6 +2159,17 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D612 — WP06 CHANGES HOW A CARD ROW'S TEXT IS READ, NOT ANY PERSISTED SHAPE.**
+    (Placed ABOVE the D611 block.) The D581 / D583 lesson applies: a v42 `cardPool` persists whole
+    Card faces, so a match created before the remote re-ingest holds tcgdex's RAW text (`<em>`,
+    energy-symbol `<span>`, "[R]", "Basic Fire Energy"). cards.ts `cardOfUid` reads every face through
+    the engine's `normalizeCardText` (cardText.ts), so that raw face plays exactly like a re-ingested
+    row — no migration, no version step. The two retired by-id keys (Inferno X `mep-023` / `-029`,
+    Stealthy Slash `30th-021` / `-148`) are covered the same way: their raw faces normalise to the
+    reader-built sentence. Rollback to 0.494 is clean: a raw face plays as it did on 0.494 (the four
+    keys are back, the 21 newly built printings unbuilt again), and a re-ingested clean row is text
+    0.494's unchanged readers already build.
+
     🆕🆕🆕 **STAYS 42 AT D611 — WP21 ADDS ONE `EffectOp` (`countersOnRecordedBody`), ONE `BoardCondition`
     MEMBER (`notYourFirstTurn`), OPTIONAL KEYS (`payFromHand.swapWithTop`, `evolveFromDeck.fromHand` /
     `recordAs`, `HAND_COST_PAID.took`) AND ONE REGISTRY VALUE (`requiresEnergyType: "any"`), NO PROMPT
@@ -2288,7 +2299,8 @@ export interface MatchRecord {
     🆕🆕🆕 **STAYS 42 AT D597 — WP29 ADDS NO OP, OP KEY, GameState, PendingStage, PROMPT OR WIRE KEY.**
     (Placed ABOVE the D596 block.) The readers claim 7 more `me` attack TEXTS (16 printings) as
     shipped ops (`discardEnergy` / `payFromHand` + `damageDefender`, D488's mill + `countFilter`), and
-    two `mep` ids are keyed on the attack-only `INFERNO_X`. The new `handDiscard` member of
+    two `mep` ids are keyed on the attack-only `INFERNO_X` [🆕🆕🆕 D612: RETIRED — the text is normalised
+    and reader-built]. The new `handDiscard` member of
     `AttackDiscardScaledBoost` is a reader result, never persisted. The card row is not read
     differently; its printed TEXT is, at attack time, so a v42 match in flight holding these faces in
     its persisted `cardPool` gains the programs mid-match. Every park is an EXISTING prompt

@@ -532,7 +532,7 @@ describe("D603 §9 — the dropped and excluded texts stay unkeyed, and the vers
       expect(programFor(id), id).toBeUndefined();
   });
 
-  it("is built at engine 0.494.0", () => {
-    expect(engineVersion).toBe("0.494.0");
+  it("is built at engine 0.495.0", () => {
+    expect(engineVersion).toBe("0.495.0");
   });
 });

@@ -30138,11 +30138,11 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   `yours`), Garland Ray ×3 (from `yourActive`, cap 2), Steel Cutter and Double Eater (D489's declinable `payFromHand`).
   `milledCardFilter` reads "Basic {W} Energy card", mill-only (Hammer-lanche ×2, Iceberg Breaker).
   `deriveAttackDiscardScaledBoost` gains `handDiscard` (Shooting Moons ×4, printed base kept). registry.ts `INFERNO_X`
-  keys the two "[R]" `mep` Inferno X.
+  keys the two "[R]" `mep` Inferno X [🆕🆕🆕 D612: RETIRED — WP06].
 - **No new op, field or persisted member.** The `sv` reader output is byte-identical.
 - **Dropped and named:** Mega Eelektross ex "Disaster Shock" ×3 [🆕🆕🆕 D608: BUILT — WP30], Slowpoke "All-You-Can-Yeet", Team Rocket's Honchkrow
   "Rocket Feathers", Pawmot "Voltaic Fist".
-- **Reading R-IX1 (UNRULED).** tcgdex's "[R]" on the two `mep` Inferno X is read as {R}.
+- **Reading R-IX1 (UNRULED).** tcgdex's "[R]" on the two `mep` Inferno X is read as {R}. [🆕🆕🆕 D612: RESOLVED — the WP06 normaliser writes and reads it as {R}; `INFERNO_X` retired.]
 - **Suite.** `discardScaledMeD597.test.ts` (22): readings, near misses, each attack on a board (offers, ceilings, filters,
   decline, the kept base, the mill count). +29 mutant rows.
 - **Census.** Standard pool attacks **2576 / 2771**; 857 `me` printings fully built.
@@ -30237,6 +30237,27 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D612 — WP06: the tcgdex markup normaliser (engine 0.495.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D611 (`9aa0ec4c`), NOT committed.
+
+- **The normaliser.** cardText.ts `normalizeCardText`: energy-symbol `<span>` → `{X}`, `<em>` stripped, "[R]" → `{R}`, a type
+  word before "Energy" / "Pokémon" (or a joined list of them) → its symbol, glued type words and a cost word before "less" /
+  "more" → symbols. Pure, idempotent, closed; every `sv` text is a fixed point.
+- **Two call sites.** cards.ts `cardOfUid` reads every face through `normalizedFace` (memoised; the same object when unchanged),
+  so a persisted v42 `cardPool` face reads clean. apps/api ingest/map.ts writes every attack / Ability / rules text through it.
+- **Data.** LOCAL D1 `mep`, `30th`, `30th-c`, `swsh10.5` re-ingested (90 text columns on 87 rows, nothing else);
+  `censusAttackCorpusMe.ts` regenerated (451 → 442 sentences). KV catalog cache v7 → v8. Remote re-ingest owed before deploy, run with the D612
+  ingest code (map.ts + `normalizeCardText`).
+- **Built.** 18 attack texts / 21 `30th` printings, on shipped readers. `INFERNO_X` and `STEALTHY_SLASH` retired (R-IX1
+  resolved); `PHOTON_BULLETS` stays (its clean text is still unread). Six texts still need reader vocabulary (named in
+  `progress.md` NEXT (b)).
+- **Readings.** R-BC1 (UNRULED): Booming Call ×2 (`30th-109` / `-156`) benches any-stage {N} Pokémon from the discard — D238's
+  Kingdra ex reading, now on 2 more printings. Reversal: `stage: "basic"` on a bench destination's typed noun.
+- **Suite.** `cardTextD612.test.ts` (24), two map.test rungs and a census D612 block (3). +23 mutant rows, all killed; 3 retired.
+- **Census.** Standard pool attacks **2,661 / 2,771**; 1026 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
 ## D611 — WP21: the rest of the `me` activated Abilities, plus Dragonair (engine 0.494.0, `MATCH_RECORD_VERSION` stays 42)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D610 (`994a949d`), NOT committed.
@@ -30304,7 +30325,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   `BENCHED_SNIPE_TARGET_COUNTERS` without "Benched" → `opponentAny`; three literal compounds (Sonic Ripper, Bone Sniper,
   Phantasmal Barrage); the NEW `damageChosen.specialEnergyOnly` narrowing (`snipeTargets`, `snipeNote`); a fourth
   optional-cost skeleton with the `defenderStatus` payoff (gate → inner confirm → cost → Paralyzed). Two attack-only registry
-  objects for the `30th` `<em>` faces: `PHOTON_BULLETS` (the ex-only spread, no `ignoreWR`) and `STEALTHY_SLASH`.
+  objects for the `30th` `<em>` faces: `PHOTON_BULLETS` (the ex-only spread, no `ignoreWR`) and `STEALTHY_SLASH` [🆕🆕🆕 D612: RETIRED].
 - **7 texts / 13 `me` printings read, 5 keyed.** Mega Eelektross ex ×3 (Split Bomb, Disaster Shock), Ambipom ×2, Mega
   Skarmory ex ×2, Mandibuzz, Greninja ex ×3, Spectrier, Mewtwo ex ×3 — all 15 fully built. `sv` reader output byte-identical.
 - **WP30 rest, named.** Pikachu `30th-051`, Mismagius, Coalossal, Genesect, Seaking, Frosmoth, Ferrothorn `30th-104`, Deoxys.

@@ -27,6 +27,12 @@
 // asserted in `censusAtHead.test.ts` (the transcription's own check). 158 of the 451
 // sentences (550 printings) are ALSO printed in the `sv` column; 293 (489) are new.
 //
+// 🆕🆕🆕 D612 — RE-RUN 2026-10-09, after WP06 re-ingested `mep`, `30th`, `30th-c` and
+// `swsh10.5` into the LOCAL D1 through the markup normaliser (`cardText.ts`). The same
+// statement now returns **442 rows / 1,039 units / 41,838 characters**; 163 of the 442
+// sentences (563 printings) are ALSO printed in the `sv` column; 279 (476) are new. The
+// 2026-10-07 figures above are the D581 baseline, kept as history.
+//
 // ⚠️ `c.category = 'Pokemon'` IS NEW AT D581 AND IS A NO-OP ON THE `sv` HALF'S OLD DATA.
 // Since D581 the ingest keeps a Trainer's printed face (`apps/api/src/ingest/map.ts`), so
 // a Technical Machine's attack now sits in `attacks_json` too; it is a TRAINER printing
@@ -55,35 +61,34 @@ const CORPUS_ME = `
 1 Choose a random card from your opponent's hand, and your opponent reveals that card and shuffles it into their deck.
 1 Choose a random card from your opponent's hand. Your opponent reveals that card and shuffles it into their deck.
 1 Devolve each of your opponent's evolved Pokémon by putting the highest Stage Evolution card on it into your opponent's hand.
-1 Discard 2 <span class="energy-symbol Fighting" title="Fighting">Fighting</span> Energy from this Pokémon.
-1 Discard 2 <span class="energy-symbol Lightning" title="Lightning">Lightning</span> Energy from this Pokémon.
 2 Discard 2 Energy from this Pokémon, and this attack also does 50 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
 1 Discard 2 Energy from this Pokémon, and this attack does 120 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
 2 Discard 2 Energy from this Pokémon, and this attack does 60 damage to each of 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
 1 Discard 2 Energy from this Pokémon, and your opponent's Active Pokémon is now Paralyzed.
 16 Discard 2 Energy from this Pokémon.
+1 Discard 2 {F} Energy from this Pokémon.
+1 Discard 2 {L} Energy from this Pokémon.
 3 Discard 3 Energy from this Pokémon, and this attack does 280 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
 5 Discard 3 Energy from this Pokémon.
 2 Discard 4 Basic {R} Energy cards from your hand. If you can't discard 4 cards in this way, this attack does nothing.
-1 Discard a <span class="energy-symbol Fire" title="Fire">Fire</span> Energy, a <span class="energy-symbol Water" title="Water">Water</span> Energy, and a <span class="energy-symbol Lightning" title="Lightning">Lightning</span> Energy from this Pokémon.
 1 Discard a Stadium in play.
 4 Discard a random card from your opponent's hand.
 3 Discard a random card from your opponent's hand. Discard the top card of your opponent's deck.
 1 Discard a {L} Energy from this Pokémon.
 1 Discard a {R} Energy from this Pokémon.
-1 Discard all <span class="energy-symbol Lightning" title="Lightning">Lightning</span> Energy from this Pokémon, and this attack does 90 damage to 1 of your opponent's Pokémon. <em>(Don't apply Weakness and Resistance for Benched Pokémon.)</em>
+1 Discard a {R} Energy, a {W} Energy, and a {L} Energy from this Pokémon.
 1 Discard all Energy from this Pokémon and place 12 damage counters on 1 of your opponent's Pokémon.
 1 Discard all Energy from this Pokémon, and this attack also does 90 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
-1 Discard all Energy from this Pokémon, and this attack does 120 damage to 1 of your opponent's Pokémon. <em>(Don't apply Weakness and Resistance for Benched Pokémon.)</em>
+1 Discard all Energy from this Pokémon, and this attack does 120 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
 1 Discard all Energy from this Pokémon, and this attack does 90 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
 15 Discard all Energy from this Pokémon.
 1 Discard all Energy from this Pokémon. Heal all damage from 1 of your Benched Pokémon.
 2 Discard all Energy from this Pokémon. Your opponent's Active Pokémon is now Paralyzed.
 3 Discard all Pokémon Tools and Special Energy from all of your opponent's Pokémon.
+1 Discard all {L} Energy from this Pokémon, and this attack does 90 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
 15 Discard an Energy from this Pokémon.
 4 Discard an Energy from your opponent's Active Pokémon.
-2 Discard any amount of [R] Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way.
-4 Discard any amount of {R} Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way.
+6 Discard any amount of {R} Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way.
 1 Discard random cards from your opponent's hand until they have 5 cards in their hand.
 2 Discard the top 2 cards of your deck.
 5 Discard the top 2 cards of your opponent's deck.
@@ -104,7 +109,7 @@ const CORPUS_ME = `
 2 Draw cards until you have 7 cards in your hand.
 1 During your next turn, attacks used by this Pokémon do 120 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).
 2 During your next turn, attacks used by this Pokémon do 150 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).
-1 During your next turn, the Defending Pokémon takes 30 more damage from attacks <em>(after applying Weakness and Resistance)</em>.
+1 During your next turn, the Defending Pokémon takes 30 more damage from attacks (after applying Weakness and Resistance).
 2 During your next turn, this Pokémon can't attack.
 3 During your next turn, this Pokémon can't use Accelerating Stab.
 1 During your next turn, this Pokémon can't use Bright Horns.
@@ -120,8 +125,7 @@ const CORPUS_ME = `
 1 During your next turn, this Pokémon's Mochi Rush attack does 50 more damage (before applying Weakness and Resistance).
 1 During your opponent's next turn, Energy can't be attached from your opponent's hand to the Defending Pokémon.
 2 During your opponent's next turn, attacks used by the Defending Pokémon do 20 less damage (before applying Weakness and Resistance).
-1 During your opponent's next turn, attacks used by the Defending Pokémon do 30 less damage (before applying Weakness and Resistance).
-1 During your opponent's next turn, attacks used by the Defending Pokémon do 30 less damage <em>(before applying Weakness and Resistance)</em>.
+2 During your opponent's next turn, attacks used by the Defending Pokémon do 30 less damage (before applying Weakness and Resistance).
 2 During your opponent's next turn, attacks used by the Defending Pokémon do 50 less damage (before applying Weakness and Resistance).
 1 During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips 2 coins. If either of them is tails, that attack doesn't happen.
 2 During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin. If tails, that attack doesn't happen.
@@ -139,10 +143,8 @@ const CORPUS_ME = `
 1 During your opponent's next turn, this Pokémon takes 100 more damage from attacks (after applying Weakness and Resistance).
 1 During your opponent's next turn, this Pokémon takes 20 less damage from attacks (after applying Weakness and Resistance).
 11 During your opponent's next turn, this Pokémon takes 30 less damage from attacks (after applying Weakness and Resistance).
-3 During your opponent's next turn, this Pokémon takes 50 less damage from attacks (after applying Weakness and Resistance).
-1 During your opponent's next turn, this Pokémon takes 50 less damage from attacks <em>(after applying Weakness and Resistance)</em>.
-2 During your opponent's next turn, this Pokémon takes 60 less damage from attacks (after applying Weakness and Resistance).
-1 During your opponent's next turn, this Pokémon takes 60 less damage from attacks <em>(after applying Weakness and Resistance)</em>.
+4 During your opponent's next turn, this Pokémon takes 50 less damage from attacks (after applying Weakness and Resistance).
+3 During your opponent's next turn, this Pokémon takes 60 less damage from attacks (after applying Weakness and Resistance).
 1 During your opponent's next turn, whenever they attach an Energy card from their hand to the Defending Pokémon, place 8 damage counters on that Pokémon.
 1 During your opponent's next turn, whenever they try to use a Trainer card from their hand, they flip a coin. If tails, your opponent discards that Trainer card instead of using it.
 1 Each player may attach up to 3 Basic Energy cards from their hand to their Pokémon in any way they like. Your opponent does this first.
@@ -172,8 +174,8 @@ const CORPUS_ME = `
 2 Flip a coin until you get tails. For each heads, choose a random card from your opponent's hand. Your opponent reveals those cards and shuffles them into their deck.
 3 Flip a coin until you get tails. For each heads, discard the top card of your opponent's deck.
 1 Flip a coin until you get tails. Search your deck for a number of cards up to the number of heads and put them into your hand. Then, shuffle your deck.
-1 Flip a coin until you get tails. Search your deck for an amount of Basic <span class="energy-symbol Lightning" title="Lightning">Lightning</span> Energy up to the number of heads and attach it to this Pokémon. Then, shuffle your deck.
 1 Flip a coin until you get tails. Search your deck for an amount of Basic Energy up to the number of heads and attach it to this Pokémon. Then, shuffle your deck.
+1 Flip a coin until you get tails. Search your deck for an amount of Basic {L} Energy up to the number of heads and attach it to this Pokémon. Then, shuffle your deck.
 1 Flip a coin until you get tails. This attack does 100 more damage for each heads.
 2 Flip a coin until you get tails. This attack does 20 damage for each heads.
 1 Flip a coin until you get tails. This attack does 30 damage for each heads.
@@ -226,12 +228,12 @@ const CORPUS_ME = `
 1 If this Pokémon has a Pokémon Tool attached, this attack does 140 more damage.
 1 If this Pokémon has a Pokémon Tool attached, this attack does 40 more damage.
 1 If this Pokémon has a Pokémon Tool attached, this attack does 70 more damage.
-1 If this Pokémon has any <span class="energy-symbol Fire" title="Fire">Fire</span> Energy attached, this attack does 80 more damage.
-1 If this Pokémon has any <span class="energy-symbol Lightning" title="Lightning">Lightning</span> Energy attached, this attack does 80 more damage.
 1 If this Pokémon has any Special Energy attached, this attack does 70 more damage.
 1 If this Pokémon has any damage counters on it, this attack can be used for {D}.
 2 If this Pokémon has any damage counters on it, this attack does 100 more damage.
 3 If this Pokémon has any damage counters on it, this attack does 150 more damage.
+1 If this Pokémon has any {L} Energy attached, this attack does 80 more damage.
+1 If this Pokémon has any {R} Energy attached, this attack does 80 more damage.
 1 If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
 2 If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack does 130 more damage.
 1 If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack does 140 more damage.
@@ -282,9 +284,8 @@ const CORPUS_ME = `
 1 If your opponent's Active Pokémon has no Retreat Cost, this attack does 80 more damage.
 2 If your opponent's Active Pokémon is Burned, this attack does 160 more damage.
 1 If your opponent's Active Pokémon is Poisoned, this attack does 50 more damage.
-1 If your opponent's Active Pokémon is a Pokémon <em>ex</em>, this attack does 80 more damage.
 1 If your opponent's Active Pokémon is a Pokémon ex, this attack does 120 more damage.
-1 If your opponent's Active Pokémon is a Pokémon ex, this attack does 80 more damage.
+2 If your opponent's Active Pokémon is a Pokémon ex, this attack does 80 more damage.
 1 If your opponent's Active Pokémon is a Pokémon ex, this attack does 90 more damage.
 1 If your opponent's Active Pokémon is a Stage 2 Pokémon, this attack does 140 more damage.
 1 If your opponent's Active Pokémon is a {M} Pokémon, this attack does 30 more damage.
@@ -314,8 +315,8 @@ const CORPUS_ME = `
 1 Put an Energy attached to this Pokémon into your hand.
 5 Put this Pokémon and all attached cards into your hand.
 1 Put up to 2 Basic Energy cards from your discard pile into your hand.
-2 Put up to 3 <span class="energy-symbol Dragon" title="Dragon">Dragon</span> Pokémon from your discard pile onto your Bench.
 1 Put up to 3 Basic Pokémon from your discard pile onto your Bench.
+2 Put up to 3 {N} Pokémon from your discard pile onto your Bench.
 3 Reveal any number of Honedge, Doublade, and Aegislash from your hand, and this attack does 60 damage for each card you revealed in this way.
 1 Reveal the bottom 7 cards of your deck, and this attack does 50 damage for each Pokémon you find there that has the Bug Out attack. Then, shuffle any revealed Pokémon back into your deck. Discard the other cards.
 1 Search your deck for a Basic Pokémon and put it onto your Bench. Then, shuffle your deck.
@@ -350,9 +351,9 @@ const CORPUS_ME = `
 3 Switch in 1 of your opponent's Benched Pokémon to the Active Spot.
 6 Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)
 12 Switch this Pokémon with 1 of your Benched Pokémon.
-1 Switch this Pokémon with 1 of your Benched Pokémon. If you do, switch out your opponent's Active Pokémon to the Bench. <em>(Your opponent chooses the new Active Pokémon.)</em>
+1 Switch this Pokémon with 1 of your Benched Pokémon. If you do, switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)
 2 Switch this Pokémon with 1 of your Benched {L} Pokémon.
-1 The Defending Pokémon's Weakness is now <span class="energy-symbol Lightning" title="Lightning">Lightning</span> until the end of your next turn. <em>(Apply Weakness as ×2.)</em>
+1 The Defending Pokémon's Weakness is now {L} until the end of your next turn. (Apply Weakness as ×2.)
 14 This Pokémon also does 10 damage to itself.
 2 This Pokémon also does 20 damage to itself.
 10 This Pokémon also does 30 damage to itself.
@@ -367,16 +368,14 @@ const CORPUS_ME = `
 1 This Pokémon is now Confused.
 1 This Pokémon recovers from all Special Conditions.
 1 This attack also does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
-4 This attack also does 20 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
-2 This attack also does 20 damage to 1 of your opponent's Benched Pokémon. <em>(Don't apply Weakness and Resistance for Benched Pokémon.)</em>
+6 This attack also does 20 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
 1 This attack also does 20 damage to each Benched Pokémon (both yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.)
-1 This attack also does 20 damage to each of your Benched Pokémon. <em>(Don't apply Weakness and Resistance for Benched Pokémon.)</em>
+1 This attack also does 20 damage to each of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
 2 This attack also does 30 damage to 1 of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
 1 This attack also does 30 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
 1 This attack also does 30 damage to each of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
 3 This attack also does 50 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
-1 This attack also does 60 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
-1 This attack also does 60 damage to 1 of your opponent's Benched Pokémon. <em>(Don't apply Weakness and Resistance for Benched Pokémon.)</em>
+2 This attack also does 60 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
 2 This attack does 10 damage for each card in your hand.
 2 This attack does 10 damage for each damage counter on all of your Benched Cynthia's Pokémon. This attack's damage isn't affected by Weakness.
 2 This attack does 10 less damage for each damage counter on this Pokémon.
@@ -391,7 +390,7 @@ const CORPUS_ME = `
 2 This attack does 20 damage for each damage counter on your opponent's Active Pokémon.
 3 This attack does 20 damage for each of your Pokémon in play.
 1 This attack does 20 damage to 1 of your opponent's Pokémon for each {G} Energy attached to this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
-1 This attack does 20 damage to 1 of your opponent's Pokémon. <em>(Don't apply Weakness and Resistance for Benched Pokémon.)</em>
+1 This attack does 20 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
 1 This attack does 20 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) Your opponent's Active Pokémon is now Asleep.
 4 This attack does 20 more damage for each Benched Pokémon (both yours and your opponent's).
 1 This attack does 20 more damage for each Energy attached to your opponent's Active Pokémon.
@@ -407,22 +406,20 @@ const CORPUS_ME = `
 1 This attack does 30 damage for each {C} in your opponent's Active Pokémon's Retreat Cost.
 2 This attack does 30 damage for each {P} Energy attached to all of your Pokémon.
 1 This attack does 30 damage for each {W} Energy attached to this Pokémon. Switch this Pokémon with 1 of your Benched Pokémon.
-1 This attack does 30 damage to 1 of your opponent's Pokémon for each damage counter on that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
-2 This attack does 30 damage to 1 of your opponent's Pokémon for each damage counter on that Pokémon. <em>(Don't apply Weakness and Resistance for Benched Pokémon.)</em>
+3 This attack does 30 damage to 1 of your opponent's Pokémon for each damage counter on that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
 1 This attack does 30 damage to 1 of your opponent's Pokémon for each {W} Energy attached to this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
-1 This attack does 30 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
-2 This attack does 30 damage to each of your opponent's Pokémon. <em>(Don't apply Weakness and Resistance for Benched Pokémon.)</em>
-1 This attack does 30 more damage for each <span class="energy-symbol Water" title="Water">Water</span> Energy attached to this Pokémon.
+3 This attack does 30 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
 2 This attack does 30 more damage for each Energy attached to your opponent's Active Pokémon.
 1 This attack does 30 more damage for each of your Benched Pokémon that has "Antique" in its name.
 1 This attack does 30 more damage for each of your opponent's Benched Pokémon.
 2 This attack does 30 more damage for each {G} Energy attached to this Pokémon.
+1 This attack does 30 more damage for each {W} Energy attached to this Pokémon.
 1 This attack does 40 damage for each Energy attached to all of your opponent's Pokémon.
 3 This attack does 40 damage for each Energy attached to this Pokémon.
 1 This attack does 40 damage for each Pokémon Tool attached to all Pokémon.
 2 This attack does 40 damage for each damage counter on all of your Benched Rattata.
 1 This attack does 40 damage for each of your Erika's Pokémon in play.
-1 This attack does 40 damage for each of your Pikachu and Pikachu <em>ex</em> in play.
+1 This attack does 40 damage for each of your Pikachu and Pikachu ex in play.
 2 This attack does 40 damage for each of your Pokémon in play that has the Round attack.
 1 This attack does 40 damage for each of your Pokémon that has "Tauros" in its name that has any damage counters on it.
 1 This attack does 40 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
@@ -436,8 +433,8 @@ const CORPUS_ME = `
 6 This attack does 50 damage for each {P} Energy attached to all of your Pokémon.
 1 This attack does 50 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
 2 This attack does 50 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
-3 This attack does 50 damage to each of your opponent's Pokémon <em>ex</em>. <em>(Don't apply Weakness and Resistance for Benched Pokémon.)</em>
-1 This attack does 50 damage to each of your opponent's Pokémon. <em>(Don't apply Weakness and Resistance for Benched Pokémon.) </em>This Pokémon also does 130 damage to itself.
+3 This attack does 50 damage to each of your opponent's Pokémon ex. (Don't apply Weakness and Resistance for Benched Pokémon.)
+1 This attack does 50 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) This Pokémon also does 130 damage to itself.
 2 This attack does 50 more damage for each of your Benched Pokémon that has any damage counters on it.
 3 This attack does 50 more damage for each {C} in your opponent's Active Pokémon's Retreat Cost.
 3 This attack does 50 more damage for each {G} Energy attached to this Pokémon.

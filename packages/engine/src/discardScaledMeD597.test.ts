@@ -2,6 +2,7 @@ import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
+import { normalizeCardText } from "./cardText";
 import {
   deriveAttackDamageMultiplier,
   deriveAttackDiscardScaledBoost,
@@ -39,6 +40,8 @@ import {
 //   • `deriveAttackDiscardScaledBoost`'s `handDiscard` member: Shooting Moons ×4 (Mega Clefable ex;
 //     "Luminous Wing" stays unbuilt).
 //   • registry.ts `INFERNO_X`: the two `mep` Inferno X, whose text prints tcgdex's "[R]".
+//     [🆕🆕🆕 D612: RETIRED — WP06's normaliser reads "[R]" as {R} (at ingest and in cards.ts
+//     `cardOfUid`), so both printings play the comma arm off their text (R-IX1 resolved).]
 
 const T = {
   infernoX:
@@ -92,12 +95,14 @@ describe("D597 §1 — the eight sentences and their readings", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     const sv = new Set(legalAttackCorpus().map(([, text]) => text));
     for (const [text, n, ids] of ROWS) {
-      expect([text, me.get(text)]).toEqual([text, n]);
+      // 🆕🆕🆕 D612 — Inferno X's row is 6: the two `mep` "[R]" printings normalise into it (WP06).
+      expect([text, me.get(text)]).toEqual([text, text === T.infernoX ? n + CHARIZARD_MEP.length : n]);
       expect(sv.has(text), text).toBe(false);
       expect(resolvedByAnyReader(text), text).toBe(true);
       expect(ids).toHaveLength(n);
     }
     expect(ROWS.reduce((sum, [, n]) => sum + n, 0)).toBe(16);
+    for (const id of CHARIZARD_MEP) expect(programFor(id)?.attack, id).toBeUndefined(); // 🆕🆕🆕 D612
     // Only Mega Diancie ex is registry-keyed (its Ability, `COPPERAJAH_EX`), and with no attack entry.
     for (const [, , ids] of ROWS) {
       for (const id of ids) expect(programFor(id)?.attack, id).toBeUndefined();
@@ -109,15 +114,14 @@ describe("D597 §1 — the eight sentences and their readings", () => {
     expect(deriveAttackEffect(T.infernoX)).toEqual(INFERNO_PROGRAM);
   });
 
-  it("the \"[R]\" Inferno X ×2 is unread, and keyed BY ID on `INFERNO_X` — the `{R}` arm's program, byte for byte", () => {
+  it("~~the \"[R]\" Inferno X ×2 is unread, and keyed BY ID on `INFERNO_X`~~ (🆕🆕🆕 D612: the raw text is still unread, but it normalises to the `{R}` sentence and the key is retired)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
-    expect(me.get(T.infernoXBracket)).toBe(2);
+    // 🆕🆕🆕 D612 (D539): the corpus no longer prints "[R]" (WP06's re-ingest); the raw text a persisted
+    // face may still carry is unread by the readers, and the normaliser turns it into the `{R}` sentence.
+    expect(me.get(T.infernoXBracket)).toBeUndefined();
     expect(resolvedByAnyReader(T.infernoXBracket)).toBe(false);
-    const keyed = programFor("mep-023");
-    expect(Object.keys(keyed ?? {})).toEqual(["attack"]);
-    expect(keyed?.attack?.[0]).toEqual(deriveAttackEffect(T.infernoX));
-    for (const id of CHARIZARD_MEP) expect(programFor(id), id).toBe(keyed);
-    expect(CHARIZARD_MEP).toHaveLength(me.get(T.infernoXBracket) ?? 0);
+    expect(normalizeCardText(T.infernoXBracket)).toBe(T.infernoX);
+    for (const id of CHARIZARD_MEP) expect(programFor(id), id).toBeUndefined();
   });
 
   it("Garland Ray: up to 2 of ANY Energy off the attacking body, 120 per card", () => {
@@ -422,7 +426,7 @@ describe("D597 §3 — Inferno X: {R} Energy from the whole own board", () => {
     expect(of(events, "ENERGY_DISCARDED")).toHaveLength(0);
   });
 
-  it("the keyed \"[R]\" printing `mep-023` plays the same program", () => {
+  it("the keyed \"[R]\" printing `mep-023` plays the same program (🆕🆕🆕 D612: unkeyed — its raw face, as a persisted pre-D612 pool holds it, is read through `cardOfUid`'s normaliser)", () => {
     const parked = swing(board(CHARIZARD_KEYED)).state;
     const prompt = discardPrompt(parked);
     expect(prompt.discardable).toHaveLength(4);
@@ -524,7 +528,7 @@ describe("D597 §7 — Shooting Moons: up to 4 Energy cards from the hand, 40 mo
 });
 
 describe("D597 §8 — the version", () => {
-  it("is built at engine 0.494.0", () => {
-    expect(engineVersion).toBe("0.494.0");
+  it("is built at engine 0.495.0", () => {
+    expect(engineVersion).toBe("0.495.0");
   });
 });
