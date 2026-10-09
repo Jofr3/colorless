@@ -504,6 +504,8 @@ export function damagedByAttackAbility(
     POKÉMON TOOL on `seat`'s board carries, keyed on the KO of `koedUid` (that
     seat's Active). Returns, in board order, the Tool's own `uid` (the card whose
     sentence runs), the `holderUid` it is attached to, and the program.
+    🆕🆕🆕 D626 — no longer Tool-borne only: the dying Active's own `onSelfActiveKnockedOut` ABILITY
+    (Miraidon "Photon Cord") comes FIRST, with `toolUid` = `holderUid` = the body and `fromAbility: true`.
 
     ⚠️ THIS IS A FOURTH DETECTION SITE, AND IT HAD TO BE — none of the three that
     existed can see this card, each for its own structural reason:
@@ -548,6 +550,9 @@ export function damagedByAttackAbility(
         ungated — the Tools are read through `toolsInEffect`, so Jamming Tower (a
         Stadium, not an Ability-lock) silences Exp. Share; driven in
         `stadiumsD562.test.ts`.
+        🆕🆕🆕 D626 (D539): *"NO §9 GATE"* holds for the TOOL arms only — the scan now also
+        reads the dying Active's OWN Ability (`onSelfActiveKnockedOut`, Miraidon "Photon Cord"),
+        and that arm IS §9-gated (`disabledAbilityUids`), because it is an Ability.
 
     Read by flow.ts (`runKoToolTrigger`, which fires the first match) and by
     attack.ts (presence alone, to decide whether to seed the stage at all — so an
@@ -560,13 +565,22 @@ export function koToolTriggersOf(
   state: GameState,
   seat: Seat,
   koedUid: string,
-): { toolUid: string; holderUid: string; ability: TriggeredAbility }[] {
+): { toolUid: string; holderUid: string; ability: TriggeredAbility; fromAbility?: true }[] {
   const side = state.players[seat];
-  const out: { toolUid: string; holderUid: string; ability: TriggeredAbility }[] = [];
+  const out: { toolUid: string; holderUid: string; ability: TriggeredAbility; fromAbility?: true }[] = [];
   const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
   for (const body of bodies) {
     const holderUid = topUid(body);
     if (holderUid === undefined) continue;
+    // 🆕🆕🆕 D626 — THE ABILITY TWIN (Miraidon "Photon Cord", `onSelfActiveKnockedOut`): the dying body's OWN
+    // top card, FIRST (before its Tools), §9-gated because it is an Ability. `toolUid` then names the body
+    // itself and `fromAbility` tells the runner so (an `ABILITY_TRIGGERED` row, `invokedBy: "ability"`).
+    if (holderUid === koedUid && !disabledAbilityUids(state).has(holderUid)) {
+      const top = topCardOf(state, body);
+      for (const ability of (top === undefined ? undefined : programFor(top.id)?.triggered) ?? []) {
+        if (ability.trigger === "onSelfActiveKnockedOut") out.push({ toolUid: holderUid, holderUid, ability, fromAbility: true });
+      }
+    }
     // 🆕🆕🆕 D566 — THE KO'D BODY IS SKIPPED for the ally timing and READ for the self one:
     // the timing this body answers is chosen by whether it IS the dying body.
     const timing: TriggerTiming =

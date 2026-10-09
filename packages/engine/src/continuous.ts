@@ -780,6 +780,18 @@ export function koEnergyRescueUids(state: GameState, seat: Seat, body: InPlayPok
     "It" is the Pokémon: every card of its `stack` (R-IS1, ⚠️ UNRULED — an evolved Gengar takes
     its Gastly and Haunter with it); "(Discard all attached cards.)" is the Energy and Tools,
     which stay on the discard path. */
+/** 🆕🆕🆕 §8.1 (D626) — the printed NAME of `body`'s Gengar ex "Fainting Spell" (`koAttackerOnCoinFlip`), or
+    null: the body's OWN top card carries it and its Ability is live (`disabledAbilityUids`). Asked by flow.ts
+    `faintingSpells` of a body still on the board, before the sweep — `koSelfToHandUids`' reading. */
+export function koAttackerOnCoinFlipOf(state: GameState, body: InPlayPokemon): string | null {
+  const top = topCardOf(state, body);
+  const ability = top === undefined ? undefined : programFor(top.id)?.passive?.koAttackerOnCoinFlip;
+  if (ability === undefined) return null;
+  const uid = topUid(body);
+  if (uid !== undefined && disabledAbilityUids(state).has(uid)) return null; // §9
+  return ability;
+}
+
 export function koSelfToHandUids(state: GameState, seat: Seat, body: InPlayPokemon): string[] {
   const top = topCardOf(state, body);
   if (top === undefined || programFor(top.id)?.passive?.koSelfToHand !== true) return [];

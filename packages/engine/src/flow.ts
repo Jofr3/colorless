@@ -11,6 +11,8 @@ import {
   // 🆕🆕🆕 D578 — the IN-PLAY card (Scovillain ex "Double Type"), at the §13.1 Poison read.
   inPlayCardOf,
   isLethallyDamaged,
+  // 🆕🆕🆕 D626 — Gengar ex "Fainting Spell".
+  koAttackerOnCoinFlipOf,
   koEnergyRescueUids,
   // 🆕🆕🆕 D598 — Infinite Shadow's return-to-hand and Shadowy Concealment's seat scan.
   koSelfToHandUids,
@@ -24,8 +26,16 @@ import {
   stadiumShieldsStatus,
 } from "./continuous";
 import type { GameEvent } from "./events";
-import type { RunResult } from "./interpreter";
-import { attackAgainBarred, attackAgainLicensed, discardHand, doomBodyAt, runProgram } from "./interpreter";
+import type { PokemonRef, RunResult } from "./interpreter";
+import {
+  attackAgainBarred,
+  attackAgainLicensed,
+  discardHand,
+  doomBodyAt,
+  // 🆕🆕🆕 D626 — Fainting Spell's attacker Knock Out asks the §11 funnel (Luminous Wing).
+  effectRefused,
+  runProgram,
+} from "./interpreter";
 import type { KoPrizeReduction } from "./registry";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
@@ -354,6 +364,51 @@ function koRecoilOf(
   return total;
 }
 
+/** 🆕🆕🆕 §8.1 (D626) — Gengar ex `30th-090` / `-154` "Fainting Spell": *"If this Pokémon is Knocked Out by
+    damage from an attack from your opponent's Pokémon, flip a coin. If heads, the Attacking Pokémon is Knocked
+    Out."* Called by `finishAttack` alone, so "by an attack" and "your opponent's" are discharged by placement
+    exactly as `koRecoilOf`'s are (only `otherSeat(attackerSeat)` is scanned); "by damage" is `koRecoilOf`'s
+    `lethalByEffect` refusal. For each such body, Active then Bench, carrying a live Fainting Spell
+    (`koAttackerOnCoinFlipOf`): `ABILITY_TRIGGERED`, one `ABILITY_COIN_FLIP`, and on heads the Attacking
+    Pokémon — `attackerUid`, by uid in either zone (D189) — is DOOMED with D414's marker, unless the §11 funnel
+    refuses an Ability's effect on it (Mega Clefable ex "Luminous Wing", `ABILITY_EFFECT_PREVENTED`). A Knock
+    Out, not damage: no KO-survival clamp or coin is asked (Survival Brace, Tenacious Body). An attacker
+    already lethal keeps its damage-cause (no marker). R-FS1 ⚠️ UNRULED: each dying Gengar ex flips (two flip
+    twice; the second can find the attacker already doomed); an attacker no longer in play is still flipped
+    for and nothing happens; the attacker's Knock Out is in the SAME batch as the Gengar ex's, so both Prizes
+    are taken before either promotion. */
+function faintingSpells(state: GameState, attackerSeat: Seat, attackerUid: string, events: GameEvent[]): GameState {
+  const seat = otherSeat(attackerSeat);
+  const doomed = new Set(lethalRefs(state, [seat]).map((ref) => ref.uid));
+  if (doomed.size === 0) return state;
+  const side = state.players[seat];
+  let next = state;
+  for (const body of side.active === null ? side.bench : [side.active, ...side.bench]) {
+    const uid = topUid(body);
+    if (uid === undefined || !doomed.has(uid) || lethalByEffect(body, state.turn)) continue;
+    const ability = koAttackerOnCoinFlipOf(state, body);
+    if (ability === null) continue;
+    events.push({ type: "ABILITY_TRIGGERED", seat, uid, ability });
+    const [face, rngState] = flipCoin(next.rngState);
+    next = { ...next, rngState };
+    events.push({ type: "ABILITY_COIN_FLIP", seat, uid, ability, result: face });
+    if (face !== "heads") continue;
+    const own = next.players[attackerSeat];
+    const index = own.bench.findIndex((pokemon) => topUid(pokemon) === attackerUid);
+    const ref: PokemonRef | undefined =
+      own.active !== null && topUid(own.active) === attackerUid
+        ? { seat: attackerSeat, spot: { spot: "active" } }
+        : index === -1
+          ? undefined
+          : { seat: attackerSeat, spot: { spot: "bench", index } };
+    const attacker = ref === undefined ? undefined : ref.spot.spot === "active" ? own.active : own.bench[index];
+    if (ref === undefined || attacker === null || attacker === undefined) continue;
+    if (effectRefused(next, attackerSeat, { seat, sourceUid: uid, invokedBy: "ability" }, events, attacker)) continue;
+    next = doomBodyAt(next, ref, isLethallyDamaged(next, attacker) ? undefined : koByEffectMarker(next.turn));
+  }
+  return next;
+}
+
 /** Add `amount` HP of damage to the in-play body `uid` names on `seat`'s board —
     Active OR Bench — or `null` when it is not in play there (D189).
 
@@ -521,6 +576,13 @@ export function koByOpponentAttack(
   if (attackerSeat === undefined || attackerSeat === ref.seat) return false;
   const body = preBatchBody(state, ref);
   return body !== undefined && !lethalByEffect(body, state.turn);
+}
+
+/** 🆕🆕🆕 §8.1 (D626) — was `ref`'s body in its seat's ACTIVE SPOT on the PRE-batch board? The on-KO
+    `activeOnly` gate (Flygon "Sandy Flapping"); `planPrizes` asks it before any body leaves play. */
+export function koWasActiveSpot(state: GameState, ref: { seat: Seat; uid: string }): boolean {
+  const active = state.players[ref.seat].active;
+  return active !== null && topUid(active) === ref.uid;
 }
 
 /** 🆕🆕🆕 §8.1 (D598) — THE "KO'd BY AN ex" CONDITION: `koByOpponentAttack` AND the attacking body
@@ -1170,7 +1232,10 @@ function planPrizes(
       ability !== undefined &&
       ability.program.length > 0 &&
       // 🆕🆕🆕 D598 — Final Chain's printed cause (`byOpponentAttack`); absent = every Knock Out.
-      (ability.byOpponentAttack !== true || koByOpponentAttack(next, ref, attackerSeat));
+      (ability.byOpponentAttack !== true || koByOpponentAttack(next, ref, attackerSeat)) &&
+      // 🆕🆕🆕 D626 — Flygon "Sandy Flapping"'s *"if this Pokémon is in the Active Spot"*, on the PRE-batch
+      // board (`koWasActive`'s reading); absent = anywhere, byte-identical for every earlier on-KO row.
+      (ability.activeOnly !== true || koWasActiveSpot(next, ref));
     // 🆕 D298 — every push in this loop goes through here, so the ATTACHED
     // reduction (Legacy Energy, Lillie's Pearl) rides EVERY on-KO Ability path and
     // not just the bare one: a Munkidori ex wearing a Legacy Energy pays both, and
@@ -1579,6 +1644,9 @@ export function finishAttack(
       source: "counterattack",
     });
   }
+  // 🆕🆕🆕 D626 — Gengar ex "Fainting Spell": after the KO recoil (so its counters land first), before the
+  // sweep, so a doomed attacker joins THIS batch (§8.1 simultaneous) and its Prize goes to the Gengar side.
+  next = faintingSpells(next, attackerSeat, attackerUid, events);
 
   // ⚠️ `attackerSeat` is passed ONLY here. It is what makes the attack epilogue
   // distinguishable from the Checkup and the mid-turn evolve sweep INSIDE
@@ -1980,7 +2048,10 @@ function runDamagedTrigger(
     "the Pokémon this card is attached to" from it, which is the phrase a Tool
     prints where a Pokémon prints "this Pokémon". No ABILITY_TRIGGERED row: a Tool
     has no Ability to trigger (log.ts says so at the neighbouring recoil arm), so
-    the prompt and the ENERGY_MOVED row are the whole of what a reader is told. */
+    the prompt and the ENERGY_MOVED row are the whole of what a reader is told.
+    🆕🆕🆕 D626 (D539): for a TOOL entry only — the scan's Ability arm (Miraidon "Photon Cord",
+    `fromAbility`) files `ABILITY_TRIGGERED`, runs with the body's own uid and `invokedBy: "ability"`,
+    and refuses a `knockOutDefender` doom (R-PHC1). */
 function runKoToolTrigger(state: GameState, koedSeat: Seat, events: GameEvent[]): ApplyResult {
   const active = state.players[koedSeat].active;
   if (active === null || !isLethallyDamaged(state, active)) return advance(state, events);
@@ -1996,6 +2067,18 @@ function runKoToolTrigger(state: GameState, koedSeat: Seat, events: GameEvent[])
       effectiveRetreatCost(state, active) === 4,
   );
   if (entry === undefined || entry.ability.program.length === 0) return advance(state, events);
+  // 🆕🆕🆕 D626 — Miraidon "Photon Cord", the scan's Ability arm: "by damage" refuses a `knockOutDefender`
+  // doom (D414's marker, R-PHC1), and the Ability announces itself and runs as an Ability (`invokedBy`).
+  if (entry.fromAbility === true) {
+    if (lethalByEffect(active, state.turn)) return advance(state, events);
+    events.push({ type: "ABILITY_TRIGGERED", seat: koedSeat, uid, ability: entry.ability.name });
+    return settleProgram(
+      runProgram(state, entry.ability.program, { seat: koedSeat, sourceUid: uid, invokedBy: "ability" }, events),
+      koedSeat,
+      events,
+      { resumeTail: true },
+    );
+  }
   return settleProgram(
     runProgram(state, entry.ability.program, { seat: koedSeat, sourceUid: entry.toolUid }, events),
     koedSeat,

@@ -30,7 +30,8 @@ import {
 // the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-07, `legal_standard = 1`; no id
 // was referenced anywhere in the tree before this slice. Flygon ×3 "Sandy Flapping" (`me02-053`,
 // `me02-101`, `mep-016`) is NOT built: its KO half needs an Active-Spot / by-attack gate on an
-// `onKnockOut` program. No `me` row is a fixture, so the printed faces are carried HERE.
+// `onKnockOut` program. [🆕🆕🆕 D626 (D539): Flygon ×3 BUILT at D626 (K1): `activeOnly` is read for an on-KO
+// program, beside D598's `byOpponentAttack` — `koTriggerRestMeD626.test.ts`.] No `me` row is a fixture, so the printed faces are carried HERE.
 
 const HEAD =
   "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability.";
@@ -156,9 +157,9 @@ describe("D590 §1 — the programs: nine `onEvolve` objects over 13 printings, 
     ]);
   });
 
-  it('Flygon ×3 "Sandy Flapping" is not keyed (its KO half), and no printed attack is registry-keyed', () => {
+  it('Flygon ×3 "Sandy Flapping" is ~~not keyed (its KO half)~~ keyed since D626 with both halves (🆕🆕🆕 D626 (D539)), and no printed attack is registry-keyed', () => {
     for (const id of ["me02-053", "me02-101", "mep-016"])
-      expect(programFor(id), id).toBeUndefined();
+      expect(programFor(id)?.triggered?.map((t) => t.trigger), id).toEqual(["onEvolve", "onKnockOut"]);
     for (const [, , ids] of ABILITIES)
       for (const id of ids) expect(programFor(id)?.attack, id).toBeUndefined();
     expect(programFor(LOKIX)).toBeUndefined();
@@ -806,7 +807,7 @@ describe("D590 §10b — Aqua Return over an evolution stack", () => {
 });
 
 describe("D590 §11 — the version", () => {
-  it("is built at engine 0.508.0", () => {
-    expect(engineVersion).toBe("0.508.0");
+  it("is built at engine 0.509.0", () => {
+    expect(engineVersion).toBe("0.509.0");
   });
 });

@@ -31,7 +31,8 @@ import {
 // Memory (the NEW `toolAttacksHolder`) and Tremendous Bomb ×2 (the NEW `damageAttackerActiveThenDiscardIf`).
 // Every id and text off the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-09,
 // `legal_standard = 1`. Dropped and named: Adversity Policy `me04-074` (a Weakness gate, a new
-// `BoardCondition` member). Driven on a LOCAL `cardPool` (D275) in the suite's OWN 60-card deck (D270).
+// `BoardCondition` member). [🆕🆕🆕 D626 (D539): Adversity Policy BUILT at D626 (K1, the new
+// `yourActiveWeakToOpponentActiveType`).] Driven on a LOCAL `cardPool` (D275) in the suite's OWN 60-card deck (D270).
 
 const ONSLAUGHT = "This attack does 70 damage for each Prize card you have taken.";
 const GOBBLE = "This attack does 80 damage for each Prize card you have taken.";
@@ -387,8 +388,8 @@ describe("D620 §1 — the prints, the registry rows and the readings", () => {
     }
   });
 
-  it("Adversity Policy is dropped: unkeyed", () => {
-    expect(programFor(ADVERSITY)).toBeUndefined();
+  it("Adversity Policy is dropped: unkeyed (🆕🆕🆕 D626 (D539): WITHDRAWN — built at D626, K1, `koTriggerRestMeD626.test.ts`)", () => {
+    expect(Object.keys(programFor(ADVERSITY) ?? {})).toEqual(["triggered"]);
   });
 });
 
@@ -559,7 +560,7 @@ describe("D620 §8 — Tremendous Bomb: 240+ from an opposing Mega ex on a non-M
 });
 
 describe("D620 §9 — the version", () => {
-  it("is built at engine 0.508.0", () => {
-    expect(engineVersion).toBe("0.508.0");
+  it("is built at engine 0.509.0", () => {
+    expect(engineVersion).toBe("0.509.0");
   });
 });

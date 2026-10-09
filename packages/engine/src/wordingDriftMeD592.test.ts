@@ -252,11 +252,14 @@ describe("D592 §4 — Corrosive Liquid: Megaton Blower's two sweeps on an attac
     expect(deriveAttackEffect(CORROSIVE_LIQUID.replace("'", "’"))).toEqual(program);
   });
 
-  it("no printing of this slice is registry-keyed (🆕🆕🆕 D598 (D539): WITHDRAWN for Annihilape `me05-041` — keyed for its Ability \"Durable Body\"; its attack is still the reader's)", () => {
-    for (const id of ["me04-065", "me04-104", "me04-118", "me01-086", "mep-082", "me02-069", "me02-078", "me03-049", "me05-031", "30th-090", "30th-154", "30th-123"]) {
+  it("no printing of this slice is registry-keyed (🆕🆕🆕 D598 (D539): WITHDRAWN for Annihilape `me05-041` — keyed for its Ability \"Durable Body\"; its attack is still the reader's; 🆕🆕🆕 D626 (D539): and for Miraidon `mep-082` and Gengar ex `30th-090` / `-154` — keyed for their Abilities \"Photon Cord\" / \"Fainting Spell\"; their attacks are still the reader's)", () => {
+    for (const id of ["me04-065", "me04-104", "me04-118", "me01-086", "me02-069", "me02-078", "me03-049", "me05-031", "30th-123"]) {
       expect(programFor(id), id).toBeUndefined();
     }
     expect(Object.keys(programFor("me05-041") ?? {})).toEqual(["passive"]);
+    // 🆕🆕🆕 D626 — an Ability key only: no `attack` key, so "Thunder" / "Chaotic Pain" still derive.
+    expect(Object.keys(programFor("mep-082") ?? {})).toEqual(["triggered"]);
+    for (const id of ["30th-090", "30th-154"]) expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
   });
 });
 
@@ -476,7 +479,7 @@ describe("D592 §6 — Claw of Darkness and Thunder on a board", () => {
 });
 
 describe("D592 §7 — the version", () => {
-  it("is built at engine 0.508.0", () => {
-    expect(engineVersion).toBe("0.508.0");
+  it("is built at engine 0.509.0", () => {
+    expect(engineVersion).toBe("0.509.0");
   });
 });

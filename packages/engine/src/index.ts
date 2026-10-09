@@ -20269,6 +20269,17 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.508.0 → **0.509.0** (D626 — K1: THE REST OF THE KO / DAMAGED TRIGGERS, 4 TEXTS / 8 `me`
+    PRINTINGS; `MATCH_RECORD_VERSION` STAYS 43 (apps/api match.ts "STAYS 43 AT D626")). registry.ts: four NEW objects —
+    Flygon ×3 "Sandy Flapping" (an `onEvolve` row and an `onKnockOut` row behind `byOpponentAttack` and `activeOnly`,
+    each a confirm around `discardDeckTop` 2 on the opponent; R-SF1), Miraidon ×2 "Photon Cord" (the NEW `TriggerTiming`
+    `onSelfActiveKnockedOut` on the shipped `koToolTrigger` stage; R-PHC1), Gengar ex ×2 "Fainting Spell" (the NEW
+    `PassiveEffects.koAttackerOnCoinFlip`; R-FS1) and Adversity Policy (an `onDamagedByAttack` Tool behind the NEW
+    `BoardCondition` `yourActiveWeakToOpponentActiveType`; R-AP1). flow.ts: `planPrizes` reads `activeOnly` for an
+    on-KO program (`koWasActiveSpot`), `finishAttack` calls the NEW `faintingSpells` after the KO recoil, and
+    `runKoToolTrigger` runs the scan's Ability arm. triggers.ts: `koToolTriggersOf`'s Ability arm (`fromAbility`).
+    continuous.ts: `koAttackerOnCoinFlipOf`. interpreter.ts: the new member's `conditionHolds` / `conditionNote` arms.
+    No new park shape. `koTriggerRestMeD626.test.ts`.)
     🆕🆕🆕 engineVersion 0.507.0 → **0.508.0** (D625 — T1: THE REST OF THE `me` TRAINERS, 7 TEXTS / 13 `me` PRINTINGS,
     PLUS THE OPEN DOCS FINDINGS; `MATCH_RECORD_VERSION` STAYS 43 (apps/api match.ts "STAYS 43 AT D625")). registry.ts: seven
     NEW Trainer objects — Special Red Card ×2 (`handRefresh` opponent behind `opponentPrizesRemaining [0..3]`, R-SRC1), Jumbo
@@ -20324,7 +20335,7 @@ import type { GameState, Seat } from "./types";
     `holder`), Punk Helmet ×2 (the NEW `damageAttacker.holderType`), Team Rocket's Hypnotizer (an
     `onDamagedByAttack` Tool trigger behind `yourActiveOwner`), Core Memory (the NEW `toolAttacksHolder`, read by
     `attackMenuOf`) and Tremendous Bomb ×2 (the NEW `damageAttackerActiveThenDiscardIf`, read by `deluxeBombOf`,
-    which now takes the hit's `dealt`; R-TRB1 UNRULED). Dropped and named: Adversity Policy (a Weakness gate).
+    which now takes the hit's `dealt`; R-TRB1 UNRULED). Dropped and named: Adversity Policy (a Weakness gate) [🆕🆕🆕 D626 (D539): BUILT at D626 (K1)].
     `prizesToolsMeD620.test.ts`.)
     🆕🆕🆕 engineVersion 0.501.0 → **0.502.0** (D619 — WP12 (THE PASSIVE HALF) + WP15: ATTACKER-GATED
     REDUCTIONS AND NAMED-SUPPORTER CONDITIONS, 7 TEXTS / 10 `me` PRINTINGS; `MATCH_RECORD_VERSION` STAYS 42
@@ -20550,7 +20561,8 @@ import type { GameState, Seat } from "./types";
     "N Pokémon cards" beside D572's "N Basic Energy") and Pecharunt "Final Chain" (an on-KO program
     behind `TriggeredAbility.byOpponentAttack`). flow.ts `koByOpponentAttack` / `koByOpponentPokemonEx`
     are the shared cause predicates ("KO'd by an ex"). Registry-only fields; no persisted member.
-    Fainting Spell, Photon Cord, Spiteful Swirl, Counterattack Grouping and Damp dropped and named.
+    Fainting Spell, Photon Cord, Spiteful Swirl, Counterattack Grouping and Damp dropped and named
+    [🆕🆕🆕 D626 (D539): Fainting Spell and Photon Cord BUILT at D626 (K1)].
     `koAbilitiesMeD598.test.ts`.)
     🆕🆕🆕 engineVersion 0.480.0 → **0.481.0** (D597 — WP29: THE DISCARD-SCALED ATTACKS;
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D597")). effects.ts
@@ -20636,7 +20648,8 @@ import type { GameState, Seat } from "./types";
     Active). effects.ts `deriveAttackEffect` reads *"Shuffle this Pokémon and all attached cards into
     your deck."* as `returnSelf` `dest: "deck"` (`ATTACK_RETURN_SELF_TO_DECK`; Lokix "Jumping Shot",
     Primarina "Aqua Return" ×2). No new op, member or field. **Dropped:** Flygon ×3 "Sandy Flapping"
-    (its KO half needs an Active-Spot / by-attack gate an `onKnockOut` program does not have).
+    (its KO half needs an Active-Spot / by-attack gate an `onKnockOut` program does not have)
+    [🆕🆕🆕 D626 (D539): BUILT at D626 (K1) — `activeOnly` is now read for an on-KO program].
     Alakazam's "Powerful Hand" stays unbuilt (WP14) [🆕🆕🆕 D600: built]. Census: Standard pool attacks 2492 / 2771,
     abilities 470 / 610; 782 `me` printings fully built. `onEvolveMeD590.test.ts`.)
     🆕🆕🆕 engineVersion 0.472.0 → **0.473.0** (D589 — WP08: MEGA GRENINJA EX AND THE OPTIONAL-COST
@@ -25592,7 +25605,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.508.0";
+export const engineVersion = "0.509.0";
 
 export type {
   ApplyResult,

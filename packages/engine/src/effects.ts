@@ -2569,6 +2569,14 @@ export type BoardCondition =
       above's fold (`effectiveRetreatCost`) at zero — the EFFECTIVE cost, not the printed column
       (R-CW1, UNRULED). False with an empty Active Spot. */
   | { kind: "opponentActiveNoRetreatCost" }
+  /** 🆕🆕🆕 **D626 — YOUR ACTIVE POKÉMON HAS WEAKNESS TO YOUR OPPONENT'S ACTIVE POKÉMON'S TYPE.** Adversity
+      Policy `me04-074` (Tool): *"If the Pokémon this card is attached to has Weakness to your opponent's Active
+      Pokémon's type, …"* — read on the `onDamagedByAttack` stage, where your Active IS the holder (D620's
+      `yourActiveOwner` reading). The EFFECTIVE Weakness at that moment: the in-play cards (`inPlayCardOf`) on
+      both sides, `weaknessOf` with the installed retype (D552) and the opponent-side rewrite (D559), and the
+      "has no Weakness" bars (`seatRemovesWeakness`, `installedNoWeakness`) answer false. A dual-type opponent's
+      Active matches when either type does (R-AP1 ⚠️ UNRULED). False with either Active Spot empty. Public. */
+  | { kind: "yourActiveWeakToOpponentActiveType" }
   /** 🆕 **D370 — YOU HAVE AT LEAST ONE Pokémon OF TYPE `type` ON YOUR BENCH.**
       *"If you have any {M} Pokémon on your Bench, this attack does 80 more
       damage."*, **2 legal printings** — measured off `legalAttackCorpus()`, the

@@ -371,6 +371,6 @@ describe("D623 §4 — the two texts on shipped members, on a board", () => {
 
 describe("D623 §5 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.508.0");
+    expect(engineVersion).toBe("0.509.0");
   });
 });

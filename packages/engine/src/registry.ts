@@ -327,7 +327,15 @@ export type TriggerTiming =
       `-097`). The FIRST end-of-turn moment that can PARK: flow.ts's `endTurn` stage seeds
       one `endTurnToolTrigger` per live Tool on the turn owner's Active, ahead of itself,
       before `TURN_ENDED`. */
-  | "atEndOfYourTurnInActive";
+  | "atEndOfYourTurnInActive"
+  /** 🆕🆕🆕 D626 — an ABILITY's *"If this Pokémon is in the Active Spot and is Knocked Out by damage from an
+      attack from your opponent's Pokémon, move … from this Pokémon"* (Miraidon `mep-082` / `me05-028` "Photon
+      Cord"). `onHolderActiveKnockedOut`'s Ability twin: the same `koToolTrigger` stage, seeded ahead of the
+      `attackEpilogue` BEFORE `knockOut` discards the stack, found by the same scan's self arm (triggers.ts
+      `koToolTriggersOf`) off the dying Active's TOP card — §9-gated, because it is an Ability — and run by
+      flow.ts `runKoToolTrigger` with `invokedBy: "ability"` and an `ABILITY_TRIGGERED` row. A timing of its
+      own so Heavy Baton's Retreat-exactly-4 clause (keyed on its timing) is not asked of it. */
+  | "onSelfActiveKnockedOut";
 
 /** A card's triggered Ability (§9) — one that FIRES on a game event rather than
     being player-activated. The framework runs `program` through the shared
@@ -359,7 +367,10 @@ export interface TriggeredAbility {
   /** Fires only while this Pokémon is in the Active Spot (Trevenant's "if this
       Pokémon is in the Active Spot"). Not consulted for `onKnockOut` — a
       Knocked Out Pokémon has left play, so its "when Knocked Out" Ability fires
-      regardless of where it sat. */
+      regardless of where it sat. [🆕🆕🆕 D626 (D539): *"Not consulted for `onKnockOut`"* is
+      WITHDRAWN, kept as written — flow.ts `planPrizes` reads it for an on-KO PROGRAM on the PRE-batch
+      board (Flygon "Sandy Flapping": *"if this Pokémon is in the Active Spot and is Knocked Out"*).
+      Absent on every other on-KO row, which is byte-identical.] */
   activeOnly?: boolean;
   /** 🆕 D319 — THE SCAN DIRECTION, AND IT IS NOT A SEVENTH TIMING.
       *"**Whenever your opponent** plays a Pokémon from their hand to evolve 1 of
@@ -1320,6 +1331,15 @@ export interface PassiveEffects {
       hit, and heads leaves `hp − 10` (`survived: true` on the row). Through `passivesOf`, so a §9
       lock switches it off. A placed counter is not damage, so no counter writer asks it. */
   survivesKoOnCoinFlip?: string;
+  /** 🆕🆕🆕 **D626 — THE COIN-FLIP KNOCK OUT OF THE ATTACKER**, the value the printed Ability NAME (the
+      coin row names it): *"If this Pokémon is Knocked Out by damage from an attack from your opponent's
+      Pokémon, flip a coin. If heads, the Attacking Pokémon is Knocked Out."* — Gengar ex `30th-090` / `-154`
+      "Fainting Spell". Read by flow.ts `faintingSpells` inside `finishAttack`, beside `koRecoilOf`
+      (`damageAttackerOnKo`'s site) and before the sweep, over the defender's bodies made lethal by damage
+      (Active OR Bench). Heads dooms the attacker with D414's marker (a Knock Out, not damage: no
+      KO-survival clamp is asked), through the §11 funnel with `invokedBy: "ability"` (Luminous Wing
+      refuses it). Read off the holder's own top card with the §9 lock asked (`koSelfToHand`'s reading). */
+  koAttackerOnCoinFlip?: string;
   /** §9 continuous Ability-lock AURA: while this Pokémon is in play (and, when
       `requiresActive`, in the Active Spot), every in-play Pokémon matching the
       target predicate "has no Abilities" — the engine suppresses its activated /
@@ -17228,7 +17248,9 @@ const MORTAL_SHURIKEN: CardProgram = {
 //    op `deriveAttackEffect` reads off the same sentence on an attack, or a shipped row's. 9 objects,
 //    13 printings. Flygon ×3 "Sandy Flapping" is NOT here: its KO half fires only "if this Pokémon
 //    is in the Active Spot and is Knocked Out by damage from an attack", and an `onKnockOut` program
-//    has no Active-Spot or cause gate (`TriggeredAbility.activeOnly` is not read for it). ──
+//    has no Active-Spot or cause gate (`TriggeredAbility.activeOnly` is not read for it).
+//    [🆕🆕🆕 D626 (D539): Flygon ×3 BUILT at D626 (`SANDY_FLAPPING`, K1) — `activeOnly` is now read for an on-KO
+//    program, beside D598's `byOpponentAttack`.] ──
 
 const PSYCHIC_DRAW_3_TEXT =
   "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Draw 3 cards.";
@@ -18170,7 +18192,8 @@ const FRILLED_GENERATOR: CardProgram = {
 //    `yourPrizesTaken`, `AttackBonusConsequent.baseOverride`). New pieces: `damageAttacker.holderType`
 //    (Punk Helmet), `damageAttackerActiveThenDiscardIf` (Tremendous Bomb) and `toolAttacksHolder` (Core
 //    Memory). Texts off the LOCAL D1 (2026-10-09). Dropped and named: Adversity Policy `me04-074` (a
-//    holder-has-Weakness-to-the-opponent's-Active gate, a new `BoardCondition` member). `prizesToolsMeD620.test.ts`. ──
+//    holder-has-Weakness-to-the-opponent's-Active gate, a new `BoardCondition` member). `prizesToolsMeD620.test.ts`.
+//    [🆕🆕🆕 D626 (D539): Adversity Policy BUILT at D626 (`ADVERSITY_POLICY`, K1, `yourActiveWeakToOpponentActiveType`).] ──
 
 /** 🆕🆕🆕 **D620 — Light Ball `me02.5-191` (Tool)**: *"Attacks used by the Pikachu ex this card is attached
     to do 50 more damage to your opponent's Active Pokémon ex (before applying Weakness and Resistance)."*
@@ -18442,6 +18465,116 @@ const GREAT_HAUL_NET: CardProgram = {
     play. */
 const STRANGE_TIMEPIECE: CardProgram = {
   trainer: [{ op: "devolveChosen", whose: "self", pokemonType: "Psychic", depth: "any" }],
+};
+
+// ── 🆕🆕🆕 D626 — K1, THE REST OF THE KO / DAMAGED TRIGGERS: 4 texts / 8 `me` printings on four NEW objects.
+//    Texts off the LOCAL D1 (2026-10-09, `legal_standard = 1`). New pieces: `activeOnly` READ for an
+//    `onKnockOut` program (flow.ts `planPrizes`), the `TriggerTiming` `onSelfActiveKnockedOut` (Heavy Baton's
+//    Ability twin on the shipped `koToolTrigger` stage), `PassiveEffects.koAttackerOnCoinFlip` (flow.ts
+//    `finishAttack`) and the `BoardCondition` `yourActiveWeakToOpponentActiveType`. No new park shape: every
+//    program parks through a shipped op on a shipped stage. `koTriggerRestMeD626.test.ts` plays each. Out of
+//    scope and named: Spiritomb ×2 "Spiteful Swirl" and Wishiwashi "Counterattack Grouping" (K2, a watched
+//    Active's damage moment). ──
+
+const SANDY_FLAPPING_TEXT =
+  "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. You may also use this Ability if this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon. Discard the top 2 cards of your opponent's deck.";
+
+/** 🆕🆕🆕 **D626 — Flygon `mep-016`, `me02-053` / `-101` (3 legal) "Sandy Flapping"**: two triggered rows
+    under one name. The `onEvolve` half is D590's shape; the `onKnockOut` half carries `byOpponentAttack`
+    (Final Chain's cause, D598) and `activeOnly` — read for an on-KO program since D626, on the PRE-batch
+    board. Both run `discardDeckTop` 2 on the opponent (the reader's program for the sentence) behind an
+    inner confirm: both halves print "you may", and the mill feeds the opponent's discard-scaled attacks and
+    discard retrieval, so it is not pure upside (the D590 lesson). R-SF1 ⚠️ UNRULED: the KO half rides the
+    un-gated `onKnockOutTrigger` (R-KO1), so a §9 lock on the dying Flygon does not stop it; the confirm is
+    asked after the Prize, when the koTrigger stage runs. */
+const SANDY_FLAPPING: CardProgram = {
+  triggered: [
+    {
+      name: "Sandy Flapping",
+      trigger: "onEvolve",
+      optional: true,
+      program: [
+        {
+          op: "optional",
+          note: SANDY_FLAPPING_TEXT,
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [{ op: "discardDeckTop", whose: "opponent", count: 2 }],
+        },
+      ],
+    },
+    {
+      name: "Sandy Flapping",
+      trigger: "onKnockOut",
+      optional: true,
+      activeOnly: true,
+      byOpponentAttack: true,
+      program: [
+        {
+          op: "optional",
+          note: SANDY_FLAPPING_TEXT,
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [{ op: "discardDeckTop", whose: "opponent", count: 2 }],
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D626 — Miraidon `mep-082`, `me05-028` (2 legal) "Photon Cord"**: *"If this Pokémon is in the Active
+    Spot and is Knocked Out by damage from an attack from your opponent's Pokémon, move up to 2 Basic {L} Energy
+    cards from this Pokémon to 1 of your Benched Pokémon."* Heavy Baton's sentence printed as an Ability: the NEW
+    `onSelfActiveKnockedOut` on the shipped `koToolTrigger` stage, seeded by attack.ts ahead of the
+    `attackEpilogue`, so the Energy is moved BEFORE `knockOut` discards the stack. The move is `selfToBench`
+    with ONE destination ("to 1 of your Benched Pokémon"); "up to" is the park's standing decline, so 0 is a
+    legal answer. A §9 lock on the dying Miraidon switches it off (triggers.ts `koToolTriggersOf`). R-PHC1 ⚠️
+    UNRULED: with no Benched Pokémon nothing moves; the move happens BEFORE the Prize is taken; a
+    `knockOutDefender` doom is not "by damage"; and as the first match it fires instead of a Heavy Baton on the
+    same body (`koToolTrigger` runs one program). */
+const PHOTON_CORD: CardProgram = {
+  triggered: [
+    {
+      name: "Photon Cord",
+      trigger: "onSelfActiveKnockedOut",
+      program: [
+        {
+          op: "moveEnergy",
+          filter: { kind: "basicEnergy", energyType: "Lightning" },
+          max: 2,
+          route: "selfToBench",
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D626 — Gengar ex `30th-090` / `-154` (2 legal) "Fainting Spell"**: *"If this Pokémon is Knocked Out
+    by damage from an attack from your opponent's Pokémon, flip a coin. If heads, the Attacking Pokémon is
+    Knocked Out."* The NEW `koAttackerOnCoinFlip`, read by flow.ts `finishAttack` beside `damageAttackerOnKo`
+    (D164 / D598): a Knock Out, not damage, so the attacker is doomed with D414's marker and joins the SAME
+    batch, and its Prize goes to the Gengar ex's owner. R-FS1 ⚠️ UNRULED. */
+const FAINTING_SPELL: CardProgram = { passive: { koAttackerOnCoinFlip: "Fainting Spell" } };
+
+/** 🆕🆕🆕 **D626 — Adversity Policy `me04-074` (Tool)**: *"If the Pokémon this card is attached to has Weakness
+    to your opponent's Active Pokémon's type, is in the Active Spot, and is damaged by an attack from your
+    opponent's Pokémon (even if this Pokémon is Knocked Out), draw 3 cards."* Team Rocket's Hypnotizer's stage
+    (`damagedToolTriggersOf`, D620) behind the NEW `yourActiveWeakToOpponentActiveType` — at run time your Active
+    IS the holder, and the opponent's Active is the attacker seat's CURRENT Active (Klawf ex's D101 reading,
+    inherited). R-AP1 ⚠️ UNRULED. */
+const ADVERSITY_POLICY: CardProgram = {
+  triggered: [
+    {
+      name: "Adversity Policy",
+      trigger: "onDamagedByAttack",
+      program: [
+        {
+          op: "conditionGate",
+          cond: { kind: "yourActiveWeakToOpponentActiveType" },
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [{ op: "drawCards", count: 3 }],
+        },
+      ],
+    },
+  ],
 };
 
 // ── 🆕🆕🆕 D608 — WP30: TWO `30th` ATTACK OBJECTS, KEYED BY ID. Text off the LOCAL D1; both printed
@@ -20009,6 +20142,15 @@ const REGISTRY: Record<string, CardProgram> = {
   "me02-117": BLOWTORCH, // Blowtorch
   "me04-078": GREAT_HAUL_NET, // Great Haul Net — up to 3 {W} Pokémon and up to 3 Basic {W} Energy back, shuffle
   "me01-128": STRANGE_TIMEPIECE, // Strange Timepiece — devolve your evolved {P} Pokémon; it can't evolve this turn
+  // 🆕🆕🆕 D626 — K1, the rest of the KO / damaged triggers: 8 keys / 4 objects, MID-MAP (`raw[last]` does not move).
+  "mep-016": SANDY_FLAPPING, // Flygon — on evolve, or KO'd in the Active Spot by an attack: may mill the opponent 2
+  "me02-053": SANDY_FLAPPING, // Flygon
+  "me02-101": SANDY_FLAPPING, // Flygon
+  "mep-082": PHOTON_CORD, // Miraidon — KO'd in the Active Spot by an attack: up to 2 Basic {L} to 1 Benched Pokémon
+  "me05-028": PHOTON_CORD, // Miraidon
+  "30th-090": FAINTING_SPELL, // Gengar ex — KO'd by an attack: flip, heads Knocks Out the Attacking Pokémon
+  "30th-154": FAINTING_SPELL, // Gengar ex
+  "me04-074": ADVERSITY_POLICY, // Adversity Policy — a Weak Active holder damaged by an attack: draw 3
   // 🆕🆕🆕 D608 — WP30: 5 `30th` ATTACK-only keys / 2 objects, MID-MAP (`raw[last]` does not move).
   // 🆕🆕🆕 D612 — 3 now: Stealthy Slash ×2 RETIRED (the normalised text is `mep-099`'s, reader-built).
   "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex

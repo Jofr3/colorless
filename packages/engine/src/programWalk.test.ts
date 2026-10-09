@@ -413,11 +413,17 @@ describe("the pool sweep, structurally", () => {
       // 🆕🆕🆕 D590 — Brambleghast `me02-047` "Prison Panic": its Confused sits inside the same
       // trigger-level `optional.then` (the confirm).
       "me02-047 trigger :: applyStatus",
+      // 🆕🆕🆕 D626 — Flygon `me02-053` / `-101` / `mep-016` "Sandy Flapping": the mill sits inside each of its
+      // TWO triggered rows' `optional.then` (the confirm) — two rows per id.
+      "me02-053 trigger :: discardDeckTop",
+      "me02-053 trigger :: discardDeckTop",
       // 🆕🆕🆕 D625 — Blowtorch `me02-086` / `-117` (`BLOWTORCH`): the NEW `chooseOneOffered`'s three
       // one-op branches, which no enumerated gate descends.
       "me02-086 trainer :: discardEnergy",
       "me02-086 trainer :: discardStadium",
       "me02-086 trainer :: discardTools",
+      "me02-101 trigger :: discardDeckTop", // 🆕🆕🆕 D626 — Flygon (sorts here)
+      "me02-101 trigger :: discardDeckTop",
       "me02-117 trainer :: discardEnergy",
       "me02-117 trainer :: discardStadium",
       "me02-117 trainer :: discardTools",
@@ -426,6 +432,8 @@ describe("the pool sweep, structurally", () => {
       "me02.5-205 trainer :: searchDeck",
       "mep-003 trigger :: drawCards", // 🆕🆕🆕 D590 — Alakazam (the two `mep` keys sort here)
       "mep-009 trigger :: drawCards",
+      "mep-016 trigger :: discardDeckTop", // 🆕🆕🆕 D626 — Flygon (the `mep` key sorts here)
+      "mep-016 trigger :: discardDeckTop",
       // 🆕🆕🆕 D560 — Whimsicott `sv05-015` / `sv08.5-008` "Wafting Heal": `conditionGate →
       // conditionGate → optional { then: [heal "all", discardEnergy "all"] }`. The walk
       // descends both gates and SEES the `optional`, never its `then`: two rows per id.

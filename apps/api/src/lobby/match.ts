@@ -2159,6 +2159,16 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 43 AT D626 — K1 ADDS FOUR OBJECTS, ONE `TriggerTiming`, ONE `PassiveEffects` KEY AND ONE
+    `BoardCondition` MEMBER; NO PROMPT, PHASE, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD OR EVENT.** (Placed ABOVE the
+    D625 block.) Every program is keyed by ID, so the 8 `me` faces in a v43 `cardPool` are read exactly as before and
+    in-flight pools are safe. What can be persisted mid-slice is all shipped shape: Flygon's on-KO confirm parks the
+    shipped `optional` on the shipped `koTrigger { seat, uid }`; Photon Cord parks the shipped `moveEnergy` (with D614's
+    `invokedBy: "ability"`) on the shipped `koToolTrigger { seat }`; Adversity Policy's `conditionGate` never parks, so
+    the new member never reaches `phase.cont`; Fainting Spell writes only D414's shipped `koByEffect:<turn>` marker.
+    Rollback readings, NAMED: a 0.508 reader drains a 0.509-queued Flygon `koTrigger` or Miraidon `koToolTrigger` as a
+    silent whiff (no program for the id / no Tool on the scan) and resumes an already-parked confirm or move as written.
+
     🆕🆕🆕 **STAYS 43 AT D625 — T1 ADDS SEVEN TRAINER OBJECTS, ONE `EffectOp` MEMBER AND OPTIONAL OP KEYS; NO PROMPT,
     PHASE, SIDE KEY, `InPlayPokemon` FIELD OR EVENT.** (Placed ABOVE the D624 block.) Every program is keyed by ID, so no
     `cardPool` face is read differently: the 13 `me` faces in a v43 pool are unchanged and in-flight pools are safe. New

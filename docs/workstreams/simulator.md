@@ -29981,7 +29981,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **The self-shuffle** *"Shuffle this Pokémon and all attached cards into your deck."* derives as `returnSelf` to the deck
   (`deriveAttackEffect` arm 46): Lokix "Jumping Shot", Primarina ×2 "Aqua Return".
 - **No new op, member or field.** **Dropped:** Flygon ×3 "Sandy Flapping" (its KO half needs an Active-Spot / by-attack
-  gate on an `onKnockOut` program). Alakazam ×3 keeps an unbuilt attack (WP14).
+  gate on an `onKnockOut` program) [🆕🆕🆕 D626 (D539): Flygon ×3 BUILT at D626 (K1)]. Alakazam ×3 keeps an unbuilt attack (WP14).
 - **Named deviations.** The other six objects auto-fire (D560's note; no pure-upside claim). Heave-Ho Catcher's forced
   `gust` cannot be declined, so a Defending Pokémon with Special Conditions is switched out and loses them (Defiant
   Horn's row shares this). Energized Steps, Cast-Off Shell and Multiplying Cocoon shuffle even when nothing is taken
@@ -30166,7 +30166,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **The cause predicates.** flow.ts `koByOpponentAttack` (an attack epilogue from the other seat, lethal by damage) and
   `koByOpponentPokemonEx` (plus an ex attacker, read off the attacker's uid).
 - **No op, persisted member, prompt or event.** Every event already existed.
-- **Dropped and named:** Fainting Spell ×2, Photon Cord ×2, Spiteful Swirl ×2, Counterattack Grouping, Damp ×2.
+- **Dropped and named:** Fainting Spell ×2, Photon Cord ×2, Spiteful Swirl ×2, Counterattack Grouping, Damp ×2. [🆕🆕🆕 D626 (D539): Fainting Spell ×2 and Photon Cord ×2 BUILT at D626 (K1).]
 - **Readings (UNRULED).** R-IS1, R-GC1, R-TN1, R-KO1, R-PD1, R-SB2 (`progress.md` NEXT). R-SB2: a Survival Brace / full-HP Sturdy
   answers first and no coin is flipped (`clamped === null ? koSurvivalCoinFlip(…) : …` at all four writes).
   🆕 D601: plus R-GC2 and R-GC3 (two Shadowy Concealment readings), and R-TN1 amended (self-damage never asks the coin).
@@ -30242,6 +30242,26 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Suite.** `activatedMeD602.test.ts` (22) and a census D602 block (3). +21 mutant rows.
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D626 — K1: the rest of the KO / damaged triggers (engine 0.509.0, `MATCH_RECORD_VERSION` stays 43)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D625 (`153f58f8`), NOT committed.
+
+- **Flygon ×3 "Sandy Flapping".** Two triggered rows: `onEvolve` (D590's shape) and `onKnockOut` behind `byOpponentAttack` and
+  `activeOnly` — the latter now read for an on-KO program (flow.ts `planPrizes`, `koWasActiveSpot`, the pre-batch board). Each mills
+  the opponent 2 behind an inner confirm (the mill feeds the opponent's discard-scaled attacks). D590's drop annotated. R-SF1 UNRULED.
+- **Miraidon ×2 "Photon Cord".** The NEW `TriggerTiming` `onSelfActiveKnockedOut`: `koToolTriggersOf`'s Ability arm on the dying
+  Active (first, §9-gated, `fromAbility`), run by `runKoToolTrigger` with `ABILITY_TRIGGERED` and `invokedBy: "ability"` before the
+  Knock Out discards the stack. Up to 2 Basic {L} to ONE Benched Pokémon; 0 is legal. R-PHC1 UNRULED.
+- **Gengar ex ×2 "Fainting Spell".** The NEW `PassiveEffects.koAttackerOnCoinFlip`, read by flow.ts `faintingSpells` in
+  `finishAttack` after the KO recoil: heads dooms the attacker with D414's marker (a Knock Out, not damage) unless the §11 funnel
+  refuses it (Luminous Wing); the attacker falls in the same batch, so its Prizes (3 for a Mega ex) go to the Gengar side. R-FS1 UNRULED.
+- **Adversity Policy.** Team Rocket's Hypnotizer's stage behind the NEW `BoardCondition` `yourActiveWeakToOpponentActiveType`
+  (the effective Weakness: retype, rewrite, the "no Weakness" bars). D620's drop annotated. R-AP1 UNRULED.
+- **Out of scope (K2).** Spiteful Swirl ×2 and Counterattack Grouping.
+- **MRV stays 43.** Keyed by id; no new park, stage or persisted shape (match.ts "STAYS 43 AT D626").
+- **Suite.** `koTriggerRestMeD626.test.ts` (37) and a census D626 block (2). +22 mutant rows; two D598 rows re-pointed. Census:
+  abilities **568 / 610**, trainers **432 / 447**, 1146 `me` printings fully built. Sweep PENDING.
 
 ## D625 — T1: the rest of the `me` Trainers, plus the open docs findings (engine 0.508.0, `MATCH_RECORD_VERSION` stays 43)
 
@@ -30355,7 +30375,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Reading.** R-TRB1 ⚠️ UNRULED: the 240 threshold is one hit's `dealt`.
 - **Named approximation.** Hypnotizer inherits Klawf ex's (D101): its stage runs after the attack's program, so a switched-out
   attacker's replacement is put Asleep. The 70× reader also reads Aegislash ex `sv04-135` / `-230` (Expanded-only, uncounted).
-- **Dropped.** Adversity Policy (a Weakness gate, a new `BoardCondition` member).
+- **Dropped.** Adversity Policy (a Weakness gate, a new `BoardCondition` member). [🆕🆕🆕 D626 (D539): BUILT at D626 (K1, `yourActiveWeakToOpponentActiveType`).]
 - **Suite.** `prizesToolsMeD620.test.ts` (27) and a census D620 block (2). +25 mutant rows.
 - **Census.** Standard pool attacks **2,695 / 2,771**, abilities **561 / 610**, trainers **402 / 447**; 1095 `me` printings fully built (all 12 finished).
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

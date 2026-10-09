@@ -2548,6 +2548,9 @@ export type PendingStage =
       🆕🆕🆕 D566 — or the `onHolderActiveKnockedOut` program of a Tool on the DYING Active
       itself (Heavy Baton `sv05-151`, Retreat exactly 4: up to 3 Basic Energy to the Bench);
       the shape is unchanged (the seat alone), so no persisted byte moves.
+      🆕🆕🆕 D626 — or the dying Active's OWN `onSelfActiveKnockedOut` Ability (Miraidon "Photon Cord"),
+      found first by the same scan; the shape is unchanged again (a 0.508 reader's scan finds no Tool and
+      drains the stage as a whiff).
 
       ⚠️ NO `uid`, AND THAT ABSENCE IS THE DESIGN — the one stage in this union
       that names NEITHER the body that acts NOR the body it is about. Both are

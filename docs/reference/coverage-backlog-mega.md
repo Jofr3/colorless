@@ -6,6 +6,26 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D626 update (engine 0.509.0) — K1, the rest of the KO / damaged triggers (`MATCH_RECORD_VERSION` stays 43)
+
+4 texts / 8 `me` printings on four new objects (`koTriggerRestMeD626.test.ts`): Flygon "Sandy Flapping" ×3 `mep-016`, `me02-053` /
+`-101` (an `onEvolve` row and an `onKnockOut` row behind `byOpponentAttack` and `activeOnly`, now read for an on-KO program; each mills
+the opponent 2 behind a confirm; R-SF1), Miraidon "Photon Cord" ×2 `mep-082`, `me05-028` (the NEW `onSelfActiveKnockedOut` on the
+`koToolTrigger` stage, before the Knock Out discards the stack; R-PHC1), Gengar ex "Fainting Spell" ×2 `30th-090` / `-154` (the NEW
+`koAttackerOnCoinFlip`: heads Knocks Out the Attacking Pokémon in the same batch, through the §11 funnel; R-FS1) and Adversity Policy
+`me04-074` (an `onDamagedByAttack` Tool behind the NEW `BoardCondition` `yourActiveWeakToOpponentActiveType`; R-AP1). **Finished:**
+all 8. **Out of scope (K2, named):** Spiritomb "Spiteful Swirl" ×2 and Wishiwashi "Counterattack Grouping" (a watched Active's damage
+moment).
+
+| Column | `me` built / units (D626) | Standard pool D626 |
+|---|---|---|
+| Attacks | 977 / 1,039 | **2,709 / 2,771** |
+| Abilities | 192 / 234 (+7) | **568 / 610** |
+| Trainers | 168 / 183 (+1) | **432 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1146** (1138 + 8).
+
 ## 🆕 D625 update (engine 0.508.0) — T1, the rest of the `me` Trainers, plus the open docs findings (`MATCH_RECORD_VERSION` stays 43)
 
 7 texts / 13 `me` printings on seven new Trainer objects (`trainersMeD625.test.ts`): Special Red Card ×2 `me04-082` / `-113` (Iono's
@@ -105,7 +125,8 @@ through it under D400/D492's reading of the bare W/R tail (splitting that tail f
 `me02.5-191`, Punk Helmet ×2 `me02-092` / `-121` (`damageAttacker.holderType`), Team Rocket's Hypnotizer `me02.5-206`, Core Memory
 `me03-070` (`toolAttacksHolder`) and Tremendous Bomb ×2 `me05-082` / `-113` (`damageAttackerActiveThenDiscardIf`, R-TRB1 UNRULED).
 **Finished:** all 12 (Mega Mawile ex ×2 is now fully built). **Dropped and named:** Adversity Policy `me04-074` (its "has Weakness to
-your opponent's Active Pokémon's type" gate is a new `BoardCondition` member).
+your opponent's Active Pokémon's type" gate is a new `BoardCondition` member). [🆕🆕🆕 D626 (D539): Adversity Policy BUILT at D626 (K1,
+`yourActiveWeakToOpponentActiveType`).]
 
 | Column | `me` built / units (D620) | Standard pool D620 |
 |---|---|---|
@@ -512,7 +533,8 @@ Infinite Shadow (return-to-hand on KO) and Final Chain (an on-KO search behind t
 Gengar ex ×5, Mega Hawlucha ex ×3, Annihilape `me05-041`, Shedinja ×2, Gengar `me03-050`, Pecharunt `me02.5-143`.
 **Still open in WP32 (named):** Gengar ex "Fainting Spell" ×2 (KO the Attacking Pokémon on heads), Miraidon "Photon
 Cord" ×2 (an Energy move off the dying body), Spiritomb "Spiteful Swirl" ×2 and Wishiwashi "Counterattack Grouping"
-(a seat-wide filtered recoil), Damp ×2 (WP38).
+(a seat-wide filtered recoil), Damp ×2 (WP38). [🆕🆕🆕 D626 (D539): Fainting Spell ×2 and Photon Cord ×2 BUILT at D626 (K1);
+Spiteful Swirl ×2 and Counterattack Grouping are K2.]
 
 | Column | `me` built / units (D598) | Standard pool D598 |
 |---|---|---|
@@ -669,7 +691,8 @@ Lunatone ×3. Still waiting on an attack: Delphox ×2 "Energized Storm", Frosmot
 `onEvolveMeD590.test.ts`) — Psychic Draw ×4 (Alakazam ×3, Kadabra; draw behind a confirm), Prison Panic (behind a confirm), Energized Steps,
 Heave-Ho Catcher, Cast-Off Shell ×2, Enriching Melody ×2, Multiplying Cocoon, Haphazard Hammer — and *"Shuffle this Pokémon
 and all attached cards into your deck."* ×3 derives as `returnSelf` to the deck. No new op. **Dropped:** Flygon ×3 "Sandy
-Flapping" (its KO half needs an Active-Spot / by-attack gate on an `onKnockOut` program). **Finished:** Kadabra, Brambleghast,
+Flapping" (its KO half needs an Active-Spot / by-attack gate on an `onKnockOut` program). [🆕🆕🆕 D626 (D539): Flygon ×3 BUILT at
+D626 (K1): `activeOnly` is read for an on-KO program, beside D598's `byOpponentAttack`.] **Finished:** Kadabra, Brambleghast,
 Grumpig, Hariyama, Ninjask ×2, Primarina ×2, Silcoon, Tinkatuff, Lokix `me02-010`. Alakazam ×3 still waits on "Powerful
 Hand" (WP14) [🆕🆕🆕 D600: built]. Named deviations: Heave-Ho Catcher's forced `gust` (no decline; Defiant Horn's row), and the three
 search / look programs shuffle even when nothing is taken.
@@ -1113,7 +1136,7 @@ group wins; the grouping is a reading aid, not a census figure).
 
 - 3× **Last-Ditch Catch** — Once during your turn, when you play this Pokémon from your hand onto your Bench, you may use this Ability. Search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck. You can't use more than 1 Ability that has "Last-Ditch" in its name each turn. [🆕🆕🆕 D610: left — a name lock on an `onPlayToBench` trigger]
 - 3× **Psychic Draw** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Draw 3 cards. [🆕🆕🆕 D590: BUILT]
-- 3× **Sandy Flapping** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. You may also use this Ability if this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon. Discard the top 2 cards of your opponent's deck. [🆕🆕🆕 D590: NOT BUILT — the KO half needs an Active-Spot / by-attack gate on an `onKnockOut` program] [🆕🆕🆕 D598: the by-attack half exists — `TriggeredAbility.byOpponentAttack`; the Active-Spot gate is still owed]
+- 3× **Sandy Flapping** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. You may also use this Ability if this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon. Discard the top 2 cards of your opponent's deck. [🆕🆕🆕 D590: NOT BUILT — the KO half needs an Active-Spot / by-attack gate on an `onKnockOut` program] [🆕🆕🆕 D598: the by-attack half exists — `TriggeredAbility.byOpponentAttack`; the Active-Spot gate is still owed] [🆕🆕🆕 D626: BUILT]
 - 2× **Cast-Off Shell** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Search your deck for a Shedinja and put it onto your Bench. Then, shuffle your deck. [🆕🆕🆕 D590: BUILT]
 - 2× **Enriching Melody** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Heal all damage from 1 of your Pokémon. [🆕🆕🆕 D590: BUILT]
 - 2× **Fall Back to Reload** — Once during your turn, when this Pokémon moves from the Active Spot to your Bench, you may use this Ability. Attach up to 2 Basic {W} Energy cards from your hand to this Pokémon. [🆕🆕🆕 D610: left — a hand-attach choice inside the non-parking Active→Bench self sweep]
@@ -1174,9 +1197,9 @@ group wins; the grouping is a reading aid, not a census figure).
 - 3× **Counterattacking Crest** — If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 5 damage counters on the Attacking Pokémon. [🆕🆕🆕 D585: BUILT]
 - 3× **Tenacious Body** — If this Pokémon would be Knocked Out by damage from an attack, flip a coin. If heads, this Pokémon is not Knocked Out, and its remaining HP becomes 10. [🆕🆕🆕 D598: BUILT]
 - 2× **Damp** — Pokémon in play (both yours and your opponent's) lose all Abilities that require those Pokémon to be Knocked Out.
-- 2× **Fainting Spell** — If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, flip a coin. If heads, the Attacking Pokémon is Knocked Out.
+- 2× **Fainting Spell** — If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, flip a coin. If heads, the Attacking Pokémon is Knocked Out. [🆕🆕🆕 D626: BUILT]
 - 2× **Fragile Husk** — If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon ex, your opponent can't take any Prize cards for it. [🆕🆕🆕 D598: BUILT]
-- 2× **Photon Cord** — If this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon, move up to 2 Basic {L} Energy cards from this Pokémon to 1 of your Benched Pokémon.
+- 2× **Photon Cord** — If this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon, move up to 2 Basic {L} Energy cards from this Pokémon to 1 of your Benched Pokémon. [🆕🆕🆕 D626: BUILT]
 - 2× **Spiteful Swirl** — If your Active {D} Pokémon is damaged by an attack from your opponent's Pokémon (even if your Active {D} Pokémon is Knocked Out), place 1 damage counter on the Attacking Pokémon.
 - 1× **Counterattack Grouping** — If your Wishiwashi or Wishiwashi ex is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if your Pokémon  is Knocked Out), place 3 damage counters on the Attacking Pokémon.
 - 1× **Counterattack Quills** — If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 3 damage counters on the Attacking Pokémon. [🆕🆕🆕 D584: BUILT]
@@ -1345,7 +1368,7 @@ Discard an Energy from 1 of your opponent's Pokémon. [🆕🆕🆕 D588: BUILT]
 
 ### Tool — 7 text(s) / 9 printing(s)
 
-- 1× **Adversity Policy** — If the Pokémon this card is attached to has Weakness to your opponent's Active Pokémon's type, is in the Active Spot, and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), draw 3 cards. [🆕🆕🆕 D620: dropped — a holder-has-Weakness-to-the-opponent's-Active gate, a new `BoardCondition` member]
+- 1× **Adversity Policy** — If the Pokémon this card is attached to has Weakness to your opponent's Active Pokémon's type, is in the Active Spot, and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), draw 3 cards. [🆕🆕🆕 D620: dropped — a holder-has-Weakness-to-the-opponent's-Active gate, a new `BoardCondition` member] [🆕🆕🆕 D626: BUILT]
 - 1× **Backtrack Badge** — Once during your turn, after you flip any coins for an attack of the {C} Pokémon this card is attached to, you may ignore all results of those coin flips and begin flipping those coins again.
 - 1× **Light Ball** — Attacks used by the Pikachu ex this card is attached to do 50 more damage to your opponent's Active Pokémon ex (before applying Weakness and Resistance). [🆕🆕🆕 D620: BUILT]
 - 2× **Punk Helmet** — If the {D} Pokémon this card is attached to is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 4 damage counters on the Attacking Pokémon. [🆕🆕🆕 D620: BUILT]

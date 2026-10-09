@@ -94,11 +94,13 @@ describe("D598 §1 — the texts and the registry rows", () => {
     expect(programFor(PECHARUNT)?.triggered?.[0]?.program).toEqual(deriveAttackEffect(consequent));
   });
 
-  it("the five dropped WP32 texts stay unkeyed (decisions.md D598)", () => {
-    // Fainting Spell ×2, Photon Cord ×2, Spiteful Swirl ×2, Counterattack Grouping, Damp.
-    for (const id of ["30th-090", "30th-154", "me05-028", "mep-082", "me01-087", "me01-148", "30th-022", "me02.5-039", "me02.5-040"]) {
+  it("the five dropped WP32 texts stay unkeyed (decisions.md D598) (🆕🆕🆕 D626 (D539): ~~five~~ — Fainting Spell ×2 and Photon Cord ×2 are keyed since D626, K1)", () => {
+    // Spiteful Swirl ×2, Counterattack Grouping, Damp. [🆕🆕🆕 D626 (D539): Fainting Spell ×2 and Photon Cord ×2
+    // BUILT at D626 — `koTriggerRestMeD626.test.ts`.]
+    for (const id of ["me01-087", "me01-148", "30th-022", "me02.5-039", "me02.5-040"]) {
       expect(programFor(id), id).toBeUndefined();
     }
+    for (const id of ["30th-090", "30th-154", "me05-028", "mep-082"]) expect(programFor(id), id).toBeDefined();
   });
 });
 
@@ -705,7 +707,7 @@ describe("D598 §7 — Final Chain: an on-KO search behind the printed cause", (
 });
 
 describe("D598 §8 — the version", () => {
-  it("is built at engine 0.508.0", () => {
-    expect(engineVersion).toBe("0.508.0");
+  it("is built at engine 0.509.0", () => {
+    expect(engineVersion).toBe("0.509.0");
   });
 });

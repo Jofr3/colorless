@@ -6273,6 +6273,22 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const foeActive = state.players[otherSeat(seat)].active;
       return foeActive !== null && effectiveRetreatCost(state, foeActive) === 0;
     }
+    case "yourActiveWeakToOpponentActiveType": {
+      // 🆕🆕🆕 D626 — Adversity Policy: your Active's EFFECTIVE Weakness against the opponent's Active's
+      // in-play types — the "no Weakness" bars, then `weaknessOf` with the retype (D552) and the
+      // opponent-side rewrite (D559), as at the §8.5 sites. Either Spot empty: FALSE (R-AP1, UNRULED).
+      const mine = state.players[seat].active;
+      const theirs = state.players[otherSeat(seat)].active;
+      if (mine === null || theirs === null) return false;
+      if (seatRemovesWeakness(state, seat) || installedNoWeakness(state, mine)) return false;
+      const holder = inPlayCardOf(state, mine);
+      const attacker = inPlayCardOf(state, theirs);
+      if (holder === undefined || attacker === undefined) return false;
+      return (
+        weaknessOf(attacker, holder, installedWeaknessRetypeOf(state, mine), seatWeaknessRewrite(state, seat, holder)) !==
+        null
+      );
+    }
     case "yourBenchHasType":
       // 🆕 D370 — the FIELD of the arm directly above (`Card.types`, the same read
       // Weakness and Resistance make in §8.5) over the ZONE of the arm directly
@@ -8052,6 +8068,9 @@ export function conditionNote(cond: BoardCondition): string {
       return `your opponent's Active Pokémon has exactly ${String(cond.count)} damage counters on it`;
     case "opponentActiveNoRetreatCost":
       return "your opponent's Active Pokémon has no Retreat Cost";
+    // 🆕🆕🆕 D626 — Adversity Policy's clause, the holder spoken as "your Active Pokémon" (the stage's reading).
+    case "yourActiveWeakToOpponentActiveType":
+      return "your Active Pokémon has Weakness to your opponent's Active Pokémon's type";
     case "yourDiscardHasNamed":
       return `${cond.name} is in your discard pile`;
     case "yourBenchHasStage2OfType":
