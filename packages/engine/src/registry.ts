@@ -3489,6 +3489,31 @@ export interface StadiumEffects {
       R-AZ3), which needs nothing but this number and the board. Not §9-gated (a Stadium is
       no Ability). */
   benchLimitWithTera?: number;
+  /** 🆕🆕🆕 §12 (D618) — Battle Cage `me02-085` / `-116`: *"Prevent all damage counters from being placed
+      on Benched Pokémon (both yours and your opponent's) by effects of attacks and Abilities from the
+      opponent's Pokémon. (Damage from attacks is still taken.)"* Read at every op that puts damage
+      counters on a Benched body — by interpreter.ts `benchCountersCaged` at `placeSnipe`'s
+      put-counter arm, `counterEachAll`, `counterUntilRemainingHp`, `damageSubject`, the two movers
+      onto an opponent's body, and the opponent-to-opponent move's destinations — plus flow.ts
+      `finishAttack`, which reads this flag itself to refuse the Ability share of the KO recoil
+      (`koRecoilOf`, Maractus) on an attacker that self-switched to its Bench. Only an `invokedBy` of `"attack"` or `"ability"` whose seat is NOT the
+      body's (a Trainer, a Tool, Poison/Burn Checkup counters and a player's own effects still place). Attack DAMAGE is
+      untouched (the printed parenthesis). R-BCG1 ⚠️ UNRULED: a MOVE onto a Benched body is a placement,
+      and the whole move is refused (D142's both-or-neither rule). R-BCG2 ⚠️ UNRULED: the target is still
+      offered; the counters are stopped where they would land, and no row is filed — except as a
+      destination of `moveCountersOpponentAnyWay`'s rounds, which drops it (a refused round would spend
+      the budget). Not §9-gated (a
+      Stadium is no Ability). Catalog-only: never persisted. */
+  benchCounterShield?: true;
+  /** 🆕🆕🆕 §10 (D618) — Forest of Vitality `me01-117`, `me02.5-188`, `me03-109`: *"Each player's {G}
+      Pokémon can evolve into {G} Pokémon during the turn they play those Pokémon, except during their
+      first turn."* Read by ONE function, continuous.ts `stadiumLicensesSameTurnEvolve`, at turn.ts
+      `evolve`'s §10 "came into play this turn" ban ONLY: a body whose IN-PLAY types include `type`
+      evolving into a card whose printed types include it. §4's first-turn ban stands, and Rare Candy's
+      own printed restriction is not lifted (D278's argument). R-FOV1 ⚠️ UNRULED: a {G} body that evolved
+      this turn may evolve again (Oddish → Gloom → Vileplume, the Forest of Giant Plants precedent and
+      D594's reading of "the turn you play it"). Not §9-gated. Catalog-only: never persisted. */
+  sameTurnEvolution?: { type: PokemonType };
 }
 
 /** A Special Energy's on-attach effect (§6.1) — runs the moment it is attached
@@ -17897,7 +17922,8 @@ const VOLTAIC_LIGHTNING_ENERGY: CardProgram = {
 //    damage-counter shield — the brief's other new piece), Mystery Garden ×3 (a draw-until count
 //    source), Forest of Vitality ×3 (a same-turn evolution rule), Dizzying Valley (Confusion kept
 //    through evolution), Fossil Quarry (Antique Items deck-to-Bench) and Risky Ruins (a Stadium
-//    on-Bench trigger). Excluded by the brief: Ange Floette. `stadiumsMeD606.test.ts`. ──
+//    on-Bench trigger). Excluded by the brief: Ange Floette. `stadiumsMeD606.test.ts`.
+//    [🆕🆕🆕 D618 (D539): Battle Cage, Mystery Garden and Forest of Vitality are BUILT at D618, below.] ──
 
 /** 🆕🆕🆕 **D606 — Prism Tower `me04-080` / `-111` (Stadium)**: *"Once during each player's turn, that
     player may discard 2 cards from their hand in order to draw a card."* Team Rocket's Porygon-Z
@@ -17968,6 +17994,51 @@ const CELEBRATORY_FANFARE: CardProgram = {
       endsTurn: "ifHealed",
     },
   },
+};
+
+// ── 🆕🆕🆕 D618 — WP25b: THE REST OF THE `me` STADIUMS D606 DROPPED. Three objects, 8 `me` printings.
+//    New pieces: the Bench damage-counter shield (`StadiumEffects.benchCounterShield`), the Stadium
+//    evolution permission (`StadiumEffects.sameTurnEvolution`) and a draw-until count
+//    (`drawUntilHandSize.per`) for the Stadium use with a discard cost. Texts off the LOCAL D1
+//    (2026-10-09). Dropped and named: Dizzying Valley (Confusion kept through evolution), Fossil
+//    Quarry (Antique Items deck-to-Bench), Risky Ruins (a Stadium on-Bench trigger) and Ange Floette
+//    (a play gate on Prism Tower in play, a second Stadium the same turn, and a named HP bonus).
+//    `stadiumsMeD618.test.ts`. ──
+
+/** 🆕🆕🆕 **D618 — Battle Cage `me02-085` / `-116` (Stadium)**: *"Prevent all damage counters from being
+    placed on Benched Pokémon (both yours and your opponent's) by effects of attacks and Abilities from
+    the opponent's Pokémon. (Damage from attacks is still taken.)"* (R-BCG1, R-BCG2.) */
+const BATTLE_CAGE: CardProgram = {
+  stadium: { benchCounterShield: true },
+};
+
+/** 🆕🆕🆕 **D618 — Mystery Garden `me01-122`, `me01-172`, `me02.5-194` (Stadium)**: *"Once during each
+    player's turn, that player may discard an Energy card from their hand in order to draw cards until
+    they have as many cards in their hand as they have {P} Pokémon in play."* Revavroom "Rumbling
+    Engine"'s program on the Stadium path, the size read at resolve off the actor's {P} Pokémon in play
+    (the NEW `drawUntilHandSize.per`, after the discard). The hand cost is refused short (R-AN).
+    R-MYG1 ⚠️ UNRULED: usable when the draw would be 0 — the Energy is discarded, nothing is drawn. */
+const MYSTERY_GARDEN: CardProgram = {
+  stadium: {
+    ability: {
+      label: "Mystery Garden",
+      program: [
+        { op: "payFromHand", to: "discard", count: 1, filter: { kind: "anyEnergy" } },
+        {
+          op: "drawUntilHandSize",
+          size: 1,
+          per: { kind: "pokemonInPlay", seat: "you", filter: { kind: "typedPokemon", pokemonType: "Psychic" } },
+        },
+      ],
+    },
+  },
+};
+
+/** 🆕🆕🆕 **D618 — Forest of Vitality `me01-117`, `me02.5-188`, `me03-109` (Stadium)**: *"Each player's
+    {G} Pokémon can evolve into {G} Pokémon during the turn they play those Pokémon, except during their
+    first turn."* (R-FOV1.) */
+const FOREST_OF_VITALITY: CardProgram = {
+  stadium: { sameTurnEvolution: { type: "Grass" } },
 };
 
 // ── 🆕🆕🆕 D608 — WP30: TWO `30th` ATTACK OBJECTS, KEYED BY ID. Text off the LOCAL D1; both printed
@@ -19479,6 +19550,15 @@ const REGISTRY: Record<string, CardProgram> = {
   "me03-111": LUMIOSE_CITY, // Lumiose City
   "mep-028": CELEBRATORY_FANFARE, // Celebratory Fanfare — heal 10 from each; healed any: the turn ends
   "mep-120": CELEBRATORY_FANFARE, // Celebratory Fanfare
+  // 🆕🆕🆕 D618 — WP25b: 8 `me` Stadium keys / 3 objects, MID-MAP (`raw[last]` does not move).
+  "me02-085": BATTLE_CAGE, // Battle Cage — no counters onto a Benched body from the opponent's attacks / Abilities
+  "me02-116": BATTLE_CAGE, // Battle Cage
+  "me01-122": MYSTERY_GARDEN, // Mystery Garden — discard an Energy card, draw until hand = your {P} in play
+  "me01-172": MYSTERY_GARDEN, // Mystery Garden
+  "me02.5-194": MYSTERY_GARDEN, // Mystery Garden
+  "me01-117": FOREST_OF_VITALITY, // Forest of Vitality — {G} into {G} the turn it is played, not turn one
+  "me02.5-188": FOREST_OF_VITALITY, // Forest of Vitality
+  "me03-109": FOREST_OF_VITALITY, // Forest of Vitality
   // 🆕🆕🆕 D608 — WP30: 5 `30th` ATTACK-only keys / 2 objects, MID-MAP (`raw[last]` does not move).
   // 🆕🆕🆕 D612 — 3 now: Stealthy Slash ×2 RETIRED (the normalised text is `mep-099`'s, reader-built).
   "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex

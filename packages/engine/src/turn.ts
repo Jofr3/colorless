@@ -34,6 +34,8 @@ import {
   liveHandAttachMark,
   pokemonPlayBarred,
   retreatLocked,
+  // 🆕🆕🆕 D618 — Forest of Vitality's same-turn evolution, at the §10 ban.
+  stadiumLicensesSameTurnEvolve,
 } from "./continuous";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
@@ -699,10 +701,14 @@ export function evolve(state: GameState, action: EvolveAction): ApplyResult {
   // conflation stands and is pinned — `conditionRowsMeD594.test.ts` §7, mutant
   // `D594-roar-chain-only-came-into-play`. Still true of Eevee, Karrablast and Shelmet (Basics).]
   if (!licensed && target.turnPlayed >= state.turn) {
-    return err(
-      "EVOLVE_TOO_SOON",
-      `${targetTopCard.name} came into play this turn — it cannot evolve yet (§10)`,
-    );
+    // 🆕🆕🆕 D618 — Forest of Vitality lifts THIS ban (not §4's, above): a {G} body into a {G} card,
+    // on either seat, a body that evolved this turn included (R-FOV1).
+    if (!stadiumLicensesSameTurnEvolve(state, target, card)) {
+      return err(
+        "EVOLVE_TOO_SOON",
+        `${targetTopCard.name} came into play this turn — it cannot evolve yet (§10)`,
+      );
+    }
   }
   // §10 (D285) — THE SECOND READ SITE OF THE POKÉMON-SURFACE PLAY GATE, and the
   // only one BOTH sources reach: Bronzong `sv05-069` "Evolution Jammer" stamps

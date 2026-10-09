@@ -29,7 +29,8 @@ import {
 // twin (`StadiumEffects.attackCostSurcharge`). Every id and text measured on the LOCAL D1
 // (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-08, `legal_standard = 1`; no id was referenced
 // in the tree before this slice. Dropped and named: Battle Cage ×2, Mystery Garden ×3, Forest of
-// Vitality ×3, Dizzying Valley, Fossil Quarry, Risky Ruins. Excluded by the brief: Ange Floette.
+// Vitality ×3, Dizzying Valley, Fossil Quarry, Risky Ruins. Excluded by the brief: Ange Floette. [🆕🆕🆕 D618 (D539): Battle Cage,
+// Mystery Garden and Forest of Vitality are built at D618, `stadiumsMeD618.test.ts`.]
 // Driven on a LOCAL `cardPool` (D275) in the suite's OWN 60-card deck (D270).
 
 const PRISM_TEXT = "Once during each player's turn, that player may discard 2 cards from their hand in order to draw a card.";
@@ -273,11 +274,10 @@ describe("D606 §1 — the programs: five objects over 9 printings", () => {
     expect(programFor("sv06-146")?.stadium?.ability?.program).toEqual([{ op: "healEach", amount: 10 }]);
   });
 
-  it("dropped and excluded Stadiums stay unkeyed", () => {
+  it("dropped and excluded Stadiums stay unkeyed (🆕🆕🆕 D618 (D539): Battle Cage, Mystery Garden and Forest of Vitality are keyed since D618)", () => {
+    // 🆕🆕🆕 D618 (D539) — Battle Cage ×2, Mystery Garden ×3, Forest of Vitality ×3 left this list
+    // (`stadiumsMeD618.test.ts`).
     for (const id of [
-      "me02-085", "me02-116", // Battle Cage
-      "me01-122", "me01-172", "me02.5-194", // Mystery Garden
-      "me01-117", "me02.5-188", "me03-109", // Forest of Vitality
       "me02-088", // Dizzying Valley
       "me05-076", // Fossil Quarry
       "me01-127", // Risky Ruins
@@ -465,7 +465,7 @@ describe("D606 §6 — Celebratory Fanfare: heal 10 from each; if any healed, th
 });
 
 describe("D606 §7 — the version", () => {
-  it("is built at engine 0.500.0", () => {
-    expect(engineVersion).toBe("0.500.0");
+  it("is built at engine 0.501.0", () => {
+    expect(engineVersion).toBe("0.501.0");
   });
 });

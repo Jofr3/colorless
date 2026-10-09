@@ -392,7 +392,7 @@ describe("§9 — the bytes, and THE NINTH POSITION (`MATCH_RECORD_VERSION` 35 �
     expect(() => applyAction(v35, { type: "attack", seat: "p2", index: 0 })).toThrow(TypeError);
   });
 
-  it("the engine is 0.500.0", () => {
-    expect(engineVersion).toBe("0.500.0");
+  it("the engine is 0.501.0", () => {
+    expect(engineVersion).toBe("0.501.0");
   });
 });

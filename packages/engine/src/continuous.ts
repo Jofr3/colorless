@@ -328,6 +328,19 @@ export function stadiumShieldsStatus(state: GameState, pokemon: InPlayPokemon): 
   return stadiumEffectsOf(state)?.statusShieldIfEnergyAttached === true && pokemon.energy.length > 0;
 }
 
+/** 🆕🆕🆕 §10 (D618) — does the in-play Stadium let `target` evolve into `evolution` although it came
+    into play (or evolved) this turn? Forest of Vitality: *"Each player's {G} Pokémon can evolve into {G}
+    Pokémon during the turn they play those Pokémon, except during their first turn."* The body's IN-PLAY
+    types (`effectiveTypesOf`) and the evolution card's PRINTED types must both include the Stadium's
+    `type`. Asked by turn.ts `evolve` at the §10 ban only; §4's first-turn ban is not lifted (R-FOV1).
+    No seat ("each player's") and no §9 gate (a Stadium). */
+export function stadiumLicensesSameTurnEvolve(state: GameState, target: InPlayPokemon, evolution: Card): boolean {
+  const type = stadiumEffectsOf(state)?.sameTurnEvolution?.type;
+  return (
+    type !== undefined && effectiveTypesOf(state, target).includes(type) && (evolution.types ?? []).includes(type)
+  );
+}
+
 /** §9 — the top uids of every in-play Pokémon whose Abilities are currently
     suppressed by a continuous Ability-lock AURA (Klefki "Mischievous Lock" /
     Spiritomb "Fettered in Misfortune" / Ting-Lu ex "Cursed Land"). A single

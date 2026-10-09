@@ -20266,6 +20266,17 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.500.0 → **0.501.0** (D618 — WP25b: THE REST OF THE `me` STADIUMS D606 DROPPED,
+    3 TEXTS / 8 PRINTINGS; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D618")).
+    registry.ts, three NEW `stadium` objects: Battle Cage ×2 (the NEW `StadiumEffects.benchCounterShield`,
+    read by interpreter.ts `benchCountersCaged` at `placeSnipe`'s put-counter arm, `counterEachAll`,
+    `counterUntilRemainingHp`, `damageSubject`, `moveCountersFromBench`, `moveCountersToOpponent` and
+    `anyWayDestinations`, and by flow.ts `finishAttack` for the KO recoil's Ability share on a self-switched
+    Benched attacker; R-BCG1, R-BCG2), Mystery Garden ×3 (Revavroom's `payFromHand` anyEnergy →
+    `drawUntilHandSize` with the NEW `per` member, the actor's {P} Pokémon in play; R-MYG1) and Forest of
+    Vitality ×3 (the NEW `StadiumEffects.sameTurnEvolution`, continuous.ts
+    `stadiumLicensesSameTurnEvolve`, read at turn.ts `evolve`'s §10 ban only; R-FOV1). Dropped and named:
+    Dizzying Valley, Fossil Quarry, Risky Ruins, Ange Floette. `stadiumsMeD618.test.ts`.)
     🆕🆕🆕 engineVersion 0.499.0 → **0.500.0** (D617 — WP24b: FIVE MORE `me` SUPPORTERS, 5 TEXTS / 11
     PRINTINGS; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D617")). registry.ts, five
     NEW objects: Pokémon Center Lady (`healChosen` 60 + the NEW `recoverHealed`: a picked Active also gets
@@ -20392,7 +20403,8 @@ import type { GameState, Seat } from "./types";
     `stadiumFilteredCostSurcharge` in `effectiveAttackCost`'s Stadium term), Lumiose City ×2 and
     Celebratory Fanfare ×2 (the NEW `StadiumAbility.endsTurn: "always" | "ifHealed"`, cardplay.ts
     `stadiumUseEndsTurn` → `settleProgram`'s shipped `endsTurn`; R-LC1, R-CF1). Dropped: Battle Cage,
-    Mystery Garden, Forest of Vitality, Dizzying Valley, Fossil Quarry, Risky Ruins. `stadiumsMeD606.test.ts`.)
+    Mystery Garden, Forest of Vitality, Dizzying Valley, Fossil Quarry, Risky Ruins [🆕🆕🆕 D618 (D539): the
+    first three BUILT at D618]. `stadiumsMeD606.test.ts`.)
     🆕🆕🆕 engineVersion 0.487.0 → **0.488.0** (D605 — WP34: COIN (THE REST); `MATCH_RECORD_VERSION`
     STAYS 42 (apps/api match.ts "STAYS 42 AT D605")). effects.ts: two NEW `damageChosen` riders —
     `perHeadsInPlay` (Tauros "Target Together": the pick first, then one coin per own body in play
@@ -25506,7 +25518,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.500.0";
+export const engineVersion = "0.501.0";
 
 export type {
   ApplyResult,

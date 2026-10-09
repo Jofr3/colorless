@@ -214,8 +214,8 @@ function damageRow(events: readonly GameEvent[]): Extract<GameEvent, { type: "DA
 const SCOV_SPOT: Spot = { id: SCOVILLAIN, under: [CAPSAKID] };
 
 describe("D578 Scovillain §0 — the version", () => {
-  it("is built at engine 0.500.0", () => {
-    expect(engineVersion).toBe("0.500.0");
+  it("is built at engine 0.501.0", () => {
+    expect(engineVersion).toBe("0.501.0");
   });
 });
 
@@ -434,6 +434,8 @@ const ALLOWLIST: Record<string, string> = {
   "types · continuous.ts · passivesOf · holderCard?.types": `${E} — \`holderCard\` is \`inPlayCardOf\` (printed under a §9 lock)`,
   "types · continuous.ts · preventsAttackerType · attacker.types": `${E} — every damage site passes the in-play attacker`,
   "types · continuous.ts · seatWeaknessRewrite · defenderCard.types": `${E} — both Weakness sites pass the in-play defender`,
+  // 🆕🆕🆕 D618 — Forest of Vitality: the EVOLUTION card is in the hand (the body's side reads `effectiveTypesOf`).
+  "types · continuous.ts · stadiumLicensesSameTurnEvolve · evolution.types": `${P} — the evolution card is in the hand, not in play`,
   "types · continuous.ts · stadiumPoisonExtraCounters · top?.types": `${E} — flow.ts's §13.1 Poison passes \`inPlayCardOf\``,
   "types · continuous.ts · stadiumRetreatDelta · top.types": `${E} — \`effectiveRetreatCost\` passes \`inPlayCardOf\``,
   "types · interpreter.ts · attachEnergyTargets · card?.types": `${E} — \`inPlayCardOf\``,

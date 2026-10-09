@@ -19,6 +19,8 @@ import {
   seatKoPrizeBonuses,
   seatKoPrizeReductionOf,
   stadiumPoisonExtraCounters,
+  // 🆕🆕🆕 D618 — Battle Cage, asked for a self-switched (Benched) attacker's KO recoil.
+  stadiumEffectsOf,
   stadiumShieldsStatus,
 } from "./continuous";
 import type { GameEvent } from "./events";
@@ -327,6 +329,7 @@ function koRecoilOf(
   seat: Seat,
   // 🆕🆕🆕 D614 — the attacker carries Mega Clefable ex "Luminous Wing": the Ability shares
   // (Maractus "Exploding Needles") are refused, a Tool's (Vengeful Punch) still lands.
+  // [🆕🆕🆕 D618: and when Battle Cage stands and the attacker sits on its own Bench.]
   abilityShareRefused = false,
 ): number {
   // 🆕🆕 D414 — the doomed set is narrowed to bodies made lethal BY DAMAGE. The
@@ -1549,7 +1552,13 @@ export function finishAttack(
     (body) => body !== null && body !== undefined && topUid(body) === attackerUid,
   );
   const shielded = attackerBody != null && passivesOf(next, attackerBody).preventAbilityEffects;
-  const koRecoil = koRecoilOf(next, otherSeat(attackerSeat), shielded);
+  // 🆕🆕🆕 D618 — Battle Cage: an attacker that self-switched onto its own Bench (D189) takes no
+  // counters from the opponent's ABILITY share (Maractus "Exploding Needles"); a Tool's share (Vengeful
+  // Punch) still lands. No row is filed (R-BCG2); Luminous Wing's row below stays its own.
+  const caged =
+    stadiumEffectsOf(next)?.benchCounterShield === true &&
+    next.players[attackerSeat].bench.some((body) => topUid(body) === attackerUid);
+  const koRecoil = koRecoilOf(next, otherSeat(attackerSeat), shielded || caged);
   if (shielded && koRecoil < koRecoilOf(next, otherSeat(attackerSeat))) {
     events.push({ type: "ABILITY_EFFECT_PREVENTED", seat: attackerSeat, uid: attackerUid });
   }

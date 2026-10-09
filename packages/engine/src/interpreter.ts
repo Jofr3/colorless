@@ -109,6 +109,8 @@ import {
   returnsAfterAttackDiscard,
   // 🆕🆕🆕 D580 — Look-Alike Show's offer and splice (a Supporter's registry program).
   supporterEffectOf,
+  // 🆕🆕🆕 D618 — Battle Cage's flag, read by `benchCountersCaged`.
+  stadiumEffectsOf,
 } from "./continuous";
 import type { KoSurvival } from "./continuous";
 import { POKEMON_TYPES, STATUS_WORD_OF, foldApostrophes } from "./effects";
@@ -1653,6 +1655,8 @@ function describeBranch(ops: readonly EffectOp[]): string | null {
         );
         break;
       case "drawUntilHandSize":
+        // 🆕🆕🆕 D618 — Mystery Garden's `per` member is silent (Emma's reason: it draws at top level).
+        if (op.per !== undefined) return null;
         parts.push(`draw cards until you have ${op.size} cards in your hand`);
         break;
       // 🆕🆕🆕 D561 — Perrin's consequent, in the card's printed words minus its capital:
@@ -3042,7 +3046,8 @@ function stepOp(
       // `unshieldedRefs` pass): Team Rocket's Venture Bomb's heads pick must not OFFER a
       // body whose "prevent all effects of Item and Supporter cards your opponent plays"
       // covers it, or a benched Fraxure would take the counters (the Bench leg of
-      // `placeSnipe` asks no shield). Asked only for an Item/Supporter invocation, so
+      // `placeSnipe` asks no shield [🆕🆕🆕 D618 (D539): no §11 shield — it asks Battle Cage's
+      // `benchCountersCaged` since D618]). Asked only for an Item/Supporter invocation, so
       // every Ability and attack producer takes the byte-identical unfiltered set.
       // [🆕🆕🆕 D614 (D539): WITHDRAWN for Abilities — see below; attacks still take it.]
       // 🆕🆕🆕 D614 — and on the ABILITY channel too: a placed counter is an Ability's effect (Cursed
@@ -3223,6 +3228,14 @@ function stepOp(
       // no-ops at count ≤ 0 and emits no event, so a topped-up hand leaves no
       // misleading "drew 0 cards" row; a shallow deck short-draws, like every
       // other draw (§14.3 deck-out is checked at turn start, not here).
+      if (op.per !== undefined) {
+        // 🆕🆕🆕 D618 — Mystery Garden: the target is `size` × the matching Pokémon in play (Awakening
+        // Drum's walk), counted HERE, after the program's payment. Absent `per`, the arm below is
+        // byte-identical.
+        const perSeat = op.per.seat === "you" ? ctx.seat : otherSeat(ctx.seat);
+        const target = op.size * countPokemonInPlay(state, perSeat, op.per.filter, op.per.damagedOnly === true);
+        return { done: drawToHand(state, ctx.seat, target - state.players[ctx.seat].hand.length, "effect", events) };
+      }
       return {
         done: drawToHand(
           state,
@@ -11173,6 +11186,23 @@ export function effectRefused(
   return true;
 }
 
+/** 🆕🆕🆕 §12 (D618) — IS A DAMAGE-COUNTER PLACEMENT ON ONE OF `seat`'s BENCHED POKÉMON STOPPED?
+    Battle Cage (`StadiumEffects.benchCounterShield`): *"Prevent all damage counters from being placed
+    on Benched Pokémon (both yours and your opponent's) by effects of attacks and Abilities from the
+    opponent's Pokémon."* True while the Stadium is in play, for an attack's or a Pokémon Ability's
+    program (`invokedBy`) run by `seat`'s OPPONENT. Callers ask it only for a BENCHED body, at the write
+    (R-BCG2: the target stays offered; no row is filed — the Stadium is no Pokémon to announce it), and
+    at `anyWayDestinations`, the one offer it narrows. A
+    Trainer, a Tool, Poison/Burn Checkup counters and a player's own effects are not stopped. flow.ts
+    `finishAttack` reads the flag itself for the KO recoil on a self-switched Benched attacker. */
+function benchCountersCaged(state: GameState, seat: Seat, ctx: EffectContext): boolean {
+  return (
+    stadiumEffectsOf(state)?.benchCounterShield === true &&
+    (ctx.invokedBy === "attack" || ctx.invokedBy === "ability") &&
+    seat !== ctx.seat
+  );
+}
+
 /** 🆕 D259 — THE PER-CANDIDATE FORM OF THE FUNNEL: drop from `refs` every body
     that refuses this effect, announcing one row for each one dropped.
 
@@ -11725,6 +11755,11 @@ function placeSnipe(
       // and since 0.89.0 Ting-Lu ex's "Land Scoop"): flat, no W/R and no reduction
       // passive (a placed counter is not "damage from an attack"). `source` is the
       // producer's, never this function's — see the doc block.
+      // 🆕🆕🆕 D618 — Battle Cage: the counters do not land on the Benched pick (R-BCG2).
+      if (benchCountersCaged(next, benchVictim, ctx)) {
+        bench.push(pokemon);
+        continue;
+      }
       events.push({ type: "COUNTERS_PLACED", seat: benchVictim, uid, amount, source });
       bench.push({ ...pokemon, damage: pokemon.damage + amount });
       continue;
@@ -13064,6 +13099,8 @@ function counterEachAll(
       const uid = topUid(pokemon);
       if (uid === undefined) return pokemon;
       if (effectRefused(next, seat, ctx, events, pokemon)) return pokemon;
+      // 🆕🆕🆕 D618 — Battle Cage, on a Benched body only (the Active is `board.active`).
+      if (pokemon !== board.active && benchCountersCaged(next, seat, ctx)) return pokemon;
       events.push({ type: "COUNTERS_PLACED", seat, uid, amount, source: op.source });
       return { ...pokemon, damage: pokemon.damage + amount };
     };
@@ -13149,6 +13186,8 @@ function counterUntilRemainingHp(
     const uid = topUid(pokemon);
     if (uid === undefined) return pokemon;
     if (effectRefused(state, victim, ctx, events, pokemon)) return pokemon;
+    // 🆕🆕🆕 D618 — Battle Cage, on a Benched body only.
+    if (pokemon !== board.active && benchCountersCaged(state, victim, ctx)) return pokemon;
     events.push({
       type: "COUNTERS_PLACED",
       seat: victim,
@@ -13306,6 +13345,8 @@ function damageSubject(
   if (index === -1) return state;
   const benched = side.bench[index];
   if (benched !== undefined && effectRefused(state, seat, ctx, events, benched)) return state;
+  // 🆕🆕🆕 D618 — Battle Cage: an opponent's Ability puts no counters on the Benched subject.
+  if (benchCountersCaged(state, seat, ctx)) return state;
   events.push({ type: "COUNTERS_PLACED", seat, uid, amount, source: "ability" });
   return withSide(state, seat, {
     ...side,
@@ -13453,6 +13494,8 @@ function moveCountersFromBench(
   if (dest.spot.spot === "active" && effectRefused(state, dest.seat, ctx, events)) {
     return state;
   }
+  // 🆕🆕🆕 D618 — Battle Cage: a move onto a Benched body is refused WHOLE, before the HEALED row (R-BCG1).
+  if (dest.spot.spot === "bench" && benchCountersCaged(state, dest.seat, ctx)) return state;
   events.push({ type: "HEALED", seat: ctx.seat, uid: sourceUid, amount: moved });
   // `moved` IS `source.damage`, so `healedBody` writes the same 0 this line has
   // always written — and writes the D386 stamp with it, which is the whole point
@@ -13573,7 +13616,8 @@ export function counterToOpponentSources(state: GameState, seat: Seat): PokemonR
     `healChosen` (`HEALED` + the D386 stamp), the placement `COUNTERS_PLACED { source: "moved" }`
     on the destination's seat, written off the healed board. Silent endings, all wire belts: a
     destination on the controller's own board, an empty spot, nothing to move. No §11 question
-    (an Ability, not an attack). The op never Knocks Out — a lethal placement is swept by
+    (an Ability, not an attack) [🆕🆕🆕 D618 (D539): and since D618 a Benched destination under Battle
+    Cage refuses the move whole (`benchCountersCaged`, R-BCG1)]. The op never Knocks Out — a lethal placement is swept by
     `settleProgram` → `resolveMidTurnKnockOuts`, NOT by an attack (no `attackerSeat`). */
 function moveCountersToOpponent(
   state: GameState,
@@ -13591,6 +13635,8 @@ function moveCountersToOpponent(
   const targetUid = topUid(target);
   const moved = Math.min(count * 10, source.damage);
   if (targetUid === undefined || moved <= 0) return state;
+  // 🆕🆕🆕 D618 — Battle Cage: a move onto a Benched body is refused whole (R-BCG1).
+  if (dest.spot.spot === "bench" && benchCountersCaged(state, dest.seat, ctx)) return state;
   const relieved = healChosen(state, sourceRef, moved, ctx, events);
   events.push({ type: "COUNTERS_PLACED", seat: dest.seat, uid: targetUid, amount: moved, source: "moved" });
   const landing = refPokemon(relieved, dest) ?? target;
@@ -13638,7 +13684,11 @@ function anyWayDestinations(
         ? []
         : [{ seat: opp, spot: { spot: "active" } }]
       : oppAnyRefs(state, ctx.seat).filter((ref) => refKeyOf(ref) !== refKeyOf(from));
-  return unshieldedRefs(state, offered, ctx, []);
+  // 🆕🆕🆕 D618 — Battle Cage: a Benched body cannot receive the counters (R-BCG1), so it is no
+  // destination — the one OFFER the Cage narrows, because a refused round would spend the budget.
+  return unshieldedRefs(state, offered, ctx, []).filter(
+    (ref) => ref.spot.spot !== "bench" || !benchCountersCaged(state, ref.seat, ctx),
+  );
 }
 
 /** A round's SOURCES: damaged, unshielded opponent bodies in the zone that have at least one

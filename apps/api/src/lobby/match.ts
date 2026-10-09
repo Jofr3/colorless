@@ -2159,6 +2159,13 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D618 — THREE STADIUM OBJECTS, TWO `StadiumEffects` FIELDS AND ONE OPTIONAL OP KEY.**
+    (Placed ABOVE the D617 block.) `benchCounterShield` and `sameTurnEvolution` are catalog fields read off
+    the Stadium in play, never persisted. `drawUntilHandSize.per` (Mystery Garden) rides the `rest` of the
+    use's parked Energy discard: a 0.500 ROLLBACK resuming that park ignores the key and draws until 1 card
+    (usually nothing). Named, D561's precedent (optional keys, no version). The 8 `me` faces in a v42
+    `cardPool` are unchanged.
+
     🆕🆕🆕 **STAYS 42 AT D617 — FIVE SUPPORTER OBJECTS, FOUR OPTIONAL OP KEYS, ONE `per` MEMBER, ONE `cap`
     VALUE AND ONE `BoardCondition` MEMBER.** (Placed ABOVE the D616 block.) No `GameState`, `PendingStage`,
     prompt or wire key moves; what is new can only ride a parked `EffectContinuation`: `healChosen`

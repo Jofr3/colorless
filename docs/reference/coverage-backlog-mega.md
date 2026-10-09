@@ -6,6 +6,25 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D618 update (engine 0.501.0) — the rest of the Stadiums (WP25b)
+
+3 texts / 8 `me` Stadium printings on three new `stadium` objects (`stadiumsMeD618.test.ts`): Battle Cage ×2 `me02-085` / `-116`
+(the Bench damage-counter shield, `StadiumEffects.benchCounterShield`, NEW; R-BCG1, R-BCG2), Mystery Garden ×3 `me01-122` / `-172`,
+`me02.5-194` (Revavroom's discard-an-Energy cost, then `drawUntilHandSize` with the NEW `per` count of your {P} Pokémon in play;
+R-MYG1) and Forest of Vitality ×3 `me01-117`, `me02.5-188`, `me03-109` (the Stadium evolution permission,
+`StadiumEffects.sameTurnEvolution`, NEW; R-FOV1). **Finished:** all 8. **Dropped and named:** Dizzying Valley (Confusion kept
+through evolution), Fossil Quarry (Antique Items deck-to-Bench), Risky Ruins (a Stadium on-Bench trigger) and Ange Floette (a play
+gate on Prism Tower in play, a second Stadium the same turn, and a named HP bonus).
+
+| Column | `me` built / units (D618) | Standard pool D618 |
+|---|---|---|
+| Attacks | 953 / 1,039 | **2,685 / 2,771** |
+| Abilities | 181 / 234 | **557 / 610** |
+| Trainers | 128 / 183 (+8) | **392 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1073** (1065 + 8).
+
 ## 🆕 D617 update (engine 0.500.0) — five more WP24 Supporters (WP24b)
 
 5 texts / 11 `me` Supporter printings on five new objects (`supportersMeD617.test.ts`): Pokémon Center Lady `me01-123`
@@ -232,7 +251,8 @@ Stadium program `programPlayable` can refuse), Nighttime Mine (League HQ's {C} s
 `StadiumAbility.endsTurn: "always" | "ifHealed"`; R-LC1, R-CF1). **Finished:** all 9. **Dropped and named:** Battle Cage ×2 (a
 Bench damage-counter shield — the brief's other new piece), Mystery Garden ×3 (a draw-until count source), Forest of Vitality ×3
 (a same-turn evolution rule), Dizzying Valley (Confusion kept through evolution), Fossil Quarry (Antique Items deck-to-Bench),
-Risky Ruins (an on-Bench Stadium trigger). **Excluded by the brief:** Ange Floette.
+Risky Ruins (an on-Bench Stadium trigger). **Excluded by the brief:** Ange Floette. [🆕🆕🆕 D618: Battle Cage, Mystery Garden and
+Forest of Vitality BUILT by WP25b, above; Dizzying Valley, Fossil Quarry, Risky Ruins and Ange Floette dropped again.]
 
 | Column | `me` built / units (D606) | Standard pool D606 |
 |---|---|---|
@@ -1132,20 +1152,20 @@ At any time during your turn, you may discard this card from play.
 ### Stadium — Mega Evolution-conditioned — 1 text(s) / 1 printing(s)
 
 - 1× **Ange Floette** — You can put this card into play only if you discard a Prism Tower in play, and you can put this card into play during the same turn you play Prism Tower.
-Each Mega Floette ex in play (both yours and your opponent's) gets +150 HP.
+Each Mega Floette ex in play (both yours and your opponent's) gets +150 HP. [🆕🆕🆕 D618: dropped — a play gate on Prism Tower in play, a second Stadium the same turn, a named HP bonus]
 
 ### Stadium — 11 text(s) / 20 printing(s)
 
-- 2× **Battle Cage** — Prevent all damage counters from being placed on Benched Pokémon (both yours and your opponent's) by effects of attacks and Abilities from the opponent's Pokémon. (Damage from attacks is still taken.) [🆕🆕🆕 D606: dropped — a Bench damage-counter shield]
+- 2× **Battle Cage** — Prevent all damage counters from being placed on Benched Pokémon (both yours and your opponent's) by effects of attacks and Abilities from the opponent's Pokémon. (Damage from attacks is still taken.) [🆕🆕🆕 D606: dropped — a Bench damage-counter shield] [🆕🆕🆕 D618: BUILT]
 - 2× **Celebratory Fanfare** — Once during each player's turn, that player may heal 10 damage from each of their Pokémon. If a player healed any damage in this way, their turn ends. [🆕🆕🆕 D606: BUILT]
-- 1× **Dizzying Valley** — Confused Pokémon (both yours and your opponent's) don't recover from that Special Condition when they evolve or devolve. [🆕🆕🆕 D606: dropped — Confusion kept through evolution]
-- 3× **Forest of Vitality** — Each player's {G} Pokémon can evolve into {G} Pokémon during the turn they play those Pokémon, except during their first turn. [🆕🆕🆕 D606: dropped — a same-turn evolution rule]
-- 1× **Fossil Quarry** — Once during each player's turn, that player may search their deck for up to 2 Item cards that have "Antique" in their name and put them onto their Bench. Then, that player shuffles their deck. [🆕🆕🆕 D606: dropped — Antique Items deck-to-Bench]
+- 1× **Dizzying Valley** — Confused Pokémon (both yours and your opponent's) don't recover from that Special Condition when they evolve or devolve. [🆕🆕🆕 D606: dropped — Confusion kept through evolution] [🆕🆕🆕 D618: dropped again]
+- 3× **Forest of Vitality** — Each player's {G} Pokémon can evolve into {G} Pokémon during the turn they play those Pokémon, except during their first turn. [🆕🆕🆕 D606: dropped — a same-turn evolution rule] [🆕🆕🆕 D618: BUILT]
+- 1× **Fossil Quarry** — Once during each player's turn, that player may search their deck for up to 2 Item cards that have "Antique" in their name and put them onto their Bench. Then, that player shuffles their deck. [🆕🆕🆕 D606: dropped — Antique Items deck-to-Bench] [🆕🆕🆕 D618: dropped again]
 - 2× **Lumiose City** — Once during each player's turn, that player may search their deck for a Basic Pokémon and put it onto their Bench. Then, that player shuffles their deck. If a player searches their deck in this way, their turn ends. [🆕🆕🆕 D606: BUILT]
-- 3× **Mystery Garden** — Once during each player's turn, that player may discard an Energy card from their hand in order to draw cards until they have as many cards in their hand as they have {P} Pokémon in play. [🆕🆕🆕 D606: dropped — a draw-until count source]
+- 3× **Mystery Garden** — Once during each player's turn, that player may discard an Energy card from their hand in order to draw cards until they have as many cards in their hand as they have {P} Pokémon in play. [🆕🆕🆕 D606: dropped — a draw-until count source] [🆕🆕🆕 D618: BUILT]
 - 1× **Nighttime Mine** — Attacks used by each Tera Pokémon in play (both yours and your opponent's) cost {C} more. [🆕🆕🆕 D606: BUILT]
 - 2× **Prism Tower** — Once during each player's turn, that player may discard 2 cards from their hand in order to draw a card. [🆕🆕🆕 D606: BUILT]
-- 1× **Risky Ruins** — Whenever any player puts a Basic non-{D} Pokémon onto their Bench during their turn, place 2 damage counters on that Pokémon. [🆕🆕🆕 D606: dropped — an on-Bench Stadium trigger]
+- 1× **Risky Ruins** — Whenever any player puts a Basic non-{D} Pokémon onto their Bench during their turn, place 2 damage counters on that Pokémon. [🆕🆕🆕 D606: dropped — an on-Bench Stadium trigger] [🆕🆕🆕 D618: dropped again]
 - 2× **Surfing Beach** — Once during each player's turn, that player may switch their Active {W} Pokémon with 1 of their Benched {W} Pokémon. [🆕🆕🆕 D606: BUILT]
 
 ### Supporter — Mega Evolution-conditioned — 2 text(s) / 4 printing(s)

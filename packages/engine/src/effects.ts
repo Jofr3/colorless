@@ -7513,7 +7513,18 @@ export type EffectOp =
       drawCards, and short-draws the same way on a shallow deck (§14.3 deck-out
       is a turn-START rule). Distinct from drawCards because the count is read
       off the CURRENT hand: two of these in a row is not two draws. */
-  | { op: "drawUntilHandSize"; size: number }
+  | {
+      op: "drawUntilHandSize";
+      size: number;
+      /** 🆕🆕🆕 **D618 — Mystery Garden `me01-122` / `-172`, `me02.5-194` (Stadium)**: *"draw cards until
+          they have as many cards in their hand as they have {P} Pokémon in play."* The target size is
+          `size` × this count, `drawCards.per`'s `pokemonInPlay` member reused by `Extract` and counted
+          by the same walk (`countPokemonInPlay`), read at resolve — after the program's payment.
+          Absent = the printed `size`, byte for byte. The payment PARKS, so this op rides its `rest`
+          and IS persisted: a 0.500 ROLLBACK resuming that park ignores the key and draws until `size`
+          (1) cards — usually nothing (NAMED, D561's optional-key precedent). */
+      per?: Extract<DamageCountSource, { kind: "pokemonInPlay" }>;
+    }
   /** Discard the controller's whole hand (Professor's Research precedes a draw). */
   | { op: "discardHand" }
   /** 🆕🆕🆕 **D564 — Amarys `sv08.5-093`/`-132`/`-170` (Supporter, 3 legal)**: *"At the end

@@ -30237,6 +30237,33 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D618 — WP25b: the rest of the `me` Stadiums (engine 0.501.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D617 (`001fdbcc`), NOT committed.
+
+- **The programs.** registry.ts, three new `stadium` objects on 8 `me` ids: Battle Cage ×2 (the NEW
+  `StadiumEffects.benchCounterShield`), Mystery Garden ×3 (Revavroom's `payFromHand` 1 `anyEnergy`, then `drawUntilHandSize` 1 with
+  the NEW `per` member, the actor's {P} Pokémon in play) and Forest of Vitality ×3 (the NEW `StadiumEffects.sameTurnEvolution`
+  `{ type: "Grass" }`).
+- **Battle Cage.** interpreter.ts `benchCountersCaged` (the Stadium in play, an `"attack"` or `"ability"` invoker, the body's
+  opponent as its controller), asked for a Benched body at `placeSnipe`'s put-counter arm, `counterEachAll`,
+  `counterUntilRemainingHp`, `damageSubject`, `moveCountersFromBench` and `moveCountersToOpponent` (refused whole), and at
+  `anyWayDestinations` (dropped as a destination). flow.ts `finishAttack` also refuses the Ability share of the KO recoil
+  (`koRecoilOf`, Maractus) on an attacker that self-switched to its Bench. Attack damage, Trainers, Tools, Poison/Burn Checkup
+  counters and a player's own effects still place.
+- **Forest of Vitality.** continuous.ts `stadiumLicensesSameTurnEvolve` (the body's in-play types and the evolution card's printed
+  types both include {G}), read at turn.ts `evolve`'s §10 "came into play this turn" ban only; §4's first-turn ban and Rare Candy
+  are unchanged.
+- **Readings.** R-BCG1 ⚠️ UNRULED (a move onto a Benched body is a placement; refused whole), R-BCG2 ⚠️ UNRULED (targets stay
+  offered; nothing lands, no row), R-MYG1 ⚠️ UNRULED (usable when the draw would be 0), R-FOV1 ⚠️ UNRULED (a {G} body that
+  evolved this turn may evolve again).
+- **Dropped.** Dizzying Valley, Fossil Quarry, Risky Ruins, Ange Floette (each needs vocabulary beyond the brief).
+- **Suite.** `stadiumsMeD618.test.ts` (30) and a census D618 block (2). +26 mutant rows, all killed; two older rows re-pointed
+  (`D451-section-11-gate-reads-the-active-for-every-body`, `D574-loop-shield-not-filtered`). D539: D606's drop notes and two
+  "asks no shield" / "No §11 question" claims annotated.
+- **Census.** Standard pool trainers **392 / 447**; 1073 `me` printings fully built (all 8 finished).
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
 ## D617 — WP24b: five more WP24 Supporters (engine 0.500.0, `MATCH_RECORD_VERSION` stays 42)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D616 (`48f9c661`), NOT committed.
@@ -30473,7 +30500,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   KILLED by new D606 blocks in `redactStadiumAbility.test.ts` and `GameHud.stadiumAbility.dom.test.tsx`; the
   "no printed Stadium ability whiff-gates" claim is annotated WITHDRAWN at every site (D539).
 - **Dropped and named.** Battle Cage ×2, Mystery Garden ×3, Forest of Vitality ×3, Dizzying Valley, Fossil Quarry, Risky
-  Ruins. Ange Floette excluded by the brief.
+  Ruins. Ange Floette excluded by the brief. [🆕🆕🆕 D618 (D539): the first three BUILT at D618.]
 - **Readings.** R-LC1, R-CF1, UNRULED (`progress.md` NEXT).
 - **Suite.** `stadiumsMeD606.test.ts` (23) and a census D606 block (2). +17 mutant rows.
 - **Census.** Standard pool trainers **373 / 447**; 935 `me` printings fully built.
