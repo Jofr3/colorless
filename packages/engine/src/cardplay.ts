@@ -994,7 +994,8 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
     };
   }
   return settleProgram(
-    runProgram(next, ability.program, { seat: action.seat, sourceUid: uid }, events),
+    // 🆕🆕🆕 D614 — `invokedBy: "ability"`: the §11 ability channel (Luminous Wing).
+    runProgram(next, ability.program, { seat: action.seat, sourceUid: uid, invokedBy: "ability" }, events),
     action.seat,
     events,
     { endsTurn: ability.endsTurn === true },

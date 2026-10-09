@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-09 — build session #553 (**P3-M5 — D613, *FIX-UP — THE JET ENERGY SWITCH'S KNOCK OUT CHECK AND BASIC-ONLY BENCH PLACEMENT: turn.ts `attachEnergy` runs the mid-turn sweep after a Jet Energy switch (D610's open review finding: Holes counters were never Knock-Out-checked there); cards.ts `benchMatches` — an effect benches Basic Pokémon only unless its noun names its card (King's Order ×3, Booming Call ×2, Revival Blessing ×3, Summoning Gate ×2, Cinnabar Lure ×2 corrected; R-BC1 and D238's any-stage reading retired; R-BN1 UNRULED); no count moves*** — engine 0.496.0, MRV 42, NOT committed; the whole-corpus sweep PENDING; remote re-ingest still owed before deploy)
+**Last updated:** 2026-10-09 — build session #554 (**P3-M5 — D614, *WP37b — THE ABILITY-EFFECT SHIELD: Mega Clefable ex ×4 "Luminous Wing" on the new `passive.preventAbilityEffects`; `EffectContext.invokedBy` gains `"ability"` at every Pokémon-Ability `runProgram` site and the §11 funnel refuses an opponent's Ability's effects on the holder (new `ABILITY_EFFECT_PREVENTED`); `damageChosen` / Adrena-Brain / `damageSubject` widened onto the funnel; the Ability share of a recoil and Magma Surge's extra counters refused; R-LW1 / R-LW2 UNRULED; abilities 557 / 610, 1030 `me` printings fully built*** — engine 0.497.0, MRV 42, NOT committed; the whole-corpus sweep PENDING; remote re-ingest still owed before deploy)
+
+**Last updated (was):** 2026-10-09 — build session #553 (**P3-M5 — D613, *FIX-UP — THE JET ENERGY SWITCH'S KNOCK OUT CHECK AND BASIC-ONLY BENCH PLACEMENT: turn.ts `attachEnergy` runs the mid-turn sweep after a Jet Energy switch (D610's open review finding: Holes counters were never Knock-Out-checked there); cards.ts `benchMatches` — an effect benches Basic Pokémon only unless its noun names its card (King's Order ×3, Booming Call ×2, Revival Blessing ×3, Summoning Gate ×2, Cinnabar Lure ×2 corrected; R-BC1 and D238's any-stage reading retired; R-BN1 UNRULED); no count moves*** — engine 0.496.0, MRV 42, NOT committed; the whole-corpus sweep PENDING; remote re-ingest still owed before deploy)
 
 **Last updated (was):** 2026-10-09 — build session #552 (**P3-M5 — D612, *WP06 — THE tcgdex MARKUP NORMALISER: cardText.ts `normalizeCardText` at ingest (map.ts) and at read (cards.ts `cardOfUid`, so a persisted v42 `cardPool` face reads clean); `mep` / `30th` / `30th-c` / `swsh10.5` re-ingested into the LOCAL D1 (90 text columns on 87 rows); the `me` corpus regenerated (451 → 442); 18 texts / 21 `30th` printings built on shipped readers; `INFERNO_X` and `STEALTHY_SLASH` retired (R-IX1 resolved); R-BC1 UNRULED (Booming Call benches any {N} Pokémon, D238's reading) [🆕🆕🆕 D613 (D539): WITHDRAWN — Basic only; R-BC1 retired]; KV cache v8; attacks 2,661 / 2,771, 1026 `me` printings fully built*** — engine 0.495.0, MRV 42, NOT committed; the whole-corpus sweep PENDING; remote re-ingest owed before deploy)
 
@@ -851,6 +853,39 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-09, after D614)
+>
+> 🛑 **D614 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D613 = `55ccb609`). D614 is WP37b of the Mega backlog (Luminous Wing). Next: a review of D614 (and rulings on R-LW1 / R-LW2), then another package — WP17 (Hide 'n' Sneak ×4) can now reuse the piece — or the landing of D581–D614 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is a symlink to the main checkout's local D1). The D612 deploy order still stands (below).
+>
+> ✅ **`bun run check` IS GREEN**: `Test Files 656 passed (656) / Tests 15569 passed (15569) / CHECK_EXIT=0` (D613: 655 / 15543; D614 adds `abilityShieldMeD614.test.ts` (24) and the census D614 block (2)).
+>
+> **(a) THE SLICE.** Mega Clefable ex `mep-072`, `me03-031` / `-103` / `-119` "Luminous Wing" (LOCAL D1): one NEW object, `LUMINOUS_WING` = `passive.preventAbilityEffects`. `EffectContext.invokedBy` gains `"ability"`, set at cardplay.ts `useAbility`, triggers.ts `runBoardTrigger` / `sweepTriggers` / `runCheckupTriggers` and flow.ts's on-KO and damaged-by-attack Ability runs (no Tool, Stadium or Energy site). `effectRefusedOn` answers it when the target is on the other seat; `effectRefused` files the NEW `ABILITY_EFFECT_PREVENTED`. Audit of the registry's Ability programs that act on an opponent's Pokémon: on the funnel already — `applyStatus`, `counterEachAll`, `damageActive`, `discardEnergy`, `gust`, `devolveChosen`; widened — `damageChosen`'s offer (D557's filter), Adrena-Brain's destination, `damageSubject`. Passive acts: the `sources[0]` share of `damageAttacker` / `damageAttackerOnKo` (NEW fold fields) is refused at the three recoil sites; Magma Surge's +30 is refused in flow.ts's Burn tick. `programPlayable` unchanged (Cursed Blast with only Clefable is usable and places nothing).
+>
+> **(b) MRV STAYS 42** (match.ts "STAYS 42 AT D614"): a widened optional key and a new event. A continuation parked on 0.496 lacks the tag and resumes unshielded. Rollback to 0.496 is clean.
+>
+> | Column | `me` D614 | Standard pool D614 |
+> |---|---|---|
+> | Attacks | 929 / 1039 | **2661 / 2771** |
+> | Abilities | 181 / 234 | **557 / 610** |
+> | Trainers | 109 / 183 | **373 / 447** |
+> | Special Energy | 11 / 11 | **22 / 22** |
+>
+> **1030 `me` printings fully built** (1026 + 4; Shooting Moons was built at D597). Pins stepped: registry length 1297 → 1301 (census D273 and five suites), non-attack 1129 → 1133, the `me` key tables (census D581, `reprintAliasMeD582.test.ts` `KEYED_AT_D614`), D610's "Clefable stays unkeyed" (census D610, `onMoveHpMeD610.test.ts` §9), the `passivesOf` key list (`therapeuticEnergy.test.ts`), the parked `ctx` shape (`sourceUid.test.ts`). Version tax: 268 stepped, 1 kept (the D613 heading).
+>
+> **D539 sweep.** Annotated in place: "an Ability's program leaves `invokedBy` absent" (interpreter.ts `EffectContext` doc ×2, index.ts D142 heading, `trainerShield.test.ts` title), D557's "every Ability … takes the unfiltered set" (interpreter.ts `damageChosen`), the Froslass "never refused" claim (interpreter.ts `counterEachAll`, `counterFold.test.ts`), `damageSubject`'s "NO `effectRefused` CALL".
+>
+> **(c) THE MUTATION RECORD.** +22 D614 rows (interpreter.ts 8, continuous.ts 4, triggers.ts 3, flow.ts 3, cardplay.ts, attack.ts, registry.ts, log.ts 1 each); 7 rows re-pointed onto the moved lines with the same mutation (`D437-narrows-after-the-arity-doctrine`, `D456-attack-site-…` / `D456-interpreter-site-forgets-the-third-argument`, `D557-venture-offer-ignores-the-shield`, `D560-burn-extra-not-read` / `-after-the-flip`, `D572-destination-forced-at-one`): 4981 in all. precheck: 4981 mutants, the same 20 pre-existing broken rows. Probe `run.ts --decision D614 --allow-dirty`: 22 killed · 0 known · 0 GAP · 0 error, tree byte-identical after; `--only` the 7 re-points: 7 killed. GATE-WITNESS `--only` over the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows: 18 killed. residue-census-gate, opaque-anatomy-gate, splice-gate, partition-gate: OK. The on-KO Ability tag has no row: no registry on-KO Ability acts on an opponent's Pokémon, so no board can tell it from its absence.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D581–D613's too). Predicted: **4914 killed · 47 known survivor(s) · 0 GAP(S) · 20 error(s)** over **4,981** rows — 4959 + 22 = 4981; 4892 + 22 = 4914 killed (the 7 re-points stay killed); 47 survivors unchanged; 4914 + 47 + 20 = 4981. It assumes D613's prediction holds. If it holds, D581–D614 close together. If it fails: an error count ≠ 20 means a broken `find` outside the pre-existing 20 (start with the 7 re-points); a D614 survivor means a shield site is no longer pinned (start with `abilityShieldMeD614.test.ts`); a declared survivor reported stale means the D614 suite now kills a row on the §11 funnel or the recoil fold (start with rows on interpreter.ts `effectRefusedOn` / `damageChosen` and continuous.ts `passivesOf`).
+>
+> **Pending decisions (UNRULED readings):** **R-LW1 (NEW, UNRULED)** — Luminous Wing refuses an Ability's resolved acts on the holder (counters, Special Conditions, Energy discards, gusts, devolves, the recoil on the Attacking Pokémon, Magma Surge's counters) but NOT a continuous Ability aura that changes a rule for it: Trap Territory / Binding Flame / Big Net (+{C} Retreat Cost), Block, Pressure / Lonely Gaze / Intimidating Fang, Quaking Zone, Fairy Zone, Mentally Calm. Precedent: the Trainer shield does not refuse Gravity Gemstone. A switch-out of the Active (Torrential Whirlpool) follows D227's attack-channel reading. Reversal: skip a body with `preventAbilityEffects` at each aura's read site (continuous.ts). **R-LW2 (NEW, UNRULED)** — an Ability lock on the holder (Flutter Mane "Midnight Fluttering", Iron Thorns ex "Initialization") removes Luminous Wing before it can apply, so the lock and every later Ability effect land. Reversal: exempt `preventAbilityEffects` holders in `disabledAbilityUids` for an opponent-side lock. Carried: as at D613 (below).
+>
+> Still owed from the Mega backlog: as at D613 (below), less WP37b. WP37's rest (7 texts / 13 printings: Fall Back to Reload ×2, Last-Ditch Catch ×3, Supreme Overlord, Gloomy Garbage, Sniper's Eye ×2, Ancient Bulwark ×3, Life-Locked) stays in WP37; Hide 'n' Sneak ×4 (WP17) can reuse `preventAbilityEffects` beside `preventAttackEffects`.
+>
+> ---
+>
+> **ARCHIVED — the resume point D614 was built from, kept rather than overwritten** (D613 has since been committed on `mega-ingest` as `55ccb609`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-09, after D613)
 >
 > 🛑 **D613 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D612 = `662f1911`). D613 is a fix-up slice: D610's open review finding and R-BC1. Next: a review of D613 (and a ruling on R-BN1), then another package, or the landing of D581–D613 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is a symlink to the main checkout's local D1). The D612 deploy order still stands (below): the remote re-ingest with the D612 ingest code, then ship.
@@ -35548,7 +35583,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D613, *fix-up — the Jet Energy switch now runs the mid-turn Knock Out sweep (Holes, D610's review finding); bench placement is Basic only unless the noun names its card (R-BC1 / D238 retired, R-BN1 UNRULED); no count moves*** — engine 0.496.0, MRV 42, NOT committed; the sweep PENDING; remote re-ingest owed) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D614, *WP37b — the Ability-effect shield: Mega Clefable ex ×4 "Luminous Wing" (`passive.preventAbilityEffects`, `invokedBy: "ability"`, the new `ABILITY_EFFECT_PREVENTED`); R-LW1 / R-LW2 UNRULED; abilities 557 / 610, 1030 `me` printings fully built*** — engine 0.497.0, MRV 42, NOT committed; the sweep PENDING; remote re-ingest owed) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D613, *fix-up — the Jet Energy switch now runs the mid-turn Knock Out sweep (Holes, D610's review finding); bench placement is Basic only unless the noun names its card (R-BC1 / D238 retired, R-BN1 UNRULED); no count moves*** — engine 0.496.0, MRV 42, NOT committed; the sweep PENDING; remote re-ingest owed) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D610, *WP37a — the first part of the `me` on-move / as-often / HP passives: 8 texts / 16 `me` printings on seven new objects (Solar Transfer, Bubble Gathering, Metal Road, Swirling Prose, Holes, Scale Up, Tyrannically Gutsy) over the new `hpBonus.requiresEnergyCount`; WP37's other 8 texts named; abilities 536 / 610*** — engine 0.493.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D609, *WP36 — the `me` KO / damage-counter attacks: 4 attack texts / 8 `me` printings (Terminal Period's exact-counter gate, Bring Down's least-HP Knock Out on either side, Snow Coating's doubled counters, the singular counter put); Soul Destroyer and Mysterious Signal named; R-BD1 UNRULED; attacks 2,640 / 2,771*** — engine 0.492.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D608, *WP30 — the `me` snipe / spread wording: 7 attack texts / 13 `me` printings read ("each of 2", Disaster Shock's optional-cost skeleton, three literal compounds, `damageChosen.specialEnergyOnly`, the unbenched counter snipe) and 5 `30th` printings keyed; WP30's other 8 texts named; attacks 2,632 / 2,771*** — engine 0.491.0, MRV 42, NOT committed; the sweep PENDING) |
@@ -35777,6 +35813,18 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-09 — build session #554 (P3-M5 — D614)
+
+**WP37b — THE ABILITY-EFFECT SHIELD (MEGA CLEFABLE EX "LUMINOUS WING"). `MATCH_RECORD_VERSION` STAYS 42.**
+
+Built in the `luminous_ui-mega` worktree on D613 (`55ccb609`); the main checkout was not touched. Ids `git grep`-ped and the
+text read off the LOCAL D1 first. `passive.preventAbilityEffects` (NEW) on Mega Clefable ex ×4; `invokedBy: "ability"` at every
+Pokémon-Ability `runProgram` site; the §11 funnel answers it (new `ABILITY_EFFECT_PREVENTED`); `damageChosen`, Adrena-Brain and
+`damageSubject` widened onto it; the Ability share of the three recoils and Magma Surge's counters refused. R-LW1 / R-LW2
+UNRULED. Mega Clefable ex ×4 finished (1030 `me` printings). `abilityShieldMeD614.test.ts` (24), census D614 block (2); check
+656 / 15569. Version tax 268 stepped / 1 kept. +22 mutant rows, all KILLED; 7 rows re-pointed. Sweep PENDING (NEXT (0)). NOT
+committed.
 
 ### 2026-10-09 — build session #553 (P3-M5 — D613)
 

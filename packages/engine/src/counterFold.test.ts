@@ -556,7 +556,7 @@ describe("§3 — TWO REQUIRED fields on a shipped op, and the record version do
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.496.0");
+    expect(engineVersion).toBe("0.497.0");
   });
 });
 
@@ -882,7 +882,9 @@ describe("§9 — `source` on the wire, and the shipped Ability path unchanged",
     // ⚠️ **THE ONE THING A SEAM SLICE MUST PROVE ABOUT THE CALLER IT DID NOT COME FOR.**
     // `effectRefusedOn` returns false at `ctx.invokedBy !== "attack"`, and a triggered
     // Ability leaves `invokedBy` ABSENT — so Froslass now consults a gate it never used
-    // to, is never refused by it, and pushes no event. The whole of `freezingShroud.test.ts`
+    // to, is never refused by it, and pushes no event. [🆕🆕🆕 D614 (D539): WITHDRAWN — a trigger
+    // carries `invokedBy: "ability"`, and an opponent's Luminous Wing refuses the counter
+    // (`abilityShieldMeD614.test.ts` §4).] The whole of `freezingShroud.test.ts`
     // is the real witness; this is the field-level statement of why it stayed green.
     const program = programFor("sv06-053")?.triggered?.[0]?.program;
     expect(program).toEqual([

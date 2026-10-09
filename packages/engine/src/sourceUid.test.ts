@@ -151,7 +151,8 @@ describe("the context carries the source — the mechanism", () => {
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     // The WHOLE context, not just the field: `{seat, sourceUid}` and nothing
     // else is what the continuation serializes (D14).
-    expect(parked.phase.cont.ctx).toEqual({ seat: "p1", sourceUid: pawmotUid });
+    // 🆕🆕🆕 D614 (D539): ~~"and nothing else"~~ — plus `invokedBy: "ability"`, the §11 ability channel.
+    expect(parked.phase.cont.ctx).toEqual({ seat: "p1", sourceUid: pawmotUid, invokedBy: "ability" });
   });
 
   it("a board trigger parks with the PLAYED Pokémon's uid", () => {
@@ -160,7 +161,8 @@ describe("the context carries the source — the mechanism", () => {
     const uid = handUid(state, "p1", FLAMIGO);
     const { state: parked } = mustApply(state, { type: "playBasicToBench", seat: "p1", uid });
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
-    expect(parked.phase.cont.ctx).toEqual({ seat: "p1", sourceUid: uid });
+    // 🆕🆕🆕 D614 — a triggered Ability carries `invokedBy: "ability"` too.
+    expect(parked.phase.cont.ctx).toEqual({ seat: "p1", sourceUid: uid, invokedBy: "ability" });
   });
 
   it("a Trainer parks with NO source — the field is not even present", () => {

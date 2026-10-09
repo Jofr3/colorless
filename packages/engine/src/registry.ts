@@ -2444,6 +2444,15 @@ export interface PassiveEffects {
       Cover holder takes them. Pre-existing, shared by both printings, recorded in decisions.md D576
       and NOT changed here (the Active arm refuses them, driven in `antiqueFossilsD576.test.ts` §5). */
   preventAttackEffects?: true;
+  /** 🆕🆕🆕 §11 (D614) — the field above with the channel swapped to ABILITIES: Mega Clefable ex
+      `mep-072`, `me03-031` / `-103` / `-119` "Luminous Wing", *"Prevent all effects of your
+      opponent's Pokémon's Abilities done to this Pokémon."* Read by interpreter.ts
+      `effectRefusedOn`'s ability channel (`EffectContext.invokedBy === "ability"`, set at every
+      Pokémon-Ability `runProgram` site) and by the Ability-borne recoil on the Attacking Pokémon
+      (`passivesOf().damageAttackerFromAbility` / `damageAttackerOnKoFromAbility`) and Magmortar's
+      Burn counters (flow.ts). Continuous Ability auras are NOT refused (R-LW1 ⚠️ UNRULED). A BOOLEAN,
+      §9-suppressible: an Ability lock on the holder switches it off (R-LW2 ⚠️ UNRULED). */
+  preventAbilityEffects?: true;
   /** §11 continuous TARGET-GROUP PREVENTION of an ATTACK's EFFECTS — the field
       directly above with its object moved off the holder and onto a NAMED SUBGROUP
       of the holder's own board:
@@ -12153,7 +12162,8 @@ const RIPENING_CHARGE: CardProgram = {
     THIS SLICE WAS TOLD WAS MOST LIKELY TO COST AN ENGINE LINE.** `toSelf` reads
     `sourceRef(state, ctx)`, and D221 built it for an ACTIVATED Ability where
     `useAbility` sets the uid explicitly. `runBoardTrigger` (triggers.ts) sets it
-    too — `runProgram(state, ability.program, { seat, sourceUid: uid }, events)`,
+    too — `runProgram(state, ability.program, { seat, sourceUid: uid }, events)` [🆕🆕🆕 D614: plus
+    `invokedBy: "ability"`],
     where `uid` is `topUid(pokemon)` of the body that just landed — so the field
     was already on the board-trigger context and the cross costs zero engine
     lines. **Read, not inferred**: the risk was real and the answer was no.
@@ -18206,6 +18216,18 @@ const EVOLUTIONARY_GUIDANCE: CardProgram = {
   ],
 };
 
+// ── 🆕🆕🆕 D614 — WP37b: THE ABILITY-EFFECT SHIELD. One object, 4 printings; text off the LOCAL D1.
+//    One new piece: `passive.preventAbilityEffects`, read through `EffectContext.invokedBy: "ability"`.
+//    `abilityShieldMeD614.test.ts` drives it. ──
+
+/** 🆕🆕🆕 **D614 — Mega Clefable ex `mep-072`, `me03-031` / `-103` / `-119` "Luminous Wing"**: *"Prevent
+    all effects of your opponent's Pokémon's Abilities done to this Pokémon."* Skeledirge "Unaware"'s
+    holder shield (`preventAttackEffects`) on the Ability channel. Its attack, Shooting Moons, is D597's
+    reader-built discard-scaled row. */
+const LUMINOUS_WING: CardProgram = {
+  passive: { preventAbilityEffects: true },
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -19385,6 +19407,11 @@ const REGISTRY: Record<string, CardProgram> = {
   "me03-009": GRAND_WING, // Vivillon — the opponent's hand under their deck; any moved: they draw 4
   "me04-038": SPITEFUL_EVOLUTION, // Phantump — evolve from hand, 2 counters on the evolved body
   "me02.5-151": EVOLUTIONARY_GUIDANCE, // Dragonair — any Energy attached: an Evolution Pokémon from the deck
+  // 🆕🆕🆕 D614 — WP37b: 4 non-attack keys / 1 object, MID-MAP (`raw[last]` does not move).
+  "mep-072": LUMINOUS_WING, // Mega Clefable ex — prevent the opponent's Abilities' effects done to it
+  "me03-031": LUMINOUS_WING, // Mega Clefable ex
+  "me03-103": LUMINOUS_WING, // Mega Clefable ex
+  "me03-119": LUMINOUS_WING, // Mega Clefable ex
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

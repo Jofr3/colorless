@@ -3898,7 +3898,17 @@ export function attack(
     // published one push up, so the row, the gate and the retaliation cannot disagree.
     // ⚠️ `dealt` AND NOT `clamped`: a KO-survival clamp is a damage TOTAL, and this
     // sentence asks what the attack DID (D427's identical choice one field over).
-    const recoil = defenderPassives.damageAttacker + installedRecoilOf(next, defender, dealt);
+    // 🆕🆕🆕 D614 — an attacker carrying Mega Clefable ex "Luminous Wing" refuses the ABILITY share
+    // (Counterattacking Crest, Counterattack Quills …); a Tool's and an installed recoil still land.
+    const refusedRecoil =
+      dealt > 0 && passivesOf(next, attackerBody).preventAbilityEffects
+        ? defenderPassives.damageAttackerFromAbility
+        : 0;
+    if (refusedRecoil > 0) {
+      events.push({ type: "ABILITY_EFFECT_PREVENTED", seat: action.seat, uid: attackerUid });
+    }
+    const recoil =
+      defenderPassives.damageAttacker - refusedRecoil + installedRecoilOf(next, defender, dealt);
     if (dealt > 0 && recoil > 0) {
       const retaliated = { ...attackerBody, damage: attackerBody.damage + recoil };
       next = withActive(next, action.seat, retaliated);

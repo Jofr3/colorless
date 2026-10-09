@@ -1124,6 +1124,8 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
           ` prevented the effect of the ${event.trainerType === "item" ? "Item" : "Supporter"}`,
         ),
       ]);
+    case "ABILITY_EFFECT_PREVENTED":
+      return row(event.seat, [strong(cardName(state, event.uid)), plain(" prevented the effect of the Ability")]);
     case "COUNTERS_PLACED": {
       // Checkup ticks and the confusion self-hit are the game's doing, not a
       // player action — system rows, like the coin toss.

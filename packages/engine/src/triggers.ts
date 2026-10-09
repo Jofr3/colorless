@@ -139,7 +139,7 @@ export function runBoardTrigger(
   // see `TriggeredAbility.optional`.
   events.push({ type: "ABILITY_TRIGGERED", seat, uid, ability: ability.name });
   return settleProgram(
-    runProgram(state, ability.program, { seat, sourceUid: uid }, events),
+    runProgram(state, ability.program, { seat, sourceUid: uid, invokedBy: "ability" }, events),
     seat,
     events,
   );
@@ -333,7 +333,8 @@ function sweepTriggers(
       }
       events.push({ type: "ABILITY_TRIGGERED", seat: watcher, uid, ability: ability.name });
       next = recoverStatuses(
-        runProgram(next, ability.program, { seat: watcher, sourceUid: uid, subjectUid }, events)
+        // 🆕🆕🆕 D614 — `invokedBy: "ability"` on all three sweeps here (the §11 ability channel).
+        runProgram(next, ability.program, { seat: watcher, sourceUid: uid, subjectUid, invokedBy: "ability" }, events)
           .state,
         events,
       );
@@ -465,7 +466,7 @@ export function runCheckupTriggers(
         // heals, Trevenant places a counter), so this is latent — but `program` is
         // a plain EffectOp[] and nothing stops the next one from doing so.
         next = recoverStatuses(
-          runProgram(next, ability.program, { seat, sourceUid: uid }, events).state,
+          runProgram(next, ability.program, { seat, sourceUid: uid, invokedBy: "ability" }, events).state,
           events,
         );
       }

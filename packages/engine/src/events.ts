@@ -979,6 +979,11 @@ export type GameEvent =
       uid: string;
       trainerType: "item" | "supporter";
     }
+  /** 🆕🆕🆕 §11 (D614) — the ABILITY channel's row: an effect of the opponent's Pokémon's Ability was
+      refused by the shielded body's own Ability (Mega Clefable ex "Luminous Wing"). `uid` / `seat`
+      as in `TRAINER_EFFECT_PREVENTED` above, and a separate member for that row's log reason. New
+      text in NEW records only (D141), so `MATCH_RECORD_VERSION` does not move. */
+  | { type: "ABILITY_EFFECT_PREVENTED"; seat: Seat; uid: string }
   /** Damage counters placed OUTSIDE the §8.5 attack pipeline (poison/burn
       Checkup ticks, the confusion self-hit, an attack's own "does N damage to
       itself" recoil clause) — `amount` is HP of damage, and weakness/resistance

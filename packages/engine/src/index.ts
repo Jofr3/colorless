@@ -2141,7 +2141,8 @@ import type { GameState, Seat } from "./types";
     answers nothing, and not clearing it is the whole point.
 
     ⚠️ "EFFECTS OF ATTACKS" IS A PROVENANCE THE TARGET CANNOT ANSWER, so it rides
-    `EffectContext.invokedBy?: "attack"` — set by `attack.ts` and by nothing else.
+    `EffectContext.invokedBy?: "attack"` — set by `attack.ts` and by nothing else. [🆕🆕🆕 D614 (D539):
+    WITHDRAWN as a live claim — D259 added the Trainer pair and D614 `"ability"`.]
     **This REFINES D139 rather than reversing it**: that decision put a provenance
     on the OP (`damageActive`/`damageChosen` still carry `source`) because a LOG
     LABEL is a property of the row an op emits; what rides on the context is a
@@ -20265,6 +20266,18 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.496.0 → **0.497.0** (D614 — WP37b: THE ABILITY-EFFECT SHIELD, MEGA CLEFABLE EX
+    "LUMINOUS WING"; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D614")). registry.ts
+    `LUMINOUS_WING` (`passive.preventAbilityEffects`, NEW) on `mep-072`, `me03-031` / `-103` / `-119`.
+    interpreter.ts `EffectContext.invokedBy` widened with `"ability"`, set at every Pokémon-Ability
+    `runProgram` site (cardplay.ts `useAbility`, triggers.ts's three sweeps, flow.ts's on-KO and
+    damaged-by-attack Abilities); `effectRefusedOn` answers it (opponent's Abilities only) and the funnel
+    files the NEW `ABILITY_EFFECT_PREVENTED` row. Funnel widenings: `damageChosen`'s offer, Adrena-Brain's
+    destination and `damageSubject` (Holes / Gnawing Curse / Darkest Impulse). continuous.ts
+    `passivesOf().damageAttackerFromAbility` / `damageAttackerOnKoFromAbility` (NEW): the Ability share of
+    a recoil is refused at attack.ts's main hit, interpreter.ts `reactWithRecoilAndAbility` and flow.ts
+    `koRecoilOf`; flow.ts refuses Magma Surge's extra Burn counters. R-LW1 / R-LW2 UNRULED.
+    `abilityShieldMeD614.test.ts`.)
     🆕🆕🆕 engineVersion 0.495.0 → **0.496.0** (D613 — FIX-UP: THE JET ENERGY SWITCH'S KNOCK OUT CHECK
     AND BASIC-ONLY BENCH PLACEMENT; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT
     D613")). turn.ts `attachEnergy`: Jet Energy's `switchIfBenched` rider is the one `switchInto` route
@@ -25461,7 +25474,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.496.0";
+export const engineVersion = "0.497.0";
 
 export type {
   ApplyResult,

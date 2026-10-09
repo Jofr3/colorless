@@ -322,7 +322,13 @@ function lethalByEffect(body: InPlayPokemon, turn: number): boolean {
   return body.markers.includes(koByEffectMarker(turn));
 }
 
-function koRecoilOf(state: GameState, seat: Seat): number {
+function koRecoilOf(
+  state: GameState,
+  seat: Seat,
+  // 🆕🆕🆕 D614 — the attacker carries Mega Clefable ex "Luminous Wing": the Ability shares
+  // (Maractus "Exploding Needles") are refused, a Tool's (Vengeful Punch) still lands.
+  abilityShareRefused = false,
+): number {
   // 🆕🆕 D414 — the doomed set is narrowed to bodies made lethal BY DAMAGE. The
   // printed condition is "if this Pokémon is Knocked Out by damage from an
   // opponent's attack", and until D414 the `by damage` half was true by
@@ -337,7 +343,9 @@ function koRecoilOf(state: GameState, seat: Seat): number {
     // 🆕🆕 D414 — `&& !lethalByEffect(...)` is the printed *"by damage"*, which
     // until D414 was true by construction at this line and is now a question.
     if (uid !== undefined && doomed.has(uid) && !lethalByEffect(body, state.turn)) {
-      total += passivesOf(state, body).damageAttackerOnKo;
+      const passives = passivesOf(state, body);
+      total +=
+        passives.damageAttackerOnKo - (abilityShareRefused ? passives.damageAttackerOnKoFromAbility : 0);
     }
   }
   return total;
@@ -1535,7 +1543,16 @@ export function finishAttack(
   // antecedent): `stampSeatAttacker` keeps the record when the body leaves play (R-1, reading B).
   let next = stampAttackUse(state, attackerSeat, attackerUid, attackName);
   next = stampSeatAttacker(next, attackerSeat, attackerUid);
-  const koRecoil = koRecoilOf(next, otherSeat(attackerSeat));
+  // 🆕🆕🆕 D614 — Luminous Wing on the Attacking Pokémon, read by uid in either zone (it may have
+  // self-switched): the KO recoil's Ability share is refused, and the refusal is announced.
+  const attackerBody = [next.players[attackerSeat].active, ...next.players[attackerSeat].bench].find(
+    (body) => body !== null && body !== undefined && topUid(body) === attackerUid,
+  );
+  const shielded = attackerBody != null && passivesOf(next, attackerBody).preventAbilityEffects;
+  const koRecoil = koRecoilOf(next, otherSeat(attackerSeat), shielded);
+  if (shielded && koRecoil < koRecoilOf(next, otherSeat(attackerSeat))) {
+    events.push({ type: "ABILITY_EFFECT_PREVENTED", seat: attackerSeat, uid: attackerUid });
+  }
   const recoiled = koRecoil > 0 ? addDamageByUid(next, attackerSeat, attackerUid, koRecoil) : null;
   if (recoiled !== null) {
     next = recoiled;
@@ -1828,7 +1845,7 @@ function runKoTrigger(
   // card's own printed sentence), and a source-reading op then finds no board
   // top for it and whiffs, which is what "this Pokémon" means after a KO.
   return settleProgram(
-    runProgram(state, ability.program, { seat: koedSeat, sourceUid: uid }, events),
+    runProgram(state, ability.program, { seat: koedSeat, sourceUid: uid, invokedBy: "ability" }, events),
     koedSeat,
     events,
     { resumeTail: true },
@@ -1893,7 +1910,7 @@ function runDamagedTrigger(
   if (ability === undefined || ability.program.length === 0) return advance(state, events);
   events.push({ type: "ABILITY_TRIGGERED", seat: damagedSeat, uid, ability: ability.name });
   return settleProgram(
-    runProgram(state, ability.program, { seat: damagedSeat, sourceUid: uid }, events),
+    runProgram(state, ability.program, { seat: damagedSeat, sourceUid: uid, invokedBy: "ability" }, events),
     damagedSeat,
     events,
     { resumeTail: true },
@@ -2326,7 +2343,12 @@ function runCheckup(state: GameState, endedSeat: Seat, events: GameEvent[]): App
     const spot = activeTop(next, seat);
     if (spot === null || !spot.active.conditions.burned) continue;
     const { active, uid } = spot;
-    const burn = 20 + seatBurnExtraCounters(next, seat);
+    // 🆕🆕🆕 D614 — Magma Surge's 3 more counters are an Ability's effect: Mega Clefable ex "Luminous
+    // Wing" refuses them (announced); the rulebook's 20 still lands.
+    const surge = seatBurnExtraCounters(next, seat);
+    const surgeRefused = surge > 0 && passivesOf(next, active).preventAbilityEffects;
+    if (surgeRefused) events.push({ type: "ABILITY_EFFECT_PREVENTED", seat, uid });
+    const burn = 20 + (surgeRefused ? 0 : surge);
     let updated = { ...active, damage: active.damage + burn };
     events.push({ type: "COUNTERS_PLACED", seat, uid, amount: burn, source: "burn" });
     const [face, rngState] = flipCoin(next.rngState);

@@ -2159,6 +2159,17 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D614 — A WIDENED UNION AND A NEW EVENT, NO REQUIRED FIELD.** (Placed ABOVE the
+    D613 block.) `EffectContext.invokedBy` gains `"ability"`, which a parked Ability program writes into
+    `phase.cont.ctx`: an OPTIONAL key's new member, a widening (D125 / D259). A continuation parked on
+    0.496 lacks it and resumes UNSHIELDED (an Adrena-Brain destination prompt keeps its persisted
+    candidates, Clefable included). The new `ABILITY_EFFECT_PREVENTED` event is new text in new records
+    (D141). No card row is read differently: Luminous Wing is a registry key read by id, so an in-flight
+    `cardPool`'s Mega Clefable ex gains the shield on deploy. Rollback to 0.496 is clean: every reader of
+    `invokedBy` compares against `"attack"` / `"item"` / `"supporter"`, so `"ability"` reads as absent,
+    and the new row is rendered to text at apply time (`logFromEvents` into `record.log`), so a stored
+    log holds no event for 0.496 to read.
+
     🆕🆕🆕 **STAYS 42 AT D613 — TWO RULE FIXES, NO PERSISTED SHAPE.** (Placed ABOVE the D612 block.)
     (1) turn.ts `attachEnergy` runs the mid-turn Knock Out sweep after a Jet Energy switch: control
     flow only. A v42 record saved on 0.495 with a lethal body left in play by that route keeps it until

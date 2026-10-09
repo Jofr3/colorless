@@ -977,6 +977,13 @@ export function passivesOf(
       Read once per sweep by flow.ts `koRecoilOf`, which supplies the "is Knocked
       Out" half; this aggregation only answers "what would this body pay". */
   damageAttackerOnKo: number;
+  /** 🆕🆕🆕 §11 (D614) — the shares of the two recoils above that the holder's own printed ABILITY
+      contributes (the top card's passive, `sources[0]`), without the Tools'. An Attacking Pokémon
+      carrying `preventAbilityEffects` (Mega Clefable ex "Luminous Wing") takes the recoil less this
+      share: Rocky Helmet / Vengeful Punch are Item cards and still land. Read by attack.ts's main hit,
+      interpreter.ts `reactWithRecoilAndAbility` and flow.ts `koRecoilOf`. */
+  damageAttackerFromAbility: number;
+  damageAttackerOnKoFromAbility: number;
   /** §8.5 full damage PREVENTION when the attacker is an ex/V (Mimikyu
       "Safeguard"). The attacker's rule-box class is known only at the read sites,
       so this aggregation just reports whether the holder carries the aura; the
@@ -1159,6 +1166,10 @@ export function passivesOf(
       channel. NO zone clause is printed, so unlike D253's twin the fold has
       nothing to resolve and a benched holder answers exactly as an Active one. */
   preventAttackEffects: boolean;
+  /** 🆕🆕🆕 §11 (D614) — `preventAttackEffects` on the ABILITY channel (Mega Clefable ex "Luminous
+      Wing"). Its read site is interpreter.ts `effectRefusedOn` (`invokedBy === "ability"`), plus the
+      recoil shares above and flow.ts's Burn counters. */
+  preventAbilityEffects: boolean;
   /** §8.5 (D255) — the printed RULE-BOX CLASSES an attacker must belong to for this
       Pokémon's prevention aura to stop its damage. The SIXTH member of the prevent
       family, and the second whose gate is PARAMETERISED (`preventDamageFromTypes`,
@@ -1690,6 +1701,9 @@ export function passivesOf(
   let hpBonus = 0;
   let damageAttacker = 0;
   let damageAttackerOnKo = 0;
+  let damageAttackerFromAbility = 0;
+  let damageAttackerOnKoFromAbility = 0;
+  let preventAbilityEffects = false;
   let preventDamageFromExV = false;
   let preventDamageFromHasAbility = false;
   let preventDamageAndEffectsFromSpecialEnergy = false;
@@ -1724,8 +1738,10 @@ export function passivesOf(
   const evolveEarlyExempt: (BoardCondition | undefined)[] = [];
   const attackCostClauses: NonNullable<PassiveEffects["attackCostClause"]>[] = [];
   const evolveAsNamed: NonNullable<PassiveEffects["evolveAsNamed"]>[] = [];
-  for (const passive of sources) {
+  for (const [index, passive] of sources.entries()) {
     if (passive === undefined) continue;
+    // 🆕🆕🆕 D614 — `sources[0]` is the top card's own printed passive, i.e. its Ability.
+    const fromAbility = index === 0;
     damageReductionAfterWR += passive.damageReductionAfterWR ?? 0;
     // D161 — the same number, gated on the holder's own printed type [🆕🆕🆕 D578 (D539): its
     // IN-PLAY type — `holderTypes` above]. SUMMED into
@@ -1793,11 +1809,14 @@ export function passivesOf(
     // amount MULTIPLIED by the holder's count of that type (provision, D118), here, so
     // both read sites take a zero diff. 0 {M} Energy pays 0.
     const recoil = passive.damageAttacker;
-    if (recoil !== undefined && (recoil.requiresTool !== true || hasTool))
-      damageAttacker +=
+    if (recoil !== undefined && (recoil.requiresTool !== true || hasTool)) {
+      const amount =
         recoil.perAttachedEnergy === undefined
           ? recoil.amount
           : recoil.amount * countAttachedEnergy(state, pokemon, recoil.perAttachedEnergy);
+      damageAttacker += amount;
+      if (fromAbility) damageAttackerFromAbility += amount;
+    }
     // No `requiresTool` twin: the one printing IS a Tool, and an unread gate is
     // the D156 defect. It rides the SAME Ability-lock rule as its sibling by
     // sitting in this loop — a §9 lock suppresses a holder's own printed passive
@@ -1809,8 +1828,10 @@ export function passivesOf(
     // `onBench`. `koRecoilOf` reads this fold BEFORE `knockOut` unseats the body, so the
     // zone is still the one it was Knocked Out in. Still no `requiresTool` arm.
     const onKo = passive.damageAttackerOnKo;
-    if (onKo !== undefined && (onKo.activeOnly !== true || !onBench))
+    if (onKo !== undefined && (onKo.activeOnly !== true || !onBench)) {
       damageAttackerOnKo += onKo.amount;
+      if (fromAbility) damageAttackerOnKoFromAbility += onKo.amount;
+    }
     if (passive.preventDamageFromExV === true) preventDamageFromExV = true;
     if (passive.preventDamageFromType !== undefined)
       preventDamageFromTypes.push(passive.preventDamageFromType);
@@ -1856,6 +1877,7 @@ export function passivesOf(
     // magnitude. In this loop rather than read off `top` at the read site because
     // the printing IS an Ability and Klefki's lock must let the Poison land.
     if (passive.preventAttackEffects === true) preventAttackEffects = true;
+    if (passive.preventAbilityEffects === true) preventAbilityEffects = true;
     // D255 — the attacker's printed RULE-BOX CLASS, and the FIRST PUSH in this
     // family since D159's type list. A push and not an OR because the gate names a
     // VALUE and this pool prints TWO of them ("Pokémon ex" and "Basic Pokémon ex"),
@@ -2039,6 +2061,8 @@ export function passivesOf(
     hpBonus,
     damageAttacker,
     damageAttackerOnKo,
+    damageAttackerFromAbility,
+    damageAttackerOnKoFromAbility,
     preventDamageFromExV,
     preventDamageFromTypes,
     preventDamageFromHasAbility,
@@ -2047,6 +2071,7 @@ export function passivesOf(
     preventDamageWhileBenched,
     preventTrainerEffects,
     preventAttackEffects,
+    preventAbilityEffects,
     preventDamageFromAttackerClasses,
     preventDamageAndEffectsFromBanners,
     preventDamageAtOrAbove,

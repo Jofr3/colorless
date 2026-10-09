@@ -736,7 +736,10 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
         "cantAttackUnless",
         "conditionalDamageBonusBeforeWR",
         "damageAttacker",
+        // 🆕🆕🆕 D614 — the Ability shares of the two recoils (Luminous Wing's refusal), 0 here.
+        "damageAttackerFromAbility",
         "damageAttackerOnKo",
+        "damageAttackerOnKoFromAbility",
         "damageBonusBeforeWR",
         "damageReductionAfterWR",
         // 🆕 D278 — the §4/§10 EVOLVE licence (`evolveEarlyExempt`), the fold's
@@ -785,6 +788,8 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
         // Ability's flag, FALSE here because this board's Energy is Therapeutic and writes none.
         "preventDamageWhileBenched",
         "preventTrainerEffects",
+        // 🆕🆕🆕 D614 — the Ability-channel holder shield (Luminous Wing), false here.
+        "preventAbilityEffects",
         "preventAttackEffects",
         "statusImmunities",
         "statusRecovery",

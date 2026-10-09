@@ -6,6 +6,24 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D614 update (engine 0.497.0) — the Ability-effect shield (WP37b)
+
+1 Ability text / 4 `me` printings on one new object (`abilityShieldMeD614.test.ts`): Mega Clefable ex `mep-072`, `me03-031` /
+`-103` / `-119` "Luminous Wing" = `passive.preventAbilityEffects` (NEW), read through `EffectContext.invokedBy: "ability"` by the
+§11 funnel, the Ability share of the recoils and Magma Surge's counters. **Finished:** all 4 cards (Shooting Moons was built at
+D597). Two new readings (UNRULED): R-LW1, continuous Ability auras are not refused; R-LW2, an Ability lock on the holder removes the
+shield (`progress.md` NEXT). Can reuse the piece: Hide 'n' Sneak ×4 (WP17, with `preventAttackEffects`) and Antique Old Amber
+`sv03.5-154` "Amber Protection" (same text, not Standard). WP37's other 7 texts / 13 printings stay in WP37.
+
+| Column | `me` built / units (D614) | Standard pool D614 |
+|---|---|---|
+| Attacks | 929 / 1,039 | **2,661 / 2,771** |
+| Abilities | 181 / 234 (+4) | **557 / 610** |
+| Trainers | 109 / 183 | **373 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1030** (1026 + 4).
+
 ## 🆕 D613 update (engine 0.496.0) — fix-up: the Jet Energy switch's Knock Out check, Basic-only bench placement
 
 No new printing is built and no count moves. Two rule fixes on built cards: Holes ×2 (Team Rocket's Dugtrio, D610) now
@@ -63,7 +81,7 @@ Boost's promoted-this-turn gate over a typed any-amount sweep; Swirling Prose ×
 Dugtrio) ride Lava Zone's opponent-side `onActiveMovedToBench`; Scale Up ×3 and Tyrannically Gutsy ×2 are `hpBonus` gates (the new
 `requiresEnergyCount`, and "special"). **Finished:** all 16 cards (Mega Venusaur ex ×4 among them). **WP37 rest, left and named**
 (8 texts / 17 printings): Fall Back to Reload ×2, Last-Ditch Catch ×3, Luminous Wing ×4 (WP37b — Mega Clefable ex ×4 still waits
-on it), Supreme Overlord, Gloomy Garbage, Sniper's Eye ×2, Ancient Bulwark ×3, Life-Locked. Two new readings (UNRULED): R-HL1, Holes
+on it [🆕🆕🆕 D614: BUILT, Mega Clefable ex ×4 finished]), Supreme Overlord, Gloomy Garbage, Sniper's Eye ×2, Ancient Bulwark ×3, Life-Locked. Two new readings (UNRULED): R-HL1, Holes
 resolves before Palafin's Zero to Hero with no Knock Out check between; R-MR1, Metal Road's moment is a use-time gate, which affords
 a delayed use (`progress.md` NEXT).
 
@@ -293,7 +311,7 @@ Eater: the `me` comma spelling of D402's `×` fold (`COMMA_DISCARD_SCALED_DAMAGE
 `payFromHand`). Hammer-lanche ×2, Iceberg Breaker: D488's mill on the typed "Basic {W} Energy card" noun. Shooting
 Moons ×4: `deriveAttackDiscardScaledBoost`'s new `handDiscard` member. The two "[R]" Inferno X `mep-023` / `-029`:
 keyed on `INFERNO_X` [🆕🆕🆕 D612: RETIRED — WP06 normalises the text]. **Finished:** Mega Charizard X ex ×6, Mega Abomasnow ex ×2, Mega Diancie ex ×3, Avalugg
-`me04-024`, Skarmory `me05-060`, Mawile `me03-032`. Mega Clefable ex ×4 still wait on "Luminous Wing".
+`me04-024`, Skarmory `me05-060`, Mawile `me03-032`. Mega Clefable ex ×4 still wait on "Luminous Wing". [🆕🆕🆕 D614: no longer — built at D614]
 **Still open in WP29 (named):** Mega Eelektross ex "Disaster Shock" ×3 (status payoff; Split Bomb is WP30) [🆕🆕🆕 D608: both BUILT — WP30], Slowpoke
 "All-You-Can-Yeet" `me05-029`, Team Rocket's Honchkrow "Rocket Feathers" `me02.5-127`, Pawmot "Voltaic Fist"
 `me02-034`.
@@ -972,7 +990,7 @@ group wins; the grouping is a reading aid, not a census figure).
 ### Prevention / immunity passives — 6 text(s) / 14 printing(s)
 
 - 4× **Hide 'n' Sneak** — Prevent all effects of your opponent's Pokémon's attacks and Abilities done to this Pokémon. (Damage is not an effect.)
-- 4× **Luminous Wing** — Prevent all effects of your opponent's Pokémon's Abilities done to this Pokémon. [🆕🆕🆕 D610: left — WP37b (prevent Ability effects)]
+- 4× **Luminous Wing** — Prevent all effects of your opponent's Pokémon's Abilities done to this Pokémon. [🆕🆕🆕 D610: left — WP37b (prevent Ability effects)] [🆕🆕🆕 D614: BUILT]
 - 3× **Damp** — Pokémon in play (both yours and your opponent's) lose any Ability that requires the Pokémon using it to Knock Out itself.
 - 1× **Dopey Face** — This Pokémon can't be Confused. [🆕🆕🆕 D584: BUILT]
 - 1× **Life-Locked** — Your opponent's Active Pokémon can't be healed.

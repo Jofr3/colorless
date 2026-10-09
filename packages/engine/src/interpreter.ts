@@ -232,8 +232,9 @@ export interface EffectContext {
   subjectUid?: string;
   /** §11/§15.B — WHAT invoked this program, when the answer changes a RULE.
       Set to `"attack"` by attack.ts and by nothing else; ABSENT everywhere else
-      (a Trainer, an activated Ability, a trigger, the Checkup), which is why it
-      is optional rather than a two-member union with a default: the fact is
+      (a Trainer, an activated Ability, a trigger, the Checkup) [🆕🆕🆕 D614 (D539): WITHDRAWN for
+      Abilities — an activated or triggered Pokémon Ability's program carries `"ability"`, see below],
+      which is why it is optional rather than a two-member union with a default: the fact is
       "this is an attack's effect", and its negation needs no spelling.
 
       ⚠️ THIS REFINES D139's RULE RATHER THAN REVERSING IT, and the distinction is
@@ -277,8 +278,16 @@ export interface EffectContext {
       It is set by `attack.ts` (as `"attack"`) and by cardplay.ts's ONE trainer
       `runProgram` call (as the played card's `trainerType`), and by nothing else —
       an Ability's program leaves it absent, which is why an Ability that discards
-      an opposing Energy is refused by neither channel. */
-  invokedBy?: "attack" | "item" | "supporter";
+      an opposing Energy is refused by neither channel.
+
+      🆕🆕🆕 D614 (D539): ~~"an Ability's program leaves it absent"~~ — a POKÉMON ABILITY's program
+      now carries `"ability"`, set at every such `runProgram` site (cardplay.ts `useAbility`,
+      triggers.ts's three sweeps, flow.ts's on-KO and damaged-by-attack Abilities) and at no Tool,
+      Stadium or Energy site. Read by `effectRefusedOn`'s ability channel (Mega Clefable ex "Luminous
+      Wing") and by nothing else, so every other reader (`=== "attack"`, the Trainer pair) answers
+      exactly as for an absent key. A WIDENING like D259's: a continuation parked before D614 lacks
+      it and resumes unshielded. */
+  invokedBy?: "attack" | "item" | "supporter" | "ability";
   /** 🆕🆕 **D427 — THE DAMAGE THIS ATTACK JUST DEALT TO THE DEFENDING ACTIVE**, the
       printed *"the same amount of damage you did to your opponent's Active
       Pokémon."* (6 legal printings on 1 sentence). Set by `attack.ts` at the ONE
@@ -2778,7 +2787,9 @@ function stepOp(
       // mover clamps the take to the source's counters. A source with no counters left is the
       // silent whiff (no question about nothing).
       if ((refPokemon(state, { seat: ctx.seat, spot: source })?.damage ?? 0) <= 0) return { done: state };
-      const opposing = oppAnyRefs(state, ctx.seat);
+      // 🆕🆕🆕 D614 — through the §11 funnel: a Luminous Wing body is not a destination (the moved
+      // counters are the Ability's effect done to it).
+      const opposing = unshieldedRefs(state, oppAnyRefs(state, ctx.seat), ctx, events);
       if (opposing.length === 0) return { done: state };
       return {
         park: {
@@ -3014,9 +3025,15 @@ function stepOp(
       // covers it, or a benched Fraxure would take the counters (the Bench leg of
       // `placeSnipe` asks no shield). Asked only for an Item/Supporter invocation, so
       // every Ability and attack producer takes the byte-identical unfiltered set.
-      const trainerInvoked = ctx.invokedBy === "item" || ctx.invokedBy === "supporter";
+      // [🆕🆕🆕 D614 (D539): WITHDRAWN for Abilities — see below; attacks still take it.]
+      // 🆕🆕🆕 D614 — and on the ABILITY channel too: a placed counter is an Ability's effect (Cursed
+      // Blast, Mortal Shuriken, Flying Entry …), so a Luminous Wing body is not offered.
+      // `programPlayable` keeps the unfiltered set (an effect in play blocks it; the Trainer
+      // channel's D557 shape).
+      const shieldAsked =
+        ctx.invokedBy === "item" || ctx.invokedBy === "supporter" || ctx.invokedBy === "ability";
       const offered = snipeTargets(state, ctx.seat, op);
-      const candidates = trainerInvoked ? unshieldedRefs(state, offered, ctx, events) : offered;
+      const candidates = shieldAsked ? unshieldedRefs(state, offered, ctx, events) : offered;
       if (candidates.length === 0) return { done: state };
       // Wo-Chien "Covetous Ivy" scales the amount by the opponent's TAKEN Prizes;
       // 0 taken → 0 damage, so there is nothing to place OR to ask about.
@@ -10906,6 +10923,13 @@ function effectRefusedOn(
     // the printed target is "all of your Pokémon" — the scan is about the side.
     return ctx.invokedBy === "supporter" && seatShieldedFromSupporterEffects(state, seat);
   }
+  // 🆕🆕🆕 D614 — THE ABILITY CHANNEL: Mega Clefable ex "Luminous Wing", *"Prevent all effects of your
+  // opponent's Pokémon's Abilities done to this Pokémon."* The HOLDER rule (the fold answers it whole,
+  // any zone), behind the seat guard the print's "your opponent's" asks for: an Ability of the
+  // shielded body's own side is not refused.
+  if (ctx.invokedBy === "ability") {
+    return seat !== ctx.seat && passivesOf(state, target).preventAbilityEffects;
+  }
   if (ctx.invokedBy !== "attack") return false;
   // 🆕🆕🛑 **D430 — A SHIELD PRINTED AGAINST YOUR OPPONENT'S CARDS DOES NOT PROTECT
   // AGAINST YOUR OWN, AND THIS IS THE ATTACK CHANNEL'S HALF OF THE RULE THE TRAINER
@@ -11107,7 +11131,9 @@ export function effectRefused(
   events.push(
     ctx.invokedBy === "item" || ctx.invokedBy === "supporter"
       ? { type: "TRAINER_EFFECT_PREVENTED", seat, uid, trainerType: ctx.invokedBy }
-      : { type: "ATTACK_EFFECT_PREVENTED", seat, uid },
+      : ctx.invokedBy === "ability"
+        ? { type: "ABILITY_EFFECT_PREVENTED", seat, uid }
+        : { type: "ATTACK_EFFECT_PREVENTED", seat, uid },
   );
   return true;
 }
@@ -12312,9 +12338,17 @@ function reactWithRecoilAndAbility(
 ): GameState {
   let next = state;
   const attacker = activeTop(next, attackerSeat);
+  const damagedPassives = passivesOf(next, damagedBody);
+  // 🆕🆕🆕 D614 — Luminous Wing on the attacker refuses the Ability share (attack.ts's main-hit rule).
+  const refusedRecoil =
+    attacker !== null && passivesOf(next, attacker.active).preventAbilityEffects
+      ? damagedPassives.damageAttackerFromAbility
+      : 0;
+  if (attacker !== null && refusedRecoil > 0) {
+    events.push({ type: "ABILITY_EFFECT_PREVENTED", seat: attackerSeat, uid: attacker.uid });
+  }
   const recoil =
-    passivesOf(next, damagedBody).damageAttacker +
-    installedRecoilOf(next, damagedBody, damageTaken);
+    damagedPassives.damageAttacker - refusedRecoil + installedRecoilOf(next, damagedBody, damageTaken);
   if (attacker !== null && recoil > 0) {
     next = withActive(next, attackerSeat, {
       ...attacker.active,
@@ -12949,7 +12983,9 @@ function healEachAll(state: GameState, amount: number, events: GameEvent[]): Gam
       prevention row. ⚠️ **AND THE ABILITY CALLER IS BYTE-IDENTICAL ACROSS THIS
       CHANGE**: `effectRefusedOn` returns `false` at `ctx.invokedBy !== "attack"`,
       and a triggered Ability leaves `invokedBy` ABSENT — so Froslass asks the gate,
-      is never refused, and pushes no event. ⚠️ **AND THE OWN-SIDE HALF OF
+      is never refused, and pushes no event. [🆕🆕🆕 D614 (D539): WITHDRAWN — a trigger carries
+      `invokedBy: "ability"` now, and an opponent's Mega Clefable ex "Luminous Wing" refuses Freezing
+      Shroud's counter (one `ABILITY_EFFECT_PREVENTED`); the holder's own Froslass is not refused.] ⚠️ **AND THE OWN-SIDE HALF OF
       `side: "both"` IS ANSWERED BY THE GATE RATHER THAN BY THIS FUNCTION**:
       D430's `seat === ctx.seat` line returns `false`, because every §11 shield in
       the pool names the ATTACK'S SOURCE and the source it names is the holder's
@@ -13210,7 +13246,10 @@ function countersOnRecordedBody(
     call here would be a line that cannot fire on any board this catalog builds,
     i.e. green and dead. `damageActive` calls it because that op IS reached from
     attack programs. The day a watched trigger becomes an attack's effect, this
-    line is the one to add, and it will have a reader on the day it is written. */
+    line is the one to add, and it will have a reader on the day it is written.
+    [🆕🆕🆕 D614 (D539): WITHDRAWN — a watched trigger now carries `invokedBy: "ability"`, and Mega
+    Clefable ex "Luminous Wing" refuses it, so the call is made below, on the subject body (Holes,
+    Gnawing Curse, Darkest Impulse).] */
 function damageSubject(
   state: GameState,
   amount: number,
@@ -13223,11 +13262,15 @@ function damageSubject(
   const side = state.players[seat];
   const active = side.active;
   if (active !== null && topUid(active) === uid) {
+    // 🆕🆕🆕 D614 — the §11 funnel on the subject body (Luminous Wing).
+    if (effectRefused(state, seat, ctx, events, active)) return state;
     events.push({ type: "COUNTERS_PLACED", seat, uid, amount, source: "ability" });
     return withActive(state, seat, { ...active, damage: active.damage + amount });
   }
   const index = side.bench.findIndex((pokemon) => topUid(pokemon) === uid);
   if (index === -1) return state;
+  const benched = side.bench[index];
+  if (benched !== undefined && effectRefused(state, seat, ctx, events, benched)) return state;
   events.push({ type: "COUNTERS_PLACED", seat, uid, amount, source: "ability" });
   return withSide(state, seat, {
     ...side,

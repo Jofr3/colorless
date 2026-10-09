@@ -30237,6 +30237,24 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D614 — WP37b: the Ability-effect shield, Mega Clefable ex "Luminous Wing" (engine 0.497.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D613 (`55ccb609`), NOT committed.
+
+- **The piece.** registry.ts `LUMINOUS_WING` = `passive.preventAbilityEffects` (NEW) on `mep-072`, `me03-031` / `-103` / `-119`.
+  `EffectContext.invokedBy` gains `"ability"`, set at every Pokémon-Ability `runProgram` site (cardplay.ts `useAbility`,
+  triggers.ts's three sweeps, flow.ts's on-KO and damaged-by-attack Abilities). interpreter.ts `effectRefusedOn` refuses an
+  opponent's Ability's effect on the holder; the new `ABILITY_EFFECT_PREVENTED` row announces it.
+- **Sites.** Already on the funnel: `applyStatus`, `counterEachAll`, `damageActive`, `discardEnergy`, `gust`, `devolveChosen`.
+  Widened: `damageChosen`'s offer, Adrena-Brain's destination, `damageSubject`. Passive acts: the Ability share of the recoil on
+  the Attacking Pokémon (attack.ts main hit, `reactWithRecoilAndAbility`, `koRecoilOf`; continuous.ts
+  `damageAttackerFromAbility` / `damageAttackerOnKoFromAbility`) and Magma Surge's extra Burn counters.
+- **Readings.** R-LW1 ⚠️ UNRULED: continuous Ability auras (Retreat Cost surcharges, Block, attack debuffs, Quaking Zone, Fairy
+  Zone, Mentally Calm) are not refused. R-LW2 ⚠️ UNRULED: an Ability lock on Clefable removes the shield first.
+- **Suite.** `abilityShieldMeD614.test.ts` (24) and a census D614 block (2). +22 mutant rows, all killed; 7 rows re-pointed.
+- **Census.** Standard pool abilities **557 / 610**; 1030 `me` printings fully built (Mega Clefable ex ×4 finished).
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
 ## D613 — fix-up: the Jet Energy switch's Knock Out check and Basic-only bench placement (engine 0.496.0, `MATCH_RECORD_VERSION` stays 42)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D612 (`662f1911`), NOT committed.

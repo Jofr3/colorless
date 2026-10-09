@@ -713,7 +713,6 @@ describe("D610 §9 — what WP37 leaves, and the version", () => {
   it("the dropped and out-of-scope texts stay unkeyed (Meowth ex keeps only its attack key)", () => {
     for (const id of [
       ...["me01-038", "me01-141"], // Clawitzer "Fall Back to Reload"
-      ...["mep-072", "me03-031", "me03-103", "me03-119"], // Mega Clefable ex "Luminous Wing" (WP37b)
       "me02.5-148", // Kingambit "Supreme Overlord"
       "me04-057", // Garbodor "Gloomy Garbage"
       ...["me03-012", "me03-100"], // Decidueye ex "Sniper's Eye"
@@ -721,11 +720,15 @@ describe("D610 §9 — what WP37 leaves, and the version", () => {
       "30th-100", // Yveltal "Life-Locked"
     ])
       expect(programFor(id), id).toBeUndefined();
+    // 🆕🆕🆕 D614 (D539) — Mega Clefable ex ×4 "Luminous Wing" (WP37b) left this list: keyed at D614
+    // (`abilityShieldMeD614.test.ts`).
+    for (const id of ["mep-072", "me03-031", "me03-103", "me03-119"])
+      expect(programFor(id)?.passive, id).toEqual({ preventAbilityEffects: true });
     for (const id of ["me03-062", "me03-107", "me03-121"])
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["attack"]);
   });
 
-  it("is built at engine 0.496.0", () => {
-    expect(engineVersion).toBe("0.496.0");
+  it("is built at engine 0.497.0", () => {
+    expect(engineVersion).toBe("0.497.0");
   });
 });

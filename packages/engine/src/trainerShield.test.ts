@@ -432,7 +432,8 @@ describe("the boundaries — what the channel must NOT refuse", () => {
   // ⚠️ AN ABILITY IS NOT AN ITEM OR A SUPPORTER, and `invokedBy` being ABSENT for
   // one is what says so. Asserted through the context rather than a board because
   // that is where the distinction lives.
-  it("leaves invokedBy absent for an Ability's program", () => {
+  // 🆕🆕🆕 D614 (D539): ~~ABSENT~~ — an Ability's program carries `"ability"` (never a Trainer type).
+  it("labels a played Item, and never an Ability's program, as a Trainer (🆕🆕🆕 D614 (D539): ~~leaves invokedBy absent for an Ability's program~~ — it is \"ability\")", () => {
     const state = board("fix-unnerve", ["fix-titan"]);
     // Nothing in this deck has a parking Ability; the claim is about the setter,
     // and cardplay.ts labels ONLY the trainer call. A grep-shaped assertion would
