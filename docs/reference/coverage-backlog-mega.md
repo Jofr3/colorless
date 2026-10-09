@@ -6,6 +6,24 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D627 update (engine 0.510.0) — H1, the Hide 'n' Sneak archetype (`MATCH_RECORD_VERSION` stays 43)
+
+5 texts / 8 `me` printings / 10 units (`hideNSneakMeD627.test.ts`): Hide 'n' Sneak ×4 (Poltchageist `me05-005`, Sinistcha `me05-006`, Shuppet
+`me05-033`, Banette `me05-034`) = one new object, `passive { preventAttackEffects, preventAbilityEffects }`; Dhelmise "Vengeful Anchor" ×3
+`mep-084`, `me05-039` / `-091` (+140 behind the NEW `BoardCondition` `yourDiscardPokemonWithAbilityNamedAtLeast` at 4), Sinistcha "Matcha
+Spin" (the member at 6 around the counter fold), Poltchageist "Furtive Drop" (the singular put on the Active) and Spiritomb "Spiritual End"
+`me05-035` (the member at 13 around D530's per-counter placement on 2 picks: the quadruple). Two UNRULED readings: R-HNS1, R-SPE1.
+**Finished:** all 8. WP17 is closed.
+
+| Column | `me` built / units (D627) | Standard pool D627 |
+|---|---|---|
+| Attacks | 983 / 1,039 (+6) | **2,715 / 2,771** |
+| Abilities | 196 / 234 (+4) | **572 / 610** |
+| Trainers | 168 / 183 | **432 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1154** (1146 + 8).
+
 ## 🆕 D626 update (engine 0.509.0) — K1, the rest of the KO / damaged triggers (`MATCH_RECORD_VERSION` stays 43)
 
 4 texts / 8 `me` printings on four new objects (`koTriggerRestMeD626.test.ts`): Flygon "Sandy Flapping" ×3 `mep-016`, `me02-053` /
@@ -251,7 +269,7 @@ Trip-ulations" `me04-043`, Celebi "Traverse Time" `me01-012`, Dialga "Reversed C
 `-103` / `-119` "Luminous Wing" = `passive.preventAbilityEffects` (NEW), read through `EffectContext.invokedBy: "ability"` by the
 §11 funnel, the Ability share of the recoils and Magma Surge's counters. **Finished:** all 4 cards (Shooting Moons was built at
 D597). Two new readings (UNRULED): R-LW1, continuous Ability auras are not refused; R-LW2, an Ability lock on the holder removes the
-shield (`progress.md` NEXT). Can reuse the piece: Hide 'n' Sneak ×4 (WP17, with `preventAttackEffects`) and Antique Old Amber
+shield (`progress.md` NEXT). Can reuse the piece: Hide 'n' Sneak ×4 (WP17, with `preventAttackEffects`) [🆕🆕🆕 D627 (D539): BUILT at D627 (H1)] and Antique Old Amber
 `sv03.5-154` "Amber Protection" (same text, not Standard). WP37's other 7 texts / 13 printings stay in WP37.
 
 | Column | `me` built / units (D614) | Standard pool D614 |
@@ -953,11 +971,11 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× If any of your Benched Pancham have any damage counters on them, this attack does 120 more damage. [🆕🆕🆕 D593: BUILT]
 - 1× If this Pokémon has 2 or more damage counters on it, this attack does 90 more damage. This attack's damage isn't affected by Weakness. [🆕🆕🆕 D594: BUILT]
 - 1× If this Pokémon has any damage counters on it, this attack can be used for {D}. [🆕🆕🆕 D593: BUILT]
-- 1× If you have 13 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, choose 2 of your opponent's Pokémon and quadruple the number of damage counters on each of them.
-- 1× If you have 6 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, place 4 damage counters on each of your opponent's Pokémon.
+- 1× If you have 13 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, choose 2 of your opponent's Pokémon and quadruple the number of damage counters on each of them. [🆕🆕🆕 D627: BUILT]
+- 1× If you have 6 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, place 4 damage counters on each of your opponent's Pokémon. [🆕🆕🆕 D627: BUILT]
 - 1× If your opponent's Active Pokémon is affected by a Special Condition, place 6 damage counters on 1 of your opponent's Benched Pokémon. [🆕🆕🆕 D608: WP30 rest]
 - 1× Place 1 damage counter on 1 of your opponent's Pokémon. [🆕🆕🆕 D609: BUILT]
-- 1× Place 1 damage counter on your opponent's Active Pokémon.
+- 1× Place 1 damage counter on your opponent's Active Pokémon. [🆕🆕🆕 D627: BUILT]
 - 1× Place 3 damage counters on your opponent's Active Pokémon. [🆕🆕🆕 D592: BUILT]
 - 1× Place 5 damage counters on 1 of your opponent's Benched Pokémon. [🆕🆕🆕 D592: BUILT]
 - 1× Place damage counters on your opponent's Active Pokémon until its remaining HP is 50. [🆕🆕🆕 D592: BUILT]
@@ -1020,7 +1038,7 @@ group wins; the grouping is a reading aid, not a census figure).
 
 - 5× You may put a {W} Energy attached to this Pokémon into your hand and have this attack do 80 more damage. [🆕🆕🆕 D589: BUILT]
 - 4× If this Pokémon was damaged by an attack during your opponent's last turn, this attack does that much more damage.
-- 3× If you have 4 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, this attack does 140 more damage.
+- 3× If you have 4 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, this attack does 140 more damage. [🆕🆕🆕 D627: BUILT]
 - 3× If you have no cards in your hand, this attack does 160 more damage. [🆕🆕🆕 D594: BUILT]
 - 2× If Rosa's Encouragement is in your discard pile, this attack does 150 more damage. [🆕🆕🆕 D600: BUILT]
 - 2× If this Pokémon is Burned or Poisoned, this attack does 100 more damage. [🆕🆕🆕 D593: BUILT]
@@ -1231,7 +1249,7 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### Prevention / immunity passives — 6 text(s) / 14 printing(s)
 
-- 4× **Hide 'n' Sneak** — Prevent all effects of your opponent's Pokémon's attacks and Abilities done to this Pokémon. (Damage is not an effect.)
+- 4× **Hide 'n' Sneak** — Prevent all effects of your opponent's Pokémon's attacks and Abilities done to this Pokémon. (Damage is not an effect.) [🆕🆕🆕 D627: BUILT]
 - 4× **Luminous Wing** — Prevent all effects of your opponent's Pokémon's Abilities done to this Pokémon. [🆕🆕🆕 D610: left — WP37b (prevent Ability effects)] [🆕🆕🆕 D614: BUILT]
 - 3× **Damp** — Pokémon in play (both yours and your opponent's) lose any Ability that requires the Pokémon using it to Knock Out itself.
 - 1× **Dopey Face** — This Pokémon can't be Confused. [🆕🆕🆕 D584: BUILT]

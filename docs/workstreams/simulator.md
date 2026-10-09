@@ -8101,6 +8101,10 @@ is **Trevenant's ABILITY** — lowercase, mid-sentence, behind a Checkup clause,
 already carrying a registry row producing this very op. A singular branch would invent a
 reading nothing prints.
 
+*D627 (D539): WITHDRAWN, kept as written — Furtive Drop `me05-005` prints the Active
+singular ("Place 1 damage counter on your opponent's Active Pokémon."), read at exactly 1
+with number agreement kept.*
+
 ### ⚠️ The placement is FLAT, pinned from BOTH sides of §8.5
 
 D138 pinned only the doubling direction. Under a **Psychic** attacker (Mimikyu):
@@ -30242,6 +30246,24 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Suite.** `activatedMeD602.test.ts` (22) and a census D602 block (3). +21 mutant rows.
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D627 — H1: the Hide 'n' Sneak archetype (engine 0.510.0, `MATCH_RECORD_VERSION` stays 43)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D626 (`54801b49`), NOT committed. 5 texts / 8 `me` printings / 10 units
+(6 attack + 4 Ability).
+
+- **Hide 'n' Sneak ×4** (Poltchageist, Sinistcha, Shuppet, Banette). One NEW object, `passive { preventAttackEffects,
+  preventAbilityEffects }` (both shipped). An attack's placed counters and an opponent Ability's effects are refused; damage lands.
+  Inherits R-LW1 / R-LW2.
+- **The count.** The NEW `BoardCondition` `yourDiscardPokemonWithAbilityNamedAtLeast { ability, count }`: Pokémon faces in your
+  discard pile whose printed Abilities include the name (Trainer faces never count). Reads `Card.abilities`, already on every
+  persisted `cardPool` face, so in-flight pools are safe. R-HNS1 UNRULED.
+- **Vengeful Anchor ×3** (+140 at 4), **Matcha Spin** (40 on each opponent body at 6) and **Spiritual End** (at 13, D530's
+  `perDamageCounterOnTarget` on a 2-pick placement: 3 more per counter, the quadruple; R-SPE1 UNRULED) — three literal clause rows
+  and arm 6e-septies. **Furtive Drop** — `COUNTER_PUT_ON_DEFENDER` at the singular.
+- **MRV stays 43.** No new op or park shape (match.ts "STAYS 43 AT D627"). `sv` reader output byte-identical.
+- **Suite.** `hideNSneakMeD627.test.ts` (28) and a census D627 block (2). +23 mutant rows, all KILLED; one D530 row re-pointed. Census: attacks
+  **2,715 / 2,771**, abilities **572 / 610**, 1154 `me` printings fully built. Sweep PENDING.
 
 ## D626 — K1: the rest of the KO / damaged triggers (engine 0.509.0, `MATCH_RECORD_VERSION` stays 43)
 

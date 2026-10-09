@@ -18577,6 +18577,22 @@ const ADVERSITY_POLICY: CardProgram = {
   ],
 };
 
+// ── 🆕🆕🆕 D627 — H1, THE HIDE 'N' SNEAK ARCHETYPE: one NEW object on 4 `me` printings, plus reader rows
+//    (effects.ts: the `BoardCondition` `yourDiscardPokemonWithAbilityNamedAtLeast`, three clause rows,
+//    arm 6e-septies, and `COUNTER_PUT_ON_DEFENDER` at the singular). Texts off the LOCAL D1 (2026-10-10,
+//    `legal_standard = 1`). `hideNSneakMeD627.test.ts` plays each. ──
+
+/** 🆕🆕🆕 **D627 — Poltchageist `me05-005`, Sinistcha `me05-006`, Shuppet `me05-033` and Banette `me05-034`
+    (4 legal) "Hide 'n' Sneak"**: *"Prevent all effects of your opponent's Pokémon's attacks and Abilities
+    done to this Pokémon. (Damage is not an effect.)"* Skeledirge "Unaware"'s `preventAttackEffects` and
+    Mega Clefable ex "Luminous Wing"'s `preventAbilityEffects` (D614) on one holder, both shipped: an
+    attack's placed counters (Matcha Spin, Phantom Dive) are refused, its damage lands. It inherits R-LW1
+    (continuous Ability auras are not refused) and R-LW2 (an Ability lock on the holder switches both
+    halves off). The four attacks are reader-built (Furtive Drop, Matcha Spin, Hang Down, Puppet Pull). */
+const HIDE_N_SNEAK: CardProgram = {
+  passive: { preventAttackEffects: true, preventAbilityEffects: true },
+};
+
 // ── 🆕🆕🆕 D608 — WP30: TWO `30th` ATTACK OBJECTS, KEYED BY ID. Text off the LOCAL D1; both printed
 //    tcgdex's `<em>` markup (WP06), so no reader claimed them. `snipeSpreadMeD608.test.ts`.
 //    🆕🆕🆕 D612 — ONE now: the normaliser (cardText.ts) strips the `<em>`. Stealthy Slash's text is
@@ -20151,6 +20167,11 @@ const REGISTRY: Record<string, CardProgram> = {
   "30th-090": FAINTING_SPELL, // Gengar ex — KO'd by an attack: flip, heads Knocks Out the Attacking Pokémon
   "30th-154": FAINTING_SPELL, // Gengar ex
   "me04-074": ADVERSITY_POLICY, // Adversity Policy — a Weak Active holder damaged by an attack: draw 3
+  // 🆕🆕🆕 D627 — H1, the Hide 'n' Sneak archetype: 4 keys / 1 object, MID-MAP (`raw[last]` does not move).
+  "me05-005": HIDE_N_SNEAK, // Poltchageist — prevent the opponent's attack and Ability effects on it
+  "me05-006": HIDE_N_SNEAK, // Sinistcha
+  "me05-033": HIDE_N_SNEAK, // Shuppet
+  "me05-034": HIDE_N_SNEAK, // Banette
   // 🆕🆕🆕 D608 — WP30: 5 `30th` ATTACK-only keys / 2 objects, MID-MAP (`raw[last]` does not move).
   // 🆕🆕🆕 D612 — 3 now: Stealthy Slash ×2 RETIRED (the normalised text is `mep-099`'s, reader-built).
   "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex

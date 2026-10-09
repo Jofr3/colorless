@@ -1838,6 +1838,8 @@ import type { GameState, Seat } from "./types";
     D135's for the unprinted "Heal all damage …". And the SINGULAR is NOT a branch,
     which is where this differs from D131: the pool prints only the plural on
     attacks, and its one singular is Trevenant's ABILITY, already registered.
+    D627 (D539): WITHDRAWN, kept as written — Furtive Drop me05-005 prints the
+    Active singular, read at exactly 1 (number agreement kept).
 
     THE PLACEMENT IS FLAT, FROM BOTH SIDES. A placed counter is not attack damage,
     so §8.5's Weakness and the `damageReductionAfterWR` passive both skip it —
@@ -20269,6 +20271,17 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.509.0 → **0.510.0** (D627 — H1: THE HIDE 'N' SNEAK ARCHETYPE, 5 TEXTS / 8 `me` PRINTINGS
+    (10 UNITS); `MATCH_RECORD_VERSION` STAYS 43 (apps/api match.ts "STAYS 43 AT D627")). registry.ts: ONE NEW object,
+    `HIDE_N_SNEAK` (`passive { preventAttackEffects, preventAbilityEffects }`, both shipped) on Poltchageist
+    `me05-005`, Sinistcha `me05-006`, Shuppet `me05-033` and Banette `me05-034` (inherits R-LW1 / R-LW2). effects.ts:
+    the NEW `BoardCondition` `yourDiscardPokemonWithAbilityNamedAtLeast` (printed Ability names on the Pokémon faces
+    in your discard pile; R-HNS1) and three `CONDITIONAL_DAMAGE_CLAUSES` rows at 4 / 6 / 13 — Dhelmise ×3 "Vengeful
+    Anchor" (+140), Sinistcha "Matcha Spin" (arm 6e-septies, a gate around the counter fold) and Spiritomb
+    "Spiritual End" (arm 6e-septies, a gate around D530's `perDamageCounterOnTarget` on a 2-pick placement:
+    the quadruple, R-SPE1); `COUNTER_PUT_ON_DEFENDER` reads the singular (Poltchageist "Furtive Drop").
+    interpreter.ts: the member's `conditionHolds` / `conditionNote` arms; `snipeNote` captions a per-counter
+    PLACEMENT in counters. No new op or park shape. `hideNSneakMeD627.test.ts`.)
     🆕🆕🆕 engineVersion 0.508.0 → **0.509.0** (D626 — K1: THE REST OF THE KO / DAMAGED TRIGGERS, 4 TEXTS / 8 `me`
     PRINTINGS; `MATCH_RECORD_VERSION` STAYS 43 (apps/api match.ts "STAYS 43 AT D626")). registry.ts: four NEW objects —
     Flygon ×3 "Sandy Flapping" (an `onEvolve` row and an `onKnockOut` row behind `byOpponentAttack` and `activeOnly`,
@@ -25605,7 +25618,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.509.0";
+export const engineVersion = "0.510.0";
 
 export type {
   ApplyResult,

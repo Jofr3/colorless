@@ -567,6 +567,9 @@ describe("the anchor — 2 printings, 2 clauses, one regex with one (\\d+) captu
       // THE SINGULAR NOUN. Deliberately NOT a branch, which is where this differs
       // from D131's mill: the pool prints only the plural on attacks, and its one
       // singular is Trevenant's ABILITY, which already has a registry row.
+      // D627 (D539): WITHDRAWN, kept as written — Furtive Drop me05-005 prints the
+      // Active singular, read at exactly 1. This miss still holds through number
+      // agreement: the singular noun is read only at a count of 1, never at 7.
       "Put 7 damage counter on your opponent's Active Pokémon.",
       // NO COUNT AT ALL — Alolan Raticate's opening, and the reading this anchor
       // must not invent a number for.

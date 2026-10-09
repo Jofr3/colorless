@@ -3908,6 +3908,17 @@ export type BoardCondition =
       exact-name twin of the member above (YOUR pile only; any card kind; the card side folded,
       `yourActiveHasNamedEnergyAttached`'s D154 call). Public: a discard pile is face up. */
   | { kind: "yourDiscardHasNamed"; name: string }
+  /** 🆕🆕🆕 **D627 — YOU HAVE `count` OR MORE POKÉMON THAT HAVE THE `ability` ABILITY IN YOUR DISCARD
+      PILE.** The Hide 'n' Sneak archetype (LOCAL D1, `legal_standard = 1`): Dhelmise "Vengeful Anchor"
+      (`mep-084`, `me05-039` / `-091`, 4), Sinistcha "Matcha Spin" (`me05-006`, 6) and Spiritomb "Spiritual
+      End" (`me05-035`, 13). The first `BoardCondition` to read Ability NAMES off discard-pile cards: each
+      card in YOUR pile counts once when its face is a Pokémon card (`category === "Pokemon"`, so a Trainer
+      face that prints an Ability — an Antique fossil — never counts) whose PRINTED Abilities include
+      `ability` (apostrophes folded on both sides). A card in a discard pile is in no play state, so no §9
+      lock can reach it (R-HNS1 ⚠️ UNRULED). `>=`, the printed "or more". Reads `Card.abilities`, a field
+      every `GameState.cardPool` face already carries, so a persisted pool is read the same way. Public: a
+      discard pile is face up. */
+  | { kind: "yourDiscardPokemonWithAbilityNamedAtLeast"; ability: string; count: number }
   /** 🆕🆕🆕 **D564 — YOU played, from your hand THIS TURN, a Supporter whose NAME is
       `name` (exact) or CONTAINS `nameContains` (substring).** Two printed readers:
       Team Rocket's Factory `sv10-173` (*"if they played a Supporter card that has "Team
@@ -15294,8 +15305,12 @@ const COUNTER_MOVE_OPPONENT_ANY_WAY =
 // refusal is about the CASE and the POSITION, not about the card being unreachable
 // — `counterPut.test.ts`'s `NEAR_MISSES` is the list whose standing note says an
 // unread sentence needs a live witness, and that one WAS re-pointed.
+// 🆕🆕🆕 D627 (D539): *"AND THE SINGULAR IS NOT A BRANCH"* is WITHDRAWN, kept as written — the `me` column
+// prints the singular ATTACK sentence: Poltchageist "Furtive Drop" (`me05-005`, *"Place 1 damage counter on
+// your opponent's Active Pokémon."*, its "Place" read as "Put" by `normaliseMeWording`). The singular is read
+// at exactly 1, number agreement kept (D609's `COUNTER_PUT_ON_OPPONENT_ANY` precedent): the count is `[1] ?? [2]`.
 const COUNTER_PUT_ON_DEFENDER =
-  /^Put (\d+) damage counters on your opponent['’]s Active Pokémon\.$/;
+  /^Put (?:(\d+) damage counters|(1) damage counter) on your opponent['’]s Active Pokémon\.$/;
 // 🆕🆕🆕 D600 — WP14: the same put, once per card in the ATTACKER's hand (Alakazam "Powerful Hand"
 // ×3, whose printed "Place" `normaliseMeWording` reads as "Put"). A separate anchor (D441).
 const COUNTER_PUT_ON_DEFENDER_PER_HAND_CARD =
@@ -18259,6 +18274,16 @@ const REVEAL_BOTTOM_ITEM =
 // 🆕🆕🆕 D619 — WP15, Hippowdon "Twister Spewing" (`me03-040`, LOCAL D1): a clause-table gate over the
 // opponent-side mill (arm 6e-quinquies). The clause is looked up, not captured as a name.
 const CLAUSE_GATED_OPPONENT_MILL = /^If (.+), discard the top (\d+) cards of your opponent['’]s deck\.$/;
+// 🆕🆕🆕 D627 — the Hide 'n' Sneak archetype (LOCAL D1, 2026-10-10), two clause-table gates (arm 6e-septies),
+// neither printed in legal `sv`. Sinistcha "Matcha Spin" (`me05-006`): arm 23e's opponent-side counter fold
+// behind the clause — its lower-case "place" is read as "put" by `normaliseMeWording`.
+const CLAUSE_GATED_OPPONENT_COUNTER_FOLD =
+  /^If (.+), put (\d+) damage counters on each of your opponent['’]s Pokémon\.$/;
+// Spiritomb "Spiritual End" (`me05-035`): "quadruple the number of damage counters" is D530's
+// `damageChosen.perDamageCounterOnTarget` placing 3 more per counter already there (R-SPE1). The word is
+// a literal: no other multiplier is printed on a chosen pick.
+const CLAUSE_GATED_CHOSEN_QUADRUPLE =
+  /^If (.+), choose (\d+) of your opponent['’]s Pokémon and quadruple the number of damage counters on each of them\.$/;
 // 🆕🆕🆕 D624 — WP31c, five more literal `me` anchors (LOCAL D1, 2026-10-09), none printed in legal `sv`
 // (arm 6e-sexies). Dedenne "Tail Generator" ×2: `attachFromDiscard` at the count-scaled ceiling (NEW).
 const DISCARD_ATTACH_UP_TO_OPPONENT_ENERGY =
@@ -22092,6 +22117,23 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   [
     "you played Tarragon from your hand during this turn",
     { kind: "youPlayedSupporterNamedThisTurn", name: "Tarragon" },
+  ],
+  // 🆕🆕🆕 D627 — the Hide 'n' Sneak archetype, three literal rows on the NEW
+  // `yourDiscardPokemonWithAbilityNamedAtLeast` (LOCAL D1, 2026-10-10, legal `me`): Dhelmise "Vengeful
+  // Anchor" ×3 (30+, +140), Sinistcha "Matcha Spin" (the gated counter fold, arm 6e-septies) and Spiritomb
+  // "Spiritual End" (the gated quadruple, arm 6e-septies). Literal rows (D119's corollary): the threshold
+  // and the Ability name both vary in principle, and the pool prints this clause at three thresholds only.
+  [
+    "you have 4 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile",
+    { kind: "yourDiscardPokemonWithAbilityNamedAtLeast", ability: "Hide 'n' Sneak", count: 4 },
+  ],
+  [
+    "you have 6 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile",
+    { kind: "yourDiscardPokemonWithAbilityNamedAtLeast", ability: "Hide 'n' Sneak", count: 6 },
+  ],
+  [
+    "you have 13 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile",
+    { kind: "yourDiscardPokemonWithAbilityNamedAtLeast", ability: "Hide 'n' Sneak", count: 13 },
   ],
 ]);
 // The printed energy-type notations, BOTH of them: the modern brace CODE
@@ -30211,6 +30253,52 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     }
   }
 
+  // 6e-septies. 🆕🆕🆕 D627 — the Hide 'n' Sneak archetype's two gated sentences: a `conditionGate` on the
+  //     clause table's row (the NEW `yourDiscardPokemonWithAbilityNamedAtLeast`) around a shipped op. A
+  //     clause no row claims leaves the sentence unread; each printed count keeps its `>= 1` floor.
+  match = CLAUSE_GATED_OPPONENT_COUNTER_FOLD.exec(effect);
+  if (match !== null) {
+    const foldGate = boardConditionForClause(match[1] ?? "");
+    const foldCounters = Number(match[2]);
+    if (foldGate !== null && foldCounters >= 1) {
+      return [
+        {
+          op: "conditionGate",
+          cond: foldGate,
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [
+            { op: "counterEachAll", amount: foldCounters * 10, filter: { kind: "anyPokemon" }, side: "opponent", source: "attack" },
+          ],
+        },
+      ];
+    }
+  }
+  match = CLAUSE_GATED_CHOSEN_QUADRUPLE.exec(effect);
+  if (match !== null) {
+    const quadrupleGate = boardConditionForClause(match[1] ?? "");
+    const quadrupled = Number(match[2]);
+    if (quadrupleGate !== null && quadrupled >= 1) {
+      return [
+        {
+          op: "conditionGate",
+          cond: quadrupleGate,
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [
+            {
+              op: "damageChosen",
+              target: "opponentAny",
+              // 3 more counters per counter already on the pick: four times the number.
+              amount: 30,
+              count: quadrupled,
+              source: "attack",
+              perDamageCounterOnTarget: true,
+            },
+          ],
+        },
+      ];
+    }
+  }
+
   // 6e-sexies. 🆕🆕🆕 D624 — WP31c's five sentences; the new pieces are `attachFromDiscard.max`
   //     `"opponentEnergyInPlay"`, `randomFromOpponentHand.untilHandSize` and the `pokemonWithResistance` filter.
   match = DISCARD_ATTACH_UP_TO_OPPONENT_ENERGY.exec(effect);
@@ -32336,7 +32424,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // risk in the slice — the same conversion the `DEFENDER_POISON_N` arm above
     // makes for `poisonDamage`, and the same one Trevenant's registry row makes
     // by hand when it writes `amount: 10` for its printed 1 counter.
-    const counters = Number(match[1]);
+    // 🆕🆕🆕 D627 — `[1] ?? [2]`: the plural's count, or the singular's literal 1 (Furtive Drop).
+    const counters = Number(match[1] ?? match[2]);
     // `counters >= 1` is the guard every arm here carries: a printed "Put 0
     // damage counters" is not a real card and would derive to a silent no-op —
     // an attack reporting a simulated effect that moved nothing. Leave it loud.

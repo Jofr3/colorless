@@ -2159,6 +2159,15 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 43 AT D627 — H1 ADDS ONE REGISTRY OBJECT, ONE `BoardCondition` MEMBER, THREE CLAUSE ROWS AND READER
+    ARMS; NO OP, PROMPT, PHASE, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD OR EVENT.** (Placed ABOVE the D626 block.)
+    The Hide 'n' Sneak program is keyed by ID, and the new member reads `Card.abilities` / `category` — fields every
+    v43 `cardPool` face already carries — so no persisted face is read differently and in-flight pools are safe. The
+    6 `me` attack printings are re-derived from text. What can be persisted mid-attack is shipped shape: Spiritual End
+    parks the shipped `damageChosen` with D530's `perDamageCounterOnTarget` (a v30 key); the `conditionGate` never
+    parks, so the new member never reaches `phase.cont`. Rollback reading, NAMED: a 0.509 reader resumes that park
+    as written and reads the four attack texts as skipped effects.
+
     🆕🆕🆕 **STAYS 43 AT D626 — K1 ADDS FOUR OBJECTS, ONE `TriggerTiming`, ONE `PassiveEffects` KEY AND ONE
     `BoardCondition` MEMBER; NO PROMPT, PHASE, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD OR EVENT.** (Placed ABOVE the
     D625 block.) Every program is keyed by ID, so the 8 `me` faces in a v43 `cardPool` are read exactly as before and

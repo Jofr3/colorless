@@ -127,7 +127,7 @@ describe("D609 §2 — the readings", () => {
     expect(deriveAttackEffect(`${SNOW_COATING} Draw a card.`)).toBeNull();
   });
 
-  it("Sneaky Placement: the singular is D449's put at 1; the Active singular stays unread", () => {
+  it("Sneaky Placement: the singular is D449's put at 1; the Active singular stays unread (🆕🆕🆕 D627 (D539): built since D627)", () => {
     const one = [{ op: "damageChosen", target: "opponentAny", amount: 10, count: 1, source: "attack" }];
     expect(deriveAttackEffect(SNEAKY_PLACEMENT)).toEqual(one);
     expect(deriveAttackEffect("Put 1 damage counter on 1 of your opponent's Pokémon.")).toEqual(one);
@@ -137,7 +137,11 @@ describe("D609 §2 — the readings", () => {
       { ...one[0], amount: 20 },
     ]);
     // The other singular `me` sentence is rewritten and stays unbuilt.
-    expect(deriveAttackEffect("Place 1 damage counter on your opponent's Active Pokémon.")).toBeNull();
+    // 🆕🆕🆕 D627 (D539): "stays unbuilt" is WITHDRAWN, kept as written — Poltchageist "Furtive Drop" is
+    // built by H1 (`COUNTER_PUT_ON_DEFENDER` at the singular, `hideNSneakMeD627.test.ts` §2).
+    expect(deriveAttackEffect("Place 1 damage counter on your opponent's Active Pokémon.")).toEqual([
+      { op: "damageActive", amount: 10, source: "attack" },
+    ]);
     expect(deriveAttackEffect(SNEAKY_PLACEMENT.replace("1 damage", "0 damage"))).toBeNull();
     // Number agreement: the singular is read at exactly 1 (D449's "the singular noun" control).
     expect(deriveAttackEffect("Put 2 damage counter on 1 of your opponent's Pokémon.")).toBeNull();
@@ -417,6 +421,6 @@ describe("D609 §6 — Sneaky Placement: 1 counter on 1 of the opponent's Pokém
 
 describe("D609 §7 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.509.0");
+    expect(engineVersion).toBe("0.510.0");
   });
 });

@@ -178,7 +178,8 @@ describe("D592 §2 — the table cannot reach an `sv` sentence", () => {
     // Each still needs vocabulary beyond a synonym (a hand-count source, a gate, a trigger, …).
     // 🆕🆕🆕 D609 (D539): ~~5~~ 7 — WP36 widened the lookahead to the singular "damage counter on", so the
     // table also rewrites Sneaky Placement (built, `COUNTER_PUT_ON_OPPONENT_ANY`) and the Active singular
-    // (still unbuilt, the §3 control).
+    // (still unbuilt, the §3 control). 🆕🆕🆕 D627 (D539): WITHDRAWN, kept as written — the Active singular is
+    // Furtive Drop `me05-005`, BUILT at D627 (H1); the §3 control is re-pointed to "Place 2 damage counter…".
     expect(unbuilt).toHaveLength(7);
     // 🆕🆕🆕 D600 (D539): "five that stay unbuilt" is WITHDRAWN, kept as written — four: Powerful Hand
     // ×3 is built by WP14's hand-count source (`damageActive.per`), the vocabulary named above.
@@ -193,7 +194,17 @@ describe("D592 §2 — the table cannot reach an `sv` sentence", () => {
     const sneaky = "Place 1 damage counter on 1 of your opponent's Pokémon.";
     expect(unbuilt).toContain(sneaky);
     expect(deriveAttackEffect(sneaky)).not.toBeNull();
-    for (const text of unbuilt.filter((t) => t !== powerfulHand && t !== barrage && t !== sneaky)) {
+    // 🆕🆕🆕 D627 (D539): and two more — Furtive Drop (the Active singular, `COUNTER_PUT_ON_DEFENDER` at 1) and
+    // Matcha Spin (arm 6e-septies, read after this table rewrote its lower-case "place") are built by H1.
+    const furtive = "Place 1 damage counter on your opponent's Active Pokémon.";
+    const matcha =
+      "If you have 6 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, place 4 damage counters on each of your opponent's Pokémon.";
+    for (const text of [furtive, matcha]) {
+      expect(unbuilt).toContain(text);
+      expect(deriveAttackEffect(text), text).not.toBeNull();
+    }
+    const built = [powerfulHand, barrage, sneaky, furtive, matcha];
+    for (const text of unbuilt.filter((t) => !built.includes(t))) {
       expect(deriveAttackEffect(text), text).toBeNull();
     }
   });
@@ -204,7 +215,9 @@ describe("D592 §3 — near misses stay null, one token apart each", () => {
     const controls: Record<string, string> = {
       // 🆕🆕🆕 D609 (D539): the table now rewrites this singular "place" too (WP36); it stays null because no
       // anchor reads a 1-counter put on the Active.
-      "a singular counter (no 'counters')": "Place 1 damage counter on your opponent's Active Pokémon.",
+      // 🆕🆕🆕 D627 (D539): WITHDRAWN, kept as written — the printed singular is BUILT (Poltchageist "Furtive
+      // Drop", H1). The control is re-pointed onto its number-agreement near miss, which stays null.
+      "a singular counter (no 'counters')": "Place 2 damage counter on your opponent's Active Pokémon.",
       // 🆕🆕🆕 D600 (D539): the printed Powerful Hand is BUILT (WP14) — this control is its seat near miss.
       "Powerful Hand over THEIR hand (the printed row is built, WP14)":
         "Place 2 damage counters on your opponent's Active Pokémon for each card in their hand.",
@@ -479,7 +492,7 @@ describe("D592 §6 — Claw of Darkness and Thunder on a board", () => {
 });
 
 describe("D592 §7 — the version", () => {
-  it("is built at engine 0.509.0", () => {
-    expect(engineVersion).toBe("0.509.0");
+  it("is built at engine 0.510.0", () => {
+    expect(engineVersion).toBe("0.510.0");
   });
 });

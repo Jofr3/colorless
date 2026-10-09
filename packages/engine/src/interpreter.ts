@@ -6832,6 +6832,20 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
         const discarded = cardOfUid(state, uid);
         return discarded !== undefined && foldApostrophes(discarded.name) === cond.name;
       });
+    case "yourDiscardPokemonWithAbilityNamedAtLeast": {
+      // 🆕🆕🆕 D627 — the Hide 'n' Sneak count: YOUR pile, each Pokémon-card face whose PRINTED Abilities
+      // include the name (apostrophes folded). A Trainer face that prints an Ability (an Antique fossil)
+      // never counts; no §9 lock reaches a discarded card (R-HNS1, UNRULED).
+      const holders = state.players[seat].discard.filter((uid) => {
+        const discarded = cardOfUid(state, uid);
+        return (
+          discarded !== undefined &&
+          discarded.category === "Pokemon" &&
+          (discarded.abilities ?? []).some((printed) => foldApostrophes(printed.name) === cond.ability)
+        );
+      });
+      return holders.length >= cond.count;
+    }
     case "youPlayedSupporterNamedThisTurn": {
       // 🆕🆕🆕 D564 — Team Rocket's Factory's *"if they played a Supporter card that has
       // "Team Rocket" in its name from their hand this turn"* and Crobat "Shadowy Envoy"'s
@@ -8073,6 +8087,9 @@ export function conditionNote(cond: BoardCondition): string {
       return "your Active Pokémon has Weakness to your opponent's Active Pokémon's type";
     case "yourDiscardHasNamed":
       return `${cond.name} is in your discard pile`;
+    // 🆕🆕🆕 D627 — the printed clause (Vengeful Anchor, Matcha Spin, Spiritual End), minus the "If".
+    case "yourDiscardPokemonWithAbilityNamedAtLeast":
+      return `you have ${String(cond.count)} or more Pokémon that have the ${cond.ability} Ability in your discard pile`;
     case "yourBenchHasStage2OfType":
       return `you have any Stage 2 ${cond.type} Pokémon on your Bench`;
     case "yourBenchHasNamedEnergyAttached":
@@ -12973,7 +12990,10 @@ function snipeNote(
       ? " that has any Special Energy attached"
       : "";
   if (perDamageCounterOnTarget) {
-    return `${verb} ${count} of ${owner} ${zone}${window} (${amount} damage for each damage counter on it).`;
+    // 🆕🆕🆕 D627 — `each`, not `${amount} damage`: a PLACEMENT (Spiritomb "Spiritual End", `deals` absent)
+    // quotes the counters it places per counter already there; for the `deals` hit (D530) `each` is the same
+    // bytes as before.
+    return `${verb} ${count} of ${owner} ${zone}${window} (${each} for each damage counter on it).`;
   }
   if (perHeads) return `${verb} ${count} of ${owner} ${zone}${window} (${amount} damage for each heads).`;
   return `${verb} ${count} of ${owner} ${zone}${window} (${each} each).`;

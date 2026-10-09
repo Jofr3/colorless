@@ -738,7 +738,7 @@ const RAW: Record<string, string> = (
 describe("D522 §4 — the version steps, the heading is written, the prose is corrected, and what stands still", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.509.0");
+    expect(engineVersion).toBe("0.510.0");
     expect(manifest.version).toBe(engineVersion);
   });
 
@@ -766,7 +766,9 @@ describe("D522 §4 — the version steps, the heading is written, the prose is c
     // `conditionGate` on `opponentActiveDamageCountersExactly` around `knockOutDefender`. MEASURED.
     // 🆕🆕🆕 D619 — 21 → 22: Hippowdon "Twister Spewing"'s arm (`CLAUSE_GATED_OPPONENT_MILL`), a
     // `conditionGate` on the clause table's row around `discardDeckTop`. MEASURED.
-    expect(effects.split('op: "conditionGate",').length - 1).toBe(22);
+    // 🆕🆕🆕 D627 — 22 → 24: arm 6e-septies' two (`CLAUSE_GATED_OPPONENT_COUNTER_FOLD`,
+    // `CLAUSE_GATED_CHOSEN_QUADRUPLE`), each a `conditionGate` on the clause table's row. MEASURED.
+    expect(effects.split('op: "conditionGate",').length - 1).toBe(24);
     expect(effects.split('op: "spreadDamage",').length - 1).toBe(10);
     expect(effects.split('{ op: "discardStadium" }').length - 1).toBe(6);
   });
