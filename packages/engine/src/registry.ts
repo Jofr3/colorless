@@ -3962,6 +3962,13 @@ const NEST_BALL: CardProgram = {
     (Supporter — the gust archetype) */
 const BOSSS_ORDERS: CardProgram = { trainer: [{ op: "gust" }] };
 
+/** Counter Catcher — play only while you have more Prize cards remaining than
+    your opponent, then switch in one of their Benched Pokémon. */
+const COUNTER_CATCHER: CardProgram = {
+  trainerPlayableIf: { kind: "morePrizesThanOpponent" },
+  trainer: [{ op: "gust" }],
+};
+
 /** "Switch your Active Pokémon with 1 of your Benched Pokémon." (Item)
 
     ⚠️ D206 — ALL THREE PRINTINGS OF THIS SENTENCE ARE `legal_standard = 0`
@@ -16370,6 +16377,9 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-172": BOSSS_ORDERS,
   "sv02-248": BOSSS_ORDERS,
   "sv02-265": BOSSS_ORDERS,
+  // Counter Catcher (Paradox Rift, regular and gold printings)
+  "sv04-160": COUNTER_CATCHER,
+  "sv04-264": COUNTER_CATCHER,
   // Switch — ⚠️ rotated OUT of Standard (see the program's doc).
   "sv01-194": SWITCH,
   // D206 — the "Switch … . If you do, …" seam. Surfer (Supporter, 2 legal) and
