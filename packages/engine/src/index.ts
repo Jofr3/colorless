@@ -20271,6 +20271,13 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.521.0 → **0.522.0** (D639 — K3 + R1: KO-BY-THIS-ATTACK CONSEQUENTS AND THE KO SWEEP, 3 TEXTS /
+    6 PRINTINGS (`me` + `30th`); `MATCH_RECORD_VERSION` STAYS 46 (apps/api match.ts "STAYS 46 AT D639")). effects.ts:
+    Shadowy Side Kick (Marshadow `me01-080` / `-146`) = Critical Slash (Golisopod `me04-026`) as `conditionGate` on the NEW
+    `BoardCondition` `opponentKnockedOutByDamage` over the shipped `preventDamage { effects }` (R-SSK1); Unown `30th-072`
+    "Mysterious Signal" on the NEW `bountyThisAttack` (a THIS-turn `koBounty`, R-MSG1); Yveltal ex `me03-053` / `-105`
+    "Soul Destroyer" on the NEW `knockOutEach { remainingHpAtMost }` (R-SDS1). Gholdengo `30th-108` / `-142` "Celebration"
+    dropped and named (a post-Prize stage). `koSweepMeD639.test.ts`.)
     🆕🆕🆕 engineVersion 0.520.0 → **0.521.0** (D638 — X1: COPY / BORROWED EFFECTS, 3 TEXTS / 6 PRINTINGS (`me` + `30th`);
     `MATCH_RECORD_VERSION` STAYS 46 (apps/api match.ts "STAYS 46 AT D638")). registry.ts: `MEMORY_HELIX` (Mew ex
     `30th-066` / `-152` / `-158`) on the NEW `PassiveEffects.memoryHelix`, a fourth `attackMenuOf` section (continuous.ts:
@@ -20587,7 +20594,7 @@ import type { GameState, Seat } from "./types";
     `COUNTER_PUT_ON_OPPONENT_ANY` take the singular "damage counter" (Sneaky Placement). interpreter.ts:
     `conditionHolds` / `conditionNote` arms, `knockOutChosenTargets` as a total `switch` plus
     `leastHpRemainingRefs`, Bring Down's caption, `counterEachAll`'s per-body amount. 8 `me` attack
-    printings. Soul Destroyer ×2 and Unown `30th-072` dropped and named. `koCountersMeD609.test.ts`.)
+    printings. Soul Destroyer ×2 and Unown `30th-072` dropped and named. [🆕🆕🆕 D639 (D539): both BUILT at D639 (K3 + R1)] `koCountersMeD609.test.ts`.)
     🆕🆕🆕 engineVersion 0.490.0 → **0.491.0** (D608 — WP30: THE `me` SNIPE / SPREAD WORDING;
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D608")). effects.ts: "each of 2"
     read as the shipped arity on `CHOSEN_ANY_TARGET` / `SELF_DISCARD_THEN_ANY_TARGET` (Mega Eelektross
@@ -25736,7 +25743,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.521.0";
+export const engineVersion = "0.522.0";
 
 export type {
   ApplyResult,

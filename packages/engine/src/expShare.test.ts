@@ -59,7 +59,7 @@ import {
 // (`attacks_json`). That is a DIFFERENT antecedent — the KO is *caused by* the
 // attack being resolved rather than *suffered by* the reader, and its consequent
 // is a durated self-prevention — so it belongs to no member of this family. It
-// has no registry row. Every run of this census since D158 has been blind to it
+// has no registry row. [🆕🆕🆕 D639 (D539): its sentence is READ since D639 — `opponentKnockedOutByDamage`.] Every run of this census since D158 has been blind to it
 // because the pattern says "from an attack" and this row says "from this attack".
 //
 // ⚠️ THE SHAPE — WHY NEITHER EXISTING KO SEAM SERVES THIS, WHICH IS THE SLICE.
@@ -294,6 +294,8 @@ describe("the printed datum — re-queried, not inherited", () => {
     // being resolved, not SUFFERED BY the card's owner, and the consequent is a
     // durated self-prevention. A different antecedent family, deliberately
     // unmapped, and pinned here so the next census does not rediscover it.
+    // 🆕🆕🆕 D639 (D539): "deliberately unmapped" is WITHDRAWN, kept as written — the sentence is READ since
+    // D639 (Shadowy Side Kick / Critical Slash, `opponentKnockedOutByDamage`); `sv02-148` itself is not in the pool.
     expect(FIXTURE_POOL["sv02-148"]).toBeUndefined();
     expect(ACCELERATE).toContain("Knocked Out by damage from this attack");
     expect(ACCELERATE).not.toContain("from an attack");

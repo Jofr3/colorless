@@ -3921,6 +3921,14 @@ export type BoardCondition =
       `damageCountersOn` — the predicate `knockOutChosen.damageCountersExactly` reads (Euclase). An
       empty Active Spot is FALSE. Public: damage counters are face up. */
   | { kind: "opponentActiveDamageCountersExactly"; count: number }
+  /** 🆕🆕🆕 **D639 — "IF YOUR OPPONENT'S POKÉMON IS KNOCKED OUT BY DAMAGE FROM THIS ATTACK".**
+      Shadowy Side Kick (Marshadow `me01-080` / `-146`) and Critical Slash (Golisopod `me04-026`),
+      the gate in front of `preventDamage { effects }`. Read at the attack program's step — after
+      the damage, before the §8.1 sweep — as: some body of the opponent's is lethally damaged
+      (`isLethallyDamaged`) and not doomed by an effect this turn (`koByEffect`). R-SSK1 ⚠️
+      UNRULED: no stage between that step and the sweep heals or moves a defender at this head,
+      so lethal there is Knocked Out there. Outside an attack program no body is lethal: FALSE. */
+  | { kind: "opponentKnockedOutByDamage" }
   /** 🆕🆕🆕 **D560 (V4) — YOUR OPPONENT'S ACTIVE POKÉMON'S TOP CARD PRINTS AN
       ABILITY.** Galvantula `sv06.5-002` "Compound Eyes" — *"Attacks used by this
       Pokémon do 50 more damage to your opponent's Active Pokémon that has an Ability
@@ -4824,6 +4832,15 @@ export type EffectOp =
       refuses it (`exposeDefender`'s check verbatim). Never parks, consumes no rng;
       idempotent by `Math.max` on one window. */
   | { op: "bountyDefender"; amount: number }
+  /** 🆕🆕🆕 §8.1 (D639) — THE THIS-ATTACK KNOCK OUT BOUNTY: Unown `30th-072` "Mysterious Signal"
+      (*"If your opponent's Pokémon is Knocked Out by damage from this attack, take 1 more Prize
+      card."*). At the program's step (after the damage, before the §8.1 sweep) the opponent's
+      Active, when it is lethally damaged and not doomed by an effect (`koByEffect`), gets its
+      EXISTING `koBounty` record stamped for THIS turn — `amount` added to a live one (R-MSG1
+      ⚠️ UNRULED: the two effects stack; no §11 ask, the Prize is not an effect done to that
+      Pokémon). flow.ts `koPrizeBonus` pays it at the sweep. No new key: a 0.521 reader pays the
+      same record the same way. Never parks; no event (the PRIZE_BONUS row names the payout). */
+  | { op: "bountyThisAttack"; amount: number }
   /** 🆕🆕 §13 (D434) — SCHEDULE a counter placement onto the DEFENDING Pokémon for
       the end of the opponent's next turn:
 
@@ -9731,6 +9748,13 @@ export type EffectOp =
           op (no v42 record holds it). */
       leastHpRemaining?: true;
     }
+  /** 🆕🆕🆕 §8.1/§11 (D639) — KNOCK OUT EACH of the opponent's Pokémon with `remainingHpAtMost`
+      HP or less remaining: Yveltal ex `me03-053` / `-105` "Soul Destroyer". No pick: the window
+      (`remainingHpWithin`) is read over the opponent's Active and Bench at once, THEN a §11 shield
+      is asked per body (`unshieldedRefs`, announced), and every survivor of both is doomed with
+      D414's `koByEffect` marker — an effect, not damage (R-SDS1 ⚠️ UNRULED). §8.1's sweep takes
+      the Prizes. Never parks. */
+  | { op: "knockOutEach"; remainingHpAtMost: number }
   /** 🆕🆕 **D431 — §8.1, THE FIRST PRIZE TAKEN WITHOUT A KNOCK OUT.**
       *"Discard all Energy from this Pokémon, and take a Prize card."* — **1 sentence /
       3 legal printings**, the tail half of a compound anchor whose head is the shipped
@@ -14779,6 +14803,8 @@ const FLIP_DECK_TOP_MILL =
 //     (1 — Corviknight sv02-148 "Accelerate", attack INDEX 0) gates on the
 //     attack's own RESULT,
 //     the §9.2 channel Iron Moth "Suction" and Camerupt want;
+//     (🆕🆕🆕 D639 (D539): no longer LOUD — BUILT, `KO_BY_THIS_ATTACK_PREVENT_ALL` on the NEW
+//     `opponentKnockedOutByDamage` gate, read at the program step (R-SSK1))
 //   • "Flip a coin. If tails, this attack does nothing. If heads, …" (1 —
 //     Squawkabilly sv01-162 "Fly") carries a SECOND consequent on the same flip.
 // Each is a separate warrant, written down here so the next slice inherits the
@@ -18438,6 +18464,18 @@ const LEAST_HP_ANY_KO =
 // N's Vanilluxe "Snow Coating": `counterEachAll` with `perDamageCounterOnTarget` (10 per counter).
 const DOUBLE_OPPONENT_COUNTERS =
   /^Double the number of damage counters on each of your opponent['’]s Pokémon\.$/;
+// 🆕🆕🆕 D639 — K3 + R1, three literal `me` anchors (LOCAL D1, 2026-10-10), none printed in legal `sv`.
+// Shadowy Side Kick ×2 / Critical Slash: `conditionGate { opponentKnockedOutByDamage }` over the shipped
+// `preventDamage { effects }` (R-SSK1).
+const KO_BY_THIS_ATTACK_PREVENT_ALL =
+  /^If your opponent['’]s Pokémon is Knocked Out by damage from this attack, during your opponent['’]s next turn, prevent all damage from and effects of attacks done to this Pokémon\.$/;
+// Unown "Mysterious Signal": the NEW `bountyThisAttack` (R-MSG1); the count is captured (`>= 1`) and
+// the noun agrees with it ("1 … card", "2 … cards").
+const KO_BY_THIS_ATTACK_MORE_PRIZES =
+  /^If your opponent['’]s Pokémon is Knocked Out by damage from this attack, take (\d+) more Prize card(s?)\.$/;
+// Yveltal ex "Soul Destroyer" ×2: the NEW `knockOutEach` (R-SDS1); the HP is captured (`>= 10`).
+const KO_EACH_AT_REMAINING_HP =
+  /^Knock Out each of your opponent['’]s Pokémon that has (\d+) HP or less remaining\.$/;
 // 🆕🆕🆕 D615 — WP31a, eight literal `me` anchors (LOCAL D1, 2026-10-09), none printed in legal `sv`, each
 // onto a shipped op (arm 6e-ter). Mega Delphox ex "Trick Portal": `ATTACK_LOOK_TOP_BENCH`'s sentence with
 // the comma join.
@@ -30448,6 +30486,27 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   }
   if (LEAST_HP_ANY_KO.test(effect)) {
     return [{ op: "knockOutChosen", target: "anyExceptSelf", leastHpRemaining: true }];
+  }
+  // 🆕🆕🆕 D639 — K3 + R1 (anchors beside D609's).
+  if (KO_BY_THIS_ATTACK_PREVENT_ALL.test(effect)) {
+    return [
+      {
+        op: "conditionGate",
+        cond: { kind: "opponentKnockedOutByDamage" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "preventDamage", effects: true }],
+      },
+    ];
+  }
+  match = KO_BY_THIS_ATTACK_MORE_PRIZES.exec(effect);
+  if (match !== null) {
+    const more = Number(match[1]);
+    if (more >= 1 && (more === 1) === (match[2] === "")) return [{ op: "bountyThisAttack", amount: more }];
+  }
+  match = KO_EACH_AT_REMAINING_HP.exec(effect);
+  if (match !== null) {
+    const hp = Number(match[1]);
+    if (hp >= 10) return [{ op: "knockOutEach", remainingHpAtMost: hp }];
   }
   if (DOUBLE_OPPONENT_COUNTERS.test(effect)) {
     return [

@@ -8732,7 +8732,7 @@ PREVENT family" understates it by six.
 | `Flip a coin. If heads, during your opponent's next turn, prevent all damage done to this Pokémon by attacks.` | **2** | ✅ `FLIP_PREVENT_DAMAGE` → `preventDamage` |
 | `During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic Pokémon.` | 3 | ❌ an attacker-CLASS filter — a field and a predicate this op has not got |
 | `During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon.` | 1 | ❌ the same filter on a different class (Iron Moth `sv06.5-009`, **index 1**) |
-| `If your opponent's Pokémon is Knocked Out by damage from this attack, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.` | 1 | ❌ gated on the attack's own RESULT — the §9.2 channel Iron Moth "Suction" and Camerupt want |
+| `If your opponent's Pokémon is Knocked Out by damage from this attack, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.` | 1 | ❌ gated on the attack's own RESULT — the §9.2 channel Iron Moth "Suction" and Camerupt want (🆕🆕🆕 D639 (D539): BUILT — `conditionGate { opponentKnockedOutByDamage }`, read at the program step, R-SSK1; the `me` printings are Marshadow ×2 and Golisopod) |
 | `Flip a coin. If tails, this attack does nothing. If heads, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.` | 1 | ❌ a SECOND consequent on the same flip |
 
 The eleven mapped WIDE printings: Joltik `sv06.5-001` + Hoppip `sv02-001` "Splashing
@@ -16473,7 +16473,7 @@ a SYNCHRONOUS placement at all, however right that placement is.**
 - **`sv02-148` Corviknight is an OPEN, UNPRICED antecedent family of one** — *"Knocked Out
   by damage from **this** attack"* → a durated self-prevention. It needs a
   KO-CAUSED-BY-THIS-ATTACK read that nothing in the engine has, plus an `attackBlock`-shaped
-  stamp that D142/D148 already built. **Probably cheap; nobody has looked.**
+  stamp that D142/D148 already built. **Probably cheap; nobody has looked.** [🆕🆕🆕 D639 (D539): no longer open — the sentence is READ since D639 (`opponentKnockedOutByDamage`, R-SSK1; the `me` printings are Marshadow ×2 and Golisopod)]
 - **`onAllyActiveKnockOut` has ONE producer and the scan fires the FIRST match.** A second
   parking Tool trigger on one board is deferred, exactly as the board triggers defer
   chaining — same follow-up, now with a second caller wanting it.
@@ -16880,7 +16880,7 @@ itself, not smaller.**
   than assumed: still no reader, still no op / `CardFilter` / zone rule that consults a
   card's own retrievability. ⚠️ **This is now the ONLY clause D159 left LOUD that is still
   LOUD** — said so the next census does not have to work out which of the two closed.
-- **`sv02-148` Corviknight** remains D171's open antecedent family of one, untouched.
+- **`sv02-148` Corviknight** remains D171's open antecedent family of one, untouched. [🆕🆕🆕 D639 (D539): no longer open — the sentence is READ since D639 (`opponentKnockedOutByDamage`, R-SSK1; the `me` printings are Marshadow ×2 and Golisopod)]
 
 ## D173 — THE SIX WRONG-INDEX FIXTURES, FIXED RATHER THAN DECLARED: all six carry their whole printed attack list at PRINTED indices, `reindexed` empties and is PINNED empty, and the sweep that transcribed them turned up a WRONG VALUE on an axis no census recorded (engine **UNCHANGED at 0.117.0**, `MATCH_RECORD_VERSION` **unchanged at 11**, **0 engine behaviour lines**)
 
@@ -17205,7 +17205,7 @@ this figure is 218 and not the 216 the worktree handoff measured against a pre-D
   producers three ways; they agree today and the agreement is what each of them asserts.
 - **Therapeutic Energy `sv02-193`** (§D172) and **Corviknight `sv02-148`** (§D171) are
   untouched by this slice and remain the open items in their own neighbourhoods. ✅ **`sv02-193`
-  has since been BUILT at D174 (§D174); only Corviknight is still open.**
+  has since been BUILT at D174 (§D174); only Corviknight is still open.** [🆕🆕🆕 D639 (D539): no longer open — the sentence is READ since D639 (`opponentKnockedOutByDamage`, R-SSK1; the `me` printings are Marshadow ×2 and Golisopod)]
 
 ---
 
@@ -17598,7 +17598,7 @@ the columns.
 - **DISCARD-PILE RETRIEVAL RESTRICTIONS — 2 printings** (Neutralization Zone `sv06.5-060`, Poké
   Vital A `sv06.5-062`). Unchanged since D159; still the only clause D159 left LOUD that is still
   LOUD.
-- **`sv02-148` Corviknight** remains D171's open antecedent family of one, untouched.
+- **`sv02-148` Corviknight** remains D171's open antecedent family of one, untouched. [🆕🆕🆕 D639 (D539): no longer open — the sentence is READ since D639 (`opponentKnockedOutByDamage`, R-SSK1; the `me` printings are Marshadow ×2 and Golisopod)]
 - **SPIRITOMB `sv02-089`'s TYPE DIVERGENCE** (D173's remainder) — owned by the concurrent slice
   that landed as **D175**; NOT touched here.
 - ⚠️ **THE SECOND `EnergyProgram.passive` WRITER IS THE ONE TO WATCH.** The audit's controlling
@@ -17888,7 +17888,7 @@ regeneration, so nothing was owed; a slice that adds or removes a fixture id wou
   status-immunity family is CLOSED at 4/4 printings / 3/3 sentences.** Its own remainder — the
   four newly counted `recovers from ALL Special Conditions` printings — is listed in §D174.
   **Corviknight `sv02-148`** (§D171) is untouched and remains the open item in its own
-  neighbourhood.
+  neighbourhood. [🆕🆕🆕 D639 (D539): no longer open — the sentence is READ since D639 (`opponentKnockedOutByDamage`, R-SSK1; the `me` printings are Marshadow ×2 and Golisopod)]
 
 ---
 
@@ -30247,6 +30247,25 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D639 — K3 + R1: KO-by-this-attack consequents and the KO sweep (engine 0.522.0, `MATCH_RECORD_VERSION` stays 46)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D638 (`4b62beef`), NOT committed. 3 texts / 6 printings (`me` + `30th`) — the
+D625 re-rank's K3 and R1 groups, less Celebration.
+
+- **Shadowy Side Kick / Critical Slash** (Marshadow `me01-080` / `-146`, Golisopod `me04-026`): `conditionGate` on the NEW `BoardCondition`
+  `opponentKnockedOutByDamage` over the shipped `preventDamage { effects }`. R-SSK1 ⚠️ UNRULED: the KO is read at the program's step (after
+  the damage, before the §8.1 sweep) as a lethally damaged opponent body not doomed by an effect; no reactive stage between heals or moves it.
+- **Mysterious Signal** (Unown `30th-072`): the NEW `bountyThisAttack` stamps the EXISTING `koBounty` on a lethally damaged opponent Active
+  for THIS turn; flow.ts `koPrizeBonus` pays it at the sweep. R-MSG1 ⚠️ UNRULED: it adds to a live next-turn bounty; no §11 ask.
+- **Soul Destroyer** (Yveltal ex `me03-053` / `-105`): the NEW `knockOutEach { remainingHpAtMost }`. R-SDS1 ⚠️ UNRULED: the window is read
+  over the whole opposing side first, a §11-shielded body is skipped (announced), each Knock Out is D414's effect doom.
+- **Dropped and named:** Gholdengo ×2 "Celebration" (`30th-108` / `-142`): `takePrize` queues its stage behind the program, so the "If you
+  do" shuffle would run first; a post-Prize stage is persisted state.
+- **MRV stays 46** (match.ts "STAYS 46 AT D639"): no new member parks; the persisted bytes are the shipped `koBounty`, `attackBlock` and
+  `koByEffect` marker.
+- **Suite.** `koSweepMeD639.test.ts` (20), census D639 block (2). +23 mutant rows, all KILLED. Census: attacks **2,763 / 2,771**, 1233 `me`
+  printings fully built. Sweep PENDING.
+
 ## D638 — X1: copy / borrowed effects (engine 0.521.0, `MATCH_RECORD_VERSION` stays 46)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D637 (`85a9bb88`), NOT committed. 3 texts / 6 printings (`me` + `30th`) — the
@@ -30849,7 +30868,7 @@ registry objects.
   double). D592's "Place" row and D449's any-zone put take the singular "1 damage counter" (Sneaky Placement).
 - **4 texts / 8 `me` printings.** Mega Absol ex ×3, Inteleon ×3, N's Vanilluxe, Bramblin — all 8 fully built.
 - **Dropped and named.** Yveltal ex ×2 "Soul Destroyer" (a Knock Out sweep at an HP threshold), Unown `30th-072`
-  "Mysterious Signal" (a this-attack Prize bonus).
+  "Mysterious Signal" (a this-attack Prize bonus). [🆕🆕🆕 D639 (D539): both BUILT at D639 (K3 + R1)]
 - **Readings.** R-BD1 (UNRULED): Bring Down's least HP is taken before the §11 filter.
 - **Suite.** `koCountersMeD609.test.ts` (21) and a census D609 block (2). +26 mutant rows; six rows re-pointed.
 - **Census.** Standard pool attacks **2,640 / 2,771**; 972 `me` printings fully built.

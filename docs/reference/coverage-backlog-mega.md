@@ -6,6 +6,23 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D639 update (engine 0.522.0) — K3 + R1, KO-by-this-attack consequents and the KO sweep (`MATCH_RECORD_VERSION` stays 46)
+
+3 texts / 6 printings (`koSweepMeD639.test.ts`), reader rows: Shadowy Side Kick ×2 `me01-080` / `-146` = Golisopod "Critical Slash"
+`me04-026` (the new `opponentKnockedOutByDamage` gate over the shipped effects shield — R-SSK1), Unown "Mysterious Signal" `30th-072`
+(the new `bountyThisAttack`, a this-turn `koBounty` — R-MSG1) and Yveltal ex ×2 "Soul Destroyer" `me03-053` / `-105` (the new
+`knockOutEach` — R-SDS1). **Finished:** all 6. **Dropped and named:** Gholdengo ×2 "Celebration" `30th-108` / `-142` (its "If you do"
+after the queued `takePrizes` stage needs a new post-Prize stage: persisted state).
+
+| Column | `me` built / units (D639) | Standard pool D639 |
+|---|---|---|
+| Attacks | 1,031 / 1,039 (+6) | **2,763 / 2,771** |
+| Abilities | 220 / 234 | **596 / 610** |
+| Trainers | 175 / 183 | **439 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1233** (1227 + 6).
+
 ## 🆕 D638 update (engine 0.521.0) — X1, copy / borrowed effects (`MATCH_RECORD_VERSION` stays 46)
 
 3 texts / 6 printings (`copyBorrowedMeD638.test.ts`) on the shipped copy family: Mew ex ×3 "Memory Helix" `30th-066` / `-152` / `-158`
@@ -560,7 +577,7 @@ a delayed use (`progress.md` NEXT). [🆕🆕🆕 D625 (D610 MINOR 2): R-HL1 INV
 before the §11 filter); N's Vanilluxe "Snow Coating" is `counterEachAll` with the new `perDamageCounterOnTarget`; Bramblin
 "Sneaky Placement" is the singular "Place 1 damage counter" on D449's any-zone put. **Finished:** all 8 cards. **WP36 rest,
 dropped and named** (2 texts / 3 printings): Yveltal ex ×2 "Soul Destroyer" (a Knock Out sweep at an HP threshold) and Unown
-`30th-072` "Mysterious Signal" (a this-attack Prize bonus).
+`30th-072` "Mysterious Signal" (a this-attack Prize bonus). [🆕🆕🆕 D639 (D539): both BUILT at D639 (K3 + R1)]
 
 | Column | `me` built / units (D609) | Standard pool D609 |
 |---|---|---|
@@ -1145,17 +1162,17 @@ group wins; the grouping is a reading aid, not a census figure).
 - 3× Choose a Pokémon in play (yours or your opponent's) that has the least HP remaining, except for this Pokémon, and it is Knocked Out. [🆕🆕🆕 D609: BUILT]
 - 3× If your opponent has 3 or fewer Prize cards remaining, this attack does 90 more damage. [🆕🆕🆕 D586: BUILT]
 - 3× If your opponent's Active Pokémon has exactly 6 damage counters on it, that Pokémon is Knocked Out. [🆕🆕🆕 D609: BUILT]
-- 3× If your opponent's Pokémon is Knocked Out by damage from this attack, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.
+- 3× If your opponent's Pokémon is Knocked Out by damage from this attack, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon. [🆕🆕🆕 D639: BUILT — K3]
 - 3× This attack does 70 damage for each Prize card you have taken. [🆕🆕🆕 D620: BUILT]
 - 2× If any of your Hop's Pokémon were Knocked Out by damage from an attack during your opponent's last turn, this attack does 100 more damage. [🆕🆕🆕 D593: BUILT]
-- 2× If you have exactly 30 cards in your hand, take 2 Prize cards. If you do, shuffle your hand into your deck. [🆕🆕🆕 D594: dropped from WP33a — `takePrize` queues behind the program, so the "if you do" shuffle would run first] [🆕🆕🆕 D600: dropped again from WP33b, same reason]
+- 2× If you have exactly 30 cards in your hand, take 2 Prize cards. If you do, shuffle your hand into your deck. [🆕🆕🆕 D594: dropped from WP33a — `takePrize` queues behind the program, so the "if you do" shuffle would run first] [🆕🆕🆕 D600: dropped again from WP33b, same reason] [🆕🆕🆕 D639: dropped from R1 — the "If you do" after a queued `takePrizes` stage needs a new post-Prize stage (persisted state)]
 - 2× If you have exactly 6 Prize cards remaining, this attack does 200 more damage. [🆕🆕🆕 D594: BUILT]
 - 2× If your opponent has 2 or fewer Prize cards remaining, this attack does 100 more damage. [🆕🆕🆕 D586: BUILT]
-- 2× Knock Out each of your opponent's Pokémon that has 50 HP or less remaining. [🆕🆕🆕 D609: WP36 rest]
+- 2× Knock Out each of your opponent's Pokémon that has 50 HP or less remaining. [🆕🆕🆕 D609: WP36 rest] [🆕🆕🆕 D639: BUILT — R1]
 - 2× This attack does 80 damage for each Prize card you have taken. [🆕🆕🆕 D620: BUILT]
 - 1× During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), place 12 damage counters on the Attacking Pokémon. [🆕🆕🆕 D592: BUILT]
 - 1× Flip 3 coins. If all of them are heads, Knock Out 1 of your opponent's Pokémon.
-- 1× If your opponent's Pokémon is Knocked Out by damage from this attack, take 1 more Prize card. [🆕🆕🆕 D609: WP36 rest]
+- 1× If your opponent's Pokémon is Knocked Out by damage from this attack, take 1 more Prize card. [🆕🆕🆕 D609: WP36 rest] [🆕🆕🆕 D639: BUILT — K3]
 - 1× This attack does 60 more damage for each Prize card your opponent took during their last turn. [🆕🆕🆕 D607: WP28b] [🆕🆕🆕 D623: dropped from WP28b — no state records the Prizes taken during the last turn; a persisted record is an MRV bump] [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
 
 ### Damage-counter placement and manipulation — 24 text(s) / 34 printing(s)

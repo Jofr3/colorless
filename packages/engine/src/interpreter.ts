@@ -2578,6 +2578,12 @@ function stepOp(
       return { done: taxDefender(state, ctx, events) };
     case "bountyDefender":
       return { done: bountyDefender(state, op.amount, ctx, events) };
+    // 🆕🆕🆕 D639 — Mysterious Signal: the defender's own `koBounty`, for THIS turn (R-MSG1).
+    case "bountyThisAttack":
+      return { done: bountyThisAttack(state, op.amount, ctx) };
+    // 🆕🆕🆕 D639 — Soul Destroyer: every opponent body in the window, doomed (R-SDS1).
+    case "knockOutEach":
+      return { done: knockOutEach(state, op.remainingHpAtMost, ctx, events) };
     // 🆕🆕 D434 — the SCHEDULE half of the delayed placement. The other half is
     // flow.ts `runCheckup`; neither is a build on its own.
     case "scheduleCounters":
@@ -6901,6 +6907,10 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const defending = state.players[otherSeat(seat)].active;
       return defending !== null && damageCountersOn(defending) === cond.count;
     }
+    case "opponentKnockedOutByDamage":
+      // 🆕🆕🆕 D639 — Shadowy Side Kick / Critical Slash (R-SSK1): a body of the opponent's that the
+      // §8.1 sweep will Knock Out, and not by an effect's doom (`koByEffect` this turn).
+      return opponentKnockedOutByDamage(state, seat);
     case "opponentDiscardHasNameContaining":
       // 🆕🆕🆕 D563 — Kyurem "Plasma Bane"'s *"your opponent has any cards in their
       // discard pile that have "Colress" in the name"*: the OTHER seat's pile only (R-PB),
@@ -8170,6 +8180,9 @@ export function conditionNote(cond: BoardCondition): string {
     // 🆕🆕🆕 D609 — the printed clause (Terminal Period); `knockOutChosenNote`'s window wording.
     case "opponentActiveDamageCountersExactly":
       return `your opponent's Active Pokémon has exactly ${String(cond.count)} damage counters on it`;
+    // 🆕🆕🆕 D639 — the printed clause (Shadowy Side Kick), minus the "If".
+    case "opponentKnockedOutByDamage":
+      return "your opponent's Pokémon is Knocked Out by damage from this attack";
     case "opponentActiveNoRetreatCost":
       return "your opponent's Active Pokémon has no Retreat Cost";
     // 🆕🆕🆕 D626 — Adversity Policy's clause, the holder spoken as "your Active Pokémon" (the stage's reading).
@@ -10924,6 +10937,47 @@ function bountyDefender(
     ...marked,
     koBounty: { turn: bountyTurn, amount: payout },
   });
+}
+
+/** 🆕🆕🆕 §8.1 (D639) — is a body of `seat`'s OPPONENT lethally damaged right now, and not by an
+    effect's doom this turn? Inside an attack program (after the damage, before the sweep) that is
+    *"Knocked Out by damage from this attack"* (R-SSK1); at a settled point no body is lethal. */
+function opponentKnockedOutByDamage(state: GameState, seat: Seat): boolean {
+  const side = state.players[otherSeat(seat)];
+  return [side.active, ...side.bench].some(
+    (body) =>
+      body !== null &&
+      isLethallyDamaged(state, body) &&
+      !body.markers.includes(koByEffectMarker(state.turn)),
+  );
+}
+
+/** 🆕🆕🆕 §8.1 (D639) — Unown "Mysterious Signal": the opponent's Active, lethally damaged by this
+    attack, carries a THIS-turn `koBounty` that flow.ts `koPrizeBonus` pays at the sweep. A live
+    record of this turn is ADDED to (R-MSG1 ⚠️ UNRULED: the effects stack); any other is replaced.
+    No §11 ask (the Prize is not an effect done to that Pokémon, R-MSG1) and no event. */
+function bountyThisAttack(state: GameState, amount: number, ctx: EffectContext): GameState {
+  const seat = otherSeat(ctx.seat);
+  const marked = state.players[seat].active;
+  if (marked === null || !isLethallyDamaged(state, marked)) return state;
+  if (marked.markers.includes(koByEffectMarker(state.turn))) return state;
+  const prior = marked.koBounty;
+  const live = prior !== null && prior.turn === state.turn ? prior.amount : 0;
+  return withActive(state, seat, { ...marked, koBounty: { turn: state.turn, amount: live + amount } });
+}
+
+/** 🆕🆕🆕 §8.1/§11 (D639) — Yveltal ex "Soul Destroyer": every opponent body with `atMost` HP or
+    less remaining (`remainingHpWithin`, read over the whole side BEFORE any doom), minus each §11-
+    shielded one (`unshieldedRefs`, announced), doomed with D414's `koByEffect` marker (R-SDS1). */
+function knockOutEach(state: GameState, atMost: number, ctx: EffectContext, events: GameEvent[]): GameState {
+  const inWindow = oppAnyRefs(state, ctx.seat).filter((ref) => {
+    const pokemon = refPokemon(state, ref);
+    return pokemon !== undefined && remainingHpWithin(state, pokemon, atMost);
+  });
+  return unshieldedRefs(state, inWindow, ctx, events).reduce(
+    (next, ref) => doomBodyAt(next, ref, koByEffectMarker(state.turn)),
+    state,
+  );
 }
 
 /** 🆕🆕 §13 (D434) — SCHEDULE a counter placement onto the DEFENDING Pokémon for the

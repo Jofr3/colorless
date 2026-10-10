@@ -33,6 +33,7 @@ import {
 //   Sneaky Placement   — the singular "Place 1 damage counter on", D592's synonym and D449's anchor widened.
 //
 // WP36's other two texts need vocabulary beyond the brief and are dropped, named in §1.
+// [🆕🆕🆕 D639 (D539): both BUILT at D639 (K3 + R1, `koSweepMeD639.test.ts`); §1's pin is inverted.]
 
 const TERMINAL_PERIOD =
   "If your opponent's Active Pokémon has exactly 6 damage counters on it, that Pokémon is Knocked Out.";
@@ -49,7 +50,7 @@ const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [SNEAKY_PLACEMENT, ["me02-046"]],
 ];
 
-/** WP36's rest, dropped and named: [text, ids, the vocabulary it needs]. */
+/** WP36's rest, dropped and named: [text, ids, the vocabulary it needs]. [🆕🆕🆕 D639 (D539): both BUILT at D639.] */
 const WP36_REST: readonly (readonly [string, readonly string[]])[] = [
   // a Knock Out SWEEP over every opponent body at or under an HP threshold (no op walks and KOs).
   ["Knock Out each of your opponent's Pokémon that has 50 HP or less remaining.", ["me03-053", "me03-105"]],
@@ -70,11 +71,12 @@ describe("D609 §1 — the texts", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(8);
   });
 
-  it("WP36's rest stays unbuilt: 2 texts / 3 printings, named", () => {
+  it("WP36's rest stays unbuilt: 2 texts / 3 printings, named (🆕🆕🆕 D639: both BUILT — K3 + R1)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, ids] of WP36_REST) {
       expect([text, me.get(text)]).toEqual([text, ids.length]);
-      expect(resolvedByAnyReader(text), text).toBe(false);
+      // 🆕🆕🆕 D639 (D539): "stays unbuilt" is WITHDRAWN — `koSweepMeD639.test.ts` reads both; still unkeyed.
+      expect(resolvedByAnyReader(text), text).toBe(true);
       for (const id of ids) expect(programFor(id), id).toBeUndefined();
     }
   });
@@ -421,6 +423,6 @@ describe("D609 §6 — Sneaky Placement: 1 counter on 1 of the opponent's Pokém
 
 describe("D609 §7 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.521.0");
+    expect(engineVersion).toBe("0.522.0");
   });
 });

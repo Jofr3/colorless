@@ -738,7 +738,7 @@ const RAW: Record<string, string> = (
 describe("D522 §4 — the version steps, the heading is written, the prose is corrected, and what stands still", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.521.0");
+    expect(engineVersion).toBe("0.522.0");
     expect(manifest.version).toBe(engineVersion);
   });
 
@@ -772,7 +772,9 @@ describe("D522 §4 — the version steps, the heading is written, the prose is c
     // `conditionGate` on the clause table's row around the Benched placement. MEASURED.
     // 🆕🆕🆕 D636 — 25 → 26 and 6 → 7: Chi-Yu "Scorching Earth"'s arm (`DISCARD_OPPONENT_STADIUM_AND_BAR`), a
     // `conditionGate` on `opponentStadiumInPlay` around `discardStadium` and the Stadium bar. MEASURED.
-    expect(effects.split('op: "conditionGate",').length - 1).toBe(26);
+    // 🆕🆕🆕 D639 — 26 → 27: Shadowy Side Kick's arm (`KO_BY_THIS_ATTACK_PREVENT_ALL`), a `conditionGate` on
+    // `opponentKnockedOutByDamage` around `preventDamage { effects }`. MEASURED.
+    expect(effects.split('op: "conditionGate",').length - 1).toBe(27);
     expect(effects.split('op: "spreadDamage",').length - 1).toBe(10);
     expect(effects.split('{ op: "discardStadium" }').length - 1).toBe(7);
   });

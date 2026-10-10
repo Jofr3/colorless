@@ -2160,6 +2160,15 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 46 AT D639 — K3 + R1 ADD TWO `EffectOp` MEMBERS (`bountyThisAttack`, `knockOutEach`) AND ONE
+    `BoardCondition` MEMBER (`opponentKnockedOutByDamage`); NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY OR `InPlayPokemon`
+    FIELD.** (Placed ABOVE the D638 block.) Each new member is the WHOLE program of its sentence and none parks, so none can
+    sit in `phase.cont`. What can be persisted is shipped bytes only: Mysterious Signal writes the EXISTING
+    `InPlayPokemon.koBounty` at `turn: state.turn` (a record a 0.521 reader pays the same way at the sweep, flow.ts
+    `koPrizeBonus`, if a reactive stage parks between the stamp and the sweep); Shadowy Side Kick the EXISTING `attackBlock`;
+    Soul Destroyer D414's EXISTING `koByEffect:<turn>` marker. Gholdengo "Celebration" ×2 is NOT built: its "If you do" after
+    the Prize needs a new post-Prize `PendingStage` (a persisted shape), named for a later bump.
+
     🆕🆕🆕 **STAYS 46 AT D638 — X1 ADDS TWO `EffectOp` MEMBERS (`useInPlayAttackAs`, `useMilledSupporterEffect`), ONE
     OPTIONAL EVENT KEY (`SUPPORTER_EFFECT_USED.milled`, not persisted) AND ONE CATALOG-SIDE FIELD
     (`PassiveEffects.memoryHelix`); NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY OR `InPlayPokemon` FIELD.** (Placed ABOVE

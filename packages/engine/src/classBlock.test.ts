@@ -224,7 +224,8 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
     // re-censused (effects.ts carries the same table).
     for (const text of [
       // Corviknight sv02-148 "Accelerate" — gated on the attack's own RESULT.
-      "If your opponent's Pokémon is Knocked Out by damage from this attack, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.",
+      // 🆕🆕🆕 D639 (D539): LEFT THIS LIST, removed rather than shortened silently (D575's move) — the sentence is
+      // BUILT at D639 (Shadowy Side Kick / Critical Slash, `opponentKnockedOutByDamage`), pinned positively below.
       // Squawkabilly sv01-162 "Fly" — a SECOND consequent on the same flip.
       "Flip a coin. If tails, this attack does nothing. If heads, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.",
       // Bronzong sv03-145 "Oracle Press" — effects WITHOUT damage.
@@ -232,6 +233,19 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
+    // 🆕🆕🆕 D639 — the row that left: the KO gate over the shipped effects shield (`koSweepMeD639.test.ts`).
+    expect(
+      deriveAttackEffect(
+        "If your opponent's Pokémon is Knocked Out by damage from this attack, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.",
+      ),
+    ).toEqual([
+      {
+        op: "conditionGate",
+        cond: { kind: "opponentKnockedOutByDamage" },
+        // biome-ignore lint/suspicious/noThenProperty: the effect contract's gated-step list.
+        then: [{ op: "preventDamage", effects: true }],
+      },
+    ]);
   });
 
   it("costs zero registry rows — both cards simulate off their printed text", () => {

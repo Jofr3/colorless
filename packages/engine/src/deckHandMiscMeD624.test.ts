@@ -532,6 +532,6 @@ describe("D624 §7 — Chirp: up to 2 Pokémon with {F} Resistance, revealed int
 
 describe("D624 §8 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.521.0");
+    expect(engineVersion).toBe("0.522.0");
   });
 });
