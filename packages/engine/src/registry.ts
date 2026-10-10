@@ -397,11 +397,18 @@ export interface TriggeredAbility {
       Active Spot to the Bench, …"*. Keyed through `abilityUsedKey` (cardplay.ts — the ONE
       funnel for the key; its parameter WIDENED to take a trigger row) on the EXISTING
       `TurnAllowances.abilitiesUsed`: no new state key. Read by triggers.ts `sweepTriggers`
-      only — the one runner that serves this timing's self direction — which skips a spent
+      only [🆕🆕🆕 D628 (D539): "only" WITHDRAWN — `runBoardTrigger` reads it too, below] — the one runner that serves this timing's self direction — which skips a spent
       row and WRITES the key before the program runs. The lock matters beyond the rules
       text because a failed search still shuffles (R-ZH2), and RNG is state. Absent on every
-      other triggered row, which is byte-identical. */
-  oncePerTurn?: true;
+      other triggered row, which is byte-identical.
+      🆕🆕🆕 **D628 — WIDENED TO `"sharedByName"`, AND NOW READ BY `runBoardTrigger` TOO.** Meowth ex
+      `me03-062` / `-107` / `-121` "Last-Ditch Catch" (`onPlayToBench`) prints *"You can't use more than 1
+      Ability that has "Last-Ditch" in its name each turn."*: the activated Abilities' D272 scope, keyed
+      through the same `abilityUsedKey` (`*:Last-Ditch Catch`). The key is the Ability's NAME because it is
+      the only Ability in the LOCAL D1 whose name holds "Last-Ditch" (3 printings, one text); R-LDC1 ⚠️
+      UNRULED. `runBoardTrigger` skips a spent row and writes the key before the program runs; the self
+      sweep still reads `true` only (no swept row prints the name lock). */
+  oncePerTurn?: true | "sharedByName";
   /** 🆕 D319 — *"The effect of {name} doesn't stack."* — the printed clause that
       makes a SECOND copy of the same Ability contribute nothing. For a trigger
       that means the board sweep fires the ability NAME at most once, however
@@ -16511,7 +16518,7 @@ const DESTRUCTO_PRESS: CardProgram = {
     `discardAtEndOfYourTurn` (flow.ts `endTurn`, R-IG1). ⚠️ CARRIED DEBT, named and not fixed:
     the catalog tags it `energyType "Normal"`, so cards.ts `basicEnergy` matches it (Basic
     Energy searches, the deck-count rule) — Prism's and Reversal's debt, and its fix is
-    catalog data outside this whitelist (D538). [🆕🆕🆕 D583 (D539): WITHDRAWN for the ENGINE — cards.ts `isBasicEnergy` / `isSpecialEnergy` read the printed rules text since D583, so the "Normal" tag no longer makes a Special a Basic Energy there; the deck builder's copy rule still reads the catalog tag until a re-ingest writes map.ts's D583 "Special"] */
+    catalog data outside this whitelist (D538). [🆕🆕🆕 D583 (D539): WITHDRAWN for the ENGINE — cards.ts `isBasicEnergy` / `isSpecialEnergy` read the printed rules text since D583, so the "Normal" tag no longer makes a Special a Basic Energy there; the deck builder's copy rule still reads the catalog tag until a re-ingest writes map.ts's D583 "Special" (🆕🆕🆕 D628 (D539): WITHDRAWN — the deck builder asks the engine's `isBasicEnergy` / `isSpecialEnergy` since D628, finding 0b)] */
 const IGNITION_ENERGY: CardProgram = {
   energy: {
     provides: ["Colorless"],
@@ -17592,9 +17599,37 @@ const BALLOON_RETURN: CardProgram = {
 
 /** 🆕🆕🆕 **D593 — Meowth ex `me03-062` / `-107` / `-121` "Tuck Tail"** (attack index **0**,
     {C}{C}{C}, 60). Attack-only: its Ability "Last-Ditch Catch" stays UNBUILT, so the three
-    printings are not fully built. */
+    printings are not fully built. [🆕🆕🆕 D628 (D539): "Attack-only" and "stays UNBUILT" are WITHDRAWN,
+    kept as written — the object carries `triggered` "Last-Ditch Catch" since D628 (A1), so the three
+    printings are fully built.]
+    🆕🆕🆕 **D628 — "Last-Ditch Catch"**: *"Once during your turn, when you play this Pokémon from your hand
+    onto your Bench, you may use this Ability. Search your deck for a Supporter card, reveal it, and put it
+    into your hand. Then, shuffle your deck. You can't use more than 1 Ability that has "Last-Ditch" in its
+    name each turn."* An `onPlayToBench` trigger with `oncePerTurn: "sharedByName"` (the last sentence,
+    read by `runBoardTrigger`, R-LDC1 ⚠️ UNRULED) over Drilbur-style `searchDeck` Supporter → hand, revealed,
+    then the shuffle — behind an inner `optional` confirm, because the shuffle is a downside (a known deck
+    top is lost; the D590 rule). */
 const TUCK_TAIL: CardProgram = {
   attack: { 0: [{ op: "returnSelf", dest: "hand" }] },
+  triggered: [
+    {
+      name: "Last-Ditch Catch",
+      trigger: "onPlayToBench",
+      optional: true,
+      oncePerTurn: "sharedByName",
+      program: [
+        {
+          op: "optional",
+          note: "You may search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck.",
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [
+            { op: "searchDeck", filter: { kind: "supporter" }, dest: "hand", max: 1, reveal: true },
+            { op: "shuffleDeck" },
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 /** 🆕🆕🆕 **D593 — Emolga `me04-030` "Sky Return"** (attack index **1**, {L}, 30). Index 0
@@ -17693,7 +17728,7 @@ const FINAL_CHAIN: CardProgram = {
 //    Pokémon). The printed "you may use this Ability" is the use itself (§9.1). Dropped and named
 //    (vocabulary beyond the brief): Dragonair `me02.5-151` "Evolutionary Guidance" (an UNTYPED
 //    per-body Energy gate; `requiresEnergyType` takes a type) and Larry's Komala `me02.5-175`
-//    "Lethargic Charge" (an Active-only attach target; no `AttachTargetRiders` member says "Active").
+//    "Lethargic Charge" (an Active-only attach target; no `AttachTargetRiders` member says "Active"). [🆕🆕🆕 D628 (D539): Lethargic Charge BUILT at D628 (A1)]
 //    [🆕🆕🆕 D611 (D539): Dragonair BUILT at D611 (`requiresEnergyType: "any"`, `EVOLUTIONARY_GUIDANCE`);
 //    Larry's Komala still dropped (it also needs a which-Energy-card choice, see the D611 block).]
 //    `activatedMeD602.test.ts` drives each one. ──
@@ -17821,7 +17856,7 @@ const SUNRISE: CardProgram = {
 //    Abilities' "if you have any [{T}] Mega Evolution Pokémon ex in play") and the NEW
 //    `CardFilter.megaEvolutionEx` (Mega Signal's search, Jett's count). Everything else is shipped.
 //    Texts off the LOCAL D1. Dropped and named (vocabulary beyond the brief): Latios `me01-101`
-//    "Lustrous Assist" (a gate on a NAMED Active's Bench-to-Active move) and Wally's Compassion
+//    "Lustrous Assist" [🆕🆕🆕 D628 (D539): Lustrous Assist BUILT at D628 (A1)] (a gate on a NAMED Active's Bench-to-Active move) and Wally's Compassion
 //    `me01-132` / `-176` / `-186` (an all-Energy-to-hand consequent on the healed body). Excluded by
 //    the brief: Tremendous Bomb ×2, Ange Floette, Core Memory. `megaGatedMeD603.test.ts`.
 //    [🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory BUILT at D620 (WP26).]
@@ -18593,6 +18628,54 @@ const HIDE_N_SNEAK: CardProgram = {
   passive: { preventAttackEffects: true, preventAbilityEffects: true },
 };
 
+// ── 🆕🆕🆕 D628 — A1, THE REST OF THE ON-BENCH / ON-MOVE ABILITIES: 3 texts / 5 `me` printings. Meowth ex ×3
+//    "Last-Ditch Catch" rides `TUCK_TAIL` (above, D593's object); two NEW objects here. Texts off the LOCAL D1
+//    (2026-10-10, `legal_standard = 1`). Dropped and named: Clawitzer `me01-038` / `-141` "Fall Back to Reload"
+//    (*"Attach up to 2 Basic {W} Energy cards from your hand to this Pokémon"* is a choice, and the
+//    Active→Bench self sweep cannot park — `switchInto` runs mid-program; R-MR1's use-time reading would need a
+//    moved-to-Bench stamp, a persisted `InPlayPokemon` field). `onBenchMoveMeD628.test.ts` plays each. ──
+
+/** 🆕🆕🆕 **D628 — Latios `me01-101` "Lustrous Assist"**: *"Once during your turn, when your Mega Latias ex
+    moves from your Bench to the Active Spot, you may use this Ability. Move any amount of Energy from your
+    Benched Pokémon to your Active Pokémon."* Metal Road's frame (`METAL_ROAD`: the moment read as a use-time
+    gate, R-MR1) with the subject named rather than "this Pokémon": `playableIf allOf
+    [yourActivePromotedThisTurn, yourActiveNamed "Mega Latias ex"]` (the NEW member), no spot gate on Latios,
+    over N's Plan's `benchToActive` route at `max: "any"` + `anySource`. R-LSA1 ⚠️ UNRULED. */
+const LUSTROUS_ASSIST: CardProgram = {
+  abilities: [
+    {
+      name: "Lustrous Assist",
+      oncePerTurn: true,
+      activeOnly: false,
+      playableIf: {
+        kind: "allOf",
+        conditions: [{ kind: "yourActivePromotedThisTurn" }, { kind: "yourActiveNamed", name: "Mega Latias ex" }],
+      },
+      program: [{ op: "moveEnergy", filter: { kind: "anyEnergy" }, max: "any", route: "benchToActive", anySource: true }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D628 — Larry's Komala `me02.5-175` "Lethargic Charge"**: *"Once during your turn, if this Pokémon is
+    on your Bench, you may use this Ability. Attach an Energy card from your hand to your Active Larry's
+    Pokémon."* `benchOnly` (Flustered Leap's spot gate) over `attachFromHand` with the NEW `one` (the printed
+    singular, mandatory, R-LGC1 ⚠️ UNRULED) and the riders `activeOnly` (NEW) + `ownerPokemon "Larry"`: the hand
+    rows are the which-Energy-card choice, and any Energy card counts (Special too). No Energy card in hand, or
+    an Active that is not a Larry's Pokémon, refuses the use (`programPlayable`). */
+const LETHARGIC_CHARGE: CardProgram = {
+  abilities: [
+    {
+      name: "Lethargic Charge",
+      oncePerTurn: true,
+      activeOnly: false,
+      benchOnly: true,
+      program: [
+        { op: "attachFromHand", filter: { kind: "anyEnergy" }, one: true, activeOnly: true, ownerPokemon: "Larry" },
+      ],
+    },
+  ],
+};
+
 // ── 🆕🆕🆕 D608 — WP30: TWO `30th` ATTACK OBJECTS, KEYED BY ID. Text off the LOCAL D1; both printed
 //    tcgdex's `<em>` markup (WP06), so no reader claimed them. `snipeSpreadMeD608.test.ts`.
 //    🆕🆕🆕 D612 — ONE now: the normaliser (cardText.ts) strips the `<em>`. Stealthy Slash's text is
@@ -18743,7 +18826,7 @@ const TYRANNICALLY_GUTSY: CardProgram = {
 //    (Evidence Gathering), `evolveFromDeck.fromHand` + `recordAs` with the NEW op
 //    `countersOnRecordedBody` (Spiteful Evolution; Sinister Surge reuses the op), the NEW
 //    `BoardCondition` `notYourFirstTurn` and `requiresEnergyType: "any"` (Evolutionary Guidance).
-//    Dropped and named: Larry's Komala `me02.5-175` "Lethargic Charge" — an Active-only attach target
+//    Dropped and named: Larry's Komala `me02.5-175` "Lethargic Charge" [🆕🆕🆕 D628 (D539): Lethargic Charge BUILT at D628 (A1)] — an Active-only attach target
 //    AND a choice of WHICH Energy card (`attachEnergyFrom` `anyEnergy` attaches the first one in the
 //    hand, D246's attack reading): two pieces, not one. The printed "Larry's" filter is not a third:
 //    `attachEnergyFrom` carries it as `ownerPokemon`; `attachFromHand`, which does choose the card,
@@ -20035,7 +20118,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // 🆕🆕🆕 D593 — WP07: "Fade Out" ×5 under three printed names, MID-MAP (`raw[last]` does not move).
   // ATTACK-only keys. `clauseRowsMeD593.test.ts` pins each face and drives the bounce.
   "mep-006": BALLOON_RETURN, // Drifblim "Balloon Return" (attack 1) — twin `sv09-068` (Lillie's Comfey "Fade Out", attack 1)
-  "me03-062": TUCK_TAIL, // Meowth ex "Tuck Tail" (attack 0) — Ability "Last-Ditch Catch" unbuilt
+  "me03-062": TUCK_TAIL, // Meowth ex "Tuck Tail" (attack 0) — Ability "Last-Ditch Catch" unbuilt [🆕🆕🆕 D628 (D539): BUILT, on this object]
   "me03-107": TUCK_TAIL, // Meowth ex
   "me03-121": TUCK_TAIL, // Meowth ex
   "me04-030": SKY_RETURN, // Emolga "Sky Return" (attack 1)
@@ -20172,6 +20255,10 @@ const REGISTRY: Record<string, CardProgram> = {
   "me05-006": HIDE_N_SNEAK, // Sinistcha
   "me05-033": HIDE_N_SNEAK, // Shuppet
   "me05-034": HIDE_N_SNEAK, // Banette
+  // 🆕🆕🆕 D628 — A1, the rest of the on-bench / on-move Abilities: 2 keys / 2 objects, MID-MAP (`raw[last]` does
+  // not move). Meowth ex ×3 "Last-Ditch Catch" rides `TUCK_TAIL`'s existing keys.
+  "me01-101": LUSTROUS_ASSIST, // Latios — after your Mega Latias ex moved up this turn: Bench Energy to the Active
+  "me02.5-175": LETHARGIC_CHARGE, // Larry's Komala — from the Bench: an Energy card from hand to your Active Larry's Pokémon
   // 🆕🆕🆕 D608 — WP30: 5 `30th` ATTACK-only keys / 2 objects, MID-MAP (`raw[last]` does not move).
   // 🆕🆕🆕 D612 — 3 now: Stealthy Slash ×2 RETIRED (the normalised text is `mep-099`'s, reader-built).
   "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex

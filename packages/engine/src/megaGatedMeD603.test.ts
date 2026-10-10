@@ -26,7 +26,7 @@ import {
 // NEW `CardFilter.megaEvolutionEx`. Every id and text measured on the LOCAL D1
 // (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-08, `legal_standard = 1`; no id was referenced in
 // the tree before this slice except Mega Signal `me01-121`, a Trainer face in
-// `megaEvolutionRuleD582.test.ts`. Dropped and named: Latios `me01-101` "Lustrous Assist" (a gate on a
+// `megaEvolutionRuleD582.test.ts`. Dropped and named: Latios `me01-101` "Lustrous Assist" [🆕🆕🆕 D628 (D539): Lustrous Assist BUILT at D628 (A1)] (a gate on a
 // NAMED Active's Bench-to-Active move) and Wally's Compassion ×3 (an all-Energy-to-hand consequent on
 // the healed body). Excluded by the brief: Tremendous Bomb ×2, Ange Floette, Core Memory (§9).
 // [🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory BUILT at D620 (WP26).]
@@ -520,19 +520,20 @@ describe("D603 §8 — Jett: a card for each of your opponent's Mega Evolution P
 });
 
 describe("D603 §9 — the dropped and excluded texts stay unkeyed, and the version", () => {
-  it("Latios, ~~Wally's Compassion ×3~~ and Ange Floette carry no program (🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory, excluded here, are keyed since D620; 🆕🆕🆕 D625 (D539): Wally's Compassion ×3 is keyed since D625)", () => {
+  it("~~Latios~~, ~~Wally's Compassion ×3~~ and Ange Floette carry no program (🆕🆕🆕 D628 (D539): Latios is keyed since D628; 🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory, excluded here, are keyed since D620; 🆕🆕🆕 D625 (D539): Wally's Compassion ×3 is keyed since D625)", () => {
     for (const id of [
-      "me01-101", // Latios "Lustrous Assist" — dropped
+      // "me01-101", Latios "Lustrous Assist" — dropped [🆕🆕🆕 D628 (D539): keyed since D628, onBenchMoveMeD628.test.ts]
       "me04-075", // Ange Floette — excluded
     ])
       expect(programFor(id), id).toBeUndefined();
+    expect(programFor("me01-101")?.abilities?.[0]?.name).toBe("Lustrous Assist");
     // 🆕🆕🆕 D625 — Wally's Compassion ×3, dropped here, is built by T1 (`trainersMeD625.test.ts`).
     for (const id of ["me01-132", "me01-176", "me01-186"]) expect(programFor(id), id).toBeDefined();
     // 🆕🆕🆕 D620 — Tremendous Bomb ×2 and Core Memory are built by WP26 (`prizesToolsMeD620.test.ts`).
     for (const id of ["me05-082", "me05-113", "me03-070"]) expect(programFor(id), id).toBeDefined();
   });
 
-  it("is built at engine 0.510.0", () => {
-    expect(engineVersion).toBe("0.510.0");
+  it("is built at engine 0.511.0", () => {
+    expect(engineVersion).toBe("0.511.0");
   });
 });

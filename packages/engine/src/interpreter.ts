@@ -6782,6 +6782,12 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const spot = activeTop(state, seat);
       return spot !== null && (spot.card.abilities ?? []).some((a) => a.name === cond.name);
     }
+    case "yourActiveNamed": {
+      // 🆕🆕🆕 D628 — Latios "Lustrous Assist"'s *"your Mega Latias ex"*: the Active's TOP card by its
+      // exact printed name (`yourNamedPokemonInPlay`'s comparison on one body). Empty Spot: FALSE.
+      const spot = activeTop(state, seat);
+      return spot !== null && spot.card.name === cond.name;
+    }
     case "opponentHasExOrVInPlay": {
       // 🆕🆕🆕 D560 (V2) — Slaking ex's *"your opponent has … Pokémon ex or Pokémon V in
       // play"*: the Active AND the Bench (§1.1, R-SL), each TOP card through D107's
@@ -8065,6 +8071,9 @@ export function conditionNote(cond: BoardCondition): string {
     case "yourActiveHasAbility":
       // 🆕🆕🆕 D560 — the printed clause verbatim (Thwackey's reject pill / tooltip).
       return `your Active Pokémon has the ${cond.name} Ability`;
+    case "yourActiveNamed":
+      // 🆕🆕🆕 D628 — Lustrous Assist's reject pill / tooltip, beside the promoted-this-turn note.
+      return `your Active Pokémon is ${cond.name}`;
     case "opponentHasExOrVInPlay":
       // 🆕🆕🆕 D560 — the PERMISSION `cantAttackUnless` stores, in the positive voice the
       // §8 reject reads it in ("can't attack unless <this>").
@@ -8872,7 +8881,15 @@ export function applyChoice(
       // stays attached — which is also exactly what a v33 ROLLBACK deploy computes on a
       // v34 record parked here (apps/api match.ts, THE SEVENTH POSITION).
       if (choice.kind !== "attachCards") return state;
-      const attached = attachFromZoneApply(state, choice.assignments, "hand", ctx, events);
+      // 🆕🆕🆕 D628 — the printed singular is MANDATORY (Lethargic Charge, R-LGC1): an empty answer is topped up
+      // with the first offered card onto the first offered target, both re-read off the live offer.
+      const attached = attachFromZoneApply(
+        state,
+        op.one === true && choice.assignments.length === 0 ? handTopUp(state, ctx, op) : choice.assignments,
+        "hand",
+        ctx,
+        events,
+      );
       recordMoved(record, op.recordAs, attached.attached);
       return attached.state;
     }
@@ -18281,7 +18298,8 @@ export function firstAttachableEnergy(
     is that type (Gardevoir's "your {P} Pokémon"), `basicOnly` only Basics
     (Koraidon's), `ownerPokemon` only the printed owner-prefixed subgroup (Iono's
     Bellibolt ex's "1 of your Iono's Pokémon"), `benchOnly` drops the Active
-    outright (Electric Generator's "your Benched {L} Pokémon"), and `notIfKO`
+    outright (Electric Generator's "your Benched {L} Pokémon") [🆕🆕🆕 D628: and `activeOnly` drops the
+    Bench, Lethargic Charge's "your Active Larry's Pokémon"], and `notIfKO`
     drops any whose `bonusCounters` would Knock it Out ("you can't use this on a
     Pokémon that would be Knocked Out"), so the placed counters are always
     non-lethal. No riders → every own in-play Pokémon (the base ops' targets).
@@ -18380,6 +18398,8 @@ export function attachEnergyTargets(
   if (riders.benchOnly !== true && side.active !== null && eligible(side.active)) {
     refs.push({ seat: owner, spot: { spot: "active" } });
   }
+  // 🆕🆕🆕 D628 — `activeOnly` (Lethargic Charge's "your Active Larry's Pokémon"): the Bench is not offered.
+  if (riders.activeOnly === true) return refs;
   side.bench.forEach((pokemon, index) => {
     if (eligible(pokemon)) refs.push({ seat: owner, spot: { spot: "bench", index } });
   });
@@ -18729,7 +18749,10 @@ function eachAttachTopUp(
 
     NOTE — this reads the HAND, which is why it is the one offer in this family
     that could safely be a `programPlayable` input. It is not one, because no
-    printing of this op is a Trainer or an Ability; see the op's doc. */
+    printing of this op is a Trainer or an Ability; see the op's doc.
+    [🆕🆕🆕 D628 (D539): "It is not one" and "THE CAP IS ALWAYS THE CANDIDATE SET" are WITHDRAWN for the
+    printed singular (`one`, Larry's Komala "Lethargic Charge", an Ability): its cap is 1, and the offer is the
+    play gate's input through `attachFromHandPlayable`.] */
 function attachFromHandOffer(
   state: GameState,
   ctx: EffectContext,
@@ -18752,7 +18775,42 @@ function attachFromHandOffer(
   if (op.toSelf === true) {
     return { candidates, targets: handOpenRefs(state, sourceRef(state, ctx)), max: candidates.length };
   }
+  // 🆕🆕🆕 D628 — the printed singular "Attach AN Energy card … to your Active Larry's Pokémon" (Lethargic
+  // Charge): the two riders reach `attachEnergyTargets` and the cap is ONE card. An EARLY RETURN so D247's
+  // line below stays byte-identical.
+  if (op.one === true) {
+    const riders: AttachTargetRiders = {
+      source: "hand",
+      ...(op.activeOnly === true ? { activeOnly: true as const } : {}),
+      ...(op.ownerPokemon === undefined ? {} : { ownerPokemon: op.ownerPokemon }),
+    };
+    return { candidates, targets: attachEnergyTargets(state, seat, riders), max: Math.min(1, candidates.length) };
+  }
   return { candidates, targets: attachEnergyTargets(state, seat, { source: "hand" }), max: candidates.length };
+}
+
+/** 🆕🆕🆕 D628 — R-LGC1's top-up: the first offered hand card onto the first offered target, or nothing. */
+function handTopUp(
+  state: GameState,
+  ctx: EffectContext,
+  op: Extract<EffectOp, { op: "attachFromHand" }>,
+): { uid: string; to: PokemonRef }[] {
+  const offer = attachFromHandOffer(state, ctx, op);
+  const [uid] = offer.candidates;
+  const [to] = offer.targets;
+  return uid === undefined || to === undefined ? [] : [{ uid, to }];
+}
+
+/** 🆕🆕🆕 D628 — `attachFromHandOffer` for the play gate (cardplay.ts `programPlayable`), which holds a seat
+    and the acting body's uid but no `EffectContext`. */
+export function attachFromHandPlayable(
+  state: GameState,
+  seat: Seat,
+  op: Extract<EffectOp, { op: "attachFromHand" }>,
+  sourceUid?: string,
+): boolean {
+  const offer = attachFromHandOffer(state, sourceUid === undefined ? { seat } : { seat, sourceUid }, op);
+  return offer.candidates.length > 0 && offer.targets.length > 0;
 }
 
 /** 🆕🆕🆕 D575 — `refs` minus every body carrying a live Glimmora bar (R-GL1): the `toSelf`
@@ -21060,6 +21118,11 @@ function attachFromHandNote(op: Extract<EffectOp, { op: "attachFromHand" }>): st
   // captioning, named as a carried debt in decisions.md D552.
   if (op.toSelf === true) {
     return `Attach any number of ${retrieveNoun(op.filter).plural} from your hand to this Pokémon.`;
+  }
+  // 🆕🆕🆕 D628 — the printed singular (Lethargic Charge), its own sentence: "Attach an Energy card from your
+  // hand to your Active Larry's Pokémon." (`attachTargetNoun` has no Active word; the zone is spelled here.)
+  if (op.one === true) {
+    return `Attach ${retrieveNoun(op.filter).singular} from your hand to your ${op.activeOnly === true ? "Active " : ""}${ownerNoun(op.ownerPokemon)}Pokémon.`;
   }
   return `Attach any number of ${retrieveNoun(op.filter).plural} from your hand to your ${attachTargetNoun({})} in any way you like.`;
 }

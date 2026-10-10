@@ -5,6 +5,7 @@
 // builder keeps speaking its own dialect (accented "Pokémon", "Stage 1",
 // "Pokémon Tool", …) unchanged.
 
+import { isBasicEnergy, isSpecialEnergy } from "@luminous/engine";
 import type { Card, CardBrief, CardCategory, CatalogFacets } from "@luminous/schema";
 import { type CardsQuery, getCards } from "../../lib/api";
 import {
@@ -69,9 +70,20 @@ function subtypeOf(card: CardBrief | Card): string {
       ? card.stage
       : card.category === "Trainer"
         ? card.trainerType
-        : card.energyType;
+        : energySubtypeOf(card);
   if (raw === null) return "";
   return subtypeLabelOf(raw);
+}
+
+/** 🆕 D628 (finding 0b) — an Energy's subtype as the ENGINE classes it (cards.ts `isBasicEnergy` /
+    `isSpecialEnergy`, D583), not the raw tcgdex tag: tcgdex tags 14 legal Special Energies "Normal", and
+    reading the tag let them through the 4-copy rule as Basic Energy ({@link isBasicEnergy} in cards.ts keys on
+    this subtype). A full `Card` carries the rules text the test reads; a brief carries the API's answer to the
+    same test (apps/api catalog/map.ts `briefEnergyType`), so both reach one predicate. */
+function energySubtypeOf(card: CardBrief | Card): string | null {
+  const face = { category: card.category, energyType: card.energyType, effect: "effect" in card ? card.effect : undefined };
+  if (isSpecialEnergy(face)) return "Special";
+  return isBasicEnergy(face) ? "Normal" : card.energyType;
 }
 
 /** A catalog card (brief or full — both carry the fields this view needs) as

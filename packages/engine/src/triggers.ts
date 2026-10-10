@@ -130,6 +130,18 @@ export function runBoardTrigger(
   if (ability === undefined) return ok(state, events);
   const uid = topUid(pokemon);
   if (uid === undefined) return ok(state, events);
+  // 🆕🆕🆕 D628 — the printed lock on a BOARD trigger (Meowth ex "Last-Ditch Catch", `"sharedByName"`): a
+  // spent key fires nothing, and the key is written BEFORE the program runs — the inner confirm's "no"
+  // still spends it (R-LDC1 ⚠️ UNRULED), `sweepTriggers`' Zero to Hero order. Absent = byte-identical.
+  let armed = state;
+  if (ability.oncePerTurn !== undefined) {
+    const usedKey = abilityUsedKey(uid, ability);
+    if (state.allowances.abilitiesUsed.includes(usedKey)) return ok(state, events);
+    armed = {
+      ...state,
+      allowances: { ...state.allowances, abilitiesUsed: [...state.allowances.abilitiesUsed, usedKey] },
+    };
+  }
   // Optional triggers auto-fire (see TriggeredAbility.optional) — the "up to"
   // search still lets the player take none, and the other representatives are
   // pure upside. A yes/no confirm for a downside trigger is the follow-up.
@@ -139,7 +151,7 @@ export function runBoardTrigger(
   // see `TriggeredAbility.optional`.
   events.push({ type: "ABILITY_TRIGGERED", seat, uid, ability: ability.name });
   return settleProgram(
-    runProgram(state, ability.program, { seat, sourceUid: uid, invokedBy: "ability" }, events),
+    runProgram(armed, ability.program, { seat, sourceUid: uid, invokedBy: "ability" }, events),
     seat,
     events,
   );

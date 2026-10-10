@@ -3844,6 +3844,13 @@ export type BoardCondition =
       equality on the printed name, `exemptAbilityNamed`'s comparison. An empty Active
       Spot is FALSE. Public: the Active's card is face up. */
   | { kind: "yourActiveHasAbility"; name: string }
+  /** 🆕🆕🆕 **D628 — YOUR ACTIVE Pokémon IS THE NAMED CARD.** Latios `me01-101` "Lustrous Assist" —
+      *"Once during your turn, when **your Mega Latias ex** moves from your Bench to the Active Spot,
+      you may use this Ability."* — authored as `allOf [yourActivePromotedThisTurn, yourActiveNamed]`
+      (R-LSA1 ⚠️ UNRULED, R-MR1's use-time reading). The Active's TOP card, exact printed name
+      (`yourNamedPokemonInPlay`'s comparison narrowed to one body). An empty Active Spot is FALSE.
+      Public: the Active's card is face up. */
+  | { kind: "yourActiveNamed"; name: string }
   /** 🆕🆕🆕 **D560 (V2) — YOUR OPPONENT HAS A POKÉMON ex OR POKÉMON V IN PLAY** —
       Active OR Bench. Slaking ex `sv08-147`/`-227` "Born to Slack" — *"If your
       opponent has no Pokémon ex or Pokémon V in play, this Pokémon can't attack."* —
@@ -4199,6 +4206,11 @@ export interface AttachTargetRiders {
       "your **Benched** {L} Pokémon", where the attach is the whole point of
       putting Energy somewhere the turn's manual attach cannot reach). */
   benchOnly?: true;
+  /** 🆕🆕🆕 **D628 — `benchOnly`'s MIRROR: only the ACTIVE Pokémon** (Larry's Komala `me02.5-175`
+      "Lethargic Charge": *"Attach an Energy card from your hand to your **Active** Larry's
+      Pokémon."*). Read once, in `attachEnergyTargets`, beside `benchOnly`. Declared on
+      `attachFromHand` only — the one op a printing sets it on. Absent = no spot narrowing (D135). */
+  activeOnly?: true;
   /** Damage counters the attach itself places on the target (Gardevoir's 2). */
   bonusCounters?: number;
   /** Exclude any target `bonusCounters` would Knock Out ("you can't use this on
@@ -11655,7 +11667,9 @@ export type EffectOp =
       use (cardplay.ts — three call sites, all of them card plays), and every
       printing of this sentence is an ATTACK, whose effect is never vetoed for
       whiffing. A future Ability printing would want the gate and would be the
-      first card in the family to earn one.
+      first card in the family to earn one. [🆕🆕🆕 D628 (D539): "NO `programPlayable` GATE" is
+      WITHDRAWN for the printed singular — Larry's Komala "Lethargic Charge" (`one`) is that first
+      Ability and is gated (cardplay.ts, `attachFromHandPlayable`); the "any number" rows stay ungated.]
 
       Never damages, so it never KOs; and it is not the §6.3 manual attach, so no
       allowance is touched.
@@ -11693,6 +11707,22 @@ export type EffectOp =
           it as the Energy the printed attach added to the declaration-time count.
           Enrolled in interpreter.ts `recordSlotOf` (D206: the omission is silent). */
       recordAs?: EffectSlot;
+      /** 🆕🆕🆕 **D628 — THE PRINTED SINGULAR *"Attach **an** Energy card from your hand"***, the
+          op's first ABILITY printing: Larry's Komala `me02.5-175` "Lethargic Charge" — *"Once during
+          your turn, if this Pokémon is on your Bench, you may use this Ability. Attach an Energy card
+          from your hand to your Active Larry's Pokémon."* EXACTLY ONE card and MANDATORY: the offer's
+          cap is 1 (not the candidate set), and an empty answer is TOPPED UP at the apply with the
+          first offered card (hand order) onto the first offered target (R-LGC1 ⚠️ UNRULED, Reboot
+          Pod's R-PX1 shape). The hand rows are still the choice of WHICH Energy card, which is why
+          this is `attachFromHand` and not `attachEnergyFrom` (whose `anyEnergy` takes the first one).
+          Absent = D247's "any number" (D125): every existing row is byte-identical. [D628 (D539):
+          the doc's "NO `max` FIELD, AND THE ABSENCE IS THE PRINT" and "NO TARGET RIDER IS DECLARED"
+          are WITHDRAWN for this row, kept as written.] */
+      one?: true;
+      /** 🆕🆕🆕 D628 — the printed "your **Active**" (Lethargic Charge), `AttachTargetRiders.activeOnly`. */
+      activeOnly?: true;
+      /** 🆕🆕🆕 D628 — the printed "**Larry's** Pokémon", `AttachTargetRiders.ownerPokemon` (the bare owner). */
+      ownerPokemon?: string;
     }
   /** Discard Energy attached to an in-play Pokémon — the §15 energy-removal
       ("hammer") family on the opponent's side (Crushing Hammer, Giacomo, Mawile

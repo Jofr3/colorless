@@ -20271,6 +20271,17 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.510.0 → **0.511.0** (D628 — A1: THE REST OF THE ON-BENCH / ON-MOVE ABILITIES, 3 TEXTS / 5
+    `me` PRINTINGS, PLUS FINDING 0b (THE DECK BUILDER'S BASIC-ENERGY TEST); `MATCH_RECORD_VERSION` STAYS 43 (apps/api
+    match.ts "STAYS 43 AT D628")). registry.ts: Meowth ex ×3 "Last-Ditch Catch" on D593's `TUCK_TAIL` (an
+    `onPlayToBench` trigger behind an inner confirm; `TriggeredAbility.oncePerTurn` WIDENED to `"sharedByName"` and
+    read by triggers.ts `runBoardTrigger`, R-LDC1); two NEW objects, `LUSTROUS_ASSIST` (Latios; the NEW
+    `BoardCondition` `yourActiveNamed` beside `yourActivePromotedThisTurn`, R-LSA1) and `LETHARGIC_CHARGE` (Larry's
+    Komala; `attachFromHand` with the NEW `one` and riders `activeOnly` (NEW `AttachTargetRiders` member) +
+    `ownerPokemon`, R-LGC1; cardplay.ts gates the op through `attachFromHandPlayable`). Clawitzer ×2 "Fall Back to
+    Reload" dropped and named (a choice inside the non-parking Active→Bench self sweep). cards.ts:
+    `isBasicEnergy` / `isSpecialEnergy` take the three face fields they read (`EnergyFace`), so the deck builder and
+    the catalog API ask them. `onBenchMoveMeD628.test.ts`.)
     🆕🆕🆕 engineVersion 0.509.0 → **0.510.0** (D627 — H1: THE HIDE 'N' SNEAK ARCHETYPE, 5 TEXTS / 8 `me` PRINTINGS
     (10 UNITS); `MATCH_RECORD_VERSION` STAYS 43 (apps/api match.ts "STAYS 43 AT D627")). registry.ts: ONE NEW object,
     `HIDE_N_SNEAK` (`passive { preventAttackEffects, preventAbilityEffects }`, both shipped) on Poltchageist
@@ -20447,7 +20458,7 @@ import type { GameState, Seat } from "./types";
     `payFromHand.swapWithTop` (+ `HAND_COST_PAID.took`), `evolveFromDeck.fromHand` / `recordAs`, the op
     `countersOnRecordedBody`, the `BoardCondition` `notYourFirstTurn` and `AbilityProgram.requiresEnergyType:
     "any"`; redact.ts passes the body's uid to `programPlayable`. R-EG1, R-SE1, R-SE2, R-SE3 UNRULED. Larry's
-    Komala "Lethargic Charge" dropped again (an Active-only target and a which-Energy-card choice); Frilled
+    Komala "Lethargic Charge" dropped again [🆕🆕🆕 D628 (D539): Lethargic Charge BUILT at D628 (A1)] (an Active-only target and a which-Energy-card choice); Frilled
     Generator (WP15) stays. `activatedMeD611.test.ts`.)
     🆕🆕🆕 engineVersion 0.492.0 → **0.493.0** (D610 — WP37a: THE FIRST PART OF THE `me` ON-MOVE /
     AS-OFTEN / HP PASSIVES; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D610")).
@@ -20459,7 +20470,7 @@ import type { GameState, Seat } from "./types";
     continuous.ts/registry.ts: the NEW `hpBonus.requiresEnergyCount` ("6 or more") and
     `requiresEnergyType` widened to "special". R-HL1 UNRULED (triggers.ts: Holes resolves before
     Palafin's Zero to Hero, no Knock Out check between) [🆕🆕🆕 D625 (D610 MINOR 2): R-HL1 INVERTS D356's principle (turn.ts, Magearna "Auto Heal": the turn player's own effects resolve first when two triggers answer one moment), and its listed reversal "Zero to Hero first" IS D356's order. The departure is the reading because under D356's order Holes' subject has already gone to the deck and Holes does nothing; still UNRULED.]; R-MR1 UNRULED (registry.ts: Metal Road's
-    moment read as a use-time gate, which affords a delayed use). Fall Back to Reload ×2, Last-Ditch Catch ×3,
+    moment read as a use-time gate, which affords a delayed use). Fall Back to Reload ×2, Last-Ditch Catch ×3, [🆕🆕🆕 D628 (D539): Last-Ditch Catch BUILT at D628 (A1)]
     Luminous Wing ×4 (WP37b) and five passives left and named. `onMoveHpMeD610.test.ts`.)
     🆕🆕🆕 engineVersion 0.491.0 → **0.492.0** (D609 — WP36: THE `me` KO / DAMAGE-COUNTER ATTACKS;
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D609")). effects.ts: three literal
@@ -20531,7 +20542,7 @@ import type { GameState, Seat } from "./types";
     (`healChosen` 60, {G} gate), Linoone "Excited Dash" (`benchOnly`, Showtime's switch, untyped gate),
     Seviper "Excited Power" (`damageBonusBeforeWRIf` 120, {D} gate), Mega Signal ×3 (search a Mega ex)
     and Jett (`drawCards.per` over the opponent's Mega ex; R-PX6 inherited). Dropped and named: Latios
-    "Lustrous Assist" (a NAMED Active's move gate) and Wally's Compassion ×3 (all Energy to hand from the
+    "Lustrous Assist" [🆕🆕🆕 D628 (D539): Lustrous Assist BUILT at D628 (A1)] (a NAMED Active's move gate) and Wally's Compassion ×3 (all Energy to hand from the
     healed body) [🆕🆕🆕 D625 (D539): Wally's Compassion ×3 BUILT at D625 (`healChosen.energyToHandFromHealed`).]. `megaGatedMeD603.test.ts`.)
     🆕🆕🆕 engineVersion 0.484.0 → **0.485.0** (D602 — WP20b: THE `me` ACTIVATED ABILITIES, SEARCH /
     HEAL / ATTACH; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D602")). registry.ts:
@@ -20542,7 +20553,7 @@ import type { GameState, Seat } from "./types";
     `healChosen` 30), Erika's Vileplume ex "Lovely Fragrance" (`healEach` 30) and Solgaleo `30th-105`
     "Sunrise" (`benchOnly`, `attachFromDeck` 2 Basic {M} `toSelf`). Every lock per Pokémon, as printed.
     Dropped and named: Dragonair "Evolutionary Guidance" (untyped per-body Energy gate) and Larry's
-    Komala "Lethargic Charge" (Active-only attach target). Census: Standard pool abilities 513 / 610;
+    Komala "Lethargic Charge" [🆕🆕🆕 D628 (D539): Lethargic Charge BUILT at D628 (A1)] (Active-only attach target). Census: Standard pool abilities 513 / 610;
     895 `me` printings fully built. `activatedMeD602.test.ts`.)
     🆕🆕🆕 engineVersion 0.483.0 → **0.484.0** (D600 — WP14 + WP33b: THE HAND COUNT AND FIVE BONUS
     CONDITIONS; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D600")). effects.ts:
@@ -20627,7 +20638,7 @@ import type { GameState, Seat } from "./types";
     registry.ts: "Fade Out" ×5 on three attack-only objects named for the printed attack
     (`BALLOON_RETURN`, `TUCK_TAIL`, `SKY_RETURN`). 9 texts / 15 printings; the `sv` reader
     output is byte-identical. Census: Standard pool attacks 2,525 / 2,771 (`me` 793 / 1,039);
-    816 `me` printings fully built (Meowth ex ×3 still wait on Last-Ditch Catch).
+    816 `me` printings fully built (Meowth ex ×3 still wait on Last-Ditch Catch) [🆕🆕🆕 D628 (D539): Last-Ditch Catch BUILT at D628 (A1)].
     `clauseRowsMeD593.test.ts`.)
     🆕🆕🆕 engineVersion 0.475.0 → **0.476.0** (D592 — WP02: THE `me` READER WORDING DRIFT AND
     CORROSIVE LIQUID; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D592")).
@@ -21051,7 +21062,7 @@ import type { GameState, Seat } from "./types";
     the non-matching cards is a named DISPLAY DEBT (no event names them). **Ignition Energy**: Reversal's
     `"Evolution"` provision with three Colorless units and the NEW `EnergyProgram.discardAtEndOfYourTurn`, paid
     by flow.ts's `endTurn` stage on the TURN OWNER's bodies (one `ENERGY_DISCARDED` per body, after Powerglass
-    and Amarys — R-IG1 ⚠️ UNRULED); its catalog `energyType "Normal"` debt (cards.ts `basicEnergy` matches it) [🆕🆕🆕 D583 (D539): WITHDRAWN for the ENGINE — cards.ts `isBasicEnergy` / `isSpecialEnergy` read the printed rules text since D583, so the "Normal" tag no longer makes a Special a Basic Energy there; the deck builder's copy rule still reads the catalog tag until a re-ingest writes map.ts's D583 "Special"]
+    and Amarys — R-IG1 ⚠️ UNRULED); its catalog `energyType "Normal"` debt (cards.ts `basicEnergy` matches it) [🆕🆕🆕 D583 (D539): WITHDRAWN for the ENGINE — cards.ts `isBasicEnergy` / `isSpecialEnergy` read the printed rules text since D583, so the "Normal" tag no longer makes a Special a Basic Energy there; the deck builder's copy rule still reads the catalog tag until a re-ingest writes map.ts's D583 "Special" (🆕🆕🆕 D628 (D539): WITHDRAWN — the deck builder asks the engine's `isBasicEnergy` / `isSpecialEnergy` since D628, finding 0b)]
     is carried, as Prism's and Reversal's are. **`MATCH_RECORD_VERSION` STAYS 37**: no GameState, PendingStage
     or Card key is added, nothing parks, and every addition is a catalog-only key or a new union member — see
     docs/decisions.md D571 and apps/api match.ts.)
@@ -25618,7 +25629,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.510.0";
+export const engineVersion = "0.511.0";
 
 export type {
   ApplyResult,
@@ -25668,7 +25679,7 @@ export {
   topUid,
   weaknessOf,
 } from "./cards";
-export type { DamageModifier, ParsedDamage, PokemonSuffix, PreventedAttackerClass } from "./cards";
+export type { DamageModifier, EnergyFace, ParsedDamage, PokemonSuffix, PreventedAttackerClass } from "./cards";
 // 🆕🆕🆕 D612 — the tcgdex markup normaliser, shared with the ingest (apps/api ingest/map.ts).
 export { normalizeCardText } from "./cardText";
 export {

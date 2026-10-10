@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { json } from "../../test/fetchStub";
 import { cardBrief as brief, cardsPage, FACETS } from "../../test/fixtures";
-import { DEFAULT_FORMAT, formatById } from "./cards";
+import type { Card } from "@luminous/schema";
+import { DEFAULT_FORMAT, formatById, isBasicEnergy } from "./cards";
+import { validateDeck } from "./deckMath";
 import {
   filtersToCardsQuery,
   findCardByName,
@@ -49,6 +51,45 @@ describe("toBuilderCard", () => {
       brief({ category: "Energy", stage: null, types: null, hp: null, energyType: "Special" }),
     );
     expect(special.subtype).toBe("Special Energy");
+  });
+
+  it("🆕 D628 (finding 0b): an Energy's subtype is the ENGINE's Basic / Special answer, so a 'Normal'-tagged Special Energy is capped at 4", () => {
+    // Ignition Energy `me02-124` as the LOCAL D1 stores it (2026-10-10): tagged "Normal", printing rules text.
+    const ignition: Card = {
+      ...brief({ category: "Energy", stage: null, types: null, hp: null, energyType: "Normal" }),
+      id: "me02-124",
+      setId: "me02",
+      localId: "124",
+      name: "Ignition Energy",
+      illustrator: null,
+      evolveFrom: null,
+      retreat: null,
+      abilities: null,
+      attacks: null,
+      weaknesses: null,
+      resistances: null,
+      effect:
+        "If this card is attached to 1 of your Pokémon, discard it at the end of your turn.\n\nAs long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf this card is attached to an Evolution Pokémon, it provides {C}{C}{C} Energy instead.",
+      variants: null,
+    };
+    const special = toBuilderCard(ignition);
+    expect(special.subtype).toBe("Special Energy");
+    expect(isBasicEnergy(special)).toBe(false);
+    // A brief carries the API's answer to the same test (catalog/map.ts): "Special" stays Special.
+    expect(toBuilderCard(brief({ category: "Energy", stage: null, types: null, hp: null, energyType: "Special" })).subtype).toBe(
+      "Special Energy",
+    );
+    // A Basic Energy face (no rules text) is still Basic and still exempt.
+    const fire = toBuilderCard({ ...ignition, id: "sve-002", name: "Fire Energy", effect: null });
+    expect(fire.subtype).toBe("Basic Energy");
+    const standard = formatById("standard");
+    expect(validateDeck([{ card: special, quantity: 5 }], standard).issues).toContainEqual({
+      level: "error",
+      message: "5 copies of Ignition Energy — max 4.",
+    });
+    expect(validateDeck([{ card: fire, quantity: 5 }], standard).issues.some((i) => i.message.includes("Fire Energy"))).toBe(
+      false,
+    );
   });
 
   it("passes unknown printed subtypes through verbatim", () => {

@@ -531,9 +531,11 @@ describe("D280 — MATCH_RECORD_VERSION stays 14, and the reachability claim is 
         .filter((id) => programFor(id)?.abilities?.some((a) => a.playableIf?.kind === "allOf"))
         .sort(),
     ).toEqual(
-      ["mep-096", "30th-011", "30th-130", "mep-098", "30th-055", "30th-133", "mep-097", "30th-018", "30th-132"].sort(),
+      // 🆕🆕🆕 D628 — plus Latios `me01-101` "Lustrous Assist" (promoted this turn AND named Mega Latias ex), the
+      // same registry-read gate: never in a continuation.
+      ["mep-096", "30th-011", "30th-130", "mep-098", "30th-055", "30th-133", "mep-097", "30th-018", "30th-132", "me01-101"].sort(),
     );
-    expect(abilityGates.filter((c) => c.kind === "allOf")).toHaveLength(9);
+    expect(abilityGates.filter((c) => c.kind === "allOf")).toHaveLength(10);
   });
 
   it("a gated Call Bell writes exactly the keys the CONTROL Item writes — a DIFF with an ANCHOR", () => {

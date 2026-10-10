@@ -624,10 +624,12 @@ describe("D593 §10 — Cutting Riposte: payable for {D} while this Pokémon has
 describe("D593 §11 — \"Fade Out\" under three printed names", () => {
   const BOUNCE = [{ op: "returnSelf", dest: "hand" }];
 
-  it("three NEW attack-only objects, each at its printed index; the other index keeps deriving", () => {
+  it("three NEW attack-only objects, each at its printed index; the other index keeps deriving (🆕🆕🆕 D628 (D539): \"attack-only\" WITHDRAWN for `TUCK_TAIL` — it carries Meowth ex's \"Last-Ditch Catch\" trigger too)", () => {
     expect(programFor("mep-006")).toEqual({ attack: { 1: BOUNCE } });
     expect(programFor("me04-030")).toEqual({ attack: { 1: BOUNCE } });
-    expect(programFor("me03-062")).toEqual({ attack: { 0: BOUNCE } });
+    // 🆕🆕🆕 D628 — the attack key is unchanged; the `triggered` row is pinned in onBenchMoveMeD628.test.ts §1.
+    expect(programFor("me03-062")?.attack).toEqual({ 0: BOUNCE });
+    expect(programFor("me03-062")?.triggered?.map((t) => t.name)).toEqual(["Last-Ditch Catch"]);
     expect(programFor("me03-107")).toBe(programFor("me03-062"));
     expect(programFor("me03-121")).toBe(programFor("me03-062"));
     // Distinct objects, and none is Lillie's Comfey's (which carries index 0 too).
@@ -675,7 +677,7 @@ describe("D593 §11 — \"Fade Out\" under three printed names", () => {
 });
 
 describe("D593 §12 — the version", () => {
-  it("is built at engine 0.510.0", () => {
-    expect(engineVersion).toBe("0.510.0");
+  it("is built at engine 0.511.0", () => {
+    expect(engineVersion).toBe("0.511.0");
   });
 });

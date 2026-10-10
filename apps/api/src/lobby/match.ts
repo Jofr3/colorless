@@ -2159,6 +2159,17 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 43 AT D628 — A1 ADDS TWO REGISTRY OBJECTS, A TRIGGER ROW ON `TUCK_TAIL`, ONE `BoardCondition` MEMBER,
+    ONE `AttachTargetRiders` MEMBER AND THREE OPTIONAL `attachFromHand` KEYS; NO PROMPT, PHASE, STAGE SHAPE, SIDE KEY,
+    `InPlayPokemon` FIELD OR EVENT.** (Placed ABOVE the D627 block.) Every program is keyed by ID, so the 5 `me` faces in
+    a v43 `cardPool` gain their Abilities mid-match and are otherwise read as before. The Last-Ditch lock is a string in
+    the shipped `allowances.abilitiesUsed` (`*:Last-Ditch Catch`). What can be persisted is shipped shape: the confirm,
+    the Supporter search and Lustrous Assist's `moveEnergy` park as before; Lethargic Charge parks the shipped
+    `attachCards` prompt, and its op (with the NEW `one` / `activeOnly` / `ownerPokemon`) rides `phase.cont`. Rollback
+    reading, NAMED: a 0.510 reader resumes that park with the answer as given and NO top-up (R-LGC1). The new member
+    lives in a `playableIf`, never in `phase.cont`. Finding 0b changes the catalog API's BRIEF only (`catalog/map.ts`);
+    `loadCardPool` faces and the engine's own Energy test are untouched, so in-flight pools are safe (the D581 lesson).
+
     🆕🆕🆕 **STAYS 43 AT D627 — H1 ADDS ONE REGISTRY OBJECT, ONE `BoardCondition` MEMBER, THREE CLAUSE ROWS AND READER
     ARMS; NO OP, PROMPT, PHASE, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD OR EVENT.** (Placed ABOVE the D626 block.)
     The Hide 'n' Sneak program is keyed by ID, and the new member reads `Card.abilities` / `category` — fields every

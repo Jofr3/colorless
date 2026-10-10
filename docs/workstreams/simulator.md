@@ -29209,7 +29209,7 @@ killed. Census: `BUILT.ability` 382, `BUILT.trainer` 254 (unmoved, checked), `BU
 1707; residue 18/25, OPAQUE 13/20. ~~Owed:~~ 🆕 PAID, EXACTLY, on the first launch (D571 close-out `b83179da`, `tmp/sweep-D571.log:7882`): the whole-corpus sweep (predicted `3883 · 52` over 3,935, stacked on D570's
 ~~still-PENDING~~ 🆕 PAID-EXACTLY `3868 · 52` over 3,920, close-out `b3a0d539`). Carried: the reveal display debt (the non-matching revealed cards are not
 logged), Ignition's catalog `energyType "Normal"` debt (cards.ts `basicEnergy` matches it — outside the whitelist,
-D538) [🆕🆕🆕 D583 (D539): WITHDRAWN for the ENGINE — cards.ts `isBasicEnergy` / `isSpecialEnergy` read the printed rules text since D583, so the "Normal" tag no longer makes a Special a Basic Energy there; the deck builder's copy rule still reads the catalog tag until a re-ingest writes map.ts's D583 "Special"]. NEXT: see `progress.md` NEXT — calm-divers or chooseNumber-A (one, not both; re-price the rider now that Ignition
+D538) [🆕🆕🆕 D583 (D539): WITHDRAWN for the ENGINE — cards.ts `isBasicEnergy` / `isSpecialEnergy` read the printed rules text since D583, so the "Normal" tag no longer makes a Special a Basic Energy there; the deck builder's copy rule still reads the catalog tag until a re-ingest writes map.ts's D583 "Special" (🆕🆕🆕 D628 (D539): WITHDRAWN — the deck builder asks the engine's `isBasicEnergy` / `isSpecialEnergy` since D628, finding 0b)]. NEXT: see `progress.md` NEXT — calm-divers or chooseNumber-A (one, not both; re-price the rider now that Ignition
 is spent), then the Paradox MRV trio (37 → 38). (🆕🆕🆕 D572: calm-divers TAKEN — built as D572 below.)
 
 ## D572 — "calm divers": 6 printings / 4 texts / 4 objects (engine 0.456.0, `MATCH_RECORD_VERSION` stays 37)
@@ -29835,7 +29835,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   Energy `me02.5-217` [🆕🆕🆕 D583 (D539): WITHDRAWN — `me02.5-217` is ALIASED on `sv10-182`'s object at D583; cards.ts reads a Special Energy off its printed text, so the tag no longer separates the faces], the Fade Out / Surf Back printings [🆕🆕🆕 D584: Surf Back ×2 (Drifloon) BUILT on `FLOAT_UP`].
 - **Census.** Standard pool attacks **2461 / 2771**, abilities **417 / 610**, trainers **318 / 447**, special energy
   **13 / 22**; 671 `me` printings fully built. censusAtHead's D582 block (a fifth list in the D273 partition).
-- **Gaps named.** `energy_type` Normal on Special Energies (all `me`, three `sv`) [🆕🆕🆕 D583 (D539): WITHDRAWN for the ENGINE — cards.ts `isBasicEnergy` / `isSpecialEnergy` read the printed rules text since D583, so the "Normal" tag no longer makes a Special a Basic Energy there; the deck builder's copy rule still reads the catalog tag until a re-ingest writes map.ts's D583 "Special"]; `me` Tera printings with new text.
+- **Gaps named.** `energy_type` Normal on Special Energies (all `me`, three `sv`) [🆕🆕🆕 D583 (D539): WITHDRAWN for the ENGINE — cards.ts `isBasicEnergy` / `isSpecialEnergy` read the printed rules text since D583, so the "Normal" tag no longer makes a Special a Basic Energy there; the deck builder's copy rule still reads the catalog tag until a re-ingest writes map.ts's D583 "Special" (🆕🆕🆕 D628 (D539): WITHDRAWN — the deck builder asks the engine's `isBasicEnergy` / `isSpecialEnergy` since D628, finding 0b)]; `me` Tera printings with new text.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
 ## D583 — the fix-up slice: Special Energy by printed text, and the persisted pool migrated (engine 0.467.0, `MATCH_RECORD_VERSION` 41 → 42)
@@ -30240,12 +30240,30 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   (`benchOnly`, up to 2 Basic {M} from the deck to itself).
 - **Locks.** Every one `oncePerTurn: true`: none of the six prints a name lock.
 - **Dropped and named:** Dragonair "Evolutionary Guidance" (untyped per-body Energy gate) and Larry's Komala "Lethargic
-  Charge" (an Active-only attach target). [D611: Dragonair BUILT; Larry's Komala dropped again — it also needs a
+  Charge" (an Active-only attach target). [D611: Dragonair BUILT; Larry's Komala dropped again [🆕🆕🆕 D628 (D539): Lethargic Charge BUILT at D628 (A1)] — it also needs a
   which-Energy-card choice.]
 - **Readings.** None new; each open point inherits a shipped one (`progress.md` NEXT).
 - **Suite.** `activatedMeD602.test.ts` (22) and a census D602 block (3). +21 mutant rows.
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D628 — A1: the rest of the on-bench / on-move Abilities, plus finding 0b (engine 0.511.0, `MATCH_RECORD_VERSION` stays 43)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D627 (`ccdebcc8`), NOT committed. 3 texts / 5 `me` printings.
+
+- **Meowth ex ×3 "Last-Ditch Catch".** An `onPlayToBench` trigger on D593's `TUCK_TAIL`: an inner confirm around a revealed Supporter
+  search and the shuffle. `TriggeredAbility.oncePerTurn` widened to `"sharedByName"` and read by `runBoardTrigger` (key
+  `*:Last-Ditch Catch`, written before the program). R-LDC1 UNRULED.
+- **Latios "Lustrous Assist".** `playableIf allOf [yourActivePromotedThisTurn, yourActiveNamed "Mega Latias ex"]` (the NEW
+  `BoardCondition`) over `moveEnergy benchToActive`, any amount, any source. R-LSA1 UNRULED (Metal Road's use-time reading).
+- **Larry's Komala "Lethargic Charge".** `benchOnly` over `attachFromHand` with the NEW `one` (cap 1, mandatory, topped up; R-LGC1
+  UNRULED) and the NEW `AttachTargetRiders.activeOnly` + `ownerPokemon "Larry"`; `programPlayable` gates a `one` row.
+- **Dropped and named.** Clawitzer ×2 "Fall Back to Reload" (a choice inside the non-parking Active→Bench self sweep).
+- **Finding 0b.** The deck builder (`toBuilderCard`) and the catalog API's brief ask the engine's `isBasicEnergy` / `isSpecialEnergy`
+  (now typed on `EnergyFace`), so the 14 "Normal"-tagged Special Energies obey the 4-copy rule. Cache v8 → v9.
+- **MRV stays 43.** No new prompt, phase, stage or persisted field (match.ts "STAYS 43 AT D628"); `loadCardPool` faces untouched.
+- **Suite.** `onBenchMoveMeD628.test.ts` (16), a census D628 block (2), a builder and an API rung. +28 mutant rows, all KILLED; four
+  re-pointed. Census: abilities **577 / 610**, 1159 `me` printings fully built. Sweep PENDING.
 
 ## D627 — H1: the Hide 'n' Sneak archetype (engine 0.510.0, `MATCH_RECORD_VERSION` stays 43)
 
@@ -30585,7 +30603,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **9 texts / 17 `me` printings, nine objects.** Nighttime Maneuvers ×3 (Crobat), Sinister Surge ×3 (Toxtricity), Boisterous
   Wind ×2 (Dustox), Destructive Headbutting ×2 (Rampardos ex), Evidence Gathering ×2 (Gumshoos), Sky Hunt ×2 (Talonflame),
   Grand Wing (Vivillon `me03-009`), Spiteful Evolution (Phantump), Evolutionary Guidance (Dragonair) — all 17 fully built.
-- **Dropped and named.** Larry's Komala "Lethargic Charge" (an Active-only target and a which-Energy-card choice; the "Larry's" filter is `attachEnergyFrom`'s shipped `ownerPokemon`, and `attachFromHand`, which does choose, has neither an Active nor a name rider). Heliolisk
+- **Dropped and named.** Larry's Komala "Lethargic Charge" [🆕🆕🆕 D628 (D539): Lethargic Charge BUILT at D628 (A1)] (an Active-only target and a which-Energy-card choice; the "Larry's" filter is `attachEnergyFrom`'s shipped `ownerPokemon`, and `attachFromHand`, which does choose, has neither an Active nor a name rider). Heliolisk
   "Frilled Generator" is WP15.
 - **Readings.** Four new, UNRULED: **R-EG1** (Evidence Gathering refused with an empty deck), **R-SE1** (Spiteful Evolution
   evolves a Phantump put into play this turn), **R-SE2** (the hand evolve runs no `onEvolve` trigger); review: **R-SE3** (it evolves under Bronzong's "Evolution Jammer" bar).
@@ -30605,7 +30623,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **8 texts / 16 `me` printings, seven objects.** Solar Transfer ×4 (Mega Venusaur ex), Bubble Gathering (Azumarill ex), Metal
   Road ×2 (Cobalion ex), Swirling Prose ×2 (Mismagius ex), Holes ×2 (Team Rocket's Dugtrio), Scale Up ×3 (Alolan Exeggutor),
   Tyrannically Gutsy ×2 (Tyrantrum) — all 16 fully built.
-- **Left and named.** Fall Back to Reload ×2, Last-Ditch Catch ×3, Luminous Wing ×4 (WP37b; Mega Clefable ex not finished),
+- **Left and named.** Fall Back to Reload ×2, Last-Ditch Catch ×3 [🆕🆕🆕 D628 (D539): Last-Ditch Catch BUILT at D628 (A1)], Luminous Wing ×4 (WP37b; Mega Clefable ex not finished),
   Supreme Overlord, Gloomy Garbage, Sniper's Eye ×2, Ancient Bulwark ×3, Life-Locked.
 - **Readings.** Two new, **R-HL1 ⚠️ UNRULED**: on the Active→Bench move the opponent's watched triggers (Holes) resolve
   before the mover's own (Palafin "Zero to Hero"), with no Knock Out check between, so lethal Holes counters on Palafin
@@ -30736,7 +30754,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   Benched {R}), Ludicolo ×2 "Excited Heal" (`healChosen` 60), Linoone "Excited Dash" (`benchOnly`, Showtime's switch,
   untyped gate), Seviper "Excited Power" (`damageBonusBeforeWRIf` 120), Mega Signal ×3 (search a Mega ex) and Jett
   (`drawCards.per` over the opponent's Mega ex).
-- **Dropped and named:** Latios "Lustrous Assist" (a named Active's move gate) and Wally's Compassion ×3 (all Energy to
+- **Dropped and named:** Latios "Lustrous Assist" [🆕🆕🆕 D628 (D539): Lustrous Assist BUILT at D628 (A1)] (a named Active's move gate) and Wally's Compassion ×3 (all Energy to
   the hand from the healed body). Tremendous Bomb, Ange Floette and Core Memory stay out (the brief). [🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory BUILT at D620 (WP26).] [🆕🆕🆕 D625 (D539): Wally's Compassion ×3 BUILT at D625 (`healChosen.energyToHandFromHealed`).]
 - **Readings.** None new; Jett with none in play inherits R-PX6 (`progress.md` NEXT).
 - **Suite.** `megaGatedMeD603.test.ts` (26) and a census D603 block (2). +25 mutant rows.

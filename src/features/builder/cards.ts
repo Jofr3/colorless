@@ -83,7 +83,10 @@ export function isBasicPokemon(card: BuilderCard): boolean {
   return card.supertype === "Pokémon" && card.subtype === "Basic";
 }
 
-/** True for a basic Energy — the lone exception to the 4-copies-per-name rule. */
+/** True for a basic Energy — the lone exception to the 4-copies-per-name rule. [🆕 D628 (finding 0b): the
+    subtype it reads is the ENGINE's Basic / Special answer (catalog.ts `energySubtypeOf` → `@luminous/engine`
+    `isBasicEnergy` / `isSpecialEnergy`), no longer the raw tcgdex tag, so the 14 "Normal"-tagged Special
+    Energies count toward the 4-copy limit.] */
 export function isBasicEnergy(card: BuilderCard): boolean {
   return card.supertype === "Energy" && card.subtype === "Basic Energy";
 }

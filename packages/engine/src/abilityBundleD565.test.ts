@@ -486,12 +486,18 @@ describe("§1 — the prints and the registry rows", () => {
     }
     // 🆕🆕🆕 D602 — Solgaleo `30th-105` "Sunrise" prints the same Bench clause (`SUNRISE`).
     // 🆕🆕🆕 D603 — Linoone `me02-082` "Excited Dash" prints it too (`EXCITED_DASH`).
-    expect(benchOnly.sort()).toEqual([...PSYDUCK, "30th-105", "me02-082"].sort());
+    // 🆕🆕🆕 D628 — Larry's Komala `me02.5-175` "Lethargic Charge" prints it too (`LETHARGIC_CHARGE`).
+    expect(benchOnly.sort()).toEqual([...PSYDUCK, "30th-105", "me02-082", "me02.5-175"].sort());
   });
 
-  it("the TRIGGERED `oncePerTurn` is carried by Zero to Hero alone", () => {
+  it("the TRIGGERED `oncePerTurn` is carried by Zero to Hero alone (🆕🆕🆕 D628 (D539): WITHDRAWN as the whole field — `true` is still Zero to Hero alone, and Meowth ex ×3 \"Last-Ditch Catch\" carries the widened `\"sharedByName\"`)", () => {
     const locked = registryCardIds().filter((id) => (programFor(id)?.triggered ?? []).some((t) => t.oncePerTurn === true));
     expect(locked).toEqual([PALAFIN]);
+    // 🆕🆕🆕 D628 — the name-scoped lock, read by `runBoardTrigger` (onBenchMoveMeD628.test.ts §2).
+    const shared = registryCardIds().filter((id) =>
+      (programFor(id)?.triggered ?? []).some((t) => t.oncePerTurn === "sharedByName"),
+    );
+    expect(shared.sort()).toEqual(["me03-062", "me03-107", "me03-121"]);
   });
 
   it("`abilityUsedKey` keys a TRIGGERED row exactly as an activated one — `${uid}:${name}`", () => {
@@ -500,8 +506,8 @@ describe("§1 — the prints and the registry rows", () => {
     expect(abilityUsedKey("p1#7", zero)).toBe("p1#7:Zero to Hero");
   });
 
-  it("the engine is 0.510.0", () => {
-    expect(engineVersion).toBe("0.510.0");
+  it("the engine is 0.511.0", () => {
+    expect(engineVersion).toBe("0.511.0");
   });
 });
 

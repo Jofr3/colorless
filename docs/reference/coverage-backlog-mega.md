@@ -6,6 +6,24 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D628 update (engine 0.511.0) — A1, the rest of the on-bench / on-move Abilities (`MATCH_RECORD_VERSION` stays 43)
+
+3 texts / 5 `me` printings (`onBenchMoveMeD628.test.ts`): Meowth ex "Last-Ditch Catch" ×3 `me03-062` / `-107` / `-121` (an
+`onPlayToBench` trigger on `TUCK_TAIL`, behind a confirm; the name lock read by `runBoardTrigger`; R-LDC1), Latios "Lustrous Assist"
+`me01-101` (the NEW `BoardCondition` `yourActiveNamed` beside `yourActivePromotedThisTurn`; R-LSA1) and Larry's Komala "Lethargic
+Charge" `me02.5-175` (`attachFromHand` with the NEW `one` and `activeOnly`; R-LGC1). **Finished:** all 5. **Dropped and named:** Clawitzer
+"Fall Back to Reload" ×2 `me01-038` / `-141` (a hand-attach choice inside the non-parking Active→Bench self sweep, or a persisted
+moved-to-Bench stamp). Also closed: finding 0b (the deck builder's Basic Energy test is the engine's).
+
+| Column | `me` built / units (D628) | Standard pool D628 |
+|---|---|---|
+| Attacks | 983 / 1,039 | **2,715 / 2,771** |
+| Abilities | 201 / 234 (+5) | **577 / 610** |
+| Trainers | 168 / 183 | **432 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1159** (1154 + 5).
+
 ## 🆕 D627 update (engine 0.510.0) — H1, the Hide 'n' Sneak archetype (`MATCH_RECORD_VERSION` stays 43)
 
 5 texts / 8 `me` printings / 10 units (`hideNSneakMeD627.test.ts`): Hide 'n' Sneak ×4 (Poltchageist `me05-005`, Sinistcha `me05-006`, Shuppet
@@ -316,7 +334,7 @@ Maneuvers ×3 (Crobat; Ciphermaniac's deck-top search at one card), Boisterous W
 `payFromHand.swapWithTop`), Spiteful Evolution (Phantump; `evolveFromDeck.fromHand`, `countersOnRecordedBody`,
 `notYourFirstTurn`), Sinister Surge ×3 (Toxtricity; `countersOnRecordedBody` on the body the Energy went to) and, from WP20b's
 drops, Evolutionary Guidance (Dragonair; `requiresEnergyType: "any"`). **Finished:** all 17 cards. **Dropped and named:** Larry's
-Komala `me02.5-175` "Lethargic Charge" (an Active-only target and a which-Energy-card choice — two pieces; the "Larry's" filter is `attachEnergyFrom`'s shipped `ownerPokemon`, and `attachFromHand` has neither an Active nor a name rider). Heliolisk ×2
+Komala `me02.5-175` "Lethargic Charge" [🆕🆕🆕 D628 (D539): Lethargic Charge BUILT at D628 (A1)] (an Active-only target and a which-Energy-card choice — two pieces; the "Larry's" filter is `attachEnergyFrom`'s shipped `ownerPokemon`, and `attachFromHand` has neither an Active nor a name rider). Heliolisk ×2
 "Frilled Generator" stays with WP15 [🆕🆕🆕 D619 (D539): BUILT at D619]. Four new readings (UNRULED): R-EG1 (Evidence Gathering refused with an empty deck), R-SE1
 (Spiteful Evolution evolves a Phantump put into play this turn), R-SE2 (no `onEvolve` trigger on the hand evolve), R-SE3 (review: it evolves under "Evolution Jammer")
 (`progress.md` NEXT).
@@ -337,7 +355,7 @@ ex) and Bubble Gathering (Azumarill ex) are "as often as you like" `moveEnergy` 
 Boost's promoted-this-turn gate over a typed any-amount sweep; Swirling Prose ×2 (Mismagius ex) and Holes ×2 (Team Rocket's
 Dugtrio) ride Lava Zone's opponent-side `onActiveMovedToBench`; Scale Up ×3 and Tyrannically Gutsy ×2 are `hpBonus` gates (the new
 `requiresEnergyCount`, and "special"). **Finished:** all 16 cards (Mega Venusaur ex ×4 among them). **WP37 rest, left and named**
-(8 texts / 17 printings): Fall Back to Reload ×2, Last-Ditch Catch ×3, Luminous Wing ×4 (WP37b — Mega Clefable ex ×4 still waits
+(8 texts / 17 printings): Fall Back to Reload ×2, Last-Ditch Catch ×3 [🆕🆕🆕 D628 (D539): Last-Ditch Catch BUILT at D628 (A1)], Luminous Wing ×4 (WP37b — Mega Clefable ex ×4 still waits
 on it [🆕🆕🆕 D614: BUILT, Mega Clefable ex ×4 finished]), Supreme Overlord, Gloomy Garbage, Sniper's Eye ×2, Ancient Bulwark ×3, Life-Locked. Two new readings (UNRULED): R-HL1, Holes
 resolves before Palafin's Zero to Hero with no Knock Out check between; R-MR1, Metal Road's moment is a use-time gate, which affords
 a delayed use (`progress.md` NEXT). [🆕🆕🆕 D625 (D610 MINOR 2): R-HL1 INVERTS D356's principle (turn.ts, Magearna "Auto Heal": the turn player's own effects resolve first when two triggers answer one moment), and its listed reversal "Zero to Hero first" IS D356's order. The departure is the reading because under D356's order Holes' subject has already gone to the deck and Holes does nothing; still UNRULED.]
@@ -477,7 +495,7 @@ D582's `isMegaEvolutionPokemonEx`: `BoardCondition.yourMegaExInPlay { type? }` a
 ×3 (Oricorio ex; {R} gate, as often as you like, a Basic {R} from hand to a Benched {R}), Excited Heal ×2 (Ludicolo; {G} gate,
 heal 60 from 1), Excited Dash (Linoone; on the Bench, any Mega ex, switch with the Active), Excited Power (Seviper; {D} gate,
 +120 before W/R), Mega Signal ×3 (a Mega ex from the deck) and Jett (a card per opponent's Mega ex). **Finished:** all 11.
-**Dropped:** Latios `me01-101` "Lustrous Assist" (a gate on a named Active's Bench-to-Active move) and Wally's Compassion ×3
+**Dropped:** Latios `me01-101` "Lustrous Assist" [🆕🆕🆕 D628 (D539): Lustrous Assist BUILT at D628 (A1)] (a gate on a named Active's Bench-to-Active move) and Wally's Compassion ×3
 (all Energy to the hand from the healed body). **Excluded by the brief:** Tremendous Bomb ×2, Ange Floette, Core Memory. [🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory BUILT at D620 (WP26).] [🆕🆕🆕 D625 (D539): Wally's Compassion ×3 BUILT at D625 (`healChosen.energyToHandFromHealed`).]
 
 | Column | `me` built / units (D603) | Standard pool D603 |
@@ -497,7 +515,7 @@ heal 60 from 1), Excited Dash (Linoone; on the Bench, any Mega ex, switch with t
 (Erika's Vileplume ex; heal 30 from each) and Sunrise (Solgaleo `30th-105`; on the Bench, up to 2 Basic {M} to itself). Every
 lock per Pokémon, as printed. **Finished:** all 9. **Dropped:** Dragonair `me02.5-151` "Evolutionary Guidance" (an untyped
 per-body Energy gate) and Larry's Komala `me02.5-175` "Lethargic Charge" (an Active-only attach target). [🆕🆕🆕 D611: Dragonair
-BUILT; Larry's Komala dropped again (it also needs a which-Energy-card choice).]
+BUILT; Larry's Komala dropped again (it also needs a which-Energy-card choice).] [🆕🆕🆕 D628 (D539): Lethargic Charge BUILT at D628 (A1)]
 
 | Column | `me` built / units (D602) | Standard pool D602 |
 |---|---|---|
@@ -650,7 +668,7 @@ Brain Crush (opponent's Active Confused), plus Facade ×2 on the one new member 
 Riposte is the eighth `ATTACK_GATE_CLAUSES` row (`alternateCostIf` at {D}). "Fade Out" ×5 is keyed on three new
 attack-only objects named for the printed attack (Balloon Return, Tuck Tail ×3, Sky Return). Nothing dropped. **Finished:**
 Pangoro, Hop's Trevenant ×2, Magnezone, Crawdaunt, Vikavolt, Larry's Staraptor ×2, Togedemaru ex, Malamar, Drifblim, Emolga.
-Meowth ex ×3 still waits on its Ability, Last-Ditch Catch. Voltaic Lightning Energy itself is unbuilt (it provides {C}). [🆕🆕🆕 D604 (D539): WITHDRAWN — Voltaic Lightning Energy is built since D604: it provides {L} and adds 20 on its {L} holder]
+Meowth ex ×3 still waits on its Ability, Last-Ditch Catch. [🆕🆕🆕 D628 (D539): Last-Ditch Catch BUILT at D628 (A1)] Voltaic Lightning Energy itself is unbuilt (it provides {C}). [🆕🆕🆕 D604 (D539): WITHDRAWN — Voltaic Lightning Energy is built since D604: it provides {L} and adds 20 on its {L} holder]
 
 | Column | `me` built / units (D593) | Standard pool D593 |
 |---|---|---|
@@ -1148,16 +1166,16 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× **Excited Heal** — Once during your turn, if you have any {G} Mega Evolution Pokémon ex in play, you may use this Ability. Heal 60 damage from 1 of your Pokémon. [🆕🆕🆕 D603: BUILT]
 - 1× **Excited Dash** — Once during your turn, if this Pokémon is on your Bench, and if you have any Mega Evolution Pokémon ex in play, you may use this Ability. Switch this Pokémon with your Active Pokémon. [🆕🆕🆕 D603: BUILT]
 - 1× **Excited Power** — If you have any {D} Mega Evolution Pokémon ex in play, attacks used by this Pokémon do 120 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance). [🆕🆕🆕 D603: BUILT]
-- 1× **Lustrous Assist** — Once during your turn, when your Mega Latias ex moves from your Bench to the Active Spot, you may use this Ability. Move any amount of Energy from your Benched Pokémon to your Active Pokémon. [🆕🆕🆕 D603: dropped — a gate on a named Active's Bench-to-Active move]
+- 1× **Lustrous Assist** [🆕🆕🆕 D628 (D539): Lustrous Assist BUILT at D628 (A1)] — Once during your turn, when your Mega Latias ex moves from your Bench to the Active Spot, you may use this Ability. Move any amount of Energy from your Benched Pokémon to your Active Pokémon. [🆕🆕🆕 D603: dropped — a gate on a named Active's Bench-to-Active move]
 
 ### On-evolve / on-bench / on-move triggers ("when you play this Pokémon …", "when … moves …") — 13 text(s) / 23 printing(s)
 
-- 3× **Last-Ditch Catch** — Once during your turn, when you play this Pokémon from your hand onto your Bench, you may use this Ability. Search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck. You can't use more than 1 Ability that has "Last-Ditch" in its name each turn. [🆕🆕🆕 D610: left — a name lock on an `onPlayToBench` trigger]
+- 3× **Last-Ditch Catch** [🆕🆕🆕 D628 (D539): Last-Ditch Catch BUILT at D628 (A1)] — Once during your turn, when you play this Pokémon from your hand onto your Bench, you may use this Ability. Search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck. You can't use more than 1 Ability that has "Last-Ditch" in its name each turn. [🆕🆕🆕 D610: left — a name lock on an `onPlayToBench` trigger]
 - 3× **Psychic Draw** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Draw 3 cards. [🆕🆕🆕 D590: BUILT]
 - 3× **Sandy Flapping** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. You may also use this Ability if this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon. Discard the top 2 cards of your opponent's deck. [🆕🆕🆕 D590: NOT BUILT — the KO half needs an Active-Spot / by-attack gate on an `onKnockOut` program] [🆕🆕🆕 D598: the by-attack half exists — `TriggeredAbility.byOpponentAttack`; the Active-Spot gate is still owed] [🆕🆕🆕 D626: BUILT]
 - 2× **Cast-Off Shell** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Search your deck for a Shedinja and put it onto your Bench. Then, shuffle your deck. [🆕🆕🆕 D590: BUILT]
 - 2× **Enriching Melody** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Heal all damage from 1 of your Pokémon. [🆕🆕🆕 D590: BUILT]
-- 2× **Fall Back to Reload** — Once during your turn, when this Pokémon moves from the Active Spot to your Bench, you may use this Ability. Attach up to 2 Basic {W} Energy cards from your hand to this Pokémon. [🆕🆕🆕 D610: left — a hand-attach choice inside the non-parking Active→Bench self sweep]
+- 2× **Fall Back to Reload** — Once during your turn, when this Pokémon moves from the Active Spot to your Bench, you may use this Ability. Attach up to 2 Basic {W} Energy cards from your hand to this Pokémon. [🆕🆕🆕 D610: left — a hand-attach choice inside the non-parking Active→Bench self sweep] [🆕🆕🆕 D628: dropped again (A1) — the same reason, or a persisted moved-to-Bench stamp]
 - 2× **Metal Road** — Once during your turn, when this Pokémon moves from your Bench to the Active Spot, you may use this Ability. Move any amount of {M} Energy from your other Pokémon to this Pokémon. [🆕🆕🆕 D610: BUILT]
 - 1× **Energized Steps** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Look at the top 4 cards of your deck and attach any number of Basic Energy cards you find there to your Pokémon in any way you like. Shuffle the other cards back into your deck. [🆕🆕🆕 D590: BUILT]
 - 1× **Haphazard Hammer** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Flip a coin. If heads, discard an Energy from your opponent's Active Pokémon. [🆕🆕🆕 D590: BUILT]
@@ -1197,7 +1215,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× **Frosty Flapping** — Once during your turn, if you have Moltres and Zapdos in play, you may use this Ability. Attach a Basic {W} Energy card from your hand to this Pokémon. [🆕🆕🆕 D591: BUILT]
 - 1× **Grand Wing** — Once during your turn, you may use this Ability. Your opponent shuffles their hand and puts it on the bottom of their deck. If they put any cards on the bottom of their deck in this way, they draw 4 cards. [🆕🆕🆕 D611: BUILT]
 - 1× **Guiding Dance** — Once during your turn, you may use this Ability. Flip a coin. If heads, search your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck. [🆕🆕🆕 D602: BUILT]
-- 1× **Lethargic Charge** — Once during your turn, if this Pokémon is on your Bench, you may use this Ability. Attach an Energy card from your hand to your Active Larry's Pokémon. [🆕🆕🆕 D602: dropped — an Active-only attach target] [🆕🆕🆕 D611: dropped again — also a which-Energy-card choice]
+- 1× **Lethargic Charge** [🆕🆕🆕 D628 (D539): Lethargic Charge BUILT at D628 (A1)] — Once during your turn, if this Pokémon is on your Bench, you may use this Ability. Attach an Energy card from your hand to your Active Larry's Pokémon. [🆕🆕🆕 D602: dropped — an Active-only attach target] [🆕🆕🆕 D611: dropped again — also a which-Energy-card choice]
 - 1× **Lovely Fragrance** — Once during your turn, you may use this Ability. Heal 30 damage from each of your Pokémon. [🆕🆕🆕 D602: BUILT]
 - 1× **Scent Collection** — Once during your turn, you may use this Ability. Search your deck for up to 2 Basic {P} Energy cards, reveal them, and put them into your hand. Then, shuffle your deck. [🆕🆕🆕 D585: BUILT]
 - 1× **Spiteful Evolution** — Once during your turn, you may use this Ability. Choose a card in your hand that evolves from this Pokémon and put it onto this Pokémon to evolve it. If you do, place 2 damage counters on the Pokémon you evolved in this way. You can't use this Ability during your first turn. [🆕🆕🆕 D611: BUILT]

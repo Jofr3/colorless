@@ -555,7 +555,9 @@ describe("⚠️ the read sites, priced by driving them", () => {
     // The function is asked here anyway, on the emptiest possible board, so the
     // claim "it would answer TRUE" is a fact rather than a reading: a future
     // Ability printing inherits this answer, and this test is where it would
-    // change.
+    // change. [🆕🆕🆕 D628 (D539): "a future Ability printing inherits this answer" is WITHDRAWN for
+    // the printed singular — Larry's Komala "Lethargic Charge" (`one: true`) is gated in cardplay.ts;
+    // this op (no `one`) still answers TRUE.]
     const state = ready(10, { hand: {} });
     expect(programPlayable(state, TROPICAL_FRENZY_PROGRAM, "p1")).toBe(true);
   });

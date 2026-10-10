@@ -29,6 +29,8 @@ import type {
   Set as CatalogSet,
   SetBrief,
 } from "@luminous/schema";
+import { isBasicEnergy, isSpecialEnergy } from "@luminous/engine";
+import { sql } from "drizzle-orm";
 import { cards, type series, type sets } from "../db/schema";
 import { normalizeSentinel } from "../sentinel";
 
@@ -55,10 +57,25 @@ export const cardBriefColumns = {
   stage: cards.stage,
   trainerType: cards.trainerType,
   energyType: cards.energyType,
+  /** 🆕🆕🆕 D628 (finding 0b) — the rules text of an ENERGY row only (NULL for every other category, so a list
+      never drags Trainer text off disk): `mapCardBriefRow` reads it to answer the engine's Basic / Special test,
+      because tcgdex tags 14 legal Special Energies "Normal" and a row ingested before D583's map.ts fix keeps it. */
+  effect: sql<string | null>`CASE WHEN ${cards.category} = 'Energy' THEN ${cards.effect} END`,
   legalStandard: cards.legalStandard,
   legalExpanded: cards.legalExpanded,
 };
 export type CardBriefRow = Pick<CardRow, keyof typeof cardBriefColumns>;
+
+/** 🆕🆕🆕 D628 (finding 0b) — the brief's Energy subtype, as the ENGINE classes it (cards.ts `isBasicEnergy` /
+    `isSpecialEnergy`, D583): a "Normal"-tagged Energy that prints rules text is "Special". Every other row keeps
+    its stored tag, sentinel-normalised. The full `/cards/:id` row is NOT rewritten (the engine reads the face's
+    text itself, and a persisted `GameState.cardPool` face keeps its tag either way). */
+function briefEnergyType(row: Pick<CardBriefRow, "category" | "energyType" | "effect">): string | null {
+  const energyType = normalizeSentinel(row.energyType);
+  const face = { category: row.category, energyType, effect: row.effect };
+  if (isSpecialEnergy(face)) return "Special";
+  return isBasicEnergy(face) ? "Normal" : energyType;
+}
 
 /** OUR card-image base path (clients append `/{quality}.{ext}`, §4.4). */
 function cardImagePath(cardId: string): string {
@@ -84,7 +101,7 @@ export function mapCardBriefRow(row: CardBriefRow): CardBrief {
     regulationMark: normalizeSentinel(row.regulationMark),
     stage: normalizeSentinel(row.stage),
     trainerType: normalizeSentinel(row.trainerType),
-    energyType: normalizeSentinel(row.energyType),
+    energyType: briefEnergyType(row),
     legal: { standard: row.legalStandard, expanded: row.legalExpanded },
   };
 }

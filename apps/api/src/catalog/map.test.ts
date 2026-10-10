@@ -198,6 +198,27 @@ describe("mapCardBriefRow", () => {
     });
   });
 
+  it("🆕 D628 (finding 0b): a 'Normal'-tagged Energy that prints rules text is a Special Energy (the engine's test)", () => {
+    // Prism Energy `me02.5-216` as the LOCAL D1 stores it (2026-10-10): tagged "Normal", printing its rules text.
+    const prism = {
+      ...fireEnergyRow,
+      id: "me02.5-216",
+      setId: "me02.5",
+      localId: "216",
+      name: "Prism Energy",
+      energyType: "Normal",
+      effect:
+        "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf this card is attached to a Basic Pokémon, this card provides every type of Energy but provides only 1 Energy at a time.",
+    };
+    expect(cardBriefSchema.parse(mapCardBriefRow(prism)).energyType).toBe("Special");
+    // A Basic Energy (no rules text) keeps "Normal"; a non-Energy row's text never reclassifies it.
+    expect(mapCardBriefRow({ ...fireEnergyRow, effect: null }).energyType).toBe("Normal");
+    expect(mapCardBriefRow({ ...fireEnergyRow, effect: "  " }).energyType).toBe("Normal");
+    expect(mapCardBriefRow(potionSentinelRow).energyType).toBeNull();
+    // The full row is not rewritten: the engine reads the face's text itself.
+    expect(mapCardRow(prism).energyType).toBe("Normal");
+  });
+
   it("normalises the stored 'None' sentinel to null (mfb-33 Potion)", () => {
     const brief = cardBriefSchema.parse(mapCardBriefRow(potionSentinelRow));
     expect(brief.rarity).toBeNull();

@@ -29,6 +29,8 @@ import type { EffectChoice, EffectPrompt, PokemonRef } from "./interpreter";
 import {
   attachEnergyTargets,
   attachFromDiscardOffer,
+  // 🆕🆕🆕 D628 — Lethargic Charge's hand offer, so the refusal and the offer agree.
+  attachFromHandPlayable,
   attachSeat,
   conditionHolds,
   conditionNote,
@@ -1550,6 +1552,13 @@ export function programPlayable(
     if (op.op === "attachFromDiscard") {
       const offer = attachFromDiscardOffer(state, seat, op);
       if (offer.candidates.length === 0 || offer.targets.length === 0) return false;
+    }
+    // 🆕🆕🆕 D628 — Lethargic Charge, the op's first Ability: no Energy card in hand, or no Active Larry's
+    // Pokémon → the attach can only whiff (§7, the gust rule), on the op's OWN offer funnel. Asked of the
+    // printed singular (`one`) ONLY: D247's "any number" rows are attacks and stay ungated
+    // (`derivedAnyNumberAttach.test.ts` §5 pins that answer).
+    if (op.op === "attachFromHand" && op.one === true && !attachFromHandPlayable(state, seat, op, sourceUid)) {
+      return false;
     }
     if (op.op === "moveEnergy" && !moveEnergyPlayable(state, seat, op, sourceUid)) {
       // No movable Energy, or fewer than two of your Pokémon in play (no distinct

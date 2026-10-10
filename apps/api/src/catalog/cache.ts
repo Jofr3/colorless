@@ -73,8 +73,14 @@ const CACHE_TTL_SECONDS = 3600;
     `/cards/:id` body cached before the remote re-ingest would keep showing the raw tags
     in the card dialog (and feed the LOCAL match its raw face — the engine reads that the
     same, cards.ts `cardOfUid`) for up to a TTL. As at v7, it closes only when the remote
-    re-ingest has FINISHED before the deploy. */
-const CACHE_VERSION = "v8";
+    re-ingest has FINISHED before the deploy.
+    v8→v9: D628 (finding 0b), the v3→v4 kind — same shape, different bytes. A brief's
+    `energyType` is now the engine's Basic / Special answer (catalog/map.ts `briefEnergyType`),
+    so the 14 "Normal"-tagged Special Energies serve "Special" on `/cards` and `/sets/:id`
+    lists. A v8 body would keep serving "Normal" and the deck builder's 4-copy rule would go on
+    exempting them for up to a TTL. `/facets` and the `?energyType=` filter still read the
+    stored column (a re-ingest through D583's map.ts closes those). */
+const CACHE_VERSION = "v9";
 
 /**
  * KV key for a request URL: version + path + query, with the query keys

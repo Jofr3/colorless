@@ -430,6 +430,14 @@ describe("the pool sweep, structurally", () => {
       // 🆕🆕🆕 D582 — Team Rocket's Great Ball `me02.5-205`, a reprint-alias key on `sv10-175`'s
       // object: the same `coinFlipGate.otherwise` miss, one row per KEY.
       "me02.5-205 trainer :: searchDeck",
+      // 🆕🆕🆕 D628 — Meowth ex ×3 "Last-Ditch Catch": the search and the shuffle sit inside the trigger's
+      // `optional.then` (the confirm), which the enumerated walk does not descend.
+      "me03-062 trigger :: searchDeck",
+      "me03-062 trigger :: shuffleDeck",
+      "me03-107 trigger :: searchDeck",
+      "me03-107 trigger :: shuffleDeck",
+      "me03-121 trigger :: searchDeck",
+      "me03-121 trigger :: shuffleDeck",
       "mep-003 trigger :: drawCards", // 🆕🆕🆕 D590 — Alakazam (the two `mep` keys sort here)
       "mep-009 trigger :: drawCards",
       "mep-016 trigger :: discardDeckTop", // 🆕🆕🆕 D626 — Flygon (the `mep` key sorts here)

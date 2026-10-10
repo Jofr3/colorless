@@ -176,20 +176,26 @@ export function isEnergyCard(card: Card): boolean {
     (registry.ts EnergyProgram); an unauthored one degrades to a plain
     Colorless provider (continuous.ts providedEnergy) rather than a loud reject,
     since an energy always provides SOMETHING. */
-export function isSpecialEnergy(card: Card): boolean {
+export function isSpecialEnergy(card: EnergyFace): boolean {
   return card.category === "Energy" && (card.energyType === "Special" || printsRulesText(card));
 }
+
+/** 🆕🆕🆕 D628 — the three face fields the Basic / Special Energy test reads, so a reader holding less than a
+    whole `Card` asks the ONE predicate: the deck builder's `toBuilderCard` (src/features/builder/catalog.ts) and
+    the catalog API's brief mapper (apps/api catalog/map.ts) — finding 0b, the 4-copy rule that exempted the 14
+    "Normal"-tagged Special Energies. `effect` absent reads as no rules text (a brief without it keeps the tag). */
+export type EnergyFace = Pick<Card, "category" | "energyType"> & { effect?: Card["effect"] | undefined };
 
 /** 🆕🆕🆕 D583 — A BASIC Energy card (§6.1): tagged "Normal" and printing no rules text — the
     exact complement of `isSpecialEnergy` among "Normal"-tagged Energy. The ONE reader of the
     noun: `matchesFilter`'s `basicEnergy` / `pokemonOrBasicEnergy` arms, `energyProvidesOf` and
     the interpreter's attach and identity reads all ask it. */
-export function isBasicEnergy(card: Card): boolean {
+export function isBasicEnergy(card: EnergyFace): boolean {
   return card.category === "Energy" && card.energyType === "Normal" && !isSpecialEnergy(card);
 }
 
 /** 🆕🆕🆕 D583 — does this card print rules text (a non-blank `effect`)? */
-function printsRulesText(card: Card): boolean {
+function printsRulesText(card: EnergyFace): boolean {
   return (card.effect ?? "").trim() !== "";
 }
 
