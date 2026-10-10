@@ -818,6 +818,10 @@ export interface PassiveEffects {
         (D558's ⑶-bis, inherited, not re-ruled here). */
     beneficiaryHasEnergy?: BasicEnergyType;
     sourceOnBench?: true;
+    /** 🆕🆕🆕 D637 — Antique Armor Fossil `me05-072` "Protective Armor": *"As long as this Pokémon is in the
+        Active Spot, all of your Pokémon take 10 less damage …"* — `sourceOnBench`'s SOURCE-ZONE gate with the zone
+        swapped: it gates where the SOURCE stands (its side's Active Spot), never the damaged body. */
+    sourceActive?: true;
     otherNamedInPlay?: string;
     noStack?: string;
   };
@@ -2322,6 +2326,13 @@ export interface PassiveEffects {
 
       §9-suppressible per SOURCE like every printed Ability in this family. */
   preventSupporterEffectsWhileActive?: true;
+  /** 🆕🆕🆕 §11 (D637) — the HOLDER rule narrowed to Supporters: Antique Sail Fossil `me03-069` "Protective
+      Sail", *"Whenever your opponent plays a Supporter card from their hand, prevent all effects of that card done
+      to this Pokémon."* — `preventTrainerEffects`' sentence with "an Item or" removed, and so a THIRD field for
+      that table's reason: merged into `preventTrainerEffects` it would refuse a Crushing Hammer it does not print,
+      and `preventSupporterEffectsWhileActive` is a seat scan from the Active Spot. A `passivesOf` fold (any zone,
+      §9-suppressible), read only at interpreter.ts `effectRefusedOn`'s Trainer channel for a Supporter. */
+  preventSupporterEffects?: true;
   /** §7.1/§7.4 (D284) — the CONTINUOUS seat-wide BAR ON THE PLAY ITSELF, whose
       window is the holder's own Active Spot and whose object is the OPPONENT's
       hand:
@@ -16657,6 +16668,44 @@ const PLUME_PROTECTION: CardProgram = {
   passive: { preventDamageWhileBenched: true },
 };
 
+// 🆕🆕🆕 D637 — THE FOUR `me` ANTIQUE FOSSILS (D635's drops): 4 printings / 4 texts / 4 objects, each D576's
+// `playAsPokemon` with its printed Ability as the `passive`, the face off the catalog row (D581). Texts off the
+// LOCAL D1 (2026-10-10, `legal_standard = 1`). A new `FOSSIL_IDS` id in a stack is D576's twelfth position, so
+// the four ride MATCH_RECORD_VERSION 45 → 46 (apps/api match.ts "45 → 46 AT D637"). `antiqueFossilsMeD637.test.ts`.
+
+/** Antique Jaw Fossil `me03-068` — "Intimidating Jaw": Pyroar `me01-024` "Intimidating Fang"'s sentence word for
+    word (*"As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon do 30
+    less damage (before applying Weakness and Resistance)."*) — `INTIMIDATING_FANG`'s field. */
+const INTIMIDATING_JAW: CardProgram = {
+  playAsPokemon: true,
+  passive: { opponentActiveAttackDebuff: 30 },
+};
+
+/** Antique Sail Fossil `me03-069` — "Protective Sail": *"Whenever your opponent plays a Supporter card from their
+    hand, prevent all effects of that card done to this Pokémon."* — the NEW `preventSupporterEffects` (Fraxure
+    "Unnerve" without its Item half). */
+const PROTECTIVE_SAIL: CardProgram = {
+  playAsPokemon: true,
+  passive: { preventSupporterEffects: true },
+};
+
+/** Antique Armor Fossil `me05-072` — "Protective Armor": *"As long as this Pokémon is in the Active Spot, all of
+    your Pokémon take 10 less damage from attacks from your opponent's Pokémon (after applying Weakness and
+    Resistance)."* — Hariyama `sv02-113` "Arm Thrust Practice"'s `seatDamageReductionAfterWR` with the NEW `sourceActive` rider. */
+const PROTECTIVE_ARMOR: CardProgram = {
+  playAsPokemon: true,
+  passive: { seatDamageReductionAfterWR: { amount: 10, sourceActive: true } },
+};
+
+/** Antique Skull Fossil `me05-073` — "Spiny Skull": Hop's Pincurchin ex `me02.5-068` "Counterattack Quills"'s
+    sentence word for word (*"If this Pokémon is in the Active Spot and is damaged by an attack from your
+    opponent's Pokémon (even if this Pokémon is Knocked Out), place 3 damage counters on the Attacking
+    Pokémon."*; "place" read as "put", D592) — `COUNTERATTACK_QUILLS`' field. */
+const SPINY_SKULL: CardProgram = {
+  playAsPokemon: true,
+  passive: { damageAttacker: { amount: 30 } },
+};
+
 // ── 🆕🆕🆕 D584 — THE `me` ALIAS TIER 2: RENAMED AND PARAMETER COPIES. Eight NEW objects, each a
 //    built twin's ops under the `me` printing's own Ability / attack (no new op, field or reader).
 //    The twin's program NAMES its Ability (or the text differs by one parameter), so D582's
@@ -18817,7 +18866,8 @@ const DAMP_REQUIRE_KNOCKED_OUT: CardProgram = {
 //    `me03-069` / `me05-073` (a new fossil id's uid in a stack is read by 0.518 as a Pokémon and by a 0.517
 //    rollback as an Item — D576's twelfth position, so each owes `MATCH_RECORD_VERSION` 44 → 45 [🆕🆕🆕 D636 (D539):
 //    not taken at 44 → 45; now 45 → 46]) and Antique
-//    Armor Fossil `me05-072` (that, plus a source-Active rider no shipped field has). `fossilQuarryD635.test.ts`. ──
+//    Armor Fossil `me05-072` (that, plus a source-Active rider no shipped field has). `fossilQuarryD635.test.ts`.
+//    [🆕🆕🆕 D637 (D539): all four BUILT at D637 on MRV 45 → 46 — the D637 block above.] ──
 
 /** 🆕🆕🆕 **D635 — Fossil Quarry `me05-076` (Stadium)**: *"Once during each player's turn, that player may
     search their deck for up to 2 Item cards that have "Antique" in their name and put them onto their Bench.
@@ -19998,6 +20048,12 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10.5b-080": PROTECTIVE_COVER, // Antique Cover Fossil (reprint)
   "sv07-130": PRIMAL_ROOT, // Antique Root Fossil — Primal Root: Active, the opponent's Basic attackers cost {C} more
   "sv10.5w-079": PLUME_PROTECTION, // Antique Plume Fossil — Plume Protection: Benched, no damage from the opponent's attacks
+  // ── 🆕🆕🆕 D637 — the four `me` Antique Fossils: 4 registry ids / 4 objects, MID-MAP (D395/D396), so `raw[last]`
+  //    does not move. ──
+  "me03-068": INTIMIDATING_JAW, // Antique Jaw Fossil — Intimidating Jaw: Active, the opponent's Active does 30 less
+  "me03-069": PROTECTIVE_SAIL, // Antique Sail Fossil — Protective Sail: the opponent's Supporters' effects on it prevented
+  "me05-072": PROTECTIVE_ARMOR, // Antique Armor Fossil — Protective Armor: Active, all of yours take 10 less (after W/R)
+  "me05-073": SPINY_SKULL, // Antique Skull Fossil — Spiny Skull: Active and damaged, 3 counters on the attacker
   // ── 🆕🆕🆕 D577 — Area Zero Underdepths ×3 + Boomerang Energy + Tyme ×2: 6 registry ids / 3 objects,
   //    MID-MAP (D395/D396), so `raw[last]` does not move. ──
   "sv07-131": AREA_ZERO_UNDERDEPTHS, // Area Zero Underdepths — a Tera Pokémon in play: up to 8 on that Bench

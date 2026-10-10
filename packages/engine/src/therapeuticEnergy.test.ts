@@ -691,6 +691,7 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     // suite, exactly like the coin-flip zero above it, and observable only here.
     // No Energy or Tool writer today: all four printings are Pokémon Abilities.
     expect(fold.preventTrainerEffects).toBe(false);
+    expect(fold.preventSupporterEffects).toBe(false); // 🆕🆕🆕 D637 — Protective Sail's Supporter-only twin, zero here too
     // 🆕 D260 — THE TWENTY-SECOND KEY, AND THE TRAINER ZERO's ATTACK-CHANNEL TWIN.
     // `preventAttackEffects` (Skeledirge `sv08-031` "Unaware") is read only at
     // `interpreter.ts effectRefusedOn`'s ATTACK channel, and its printed sentence
@@ -791,6 +792,8 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
         // Ability's flag, FALSE here because this board's Energy is Therapeutic and writes none.
         "preventDamageWhileBenched",
         "preventTrainerEffects",
+        // 🆕🆕🆕 D637 — `preventSupporterEffects` (Antique Sail Fossil "Protective Sail"), an Ability's flag, false here.
+        "preventSupporterEffects",
         // 🆕🆕🆕 D614 — the Ability-channel holder shield (Luminous Wing), false here.
         "preventAbilityEffects",
         "preventAttackEffects",

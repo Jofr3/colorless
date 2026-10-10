@@ -659,7 +659,8 @@ export type CardFilter =
       them onto their Bench."* `toolNameContaining`'s two conjuncts with the head noun swapped for
       `item`'s (delegated through `matchesFilter`, D159) and the same unanchored, case-sensitive
       `.includes`. The Bench half is `benchMatches`' (cards.ts): a Trainer goes onto the Bench only if
-      it has an in-play Pokémon face (`FOSSIL_IDS`), so an unbuilt Antique Item is never offered. */
+      it has an in-play Pokémon face (`FOSSIL_IDS`), so an unbuilt Antique Item is never offered. (🆕🆕🆕 D637: no
+      legal Antique Item is unbuilt since D637 — the four `me` fossils joined `FOSSIL_IDS`.) */
   | { kind: "itemNameContaining"; fragment: string }
   /** An ITEM Trainer card — the catalog's `trainerType: "Item"`, read exactly as
       `supporter` and `toolCard` read theirs one field over (D231).

@@ -6,6 +6,25 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D637 update (engine 0.520.0) — the four `me` Antique Fossils (`MATCH_RECORD_VERSION` 45 → 46)
+
+4 texts / 4 printings (`antiqueFossilsMeD637.test.ts`, `fossilsMigrationD637.test.ts`), each a new `FOSSIL_IDS` id on D576's
+`playAsPokemon`: Antique Jaw Fossil `me03-068` "Intimidating Jaw" (Intimidating Fang's debuff), Antique Sail Fossil `me03-069` "Protective
+Sail" (the new Supporter-only holder shield `preventSupporterEffects`), Antique Armor Fossil `me05-072` "Protective Armor"
+(`seatDamageReductionAfterWR` with the new `sourceActive` rider) and Antique Skull Fossil `me05-073` "Spiny Skull" (Counterattack Quills'
+recoil). A v45 match record is MIGRATED by a re-stamp (no D1 read). Fossil Quarry now offers them. **Finished:** all 4 — F1 is complete.
+**Not taken (named):** Rotom ex ×3 "Multi Adapter" (Y1a — every Tool reader, the two-Tool cap and the forced discard wherever the
+Ability goes away; its own bump) and Overwriting Bolt `30th-040` — each owes 46 → 47.
+
+| Column | `me` built / units (D637) | Standard pool D637 |
+|---|---|---|
+| Attacks | 1,022 / 1,039 | **2,754 / 2,771** |
+| Abilities | 217 / 234 | **593 / 610** |
+| Trainers | 175 / 183 (+4) | **439 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1221** (1217 + 4).
+
 ## 🆕 D636 update (engine 0.519.0) — L1 + Clawitzer, the next-turn opponent locks (`MATCH_RECORD_VERSION` 44 → 45)
 
 6 texts / 7 printings (`nextTurnLocksD636.test.ts`, `lockKeysMigrationD636.test.ts`): Trevenant "Cursed Roots" `me04-039` (Glimmora's
@@ -15,7 +34,7 @@ a coin at every Trainer play from hand, R-QF1), Chi-Yu "Scorching Earth" `me01-0
 `Stadium` bar, R-SCE1) and Clawitzer "Fall Back to Reload" ×2 `me01-038` / `-141` (the new `InPlayPokemon.benchedTurn`, R-FBR1). A v44
 match record is MIGRATED (no D1 read). **Finished:** all 7. **Not taken (named):** Rotom ex ×3 "Multi Adapter" (Y1a: a two-Tool cap and a
 forced Tool discard when the Ability goes away), Overwriting Bolt `30th-040` and the four `me` Antique Fossils — each owes a later bump
-(45 → 46).
+(45 → 46). [🆕🆕🆕 D637 (D539): the fossils BUILT at D637; Multi Adapter and Overwriting Bolt now owe 46 → 47.]
 
 | Column | `me` built / units (D636) | Standard pool D636 |
 |---|---|---|
@@ -33,7 +52,7 @@ an in-play face is benched, R-FQ1 UNRULED) and Relicanth "Fossil Beatdown" `me05
 **Finished:** both. **Dropped and named:** Antique Jaw Fossil `me03-068`, Antique Sail Fossil `me03-069` and Antique Skull Fossil
 `me05-073` — a new fossil id in a stack owes MRV 44 → 45 (D576's twelfth position; they can ride L1's bump [🆕🆕🆕 D636 (D539): they did not — beyond D636's brief; now 45 → 46]; Sail also needs a
 Supporter-only holder shield) — and Antique Armor Fossil `me05-072` (that, plus a source-Active rider). Fossil Quarry does not offer
-them until they are built.
+them until they are built. [🆕🆕🆕 D637 (D539): all four BUILT at D637 (MRV 45 → 46); Fossil Quarry offers them.]
 
 | Column | `me` built / units (D635) | Standard pool D635 |
 |---|---|---|
@@ -460,7 +479,7 @@ cardText.ts `normalizeCardText` at ingest (map.ts) and at read (cards.ts `cardOf
 `swsh10.5` re-ingested, the `me` corpus regenerated (451 → 442 sentences). The 18 "markup only" texts / 21 `30th` printings below
 are BUILT on shipped readers (`cardTextD612.test.ts`, census D612 block). `INFERNO_X` and `STEALTHY_SLASH` retired (their clean text
 is reader-built; R-IX1 resolved); Photon Bullets ×3 stays keyed. Still unbuilt, now as clean text in their packages: Elemental Blast
-`30th-121` [🆕🆕🆕 D633: BUILT], Lightning Crash `30th-051` (WP30) [🆕🆕🆕 D629: BUILT], Charge-Up Dash `30th-042` (WP13) [🆕🆕🆕 D634: BUILT], Overwriting Bolt `30th-040` [🆕🆕🆕 D633: still unbuilt — it gives a Weakness, an MRV bump (L1)] [🆕🆕🆕 D636: did not ride L1's bump; owes 45 → 46], Pika Chain `30th-034`
+`30th-121` [🆕🆕🆕 D633: BUILT], Lightning Crash `30th-051` (WP30) [🆕🆕🆕 D629: BUILT], Charge-Up Dash `30th-042` (WP13) [🆕🆕🆕 D634: BUILT], Overwriting Bolt `30th-040` [🆕🆕🆕 D633: still unbuilt — it gives a Weakness, an MRV bump (L1)] [🆕🆕🆕 D636: did not ride L1's bump; owes 45 → 46] [🆕🆕🆕 D637: not taken at 45 → 46 either; owes 46 → 47], Pika Chain `30th-034`
 (WP28b) [🆕🆕🆕 D623: BUILT], Kaboom Needles `30th-104` (WP30) [🆕🆕🆕 D629: BUILT]. The data gap below ("43 `me` rows carry tcgdex HTML") is closed on the LOCAL D1; the
 remote D1 still needs the re-ingest, run with the D612 ingest code.
 
@@ -1002,7 +1021,7 @@ now logs its own "Incandescent Body".
 **Fully built `me` printings: 690** (672 + 18; every other attack these Pokémon print is reader-built). Still owed from
 the D582 list: "Fade Out" ×5 (Drifblim, Meowth ex ×3, Emolga — other index, other name) [🆕🆕🆕 D593: BUILT, three new objects]. Named, not in WP01: Mega Scrafty
 ex ×3 prints Counterattack Quills at "place 5" (a 50 `damageAttacker` copy) [🆕🆕🆕 D585: BUILT, `COUNTERATTACKING_CREST`] and Antique Skull Fossil `me05-073` prints
-the "place 3" text on a fossil face.
+the "place 3" text on a fossil face [🆕🆕🆕 D637: BUILT, `SPINY_SKULL`].
 
 ## 🆕 D583 update (engine 0.467.0) — Special Energy by printed text
 
@@ -1060,7 +1079,7 @@ Legal rows: `sv` 2,021 (18 sets) + `me` 1,266 (9 sets; `30th-c` is not Standard-
 - **"Alias-ready"** means the exact printed text is already built on a registry id (of any
   legality), so one registry line naming the `me` id would build it with no new code. For a
   Trainer the whole printed face must match (the four `me` fossils share the fossil rule text
-  but print new Abilities, so they are NOT alias-ready). For an Ability, a match by text is
+  but print new Abilities, so they are NOT alias-ready) [🆕🆕🆕 D637: all four BUILT on their own objects]. For an Ability, a match by text is
   enough for a `passive`; an activated Ability's program also carries the printed name.
 - **Already fully built `me` printings: 576** — 514 Pokémon whose every attack text is claimed
   by an existing reader and that print no Ability, 46 **Mega … ex** printings in the same state
@@ -1405,7 +1424,7 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### HP, Retreat, type and Energy-provision passives — 8 text(s) / 15 printing(s)
 
-- 3× **Multi Adapter** — Each of your Pokémon that has "Rotom" in its name may have up to 2 Pokémon Tool cards attached. If this Ability goes away, discard Pokémon Tools from those Pokémon until only 1 remains on each. [🆕🆕🆕 D636: not taken — a two-Tool cap and a forced discard when the Ability goes away; owes its own bump (45 → 46)]
+- 3× **Multi Adapter** — Each of your Pokémon that has "Rotom" in its name may have up to 2 Pokémon Tool cards attached. If this Ability goes away, discard Pokémon Tools from those Pokémon until only 1 remains on each. [🆕🆕🆕 D636: not taken — a two-Tool cap and a forced discard when the Ability goes away; owes its own bump (45 → 46)] [🆕🆕🆕 D637: not taken at the fossils' bump either; owes 46 → 47]
 - 2× **Double Type** — As long as this Pokémon is in play, it is {F} and {P} type. [🆕🆕🆕 D586: BUILT]
 - 2× **Scale Up** — If this Pokémon has 6 or more Grass Energy attached, it gets +250 HP. [🆕🆕🆕 D610: BUILT]
 - 2× **Slimy Sliding** — When your opponent's Active Pokémon retreats, your opponent flips a coin. If tails, Energy for its Retreat Cost is not discarded, and they don't switch Pokémon. The effect of Slimy Sliding doesn't stack.
@@ -1473,16 +1492,16 @@ Search your deck for a Pokémon, reveal it, and put it into your hand. Then, shu
 
 ### Pokémon-faced Trainers (fossils, Core Memory) — 5 text(s) / 5 printing(s)
 
-- 1× **Antique Armor Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat. [🆕🆕🆕 D635: dropped — a new fossil id in a stack owes MRV 44 → 45, plus a source-Active rider] [🆕🆕🆕 D636: not taken at L1's bump; owes 45 → 46]
+- 1× **Antique Armor Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat. [🆕🆕🆕 D635: dropped — a new fossil id in a stack owes MRV 44 → 45, plus a source-Active rider] [🆕🆕🆕 D636: not taken at L1's bump; owes 45 → 46] [🆕🆕🆕 D637: BUILT]
 
 At any time during your turn, you may discard this card from play.
-- 1× **Antique Jaw Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat. [🆕🆕🆕 D635: dropped — a new fossil id in a stack owes MRV 44 → 45] [🆕🆕🆕 D636: not taken at L1's bump; owes 45 → 46]
+- 1× **Antique Jaw Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat. [🆕🆕🆕 D635: dropped — a new fossil id in a stack owes MRV 44 → 45] [🆕🆕🆕 D636: not taken at L1's bump; owes 45 → 46] [🆕🆕🆕 D637: BUILT]
 
 At any time during your turn, you may discard this card from play.
-- 1× **Antique Sail Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat. [🆕🆕🆕 D635: dropped — a new fossil id in a stack owes MRV 44 → 45, plus a Supporter-only holder shield] [🆕🆕🆕 D636: not taken at L1's bump; owes 45 → 46]
+- 1× **Antique Sail Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat. [🆕🆕🆕 D635: dropped — a new fossil id in a stack owes MRV 44 → 45, plus a Supporter-only holder shield] [🆕🆕🆕 D636: not taken at L1's bump; owes 45 → 46] [🆕🆕🆕 D637: BUILT]
 
 At any time during your turn, you may discard this card from play.
-- 1× **Antique Skull Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat. [🆕🆕🆕 D635: dropped — a new fossil id in a stack owes MRV 44 → 45] [🆕🆕🆕 D636: not taken at L1's bump; owes 45 → 46]
+- 1× **Antique Skull Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat. [🆕🆕🆕 D635: dropped — a new fossil id in a stack owes MRV 44 → 45] [🆕🆕🆕 D636: not taken at L1's bump; owes 45 → 46] [🆕🆕🆕 D637: BUILT]
 
 At any time during your turn, you may discard this card from play.
 - 1× **Core Memory** — The Mega Zygarde ex this card is attached to can use the attack on this card. (You still need the necessary Energy to use this attack.) [🆕🆕🆕 D620: BUILT]

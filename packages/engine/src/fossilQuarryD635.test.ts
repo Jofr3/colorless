@@ -30,7 +30,8 @@ import {
 // appeared only in D606's / D618's drop lists and their census pins. Dropped and named: Antique Jaw / Sail /
 // Skull Fossil `me03-068` / `me03-069` / `me05-073` (a new fossil id in a stack is read by a 0.517 rollback as
 // an Item — D576's twelfth position, so each owes `MATCH_RECORD_VERSION` 44 → 45 [🆕🆕🆕 D636 (D539): not taken at 44 → 45; now 45 → 46]) and Antique Armor Fossil
-// `me05-072` (that, plus a source-Active rider no shipped field has). Driven on a LOCAL `cardPool` (D275) in
+// `me05-072` (that, plus a source-Active rider no shipped field has) [🆕🆕🆕 D637 (D539): all four BUILT at D637 on
+// MRV 45 → 46 — antiqueFossilsMeD637.test.ts]. Driven on a LOCAL `cardPool` (D275) in
 // the suite's OWN 60-card deck (D270).
 
 const QUARRY_TEXT =
@@ -45,7 +46,7 @@ const RELICANTH = "me05-017";
 const COVER = "sv07-129";
 const ROOT = "sv07-130";
 const PLUME = "sv10.5w-079";
-const JAW = "me03-068"; // unbuilt (dropped): never offered
+const JAW = "me03-068"; // unbuilt (dropped): never offered [🆕🆕🆕 D637 (D539): BUILT at D637 — now offered]
 const LILEEP = "sv07-005";
 const TYRANITAR = "sv09-095"; // "Daunting Gaze" — the opponent can't play Item cards from their hand
 const NEST_BALL = "sv01-181";
@@ -226,10 +227,10 @@ describe("D635 §1 — the prints and the programs", () => {
     expect(deriveAttackDamageBonus(BEATDOWN_TEXT.replace("Antique", "Fossil"))).toBeNull();
   });
 
-  it("the dropped fossils stay unbuilt: no program, no in-play face", () => {
+  it("the dropped fossils stay unbuilt: no program, no in-play face (🆕🆕🆕 D637 (D539): WITHDRAWN — all four are built at D637: a program and an in-play face each)", () => {
     for (const id of [JAW, "me03-069", "me05-072", "me05-073"]) {
-      expect(programFor(id), id).toBeUndefined();
-      expect(FOSSIL_IDS.has(id), id).toBe(false);
+      expect(programFor(id)?.playAsPokemon, id).toBe(true);
+      expect(FOSSIL_IDS.has(id), id).toBe(true);
     }
   });
 });
@@ -247,7 +248,11 @@ describe("D635 §2 — `itemNameContaining` and the Bench gate", () => {
 
   it("a Trainer goes onto the Bench only with an in-play Pokémon face; Pokémon are read as before", () => {
     expect(benchMatches(POOL[COVER], ANTIQUE)).toBe(true);
-    expect(benchMatches(POOL[JAW], ANTIQUE)).toBe(false);
+    expect(benchMatches(POOL[JAW], ANTIQUE)).toBe(true); // 🆕🆕🆕 D637 (D539): was `false` — the Jaw has a face now
+    // 🆕🆕🆕 D637 (D539): a face-less Antique Item — NAMED "Antique …" so it passes the filter and reaches the Trainer arm.
+    const faceLess: Card = { ...trainerCard("d635-face-less", "Item", "An Antique test Item."), name: "Antique Test Item" };
+    expect(matchesFilter(faceLess, ANTIQUE)).toBe(true);
+    expect(benchMatches(faceLess, ANTIQUE)).toBe(false);
     expect(benchMatches(POOL[NEST_BALL], { kind: "item" })).toBe(false);
     expect(benchMatches(POOL[FILLER], { kind: "anyPokemon" })).toBe(true);
     expect(benchMatches(POOL[LILEEP], { kind: "anyPokemon" })).toBe(false);
@@ -261,8 +266,9 @@ describe("D635 §3 — Fossil Quarry on the board", () => {
     expect(of(opened, "STADIUM_ABILITY_ACTIVATED")).toHaveLength(1);
     const p = prompt(parked);
     expect(p.max).toBe(2);
-    expect(new Set(ids(parked, p.candidates))).toEqual(new Set([COVER, ROOT, PLUME]));
-    expect(p.candidates).toHaveLength(6);
+    // 🆕🆕🆕 D637 (D539): the Jaw ×2 is offered too — built at D637 (was `[COVER, ROOT, PLUME]`, 6 candidates).
+    expect(new Set(ids(parked, p.candidates))).toEqual(new Set([COVER, ROOT, PLUME, JAW]));
+    expect(p.candidates).toHaveLength(8);
     expect(JSON.stringify(p)).toContain('Item cards that have \\"Antique\\" in their name');
     const picks = [
       p.candidates.find((u) => parked.cardIdByUid[u] === COVER),
@@ -309,7 +315,7 @@ describe("D635 §3 — Fossil Quarry on the board", () => {
     const { state: theirs } = use(p2Turn, "p2");
     const p = prompt(theirs);
     for (const uid of p.candidates) expect(theirs.players.p2.deck).toContain(uid);
-    expect(new Set(ids(theirs, p.candidates))).toEqual(new Set([COVER, ROOT, PLUME]));
+    expect(new Set(ids(theirs, p.candidates))).toEqual(new Set([COVER, ROOT, PLUME, JAW])); // 🆕🆕🆕 D637 — the Jaw too
   });
 
   it("a parked Fossil Quarry round-trips through JSON", () => {
@@ -354,7 +360,7 @@ describe("D635 §4 — Relicanth \"Fossil Beatdown\": +30 per benched Antique", 
     expect(beat(state)).toBe(40);
   });
 
-  it("the engine is 0.519.0", () => {
-    expect(engineVersion).toBe("0.519.0");
+  it("the engine is 0.520.0", () => {
+    expect(engineVersion).toBe("0.520.0");
   });
 });

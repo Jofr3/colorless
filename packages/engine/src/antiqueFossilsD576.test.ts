@@ -501,8 +501,9 @@ const discard = (seat: Seat, target: PokemonTarget): GameAction => ({
 // §0 — the face, pinned LITERALLY against the printed card (🆕 D581: the Ability is the catalog row's).
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D576 §0 — `fossils.ts`: the Pokémon face, its Ability read off the catalog row (D581)", () => {
-  it("🛑 FOUR ids, and only these — keyed by PRINTING id", () => {
-    expect([...FOSSIL_IDS].sort()).toEqual([COVER, ROOT, COVER_2, PLUME].sort());
+  it("🛑 FOUR ids, and only these — keyed by PRINTING id (🆕🆕🆕 D637 (D539): EIGHT — the four `me` fossils joined, antiqueFossilsMeD637.test.ts)", () => {
+    // 🆕🆕🆕 D637 — plus Antique Jaw / Sail Fossil `me03-068` / `-069` and Antique Armor / Skull Fossil `me05-072` / `-073`.
+    expect([...FOSSIL_IDS].sort()).toEqual([COVER, ROOT, COVER_2, PLUME, "me03-068", "me03-069", "me05-072", "me05-073"].sort());
     for (const id of [LILEEP, RARE_CANDY, NEST_BALL, "sv07-131"]) expect(FOSSIL_IDS.has(id), id).toBe(false);
   });
 
@@ -1092,7 +1093,7 @@ describe("D576 §7 — the persisted position: a fossil's Trainer uid in `InPlay
     expect(isLethallyDamaged(s, { ...fossil, damage: 50 })).toBe(false);
   });
 
-  it("the engine is 0.519.0", () => {
-    expect(engineVersion).toBe("0.519.0");
+  it("the engine is 0.520.0", () => {
+    expect(engineVersion).toBe("0.520.0");
   });
 });

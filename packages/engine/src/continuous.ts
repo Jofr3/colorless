@@ -1233,6 +1233,9 @@ export function passivesOf(
       fold has nothing to resolve. What changed is the READER — a Trainer aims at
       bodies an attack cannot. */
   preventTrainerEffects: boolean;
+  /** 🆕🆕🆕 §11 (D637) — `preventTrainerEffects` narrowed to a SUPPORTER the opponent plays: Antique Sail Fossil
+      `me03-069` "Protective Sail". Its one read site is interpreter.ts `effectRefusedOn`'s Trainer channel. */
+  preventSupporterEffects: boolean;
   /** §11 (D260) — does this Pokémon refuse the EFFECTS of an opponent's attack,
       with no damage half at all? Skeledirge `sv08-031` "Unaware", 1 legal
       printing: *"Prevent all effects of attacks used by your opponent's Pokémon
@@ -1801,6 +1804,7 @@ export function passivesOf(
   let preventDamageAndEffectsWhileBenched = false;
   let preventDamageWhileBenched = false;
   let preventTrainerEffects = false;
+  let preventSupporterEffects = false;
   let preventAttackEffects = false;
   let suppressTargetEffectsOnAttack = false;
   let survivesKoAtFullHp = false;
@@ -1977,6 +1981,8 @@ export function passivesOf(
     // printings ARE Abilities, so Klefki's lock must switch the refusal off and let
     // the Crushing Hammer through.
     if (passive.preventTrainerEffects === true) preventTrainerEffects = true;
+    // 🆕🆕🆕 D637 — Protective Sail: the same bare OR, Supporters only (read at the funnel).
+    if (passive.preventSupporterEffects === true) preventSupporterEffects = true;
     // D260 — the ATTACK-borne twin of the line directly above, and a BARE OR for
     // that line's reason verbatim: no zone clause, no attacker clause, no
     // magnitude. In this loop rather than read off `top` at the read site because
@@ -2175,6 +2181,7 @@ export function passivesOf(
     preventDamageAndEffectsWhileBenched,
     preventDamageWhileBenched,
     preventTrainerEffects,
+    preventSupporterEffects,
     preventAttackEffects,
     preventAbilityEffects,
     preventDamageFromAttackerClasses,
@@ -5740,6 +5747,9 @@ export function seatDamageReduction(
       // target, so a benched Carbink shields the Active and stops shielding
       // anything the moment it is promoted.
       if (aura.sourceOnBench === true && !isOnBench(state, holder)) continue;
+      // 🆕🆕🆕 D637 — Antique Armor Fossil's "As long as this Pokémon is in the Active Spot": the same SOURCE-ZONE
+      // gate on the other zone (this side's Active Spot), never the damaged body.
+      if (aura.sourceActive === true && holder !== side.active) continue;
       // The "1 OTHER <name> in play" clause — Bouffalant's, and the one rider that
       // excludes the source itself. Compared by TOP UID because `InPlayPokemon` is
       // rebuilt by value on every damage step, and scanned over THIS side's

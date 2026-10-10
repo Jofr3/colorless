@@ -11304,6 +11304,8 @@ function effectRefusedOn(
     // Fraxure / Cetitan ex: the HOLDER rule, and the fold answers it whole — no
     // zone clause, no source clause, and BOTH trainer types refused.
     if (passivesOf(state, target).preventTrainerEffects) return true;
+    // 🆕🆕🆕 D637 — Antique Sail Fossil "Protective Sail": the HOLDER rule, Supporters only.
+    if (ctx.invokedBy === "supporter" && passivesOf(state, target).preventSupporterEffects) return true;
     // Rhyperior: the SEAT rule, Supporters only. `seat` and not `target` because
     // the printed target is "all of your Pokémon" — the scan is about the side.
     return ctx.invokedBy === "supporter" && seatShieldedFromSupporterEffects(state, seat);

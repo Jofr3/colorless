@@ -168,7 +168,7 @@ describe("§1 — the sentence, the corpus row, and D230's refusal paid", () => 
   });
 
   it("engineVersion stepped for a behaviour a card can reach, and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.519.0");
+    expect(engineVersion).toBe("0.520.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

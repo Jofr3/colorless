@@ -962,7 +962,9 @@ export function namesItsCard(filter: CardFilter): boolean {
 
     🆕🆕🆕 D635 — A TRAINER GOES ONTO THE BENCH ONLY WITH AN IN-PLAY POKÉMON FACE (`FOSSIL_IDS`): Fossil
     Quarry's Antique Items. An unbuilt Antique Item (Antique Armor / Jaw / Sail / Skull Fossil, `me`) is
-    not offered — R-IC1's reading (Impromptu Carrier offers simulated Tools only), carried. */
+    not offered — R-IC1's reading (Impromptu Carrier offers simulated Tools only), carried.
+    [🆕🆕🆕 D637 (D539): the four named `me` fossils are BUILT at D637 (`FOSSIL_IDS`) and offered; the gate stands for
+    any Trainer with no in-play face.] */
 export function benchMatches(card: Card | undefined, filter: CardFilter): boolean {
   if (card === undefined || !matchesFilter(card, filter)) return false;
   if (card.category === "Trainer") return FOSSIL_IDS.has(card.id);

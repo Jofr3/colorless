@@ -11,6 +11,14 @@ import type { Card } from "@luminous/schema";
 //   sv07-130               Antique Root Fossil   "Primal Root"
 //   sv10.5w-079            Antique Plume Fossil  "Plume Protection"
 //
+// [🆕🆕🆕 D637 (D539): ~~"Four … printings on three texts"~~ — EIGHT printings on seven texts; the four `me`
+// fossils are built at D637 (MATCH_RECORD_VERSION 45 → 46):
+//
+//   me03-068               Antique Jaw Fossil    "Intimidating Jaw"
+//   me03-069               Antique Sail Fossil   "Protective Sail"
+//   me05-072               Antique Armor Fossil  "Protective Armor"
+//   me05-073               Antique Skull Fossil  "Spiny Skull"  ]
+//
 // 🆕 D581 — THE ABILITY IS READ OFF THE CATALOG ROW, NOT HAND-WRITTEN. Until D581
 // `apps/api/src/ingest/map.ts` built every Trainer row from a base that nulled `hp` and
 // `abilitiesJson`, so the catalog `Card` for these ids had neither and this file carried the
@@ -58,12 +66,18 @@ export const FOSSIL_HP = 60;
 /** Every Antique Fossil printing the engine builds — `cardOfUid`'s hot-path test reads this
     FIRST, so a non-fossil lookup pays one `Set.has` and nothing else. Four rows, three texts.
     (me03-068 / me03-069 / me05-072 / me05-073, the Mega Evolution serie's four fossils, are
-    ingested at D581 and NOT built: each prints a fourth-to-seventh Ability text.) */
+    ingested at D581 and NOT built: each prints a fourth-to-seventh Ability text.)
+    [🆕🆕🆕 D637 (D539): ~~"Four rows, three texts"~~ / ~~"NOT built"~~ — EIGHT rows, seven texts: the four
+    `me` fossils are built at D637 (MATCH_RECORD_VERSION 45 → 46, apps/api match.ts "45 → 46 AT D637").] */
 export const FOSSIL_IDS: ReadonlySet<string> = new Set([
   "sv07-129", // Antique Cover Fossil (Stellar Crown)
   "sv10.5b-080", // Antique Cover Fossil (Black Bolt)
   "sv07-130", // Antique Root Fossil (Stellar Crown)
   "sv10.5w-079", // Antique Plume Fossil (White Flare)
+  "me03-068", // 🆕🆕🆕 D637 — Antique Jaw Fossil (Perfect Order) "Intimidating Jaw"
+  "me03-069", // 🆕🆕🆕 D637 — Antique Sail Fossil (Perfect Order) "Protective Sail"
+  "me05-072", // 🆕🆕🆕 D637 — Antique Armor Fossil (Pitch Black) "Protective Armor"
+  "me05-073", // 🆕🆕🆕 D637 — Antique Skull Fossil (Pitch Black) "Spiny Skull"
 ]);
 
 // Memoized per id, and re-synthesized only if a DIFFERENT catalog object arrives for the same

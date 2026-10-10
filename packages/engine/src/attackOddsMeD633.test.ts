@@ -34,7 +34,7 @@ import {
 // Dropped and named: Pikachu `30th-040` "Overwriting Bolt" — *"(Apply Weakness as ×2.)"* GIVES a
 // Weakness to a Pokémon that prints none (101 legal Dragon-type printings print none, LOCAL D1), which
 // D552's amount-keeping retype cannot carry; the persisted `weaknessRetype` record needs a new field, so it
-// rides an MRV bump (L1's).
+// rides an MRV bump (L1's). [🆕🆕🆕 D637 (D539): it rode neither L1's bump (D636) nor the fossils' (D637); owes 46 → 47.]
 
 const YEET = "You may discard any number of cards from your hand.";
 const ROCKET_FEATHERS =
@@ -450,7 +450,7 @@ describe("D633 §6 — Elemental Blast on a board (the matched discard, R-EB1)",
 });
 
 describe("D633 §7 — the version", () => {
-  it("is built at engine 0.519.0", () => {
-    expect(engineVersion).toBe("0.519.0");
+  it("is built at engine 0.520.0", () => {
+    expect(engineVersion).toBe("0.520.0");
   });
 });

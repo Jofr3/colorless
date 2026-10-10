@@ -651,13 +651,13 @@ describe("§12 — the v33 bytes round-trip, and a v32-shaped state THROWS (D549
     expect(() => redactGame(revived, "p1")).toThrow(TypeError);
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 45 (🆕🆕🆕 D636 stepped it 44 → 45; D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; this slice's bump was 32 → 33) — read off the raw source, not retyped", () => {
-    expect(raw("/match.ts")).toContain("export const MATCH_RECORD_VERSION = 45;");
+  it("🛑 `MATCH_RECORD_VERSION` is 46 (🆕🆕🆕 D637 stepped it 45 → 46; D636 stepped it 44 → 45; D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; this slice's bump was 32 → 33) — read off the raw source, not retyped", () => {
+    expect(raw("/match.ts")).toContain("export const MATCH_RECORD_VERSION = 46;");
     expect(raw("/match.ts")).toContain("32 → 33 AT D549 — THE SIXTH POSITION");
   });
 
-  it("the engine version stepped to 0.519.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.519.0");
-    expect(manifest.version).toBe("0.519.0");
+  it("the engine version stepped to 0.520.0 in BOTH places", () => {
+    expect(engineVersion).toBe("0.520.0");
+    expect(manifest.version).toBe("0.520.0");
   });
 });

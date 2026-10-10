@@ -2160,6 +2160,24 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **45 → 46 AT D637 — THE NINETEENTH POSITION, AND THE FIFTH MIGRATION: THE FOUR `me` ANTIQUE FOSSILS.**
+    (Placed ABOVE the D636 block.) The address, named first (D456's rule): D576's TWELFTH POSITION, once per id — no key
+    and no widened type, but a NEW `FOSSIL_IDS` id (Antique Jaw / Sail Fossil `me03-068` / `-069`, Antique Armor / Skull
+    Fossil `me05-072` / `-073`) can now sit as a uid in `InPlayPokemon.stack`. This build's zone-aware `cardOfUid` reads
+    it as a 60-HP Basic {C} Pokémon with its printed Ability; a 0.519 ROLLBACK reads it as the catalog Item (`hpOf` null:
+    never Knocked Out, no Ability, no card rules). ⚠️ Also moved, and none is a second reason: the catalog-side
+    `PassiveEffects.preventSupporterEffects` and `seatDamageReductionAfterWR.sourceActive` (never serialized).
+    🛑 **THE MIGRATION IS A RE-STAMP.** `migrateMatchRecord` takes a v45 record (no D1 read) and writes nothing but the
+    version: no v45 writer could have put a `me` fossil in play (0.519 refuses the play, `TRAINER_NOT_SIMULATED`), and a
+    v45 `cardPool`'s fossil rows already carry the printed face (D581's ingest, D583's v41 refresh), which the in-play
+    face is built from. A v45 record skips every earlier step; a v44 record takes D636's, a v43 two, a v42 three, a v41
+    all four. Driven in `fossilsMigrationD637.test.ts`. A rollback to any build at 45 (0.519) RETIRES every v46 record
+    (D124). No wire shape moves: the client offers the play off the bundled engine's `playAsPokemon`, the server decides
+    it, and an old client meeting a new server offers nothing it cannot play — the usual deploy order. ⚠️ NOT in this
+    bump, named: Rotom ex ×3 "Multi Adapter" (Y1a: a §7.4 two-Tool cap read off a Rotom holder and a live Ability, and an
+    owner's forced Tool discard at every place the Ability can go away) and Pikachu `30th-040` "Overwriting Bolt" — each
+    owes a later bump (46 → 47).
+
     🆕🆕🆕 **44 → 45 AT D636 — THE EIGHTEENTH POSITION, AND THE FOURTH MIGRATION: L1's NEXT-TURN LOCKS AND
     CLAWITZER's MOVED-TO-BENCH STAMP.** (Placed ABOVE the D635 block.) The addresses, named first (D456's rule):
     ⑴ **`InPlayPokemon.attackTwoFlipLockTurn: number | null`** — REQUIRED (Jet of Ink's two coins, R-JOI1). A v44
@@ -2188,7 +2206,8 @@ export interface MatchRecord {
     reads the Stadium bar through `handPlayBarred`), so the deploy order is the usual one. ⚠️ NOT in this bump, named:
     Rotom ex ×3 "Multi Adapter" (Y1a: a §7.4 two-Tool cap, a forced Tool discard when the Ability goes away), Pikachu
     `30th-040` "Overwriting Bolt" and the four `me` Antique Fossils (`me03-068` / `-069`, `me05-072` / `-073`) — each
-    owes a later bump (45 → 46).
+    owes a later bump (45 → 46). [🆕🆕🆕 D637 (D539): the four fossils PAID — "45 → 46 AT D637"; Multi Adapter and
+    Overwriting Bolt did not ride it (46 → 47).]
 
     🆕🆕🆕 **STAYS 44 AT D635 — F1 ADDS ONE `CardFilter` MEMBER (`itemNameContaining`), ONE `IN_PLAY_BODY_NOUNS` KEY AND
     ONE STADIUM PROGRAM (Fossil Quarry `me05-076`); NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY OR `InPlayPokemon`
@@ -2199,7 +2218,7 @@ export interface MatchRecord {
     `FOSSIL_IDS`, which this slice does NOT widen). 🛑 **THAT LAST CLAUSE IS WHY THE FOUR `me` FOSSILS ARE DROPPED**:
     adding Antique Jaw / Sail / Armor / Skull Fossil to `FOSSIL_IDS` puts a NEW id's uid in a stack, which a 0.517
     rollback reads as a catalog Item (`hpOf` null: never Knocked Out, no Ability, no card rules) — D576's TWELFTH
-    POSITION per id, so they owe 44 → 45 and wait for L1's bump [🆕🆕🆕 D636 (D539): they did not ride it — beyond D636's brief; 45 → 46]. Relicanth "Fossil Beatdown" is derived from the
+    POSITION per id, so they owe 44 → 45 and wait for L1's bump [🆕🆕🆕 D636 (D539): they did not ride it — beyond D636's brief; 45 → 46] [🆕🆕🆕 D637 (D539): PAID — "45 → 46 AT D637"]. Relicanth "Fossil Beatdown" is derived from the
     printed text at the attack, so the face in a v44 `cardPool` reads the new bonus mid-match; nothing is serialized.
 
     🆕🆕🆕 **STAYS 44 AT D634 — C1 ADDS TWO `AttackCoinFlip` MEMBERS (`bonusOnAllHeads`, `deckUpToHeads`), ONE
@@ -2921,7 +2940,7 @@ export interface MatchRecord {
     the `trimBench` `EffectOp` (parked in `cont`, a D125 widening carried by (ii)), the events
     `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side
     `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */
-export const MATCH_RECORD_VERSION = 45;
+export const MATCH_RECORD_VERSION = 46;
 
 /** 🆕🆕🆕 D583 — the one version this deploy MIGRATES rather than retires ("41 → 42 AT D583" above).
     🆕🆕🆕 D621 (D539): ~~"the one version"~~ — the version whose POOL is refreshed from D1; v42 is
@@ -2941,10 +2960,15 @@ export const RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION = 43;
     above): no D1 read, `withD636LockKeys`. A v43 record takes D630's step first, a v42 three steps, a v41 all four. */
 export const LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION = 44;
 
+/** 🆕🆕🆕 D637 — the version migrated by a re-stamp alone ("45 → 46 AT D637" above): no D1 read, no key written. A
+    v44 record takes D636's step, a v43 two steps, a v42 three, a v41 all four. */
+export const FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION = 45;
+
 /** 🆕🆕🆕 D583 — the catalog ids a v41 record's pool holds (what `loadMatchRecord` re-reads from D1), or
     `null` for anything that is not a well-formed v41 record. PURE.
     🆕🆕🆕 D621 — `[]` for a well-formed v42 record: it is migrated, but its pool is not re-read.
-    🆕🆕🆕 D630 — and `[]` for a well-formed v43 record, on the same terms. 🆕🆕🆕 D636 — and a v44 one. */
+    🆕🆕🆕 D630 — and `[]` for a well-formed v43 record, on the same terms. 🆕🆕🆕 D636 — and a v44 one. 🆕🆕🆕 D637 — and a
+    v45 one. */
 export function migratablePoolIdsOf(raw: unknown): string[] | null {
   const record = readMigratableRecord(raw);
   if (record === null) return null;
@@ -2963,10 +2987,14 @@ export function migratablePoolIdsOf(raw: unknown): string[] | null {
     🆕🆕🆕 D636 — a v44 record is migrated too (`fresh` unread); EVERY migrated version then takes D636's lock keys
     (`withD636LockKeys`), and a v44 one skips D621's and D630's steps (it has those keys, and D630's would clobber
     a live `prizesTakenOnTurn` / `attackDamageTaken`). (D539: ~~"EVERY migrated version then takes D630's record
-    keys"~~ — every version below 44.) */
+    keys"~~ — every version below 44.)
+    🆕🆕🆕 D637 — a v45 record is migrated too (`fresh` unread) by its version alone: it skips every step (it has every
+    key, and D636's step would clobber a live lock). (D539: ~~"EVERY migrated version then takes D636's lock keys"~~ —
+    every version below 45.) */
 export function migrateMatchRecord(raw: unknown, fresh: Record<string, Card>): MatchRecord | null {
   const record = readMigratableRecord(raw);
   if (record === null) return null;
+  if (record.version === FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION) return { ...record, version: MATCH_RECORD_VERSION };
   const cardPool: Record<string, Card> = { ...record.state.cardPool };
   if (record.version === MIGRATABLE_MATCH_RECORD_VERSION) {
     for (const [id, card] of Object.entries(cardPool)) {
@@ -3062,7 +3090,8 @@ export interface MatchSlot {
     v43, and a v41 OR v42 record is migrated; a v42 one has no pool to load (`[]`), so `loadPool` is
     not called and no D1 failure can hold it back.
     🆕🆕🆕 D630 (D539): ~~"the record written back is v43"~~ — v44; a v43 record is migrated too, also with no
-    pool to load. 🆕🆕🆕 D636 (D539): ~~"v44"~~ — v45; a v44 record is migrated too, with no pool to load. */
+    pool to load. 🆕🆕🆕 D636 (D539): ~~"v44"~~ — v45; a v44 record is migrated too, with no pool to load.
+    🆕🆕🆕 D637 (D539): ~~"v45"~~ — v46; a v45 record is migrated too, with no pool to load. */
 export async function loadMatchRecord(
   slot: MatchSlot,
   loadPool: (ids: readonly string[]) => Promise<Record<string, Card>>,
@@ -3074,6 +3103,7 @@ export async function loadMatchRecord(
   const ids = migratablePoolIdsOf(raw);
   if (ids === null) return { kind: "stale" };
   // 🆕🆕🆕 D621 — a v42 record has no pool to re-read (`[]`): D1 is not asked. 🆕🆕🆕 D630 — nor a v43 one. 🆕🆕🆕 D636 — nor a v44.
+  // 🆕🆕🆕 D637 — nor a v45.
   const fresh = ids.length === 0 ? {} : await loadPool(ids);
   const again = await slot.get();
   if (again === undefined) return { kind: "none" };
@@ -3085,7 +3115,7 @@ export async function loadMatchRecord(
   return { kind: "ok", record: migrated };
 }
 
-/** A v41 (🆕🆕🆕 D621: or v42; 🆕🆕🆕 D630: or v43; 🆕🆕🆕 D636: or v44) record passed through `readMatchRecord`'s own shape checks,
+/** A v41 (🆕🆕🆕 D621: or v42; 🆕🆕🆕 D630: or v43; 🆕🆕🆕 D636: or v44; 🆕🆕🆕 D637: or v45) record passed through `readMatchRecord`'s own shape checks,
     or `null`. The result keeps its OWN version (D621), which `migrateMatchRecord` branches on. */
 function readMigratableRecord(raw: unknown): MatchRecord | null {
   if (typeof raw !== "object" || raw === null) return null;
@@ -3094,7 +3124,8 @@ function readMigratableRecord(raw: unknown): MatchRecord | null {
     version !== MIGRATABLE_MATCH_RECORD_VERSION &&
     version !== SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&
     version !== RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&
-    version !== LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION
+    version !== LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&
+    version !== FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION
   )
     return null;
   const record = readMatchRecord({ ...raw, version: MATCH_RECORD_VERSION });

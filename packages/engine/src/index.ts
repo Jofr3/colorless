@@ -20271,6 +20271,16 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.519.0 → **0.520.0** (D637 — THE FOUR `me` ANTIQUE FOSSILS, 4 TEXTS / 4 PRINTINGS;
+    `MATCH_RECORD_VERSION` 45 → 46 WITH A v45 MIGRATION (apps/api match.ts "45 → 46 AT D637")). fossils.ts:
+    `FOSSIL_IDS` gains Antique Jaw / Sail Fossil `me03-068` / `-069` and Antique Armor / Skull Fossil `me05-072` /
+    `-073` (D576's `playAsPokemon`, the face off the catalog row). registry.ts: `INTIMIDATING_JAW`
+    (`opponentActiveAttackDebuff` 30, Intimidating Fang's field), `PROTECTIVE_SAIL` (the NEW
+    `preventSupporterEffects`, folded in `passivesOf`, read at `effectRefusedOn`'s Trainer channel for a Supporter),
+    `PROTECTIVE_ARMOR` (`seatDamageReductionAfterWR` 10 with the NEW source-zone rider `sourceActive`) and
+    `SPINY_SKULL` (`damageAttacker` 30, Counterattack Quills' field). Fossil Quarry now offers all eight fossils;
+    Relicanth "Fossil Beatdown" counts them. Named for a later bump: Rotom ex ×3 "Multi Adapter", Overwriting Bolt
+    `30th-040`. `antiqueFossilsMeD637.test.ts`.)
     🆕🆕🆕 engineVersion 0.518.0 → **0.519.0** (D636 — L1 + CLAWITZER: THE NEXT-TURN OPPONENT LOCKS AND FALL BACK TO
     RELOAD, 6 TEXTS / 7 PRINTINGS (`me` + `30th`); `MATCH_RECORD_VERSION` 44 → 45 WITH A v44 MIGRATION (apps/api match.ts
     "44 → 45 AT D636")). effects.ts arm 19c-D636: Cursed Roots `me04-039` (the shipped `markHandAttach { barred }`),
@@ -20284,7 +20294,8 @@ import type { GameState, Seat } from "./types";
     and `preventHandPlay` at the NEW stamped class `"Stadium"`, R-SCE1). registry.ts: `FALL_BACK_TO_RELOAD`
     (Clawitzer `me01-038` / `-141`) on the NEW per-body gate `AbilityProgram.benchedThisTurn` over the NEW
     `InPlayPokemon.benchedTurn` (written by `retreat` / `switchInto`, R-FBR1). Named for a later bump: Rotom ex ×3
-    "Multi Adapter", Overwriting Bolt `30th-040`, the four `me` Antique Fossils. `nextTurnLocksD636.test.ts`.)
+    "Multi Adapter", Overwriting Bolt `30th-040`, the four `me` Antique Fossils [🆕🆕🆕 D637 (D539): the fossils BUILT at
+    D637; Multi Adapter and Overwriting Bolt now owe 46 → 47]. `nextTurnLocksD636.test.ts`.)
     🆕🆕🆕 engineVersion 0.517.0 → **0.518.0** (D635 — F1: THE ANTIQUE ARCHETYPE, ITS UNPERSISTED HALF, 2 TEXTS / 2
     PRINTINGS; `MATCH_RECORD_VERSION` STAYS 44 (apps/api match.ts "STAYS 44 AT D635")). registry.ts: `FOSSIL_QUARRY`
     (`me05-076`, Stadium — up to 2 Antique Items from the deck onto the Bench, then the shuffle; Lumiose City's program
@@ -20293,7 +20304,7 @@ import type { GameState, Seat } from "./types";
     play). effects.ts: the fifteenth `IN_PLAY_BODY_NOUNS` key, Relicanth `me05-017` "Fossil Beatdown" (+30 per benched
     Pokémon with "Antique" in its name). Dropped and named: Antique Jaw / Sail / Skull Fossil `me03-068` / `-069` /
     `me05-073` (each owes MRV 44 → 45 — D576's twelfth position [🆕🆕🆕 D636 (D539): not taken at 44 → 45; now 45 → 46]) and Antique Armor Fossil `me05-072` (that, plus a
-    source-Active rider). `fossilQuarryD635.test.ts`.)
+    source-Active rider) [🆕🆕🆕 D637 (D539): all four BUILT at D637]. `fossilQuarryD635.test.ts`.)
     🆕🆕🆕 engineVersion 0.516.0 → **0.517.0** (D634 — C1: THE COIN REST, 7 TEXTS / 8 PRINTINGS (`me` + `30th`);
     `MATCH_RECORD_VERSION` STAYS 44 (apps/api match.ts "STAYS 44 AT D634")). effects.ts: two NEW `AttackCoinFlip`
     members — `bonusOnAllHeads` (Hyper Lariat `me01-112`: the bonus only on all heads) and `deckUpToHeads`
@@ -25717,7 +25728,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.519.0";
+export const engineVersion = "0.520.0";
 
 export type {
   ApplyResult,

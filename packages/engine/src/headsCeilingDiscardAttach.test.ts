@@ -824,7 +824,7 @@ describe("D528 §2 — H heads park H sequential `choosePokemon { upTo 1 }` over
 // §3 — the persisted address: `MATCH_RECORD_VERSION` HOLDS at 30 — what parks is D358's op bytes.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("D528 §3 — `MATCH_RECORD_VERSION` HOLDS at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570; 38 since D575; 39 since D576; 40 since D577; 41 since D579; 42 since D583; 43 since D621; 44 since D630; 45 since D636): the continuation's alphabet is D358's shipped op, and the member reaches no record", () => {
+describe("D528 §3 — `MATCH_RECORD_VERSION` HOLDS at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570; 38 since D575; 39 since D576; 40 since D577; 41 since D579; 42 since D583; 43 since D621; 44 since D630; 45 since D636; 46 since D637): the continuation's alphabet is D358's shipped op, and the member reaches no record", () => {
   it("🛑 the parked `pendingOp`'s key set, sorted, is EXACTLY the shipped sibling's — `benchOnly`, `declinable`, `energyType`, `op`, `source` — and its JSON is the sibling's op byte for byte", () => {
     const parked = swing({ faces: HHH }).after;
     const cont = continuation(parked);
@@ -846,10 +846,10 @@ describe("D528 §3 — `MATCH_RECORD_VERSION` HOLDS at 30 (🆕🆕🆕 held at 
     expect(JSON.parse(JSON.stringify(READING))).toEqual(READING);
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 45 (🆕🆕🆕 D636 stepped it 44 → 45; D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) in `apps/api` — nothing at a persisted address changed shape", () => {
+  it("🛑 `MATCH_RECORD_VERSION` is 46 (🆕🆕🆕 D637 stepped it 45 → 46; D636 stepped it 44 → 45; D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) in `apps/api` — nothing at a persisted address changed shape", () => {
     const match = Object.entries(RAW).find(([k]) => k.endsWith("/lobby/match.ts"))?.[1] ?? "";
     // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
-    expect(match).toContain("export const MATCH_RECORD_VERSION = 45;");
+    expect(match).toContain("export const MATCH_RECORD_VERSION = 46;");
   });
 });
 
@@ -907,7 +907,7 @@ describe("D528 §4 — the census moved in exactly ONE summand, by 1 sentence / 
 
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.519.0");
+    expect(engineVersion).toBe("0.520.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

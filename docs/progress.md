@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-10 — build session #576 (**P3-M5 — D636, *L1 + CLAWITZER — THE NEXT-TURN OPPONENT LOCKS AND FALL BACK TO RELOAD: 6 texts / 7 printings (`me` + `30th`) — Cursed Roots (Glimmora's bar), Electrified Incisors (the new `HandAttachMark.counters`), Jet of Ink (the new two-coin stamp), Quaking Fist (the new `PlayerSide.trainerFlipLockTurn`, a coin at every Trainer play), Scorching Earth (`opponentStadiumInPlay` and a stamped `Stadium` bar), Clawitzer ×2 (the new `InPlayPokemon.benchedTurn`); `MATCH_RECORD_VERSION` 44 → 45 with a v44 migration; five UNRULED readings; Multi Adapter, Overwriting Bolt and the `me` fossils named for 45 → 46; attacks 2,754 / 2,771, abilities 593 / 610, 1217 `me` printings fully built*** — engine 0.519.0, MRV 45, NOT committed; the whole-corpus sweep PENDING)
+**Last updated:** 2026-10-10 — build session #577 (**P3-M5 — D637, *THE FOUR `me` ANTIQUE FOSSILS: 4 texts / 4 printings — Antique Jaw Fossil (Intimidating Fang's debuff), Antique Sail Fossil (the new Supporter-only holder shield `preventSupporterEffects`), Antique Armor Fossil (Arm Thrust Practice's reduction with the new `sourceActive` rider), Antique Skull Fossil (Counterattack Quills' recoil); `FOSSIL_IDS` 4 → 8; `MATCH_RECORD_VERSION` 45 → 46 with a v45 re-stamp migration; no new reading; Multi Adapter and Overwriting Bolt named for 46 → 47; trainers 439 / 447, 1221 `me` printings fully built*** — engine 0.520.0, MRV 46, NOT committed; the whole-corpus sweep PENDING)
+
+**Last updated (was):** 2026-10-10 — build session #576 (**P3-M5 — D636, *L1 + CLAWITZER — THE NEXT-TURN OPPONENT LOCKS AND FALL BACK TO RELOAD: 6 texts / 7 printings (`me` + `30th`) — Cursed Roots (Glimmora's bar), Electrified Incisors (the new `HandAttachMark.counters`), Jet of Ink (the new two-coin stamp), Quaking Fist (the new `PlayerSide.trainerFlipLockTurn`, a coin at every Trainer play), Scorching Earth (`opponentStadiumInPlay` and a stamped `Stadium` bar), Clawitzer ×2 (the new `InPlayPokemon.benchedTurn`); `MATCH_RECORD_VERSION` 44 → 45 with a v44 migration; five UNRULED readings; Multi Adapter, Overwriting Bolt and the `me` fossils named for 45 → 46; attacks 2,754 / 2,771, abilities 593 / 610, 1217 `me` printings fully built*** — engine 0.519.0, MRV 45, NOT committed; the whole-corpus sweep PENDING)
 
 **Last updated (was):** 2026-10-10 — build session #575 (**P3-M5 — D635, *F1 — THE ANTIQUE ARCHETYPE, ITS UNPERSISTED HALF: 2 texts / 2 `me` printings — Fossil Quarry (a Stadium on the new `CardFilter` member `itemNameContaining`; only a fossil with an in-play face is benched, R-FQ1 UNRULED) and Relicanth "Fossil Beatdown" (the fifteenth `IN_PLAY_BODY_NOUNS` key); Antique Jaw / Sail / Skull / Armor Fossil dropped and named (each owes MRV 44 → 45, D576's twelfth position); attacks 2,749 / 2,771, trainers 435 / 447, 1210 `me` printings fully built*** — engine 0.518.0, MRV 44, NOT committed; the whole-corpus sweep PENDING)
 
@@ -897,6 +899,43 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-10, after D637)
+>
+> 🛑 **D637 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D636 = `7c0da7ca`). D637 is the D625 re-rank's "Fossils + Y1a" group cut to the four `me` Antique Fossils (the brief's off-ramp), the next persisted-record bundle: `MATCH_RECORD_VERSION` 45 → 46. Next: a review of D637, then commit; Multi Adapter (Y1a) and Overwriting Bolt are the 46 → 47 candidates.
+>
+> ✅ **`bun run check` IS GREEN**: `Test Files 684 passed (684) / Tests 16265 passed (16265) / CHECK_EXIT=0` (D636: 682 / 16228; D637 adds `antiqueFossilsMeD637.test.ts` (24), `fossilsMigrationD637.test.ts` (11) and the census D637 block (2)).
+>
+> **(a) THE SLICE.** 4 texts / 4 printings (ids `git grep`-ped — only D635's / D636's drop and "owed" notes, `fossils.ts`' comment, the manifest, D581's face pins and the census; texts off the LOCAL D1, `legal_standard = 1`). fossils.ts: `FOSSIL_IDS` 4 → 8 (`me03-068` / `-069`, `me05-072` / `-073`; D576's `playAsPokemon`, the face off the catalog row). registry.ts (MID-MAP): `INTIMIDATING_JAW` (`opponentActiveAttackDebuff` 30 — Pyroar's Intimidating Fang word for word), `PROTECTIVE_SAIL` (the NEW `preventSupporterEffects`: a `passivesOf` fold read at interpreter.ts `effectRefusedOn`'s Trainer channel for a Supporter only — Boss's Orders cannot pick it, Crushing Hammer can), `PROTECTIVE_ARMOR` (`seatDamageReductionAfterWR` 10 with the NEW source-zone rider `sourceActive`, read in continuous.ts `seatDamageReduction`), `SPINY_SKULL` (`damageAttacker` 30 — Hop's Pincurchin ex's Counterattack Quills word for word). Fossil Quarry now offers all eight fossils; Fossil Beatdown counts them.
+>
+> **(b) NAMED, NOT TAKEN:** Rotom ex `me02-029` / `-111` / `-126` "Multi Adapter" (Y1a) — every Tool reader, the §7.4 cap off a Rotom holder and a live Ability, and the owner's forced discard "until only 1 remains" at every place the Ability can go away (Knock Out, a lock, a Stadium, an evolution): too large to share one bump with the fossils, so it owes 46 → 47 on its own. Overwriting Bolt `30th-040` (not in this brief) also owes 46 → 47.
+>
+> **(c) MRV 45 → 46** (match.ts "45 → 46 AT D637", the NINETEENTH POSITION): D576's twelfth position per new id — a 0.519 rollback reads an in-play `me` fossil as the catalog Item (no HP, no Ability, no card rules). `migrateMatchRecord` takes a v45 record by its version alone (`FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION = 45`): no D1 read and no key, since 0.519 refuses the play (`TRAINER_NOT_SIMULATED`) and a v45 pool's fossil rows already carry the printed face (D581 / D583); it skips every earlier step (D636's would re-null a live lock). v44 / v43 / v42 / v41 take the earlier steps. A 0.519 rollback retires v46. No wire shape moves; deploy order as usual.
+>
+> **Readings.** None new: each text inherits its twin's reading (Jaw, Skull), D259's holder-rule reading (Sail) or the shipped seat-aura reading, own-side hits included (D558 ⑶-bis, Armor). **"You may" check (the D590 rule):** nothing optional beyond D576's shipped "may discard this card from play".
+>
+> | Column | `me` D637 | Standard pool D637 |
+> |---|---|---|
+> | Attacks | 1022 / 1039 | **2754 / 2771** |
+> | Abilities | 217 / 234 | **593 / 610** |
+> | Trainers | 175 / 183 | **439 / 447** |
+> | Special Energy | 11 / 11 | **22 / 22** |
+>
+> **1221 `me` printings fully built** (1217 + 4). Census pins stepped: the registry size 1396 → 1400 (six pins), `nonAttackRegistryIds` 1231 → 1235, the partition and `me`-key lists (+ `CENSUS_ME_TRAINER_D637`), the alias-tier `me` key table (+ `KEYED_AT_D637`), the `passivesOf` key list (+ `preventSupporterEffects`), `FOSSIL_IDS` (D576 §0). Inverted in place: D635's "the dropped fossils stay unbuilt", its Jaw `benchMatches` pin and Quarry offer sets, the census D635 block's unkeyed list, D581's "five UNBUILT `me` faces". Version tax: 185 test files / 302 engine-version strings, the MRV pins in 17 engine suites (it-titles included) and five apps/api suites, 11 MRV mutant rows re-pointed.
+>
+> **D539 sweep.** Annotated in place: D635's / D636's "dropped and named" and "owes 45 → 46" claims for the fossils, and "Multi Adapter / Overwriting Bolt owe 45 → 46" (now 46 → 47) — decisions D635 / D636, progress NEXT and session log, the backlog, simulator.md, match.ts, registry.ts, index.ts, cards.ts, effects.ts, fossils.ts, two D635 mutant `what`s.
+>
+> **(d) THE MUTATION RECORD.** +17 D637 rows (registry.ts 8, match.ts 4, continuous.ts 3, interpreter.ts 2): 5561 in all. 14 rows re-pointed off the bytes (the MRV constant ×11, D275, D583, D636) and two D635 `what`s annotated. precheck: 5561 mutants, the same 20 pre-existing broken rows. Probe `--decision D637 --allow-dirty`: 17 killed · 0 known · 0 GAP · 0 errors, the tree byte-identical after. The 14 re-pointed rows + D635's two bench-gate rows (`--only`): 16 killed. **Review fix:** fossilQuarryD635 §2's face-less rung could not go red (its card was named `d635-face-less`, so `itemNameContaining` "Antique" refused it before `benchMatches`' Trainer arm); it is now named "Antique Test Item" and pins the filter match first, so D635's two bench-gate rows die through it (their `what`s corrected). Also: fossils.ts' module header annotated (eight printings / seven texts), and §6 gained a spread hit on a benched Skull ("in the Active Spot"). Gate witnesses (the 18 `killedByCommand` rows on the two gates): 18 killed.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D616–D637; D581–D615 were PAID EXACTLY by the sweep of `7b1ab8d2`: 4944 killed · 47 known · 0 GAP · 20 errors over 5,011). Predicted, stacked on D636's: **5494 killed · 47 known survivor(s) · 0 GAP(S) · 20 error(s)** over **5,561** rows — 5544 + 17 = 5561; 5477 + 17 = 5494 killed; 5494 + 47 + 20 = 5561. It assumes D616–D636's predictions hold. If it fails: an error count ≠ 20 means a broken `find` outside the pre-existing 20; a GAP on an older row means a pin this slice inverted or stepped (D635's Jaw / Quarry pins, the census lists, `FOSSIL_IDS`) was its only killer; a D637 survivor means a second path to the same answer; a known count ≠ 47 means a declared survivor went RED.
+>
+> **Pending decisions (UNRULED readings):** none new at D637. R-EIC1 / R-JOI1 / R-QF1 / R-SCE1 / R-FBR1 (D636), R-FQ1 (D635) and the earlier readings stand as recorded in the archived blocks below.
+>
+> Still owed from the Mega backlog: as at D636 (below), less the four `me` Antique Fossils (all built); Multi Adapter (Y1a) and Overwriting Bolt `30th-040` owe MRV 46 → 47.
+>
+> ---
+>
+> **ARCHIVED — the resume point D637 was built from, kept rather than overwritten** (D636 has since been committed on `mega-ingest` as `7c0da7ca`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-10, after D636)
 >
 > 🛑 **D636 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D635 = `c98326dc`). D636 is L1 + Clawitzer of the Mega backlog (the D625 re-rank's L1 + Y1a group, cut to L1 + Clawitzer), the next persisted-record bundle: `MATCH_RECORD_VERSION` 44 → 45. Reviewed twice; the fixes below are in the same uncommitted tree. Next: commit, then rulings on R-EIC1 / R-JOI1 / R-QF1 / R-SCE1 / R-FBR1.
@@ -907,7 +946,7 @@
 >
 > **(a) THE SLICE.** 6 texts / 7 printings (ids `git grep`-ped — referenced only by the D595 / D610 / D628 / D630 / D633–D635 drop and "owed" notes and their unkeyed pins; texts off the LOCAL D1, `legal_standard = 1`). effects.ts arm 19c-D636, five whole-sentence anchors: Cursed Roots `me04-039` → the shipped `markHandAttach { barred }` (no key, as D630 measured); Electrified Incisors `me01-051` → `markHandAttach { counters: 8 }` (the printed "place" read as "put", D592); Jet of Ink `me04-017` → `flipLockAttack { coins: 2 }`; Quaking Fist `30th-084` → the NEW `flipLockTrainerPlay`; Scorching Earth `me01-031` → `conditionGate` on the NEW `opponentStadiumInPlay` over `discardStadium` and `preventHandPlay` `"Stadium"`. registry.ts: `FALL_BACK_TO_RELOAD` (Clawitzer `me01-038` / `-141`, MID-MAP) — `benchOnly` + the NEW `AbilityProgram.benchedThisTurn` (read in `abilityBodyGateMet`), two declinable `toSelf` Basic {W} hand attaches. Readers: interpreter.ts `shockHandAttach` (the effect path's hand attaches) and turn.ts `shockAttachedBody` (the attach action, after the watched triggers); continuous.ts `attackFlipLockCoins` (attack.ts flips every coin; any tails fails); cardplay.ts `trainerFlipFails` at the five Trainer-play sites (Item / Supporter, Stadium, Tool, Rare Candy, an Antique Fossil); `retreat` / `switchInto` stamp `benchedTurn`; types.ts `stampedBarFor` reads the `Stadium` stamp. New events `TRAINER_FLIP_LOCKED`, `TRAINER_FLIP_LOCK_CHECK` (also shown by the client's coin display); `HAND_ATTACH_MARKED` gains `counters` and `ATTACK_LOCKED` gains `coins?: 2` (log rows).
 >
-> **(b) NAMED, NOT TAKEN** (the brief allowed L1 + Clawitzer alone): Rotom ex `me02-029` / `-111` / `-126` "Multi Adapter" (Y1a) — the state already holds a Tool LIST, but the §7.4 cap must read a two-Tool allowance off a Rotom-named holder and a live Multi Adapter, and "If this Ability goes away, discard Pokémon Tools … until only 1 remains" is an owner's choice at every place an Ability can be lost (Knock Out, a lock, a Stadium); owes its own bump. Overwriting Bolt `30th-040` and the four `me` Antique Fossils (`me03-068` / `-069`, `me05-072` / `-073`), which D633 / D635 hoped would ride this bump, are beyond D636's brief: each owes 45 → 46.
+> **(b) NAMED, NOT TAKEN** (the brief allowed L1 + Clawitzer alone): Rotom ex `me02-029` / `-111` / `-126` "Multi Adapter" (Y1a) — the state already holds a Tool LIST, but the §7.4 cap must read a two-Tool allowance off a Rotom-named holder and a live Multi Adapter, and "If this Ability goes away, discard Pokémon Tools … until only 1 remains" is an owner's choice at every place an Ability can be lost (Knock Out, a lock, a Stadium); owes its own bump. Overwriting Bolt `30th-040` and the four `me` Antique Fossils (`me03-068` / `-069`, `me05-072` / `-073`), which D633 / D635 hoped would ride this bump, are beyond D636's brief: each owes 45 → 46. [🆕🆕🆕 D637 (D539): the four fossils PAID at D637; Multi Adapter and Overwriting Bolt now owe 46 → 47.]
 >
 > **(c) MRV 44 → 45** (match.ts "44 → 45 AT D636", the EIGHTEENTH POSITION): the REQUIRED `InPlayPokemon.attackTwoFlipLockTurn` / `benchedTurn`, `HandAttachMark.counters`, `PlayerSide.trainerFlipLockTurn` and the stamped `handPlayLockedTurn` key `Stadium` — each a played effect a 0.518 rollback would drop. `migrateMatchRecord` takes a v44 record with no D1 read (`withD636LockKeys`: every key `null`, a live mark's `counters: 0`), skipping D621's and D630's steps for it; a v43 / v42 / v41 record takes the earlier steps too. Stated cost: a Clawitzer benched on the turn the v44 record was saved cannot use Fall Back to Reload after the deploy. A 0.513 … 0.518 rollback retires v45. No wire shape moves; deploy order as usual.
 >
@@ -937,7 +976,7 @@
 >
 > R-FQ1 (D635) and the earlier readings stand as recorded in the archived blocks below.
 >
-> Still owed from the Mega backlog: as at D635 (below), less L1 (all 5 printings built) and Clawitzer ×2; Multi Adapter (Y1a), Overwriting Bolt `30th-040` and the four `me` Antique Fossils owe MRV 45 → 46.
+> Still owed from the Mega backlog: as at D635 (below), less L1 (all 5 printings built) and Clawitzer ×2; Multi Adapter (Y1a), Overwriting Bolt `30th-040` and the four `me` Antique Fossils owe MRV 45 → 46. [🆕🆕🆕 D637 (D539): the fossils BUILT at D637; the other two owe 46 → 47.]
 >
 > ---
 >
@@ -951,7 +990,7 @@
 >
 > **(a) THE SLICE.** 2 texts / 2 `me` printings (ids `git grep`-ped — Fossil Quarry only in D606's / D618's drop lists and pins, the `me` fossils only in `fossils.ts`' comment, the manifest and D581's face pins, Relicanth `me05-017` nowhere; texts off the LOCAL D1, `legal_standard = 1`). registry.ts: `FOSSIL_QUARRY` (`me05-076`, MID-MAP) — `searchDeck` up to 2 onto the Bench over the NEW `CardFilter` member `itemNameContaining` "Antique" (cards.ts `matchesFilter`, interpreter.ts `retrieveNoun`), then `shuffleDeck`; no turn end. cards.ts `benchMatches` gains a Trainer arm: a Trainer goes onto the Bench only with an in-play Pokémon face (`FOSSIL_IDS`), so only the four `sv` fossils are offered (R-IC1's reading, carried). effects.ts: the fifteenth `IN_PLAY_BODY_NOUNS` key, `'Pokémon that has "Antique" in its name'` → `pokemonNameContaining` (Relicanth "Fossil Beatdown", +30 per benched fossil, read by its in-play face; an evolved fossil is not counted).
 >
-> **(b) DROPPED AND NAMED.** Antique Jaw Fossil `me03-068` "Intimidating Jaw" (`INTIMIDATING_FANG`'s field would do), Antique Sail Fossil `me03-069` "Protective Sail" (needs a Supporter-only holder shield) and Antique Skull Fossil `me05-073` "Spiny Skull" (`COUNTERATTACK_QUILLS`' field would do): adding a `FOSSIL_IDS` id puts that id's uid in a stack, and a 0.517 rollback reads it as the catalog Item (`hpOf` null: never Knocked Out, no Ability, no card rules) — D576's twelfth position, per id, so each owes MRV 44 → 45. Antique Armor Fossil `me05-072` "Protective Armor": that, plus a source-Active rider on `seatDamageReductionAfterWR` (only `sourceOnBench` ships). Until they are built, Fossil Quarry does not offer them.
+> **(b) DROPPED AND NAMED.** Antique Jaw Fossil `me03-068` "Intimidating Jaw" (`INTIMIDATING_FANG`'s field would do), Antique Sail Fossil `me03-069` "Protective Sail" (needs a Supporter-only holder shield) and Antique Skull Fossil `me05-073` "Spiny Skull" (`COUNTERATTACK_QUILLS`' field would do): adding a `FOSSIL_IDS` id puts that id's uid in a stack, and a 0.517 rollback reads it as the catalog Item (`hpOf` null: never Knocked Out, no Ability, no card rules) — D576's twelfth position, per id, so each owes MRV 44 → 45. Antique Armor Fossil `me05-072` "Protective Armor": that, plus a source-Active rider on `seatDamageReductionAfterWR` (only `sourceOnBench` ships). Until they are built, Fossil Quarry does not offer them. [🆕🆕🆕 D637 (D539): all four BUILT at D637 (MRV 45 → 46, the new `sourceActive` and `preventSupporterEffects`); Fossil Quarry offers them.]
 >
 > **(c) MRV STAYS 44** (match.ts "STAYS 44 AT D635"): the only persistable shape is a parked Fossil Quarry `searchDeck` with the new filter; a 0.517 reader resumes it the same (the candidates are in the prompt, each an `sv` fossil 0.517 faces). Relicanth's bonus is derived from the printed text at the attack.
 >
@@ -977,7 +1016,7 @@
 >
 > R-UTH1 (D634) and the earlier readings stand as recorded in the archived blocks below.
 >
-> Still owed from the Mega backlog: as at D634 (below), less Fossil Quarry and Fossil Beatdown; the four `me` Antique Fossils join L1's MRV 44 → 45 with Overwriting Bolt `30th-040` [🆕🆕🆕 D636 (D539): they did not — beyond D636's brief; each owes 45 → 46] (Sail with a Supporter-only holder shield, Armor with a source-Active rider); Multi Adapter (Y1a) owes its own bump.
+> Still owed from the Mega backlog: as at D634 (below), less Fossil Quarry and Fossil Beatdown; the four `me` Antique Fossils join L1's MRV 44 → 45 with Overwriting Bolt `30th-040` [🆕🆕🆕 D636 (D539): they did not — beyond D636's brief; each owes 45 → 46] [🆕🆕🆕 D637 (D539): the four fossils BUILT at D637] (Sail with a Supporter-only holder shield, Armor with a source-Active rider); Multi Adapter (Y1a) owes its own bump.
 >
 > ---
 >
@@ -1017,7 +1056,7 @@
 >
 > R-EB1 (D633) and the earlier readings stand as recorded in the archived blocks below.
 >
-> Still owed from the Mega backlog: as at D633 (below), less C1's seven texts (all 8 printings built); Octillery "Jet of Ink" [🆕🆕🆕 D636 (D539): BUILT at D636] and Ditto ×2 stay unbuilt; Overwriting Bolt `30th-040` joins L1's MRV 44 → 45 [🆕🆕🆕 D636 (D539): it did not; 45 → 46]; Multi Adapter (Y1a) owes its own bump.
+> Still owed from the Mega backlog: as at D633 (below), less C1's seven texts (all 8 printings built); Octillery "Jet of Ink" [🆕🆕🆕 D636 (D539): BUILT at D636] and Ditto ×2 stay unbuilt; Overwriting Bolt `30th-040` joins L1's MRV 44 → 45 [🆕🆕🆕 D636 (D539): it did not; 45 → 46] [🆕🆕🆕 D637 (D539): nor 45 → 46; now 46 → 47]; Multi Adapter (Y1a) owes its own bump.
 >
 > ---
 >
@@ -1057,7 +1096,7 @@
 >
 > R-DMP1 (D632) and the earlier readings stand as recorded in the archived blocks below.
 >
-> Still owed from the Mega backlog: as at D632 (below), less O1's five texts (all 7 printings built); Overwriting Bolt `30th-040` joins L1's MRV 44 → 45 [🆕🆕🆕 D636 (D539): it did not; 45 → 46]; Multi Adapter (Y1a) owes its own bump.
+> Still owed from the Mega backlog: as at D632 (below), less O1's five texts (all 7 printings built); Overwriting Bolt `30th-040` joins L1's MRV 44 → 45 [🆕🆕🆕 D636 (D539): it did not; 45 → 46] [🆕🆕🆕 D637 (D539): nor 45 → 46; now 46 → 47]; Multi Adapter (Y1a) owes its own bump.
 >
 > ---
 >
@@ -36485,7 +36524,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D636, *L1 + Clawitzer — the next-turn opponent locks and Fall Back to Reload: 6 texts / 7 printings (Cursed Roots on Glimmora's bar; Electrified Incisors on the new `HandAttachMark.counters`; Jet of Ink on a two-coin stamp; Quaking Fist on the new `PlayerSide.trainerFlipLockTurn`; Scorching Earth on a stamped `Stadium` bar; Clawitzer ×2 on the new `InPlayPokemon.benchedTurn`); `MATCH_RECORD_VERSION` 44 → 45 with a v44 migration; R-EIC1 / R-JOI1 / R-QF1 / R-SCE1 / R-FBR1 UNRULED; attacks 2,754 / 2,771, abilities 593 / 610, 1217 `me` printings fully built*** — engine 0.519.0, MRV 45, NOT committed; the whole-corpus sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D637, *the four `me` Antique Fossils: 4 texts / 4 printings (Jaw on Intimidating Fang's debuff, Sail on the new Supporter-only shield `preventSupporterEffects`, Armor on a seat reduction with the new `sourceActive` rider, Skull on Counterattack Quills' recoil); `MATCH_RECORD_VERSION` 45 → 46 with a v45 re-stamp; Multi Adapter and Overwriting Bolt named for 46 → 47; trainers 439 / 447, 1221 `me` printings fully built*** — engine 0.520.0, MRV 46, NOT committed; the whole-corpus sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D636, *L1 + Clawitzer — the next-turn opponent locks and Fall Back to Reload: 6 texts / 7 printings (Cursed Roots on Glimmora's bar; Electrified Incisors on the new `HandAttachMark.counters`; Jet of Ink on a two-coin stamp; Quaking Fist on the new `PlayerSide.trainerFlipLockTurn`; Scorching Earth on a stamped `Stadium` bar; Clawitzer ×2 on the new `InPlayPokemon.benchedTurn`); `MATCH_RECORD_VERSION` 44 → 45 with a v44 migration; R-EIC1 / R-JOI1 / R-QF1 / R-SCE1 / R-FBR1 UNRULED; attacks 2,754 / 2,771, abilities 593 / 610, 1217 `me` printings fully built*** — engine 0.519.0, MRV 45, NOT committed; the whole-corpus sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D635, *F1 — the Antique archetype, its unpersisted half: 2 texts / 2 `me` printings (Fossil Quarry on the new `itemNameContaining`, a fossil benched only with an in-play face; Relicanth "Fossil Beatdown" on a fifteenth noun key); the four `me` fossils dropped (MRV 44 → 45 owed); R-FQ1 UNRULED; attacks 2,749 / 2,771, trainers 435 / 447, 1210 `me` printings fully built*** — engine 0.518.0, MRV 44, NOT committed; the whole-corpus sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D634, *C1 — the coin rest: 7 texts / 8 printings (Hyper Lariat on the new `bonusOnAllHeads`; three until-tails deck searches on the new `deckUpToHeads`; Challenging Delivery and Reversing Gust as arm 46b rows; Snap Inspection ×2 on `bottomFromOpponentHand.dest: "deck"`); R-UTH1 UNRULED; attacks 2,748 / 2,771, 1208 `me` printings fully built*** — engine 0.517.0, MRV 44, NOT committed; the whole-corpus sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D633, *O1 — attack odds and ends: 5 texts / 7 printings (two uncapped hand discards, the new `revealFromHand` for Weaponized Swords ×3, Voltaic Fist's confirm, Elemental Blast's matched discard on `discardEnergy.reserve`); Overwriting Bolt dropped (an MRV bump); R-EB1 UNRULED; attacks 2,740 / 2,771, 1200 `me` printings fully built*** — engine 0.516.0, MRV 44, NOT committed; the whole-corpus sweep PENDING) |
@@ -36738,6 +36778,17 @@ Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅
 
 ## Session log
 
+### 2026-10-10 — build session #577 (P3-M5 — D637)
+
+**THE FOUR `me` ANTIQUE FOSSILS. `MATCH_RECORD_VERSION` 45 → 46.**
+
+Built in the `luminous_ui-mega` worktree on D636 (`7c0da7ca`); the main checkout was not touched. 4 texts / 4 printings, each a new
+`FOSSIL_IDS` id on D576's `playAsPokemon`: Antique Jaw Fossil (Intimidating Fang's debuff), Antique Sail Fossil (the new Supporter-only
+holder shield `preventSupporterEffects`), Antique Armor Fossil (`seatDamageReductionAfterWR` with the new `sourceActive` rider), Antique
+Skull Fossil (Counterattack Quills' recoil). A v45 record is migrated by a re-stamp alone. Multi Adapter (Y1a) taken off the slice as too
+large for the same bump; it and Overwriting Bolt owe 46 → 47. No new reading. `antiqueFossilsMeD637.test.ts` (24),
+`fossilsMigrationD637.test.ts` (11), census D637 block (2). +17 mutant rows, all KILLED; 14 re-pointed. Sweep PENDING (NEXT (0)). NOT committed.
+
 ### 2026-10-10 — build session #576 (P3-M5 — D636)
 
 **L1 + CLAWITZER — THE NEXT-TURN OPPONENT LOCKS AND FALL BACK TO RELOAD. `MATCH_RECORD_VERSION` 44 → 45.**
@@ -36746,7 +36797,7 @@ Built in the `luminous_ui-mega` worktree on D635 (`c98326dc`); the main checkout
 (Glimmora's shipped bar), Electrified Incisors (the new `HandAttachMark.counters`, R-EIC1), Jet of Ink (the new `attackTwoFlipLockTurn`,
 R-JOI1), Quaking Fist (the new `PlayerSide.trainerFlipLockTurn`, R-QF1), Scorching Earth (`opponentStadiumInPlay` + the stamped `Stadium`
 bar, R-SCE1), Clawitzer ×2 (the new `InPlayPokemon.benchedTurn`, R-FBR1). A v44 record is migrated with no D1 read. Multi Adapter,
-Overwriting Bolt and the four `me` fossils named for 45 → 46. `nextTurnLocksD636.test.ts` (45), `lockKeysMigrationD636.test.ts` (10),
+Overwriting Bolt and the four `me` fossils named for 45 → 46 [🆕🆕🆕 D637 (D539): the fossils BUILT at D637]. `nextTurnLocksD636.test.ts` (45), `lockKeysMigrationD636.test.ts` (10),
 census D636 block (2), `coinFlips.test.ts` (1). +49 mutant rows, all KILLED; 26 re-pointed. Two review passes fixed in the same tree (Jet of
 Ink's two-coin log row, the client coin display, three §10 clears and R-EIC1's `attachFromHand` route tested, D287's withdrawn claim
 annotated, stale doc comments; then §5's vacuous refusal test made real, R-FBR1's evolution reading stated and driven). Sweep PENDING (NEXT (0)). NOT committed.
@@ -36758,7 +36809,7 @@ annotated, stale doc comments; then §5's vacuous refusal test made real, R-FBR1
 Built in the `luminous_ui-mega` worktree on D634 (`1fd6b84a`); the main checkout was not touched. 2 texts / 2 `me` printings: Fossil
 Quarry (a `stadium` object on the new `itemNameContaining`; `benchMatches` benches a Trainer only with an in-play face, R-FQ1 UNRULED)
 and Relicanth "Fossil Beatdown" (the fifteenth `IN_PLAY_BODY_NOUNS` key). Antique Jaw / Sail / Skull / Armor Fossil dropped and named:
-a new fossil id in a stack owes MRV 44 → 45 (D576's twelfth position). `fossilQuarryD635.test.ts` (15), census D635 block (2). +11
+a new fossil id in a stack owes MRV 44 → 45 (D576's twelfth position) [🆕🆕🆕 D637 (D539): BUILT at D637, MRV 45 → 46]. `fossilQuarryD635.test.ts` (15), census D635 block (2). +11
 mutant rows, all KILLED. Sweep PENDING (NEXT (0)). NOT committed.
 
 ### 2026-10-10 — build session #574 (P3-M5 — D634)

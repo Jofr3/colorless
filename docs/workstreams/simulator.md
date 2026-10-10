@@ -30247,6 +30247,28 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D637 — the four `me` Antique Fossils (engine 0.520.0, `MATCH_RECORD_VERSION` 45 → 46)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D636 (`7c0da7ca`), NOT committed. 4 texts / 4 printings — the D625 re-rank's
+"Fossils + Y1a" group, cut to the fossils.
+
+- **The fossils.** fossils.ts `FOSSIL_IDS` 4 → 8: `me03-068` / `-069`, `me05-072` / `-073`, each D576's `playAsPokemon` with its printed
+  Ability as the `passive` (the face off the catalog row, D581). Fossil Quarry (D635) now offers all eight; Fossil Beatdown counts them.
+- **Intimidating Jaw** (Antique Jaw Fossil): Pyroar's Intimidating Fang word for word — `opponentActiveAttackDebuff` 30.
+- **Protective Sail** (Antique Sail Fossil): the NEW `PassiveEffects.preventSupporterEffects` — Fraxure "Unnerve" without its Item half; a
+  `passivesOf` fold (any zone, §9-suppressible) read at interpreter.ts `effectRefusedOn`'s Trainer channel for a Supporter only. Boss's
+  Orders does not offer a benched Sail; Crushing Hammer still reaches it.
+- **Protective Armor** (Antique Armor Fossil): `seatDamageReductionAfterWR` 10 with the NEW source-zone rider `sourceActive`
+  (`sourceOnBench`'s mirror) in continuous.ts `seatDamageReduction`. The shipped own-side reading (D558 ⑶-bis) is inherited.
+- **Spiny Skull** (Antique Skull Fossil): Hop's Pincurchin ex's Counterattack Quills word for word — `damageAttacker` 30.
+- **MRV 45 → 46** (match.ts "45 → 46 AT D637"): D576's twelfth position per new id (a 0.519 rollback reads an in-play `me` fossil as the
+  catalog Item). A v45 record is migrated by its version alone (`FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION`; no D1 read, no key); it skips
+  every earlier step. No wire shape moves.
+- **Named, not taken.** Rotom ex ×3 "Multi Adapter" (Y1a: every Tool reader, a §7.4 two-Tool cap and an owner's forced discard wherever
+  the Ability goes away — its own bump) and Overwriting Bolt `30th-040`: each owes 46 → 47.
+- **Suite.** `antiqueFossilsMeD637.test.ts` (24), `fossilsMigrationD637.test.ts` (11), census D637 block (2). +17 mutant rows, all KILLED;
+  14 re-pointed. No new reading. Census: trainers **439 / 447**, 1221 `me` printings fully built. Sweep PENDING.
+
 ## D636 — L1 + Clawitzer: the next-turn opponent locks (engine 0.519.0, `MATCH_RECORD_VERSION` 44 → 45)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D635 (`c98326dc`), NOT committed. 6 texts / 7 printings (`me` + `30th`).
@@ -30270,7 +30292,8 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **MRV 44 → 45** (match.ts "44 → 45 AT D636"): the four REQUIRED keys and the `Stadium` stamp; a v44 record is migrated with no D1 read
   (`withD636LockKeys`; D621's and D630's steps skipped for it). Cursed Roots needed no key, as D630 measured.
 - **Named, not taken.** Rotom ex ×3 "Multi Adapter" (Y1a: a §7.4 two-Tool cap and a forced Tool discard when the Ability goes away),
-  Overwriting Bolt `30th-040` and the four `me` Antique Fossils — each owes a later bump (45 → 46).
+  Overwriting Bolt `30th-040` and the four `me` Antique Fossils — each owes a later bump (45 → 46). [🆕🆕🆕 D637 (D539): the fossils BUILT at
+  D637; Multi Adapter and Overwriting Bolt now owe 46 → 47.]
 - **Suite.** `nextTurnLocksD636.test.ts` (45), `lockKeysMigrationD636.test.ts` (10), census D636 block (2), `coinFlips.test.ts` (1).
   +49 mutant rows, all KILLED; 26 re-pointed. Two review passes, fixed in the same tree (NEXT, "REVIEW FIXES"). Census: attacks **2,754 / 2,771**, abilities **593 / 610**, 1217 `me` printings fully built. Sweep PENDING.
 
@@ -30287,7 +30310,8 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Dropped and named.** Antique Jaw / Sail / Skull Fossil (`me03-068` / `-069`, `me05-073`): a new `FOSSIL_IDS` id in a stack is read by
   a 0.517 rollback as a catalog Item (no HP, no Ability, no card rules) — D576's twelfth position, so each owes MRV 44 → 45 (L1's bump). [🆕🆕🆕 D636 (D539): they did not ride it; now 45 → 46.]
   Jaw and Skull would reuse `INTIMIDATING_FANG`'s and `COUNTERATTACK_QUILLS`' fields; Sail needs a Supporter-only holder shield. Antique
-  Armor Fossil (`me05-072`): the same, plus a source-Active rider on `seatDamageReductionAfterWR`.
+  Armor Fossil (`me05-072`): the same, plus a source-Active rider on `seatDamageReductionAfterWR`. [🆕🆕🆕 D637 (D539): all four BUILT at
+  D637 — the rider is `sourceActive`, Sail's shield `preventSupporterEffects`.]
 - **Suite.** `fossilQuarryD635.test.ts` (15) and a census D635 block (2). +11 mutant rows, all KILLED. D613's Trainer pin inverted in
   place (an Energy still benches by the filter). Census: attacks **2,749 / 2,771**, trainers **435 / 447**, 1210 `me` printings fully
   built. Sweep PENDING.
@@ -30329,7 +30353,7 @@ reader rows (effects.ts arm 10e).
   and interpreter.ts `reservedDiscards` keeps only the picks that leave the most of them fillable, so Legacy Energy cannot fill {R} and
   dodge {L} (R-EB1 ⚠️ UNRULED).
 - **Dropped.** Overwriting Bolt `30th-040`: *"(Apply Weakness as ×2.)"* gives a Weakness to a body that prints none, which D552's
-  amount-keeping retype cannot carry; it needs a persisted field (an MRV bump, L1's). [🆕🆕🆕 D636 (D539): it did not ride L1's bump; now 45 → 46.]
+  amount-keeping retype cannot carry; it needs a persisted field (an MRV bump, L1's). [🆕🆕🆕 D636 (D539): it did not ride L1's bump; now 45 → 46.] [🆕🆕🆕 D637 (D539): nor 45 → 46; now 46 → 47.]
 - **Suite.** `attackOddsMeD633.test.ts` (20) and a census D633 block (1). +21 mutant rows, all KILLED; `D552-recordslot-drops-the-hand-attach`
   re-pointed. Census: attacks **2,740 / 2,771**, 1200 `me` printings fully built. Sweep PENDING.
 
