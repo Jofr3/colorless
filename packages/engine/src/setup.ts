@@ -13,6 +13,7 @@ import { basicFromHandError, cardOfUid, isBasicPokemon } from "./cards";
 import type { GameEvent } from "./events";
 import { startTurn } from "./flow";
 import { flipCoin, shuffle } from "./rng";
+import { programFor } from "./registry";
 import type { GameState, PlayerSide, Seat } from "./types";
 import {
   BENCH_MAX,
@@ -291,6 +292,18 @@ export function setupDrawExtra(state: GameState, action: SetupDrawExtraAction): 
   return ok(next, events);
 }
 
+/** 🆕🆕🆕 §3.6 (D644) — Cinderace `me01-028` "Explosiveness": *"If this Pokémon is in your hand when you are setting up
+    to play, you may put it face down in the Active Spot."* A hand card whose program carries `setupActiveFromHand` may
+    be the face-down Active although it is not a Basic Pokémon — but only while the hand also holds a Basic, because
+    the mulligan is unchanged (R-EXP1 ⚠️ UNRULED: a hand with no Basic Pokémon still owes its mulligan). No in-play
+    Ability lock reaches the hand (R-EXP2 ⚠️ UNRULED). The Bench placement is untouched (Basics only). */
+function explosivenessPlacement(state: GameState, seat: Seat, uid: string): boolean {
+  if (!state.players[seat].hand.includes(uid)) return false;
+  const card = cardOfUid(state, uid);
+  if (card === undefined || programFor(card.id)?.setupActiveFromHand === undefined) return false;
+  return handHasBasic(state, seat);
+}
+
 /** §3.6 — the mandatory face-down Active. "Face-down" only shapes the event
     stream: M1 events are full-information (hidden-info filtering is P4). */
 export function setupPlaceActive(state: GameState, action: SetupPlaceActiveAction): ApplyResult {
@@ -305,7 +318,9 @@ export function setupPlaceActive(state: GameState, action: SetupPlaceActiveActio
   if (side.active !== null) {
     return err("ACTIVE_ALREADY_PLACED", `${action.seat} already has an Active Pokémon`);
   }
-  const invalid = basicFromHandError(state, action.seat, action.uid);
+  const invalid = explosivenessPlacement(state, action.seat, action.uid)
+    ? null
+    : basicFromHandError(state, action.seat, action.uid);
   if (invalid !== null) return invalid;
 
   const next = withSide(state, action.seat, {

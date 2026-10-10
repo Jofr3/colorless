@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-10 — build session #583 (**P3-M5 — D643, *Y1a — MULTI ADAPTER: 1 text / 3 printings (`me`) — Rotom ex ×3 "Multi Adapter" (the new `PassiveEffects.toolCapForName`, read by `toolCapOf` at both `attachTool` arms; the forced discard as a state check, the new persisted `PendingStage` `toolTrim` and `EffectOp` `trimTools`, the owner's exact `discardTools` pick); `MATCH_RECORD_VERSION` 47 → 48 with a v47 re-stamp migration; R-MAD1 / R-MAD2 / R-MAD3 / R-MAD4 UNRULED; abilities 602 / 610, 1252 `me` printings fully built*** — engine 0.526.0, MRV 48, NOT committed; the whole-corpus sweep PENDING)
+**Last updated:** 2026-10-10 — build session #584 (**P3-M5 — D644, *Y1e — RULE HOOKS, ONE PRINTING EACH: 5 texts / 5 printings (`me` + `30th`) — Cinderace "Explosiveness" (the new `CardProgram.setupActiveFromHand` at `setupPlaceActive`), Patrat "Watchful Eye" (the new `PassiveEffects.countersCantMove`: every counter move whiffs or is refused), Illumise "Supereffective Pheromones" (the new `PassiveEffects.weaknessTimesWithNamedInPlay` at both Weakness sites), Ferrothorn "Startling Drop" (the new `CardProgram.opponentMillWhenMilled`, answered inside `discardDeckTop`) and Transformation Tome (a second-copy hand cost, then Ogre's Mask's swap over Basic Pokémon); Backtrack Badge dropped and named (a persisted mid-attack re-flip park); `MATCH_RECORD_VERSION` stays 48; R-EXP1 / R-EXP2 / R-WEY1 / R-SPH1 / R-SPH2 / R-STD1 / R-STD2 / R-TFT1 / R-TFT2 UNRULED; abilities 606 / 610, trainers 446 / 447, 1257 `me` printings fully built*** — engine 0.527.0, MRV 48, NOT committed; the whole-corpus sweep PENDING)
+
+**Last updated (was):** 2026-10-10 — build session #583 (**P3-M5 — D643, *Y1a — MULTI ADAPTER: 1 text / 3 printings (`me`) — Rotom ex ×3 "Multi Adapter" (the new `PassiveEffects.toolCapForName`, read by `toolCapOf` at both `attachTool` arms; the forced discard as a state check, the new persisted `PendingStage` `toolTrim` and `EffectOp` `trimTools`, the owner's exact `discardTools` pick); `MATCH_RECORD_VERSION` 47 → 48 with a v47 re-stamp migration; R-MAD1 / R-MAD2 / R-MAD3 / R-MAD4 UNRULED; abilities 602 / 610, 1252 `me` printings fully built*** — engine 0.526.0, MRV 48, NOT committed; the whole-corpus sweep PENDING)
 
 **Last updated (was):** 2026-10-10 — build session #582 (**P3-M5 — D642, *Z1 + K2 — THE `me` STADIUM REST AND THE WATCHED-ACTIVE DAMAGE TRIGGERS: 5 texts / 6 printings (`me` + `30th`) — Spiteful Swirl ×2 and Counterattack Grouping (the new `PassiveEffects.damageAttackerWatched`, read across the damaged seat's board at the two recoil sites), Risky Ruins (the new `StadiumEffects.benchArrivalCounters`), Dizzying Valley (the new `StadiumEffects.confusionSurvivesStageChange`), Ange Floette (the new `StadiumEffects.playOnlyOverStadium` and `hpDelta.name`); `MATCH_RECORD_VERSION` stays 47; R-SSW1 / R-CAG1 / R-RR1 / R-RR2 / R-DV1 / R-ANF1 / R-ANF2 UNRULED; abilities 599 / 610, trainers 445 / 447, 1249 `me` printings fully built*** — engine 0.525.0, MRV 47, NOT committed; the whole-corpus sweep PENDING)
 
@@ -911,6 +913,43 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-10, after D644)
+>
+> 🛑 **D644 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D643 = `0c50eeb2`). D644 is the D625 re-rank's Y1e group: 5 texts / 5 printings built, Backtrack Badge dropped and named. `MATCH_RECORD_VERSION` stays 48. Next: a review of D644 and rulings on R-EXP1 … R-TFT2, then commit.
+>
+> ✅ **`bun run check` IS GREEN**: `Test Files 695 passed (695) / Tests 16464 passed (16464) / CHECK_EXIT=0` (D643: 694 / 16433; D644 adds `ruleHooksMeD644.test.ts` (29) and the census D644 block (2)).
+>
+> **(a) THE SLICE.** The five ids `git grep`-ped (named nowhere; the names only in the backlog, and Transformation Tome as D616's search target); every text off the LOCAL D1 (`legal_standard = 1`). Cinderace `me01-028` "Explosiveness" = the NEW `CardProgram.setupActiveFromHand` (setup.ts `explosivenessPlacement`, asked by `setupPlaceActive`). Patrat `me04-070` "Watchful Eye" = the NEW `PassiveEffects.countersCantMove` (continuous.ts `countersMoveLocked`; interpreter.ts `stepOp` whiffs every `isCounterMoveOp` op; cardplay.ts `programPlayable` refuses Rocket Brain / Adrena-Brain). Illumise `30th-004` "Supereffective Pheromones" = the NEW `PassiveEffects.weaknessTimesWithNamedInPlay` (continuous.ts `weaknessAmountOverride` / `withWeaknessAmount` at attack.ts's main hit and interpreter.ts `snipeActive`). Ferrothorn `me04-063` "Startling Drop" = the NEW `CardProgram.opponentMillWhenMilled` (interpreter.ts `startlingDropRetort`, called by `discardDeckTop`; `ABILITY_TRIGGERED` then `DECK_TOP_DISCARDED`). Transformation Tome `me04-083` = shipped ops (`payFromHand` for the second copy, then `switchWithDiscardNamed` over `basicPokemon`).
+>
+> **(b) DROPPED AND NAMED:** Backtrack Badge `me05-074` — re-flipping an attack's coins needs a park mid-attack that carries the flip results (and a once-per-turn record) across every attack flip site: persisted state, so it waits for an MRV slice.
+>
+> **(c) MRV STAYS 48** (match.ts "STAYS 48 AT D644"): two `CardProgram` keys and two `PassiveEffects` keys, catalog-only; no phase, prompt, stage, side key, body field, op or event member. The 0.526 rollback readings are named there.
+>
+> **"You may" check (the D590 rule):** Explosiveness's "may" is the player's own placement choice (no auto-fired consequent); the other four texts print none.
+>
+> | Column | `me` D644 | Standard pool D644 |
+> |---|---|---|
+> | Attacks | 1038 / 1039 | **2770 / 2771** |
+> | Abilities | 230 / 234 | **606 / 610** |
+> | Trainers | 182 / 183 | **446 / 447** |
+> | Special Energy | 11 / 11 | **22 / 22** |
+>
+> **1257 `me` printings fully built** (1252 + 5). Census pins stepped: the registry key pins 1415 → 1420 (five suites + the census; `nonAttackRegistryIds()` 1250 → 1255), the census's `me` key lists (`CENSUS_ME_POKEMON_D644`, `CENSUS_ME_TRAINER_D644`) and `reprintAliasMeD582`'s table (`KEYED_AT_D644`). The `me` units left: Wild Growth ×2, Slimy Sliding ×2 (abilities), Backtrack Badge (trainer), one attack.
+>
+> **D539 sweep.** The backlog's five "unbuilt" lines are annotated BUILT and Backtrack Badge's dropped; cards.ts `basicFromHandError`'s doc names the Explosiveness exception. No other claim named these texts.
+>
+> **(d) THE MUTATION RECORD.** +29 D644 rows (interpreter.ts 15, continuous.ts 7, setup.ts 4, attack.ts 1, cardplay.ts 1, registry.ts 1): 5737 in all. 8 older rows re-anchored off moved bytes (D432 ×1, D552 ×4, D559 ×3, the Weakness sites), all KILLED under `--only`; `D275-engine-version-drifts-again` re-probed, KILLED. `bun scripts/mutation/run.ts --decision D644 --allow-dirty`: **29 killed · 0 known · 0 GAP · 0 errors**, tree byte-identical after. `precheck`: 5737 checked, the 20 pre-existing broken rows only. Gates: residue-census, opaque-anatomy, splice, partition OK; the GATE-WITNESS probe (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows) 18 / 18 KILLED.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D616–D644; D581–D615 were PAID EXACTLY by the sweep of `7b1ab8d2`: 4944 killed · 47 known · 0 GAP · 20 errors over 5,011). Predicted, stacked on D643's: **5670 killed · 47 known survivor(s) · 0 GAP(S) · 20 error(s)** over **5,737** rows — 5708 + 29 = 5737; 5641 + 29 = 5670 killed; 5670 + 47 + 20 = 5737. It assumes D616–D643's predictions hold. If it comes in lower, the gap is in a D616–D644 row (the 8 re-anchored rows were re-run killed); if higher, an older known survivor was killed by the new suite.
+>
+> **Pending decisions (UNRULED readings), NEW at D644:** **R-EXP1** — Explosiveness leaves the mulligan unchanged: a hand with no Basic Pokémon still mulligans, so the Cinderace placement is refused while the hand holds no Basic. Reversal: Cinderace alone avoids the mulligan. **R-EXP2** — no in-play Ability lock reaches a card in the hand (D572 R-KR2). **R-WEY1** — under Watchful Eye a counter-move effect does nothing (an attack's other effects still resolve; an Ability or Trainer whose effect is the move is refused); an in-place swap that keeps the counters on the body (Ogre's Mask, Transformation Tome, Zero to Hero) moves none. **R-SPH1** — only an applied multiplicative Weakness becomes ×3 (a Fairy Zone / Overwriting Bolt ×2 included); no Weakness stays none; an additive one is left. **R-SPH2** — "you have Volbeat" is the Illumise owner's board; the Illumise may sit on either side and helps both Actives. **R-STD1** — Startling Drop resolves at once, inside the op that milled it, and two Ferrothorn milled together answer twice (16 cards). **R-STD2** — no in-play Ability lock reaches it; a mill it causes never triggers the controller's own Ferrothorn (that is its owner's own turn). **R-TFT1** — the two Tomes are one Item play; the second copy is discarded as a cost (refused with one alone). **R-TFT2** — "a Basic Pokémon in play" is a body whose top card is Basic; an evolved body is not offered.
+>
+> Still owed from the Mega backlog: as at D643 (below), less Y1e's five built printings; Backtrack Badge waits for an MRV slice.
+>
+> ---
+>
+> **ARCHIVED — the resume point D644 was built from, kept rather than overwritten** (D643 has since been committed on `mega-ingest` as `0c50eeb2`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-10, after D643)
 >
 > 🛑 **D643 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D642 = `4f9ce7fc`). D643 is the D625 re-rank's Y1a, alone: Rotom ex ×3 "Multi Adapter", 1 text / 3 printings. `MATCH_RECORD_VERSION` 47 → 48. Next: a review of D643 and rulings on R-MAD1 … R-MAD4, then commit.
@@ -36758,7 +36797,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D643, *Y1a — Multi Adapter: 1 text / 3 printings (Rotom ex ×3 on the new `PassiveEffects.toolCapForName`, read by `toolCapOf` at both `attachTool` arms; the forced discard as a state check on the new persisted `toolTrim` stage and `trimTools` op, the owner's exact `discardTools` pick); `MATCH_RECORD_VERSION` 47 → 48 with a v47 re-stamp; R-MAD1 / R-MAD2 / R-MAD3 / R-MAD4 UNRULED; abilities 602 / 610, 1252 `me` printings fully built*** — engine 0.526.0, MRV 48, NOT committed; the whole-corpus sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D644, *Y1e — rule hooks, one printing each: 5 texts / 5 printings (Explosiveness on the new `CardProgram.setupActiveFromHand`; Watchful Eye on the new `PassiveEffects.countersCantMove`; Supereffective Pheromones on the new `PassiveEffects.weaknessTimesWithNamedInPlay`; Startling Drop on the new `CardProgram.opponentMillWhenMilled`; Transformation Tome on shipped ops); Backtrack Badge dropped and named; `MATCH_RECORD_VERSION` stays 48; R-EXP1 … R-TFT2 UNRULED; abilities 606 / 610, trainers 446 / 447, 1257 `me` printings fully built*** — engine 0.527.0, MRV 48, NOT committed; the whole-corpus sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D643, *Y1a — Multi Adapter: 1 text / 3 printings (Rotom ex ×3 on the new `PassiveEffects.toolCapForName`, read by `toolCapOf` at both `attachTool` arms; the forced discard as a state check on the new persisted `toolTrim` stage and `trimTools` op, the owner's exact `discardTools` pick); `MATCH_RECORD_VERSION` 47 → 48 with a v47 re-stamp; R-MAD1 / R-MAD2 / R-MAD3 / R-MAD4 UNRULED; abilities 602 / 610, 1252 `me` printings fully built*** — engine 0.526.0, MRV 48, NOT committed; the whole-corpus sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D642, *Z1 + K2 — the `me` Stadium rest and the watched-Active damage triggers: 5 texts / 6 printings (Spiteful Swirl ×2 and Counterattack Grouping on the new `PassiveEffects.damageAttackerWatched`; Risky Ruins on the new `StadiumEffects.benchArrivalCounters`; Dizzying Valley on the new `StadiumEffects.confusionSurvivesStageChange`; Ange Floette on the new `StadiumEffects.playOnlyOverStadium` and `hpDelta.name`); `MATCH_RECORD_VERSION` stays 47; R-SSW1 / R-CAG1 / R-RR1 / R-RR2 / R-DV1 / R-ANF1 / R-ANF2 UNRULED; abilities 599 / 610, trainers 445 / 447, 1249 `me` printings fully built*** — engine 0.525.0, MRV 47, NOT committed; the whole-corpus sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D641, *W1 + Y1b — effects the opponent answers, and deck swap / reveal: 4 texts / 7 printings (Ditto ×2 on the new `switchWithDeckChosen`; Bug Out on the new `revealDeckBottomCount`; Pleasing Present on two capped `attachFromHand`, the opponent's first; Lt. Surge's Bargain ×3 on an opponent-answered `optional` over the new `eachPlayerTakesPrize`); `MATCH_RECORD_VERSION` stays 47; R-DIT1 / R-BUG1 / R-PP1 / R-LSB1 UNRULED; attacks 2,770 / 2,771, trainers 442 / 447, 1243 `me` printings fully built*** — engine 0.524.0, MRV 47, NOT committed; the whole-corpus sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D640, *Y1a + MRV47, cut to Overwriting Bolt and Celebration: 2 texts / 3 printings (Overwriting Bolt on D552's retype with the new `asTimesTwo`, a {L}×2 rewrite; Celebration ×2 on `takePrize { count: 2, thenShuffleHand }` and the new `shuffleHandIntoDeck` stage); `MATCH_RECORD_VERSION` 46 → 47 with a v46 re-stamp; Multi Adapter named for 47 → 48; R-OWB1 / R-CEL1 UNRULED; attacks 2,766 / 2,771, 1236 `me` printings fully built*** — engine 0.523.0, MRV 47, NOT committed; the whole-corpus sweep PENDING) [🆕🆕🆕 D643 (D539): Multi Adapter BUILT at D643 (47 → 48).] |
@@ -37017,6 +37057,16 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-10 — build session #584 (P3-M5 — D644)
+
+**Y1e — RULE HOOKS, ONE PRINTING EACH. `MATCH_RECORD_VERSION` STAYS 48.**
+
+Built in the `luminous_ui-mega` worktree on D643 (`0c50eeb2`); the main checkout was not touched. 5 texts / 5 printings: Explosiveness
+(the new `setupActiveFromHand` at `setupPlaceActive`), Watchful Eye (the new `countersCantMove`), Supereffective Pheromones (the new
+`weaknessTimesWithNamedInPlay`), Startling Drop (the new `opponentMillWhenMilled` inside `discardDeckTop`) and Transformation Tome (shipped
+ops). R-EXP1 … R-TFT2 UNRULED. Dropped and named: Backtrack Badge (a persisted mid-attack re-flip park). `ruleHooksMeD644.test.ts` (29),
+census D644 block (2). +29 mutant rows, all KILLED; 8 Weakness-site rows re-anchored. Sweep PENDING (NEXT (0)). NOT committed.
 
 ### 2026-10-10 — build session #583 (P3-M5 — D643)
 

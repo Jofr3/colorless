@@ -2161,6 +2161,16 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 48 AT D644 — Y1e ADDS TWO `CardProgram` KEYS (`setupActiveFromHand`, `opponentMillWhenMilled`) AND
+    TWO `PassiveEffects` KEYS (`countersCantMove`, `weaknessTimesWithNamedInPlay`): CATALOG ONLY, NEVER PERSISTED; NO
+    PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR EVENT MEMBER.** (Placed ABOVE
+    the D643 block.) Transformation Tome is shipped ops (`payFromHand`, `switchWithDiscardNamed`); every program is keyed
+    by id, so no `cardPool` face is read differently. The 0.526 rollback readings, NAMED: ⑴ the five ids have no program
+    at 0.526, so a Patrat / Illumise in play is inert there and a milled Ferrothorn answers nothing. ⑵ A Cinderace placed
+    face down as the Active at setup is persisted as an ordinary one-card stack, which 0.526 reads as an in-play
+    Pokémon like any other (D572's Klinklang on the Bench is the same shape). ⑶ A parked Transformation Tome resumes on
+    0.526's own `switchWithDiscardNamed` arm. No wire shape moves; the deploy order is the usual one.
+
     🆕🆕🆕 **47 → 48 AT D643 — THE TWENTY-FIRST POSITION, AND THE SEVENTH MIGRATION: MULTI ADAPTER.** (Placed ABOVE the
     D642 block.) Rotom ex `me02-029` / `-111` / `-126` "Multi Adapter" (*"Each of your Pokémon that has "Rotom" in its
     name may have up to 2 Pokémon Tool cards attached. If this Ability goes away, discard Pokémon Tools from those Pokémon

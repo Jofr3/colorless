@@ -20273,6 +20273,18 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.526.0 → **0.527.0** (D644 — Y1e: RULE HOOKS, ONE PRINTING EACH, 5 TEXTS / 5 PRINTINGS (`me` +
+    `30th`); `MATCH_RECORD_VERSION` STAYS 48 (apps/api match.ts "STAYS 48 AT D644")). registry.ts: Cinderace `me01-028`
+    "Explosiveness" on the NEW `CardProgram.setupActiveFromHand` (setup.ts `explosivenessPlacement`, read by
+    `setupPlaceActive`; R-EXP1, R-EXP2); Patrat `me04-070` "Watchful Eye" on the NEW `PassiveEffects.countersCantMove`
+    (continuous.ts `countersMoveLocked`, asked by interpreter.ts `stepOp` over `isCounterMoveOp` and by cardplay.ts
+    `programPlayable`; R-WEY1); Illumise `30th-004` "Supereffective Pheromones" on the NEW
+    `PassiveEffects.weaknessTimesWithNamedInPlay` (continuous.ts `weaknessAmountOverride` / `withWeaknessAmount` at
+    attack.ts's main hit and interpreter.ts `snipeActive`; R-SPH1, R-SPH2); Ferrothorn `me04-063` "Startling Drop" on
+    the NEW `CardProgram.opponentMillWhenMilled` (interpreter.ts `startlingDropRetort`, called by `discardDeckTop`;
+    R-STD1, R-STD2); Transformation Tome `me04-083` on shipped ops (`payFromHand` for the second copy, then
+    `switchWithDiscardNamed` over Basic Pokémon; R-TFT1, R-TFT2). Dropped and named: Backtrack Badge `me05-074` (a
+    persisted mid-attack re-flip park). `ruleHooksMeD644.test.ts`.)
     🆕🆕🆕 engineVersion 0.525.0 → **0.526.0** (D643 — Y1a: MULTI ADAPTER, 1 TEXT / 3 PRINTINGS (`me`);
     `MATCH_RECORD_VERSION` 47 → 48 WITH A v47 MIGRATION, A RE-STAMP (apps/api match.ts "47 → 48 AT D643")). registry.ts:
     Rotom ex `me02-029` / `-111` / `-126` on the NEW `PassiveEffects.toolCapForName` (continuous.ts `toolCapOf`, read at
@@ -25784,7 +25796,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.526.0";
+export const engineVersion = "0.527.0";
 
 export type {
   ApplyResult,

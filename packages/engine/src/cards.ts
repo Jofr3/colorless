@@ -1108,7 +1108,8 @@ export function activeTop(
 
 /** The "a Basic Pokémon out of your own hand" check shared by the two setup
     placements and the in-turn bench play (§3.6–§3.7, §5.2). Returns the
-    rejection, or null when the play is legal. M2's evolution play adds its
+    rejection, or null when the play is legal. (🆕🆕🆕 D644: `setupPlaceActive` asks setup.ts
+    `explosivenessPlacement` first — Cinderace "Explosiveness" may be the Active though not Basic.) M2's evolution play adds its
     own timing rules on top of the same hand/uid resolution. */
 export function basicFromHandError(state: GameState, seat: Seat, uid: string): ApplyResult | null {
   if (!state.players[seat].hand.includes(uid)) {

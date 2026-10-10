@@ -23,6 +23,8 @@ import {
   toolCardSimulated,
   // 🆕🆕🆕 D643 — Multi Adapter's raised Tool cap, at both `attachTool` arms.
   toolCapOf,
+  // 🆕🆕🆕 D644 — Watchful Eye's counter-move lock, at `programPlayable`.
+  countersMoveLocked,
 } from "./continuous";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
@@ -69,6 +71,8 @@ import {
   switchActiveTargets,
   // 🆕🆕🆕 D642 — Risky Ruins' counters, at an Antique Fossil's play.
   benchArrivalCounters,
+  // 🆕🆕🆕 D644 — the five counter-move ops Watchful Eye refuses.
+  isCounterMoveOp,
 } from "./interpreter";
 import type { AbilityProgram, StadiumAbility } from "./registry";
 import { programFor } from "./registry";
@@ -1691,6 +1695,9 @@ export function programPlayable(
     if (op.op === "discardToolAndSpecialEnergyChosen" && ruffianBodies(state, seat).length === 0) {
       return false;
     }
+    // 🆕🆕🆕 D644 — Patrat "Watchful Eye": a counter move can only whiff while a live holder is in play, so an
+    // Ability or Trainer whose op it is is refused (Rocket Brain, Adrena-Brain; R-WEY1).
+    if (isCounterMoveOp(op) && countersMoveLocked(state)) return false;
     // 🆕🆕🆕 D566 — Ogre's Mask with no qualifying body in play, OR no qualifying card in the
     // discard pile, can only whiff: refused on the op's OWN two offer funnels. A non-ex
     // Ogerpon fills neither side (`pokemonNameContaining.suffix`).

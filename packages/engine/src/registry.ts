@@ -1286,6 +1286,20 @@ export interface PassiveEffects {
       holders do not stack. The second sentence is continuous.ts `toolTrimStages`, the state check queued at
       flow.ts `advance` and index.ts `applyAction` (R-MAD1, R-MAD2). Catalog-only: never persisted. */
   toolCapForName?: { nameContains: string; cap: number };
+  /** 🆕🆕🆕 §9 (D644) — THE COUNTER-MOVE LOCK: Patrat `me04-070` "Watchful Eye" (*"Damage counters on each Pokémon
+      (both yours and your opponent's) can't be moved to other Pokémon."*). Read by ONE function, continuous.ts
+      `countersMoveLocked` (either board, Active or Bench, §9-gated per holder), which interpreter.ts `stepOp` asks
+      before every counter-MOVE op (`isCounterMoveOp`: the op whiffs) and cardplay.ts `programPlayable` asks for an
+      Ability or Trainer whose top-level op is one (refused, it could only whiff). R-WEY1 ⚠️ UNRULED. Catalog-only:
+      never persisted. */
+  countersCantMove?: true;
+  /** 🆕🆕🆕 §8.5 (D644) — THE WEAKNESS AMOUNT REWRITE: Illumise `30th-004` "Supereffective Pheromones" (*"If you
+      have Volbeat in play, apply Weakness for both Active Pokémon as ×3."*). Read by ONE function, continuous.ts
+      `weaknessAmountOverride`: a live (§9-gated) holder on either board whose OWN board has a body whose top card
+      is named `name`. Handed to `withWeaknessAmount` at both Weakness sites (attack.ts main hit, interpreter.ts
+      `snipeActive`): a multiplicative Weakness that applies is applied as `amount`. R-SPH1 / R-SPH2 ⚠️ UNRULED.
+      Catalog-only: never persisted. */
+  weaknessTimesWithNamedInPlay?: { name: string; amount: number };
   /** 🆕 §8.1 (D298) — the CAUSE-CONDITIONED PRIZE REDUCTION borne by an ATTACHED
       CARD. See `KoPrizeReduction` for the vocabulary; the two printings that reach
       this field are
@@ -4225,6 +4239,22 @@ export interface CardProgram {
       `disabledAbilityUids` is not asked. Catalog-only; nothing is persisted beyond the
       existing `allowances.abilitiesUsed` string. */
   benchFromHand?: { name: string; playableIf: BoardCondition };
+  /** 🆕🆕🆕 **§3.6 (D644) — AN IN-HAND ABILITY AT SETUP: this (non-Basic) Pokémon may be put face down into the
+      Active Spot.** Cinderace `me01-028` "Explosiveness" (*"If this Pokémon is in your hand when you are setting up to
+      play, you may put it face down in the Active Spot."*). The value is the printed Ability name. `benchFromHand`'s
+      argument: the card is in the HAND, so it is a `CardProgram` key, read on ONE path, setup.ts `setupPlaceActive`
+      (the Bench placement still takes Basics only). R-EXP1 ⚠️ UNRULED: the mulligan is unchanged — a hand with no
+      Basic Pokémon still mulligans, so the placement is refused while the hand holds none. R-EXP2 ⚠️ UNRULED: no
+      in-play Ability lock reaches a card in the hand (D572 R-KR2). Catalog-only: never persisted. */
+  setupActiveFromHand?: string;
+  /** 🆕🆕🆕 **§9 (D644) — AN IN-DECK ABILITY: discarded from the deck by the opponent, mill the opponent.** Ferrothorn
+      `me04-063` "Startling Drop" (*"During your opponent's turn, if this Pokémon is discarded from your deck by an
+      effect of an attack or Ability from your opponent's Pokémon, or by an effect of your opponent's Item or
+      Supporter cards, discard the top 8 cards of your opponent's deck."*). `ability` is the printed name, `count` the
+      mill. Read on ONE path, interpreter.ts `startlingDropRetort`, called by `discardDeckTop` for the opponent's deck
+      (the one op that discards from an opponent's deck on a shipped program). R-STD1 / R-STD2 ⚠️ UNRULED.
+      Catalog-only: never persisted. */
+  opponentMillWhenMilled?: { ability: string; count: number };
   /** The `trainer` play ENDS the controller's turn once its program completes
       (Katy: "Shuffle your hand into your deck. Then, draw 8 cards. Your turn
       ends."). playTrainer passes this to flow.ts settleProgram, which folds it
@@ -11245,6 +11275,41 @@ const ANGE_FLOETTE: CardProgram = {
     in its name may carry 2 Tools (R-MAD2, R-MAD3); when the Ability goes away the owner discards down to 1 on each
     (R-MAD1). Its attack "Thunderbolt" keeps deriving. */
 const MULTI_ADAPTER: CardProgram = { passive: { toolCapForName: { nameContains: "Rotom", cap: 2 } } };
+
+// ── 🆕🆕🆕 D644 — Y1e: RULE HOOKS, ONE PRINTING EACH. Five objects, 5 printings, texts off the LOCAL D1 (2026-10-10,
+//    `legal_standard = 1`). New pieces: `CardProgram.setupActiveFromHand` / `.opponentMillWhenMilled` and
+//    `PassiveEffects.countersCantMove` / `.weaknessTimesWithNamedInPlay`; Transformation Tome is shipped ops. Dropped
+//    and named: Backtrack Badge `me05-074` (a re-flip of an attack's coins needs a persisted mid-attack park).
+//    `ruleHooksMeD644.test.ts`. ──
+
+/** 🆕🆕🆕 **D644 — Cinderace `me01-028` "Explosiveness"**: may be put face down into the Active Spot at setup
+    (R-EXP1, R-EXP2). Its attack "Turbo Flare" keeps deriving. */
+const EXPLOSIVENESS: CardProgram = { setupActiveFromHand: "Explosiveness" };
+
+/** 🆕🆕🆕 **D644 — Patrat `me04-070` "Watchful Eye"**: no damage counter on any Pokémon can be moved (R-WEY1). Its
+    attack "Bite" keeps deriving. */
+const WATCHFUL_EYE: CardProgram = { passive: { countersCantMove: true } };
+
+/** 🆕🆕🆕 **D644 — Illumise `30th-004` "Supereffective Pheromones"**: with a Volbeat in its owner's play, Weakness for
+    both Active Pokémon is applied as ×3 (R-SPH1, R-SPH2). Its attack "Ram" keeps deriving. */
+const SUPEREFFECTIVE_PHEROMONES: CardProgram = { passive: { weaknessTimesWithNamedInPlay: { name: "Volbeat", amount: 3 } } };
+
+/** 🆕🆕🆕 **D644 — Ferrothorn `me04-063` "Startling Drop"**: discarded from its owner's deck by the opponent's effect
+    during the opponent's turn, the opponent discards the top 8 of their deck (R-STD1, R-STD2). Its attack "Special
+    Whip" keeps deriving. */
+const STARTLING_DROP: CardProgram = { opponentMillWhenMilled: { ability: "Startling Drop", count: 8 } };
+
+/** 🆕🆕🆕 **D644 — Transformation Tome `me04-083` (Item)**: *"You must play 2 Transformation Tome cards at once. (This
+    effect works one time for 2 cards.) Choose a Basic Pokémon in your discard pile and switch it with 1 of your Basic
+    Pokémon in play. Any attached cards, damage counters, Special Conditions, turns in play, and any other effects
+    remain on the new Pokémon."* The second copy is a hand cost (`payFromHand`, refused by `handCostUnmet` with the
+    played uid excluded, R-TFT1); the swap is Ogre's Mask's `switchWithDiscardNamed` over Basic Pokémon (R-TFT2). */
+const TRANSFORMATION_TOME: CardProgram = {
+  trainer: [
+    { op: "payFromHand", count: 1, to: "discard", filter: { kind: "byName", name: "Transformation Tome", cardNoun: true } },
+    { op: "switchWithDiscardNamed", filter: { kind: "basicPokemon" } },
+  ],
+};
 
 /** 🆕🆕🆕 **D578 — Technical Machine: Fluorite `sv08-188` (Tool, 1 legal printing)**: *"The Pokémon
     this card is attached to can use the attack on this card. (You still need the necessary
@@ -20681,6 +20746,12 @@ const REGISTRY: Record<string, CardProgram> = {
   "me02-029": MULTI_ADAPTER, // Rotom ex — each of your Rotom Pokémon may have up to 2 Pokémon Tools attached
   "me02-111": MULTI_ADAPTER, // Rotom ex
   "me02-126": MULTI_ADAPTER, // Rotom ex
+  // 🆕🆕🆕 D644 — Y1e: 5 keys / 5 objects, MID-MAP (`raw[last]` does not move).
+  "me01-028": EXPLOSIVENESS, // Cinderace — may be put face down into the Active Spot at setup
+  "me04-070": WATCHFUL_EYE, // Patrat — damage counters can't be moved
+  "30th-004": SUPEREFFECTIVE_PHEROMONES, // Illumise — with Volbeat in play, Weakness for both Actives is ×3
+  "me04-063": STARTLING_DROP, // Ferrothorn — milled by the opponent on their turn: their top 8 discarded
+  "me04-083": TRANSFORMATION_TOME, // Transformation Tome — play 2 at once; switch a Basic in play with one in the discard
   // 🆕🆕🆕 D608 — WP30: 5 `30th` ATTACK-only keys / 2 objects, MID-MAP (`raw[last]` does not move).
   // 🆕🆕🆕 D612 — 3 now: Stealthy Slash ×2 RETIRED (the normalised text is `mep-099`'s, reader-built).
   "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex

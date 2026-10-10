@@ -125,6 +125,11 @@ import {
   // 🆕🆕🆕 D643 — Multi Adapter's raised Tool cap (the deck attach, `trimTools`) and its trim predicate.
   toolCapOf,
   owesToolTrim,
+  // 🆕🆕🆕 D644 — Watchful Eye's counter-move lock (`stepOp`) and Illumise's Weakness amount (`snipeActive`).
+  countersMoveLocked,
+  opponentMillRetortOf,
+  weaknessAmountOverride,
+  withWeaknessAmount,
 } from "./continuous";
 import type { KoSurvival } from "./continuous";
 import { POKEMON_TYPES, STATUS_WORD_OF, foldApostrophes } from "./effects";
@@ -2449,6 +2454,55 @@ export function resumeProgram(
     computed had nowhere to go. Both endings now hand the same rewritten op to the
     same queue, which is what makes the forced and parked resolutions of one
     sentence provably the same run. */
+/** 🆕🆕🆕 §9 (D644) — Ferrothorn `me04-063` "Startling Drop": *"During your opponent's turn, if this Pokémon is
+    discarded from your deck by an effect of an attack or Ability from your opponent's Pokémon, or by an effect of your
+    opponent's Item or Supporter cards, discard the top 8 cards of your opponent's deck."* Called by `discardDeckTop`
+    for each deck it milled: `victim` is the deck's owner, `ctx.seat` the controller. It answers only when the two
+    differ, during the CONTROLLER's turn, and when the effect is an attack, an Ability, an Item or a Supporter
+    (`ctx.invokedBy`; a Stadium, Tool or Energy program carries none). Each milled card whose program carries
+    `opponentMillWhenMilled` fires once, in pile order: `ABILITY_TRIGGERED`, then the controller's top `count` cards
+    to the controller's discard pile (`DECK_TOP_DISCARDED`, `actor` the victim; a short deck gives what it has).
+    R-STD1 ⚠️ UNRULED: it resolves at once, inside the op that milled it, and two Ferrothorn milled together answer
+    twice. R-STD2 ⚠️ UNRULED: the card is in the discard pile, so no in-play Ability lock reaches it, and a mill it
+    causes cannot trigger the controller's own Ferrothorn (that is during its owner's own turn). */
+export function startlingDropRetort(
+  state: GameState,
+  victim: Seat,
+  milled: readonly string[],
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  if (victim === ctx.seat || ctx.invokedBy === undefined) return state;
+  // "During your opponent's turn" — the controller's turn: odd turns belong to `firstPlayer` (`benchArrivalCounters`).
+  if ((state.turn % 2 === 1) !== (ctx.seat === state.firstPlayer)) return state;
+  let next = state;
+  for (const uid of milled) {
+    const retort = opponentMillRetortOf(state, uid);
+    if (retort === undefined) continue;
+    events.push({ type: "ABILITY_TRIGGERED", seat: victim, uid, ability: retort.ability });
+    const side = next.players[ctx.seat];
+    const top = side.deck.slice(0, retort.count);
+    if (top.length === 0) continue;
+    events.push({ type: "DECK_TOP_DISCARDED", seat: ctx.seat, actor: victim, uids: top });
+    next = withSide(next, ctx.seat, { ...side, deck: side.deck.slice(top.length), discard: [...side.discard, ...top] });
+  }
+  return next;
+}
+
+/** 🆕🆕🆕 §9 (D644) — the ops that MOVE damage counters from one Pokémon to another: the five Patrat "Watchful Eye"
+    (*"Damage counters on each Pokémon … can't be moved to other Pokémon."*) whiffs (`stepOp`) and refuses as an
+    Ability's or Trainer's whole program (cardplay.ts `programPlayable`). R-WEY1 ⚠️ UNRULED: an in-place swap that
+    keeps the counters on the body (Ogre's Mask, Transformation Tome, Zero to Hero) moves none. */
+export function isCounterMoveOp(op: EffectOp): boolean {
+  return (
+    op.op === "moveCountersToDefender" ||
+    op.op === "moveCountersChosen" ||
+    op.op === "moveCounterOwnChosen" ||
+    op.op === "moveCountersToOpponentChosen" ||
+    op.op === "moveCountersOpponentAnyWay"
+  );
+}
+
 function stepOp(
   state: GameState,
   op: EffectOp,
@@ -2456,6 +2510,8 @@ function stepOp(
   events: GameEvent[],
   record: EffectRecord,
 ): { done: GameState; schedule?: EffectOp[] } | { park: EffectPrompt; decider?: Seat } {
+  // 🆕🆕🆕 D644 — Patrat "Watchful Eye": while a live holder is in play, a counter MOVE whiffs (R-WEY1).
+  if (isCounterMoveOp(op) && countersMoveLocked(state)) return { done: state };
   switch (op.op) {
     case "applyStatus":
       return { done: applyStatus(state, op, ctx, events) };
@@ -4175,6 +4231,8 @@ function stepOp(
           deck: side.deck.slice(milled.length),
           discard: [...side.discard, ...milled],
         });
+        // 🆕🆕🆕 D644 — Ferrothorn "Startling Drop", answered by the opponent's deck it was milled off (R-STD1).
+        milledState = startlingDropRetort(milledState, victim, milled, ctx, events);
       }
       // ONE filing, after the walk, and it runs on the empty-deck path too — the rule
       // `discardPileRetrieval` states and `attachFromDeck` repeats: an op that RAN and
@@ -12726,12 +12784,16 @@ function snipeActive(
   // 🆕🆕🆕 D622 — the bare tail (`wrOnly`) nulls Weakness and Resistance, and only those.
   const weakness = noWeakness || wrOnly
     ? null
-    : weaknessOf(
-        attacker.card,
-        target.card,
-        installedWeaknessRetypeOf(state, target.active),
-        // 🆕🆕🆕 D640 — Overwriting Bolt's installed rewrite first (R-OWB1).
-        installedWeaknessRewriteOf(state, target.active) ?? seatWeaknessRewrite(state, opponent, target.card),
+    : // 🆕🆕🆕 D644 — Illumise "Supereffective Pheromones", as at the main hit (R-SPH1).
+      withWeaknessAmount(
+        weaknessOf(
+          attacker.card,
+          target.card,
+          installedWeaknessRetypeOf(state, target.active),
+          // 🆕🆕🆕 D640 — Overwriting Bolt's installed rewrite first (R-OWB1).
+          installedWeaknessRewriteOf(state, target.active) ?? seatWeaknessRewrite(state, opponent, target.card),
+        ),
+        weaknessAmountOverride(state),
       );
   const resistance =
     ignoreWR || wrOnly || attacker === null ? null : resistanceOf(attacker.card, target.card);

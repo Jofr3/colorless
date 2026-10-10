@@ -823,7 +823,7 @@ const RAW: Record<string, string> = (
 describe("D520 §8 — the version steps, and the heading is written", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.526.0");
+    expect(engineVersion).toBe("0.527.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

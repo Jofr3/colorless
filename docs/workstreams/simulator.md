@@ -30248,6 +30248,30 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D644 — Y1e: rule hooks, one printing each (engine 0.527.0, `MATCH_RECORD_VERSION` stays 48)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D643 (`0c50eeb2`), NOT committed. 5 texts / 5 printings (`me` + `30th`) —
+the D625 re-rank's Y1e group less Backtrack Badge (dropped and named).
+
+- **Explosiveness** (Cinderace `me01-028`): the NEW `CardProgram.setupActiveFromHand`, read by setup.ts `setupPlaceActive`
+  (`explosivenessPlacement`): the Stage 2 may be the face-down Active; the Bench still takes Basics only. R-EXP1 ⚠️ UNRULED: the mulligan
+  is unchanged (refused while the hand holds no Basic). R-EXP2 ⚠️ UNRULED: no in-play lock reaches the hand.
+- **Watchful Eye** (Patrat `me04-070`): the NEW `PassiveEffects.countersCantMove`; continuous.ts `countersMoveLocked` (either board, §9 per
+  holder). interpreter.ts `stepOp` whiffs every `isCounterMoveOp` op; cardplay.ts `programPlayable` refuses Rocket Brain / Adrena-Brain.
+  R-WEY1 ⚠️ UNRULED: an in-place swap moves no counters.
+- **Supereffective Pheromones** (Illumise `30th-004`): the NEW `PassiveEffects.weaknessTimesWithNamedInPlay`; continuous.ts
+  `weaknessAmountOverride` / `withWeaknessAmount` at both Weakness sites (attack.ts main hit, interpreter.ts `snipeActive`). R-SPH1 /
+  R-SPH2 ⚠️ UNRULED.
+- **Startling Drop** (Ferrothorn `me04-063`): the NEW `CardProgram.opponentMillWhenMilled`; interpreter.ts `startlingDropRetort`, called by
+  `discardDeckTop` for the opponent's deck, during the controller's turn, for an attack / Ability / Item / Supporter (`invokedBy`).
+  R-STD1 / R-STD2 ⚠️ UNRULED.
+- **Transformation Tome** (`me04-083`): shipped ops — a second-copy `payFromHand` (one alone: `PLAY_CONDITION_NOT_MET`), then
+  `switchWithDiscardNamed` over Basic Pokémon. R-TFT1 / R-TFT2 ⚠️ UNRULED.
+- **Dropped and named:** Backtrack Badge `me05-074` — the re-flip needs a persisted mid-attack park (and a once-per-turn record).
+- **MRV stays 48** (match.ts "STAYS 48 AT D644"): catalog-only keys.
+- **Suite.** `ruleHooksMeD644.test.ts` (29), census D644 block (2). +29 mutant rows, all KILLED; 8 D432 / D552 / D559 Weakness-site rows
+  re-anchored, all KILLED. Census: abilities **606 / 610**, trainers **446 / 447**, 1257 `me` printings fully built. Sweep PENDING.
+
 ## D643 — Y1a: Multi Adapter (engine 0.526.0, `MATCH_RECORD_VERSION` 47 → 48)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D642 (`4f9ce7fc`), NOT committed. 1 text / 3 printings (`me`) — the D625

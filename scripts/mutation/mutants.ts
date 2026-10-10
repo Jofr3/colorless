@@ -6250,7 +6250,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.526.0";',
+    find: 'export const engineVersion = "0.527.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -20225,8 +20225,9 @@ export const MUTANTS: Mutant[] = [
     //    retype argument; find AND replace carry it, so the patch still deletes exactly the bar.
     // 🆕🆕🆕 D559 — RE-TRANSCRIBED off the bytes (D540): the Weakness call gained Fairy Zone's
     //    `rewrite` argument; find AND replace carry it, so the patch keeps exactly its mutation.
-    find: "    const weakness =\n      damageSuppression?.weakness === true ||\n      seatRemovesWeakness(next, defenderSeat) ||\n      installedNoWeakness(next, defender)\n        ? null\n        : weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite);",
-    replace: "    const weakness =\n      damageSuppression?.weakness === true || seatRemovesWeakness(next, defenderSeat)\n        ? null\n        : weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite);",
+    // 🆕🆕🆕 D644 — RE-ANCHORED off the bytes (D540): the Weakness now rides `withWeaknessAmount` (Illumise, R-SPH1); the patch is unchanged.
+    find: "    const weakness =\n      damageSuppression?.weakness === true ||\n      seatRemovesWeakness(next, defenderSeat) ||\n      installedNoWeakness(next, defender)\n        ? null\n        : // 🆕🆕🆕 D644 — Illumise \"Supereffective Pheromones\": the applied ×2 as ×3 (R-SPH1).\n          withWeaknessAmount(weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite), weaknessAmountOverride(next));",
+    replace: "    const weakness =\n      damageSuppression?.weakness === true || seatRemovesWeakness(next, defenderSeat)\n        ? null\n        : // 🆕🆕🆕 D644 — Illumise \"Supereffective Pheromones\": the applied ×2 as ×3 (R-SPH1).\n          withWeaknessAmount(weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite), weaknessAmountOverride(next));",
     expectKilledBy: ["packages/engine/src/noWeaknessBar.test.ts"],
   },
   {
@@ -36183,8 +36184,9 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/attack.ts",
     // 🆕🆕🆕 D559 — RE-TRANSCRIBED off the bytes (D540): the Weakness call gained Fairy Zone's
     //    `rewrite` argument; find AND replace carry it, so the patch keeps exactly its mutation.
-    find: "        : weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite);",
-    replace: "        : weaknessOf(attacker, defenderCard, null, weaknessRewrite);",
+    // 🆕🆕🆕 D644 — RE-ANCHORED off the bytes (D540): the Weakness now rides `withWeaknessAmount` (Illumise, R-SPH1); the patch is unchanged.
+    find: "withWeaknessAmount(weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite), weaknessAmountOverride(next));",
+    replace: "withWeaknessAmount(weaknessOf(attacker, defenderCard, null, weaknessRewrite), weaknessAmountOverride(next));",
     expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
   },
   {
@@ -36196,8 +36198,9 @@ export const MUTANTS: Mutant[] = [
     //    `rewrite` argument; find AND replace carry it, so the patch keeps exactly its mutation.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the rewrite argument now reads Overwriting Bolt's installed
     //    rewrite first; the patch still nulls the retype alone.
-    find: "        installedWeaknessRetypeOf(state, target.active),\n        // 🆕🆕🆕 D640 — Overwriting Bolt's installed rewrite first (R-OWB1).\n        installedWeaknessRewriteOf(state, target.active) ?? seatWeaknessRewrite(state, opponent, target.card),",
-    replace: "        null,\n        // 🆕🆕🆕 D640 — Overwriting Bolt's installed rewrite first (R-OWB1).\n        installedWeaknessRewriteOf(state, target.active) ?? seatWeaknessRewrite(state, opponent, target.card),",
+    // 🆕🆕🆕 D644 — RE-ANCHORED off the bytes (D540): the Weakness now rides `withWeaknessAmount` (Illumise, R-SPH1); the patch is unchanged.
+    find: "          installedWeaknessRetypeOf(state, target.active),\n          // 🆕🆕🆕 D640 — Overwriting Bolt's installed rewrite first (R-OWB1).\n          installedWeaknessRewriteOf(state, target.active) ?? seatWeaknessRewrite(state, opponent, target.card),",
+    replace: "          null,\n          // 🆕🆕🆕 D640 — Overwriting Bolt's installed rewrite first (R-OWB1).\n          installedWeaknessRewriteOf(state, target.active) ?? seatWeaknessRewrite(state, opponent, target.card),",
     expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
   },
   {
@@ -36209,8 +36212,9 @@ export const MUTANTS: Mutant[] = [
     //    `rewrite` argument; find AND replace carry it, so the patch keeps exactly its mutation.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the line after the retype is now D640's comment; the patch still
     //    reads the attacker's record.
-    find: "        installedWeaknessRetypeOf(state, target.active),\n        // 🆕🆕🆕 D640 — Overwriting Bolt's installed rewrite first (R-OWB1).\n",
-    replace: "        installedWeaknessRetypeOf(state, attacker.active),\n        // 🆕🆕🆕 D640 — Overwriting Bolt's installed rewrite first (R-OWB1).\n",
+    // 🆕🆕🆕 D644 — RE-ANCHORED off the bytes (D540): the Weakness now rides `withWeaknessAmount` (Illumise, R-SPH1); the patch is unchanged.
+    find: "          installedWeaknessRetypeOf(state, target.active),\n          // 🆕🆕🆕 D640 — Overwriting Bolt's installed rewrite first (R-OWB1).\n",
+    replace: "          installedWeaknessRetypeOf(state, attacker.active),\n          // 🆕🆕🆕 D640 — Overwriting Bolt's installed rewrite first (R-OWB1).\n",
     expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
   },
   {
@@ -36229,7 +36233,8 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/attack.ts",
     // 🆕🆕🆕 D559 — RE-TRANSCRIBED off the bytes (D540): the Weakness call gained Fairy Zone's
     //    `rewrite` argument; find AND replace carry it, so the patch keeps exactly its mutation.
-    find: "    const weakness =\n      damageSuppression?.weakness === true ||\n      seatRemovesWeakness(next, defenderSeat) ||\n      installedNoWeakness(next, defender)\n        ? null\n        : weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite);",
+    // 🆕🆕🆕 D644 — RE-ANCHORED off the bytes (D540): the Weakness now rides `withWeaknessAmount` (Illumise, R-SPH1); the patch is unchanged.
+    find: "    const weakness =\n      damageSuppression?.weakness === true ||\n      seatRemovesWeakness(next, defenderSeat) ||\n      installedNoWeakness(next, defender)\n        ? null\n        : // 🆕🆕🆕 D644 — Illumise \"Supereffective Pheromones\": the applied ×2 as ×3 (R-SPH1).\n          withWeaknessAmount(weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite), weaknessAmountOverride(next));",
     replace: "    const weakness =\n      weaknessRetype !== null\n        ? weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite)\n        : damageSuppression?.weakness === true ||\n            seatRemovesWeakness(next, defenderSeat) ||\n            installedNoWeakness(next, defender)\n          ? null\n          : weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite);",
     expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
   },
@@ -37907,8 +37912,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D559",
     what: "🛑 THE MAIN HIT never hands Fairy Zone's rewrite to `weaknessOf` (D432's one-sided build): the snipe honours it, the main hit does not. Killed by §2.",
     file: "packages/engine/src/attack.ts",
-    find: "        : weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite);",
-    replace: "        : weaknessOf(attacker, defenderCard, weaknessRetype);",
+    // 🆕🆕🆕 D644 — RE-ANCHORED off the bytes (D540): the Weakness now rides `withWeaknessAmount` (Illumise, R-SPH1); the patch is unchanged.
+    find: "withWeaknessAmount(weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite), weaknessAmountOverride",
+    replace: "withWeaknessAmount(weaknessOf(attacker, defenderCard, weaknessRetype), weaknessAmountOverride",
     expectKilledBy: ["packages/engine/src/abilityBundleD559.test.ts"],
   },
   {
@@ -37939,8 +37945,9 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the seat rewrite now sits behind Overwriting Bolt's installed rewrite; the
     //    patch still drops the seat rewrite.
-    find: "        installedWeaknessRewriteOf(state, target.active) ?? seatWeaknessRewrite(state, opponent, target.card),\n      );",
-    replace: "        installedWeaknessRewriteOf(state, target.active),\n      );",
+    // 🆕🆕🆕 D644 — RE-ANCHORED off the bytes (D540): the Weakness now rides `withWeaknessAmount` (Illumise, R-SPH1); the patch is unchanged.
+    find: "          installedWeaknessRewriteOf(state, target.active) ?? seatWeaknessRewrite(state, opponent, target.card),\n        ),",
+    replace: "          installedWeaknessRewriteOf(state, target.active),\n        ),",
     expectKilledBy: ["packages/engine/src/abilityBundleD559.test.ts"],
   },
   {
@@ -37949,8 +37956,9 @@ export const MUTANTS: Mutant[] = [
     what: "the snipe asks the scan about the ATTACKER's seat: Fairy Zone is read off the target's own board. Killed by §4's defender-side rung and its positives.",
     file: "packages/engine/src/interpreter.ts",
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the seat rewrite now sits behind `??`; the patch still reads the wrong seat.
-    find: " ?? seatWeaknessRewrite(state, opponent, target.card),\n      );",
-    replace: " ?? seatWeaknessRewrite(state, ctx.seat, target.card),\n      );",
+    // 🆕🆕🆕 D644 — RE-ANCHORED off the bytes (D540): the Weakness now rides `withWeaknessAmount` (Illumise, R-SPH1); the patch is unchanged.
+    find: " ?? seatWeaknessRewrite(state, opponent, target.card),\n        ),",
+    replace: " ?? seatWeaknessRewrite(state, ctx.seat, target.card),\n        ),",
     expectKilledBy: ["packages/engine/src/abilityBundleD559.test.ts"],
   },
   {
@@ -59910,5 +59918,268 @@ export const MUTANTS: Mutant[] = [
     find: "export const TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION = 47;",
     replace: "export const TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION = 46;",
     expectKilledBy: ["apps/api/src/lobby/toolTrimMigrationD643.test.ts"],
+  },
+  // ── D644 — Y1e: rule hooks, one printing each — Explosiveness (setup), Watchful Eye (the counter-move lock),
+  //    Supereffective Pheromones (the Weakness amount), Startling Drop (the in-deck mill retort), Transformation Tome.
+  {
+    id: "D644-explosiveness-ignored",
+    decision: "D644",
+    what: "`setupPlaceActive` asks `basicFromHandError` alone: Cinderace is refused as the Active. Killed by ruleHooksMeD644 §2.",
+    file: "packages/engine/src/setup.ts",
+    find: "  const invalid = explosivenessPlacement(state, action.seat, action.uid)\n    ? null\n    : basicFromHandError(state, action.seat, action.uid);",
+    replace: "  const invalid = basicFromHandError(state, action.seat, action.uid);",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-explosiveness-mulligan-skipped",
+    decision: "D644",
+    what: "the Basic-in-hand test is dropped: Cinderace is placed from a hand that owes its mulligan (R-EXP1). Killed by ruleHooksMeD644 §2.",
+    file: "packages/engine/src/setup.ts",
+    find: "  return handHasBasic(state, seat);\n}\n\n/** §3.6 — the mandatory face-down Active.",
+    replace: "  return true;\n}\n\n/** §3.6 — the mandatory face-down Active.",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-explosiveness-any-stage",
+    decision: "D644",
+    what: "the `setupActiveFromHand` key is not asked: any Stage 2 is placed as the Active. Killed by ruleHooksMeD644 §2.",
+    file: "packages/engine/src/setup.ts",
+    find: "  if (card === undefined || programFor(card.id)?.setupActiveFromHand === undefined) return false;",
+    replace: "  if (card === undefined) return false;",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-explosiveness-hand-unchecked",
+    decision: "D644",
+    what: "the hand test is dropped: a Cinderace still in the deck is placed as the Active. Killed by ruleHooksMeD644 §2.",
+    file: "packages/engine/src/setup.ts",
+    find: "  if (!state.players[seat].hand.includes(uid)) return false;\n  const card = cardOfUid(state, uid);\n  if (card === undefined || programFor",
+    replace: "  const card = cardOfUid(state, uid);\n  if (card === undefined || programFor",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-pheromones-not-lock-gated",
+    decision: "D644",
+    what: "a §9-silenced Illumise still rewrites Weakness (Flutter Mane over the Active Illumise). Killed by ruleHooksMeD644 §4.",
+    file: "packages/engine/src/continuous.ts",
+    find: "      if (rule === undefined) continue;\n      const uid = topUid(holder);\n      if (uid !== undefined && disabledAbilityUids(state).has(uid)) continue; // §9\n",
+    replace: "      if (rule === undefined) continue;\n      const uid = topUid(holder);\n",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-pheromones-volbeat-unasked",
+    decision: "D644",
+    what: "the Volbeat clause is not asked: Illumise alone gives ×3. Killed by ruleHooksMeD644 §4.",
+    file: "packages/engine/src/continuous.ts",
+    find: "      if (holders.some((body) => topCardOf(state, body)?.name === rule.name)) return rule.amount;",
+    replace: "      return rule.amount;",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-pheromones-one-seat",
+    decision: "D644",
+    what: "only P1's board is read: an Illumise on the defender's side gives ×2. Killed by ruleHooksMeD644 §4.",
+    file: "packages/engine/src/continuous.ts",
+    find: "export function weaknessAmountOverride(state: GameState): number | null {\n  for (const seat of SEATS) {",
+    replace: "export function weaknessAmountOverride(state: GameState): number | null {\n  for (const seat of [\"p1\"] as const) {",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-weakness-additive-rewritten",
+    decision: "D644",
+    what: "an additive Weakness is rewritten to ×3 too (R-SPH1). Killed by ruleHooksMeD644 §4.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (weakness === null || amount === null || weakness.op !== \"multiply\") return weakness;",
+    replace: "  if (weakness === null || amount === null) return weakness;",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-watchful-not-lock-gated",
+    decision: "D644",
+    what: "a §9-silenced Patrat still locks the counters (Flutter Mane over the Active Patrat). Killed by ruleHooksMeD644 §3.",
+    file: "packages/engine/src/continuous.ts",
+    find: "      if (top === undefined || programFor(top.id)?.passive?.countersCantMove !== true) continue;\n      const uid = topUid(holder);\n      if (uid !== undefined && disabledAbilityUids(state).has(uid)) continue; // §9\n",
+    replace: "      if (top === undefined || programFor(top.id)?.passive?.countersCantMove !== true) continue;\n      const uid = topUid(holder);\n",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-watchful-one-seat",
+    decision: "D644",
+    what: "only P1's board is read: P2's Patrat locks nothing. Killed by ruleHooksMeD644 §3.",
+    file: "packages/engine/src/continuous.ts",
+    find: "export function countersMoveLocked(state: GameState): boolean {\n  for (const seat of SEATS) {",
+    replace: "export function countersMoveLocked(state: GameState): boolean {\n  for (const seat of [\"p1\"] as const) {",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-watchful-active-only",
+    decision: "D644",
+    what: "only the Active is read as a holder: a benched Patrat locks nothing. Killed by ruleHooksMeD644 §3.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    for (const holder of side.active === null ? side.bench : [side.active, ...side.bench]) {\n      const top = topCardOf(state, holder);\n      if (top === undefined || programFor(top.id)?.passive?.countersCantMove",
+    replace: "    for (const holder of side.active === null ? [] : [side.active]) {\n      const top = topCardOf(state, holder);\n      if (top === undefined || programFor(top.id)?.passive?.countersCantMove",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-stepop-gate-dropped",
+    decision: "D644",
+    what: "`stepOp` asks no lock: the counter-move attacks move under Patrat. Killed by ruleHooksMeD644 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (isCounterMoveOp(op) && countersMoveLocked(state)) return { done: state };\n  switch (op.op) {",
+    replace: "  switch (op.op) {",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-lock-set-drops-to-defender",
+    decision: "D644",
+    what: "`moveCountersToDefender` leaves the lock's set: Transfer moves under Patrat. Killed by ruleHooksMeD644 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    op.op === \"moveCountersToDefender\" ||\n    op.op === \"moveCountersChosen\" ||\n",
+    replace: "    op.op === \"moveCountersChosen\" ||\n",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-lock-set-drops-chosen",
+    decision: "D644",
+    what: "`moveCountersChosen` leaves the lock's set: Extend moves under Patrat. Killed by ruleHooksMeD644 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    op.op === \"moveCountersChosen\" ||\n    op.op === \"moveCounterOwnChosen\" ||\n",
+    replace: "    op.op === \"moveCounterOwnChosen\" ||\n",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-lock-set-drops-own-chosen",
+    decision: "D644",
+    what: "`moveCounterOwnChosen` leaves the lock's set: Rocket Brain is used under Patrat. Killed by ruleHooksMeD644 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    op.op === \"moveCounterOwnChosen\" ||\n    op.op === \"moveCountersToOpponentChosen\" ||\n",
+    replace: "    op.op === \"moveCountersToOpponentChosen\" ||\n",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-lock-set-drops-to-opponent",
+    decision: "D644",
+    what: "`moveCountersToOpponentChosen` leaves the lock's set: Adrena-Brain is used under Patrat. Killed by ruleHooksMeD644 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    op.op === \"moveCountersToOpponentChosen\" ||\n    op.op === \"moveCountersOpponentAnyWay\"\n",
+    replace: "    op.op === \"moveCountersOpponentAnyWay\"\n",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-lock-set-drops-any-way",
+    decision: "D644",
+    what: "`moveCountersOpponentAnyWay` leaves the lock's set: Collect parks under Patrat. Killed by ruleHooksMeD644 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    op.op === \"moveCountersToOpponentChosen\" ||\n    op.op === \"moveCountersOpponentAnyWay\"\n  );",
+    replace: "    op.op === \"moveCountersToOpponentChosen\"\n  );",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-playable-gate-dropped",
+    decision: "D644",
+    what: "`programPlayable` asks no lock: Adrena-Brain is used (and whiffs) under Patrat instead of being refused. Killed by ruleHooksMeD644 §3.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "    if (isCounterMoveOp(op) && countersMoveLocked(state)) return false;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-retort-not-called",
+    decision: "D644",
+    what: "`discardDeckTop` never asks Startling Drop: a milled Ferrothorn answers nothing. Killed by ruleHooksMeD644 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        milledState = startlingDropRetort(milledState, victim, milled, ctx, events);\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-retort-self-mill",
+    decision: "D644",
+    what: "the victim / controller test is dropped: a Ferrothorn milled off its owner's own deck answers. Killed by ruleHooksMeD644 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (victim === ctx.seat || ctx.invokedBy === undefined) return state;",
+    replace: "  if (ctx.invokedBy === undefined) return state;",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-retort-any-source",
+    decision: "D644",
+    what: "the `invokedBy` test is dropped: a Stadium / Tool program's mill answers. Killed by ruleHooksMeD644 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (victim === ctx.seat || ctx.invokedBy === undefined) return state;",
+    replace: "  if (victim === ctx.seat) return state;",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-retort-any-turn",
+    decision: "D644",
+    what: "the turn test is dropped: a mill during the Ferrothorn owner's own turn answers. Killed by ruleHooksMeD644 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if ((state.turn % 2 === 1) !== (ctx.seat === state.firstPlayer)) return state;\n  let next = state;",
+    replace: "  let next = state;",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-retort-one-card",
+    decision: "D644",
+    what: "the retort mills 1 card instead of the printed 8. Killed by ruleHooksMeD644 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    const top = side.deck.slice(0, retort.count);",
+    replace: "    const top = side.deck.slice(0, 1);",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-retort-first-only",
+    decision: "D644",
+    what: "only the first milled card is read: two Ferrothorn answer once (R-STD1). Killed by ruleHooksMeD644 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  for (const uid of milled) {\n    const retort = opponentMillRetortOf(state, uid);",
+    replace: "  for (const uid of milled.slice(0, 1)) {\n    const retort = opponentMillRetortOf(state, uid);",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-retort-no-trigger-row",
+    decision: "D644",
+    what: "no `ABILITY_TRIGGERED` row is filed before the retort. Killed by ruleHooksMeD644 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    events.push({ type: \"ABILITY_TRIGGERED\", seat: victim, uid, ability: retort.ability });\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-retort-wrong-deck",
+    decision: "D644",
+    what: "the retort reads the VICTIM's deck: the controller's deck keeps its top 8. Killed by ruleHooksMeD644 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    const side = next.players[ctx.seat];\n    const top = side.deck.slice(0, retort.count);",
+    replace: "    const side = next.players[victim];\n    const top = side.deck.slice(0, retort.count);",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-main-hit-unrewritten",
+    decision: "D644",
+    what: "attack.ts's main hit applies the printed ×2: Illumise does nothing there. Killed by ruleHooksMeD644 §4.",
+    file: "packages/engine/src/attack.ts",
+    find: "          withWeaknessAmount(weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite), weaknessAmountOverride(next));",
+    replace: "          weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite);",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-snipe-unrewritten",
+    decision: "D644",
+    what: "interpreter.ts `snipeActive` applies the printed ×2: Illumise does nothing there. Killed by ruleHooksMeD644 §4.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        weaknessAmountOverride(state),\n      );",
+    replace: "        null,\n      );",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
+  },
+  {
+    id: "D644-tome-single-copy",
+    decision: "D644",
+    what: "Transformation Tome pays no second copy: one alone is played. Killed by ruleHooksMeD644 §1 / §6.",
+    file: "packages/engine/src/registry.ts",
+    find: "    { op: \"payFromHand\", count: 1, to: \"discard\", filter: { kind: \"byName\", name: \"Transformation Tome\", cardNoun: true } },\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/ruleHooksMeD644.test.ts"],
   },
 ];

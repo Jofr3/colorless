@@ -24,7 +24,7 @@ import {
   topCardOf,
   topUid,
 } from "./cards";
-import type { PokemonSuffix, PreventedAttackerClass } from "./cards";
+import type { DamageModifier, PokemonSuffix, PreventedAttackerClass } from "./cards";
 import { type Banner, bannerOf } from "./banners";
 import type { Attack, BasicEnergyType, Card } from "@luminous/schema";
 import type {
@@ -766,6 +766,64 @@ export function seatWeaknessRewrite(
     if ((defenderCard.types ?? []).includes(rewrite.targetType)) return rewrite.weaknessType;
   }
   return null;
+}
+
+/** 🆕🆕🆕 §8.5 (D644) — Illumise `30th-004` "Supereffective Pheromones": *"If you have Volbeat in play, apply
+    Weakness for both Active Pokémon as ×3."* The amount a multiplicative Weakness is applied as right now, or `null`
+    for the printed one. A holder sits on EITHER board (Active or Bench, no zone clause), its Ability live (§9), and
+    its OWN board has a body whose top card is named `rule.name` (R-SPH2 ⚠️ UNRULED: "you have" is the holder's
+    owner; a Volbeat on the other side does not count). The first live holder answers: every printing says ×3, so
+    two Illumise agree. */
+export function weaknessAmountOverride(state: GameState): number | null {
+  for (const seat of SEATS) {
+    const side = state.players[seat];
+    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    for (const holder of holders) {
+      const top = topCardOf(state, holder);
+      const rule = top === undefined ? undefined : programFor(top.id)?.passive?.weaknessTimesWithNamedInPlay;
+      if (rule === undefined) continue;
+      const uid = topUid(holder);
+      if (uid !== undefined && disabledAbilityUids(state).has(uid)) continue; // §9
+      if (holders.some((body) => topCardOf(state, body)?.name === rule.name)) return rule.amount;
+    }
+  }
+  return null;
+}
+
+/** 🆕🆕🆕 §8.5 (D644) — `weaknessAmountOverride`'s amount laid over a Weakness that applies. R-SPH1 ⚠️ UNRULED: only a
+    MULTIPLICATIVE Weakness is rewritten (every Standard Weakness is ×2, a Fairy Zone / Overwriting Bolt rewrite
+    included); no Weakness stays none, and an old-era additive one is left as printed. */
+export function withWeaknessAmount(weakness: DamageModifier | null, amount: number | null): DamageModifier | null {
+  if (weakness === null || amount === null || weakness.op !== "multiply") return weakness;
+  return { op: "multiply", amount };
+}
+
+/** 🆕🆕🆕 §9 (D644) — Ferrothorn "Startling Drop"'s retort, read off the card `uid` names wherever it lies (it has
+    just left the deck): its program's `opponentMillWhenMilled`, or `undefined`. interpreter.ts
+    `startlingDropRetort` is the one reader. */
+export function opponentMillRetortOf(
+  state: GameState,
+  uid: string,
+): { ability: string; count: number } | undefined {
+  return programFor(state.cardIdByUid[uid] ?? "")?.opponentMillWhenMilled;
+}
+
+/** 🆕🆕🆕 §9 (D644) — Patrat `me04-070` "Watchful Eye": *"Damage counters on each Pokémon (both yours and your
+    opponent's) can't be moved to other Pokémon."* True while a holder whose Ability is live (§9) is in play on
+    EITHER board, Active or Bench. Asked by interpreter.ts `stepOp` before every counter-move op and by cardplay.ts
+    `programPlayable` (R-WEY1 ⚠️ UNRULED). */
+export function countersMoveLocked(state: GameState): boolean {
+  for (const seat of SEATS) {
+    const side = state.players[seat];
+    for (const holder of side.active === null ? side.bench : [side.active, ...side.bench]) {
+      const top = topCardOf(state, holder);
+      if (top === undefined || programFor(top.id)?.passive?.countersCantMove !== true) continue;
+      const uid = topUid(holder);
+      if (uid !== undefined && disabledAbilityUids(state).has(uid)) continue; // §9
+      return true;
+    }
+  }
+  return false;
 }
 
 /** 🆕🆕🆕 §13.2 (D560) — the EXTRA Burn damage owed to `burnedSeat`'s Burned Active at

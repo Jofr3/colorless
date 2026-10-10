@@ -6,6 +6,25 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D644 update (engine 0.527.0) — Y1e, rule hooks, one printing each (`MATCH_RECORD_VERSION` stays 48)
+
+5 texts / 5 printings (`ruleHooksMeD644.test.ts`): Cinderace "Explosiveness" `me01-028` (the new `CardProgram.setupActiveFromHand` at
+`setupPlaceActive` — R-EXP1 / R-EXP2), Patrat "Watchful Eye" `me04-070` (the new `PassiveEffects.countersCantMove`: the five counter-move
+ops whiff, Rocket Brain / Adrena-Brain are refused — R-WEY1), Illumise "Supereffective Pheromones" `30th-004` (the new
+`PassiveEffects.weaknessTimesWithNamedInPlay` at both Weakness sites — R-SPH1 / R-SPH2), Ferrothorn "Startling Drop" `me04-063` (the new
+`CardProgram.opponentMillWhenMilled`, answered inside `discardDeckTop` — R-STD1 / R-STD2) and Transformation Tome `me04-083` (a second-copy
+hand cost, then Ogre's Mask's swap over Basic Pokémon — R-TFT1 / R-TFT2). **Finished:** 5. **Dropped and named:** Backtrack Badge
+`me05-074` (re-flipping an attack's coins needs a persisted mid-attack park).
+
+| Column | `me` built / units (D644) | Standard pool D644 |
+|---|---|---|
+| Attacks | 1,038 / 1,039 | **2,770 / 2,771** |
+| Abilities | 230 / 234 (+4) | **606 / 610** |
+| Trainers | 182 / 183 (+1) | **446 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+1257 `me` printings fully built (1252 + 5).
+
 ## 🆕 D643 update (engine 0.526.0) — Y1a, Multi Adapter (`MATCH_RECORD_VERSION` 47 → 48)
 
 1 text / 3 printings (`multiAdapterMeD643.test.ts`): Rotom ex ×3 "Multi Adapter" `me02-029` / `-111` / `-126` — the new
@@ -1541,7 +1560,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 3× **Damp** — Pokémon in play (both yours and your opponent's) lose any Ability that requires the Pokémon using it to Knock Out itself. [🆕🆕🆕 D632: BUILT]
 - 1× **Dopey Face** — This Pokémon can't be Confused. [🆕🆕🆕 D584: BUILT]
 - 1× **Life-Locked** — Your opponent's Active Pokémon can't be healed. [🆕🆕🆕 D631: BUILT]
-- 1× **Watchful Eye** — Damage counters on each Pokémon (both yours and your opponent's) can't be moved to other Pokémon.
+- 1× **Watchful Eye** — Damage counters on each Pokémon (both yours and your opponent's) can't be moved to other Pokémon. [🆕🆕🆕 D644: BUILT]
 
 ### Other passives — 10 text(s) / 17 printing(s)
 
@@ -1550,11 +1569,11 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× **Holes** — Whenever your opponent's Active Pokémon moves to the Bench during their turn, place 2 damage counters on that Pokémon. [🆕🆕🆕 D610: BUILT]
 - 2× **Sniper's Eye** — If your opponent has exactly 4 cards in their hand, ignore all {C} Energy in the costs of attacks used by this Pokémon. [🆕🆕🆕 D631: BUILT]
 - 2× **Swirling Prose** — As long as this Pokémon is in the Active Spot, whenever your opponent's Active Pokémon moves to the Bench during their turn, their new Active Pokémon is now Confused. [🆕🆕🆕 D610: BUILT]
-- 1× **Explosiveness** — If this Pokémon is in your hand when you are setting up to play, you may put it face down in the Active Spot.
+- 1× **Explosiveness** — If this Pokémon is in your hand when you are setting up to play, you may put it face down in the Active Spot. [🆕🆕🆕 D644: BUILT]
 - 1× **Fighting Roar** — If your opponent's Active Pokémon is a Pokémon ex, this Pokémon can evolve during your first turn or the turn you play it. [🆕🆕🆕 D594: BUILT]
 - 1× **Good Sleep** — If this Pokémon remains Asleep during Pokémon Checkup, heal all damage from this Pokémon. [🆕🆕🆕 D631: BUILT]
-- 1× **Startling Drop** — During your opponent's turn, if this Pokémon is discarded from your deck by an effect of an attack or Ability from your opponent's Pokémon, or by an effect of your opponent's Item or Supporter cards, discard the top 8 cards of your opponent's deck.
-- 1× **Supereffective Pheromones** — If you have Volbeat in play, apply Weakness for both Active Pokémon as ×3.
+- 1× **Startling Drop** — During your opponent's turn, if this Pokémon is discarded from your deck by an effect of an attack or Ability from your opponent's Pokémon, or by an effect of your opponent's Item or Supporter cards, discard the top 8 cards of your opponent's deck. [🆕🆕🆕 D644: BUILT]
+- 1× **Supereffective Pheromones** — If you have Volbeat in play, apply Weakness for both Active Pokémon as ×3. [🆕🆕🆕 D644: BUILT]
 
 ## Trainers — 67 unbuilt texts / 129 printings
 
@@ -1584,7 +1603,7 @@ Discard a Pokémon Tool or Special Energy card from 1 of your opponent's Pokémo
 
 Your opponent shuffles their hand and puts it on the bottom of their deck. If they put any cards on the bottom of their deck in this way, they draw 3 cards.
 - 1× **Strange Timepiece** — Devolve 1 of your evolved {P} Pokémon by putting any number of Evolution cards on it into your hand. (That Pokémon can't evolve this turn.) [🆕🆕🆕 D625: BUILT]
-- 1× **Transformation Tome** — You must play 2 Transformation Tome cards at once. (This effect works one time for 2 cards.)
+- 1× **Transformation Tome** — You must play 2 Transformation Tome cards at once. (This effect works one time for 2 cards.) [🆕🆕🆕 D644: BUILT]
 
 Choose a Basic Pokémon in your discard pile and switch it with 1 of your Basic Pokémon in play. Any attached cards, damage counters, Special Conditions, turns in play, and any other effects remain on the new Pokémon.
 - 2× **Ultra Ball** — You can use this card only if you discard 2 other cards from your hand. [🆕🆕🆕 D584: BUILT]
@@ -1674,7 +1693,7 @@ Discard an Energy from 1 of your opponent's Pokémon. [🆕🆕🆕 D588: BUILT]
 ### Tool — 7 text(s) / 9 printing(s)
 
 - 1× **Adversity Policy** — If the Pokémon this card is attached to has Weakness to your opponent's Active Pokémon's type, is in the Active Spot, and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), draw 3 cards. [🆕🆕🆕 D620: dropped — a holder-has-Weakness-to-the-opponent's-Active gate, a new `BoardCondition` member] [🆕🆕🆕 D626: BUILT]
-- 1× **Backtrack Badge** — Once during your turn, after you flip any coins for an attack of the {C} Pokémon this card is attached to, you may ignore all results of those coin flips and begin flipping those coins again.
+- 1× **Backtrack Badge** — Once during your turn, after you flip any coins for an attack of the {C} Pokémon this card is attached to, you may ignore all results of those coin flips and begin flipping those coins again. [🆕🆕🆕 D644: dropped and named — the re-flip needs a persisted mid-attack park; waits for an MRV slice]
 - 1× **Light Ball** — Attacks used by the Pikachu ex this card is attached to do 50 more damage to your opponent's Active Pokémon ex (before applying Weakness and Resistance). [🆕🆕🆕 D620: BUILT]
 - 2× **Punk Helmet** — If the {D} Pokémon this card is attached to is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 4 damage counters on the Attacking Pokémon. [🆕🆕🆕 D620: BUILT]
 - 2× **Sacred Charm** — The Pokémon this card is attached to takes 30 less damage from attacks from your opponent's Pokémon that have an Ability (after applying Weakness and Resistance). [🆕🆕🆕 D619: BUILT]

@@ -84,6 +84,9 @@ import {
   seatRemovesWeakness,
   // 🆕🆕🆕 D559 — the opponent-side Weakness rewrite (Fairy Zone).
   seatWeaknessRewrite,
+  // 🆕🆕🆕 D644 — Illumise's Weakness amount, laid over the applied Weakness.
+  weaknessAmountOverride,
+  withWeaknessAmount,
   // 🆕🆕🆕 D556 — the this-turn side-wide pre-W/R bonus (Black Belt's Training).
   sideAttackBonusThisTurn,
   stadiumPreventsDamage,
@@ -3605,7 +3608,8 @@ export function attack(
       seatRemovesWeakness(next, defenderSeat) ||
       installedNoWeakness(next, defender)
         ? null
-        : weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite);
+        : // 🆕🆕🆕 D644 — Illumise "Supereffective Pheromones": the applied ×2 as ×3 (R-SPH1).
+          withWeaknessAmount(weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite), weaknessAmountOverride(next));
     // D192 — Resistance has no defender-side null path (nothing in the pool prints
     // "your Pokémon have no Resistance"), so this is its FIRST, and it is its own
     // boolean because 9 legal printings suppress Resistance ALONE ("This attack's
