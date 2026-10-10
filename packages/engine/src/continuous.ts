@@ -415,7 +415,7 @@ export function stadiumLicensesSameTurnEvolve(state: GameState, target: InPlayPo
     LIMITATION IS ARGUED UNREACHABLE AMONG THE LOCKS THIS REGISTRY BUILDS — NOT IN
     STANDARD AT LARGE (D559 R-LK1).** Flutter Mane "Midnight Fluttering" and Gastrodon
     "Sticky Bind" joined, and Klefki, Spiritomb and Ting-Lu ex have ROTATED. Among the two
-    legal locks the registry BUILDS [🆕🆕🆕 D571 (D539): THREE — see the D571 paragraph below] no lock can switch off another lock's source: Flutter
+    legal locks the registry BUILDS [🆕🆕🆕 D571 (D539): THREE — see the D571 paragraph below] [🆕🆕🆕 D632 (D539): and Damp (Psyduck / Golduck) is BUILT; it reaches only a self-Knock-Out body (Cursed Blast, Overvolt Discharge), never a lock source] no lock can switch off another lock's source: Flutter
     Mane reaches only the OPPOSING Active and exempts itself by name (a mirror Flutter
     Mane keeps its lock); Gastrodon reaches only BENCHED Stage 2 bodies, an Active
     Gastrodon's lock is already off (`sourceOnBench`), and neither built source is a
@@ -435,7 +435,7 @@ export function stadiumLicensesSameTurnEvolve(state: GameState, target: InPlayPo
     `abilityBundleD559.test.ts`).
 
     🆕🆕🆕 **D571 — THE FIXPOINT LANDED WITH INITIALIZATION (R-LK2 ⚠️ UNRULED, decisions.md
-    D571), AND THE "TWO LEGAL LOCKS THE REGISTRY BUILDS" ARE THREE.** Iron Thorns ex
+    D571), AND THE "TWO LEGAL LOCKS THE REGISTRY BUILDS" ARE THREE.** [🆕🆕🆕 D632 (D539): and Damp (Psyduck / Golduck) is BUILT; it reaches only a self-Knock-Out body (Cursed Blast, Overvolt Discharge), never a lock source; it is a holder-tagged Pokémon aura in the pass below, so an Active Flutter Mane switches an opposing Active Psyduck's Damp OFF, `dampD632.test.ts` §5.] Iron Thorns ex
     "Initialization" is built (`ruleBox`, `exemptBanner "Future"`, Active-sourced). The
     collection below stays ungated, but each Pokémon aura is now tagged with its HOLDER and
     the auras are settled by a STRATIFIED pass before any target is marked: an aura is ON
@@ -615,6 +615,8 @@ function auraSuppresses(
   // for Future Pokémon"* — the Rule Box narrowing, then the banner exemption (by printing id).
   if (aura.ruleBox === true && !hasRuleBox(top)) return false;
   if (aura.exemptBanner !== undefined && matchesFilter(top, { kind: "bannerPokemon", banner: aura.exemptBanner })) return false;
+  // 🆕🆕🆕 D632 — Damp: only a body with an Ability that Knocks Out the Pokémon using it (R-DMP1).
+  if (aura.selfKnockOutAbility === true && !hasSelfKnockOutAbility(top)) return false;
   if (aura.exemptSuffix !== undefined && pokemonSuffixOf(top) === aura.exemptSuffix) return false;
   if (
     aura.exemptAbilityNamed !== undefined &&
@@ -622,6 +624,14 @@ function auraSuppresses(
   )
     return false;
   return true;
+}
+
+/** 🆕🆕🆕 D632 — Damp's Ability class: does `top`'s REGISTRY program hold an activated Ability whose program
+    Knocks Out its own user (`knockOutSelf` at its top level)? Over both corpora: Cursed Blast (Dusclops,
+    Dusknoir) and Overvolt Discharge (Magneton). A registry walk in `dampD632.test.ts` pins that no
+    `knockOutSelf` sits deeper, or in a `triggered` program, and that each holder prints that one Ability. */
+export function hasSelfKnockOutAbility(top: Card): boolean {
+  return (programFor(top.id)?.abilities ?? []).some((ability) => ability.program.some((op) => op.op === "knockOutSelf"));
 }
 
 /** §8.5 — does `seat` currently have a live "Your Pokémon in play have no

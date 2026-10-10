@@ -1386,7 +1386,7 @@ export interface PassiveEffects {
       Stadium Team Rocket's Watchtower `sv10-180`, neither built (🆕🆕🆕 D566 CORRECTION
       (D539): ~~neither built~~ — the Watchtower is BUILT, as `StadiumEffects.disableAbilities`,
       the first Stadium-sourced lock; Iron Thorns ex stays unbuilt [🆕🆕🆕 D571 (D539): BUILT —
-      `INITIALIZATION`; the legal Pokémon locks the registry builds are THREE]). The ungated collection
+      `INITIALIZATION`; the legal Pokémon locks the registry builds are THREE] [🆕🆕🆕 D632 (D539): and Damp (Psyduck / Golduck) is BUILT; it reaches only a self-Knock-Out body (Cursed Blast, Overvolt Discharge), never a lock source]). The ungated collection
       stays and is now argued rather than deferred (D559 R-LK1, docs/decisions.md D559):
       no BUILT lock can switch off another lock's source — Flutter Mane reaches only the
       opposing Active and exempts itself by name, an Active Gastrodon's lock is already
@@ -1463,6 +1463,17 @@ export interface PassiveEffects {
         (`banners.ts`, by printing id, D569). Iron Thorns ex is itself Future, so the
         source never silences itself and a mirror pair both stay ON. Catalog-only. */
     exemptBanner?: Banner;
+    /** 🆕🆕🆕 D632 — the TARGET must have an Ability that Knocks Out the Pokémon using it: Psyduck /
+        Golduck "Damp" (`me02.5-039` / `-040` / `-226`: *"lose any Ability that requires the Pokémon
+        using it to Knock Out itself"*; `mep-007` / `-008`: *"lose all Abilities that require those
+        Pokémon to be Knocked Out"*, R-DMP1 ⚠️ UNRULED). The class is read off the target's
+        REGISTRY program: an `abilities` entry whose program carries `knockOutSelf` (continuous.ts
+        `hasSelfKnockOutAbility`). Over both corpora that is Cursed Blast ×2 texts and Overvolt
+        Discharge (9 legal printings); Forretress ex "Exploding Energy" ×4 prints the class but is
+        not legal and not built. The lock is by BODY (the uid set), which is exact because every
+        holder of the class has that one Ability and nothing else (pinned by a registry walk,
+        `dampD632.test.ts`). Catalog-only: never persisted. */
+    selfKnockOutAbility?: true;
   };
   /** §8.5 continuous own-board AURA: while this Pokémon is in play, every one of
       its CONTROLLER's in-play Pokémon "has no Weakness" — the two Weakness read
@@ -3582,7 +3593,7 @@ export interface StadiumEffects {
       Pokémon locks — Iron Thorns ex {L} "Initialization" joined; still none is {C}, so the
       Watchtower switches no lock source off. "No built lock switches another lock's source off"
       is FALSE in general since D571 (Flutter Mane switches Initialization off — R-LK2), and is
-      kept here only of the Watchtower.] */
+      kept here only of the Watchtower.] [🆕🆕🆕 D632 (D539): and Damp (Psyduck / Golduck) is BUILT; it reaches only a self-Knock-Out body (Cursed Blast, Overvolt Discharge), never a lock source; Psyduck and Golduck are {W}, so the Watchtower does not reach them.] */
   disableAbilities?: NonNullable<PassiveEffects["disableAbilities"]>;
   /** 🆕🆕🆕 §7.3 (D577) — Area Zero Underdepths `sv07-131`/`sv07-174`/`sv08.5-094`: *"Each
       player who has any Tera Pokémon in play can have up to 8 Pokémon on their Bench."* The
@@ -18773,6 +18784,26 @@ const GOOD_SLEEP: CardProgram = {
   ],
 };
 
+// ── 🆕🆕🆕 D632 — D1, DAMP: two NEW objects on 5 printings, one per printed wording, on the NEW
+//    `disableAbilities.selfKnockOutAbility`. Nothing is persisted (`MATCH_RECORD_VERSION` stays 44). Texts off
+//    the LOCAL D1 (2026-10-10, `legal_standard = 1`). `dampD632.test.ts` plays each. ──
+
+/** 🆕🆕🆕 **D632 — Psyduck `me02.5-039` / `-226`, Golduck `me02.5-040` "Damp"**: *"Pokémon in play (both yours
+    and your opponent's) lose any Ability that requires the Pokémon using it to Knock Out itself."* Both sides,
+    no zone clause (it locks from the Bench too), targets with an Ability whose program Knocks Out its user. */
+const DAMP_KNOCK_OUT_ITSELF: CardProgram = {
+  passive: { disableAbilities: { side: "both", selfKnockOutAbility: true } },
+};
+
+/** 🆕🆕🆕 **D632 — Psyduck `mep-007`, Golduck `mep-008` "Damp"**: *"Pokémon in play (both yours and your
+    opponent's) lose all Abilities that require those Pokémon to be Knocked Out."* Read as the same class
+    (R-DMP1 ⚠️ UNRULED): "require … to be Knocked Out" is a use that Knocks Out the user (Cursed Blast, Overvolt
+    Discharge), not an Ability that answers a Knock Out (Fainting Spell, Final Chain, Photon Cord, Tenacious
+    Body …), since those do not require one to be used. Its own object so a reversal moves this wording only. */
+const DAMP_REQUIRE_KNOCKED_OUT: CardProgram = {
+  passive: { disableAbilities: { side: "both", selfKnockOutAbility: true } },
+};
+
 // ── 🆕🆕🆕 D608 — WP30: TWO `30th` ATTACK OBJECTS, KEYED BY ID. Text off the LOCAL D1; both printed
 //    tcgdex's `<em>` markup (WP06), so no reader claimed them. `snipeSpreadMeD608.test.ts`.
 //    🆕🆕🆕 D612 — ONE now: the normaliser (cardText.ts) strips the `<em>`. Stealthy Slash's text is
@@ -20369,6 +20400,12 @@ const REGISTRY: Record<string, CardProgram> = {
   "me04-057": GLOOMY_GARBAGE, // Garbodor — the opponent's Tool-carrying Active's attacks do 20 less before W/R
   "30th-100": LIFE_LOCKED, // Yveltal — the opponent's Active can't be healed
   "30th-119": GOOD_SLEEP, // Snorlax — Checkup, still Asleep: heal all damage from it
+  // 🆕🆕🆕 D632 — D1, Damp: 5 keys / 2 objects, MID-MAP (`raw[last]` does not move).
+  "me02.5-039": DAMP_KNOCK_OUT_ITSELF, // Psyduck — both sides lose any Ability that Knocks Out its own user
+  "me02.5-040": DAMP_KNOCK_OUT_ITSELF, // Golduck
+  "me02.5-226": DAMP_KNOCK_OUT_ITSELF, // Psyduck
+  "mep-007": DAMP_REQUIRE_KNOCKED_OUT, // Psyduck — the "require those Pokémon to be Knocked Out" wording (R-DMP1)
+  "mep-008": DAMP_REQUIRE_KNOCKED_OUT, // Golduck
   // 🆕🆕🆕 D608 — WP30: 5 `30th` ATTACK-only keys / 2 objects, MID-MAP (`raw[last]` does not move).
   // 🆕🆕🆕 D612 — 3 now: Stealthy Slash ×2 RETIRED (the normalised text is `mep-099`'s, reader-built).
   "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex

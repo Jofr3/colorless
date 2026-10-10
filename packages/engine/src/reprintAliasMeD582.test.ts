@@ -312,6 +312,9 @@ const KEYED_AT_D630 = ["me01-118", "me05-110"];
 /** 🆕🆕🆕 D631 — the `me` / `30th` ids P1 keys (passiveRestMeD631.test.ts). */
 const KEYED_AT_D631 = ["mep-085", "me05-062", "me05-093", "me03-012", "me03-100", "me02.5-148", "me04-057", "30th-100", "30th-119"];
 
+/** 🆕🆕🆕 D632 — the `me` ids D1 keys: Damp ×5 (dampD632.test.ts). */
+const KEYED_AT_D632 = ["me02.5-039", "me02.5-040", "me02.5-226", "mep-007", "mep-008"];
+
 /** 🆕🆕🆕 D621 — the `me` ids WP24c + WP23 key: Gladion's Final Battle ×3, Premium Power Pro ×3, Acerola's
     Mischief ×4, Roxie's Performance ×3, Dawn ×3 (sideStateMeD621.test.ts). */
 const KEYED_AT_D621 = [
@@ -449,7 +452,7 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
     expect(new Set(ALIASES.map(([, twin]) => programFor(twin))).size).toBe(66);
   });
 
-  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it (🆕🆕🆕 D583: plus Team Rocket's Energy `me02.5-217`; 🆕🆕🆕 D584: plus the 18 tier-2 keys; 🆕🆕🆕 D585: plus the 19 WP19 keys; 🆕🆕🆕 D586: plus Carbink ×2; 🆕🆕🆕 D587: plus the 19 WP04 Trainer keys; 🆕🆕🆕 D588: plus the 17 WP22 Trainer keys; 🆕🆕🆕 D589: plus Mega Greninja ex ×5; 🆕🆕🆕 D590: plus the 13 WP05 on-evolve keys; 🆕🆕🆕 D591: plus the 19 WP20a activated Ability keys; 🆕🆕🆕 D593: plus the 5 WP07 Fade Out keys; 🆕🆕🆕 D594: plus the 2 WP33a Ability keys; 🆕🆕🆕 D597: plus the 2 WP29 Inferno X keys; 🆕🆕🆕 D598: plus the 13 WP32 Ability keys; 🆕🆕🆕 D599: plus the 4 WP24a Supporter keys; 🆕🆕🆕 D602: plus the 9 WP20b activated Ability keys; 🆕🆕🆕 D603: plus the 11 WP11 Mega-gated keys; 🆕🆕🆕 D604: plus the 8 WP18 typed Special Energy keys; 🆕🆕🆕 D606: plus the 9 WP25a Stadium keys; 🆕🆕🆕 D608: plus the 5 WP30 `30th` attack keys; 🆕🆕🆕 D610: plus the 16 WP37a keys; 🆕🆕🆕 D611: plus the 17 WP21 keys; 🆕🆕🆕 D612: minus the 4 retired attack keys; 🆕🆕🆕 D614: plus the 4 WP37b keys; 🆕🆕🆕 D617: plus the 11 WP24b Supporter keys; 🆕🆕🆕 D618: plus the 8 WP25b Stadium keys; 🆕🆕🆕 D619: plus the 7 WP12 / WP15 keys; 🆕🆕🆕 D620: plus the 7 WP26 Tool keys; 🆕🆕🆕 D621: plus the 16 WP24c + WP23 Trainer keys; 🆕🆕🆕 D625: plus the 13 T1 Trainer keys; 🆕🆕🆕 D626: plus the 8 K1 keys; 🆕🆕🆕 D627: plus the 4 H1 keys; 🆕🆕🆕 D628: plus the 2 new A1 keys; 🆕🆕🆕 D630: plus the 2 M1 Trainer keys; 🆕🆕🆕 D631: plus the 9 P1 keys)", () => {
+  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it (🆕🆕🆕 D583: plus Team Rocket's Energy `me02.5-217`; 🆕🆕🆕 D584: plus the 18 tier-2 keys; 🆕🆕🆕 D585: plus the 19 WP19 keys; 🆕🆕🆕 D586: plus Carbink ×2; 🆕🆕🆕 D587: plus the 19 WP04 Trainer keys; 🆕🆕🆕 D588: plus the 17 WP22 Trainer keys; 🆕🆕🆕 D589: plus Mega Greninja ex ×5; 🆕🆕🆕 D590: plus the 13 WP05 on-evolve keys; 🆕🆕🆕 D591: plus the 19 WP20a activated Ability keys; 🆕🆕🆕 D593: plus the 5 WP07 Fade Out keys; 🆕🆕🆕 D594: plus the 2 WP33a Ability keys; 🆕🆕🆕 D597: plus the 2 WP29 Inferno X keys; 🆕🆕🆕 D598: plus the 13 WP32 Ability keys; 🆕🆕🆕 D599: plus the 4 WP24a Supporter keys; 🆕🆕🆕 D602: plus the 9 WP20b activated Ability keys; 🆕🆕🆕 D603: plus the 11 WP11 Mega-gated keys; 🆕🆕🆕 D604: plus the 8 WP18 typed Special Energy keys; 🆕🆕🆕 D606: plus the 9 WP25a Stadium keys; 🆕🆕🆕 D608: plus the 5 WP30 `30th` attack keys; 🆕🆕🆕 D610: plus the 16 WP37a keys; 🆕🆕🆕 D611: plus the 17 WP21 keys; 🆕🆕🆕 D612: minus the 4 retired attack keys; 🆕🆕🆕 D614: plus the 4 WP37b keys; 🆕🆕🆕 D617: plus the 11 WP24b Supporter keys; 🆕🆕🆕 D618: plus the 8 WP25b Stadium keys; 🆕🆕🆕 D619: plus the 7 WP12 / WP15 keys; 🆕🆕🆕 D620: plus the 7 WP26 Tool keys; 🆕🆕🆕 D621: plus the 16 WP24c + WP23 Trainer keys; 🆕🆕🆕 D625: plus the 13 T1 Trainer keys; 🆕🆕🆕 D626: plus the 8 K1 keys; 🆕🆕🆕 D627: plus the 4 H1 keys; 🆕🆕🆕 D628: plus the 2 new A1 keys; 🆕🆕🆕 D630: plus the 2 M1 Trainer keys; 🆕🆕🆕 D631: plus the 9 P1 keys; 🆕🆕🆕 D632: plus the 5 D1 Damp keys)", () => {
     const me = registryCardIds().filter((id) => /^(me|30th)/.test(id));
     // 🆕🆕🆕 D583 — the one `me` key outside the D582 table: Team Rocket's Energy, on `sv10-182`'s object.
     // 🆕🆕🆕 D584 — and the 18 tier-2 keys (`KEYED_AT_D584`).
@@ -519,6 +522,8 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
     expect(KEYED_AT_D630).toHaveLength(2);
     // 🆕🆕🆕 D631 — and P1's 9 passive / trigger keys (`KEYED_AT_D631`).
     expect(KEYED_AT_D631).toHaveLength(9);
+    // 🆕🆕🆕 D632 — and D1's 5 Damp keys (`KEYED_AT_D632`).
+    expect(KEYED_AT_D632).toHaveLength(5);
     expect(me.sort()).toEqual(
       [
         ...ALIASES.map(([id]) => id),
@@ -555,6 +560,7 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
         ...KEYED_AT_D628,
         ...KEYED_AT_D630,
         ...KEYED_AT_D631,
+        ...KEYED_AT_D632,
       ]
         .filter((id) => !RETIRED_AT_D612.includes(id))
         .sort(),

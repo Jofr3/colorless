@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-10 — build session #571 (**P3-M5 — D631, *P1 — THE REST OF THE PASSIVE MODIFIERS: 6 texts / 9 printings — Ancient Bulwark ×3 (a benched holder's side shield from attackers with 2 or less Energy), Sniper's Eye ×2 (every {C} ignored at an opposing hand of exactly 4), Supreme Overlord (+30 before W/R per Prize taken), Gloomy Garbage (−20 off a Tool-carrying opposing Active), Life-Locked (a heal lock at all five heal sites), Good Sleep (a Checkup heal on the new `yourActiveAsleep`); five UNRULED readings; abilities 586 / 610, 1188 `me` printings fully built*** — engine 0.514.0, MRV 44, NOT committed; the whole-corpus sweep PENDING)
+**Last updated:** 2026-10-10 — build session #572 (**P3-M5 — D632, *D1 — DAMP: 2 texts / 5 `me` printings — Psyduck / Golduck "Damp" in both printed wordings on two new objects over the new `disableAbilities.selfKnockOutAbility` (Cursed Blast and Overvolt Discharge are the whole class); R-DMP1 UNRULED; abilities 591 / 610, 1193 `me` printings fully built*** — engine 0.515.0, MRV 44, NOT committed; the whole-corpus sweep PENDING)
+
+**Last updated (was):** 2026-10-10 — build session #571 (**P3-M5 — D631, *P1 — THE REST OF THE PASSIVE MODIFIERS: 6 texts / 9 printings — Ancient Bulwark ×3 (a benched holder's side shield from attackers with 2 or less Energy), Sniper's Eye ×2 (every {C} ignored at an opposing hand of exactly 4), Supreme Overlord (+30 before W/R per Prize taken), Gloomy Garbage (−20 off a Tool-carrying opposing Active), Life-Locked (a heal lock at all five heal sites), Good Sleep (a Checkup heal on the new `yourActiveAsleep`); five UNRULED readings; abilities 586 / 610, 1188 `me` printings fully built*** — engine 0.514.0, MRV 44, NOT committed; the whole-corpus sweep PENDING)
 
 **Last updated (was):** 2026-10-10 — build session #570 (**P3-M5 — D630, *M1 — THE PERSISTED-RECORD BUNDLE: 8 texts / 13 `me` printings — Juggernaut Horn / Counter ×4 (the new `InPlayPokemon.attackDamageTaken`), Lava Wall, Flashing Barrier ×2 and Psy Protection (three new `AttackerClass` members), Metal Block (a classed `DamageReduction`), Iron Defender ×2 (`sideDamageReduction` a summed list), Settle the Score (the new `PlayerSide.prizesTakenOnTurn`), Plunging Headbutt (`exposeSelf`); `MATCH_RECORD_VERSION` 43 → 44 with a v43 migration; six UNRULED readings; attacks 2,733 / 2,771, trainers 434 / 447, 1179 `me` printings fully built*** — engine 0.513.0, MRV 44, NOT committed; the whole-corpus sweep PENDING)
 
@@ -69,7 +71,7 @@
 
 **Last updated (was):** 2026-10-08 — build session #539 (**P3-M5 — D599, *WP24a — TWO WP24 SUPPORTERS: 2 texts / 4 `me` printings — Anthea & Concordia ×2 (Briar's `supporterKoPrizeBonus` at 3 on N's Pokémon, a six-name play gate) and Emma ×2 (reveal, then `drawCards` with the new `per` member `cardsInOpponentHand`); AZ's Tranquility, Gladion's Final Battle, Grimsley's Move, Gwynn and Naveen dropped and named [🆕🆕🆕 D617 / D621 (D539): all built since]; Standard pool Trainers 360 / 447; 874 `me` printings fully built*** — engine 0.483.0, MRV 42, NOT committed; the sweep PENDING)
 
-**Last updated (was):** 2026-10-08 — build session #538 (**P3-M5 — D598, *WP32 — KO / DAMAGE-TAKEN ABILITIES: 6 texts / 13 `me` printings — Mega Gengar ex "Shadowy Concealment" ×5 (a seat-wide Prize reduction on the KO'd side, `seatKoPrizeReduction`), Mega Hawlucha ex "Tenacious Body" ×3 and Annihilape "Durable Body" (the coin-flip survive, `koSurvivalCoinFlip` at the four damage writes), Shedinja "Fragile Husk" ×2 (`onKoPrizeGuard` "pokemonExAttackPrevent"), Gengar "Infinite Shadow" (return-to-hand on KO) and Pecharunt "Final Chain" (an on-KO search behind `byOpponentAttack`); Fainting Spell, Photon Cord, Spiteful Swirl, Counterattack Grouping and Damp dropped and named; Standard pool abilities 504 / 610; 870 `me` printings fully built*** — engine 0.482.0, MRV 42, NOT committed; the sweep PENDING)
+**Last updated (was):** 2026-10-08 — build session #538 (**P3-M5 — D598, *WP32 — KO / DAMAGE-TAKEN ABILITIES: 6 texts / 13 `me` printings — Mega Gengar ex "Shadowy Concealment" ×5 (a seat-wide Prize reduction on the KO'd side, `seatKoPrizeReduction`), Mega Hawlucha ex "Tenacious Body" ×3 and Annihilape "Durable Body" (the coin-flip survive, `koSurvivalCoinFlip` at the four damage writes), Shedinja "Fragile Husk" ×2 (`onKoPrizeGuard` "pokemonExAttackPrevent"), Gengar "Infinite Shadow" (return-to-hand on KO) and Pecharunt "Final Chain" (an on-KO search behind `byOpponentAttack`); Fainting Spell, Photon Cord, Spiteful Swirl, Counterattack Grouping and Damp dropped and named [🆕🆕🆕 D632 (D539): Damp BUILT at D632 (D1)]; Standard pool abilities 504 / 610; 870 `me` printings fully built*** — engine 0.482.0, MRV 42, NOT committed; the sweep PENDING)
 
 **Last updated (was):** 2026-10-08 — build session #537 (**P3-M5 — D597, *WP29 — THE DISCARD-SCALED ATTACKS: 8 texts / 18 `me` printings — the `me` comma spelling of D402's `×` fold (`COMMA_DISCARD_SCALED_DAMAGE`: Inferno X ×4, Garland Ray ×3, Steel Cutter, Double Eater), D488's mill on "Basic {W} Energy card" (Hammer-lanche ×2, Iceberg Breaker), the `handDiscard` boost member (Shooting Moons ×4) and the two "[R]" Inferno X keyed on `INFERNO_X` [🆕🆕🆕 D612: RETIRED — WP06]; Eelektross, Slowpoke, Honchkrow and Pawmot dropped and named; `sv` reader output byte-identical; Standard pool attacks 2576 / 2771; 857 `me` printings fully built*** — engine 0.481.0, MRV 42, NOT committed; the sweep PENDING)
 
@@ -887,6 +889,46 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-10, after D632)
+>
+> 🛑 **D632 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D631 = `7e7aef7c`). D632 is D1 of the Mega backlog (the D625 re-rank's Damp group). Next: a review of D632 and a ruling on R-DMP1, then L1 (MRV 44 → 45).
+>
+> ✅ **`bun run check` IS GREEN**: `Test Files 676 passed (676) / Tests 16109 passed (16109) / CHECK_EXIT=0` (D631: 675 / 16089; D632 adds `dampD632.test.ts` (18) and the census D632 block (2)).
+>
+> **(a) THE SLICE.** D1, 2 texts / 5 printings, all taken (ids `git grep`-ped, texts off the LOCAL D1, `legal_standard = 1`). registry.ts: two NEW objects, one per printed wording — `DAMP_KNOCK_OUT_ITSELF` (Psyduck `me02.5-039` / `-226`, Golduck `me02.5-040`) and `DAMP_REQUIRE_KNOCKED_OUT` (Psyduck `mep-007`, Golduck `mep-008`) — both `disableAbilities { side: "both", selfKnockOutAbility: true }` (the NEW field; no zone clause, so a benched Damp locks). continuous.ts `auraSuppresses` narrows by the NEW `hasSelfKnockOutAbility` (an activated Ability whose registry program carries `knockOutSelf`). The class over both corpora: Cursed Blast at 5 and at 13 and Overvolt Discharge (9 legal printings, all built); Forretress ex "Exploding Energy" ×4 prints it and is not legal; `me` prints none. A registry walk pins that each holder prints that one Ability, so the body-level `disabledAbilityUids` lock is exact. Damp is a holder-tagged aura in D571's stratified pass (an Active Flutter Mane switches an opposing Active Psyduck's Damp off, §5).
+>
+> **(b) DROPPED AND NAMED:** none.
+>
+> **(c) MRV STAYS 44** (match.ts "STAYS 44 AT D632"): the lock is re-derived from the board, keyed by id; nothing parks; no face changes, so in-flight `cardPool`s read the new programs (the D581 lesson holds). A 0.514 rollback has no program for the 5 ids.
+>
+> **"You may" check (the D590 rule):** Damp prints no "you may".
+>
+> | Column | `me` D632 | Standard pool D632 |
+> |---|---|---|
+> | Attacks | 1001 / 1039 | **2733 / 2771** |
+> | Abilities | 215 / 234 | **591 / 610** |
+> | Trainers | 170 / 183 | **434 / 447** |
+> | Special Energy | 11 / 11 | **22 / 22** |
+>
+> **1193 `me` printings fully built** (1188 + 5; Hydro Pump is reader-built, Ram and Collision damage only — measured in the census D632 block). Census pins stepped: `raw.length` 1388 → 1393, `nonAttackRegistryIds()` 1223 → 1228, the partition and `me`-key lists, the five registry-size pins, `reprintAliasMeD582`'s key table, `abilityLock`'s lock-key list (13 → 18), D598's unkeyed pin. Version tax: 292 test lines in 180 files (`it()` titles included), the declaration, `package.json` and the version mutant row.
+>
+> **D539 sweep.** Annotated in place: D598's "Damp dropped and named" (decisions D598, progress header / D598 block / D626 owed line, backlog, simulator, index.ts changelog, `koAbilitiesMeD598`'s comment and title), the "legal Pokémon locks the registry builds" enumerations (registry.ts ×2, continuous.ts ×2, cardplay.ts, actions.ts, index.ts, `lavaZone.test.ts`, `abilityLock.test.ts`).
+>
+> **(d) THE MUTATION RECORD.** +13 D632 rows (continuous.ts 5, registry.ts 8): 5441 in all. Re-pointed: none. precheck: 5441 mutants, the same 20 pre-existing broken rows. Probe `--decision D632 --allow-dirty`: 13 killed · 0 known · 0 GAP · 0 stale · 0 clobbers · 0 errors; the tree byte-identical after. Gate-witness probe (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed · 0 known · 0 GAP · 0 errors.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D616–D632; D581–D615 were PAID EXACTLY by the sweep of `7b1ab8d2`: 4944 killed · 47 known · 0 GAP · 20 errors over 5,011). Predicted, stacked on D631's: **5374 killed · 47 known survivor(s) · 0 GAP(S) · 20 error(s)** over **5,441** rows — 5428 + 13 = 5441; 5361 + 13 = 5374 killed; 47 survivors unchanged; 5374 + 47 + 20 = 5441. It assumes D616–D631's predictions hold. If it fails: an error count ≠ 20 means a broken `find` outside the pre-existing 20 (none moved here, so an earlier slice's); a GAP on an older row means a moved pin (the registry-size pins, the census partition, `abilityLock`'s key list, D598's unkeyed pin) was its only killer; a D632 survivor means a second reader of `selfKnockOutAbility`; a known count ≠ 47 means a declared survivor went RED.
+>
+> **Pending decisions (UNRULED readings):** NEW at D632, built on the stated reading:
+> - **R-DMP1 ⚠️ UNRULED** — Damp `mep-007` / `-008`: *"lose all Abilities that require those Pokémon to be Knocked Out"* is the same class as the `me02.5` wording — an Ability whose USE Knocks Out its user (Cursed Blast, Overvolt Discharge). Abilities that answer a Knock Out (Fainting Spell, Final Chain, Photon Cord, Fragile Husk, Shadowy Concealment, the "(even if this Pokémon is Knocked Out)" recoils) or survive one (Tenacious Body, Sturdy) keep working. Reversal: strip those too under `DAMP_REQUIRE_KNOCKED_OUT` only (its own object for this reason).
+>
+> R-AB1 / R-SNE1 / R-LL1 / R-GS1 / R-GG1 (D631) and the earlier readings stand as recorded in the archived blocks below.
+>
+> Still owed from the Mega backlog: as at D631 (below), less D1 (all 5 printings built); L1 (5 texts / 5 printings) owes MRV 44 → 45; Multi Adapter (Y1a) owes its own bump.
+>
+> ---
+>
+> **ARCHIVED — the resume point D632 was built from, kept rather than overwritten** (D631 has since been committed on `mega-ingest` as `7e7aef7c`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-10, after D631)
 >
 > 🛑 **D631 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D630 = `cfb0a01c`). D631 is P1 of the Mega backlog (the D625 re-rank's passive modifier rest). Next: a re-review of D631 (the first review's two blocking findings are fixed, below) and rulings on the five readings below, then L1 (MRV 44 → 45).
@@ -1139,7 +1181,7 @@
 >
 > R-SRC1, R-JIC1, R-DB1, R-WC1, R-BT1, R-GHN1, R-ST1 (D625) and the earlier readings stand as recorded in the archived blocks below.
 >
-> Still owed from the Mega backlog: as at D625 (below), less K1's four texts (all 8 printings built; WP32 keeps K2 — Spiteful Swirl ×2, Counterattack Grouping — and Damp ×2).
+> Still owed from the Mega backlog: as at D625 (below), less K1's four texts (all 8 printings built; WP32 keeps K2 — Spiteful Swirl ×2, Counterattack Grouping — and Damp ×2 [🆕🆕🆕 D632 (D539): Damp BUILT at D632 (D1)]).
 >
 > ---
 >
@@ -2069,7 +2111,7 @@
 >
 > ✅ **`bun run check` IS GREEN**: `typecheck-coverage`, `tsc -b`, `lint-coverage`, `biome lint --error-on-warnings`, `Test Files 641 passed (641) / Tests 15191 passed (15191) / CHECK_EXIT=0` (D597: 640 / 15154; D598 adds `koAbilitiesMeD598.test.ts` (34) and the census D598 block (3)).
 >
-> **(a) THE SLICE.** WP32 is 11 texts / 22 printings; the Mega Gengar ex and Mega Hawlucha ex families were taken first, with the siblings that need only the brief's three new pieces (coin-flip survive, "KO'd by an ex", return-to-hand on KO): 6 texts / 13 printings, 13 registry keys on 6 objects. Mega Gengar ex "Shadowy Concealment" ×5 (`me02-056`, `me02.5-125` / `-269` / `-284`, `mep-073`): `PassiveEffects.seatKoPrizeReduction`, read by flow.ts `seatPrizeReduction` inside `planPrizes` after the attached reductions (first live holder on the KO'd side answers — "doesn't stack"; {D} by in-play type). Mega Hawlucha ex "Tenacious Body" ×3 (`me02.5-116` / `-268` / `-283`) and Annihilape "Durable Body" (`me05-041`): `survivesKoOnCoinFlip`, continuous.ts `koSurvivalCoinFlip` at the four §8.5 damage writes, asked only when `koSurvivalClamp` did not answer; heads leaves 10 HP and sets `DAMAGE_DEALT.survived`. Shedinja "Fragile Husk" ×2 (`me01-061` / `-144`): `onKoPrizeGuard: "pokemonExAttackPrevent"`, Glimmora's prohibition gated on the cause. Gengar "Infinite Shadow" (`me03-050`): `koSelfToHand`, continuous.ts `koSelfToHandUids` through D572's `toHand` (§9- and Milotic-gated; the Prize is still taken). The `KNOCKED_OUT` log tail now counts what moved (log.ts `koToHandTail`): "— 3 Pokémon cards put into the hand instead of the discard pile"; an all-Energy split is D572's string byte for byte. Pecharunt "Final Chain" (`me02.5-143`): an on-KO search behind the new `TriggeredAbility.byOpponentAttack`. The cause predicates are flow.ts `koByOpponentAttack` / `koByOpponentPokemonEx`. **Dropped and named:** Gengar ex "Fainting Spell" ×2 (KO the Attacking Pokémon on heads), Miraidon "Photon Cord" ×2 (an Energy move off the dying body), Spiritomb "Spiteful Swirl" ×2 and Wishiwashi "Counterattack Grouping" (a seat-wide filtered recoil), Damp ×2 (WP38). [🆕🆕🆕 D626 (D539): Fainting Spell ×2 and Photon Cord ×2 BUILT at D626 (K1).]
+> **(a) THE SLICE.** WP32 is 11 texts / 22 printings; the Mega Gengar ex and Mega Hawlucha ex families were taken first, with the siblings that need only the brief's three new pieces (coin-flip survive, "KO'd by an ex", return-to-hand on KO): 6 texts / 13 printings, 13 registry keys on 6 objects. Mega Gengar ex "Shadowy Concealment" ×5 (`me02-056`, `me02.5-125` / `-269` / `-284`, `mep-073`): `PassiveEffects.seatKoPrizeReduction`, read by flow.ts `seatPrizeReduction` inside `planPrizes` after the attached reductions (first live holder on the KO'd side answers — "doesn't stack"; {D} by in-play type). Mega Hawlucha ex "Tenacious Body" ×3 (`me02.5-116` / `-268` / `-283`) and Annihilape "Durable Body" (`me05-041`): `survivesKoOnCoinFlip`, continuous.ts `koSurvivalCoinFlip` at the four §8.5 damage writes, asked only when `koSurvivalClamp` did not answer; heads leaves 10 HP and sets `DAMAGE_DEALT.survived`. Shedinja "Fragile Husk" ×2 (`me01-061` / `-144`): `onKoPrizeGuard: "pokemonExAttackPrevent"`, Glimmora's prohibition gated on the cause. Gengar "Infinite Shadow" (`me03-050`): `koSelfToHand`, continuous.ts `koSelfToHandUids` through D572's `toHand` (§9- and Milotic-gated; the Prize is still taken). The `KNOCKED_OUT` log tail now counts what moved (log.ts `koToHandTail`): "— 3 Pokémon cards put into the hand instead of the discard pile"; an all-Energy split is D572's string byte for byte. Pecharunt "Final Chain" (`me02.5-143`): an on-KO search behind the new `TriggeredAbility.byOpponentAttack`. The cause predicates are flow.ts `koByOpponentAttack` / `koByOpponentPokemonEx`. **Dropped and named:** Gengar ex "Fainting Spell" ×2 (KO the Attacking Pokémon on heads), Miraidon "Photon Cord" ×2 (an Energy move off the dying body), Spiritomb "Spiteful Swirl" ×2 and Wishiwashi "Counterattack Grouping" (a seat-wide filtered recoil), Damp ×2 (WP38). [🆕🆕🆕 D626 (D539): Fainting Spell ×2 and Photon Cord ×2 BUILT at D626 (K1).] [🆕🆕🆕 D632 (D539): Damp ×2 BUILT at D632 (D1).]
 >
 > **(b) MRV STAYS 42** (match.ts "STAYS 42 AT D598"): registry-only fields; no op, persisted member, prompt or event (every event used already existed); the Final Chain park is the existing `koTrigger` stage and `chooseCards` prompt.
 >
@@ -36269,7 +36311,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D631, *P1 — the rest of the passive modifiers: 6 texts / 9 printings (Ancient Bulwark's benched side shield, Sniper's Eye's {C} ignore, Supreme Overlord's per-Prize bonus, Gloomy Garbage's Tool-gated debuff, Life-Locked's heal lock, Good Sleep's Checkup heal on the new `yourActiveAsleep`); five UNRULED readings; abilities 586 / 610, 1188 `me` printings fully built*** — engine 0.514.0, MRV 44, NOT committed; the whole-corpus sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D632, *D1 — Damp: 2 texts / 5 `me` printings (both printed wordings on two objects over the new `disableAbilities.selfKnockOutAbility`; the class is Cursed Blast and Overvolt Discharge); R-DMP1 UNRULED; abilities 591 / 610, 1193 `me` printings fully built*** — engine 0.515.0, MRV 44, NOT committed; the whole-corpus sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D631, *P1 — the rest of the passive modifiers: 6 texts / 9 printings (Ancient Bulwark's benched side shield, Sniper's Eye's {C} ignore, Supreme Overlord's per-Prize bonus, Gloomy Garbage's Tool-gated debuff, Life-Locked's heal lock, Good Sleep's Checkup heal on the new `yourActiveAsleep`); five UNRULED readings; abilities 586 / 610, 1188 `me` printings fully built*** — engine 0.514.0, MRV 44, NOT committed; the whole-corpus sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D630, *M1 — the persisted-record bundle: 8 texts / 13 `me` printings (Juggernaut Horn / Counter on the new damage record, three new attacker classes, a classed Metal Block, Iron Defender on the summed side list, Settle the Score on the new Prize record, Plunging Headbutt on `exposeSelf`); `MATCH_RECORD_VERSION` 43 → 44 with a v43 migration; six UNRULED readings; attacks 2,733 / 2,771, trainers 434 / 447, 1179 `me` printings fully built*** — engine 0.513.0, MRV 44, NOT committed; the whole-corpus sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D629, *S1 — the rest of the snipe / spread wording: 7 texts / 7 printings (the typed per-Energy snipe on the new `perTypedEnergyOnSelf`, a typed discard-all, a does-nothing requirement printed second, two compounds after the Benched clarifier, a clause-gated Benched placement); Psyspear dropped and named; no new reading; attacks 2,722 / 2,771, 1166 `me` printings fully built*** — engine 0.512.0, MRV 43, NOT committed; the whole-corpus sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D628, *A1 — the rest of the on-bench / on-move Abilities: 3 texts / 5 `me` printings (Last-Ditch Catch on a name-locked board trigger, Lustrous Assist on the new `yourActiveNamed`, Lethargic Charge on `attachFromHand` `one` + `activeOnly`); Clawitzer ×2 dropped and named; finding 0b closed; three UNRULED readings; abilities 577 / 610, 1159 `me` printings fully built*** — engine 0.511.0, MRV 43, NOT committed; sweep PENDING) |
@@ -36516,6 +36559,15 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-10 — build session #572 (P3-M5 — D632)
+
+**D1 — DAMP. `MATCH_RECORD_VERSION` STAYS 44.**
+
+Built in the `luminous_ui-mega` worktree on D631 (`7e7aef7c`); the main checkout was not touched. 2 texts / 5 printings on two new
+registry objects (Psyduck / Golduck "Damp", one object per wording) over the new `disableAbilities.selfKnockOutAbility`. The self-Knock-Out
+class was measured over both corpora (Cursed Blast ×2 texts, Overvolt Discharge; Forretress ex not legal). One UNRULED reading (R-DMP1).
+`dampD632.test.ts` (18), census D632 block (2). +13 mutant rows, all KILLED; none re-pointed. Sweep PENDING (NEXT (0)). NOT committed.
 
 ### 2026-10-10 — build session #571 (P3-M5 — D631)
 

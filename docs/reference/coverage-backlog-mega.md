@@ -6,6 +6,23 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D632 update (engine 0.515.0) — D1, Damp (`MATCH_RECORD_VERSION` stays 44)
+
+2 texts / 5 printings (`dampD632.test.ts`): Psyduck `me02.5-039` / `-226` and Golduck `me02.5-040` ("lose any Ability that requires the
+Pokémon using it to Knock Out itself"), Psyduck `mep-007` and Golduck `mep-008` ("lose all Abilities that require those Pokémon to be
+Knocked Out", read as the same class, R-DMP1). One new `disableAbilities` narrowing, `selfKnockOutAbility`; the class over both corpora is
+Cursed Blast ×2 texts and Overvolt Discharge (9 legal printings; Forretress ex "Exploding Energy" ×4 is not legal). **Finished:** all 5.
+**Dropped:** none.
+
+| Column | `me` built / units (D632) | Standard pool D632 |
+|---|---|---|
+| Attacks | 1,001 / 1,039 | **2,733 / 2,771** |
+| Abilities | 215 / 234 (+5) | **591 / 610** |
+| Trainers | 170 / 183 | **434 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1193** (1188 + 5).
+
 ## 🆕 D631 update (engine 0.514.0) — P1, the rest of the passive modifiers (`MATCH_RECORD_VERSION` stays 44)
 
 6 texts / 9 printings (`passiveRestMeD631.test.ts`): Bastiodon ×3 "Ancient Bulwark" `mep-085` / `me05-062` / `-093` (a benched holder's side
@@ -625,7 +642,7 @@ Gengar ex ×5, Mega Hawlucha ex ×3, Annihilape `me05-041`, Shedinja ×2, Gengar
 **Still open in WP32 (named):** Gengar ex "Fainting Spell" ×2 (KO the Attacking Pokémon on heads), Miraidon "Photon
 Cord" ×2 (an Energy move off the dying body), Spiritomb "Spiteful Swirl" ×2 and Wishiwashi "Counterattack Grouping"
 (a seat-wide filtered recoil), Damp ×2 (WP38). [🆕🆕🆕 D626 (D539): Fainting Spell ×2 and Photon Cord ×2 BUILT at D626 (K1);
-Spiteful Swirl ×2 and Counterattack Grouping are K2.]
+Spiteful Swirl ×2 and Counterattack Grouping are K2.] [🆕🆕🆕 D632 (D539): Damp BUILT at D632 (D1).]
 
 | Column | `me` built / units (D598) | Standard pool D598 |
 |---|---|---|
@@ -1287,7 +1304,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 5× **Shadowy Concealment** — If 1 of your {D} Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon ex, that player takes 1 fewer Prize card. The effect of Shadowy Concealment doesn't stack. [🆕🆕🆕 D598: BUILT]
 - 3× **Counterattacking Crest** — If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 5 damage counters on the Attacking Pokémon. [🆕🆕🆕 D585: BUILT]
 - 3× **Tenacious Body** — If this Pokémon would be Knocked Out by damage from an attack, flip a coin. If heads, this Pokémon is not Knocked Out, and its remaining HP becomes 10. [🆕🆕🆕 D598: BUILT]
-- 2× **Damp** — Pokémon in play (both yours and your opponent's) lose all Abilities that require those Pokémon to be Knocked Out.
+- 2× **Damp** — Pokémon in play (both yours and your opponent's) lose all Abilities that require those Pokémon to be Knocked Out. [🆕🆕🆕 D632: BUILT (R-DMP1)]
 - 2× **Fainting Spell** — If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, flip a coin. If heads, the Attacking Pokémon is Knocked Out. [🆕🆕🆕 D626: BUILT]
 - 2× **Fragile Husk** — If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon ex, your opponent can't take any Prize cards for it. [🆕🆕🆕 D598: BUILT]
 - 2× **Photon Cord** — If this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon, move up to 2 Basic {L} Energy cards from this Pokémon to 1 of your Benched Pokémon. [🆕🆕🆕 D626: BUILT]
@@ -1324,7 +1341,7 @@ group wins; the grouping is a reading aid, not a census figure).
 
 - 4× **Hide 'n' Sneak** — Prevent all effects of your opponent's Pokémon's attacks and Abilities done to this Pokémon. (Damage is not an effect.) [🆕🆕🆕 D627: BUILT]
 - 4× **Luminous Wing** — Prevent all effects of your opponent's Pokémon's Abilities done to this Pokémon. [🆕🆕🆕 D610: left — WP37b (prevent Ability effects)] [🆕🆕🆕 D614: BUILT]
-- 3× **Damp** — Pokémon in play (both yours and your opponent's) lose any Ability that requires the Pokémon using it to Knock Out itself.
+- 3× **Damp** — Pokémon in play (both yours and your opponent's) lose any Ability that requires the Pokémon using it to Knock Out itself. [🆕🆕🆕 D632: BUILT]
 - 1× **Dopey Face** — This Pokémon can't be Confused. [🆕🆕🆕 D584: BUILT]
 - 1× **Life-Locked** — Your opponent's Active Pokémon can't be healed. [🆕🆕🆕 D631: BUILT]
 - 1× **Watchful Eye** — Damage counters on each Pokémon (both yours and your opponent's) can't be moved to other Pokémon.

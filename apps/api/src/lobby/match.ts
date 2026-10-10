@@ -2159,6 +2159,13 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 44 AT D632 — DAMP ADDS ONE OPTIONAL `disableAbilities` FIELD (`selfKnockOutAbility`) AND TWO
+    REGISTRY OBJECTS; NO PROMPT, PHASE, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD OR EVENT.** (Placed ABOVE the
+    D631 block.) The lock is re-derived from the board on every read (`disabledAbilityUids`) and keyed by id, so the
+    5 faces in a v44 `cardPool` (no face changes) lock mid-match. Nothing parks: the lock is asked at the §9 read sites
+    (`useAbility` first), as for every lock. Rollback reading: a 0.514
+    reader has no program for the 5 ids, as before this slice.
+
     🆕🆕🆕 **STAYS 44 AT D631 — P1 ADDS FIVE OPTIONAL `PassiveEffects` FIELDS, ONE `BoardCondition` MEMBER AND SIX
     REGISTRY OBJECTS; NO PROMPT, PHASE, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD OR EVENT.** (Placed ABOVE the D630
     block.) Every program is keyed by ID and every new read is a catalog fact re-derived from the board, so the 9 faces

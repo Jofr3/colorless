@@ -1108,7 +1108,7 @@ describe("D575 §8 — the persisted addresses, and THE FIFTH POSITION's optiona
     expect(redactedGameOverReasonSchema.safeParse("cardEffect").success).toBe(true);
   });
 
-  it("the engine is 0.514.0", () => {
-    expect(engineVersion).toBe("0.514.0");
+  it("the engine is 0.515.0", () => {
+    expect(engineVersion).toBe("0.515.0");
   });
 });

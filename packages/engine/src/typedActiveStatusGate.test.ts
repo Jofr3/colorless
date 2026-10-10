@@ -930,7 +930,7 @@ describe("§7 — the persisted bytes, and why 29 does not move", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.514.0");
+    expect(engineVersion).toBe("0.515.0");
   });
 });
 

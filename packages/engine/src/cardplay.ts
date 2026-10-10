@@ -893,7 +893,8 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
   // Thorns ex "Initialization" and Team Rocket's Watchtower are legal and unbuilt; D539 —
   // 🆕🆕🆕 D566 (D539): the Watchtower is BUILT, the first Stadium-sourced lock — 🆕🆕🆕 D571
   // (D539): and Initialization is BUILT, so the legal Pokémon locks the registry builds are
-  // Flutter Mane / Gastrodon / Iron Thorns ex, settled by the stratified pass, R-LK2) turns
+  // Flutter Mane / Gastrodon / Iron Thorns ex, settled by the stratified pass, R-LK2 — 🆕🆕🆕 D632
+  // (D539): and Damp, Psyduck / Golduck, over self-Knock-Out bodies only) turns
   // this Pokémon's Abilities off. Checked before activeOnly/oncePerTurn/cost so a
   // locked Pokémon reports the lock, not an incidental cost failure.
   if (disabledAbilityUids(state).has(uid)) {

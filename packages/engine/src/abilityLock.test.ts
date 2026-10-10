@@ -110,6 +110,8 @@ describe("disableAbilities — the registry row", () => {
     // keys" are WITHDRAWN: Initialization is BUILT (`INITIALIZATION`, three keys), so THIRTEEN
     // keys carry a lock, and three legal Pokémon locks are built (Flutter Mane, Gastrodon,
     // Iron Thorns ex), plus the Watchtower's Stadium lock.
+    // 🆕🆕🆕 D632 (D539) — "thirteen keys" is WITHDRAWN: Damp is BUILT (five keys, two objects,
+    // `dampD632.test.ts`), so EIGHTEEN keys carry a lock, and Damp joins the three legal Pokémon locks above.
     expect(
       registryCardIds()
         .filter((id) => programFor(id)?.passive?.disableAbilities !== undefined)
@@ -129,6 +131,11 @@ describe("disableAbilities — the registry row", () => {
         "sv06-077", // 🆕🆕🆕 D571 — Iron Thorns ex "Initialization"
         "sv06-196",
         "sv08.5-032",
+        "me02.5-039", // 🆕🆕🆕 D632 — Psyduck / Golduck "Damp"
+        "me02.5-040",
+        "me02.5-226",
+        "mep-007",
+        "mep-008",
       ].sort(),
     );
   });

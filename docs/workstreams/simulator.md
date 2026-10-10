@@ -30170,7 +30170,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **The cause predicates.** flow.ts `koByOpponentAttack` (an attack epilogue from the other seat, lethal by damage) and
   `koByOpponentPokemonEx` (plus an ex attacker, read off the attacker's uid).
 - **No op, persisted member, prompt or event.** Every event already existed.
-- **Dropped and named:** Fainting Spell ×2, Photon Cord ×2, Spiteful Swirl ×2, Counterattack Grouping, Damp ×2. [🆕🆕🆕 D626 (D539): Fainting Spell ×2 and Photon Cord ×2 BUILT at D626 (K1).]
+- **Dropped and named:** Fainting Spell ×2, Photon Cord ×2, Spiteful Swirl ×2, Counterattack Grouping, Damp ×2. [🆕🆕🆕 D626 (D539): Fainting Spell ×2 and Photon Cord ×2 BUILT at D626 (K1).] [🆕🆕🆕 D632 (D539): Damp ×2 BUILT at D632 (D1).]
 - **Readings (UNRULED).** R-IS1, R-GC1, R-TN1, R-KO1, R-PD1, R-SB2 (`progress.md` NEXT). R-SB2: a Survival Brace / full-HP Sturdy
   answers first and no coin is flipped (`clamped === null ? koSurvivalCoinFlip(…) : …` at all four writes).
   🆕 D601: plus R-GC2 and R-GC3 (two Shadowy Concealment readings), and R-TN1 amended (self-damage never asks the coin).
@@ -30246,6 +30246,24 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Suite.** `activatedMeD602.test.ts` (22) and a census D602 block (3). +21 mutant rows.
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D632 — D1: Damp (engine 0.515.0, `MATCH_RECORD_VERSION` stays 44)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D631 (`7e7aef7c`), NOT committed. 2 texts / 5 `me` printings, two new
+registry objects (one per wording).
+
+- **Damp ×3** (Psyduck `me02.5-039` / `-226`, Golduck `me02.5-040`) and **Damp ×2** (Psyduck `mep-007`, Golduck `mep-008`).
+  `disableAbilities { side: "both", selfKnockOutAbility: true }`: no zone clause, so it locks from the Bench. continuous.ts
+  `auraSuppresses` narrows by `hasSelfKnockOutAbility` (an activated Ability whose program carries `knockOutSelf`).
+- **The class, measured.** Over both corpora on the LOCAL D1, only three texts make their user Knock Itself Out: Cursed Blast at 5 and
+  at 13 and Overvolt Discharge (9 printings, all legal, all built). Forretress ex "Exploding Energy" ×4 prints it and is not legal. A
+  registry walk pins that each holder prints that one Ability, so the body-level lock is exact.
+- **Reading.** The mep wording ("require those Pokémon to be Knocked Out") is read as the same class (R-DMP1 ⚠️ UNRULED): Fainting
+  Spell, Final Chain, Photon Cord and the other Knock Out answers keep their Abilities.
+- **Lock pass.** Damp is a holder-tagged Pokémon aura in D571's stratified pass: an Active Flutter Mane switches an opposing Active
+  Psyduck's Damp off. Damp reaches no lock source.
+- **Suite.** `dampD632.test.ts` (18) and a census D632 block (2). +13 mutant rows, all KILLED. Census: abilities **591 / 610**,
+  1193 `me` printings fully built. Sweep PENDING.
 
 ## D631 — P1: the rest of the passive modifiers (engine 0.514.0, `MATCH_RECORD_VERSION` stays 44)
 

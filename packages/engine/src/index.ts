@@ -20271,6 +20271,13 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.514.0 → **0.515.0** (D632 — D1: DAMP, 2 TEXTS / 5 `me` PRINTINGS; `MATCH_RECORD_VERSION`
+    STAYS 44 (apps/api match.ts "STAYS 44 AT D632")). registry.ts: two NEW objects, one per printed wording
+    (`DAMP_KNOCK_OUT_ITSELF` for `me02.5-039` / `-040` / `-226`, `DAMP_REQUIRE_KNOCKED_OUT` for `mep-007` / `-008`,
+    R-DMP1), on the NEW `disableAbilities.selfKnockOutAbility` — both sides, no zone clause. continuous.ts
+    `auraSuppresses` narrows by `hasSelfKnockOutAbility` (an activated Ability whose program carries `knockOutSelf`:
+    Cursed Blast ×2 texts, Overvolt Discharge). Damp joins the stratified lock pass as a Pokémon aura with a holder.
+    `dampD632.test.ts`.)
     🆕🆕🆕 engineVersion 0.513.0 → **0.514.0** (D631 — P1: THE REST OF THE PASSIVE MODIFIERS, 6 TEXTS / 9 PRINTINGS
     (`me` + `30th`); `MATCH_RECORD_VERSION` STAYS 44 (apps/api match.ts "STAYS 44 AT D631")). registry.ts: six NEW
     objects on five NEW `PassiveEffects` fields — `preventSeatDamageWhileBenchedFromEnergyAtMost` (Bastiodon ×3
@@ -20622,7 +20629,7 @@ import type { GameState, Seat } from "./types";
     behind `TriggeredAbility.byOpponentAttack`). flow.ts `koByOpponentAttack` / `koByOpponentPokemonEx`
     are the shared cause predicates ("KO'd by an ex"). Registry-only fields; no persisted member.
     Fainting Spell, Photon Cord, Spiteful Swirl, Counterattack Grouping and Damp dropped and named
-    [🆕🆕🆕 D626 (D539): Fainting Spell and Photon Cord BUILT at D626 (K1)].
+    [🆕🆕🆕 D626 (D539): Fainting Spell and Photon Cord BUILT at D626 (K1)] [🆕🆕🆕 D632 (D539): Damp BUILT at D632 (D1)].
     `koAbilitiesMeD598.test.ts`.)
     🆕🆕🆕 engineVersion 0.480.0 → **0.481.0** (D597 — WP29: THE DISCARD-SCALED ATTACKS;
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D597")). effects.ts
@@ -21409,7 +21416,7 @@ import type { GameState, Seat } from "./types";
     unbuilt (🆕🆕🆕 D566 (D539): the Watchtower is BUILT — a Stadium, unsilenceable, over {C} bodies,
     neither legal lock source being {C}, so R-LK1 holds with it), and an Active Flutter Mane silencing an opposing Active Iron Thorns ex re-opens the gap, so
     the fixpoint pass is owed when Initialization is built; tripwired by id [🆕🆕🆕 D571 (D539): PAID — Initialization
-    and the stratified pass are built, R-LK2; three legal Pokémon locks now]), pinned on a rotated Klefki vs
+    and the stratified pass are built, R-LK2; three legal Pokémon locks now] [🆕🆕🆕 D632 (D539): and Damp (Psyduck / Golduck) is BUILT; it reaches only a self-Knock-Out body (Cursed Blast, Overvolt Discharge), never a lock source]), pinned on a rotated Klefki vs
     Flutter Mane board. **Orthworm ex** `sv07-110`/`-162` "Pummeling Payback" on the NEW
     `damageAttacker.perAttachedEnergy` (the fold multiplies by `countAttachedEnergy`, provision — both read
     sites a zero diff; ⚠️ R-O1, a reachable DEVIATION: a benched Orthworm hit by a spread or snipe does not
@@ -25666,7 +25673,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.514.0";
+export const engineVersion = "0.515.0";
 
 export type {
   ApplyResult,
