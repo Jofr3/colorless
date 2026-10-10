@@ -2970,7 +2970,7 @@ import type { GameState, Seat } from "./types";
     pre-W/R printing in the pool that ADDS damage scopes itself "to your opponent's
     Active Pokémon" (Vitality Band, Defiance Band, Choice Belt, Practice Studio,
     Binding Mochi, Kingambit, Galvantula, Okidogi, the three birds) and **NEITHER
-    sentence that SUBTRACTS carries an Active clause at all**. A printed asymmetry,
+    sentence that SUBTRACTS carries an Active clause at all** [🆕🆕🆕 D631 (D539): ~~"neither"~~ of TWO is withdrawn as a count — Garbodor `me04-057` "Gloomy Garbage" is a further subtracting sentence, and it too names no target, so the argument stands]. A printed asymmetry,
     censused rather than intuited. Dropping the term fails **9** at the main hit and
     **1** each at `snipeActive`, `spreadDamage` and `placeSnipe`.
 
@@ -20271,6 +20271,17 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.513.0 → **0.514.0** (D631 — P1: THE REST OF THE PASSIVE MODIFIERS, 6 TEXTS / 9 PRINTINGS
+    (`me` + `30th`); `MATCH_RECORD_VERSION` STAYS 44 (apps/api match.ts "STAYS 44 AT D631")). registry.ts: six NEW
+    objects on five NEW `PassiveEffects` fields — `preventSeatDamageWhileBenchedFromEnergyAtMost` (Bastiodon ×3
+    "Ancient Bulwark", continuous.ts `seatShieldedFromLowEnergyAttacker` at the four §8.5 sites, R-AB1),
+    `ignoreColorlessCostIfOpponentHandExactly` (Decidueye ex ×2 "Sniper's Eye", `effectiveAttackCost`, R-SNE1),
+    `damageBonusBeforeWRPerOpponentPrize` (Kingambit "Supreme Overlord", in `attackerPreWRBonus`),
+    `opponentActiveToolAttackDebuff` (Garbodor "Gloomy Garbage", `opposingToolAttackDebuff` beside
+    `opposingAttackDebuff` at the four sites, R-GG1),
+    `opponentActiveCantBeHealed` (Yveltal "Life-Locked", `healLocked` at the five heal sites, R-LL1) — and a
+    `betweenTurns` trigger on the NEW `BoardCondition` `yourActiveAsleep` (Snorlax "Good Sleep", R-GS1).
+    `passiveRestMeD631.test.ts`.)
     🆕🆕🆕 engineVersion 0.512.0 → **0.513.0** (D630 — M1: THE PERSISTED-RECORD BUNDLE, 8 TEXTS / 13 `me` PRINTINGS;
     `MATCH_RECORD_VERSION` 43 → 44 WITH A v43 MIGRATION (apps/api match.ts "43 → 44 AT D630")). types.ts: the NEW
     REQUIRED `InPlayPokemon.attackDamageTaken` (written at the four §8.5 sites by `withAttackDamageTaken`, read by
@@ -25655,7 +25666,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.513.0";
+export const engineVersion = "0.514.0";
 
 export type {
   ApplyResult,

@@ -6,6 +6,23 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D631 update (engine 0.514.0) — P1, the rest of the passive modifiers (`MATCH_RECORD_VERSION` stays 44)
+
+6 texts / 9 printings (`passiveRestMeD631.test.ts`): Bastiodon ×3 "Ancient Bulwark" `mep-085` / `me05-062` / `-093` (a benched holder's side
+shield from attackers with 2 or less Energy, R-AB1), Decidueye ex ×2 "Sniper's Eye" `me03-012` / `-100` (every {C} ignored at an opposing
+hand of exactly 4, R-SNE1), Kingambit "Supreme Overlord" `me02.5-148` (+30 before W/R per Prize taken), Garbodor "Gloomy Garbage"
+`me04-057` (−20 before W/R off a Tool-carrying opposing Active, R-GG1), Yveltal "Life-Locked" `30th-100` (a heal lock at every heal site, R-LL1)
+and Snorlax "Good Sleep" `30th-119` (a Checkup heal on the new `yourActiveAsleep`, R-GS1). **Finished:** all 9. **Dropped:** none.
+
+| Column | `me` built / units (D631) | Standard pool D631 |
+|---|---|---|
+| Attacks | 1,001 / 1,039 | **2,733 / 2,771** |
+| Abilities | 210 / 234 (+9) | **586 / 610** |
+| Trainers | 170 / 183 | **434 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1188** (1179 + 9).
+
 ## 🆕 D630 update (engine 0.513.0) — M1, the persisted-record bundle (`MATCH_RECORD_VERSION` 43 → 44)
 
 8 texts / 13 `me` printings (`persistedRecordsMeD630.test.ts`): Mega Heracross ex ×2 "Juggernaut Horn" `me02-004` / `-108` and Lycanroc ×2
@@ -326,7 +343,7 @@ Trip-ulations" `me04-043`, Celebi "Traverse Time" `me01-012`, Dialga "Reversed C
 §11 funnel, the Ability share of the recoils and Magma Surge's counters. **Finished:** all 4 cards (Shooting Moons was built at
 D597). Two new readings (UNRULED): R-LW1, continuous Ability auras are not refused; R-LW2, an Ability lock on the holder removes the
 shield (`progress.md` NEXT). Can reuse the piece: Hide 'n' Sneak ×4 (WP17, with `preventAttackEffects`) [🆕🆕🆕 D627 (D539): BUILT at D627 (H1)] and Antique Old Amber
-`sv03.5-154` "Amber Protection" (same text, not Standard). WP37's other 7 texts / 13 printings stay in WP37.
+`sv03.5-154` "Amber Protection" (same text, not Standard). WP37's other 7 texts / 13 printings stay in WP37. [🆕🆕🆕 D631 (D539): Supreme Overlord, Gloomy Garbage, Sniper's Eye ×2, Ancient Bulwark ×3 and Life-Locked BUILT at D631 (P1)]
 
 | Column | `me` built / units (D614) | Standard pool D614 |
 |---|---|---|
@@ -394,7 +411,7 @@ Boost's promoted-this-turn gate over a typed any-amount sweep; Swirling Prose ×
 Dugtrio) ride Lava Zone's opponent-side `onActiveMovedToBench`; Scale Up ×3 and Tyrannically Gutsy ×2 are `hpBonus` gates (the new
 `requiresEnergyCount`, and "special"). **Finished:** all 16 cards (Mega Venusaur ex ×4 among them). **WP37 rest, left and named**
 (8 texts / 17 printings): Fall Back to Reload ×2, Last-Ditch Catch ×3 [🆕🆕🆕 D628 (D539): Last-Ditch Catch BUILT at D628 (A1)], Luminous Wing ×4 (WP37b — Mega Clefable ex ×4 still waits
-on it [🆕🆕🆕 D614: BUILT, Mega Clefable ex ×4 finished]), Supreme Overlord, Gloomy Garbage, Sniper's Eye ×2, Ancient Bulwark ×3, Life-Locked. Two new readings (UNRULED): R-HL1, Holes
+on it [🆕🆕🆕 D614: BUILT, Mega Clefable ex ×4 finished]), Supreme Overlord, Gloomy Garbage, Sniper's Eye ×2, Ancient Bulwark ×3, Life-Locked. [🆕🆕🆕 D631 (D539): Supreme Overlord, Gloomy Garbage, Sniper's Eye ×2, Ancient Bulwark ×3 and Life-Locked BUILT at D631 (P1)] Two new readings (UNRULED): R-HL1, Holes
 resolves before Palafin's Zero to Hero with no Knock Out check between; R-MR1, Metal Road's moment is a use-time gate, which affords
 a delayed use (`progress.md` NEXT). [🆕🆕🆕 D625 (D610 MINOR 2): R-HL1 INVERTS D356's principle (turn.ts, Magearna "Auto Heal": the turn player's own effects resolve first when two triggers answer one moment), and its listed reversal "Zero to Hero first" IS D356's order. The departure is the reading because under D356's order Holes' subject has already gone to the deck and Holes does nothing; still UNRULED.]
 
@@ -1288,9 +1305,9 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× **Powerful a-Salt** — Attacks used by your {F} Pokémon do 30 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance). [🆕🆕🆕 D585: BUILT]
 - 2× **Thick Fat** — This Pokémon takes 30 less damage from attacks from your opponent's {R} or {W} Pokémon (after applying Weakness and Resistance). [🆕🆕🆕 D619: BUILT]
 - 2× **Tundra Wall** — All of your Pokémon that have any {W} Energy attached take 50 less damage from attacks from your opponent's Pokémon (after applying Weakness and Resistance). The effect of Tundra Wall doesn't stack. [🆕🆕🆕 D585: BUILT]
-- 1× **Gloomy Garbage** — Attacks used by your opponent's Active Pokémon that has a Pokémon Tool attached do 20 less damage (before applying Weakness and Resistance).
+- 1× **Gloomy Garbage** — Attacks used by your opponent's Active Pokémon that has a Pokémon Tool attached do 20 less damage (before applying Weakness and Resistance). [🆕🆕🆕 D631: BUILT]
 - 1× **Intimidating Fang** — As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon do 30 less damage (before applying Weakness and Resistance). [🆕🆕🆕 D584: BUILT]
-- 1× **Supreme Overlord** — Attacks used by this Pokémon do 30 more damage to your opponent's Active Pokémon for each Prize card your opponent has taken (before applying Weakness and Resistance).
+- 1× **Supreme Overlord** — Attacks used by this Pokémon do 30 more damage to your opponent's Active Pokémon for each Prize card your opponent has taken (before applying Weakness and Resistance). [🆕🆕🆕 D631: BUILT]
 
 ### HP, Retreat, type and Energy-provision passives — 8 text(s) / 15 printing(s)
 
@@ -1309,19 +1326,19 @@ group wins; the grouping is a reading aid, not a census figure).
 - 4× **Luminous Wing** — Prevent all effects of your opponent's Pokémon's Abilities done to this Pokémon. [🆕🆕🆕 D610: left — WP37b (prevent Ability effects)] [🆕🆕🆕 D614: BUILT]
 - 3× **Damp** — Pokémon in play (both yours and your opponent's) lose any Ability that requires the Pokémon using it to Knock Out itself.
 - 1× **Dopey Face** — This Pokémon can't be Confused. [🆕🆕🆕 D584: BUILT]
-- 1× **Life-Locked** — Your opponent's Active Pokémon can't be healed.
+- 1× **Life-Locked** — Your opponent's Active Pokémon can't be healed. [🆕🆕🆕 D631: BUILT]
 - 1× **Watchful Eye** — Damage counters on each Pokémon (both yours and your opponent's) can't be moved to other Pokémon.
 
 ### Other passives — 10 text(s) / 17 printing(s)
 
-- 3× **Ancient Bulwark** — As long as this Pokémon is on your Bench, prevent all damage done to each of your Pokémon by attacks from your opponent's Pokémon that have 2 or less Energy attached.
+- 3× **Ancient Bulwark** — As long as this Pokémon is on your Bench, prevent all damage done to each of your Pokémon by attacks from your opponent's Pokémon that have 2 or less Energy attached. [🆕🆕🆕 D631: BUILT]
 - 3× **Memory Helix** — This Pokémon can use the attacks of any of your Benched Pokémon. (You still need the necessary Energy to use each attack.)
 - 2× **Holes** — Whenever your opponent's Active Pokémon moves to the Bench during their turn, place 2 damage counters on that Pokémon. [🆕🆕🆕 D610: BUILT]
-- 2× **Sniper's Eye** — If your opponent has exactly 4 cards in their hand, ignore all {C} Energy in the costs of attacks used by this Pokémon.
+- 2× **Sniper's Eye** — If your opponent has exactly 4 cards in their hand, ignore all {C} Energy in the costs of attacks used by this Pokémon. [🆕🆕🆕 D631: BUILT]
 - 2× **Swirling Prose** — As long as this Pokémon is in the Active Spot, whenever your opponent's Active Pokémon moves to the Bench during their turn, their new Active Pokémon is now Confused. [🆕🆕🆕 D610: BUILT]
 - 1× **Explosiveness** — If this Pokémon is in your hand when you are setting up to play, you may put it face down in the Active Spot.
 - 1× **Fighting Roar** — If your opponent's Active Pokémon is a Pokémon ex, this Pokémon can evolve during your first turn or the turn you play it. [🆕🆕🆕 D594: BUILT]
-- 1× **Good Sleep** — If this Pokémon remains Asleep during Pokémon Checkup, heal all damage from this Pokémon.
+- 1× **Good Sleep** — If this Pokémon remains Asleep during Pokémon Checkup, heal all damage from this Pokémon. [🆕🆕🆕 D631: BUILT]
 - 1× **Startling Drop** — During your opponent's turn, if this Pokémon is discarded from your deck by an effect of an attack or Ability from your opponent's Pokémon, or by an effect of your opponent's Item or Supporter cards, discard the top 8 cards of your opponent's deck.
 - 1× **Supereffective Pheromones** — If you have Volbeat in play, apply Weakness for both Active Pokémon as ×3.
 

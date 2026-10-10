@@ -587,7 +587,7 @@ export interface AttackDamageDebuff {
       Defiance Band, Choice Belt, Practice Studio, Binding Mochi, Kingambit,
       Galvantula, Okidogi, Moltres/Articuno/Zapdos all say "to your opponent's
       Active Pokémon" — and NEITHER of the two sentences that SUBTRACT says
-      anything of the kind. So this number comes off every damage the holder's
+      anything of the kind. [🆕🆕🆕 D631 (D539): ~~"neither"~~ of TWO is withdrawn as a count — Garbodor `me04-057` "Gloomy Garbage" is a further subtracting sentence, and it too names no target, so the argument stands] So this number comes off every damage the holder's
       attack does, the Bench included, where `damageBonusBeforeWR` correctly does
       not reach. Four read sites, the same four `installedReductionOf` is read at.
 

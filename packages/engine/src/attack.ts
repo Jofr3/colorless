@@ -72,6 +72,9 @@ import {
   berryReductionOf,
   attackerGatedReductionOf,
   opposingAttackDebuff,
+  // 🆕🆕🆕 D631 — Gloomy Garbage's term, Ancient Bulwark's side shield.
+  opposingToolAttackDebuff,
+  seatShieldedFromLowEnergyAttacker,
   passivesOf,
   preventedByDamageThreshold,
   preventsAttackerType,
@@ -3506,6 +3509,8 @@ export function attack(
     const debuff =
       installedAttackDebuffOf(next, attackerBody) +
       (suppressTargetEffects ? 0 : opposingAttackDebuff(next, attackerBody)) +
+      // 🆕🆕🆕 D631 — Gloomy Garbage: the suppression drops only a defending holder's own term (R-GG1).
+      opposingToolAttackDebuff(next, attackerBody, suppressTargetEffects ? defender : undefined) +
       printedPenalty;
     // §8.5 Weakness, unless the defender's controller has a "your Pokémon have no
     // Weakness" aura in play (Florges "Blooming Garden"); Resistance still applies.
@@ -3804,6 +3809,8 @@ export function attack(
       // line, because D253's identically-shaped note is about a field that could
       // in principle have been live at its site and this one never could.
       benchShieldedFromDamage(next, defender, "all") ||
+      // 🆕🆕🆕 D631 — Ancient Bulwark: the holder is benched, so it is never the defender here.
+      seatShieldedFromLowEnergyAttacker(next, defender, attackerBody, action.seat, "all") ||
       stadiumPreventsDamage(next, defender, attacker);
     // D258 — the EIGHTH prevent, at the FIRST of its FOUR read sites (the other three
     // are interpreter.ts's spread, `deals` and `snipeActive`), and the family's FIRST

@@ -30247,6 +30247,25 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D631 — P1: the rest of the passive modifiers (engine 0.514.0, `MATCH_RECORD_VERSION` stays 44)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D630 (`cfb0a01c`), NOT committed. 6 texts / 9 printings (`me` + `30th`), six new
+registry objects.
+
+- **Ancient Bulwark ×3.** `preventSeatDamageWhileBenchedFromEnergyAtMost: 2`: a BENCHED holder shields every body on its side (itself
+  included) from an opposing attacker with 2 or less Energy cards attached (continuous.ts `seatShieldedFromLowEnergyAttacker`, a disjunct
+  at the four §8.5 damage sites; `othersOnly` under a Feint snipe, D254; R-AB1).
+- **Sniper's Eye ×2.** `ignoreColorlessCostIfOpponentHandExactly: 4`: `effectiveAttackCost` drops every {C} (R-SNE1).
+- **Supreme Overlord.** `damageBonusBeforeWRPerOpponentPrize: 30`, a seat-deriving scan summed in `attackerPreWRBonus`.
+- **Gloomy Garbage.** `opponentActiveToolAttackDebuff: 20`, from any spot, one term per holder, when the attacker has a Tool attached
+  (continuous.ts `opposingToolAttackDebuff`, its own term beside `opposingAttackDebuff` at the four §8.5 sites). Under Feint or the D192
+  sentence only a holder that IS the target loses its −20 (R-GG1).
+- **Life-Locked.** `opponentActiveCantBeHealed`: `healLocked` at five heal sites (`healEach`, `healEachAll`, `healSubject`'s Active arm, `healSelf`, `healChosen`); a locked heal heals 0 and files no `HEALED` (R-LL1: counter
+  moves are not heals).
+- **Good Sleep.** A `betweenTurns` / `activeOnly` trigger on the NEW `BoardCondition` `yourActiveAsleep` over `heal self all` (R-GS1).
+- **Suite.** `passiveRestMeD631.test.ts` (31) and a census D631 block (2). +43 mutant rows, all KILLED. Census: abilities **586 / 610**,
+  1188 `me` printings fully built. Sweep PENDING.
+
 ## D630 — M1: the persisted-record bundle (engine 0.513.0, `MATCH_RECORD_VERSION` 43 → 44)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D629 (`d011987a`), NOT committed. 8 texts / 13 `me` printings.
@@ -30658,7 +30677,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   Road ×2 (Cobalion ex), Swirling Prose ×2 (Mismagius ex), Holes ×2 (Team Rocket's Dugtrio), Scale Up ×3 (Alolan Exeggutor),
   Tyrannically Gutsy ×2 (Tyrantrum) — all 16 fully built.
 - **Left and named.** Fall Back to Reload ×2, Last-Ditch Catch ×3 [🆕🆕🆕 D628 (D539): Last-Ditch Catch BUILT at D628 (A1)], Luminous Wing ×4 (WP37b; Mega Clefable ex not finished),
-  Supreme Overlord, Gloomy Garbage, Sniper's Eye ×2, Ancient Bulwark ×3, Life-Locked.
+  Supreme Overlord, Gloomy Garbage, Sniper's Eye ×2, Ancient Bulwark ×3, Life-Locked. [🆕🆕🆕 D631 (D539): Supreme Overlord, Gloomy Garbage, Sniper's Eye ×2, Ancient Bulwark ×3 and Life-Locked BUILT at D631 (P1)]
 - **Readings.** Two new, **R-HL1 ⚠️ UNRULED**: on the Active→Bench move the opponent's watched triggers (Holes) resolve
   before the mover's own (Palafin "Zero to Hero"), with no Knock Out check between, so lethal Holes counters on Palafin
   ride onto the swapped-in Palafin ex [🆕🆕🆕 D625 (D610 MINOR 2): R-HL1 INVERTS D356's principle (turn.ts, Magearna "Auto Heal": the turn player's own effects resolve first when two triggers answer one moment), and its listed reversal "Zero to Hero first" IS D356's order. The departure is the reading because under D356's order Holes' subject has already gone to the deck and Holes does nothing; still UNRULED.]. And **R-MR1 ⚠️ UNRULED**: Metal Road's printed moment is read as Buzzing Boost's

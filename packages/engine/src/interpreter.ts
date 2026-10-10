@@ -73,6 +73,8 @@ import {
   // 🆕🆕🆕 D575 — the hand-attach mark's one reader (Glimmora's bar, Hypno's turn end).
   liveHandAttachMark,
   opposingAttackDebuff,
+  // 🆕🆕🆕 D631 — Gloomy Garbage's term (its own holder-vs-target scope, R-GG1).
+  opposingToolAttackDebuff,
   passivesOf,
   preventedByDamageThreshold,
   preventsAttackerType,
@@ -92,6 +94,10 @@ import {
   NO_CONSUMABLE,
   berryReductionOf,
   attackerGatedReductionOf,
+  // 🆕🆕🆕 D631 — Supreme Overlord's per-Prize bonus, Ancient Bulwark's side shield, Life-Locked's heal lock.
+  selfPreWRBonusPerOpponentPrize,
+  seatShieldedFromLowEnergyAttacker,
+  healLocked,
   deluxeBombOf,
   stadiumShieldsStatus,
   // 🆕🆕🆕 D563 — Palafin ex's card-borne "only via Zero to Hero", at the deck-evolve filter
@@ -5888,6 +5894,12 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const present = presentStatuses(active.conditions);
       return present.includes("burned") || present.includes("poisoned");
     }
+    case "yourActiveAsleep": {
+      // 🆕🆕🆕 D631 — Snorlax "Good Sleep": "If this Pokémon remains Asleep". The SELF seat, through
+      // `presentStatuses` (the arm above's projection).
+      const active = state.players[seat].active;
+      return active !== null && presentStatuses(active.conditions).includes("asleep");
+    }
     case "opponentActiveBurned": {
       // 🆕 D377 — "your opponent's Active Pokémon is Burned" (Slugma sv05-028
       // "Roasting Heat", +40) and, through `ATTACK_REQUIREMENT_CLAUSES`, the printed
@@ -7619,6 +7631,9 @@ export function conditionNote(cond: BoardCondition): string {
     case "yourActiveBurnedOrPoisoned":
       // 🆕🆕🆕 D593 — the pronoun dropped as `yourActivePoisoned` drops it (D116).
       return "your Active Pokémon is Burned or Poisoned";
+    case "yourActiveAsleep":
+      // 🆕🆕🆕 D631 — the pronoun dropped as `yourActivePoisoned` drops it (D116).
+      return "your Active Pokémon is Asleep";
     case "opponentActiveBurned":
       // 🆕 D377 — a full round-trip, like the two Poison notes and unlike D376's
       // neighbour: the clause names no pronoun, no timing word and no energy glyph,
@@ -8269,7 +8284,8 @@ export function attackerPreWRBonus(
   defenderCard: Card,
 ): number {
   const passives = passivesOf(state, pokemon);
-  let bonus = passives.damageBonusBeforeWR;
+  // 🆕🆕🆕 D631 — plus Supreme Overlord's per-Prize term (a scan: it needs the holder's seat).
+  let bonus = passives.damageBonusBeforeWR + selfPreWRBonusPerOpponentPrize(state, pokemon);
   for (const { amount, cond } of passives.conditionalDamageBonusBeforeWR) {
     if (conditionHolds(state, seat, cond)) bonus += amount;
   }
@@ -11578,7 +11594,8 @@ function spreadDamage(
   // whole reason: every pre-W/R printing in the pool that ADDS damage scopes
   // itself "to your opponent's Active Pokémon" (Vitality Band, Defiance Band,
   // Choice Belt, Practice Studio, Binding Mochi, Kingambit, …) and NEITHER
-  // sentence that SUBTRACTS carries an Active clause at all. So "the Defending
+  // sentence that SUBTRACTS carries an Active clause at all [🆕🆕🆕 D631 (D539): a third, Gloomy Garbage,
+  // names no target either]. So "the Defending
   // Pokémon's attacks do 20 less damage" comes off every damage the attack does.
   // Hoisted out of the loop: it is a fact about the ATTACKER, identical for every
   // benched target.
@@ -11592,7 +11609,9 @@ function spreadDamage(
     attackerTop === null
       ? 0
       : installedAttackDebuffOf(state, attackerTop.active) +
-        opposingAttackDebuff(state, attackerTop.active);
+        opposingAttackDebuff(state, attackerTop.active) +
+        // 🆕🆕🆕 D631 — Gloomy Garbage: no clause here ignores effects on a target, so every holder counts.
+        opposingToolAttackDebuff(state, attackerTop.active);
   const spread = Math.max(0, amount - attackerDebuff);
   // D258 — WAS A `.map`, AND IS A FOLD BECAUSE THE COIN-FLIP SHIELD CONSUMES RNG.
   // ⚠️ A SPREAD INTO THREE HOLDERS IS THREE FLIPS, NOT ONE: the printed antecedent is
@@ -11725,6 +11744,8 @@ function spreadDamage(
       // ignoring effects on the damaged body. So every source on this side counts,
       // including a Rabsca splashing beside the body it is shielding.
       benchShieldedFromDamage(state, pokemon, "all") ||
+      // 🆕🆕🆕 D631 — Ancient Bulwark, the side shield (seat-gated: an own-Bench spread lands).
+      seatShieldedFromLowEnergyAttacker(state, pokemon, attackerTop?.active, ctx.seat, "all") ||
       stadiumPreventsDamage(state, pokemon, attackerCard);
     // D258 — the EIGHTH prevent, at the SECOND of its FOUR read sites, and the site
     // that makes the "once per DAMAGE INSTANCE" reading observable: a spread into
@@ -11993,7 +12014,8 @@ function placeSnipe(
   // scopes "that Pokémon" — the BENCHED pick — and the aura's source is the
   // opponent's ACTIVE, a different body entirely. (`snipeActive` is the one arm
   // where those two coincide, and it answers differently for exactly that reason.)
-  const attackerDebuff =
+  // 🆕🆕🆕 D631 — Gloomy Garbage's term is per PICK (below): its holder can be the benched pick.
+  const sharedDebuff =
     attackerTop === null
       ? 0
       : installedAttackDebuffOf(next, attackerTop.active) +
@@ -12050,6 +12072,10 @@ function placeSnipe(
     // that reduction — its "not affected by any effects on that Pokémon" reaches a
     // Benched pick too.
     const targetPassives = passivesOf(next, pokemon);
+    // 🆕🆕🆕 D631 — plus Gloomy Garbage; under `ignoreWR` a pick that is itself a holder drops its own term (R-GG1).
+    const attackerDebuff =
+      sharedDebuff +
+      (attackerTop === null ? 0 : opposingToolAttackDebuff(next, attackerTop.active, ignoreWR ? pokemon : undefined));
     // `ignoreWR` (Feint Attack — "not affected by any effects on that Pokémon")
     // bypasses the prevention just as it bypasses the reduction passive.
     //
@@ -12166,6 +12192,8 @@ function placeSnipe(
       // the identical site for the identical reason: the aura is nulled exactly to
       // the extent the damaged body is the one granting it.
       benchShieldedFromDamage(next, pokemon, ignoreWR ? "othersOnly" : "all") ||
+      // 🆕🆕🆕 D631 — Ancient Bulwark; a Feint snipe on the holder drops its own shield (D254's scope).
+      seatShieldedFromLowEnergyAttacker(next, pokemon, attackerTop?.active, ctx.seat, ignoreWR ? "othersOnly" : "all") ||
       stadiumPreventsDamage(next, pokemon, attackerCard);
     // D258 — the EIGHTH prevent, at the THIRD of its FOUR read sites. `ignoreWR` is
     // folded into the ARGUMENT rather than spelled as a guard around it, which is the
@@ -12384,7 +12412,9 @@ function snipeActive(
     attacker === null
       ? 0
       : installedAttackDebuffOf(state, attacker.active) +
-        (ignoreWR ? 0 : opposingAttackDebuff(state, attacker.active));
+        (ignoreWR ? 0 : opposingAttackDebuff(state, attacker.active)) +
+        // 🆕🆕🆕 D631 — Gloomy Garbage: `ignoreWR` drops only the target's own term (R-GG1).
+        opposingToolAttackDebuff(state, attacker.active, ignoreWR ? target.active : undefined);
   // Weakness, unless nulled by `ignoreWR` (Feint Attack) OR by a "your Pokémon
   // have no Weakness" aura on the sniped seat (Florges "Blooming Garden");
   // Resistance still applies to a Blooming-Garden-protected Active.
@@ -12536,6 +12566,8 @@ function snipeActive(
     // "your BENCHED Pokémon". Total, not case-covering; no mutant, because none
     // could be killed.
     benchShieldedFromDamage(state, target.active, "all") ||
+    // 🆕🆕🆕 D631 — Ancient Bulwark: the holder is benched, so it is never the target here.
+    seatShieldedFromLowEnergyAttacker(state, target.active, attacker?.active, ctx.seat, "all") ||
     stadiumPreventsDamage(state, target.active, attacker?.card);
   // D258 — the EIGHTH prevent, at the FOURTH and LAST of its read sites, and FOUR
   // rather than five for D255's reason: `attackEffectRefused` is NOT widened, because
@@ -13211,6 +13243,7 @@ function healEach(
       if (!matchesFilter(card, { kind: "bannerPokemon", banner: op.banner })) return pokemon;
     }
     const uid = topUid(pokemon);
+    if (healLocked(state, pokemon)) return pokemon; // 🆕🆕🆕 D631 — Life-Locked
     // 🆕🆕🆕 D560 — `"all"` is this body's OWN damage; the clamp is then a no-op.
     const healed = Math.min(amount === "all" ? pokemon.damage : amount, pokemon.damage);
     if (uid === undefined || healed <= 0) return pokemon;
@@ -13274,6 +13307,7 @@ function healEachAll(state: GameState, amount: number, events: GameEvent[]): Gam
     const side = next.players[seat];
     const healOne = (pokemon: InPlayPokemon): InPlayPokemon => {
       const uid = topUid(pokemon);
+      if (healLocked(state, pokemon)) return pokemon; // 🆕🆕🆕 D631 — Life-Locked
       const healed = Math.min(amount, pokemon.damage);
       if (uid === undefined || healed <= 0) return pokemon;
       events.push({ type: "HEALED", seat, uid, amount: healed });
@@ -13679,6 +13713,7 @@ function healSubject(
   const side = state.players[seat];
   const active = side.active;
   if (active !== null && topUid(active) === uid) {
+    if (healLocked(state, active)) return state; // 🆕🆕🆕 D631 — Life-Locked
     const healed = Math.min(amount, active.damage);
     if (healed <= 0) return state;
     events.push({ type: "HEALED", seat, uid, amount: healed });
@@ -14368,6 +14403,7 @@ function healSelf(
   if (active === null) return state;
   const uid = topUid(active);
   if (uid === undefined) return state;
+  if (healLocked(state, active)) return state; // 🆕🆕🆕 D631 — Life-Locked
   const healed = amount === "all" ? active.damage : Math.min(amount, active.damage);
   if (healed <= 0) return state;
   events.push({ type: "HEALED", seat: ctx.seat, uid, amount: healed });
@@ -18257,6 +18293,7 @@ function healChosen(
   if (pokemon === undefined || pokemon === null) return state;
   const uid = topUid(pokemon);
   if (uid === undefined) return state;
+  if (healLocked(state, pokemon)) return state; // 🆕🆕🆕 D631 — Life-Locked
   const healed = amount === "all" ? pokemon.damage : Math.min(amount, pokemon.damage);
   if (healed <= 0) return state;
   events.push({ type: "HEALED", seat: ctx.seat, uid, amount: healed });

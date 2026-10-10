@@ -1576,6 +1576,12 @@ export type BoardCondition =
       Confused / Asleep / Paralyzed Active alone does not satisfy it. False with an empty
       Active Spot. */
   | { kind: "yourActiveBurnedOrPoisoned" }
+  /** 🆕🆕🆕 **D631** — §12, YOUR Active Pokémon is **Asleep**: Snorlax `30th-119` "Good Sleep" (*"If this
+      Pokémon remains Asleep during Pokémon Checkup, …"*), read by its Checkup trigger (registry.ts
+      `GOOD_SLEEP`, `activeOnly`, so "this Pokémon" is the Active). Through `presentStatuses`, the member
+      above's projection. No row in a clause table: only that trigger names it. False with an empty Active
+      Spot. */
+  | { kind: "yourActiveAsleep" }
   /** 🆕 D377 — §12, your opponent's Active Pokémon is **BURNED**: Slugma
       `sv05-028` "Roasting Heat" ({R}, 10+, **+40**), 1 legal printing, and — read
       from the OTHER consequent — Centiskorch `sv05-037` "Charring Breath"

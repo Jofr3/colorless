@@ -2159,6 +2159,13 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 44 AT D631 — P1 ADDS FIVE OPTIONAL `PassiveEffects` FIELDS, ONE `BoardCondition` MEMBER AND SIX
+    REGISTRY OBJECTS; NO PROMPT, PHASE, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD OR EVENT.** (Placed ABOVE the D630
+    block.) Every program is keyed by ID and every new read is a catalog fact re-derived from the board, so the 9 faces
+    in a v44 `cardPool` (no face changes) read the new programs mid-match. Nothing parks: the one new `BoardCondition`
+    is read by a non-parking Checkup trigger (`yourActiveAsleep`, Snorlax "Good Sleep"). Rollback reading: a 0.513
+    reader simply has no program for the 9 ids, as before this slice.
+
     🆕🆕🆕 **43 → 44 AT D630 — THE SEVENTEENTH POSITION, AND THE THIRD MIGRATION: M1's PERSISTED RECORDS.** (Placed
     ABOVE the D629 block.) The addresses, named first (D456's rule):
     ⑴ **`InPlayPokemon.attackDamageTaken: { turn, amount } | null`** — REQUIRED (Juggernaut Horn / Counter, R-JH1).

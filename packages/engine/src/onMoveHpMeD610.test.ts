@@ -711,16 +711,20 @@ describe("D610 §8 — Tyrannically Gutsy: any Special Energy attached, +150 HP"
 });
 
 describe("D610 §9 — what WP37 leaves, and the version", () => {
-  it("the dropped and out-of-scope texts stay unkeyed (Meowth ex keeps only its attack key) (🆕🆕🆕 D628 (D539): WITHDRAWN for Meowth ex — \"Last-Ditch Catch\" is keyed since D628; Clawitzer stays dropped)", () => {
+  it("the dropped and out-of-scope texts stay unkeyed (Meowth ex keeps only its attack key) (🆕🆕🆕 D628 (D539): WITHDRAWN for Meowth ex — \"Last-Ditch Catch\" is keyed since D628; Clawitzer stays dropped) (🆕🆕🆕 D631 (D539): WITHDRAWN for Kingambit, Garbodor, Decidueye ex ×2, Bastiodon ×3 and Yveltal — keyed since D631)", () => {
     for (const id of [
       ...["me01-038", "me01-141"], // Clawitzer "Fall Back to Reload"
+    ])
+      expect(programFor(id), id).toBeUndefined();
+    // 🆕🆕🆕 D631 (D539) — the WP37 rest is keyed at D631 (P1, `passiveRestMeD631.test.ts`).
+    for (const id of [
       "me02.5-148", // Kingambit "Supreme Overlord"
       "me04-057", // Garbodor "Gloomy Garbage"
       ...["me03-012", "me03-100"], // Decidueye ex "Sniper's Eye"
       ...["mep-085", "me05-062", "me05-093"], // Bastiodon "Ancient Bulwark"
       "30th-100", // Yveltal "Life-Locked"
     ])
-      expect(programFor(id), id).toBeUndefined();
+      expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
     // 🆕🆕🆕 D614 (D539) — Mega Clefable ex ×4 "Luminous Wing" (WP37b) left this list: keyed at D614
     // (`abilityShieldMeD614.test.ts`).
     for (const id of ["mep-072", "me03-031", "me03-103", "me03-119"])
@@ -730,7 +734,7 @@ describe("D610 §9 — what WP37 leaves, and the version", () => {
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["attack", "triggered"]);
   });
 
-  it("is built at engine 0.513.0", () => {
-    expect(engineVersion).toBe("0.513.0");
+  it("is built at engine 0.514.0", () => {
+    expect(engineVersion).toBe("0.514.0");
   });
 });

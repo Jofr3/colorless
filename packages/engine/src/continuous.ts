@@ -4886,6 +4886,43 @@ export function opposingAttackDebuff(state: GameState, pokemon: InPlayPokemon): 
   return 0;
 }
 
+/** 🆕🆕🆕 §8.5 (D631) — Garbodor `me04-057` "Gloomy Garbage": the HP taken off `pokemon`'s own attack by
+    the opposing side's `opponentActiveToolAttackDebuff` holders, when `pokemon` is its side's Active and has
+    a Pokémon Tool attached (`tools.length > 0`, D369's read). The holders may stand anywhere in play (the
+    print has no spot clause); one term per holder, §9 per source. 0 otherwise.
+
+    A SEPARATE term at the four §8.5 sites, not summed into `opposingAttackDebuff`: D151's guards null the
+    Pressure half because its source (the opponent's Active) is the attack's target on those arms. Here the
+    holder may be anywhere, so `exceptHolder` is the HOLDER-VS-TARGET scope (D161's / D254's "othersOnly"
+    pattern, R-GG1 ⚠️ UNRULED): a site whose attack is "not affected by any effects on" its target passes
+    that target, and only the term the target itself grants is dropped. A benched Garbodor still weakens a
+    Feint snipe aimed elsewhere; a Garbodor that IS the pick does not. */
+export function opposingToolAttackDebuff(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  exceptHolder?: InPlayPokemon,
+): number {
+  const uid = topUid(pokemon);
+  if (uid === undefined || pokemon.tools.length === 0) return 0;
+  for (const seat of SEATS) {
+    const side = state.players[seat];
+    if (side.active === null || topUid(side.active) !== uid) continue;
+    const other = state.players[otherSeat(seat)];
+    const holders = other.active === null ? other.bench : [other.active, ...other.bench];
+    let amount = 0;
+    for (const holder of holders) {
+      const top = topCardOf(state, holder);
+      const term = top === undefined ? undefined : programFor(top.id)?.passive?.opponentActiveToolAttackDebuff;
+      const holderUid = topUid(holder);
+      if (term === undefined || holderUid === undefined || disabledAbilityUids(state).has(holderUid)) continue; // §9
+      if (exceptHolder !== undefined && topUid(exceptHolder) === holderUid) continue; // R-GG1
+      amount += term;
+    }
+    return amount;
+  }
+  return 0;
+}
+
 /** §8.5 (D159, widened D254 and D256) — is `pokemon` a BENCHED body shielded from
     all attack damage by one of its OWN side's Pokémon? THREE printed sentences
     now, and the pair that arrived first is the whole reason this function has a
@@ -5100,6 +5137,63 @@ export function benchShieldedFromDamage(
   scope: BenchShieldScope,
 ): boolean {
   return benchShieldScan(state, pokemon, "damage", scope);
+}
+
+/** 🆕🆕🆕 §8.5 (D631) — Bastiodon "Ancient Bulwark" (`preventSeatDamageWhileBenchedFromEnergyAtMost`): is
+    `pokemon` shielded from this attack's damage by a BENCHED holder on its own side, because the attacking
+    body has at most the printed number of Energy cards attached (`countAttachedEnergy(…, null)`, counted at
+    damage time — R-AB1 ⚠️ UNRULED)? "your opponent's Pokémon" is the seat test (`attackerSeat` must be the
+    other side). The holder shields itself too ("each of your Pokémon"), except under `"othersOnly"` (a
+    Feint snipe on the holder, D254's scope). An unresolvable attacker is not shielded against. §9 per
+    source. */
+export function seatShieldedFromLowEnergyAttacker(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  attackerBody: InPlayPokemon | undefined,
+  attackerSeat: Seat,
+  scope: BenchShieldScope,
+): boolean {
+  const uid = topUid(pokemon);
+  if (attackerBody === undefined || uid === undefined) return false;
+  const seat = seatOfPokemon(state, pokemon);
+  if (seat === undefined || seat === attackerSeat) return false;
+  const energy = countAttachedEnergy(state, attackerBody, null);
+  for (const holder of state.players[seat].bench) {
+    const holderUid = topUid(holder);
+    if (holderUid === undefined || (scope === "othersOnly" && holderUid === uid)) continue;
+    const top = topCardOf(state, holder);
+    const ceiling = top === undefined ? undefined : programFor(top.id)?.passive?.preventSeatDamageWhileBenchedFromEnergyAtMost;
+    if (ceiling === undefined || energy > ceiling) continue;
+    if (disabledAbilityUids(state).has(holderUid)) continue; // §9
+    return true;
+  }
+  return false;
+}
+
+/** 🆕🆕🆕 §8 (D631) — Yveltal "Life-Locked" (`opponentActiveCantBeHealed`): is `pokemon` its side's Active
+    while the OTHER side has such a holder in play (any spot), not §9-locked? Asked by every heal site in
+    interpreter.ts before it heals; a locked heal heals 0 and files no `HEALED`. Moving damage counters is not
+    a heal (R-LL1 ⚠️ UNRULED): the two counter movers do not ask. */
+export function healLocked(state: GameState, pokemon: InPlayPokemon): boolean {
+  const uid = topUid(pokemon);
+  if (uid === undefined) return false;
+  for (const seat of SEATS) {
+    const active = state.players[seat].active;
+    if (active === null || topUid(active) !== uid) continue;
+    const other = state.players[otherSeat(seat)];
+    const holders = other.active === null ? other.bench : [other.active, ...other.bench];
+    return holders.some((holder) => {
+      const top = topCardOf(state, holder);
+      const holderUid = topUid(holder);
+      return (
+        top !== undefined &&
+        holderUid !== undefined &&
+        programFor(top.id)?.passive?.opponentActiveCantBeHealed === true &&
+        !disabledAbilityUids(state).has(holderUid)
+      );
+    });
+  }
+  return false;
 }
 
 /** §11 (D254) — is `pokemon` a BENCHED body whose own side refuses attack EFFECTS
@@ -6327,6 +6421,34 @@ export function selfAttackCostDiscount(state: GameState, pokemon: InPlayPokemon)
   return tools;
 }
 
+/** 🆕🆕🆕 §8.5 (D631) — Kingambit "Supreme Overlord" (`damageBonusBeforeWRPerOpponentPrize`): the
+    pre-W/R bonus `pokemon`'s top card prints, times the Prizes its owner's opponent has taken
+    (`takenPrizes`, `selfAttackCostDiscount`'s count). The seat is derived from the body; §9-suppressible.
+    Summed by interpreter.ts `attackerPreWRBonus`. */
+export function selfPreWRBonusPerOpponentPrize(state: GameState, pokemon: InPlayPokemon): number {
+  const top = topCardOf(state, pokemon);
+  const uid = topUid(pokemon);
+  if (top === undefined || uid === undefined) return 0;
+  const rate = programFor(top.id)?.passive?.damageBonusBeforeWRPerOpponentPrize;
+  if (rate === undefined || disabledAbilityUids(state).has(uid)) return 0; // §9
+  const seat = seatOfPokemon(state, pokemon);
+  return seat === undefined ? 0 : rate * takenPrizes(state, otherSeat(seat));
+}
+
+/** 🆕🆕🆕 §8.2 (D631) — Decidueye ex "Sniper's Eye" (`ignoreColorlessCostIfOpponentHandExactly`): does
+    `pokemon`'s top card ignore every {C} in its attack costs right now — its owner's opponent holding
+    exactly the printed number of cards? The seat is derived from the body; §9-suppressible. Read by
+    `effectiveAttackCost`. */
+export function selfIgnoresColorlessCost(state: GameState, pokemon: InPlayPokemon): boolean {
+  const top = topCardOf(state, pokemon);
+  const uid = topUid(pokemon);
+  if (top === undefined || uid === undefined) return false;
+  const exactly = programFor(top.id)?.passive?.ignoreColorlessCostIfOpponentHandExactly;
+  if (exactly === undefined || disabledAbilityUids(state).has(uid)) return false; // §9
+  const seat = seatOfPokemon(state, pokemon);
+  return seat !== undefined && state.players[otherSeat(seat)].hand.length === exactly;
+}
+
 /** 🆕🆕🆕 §8.2 (D558) — the {C} SUBTRACTED from `pokemon`'s attacks by its ATTACHED
     TOOLS' `attackCostDiscount` (Counter Gain `sv08-169`/`-249`, the cost half of
     Hop's Choice Band `sv09-148`). Summed over `pokemon.tools` (🆕🆕🆕 D562: over
@@ -6515,7 +6637,9 @@ function namedInDiscard(state: GameState, seat: Seat, name: string): number {
     "ITSELF when the net delta is zero" is now conditional — with a Crystal on a Tera
     holder the any-type removal returns a MODIFIED array even when the {C} net delta is
     zero. The identity still holds on every board without one, which is the common board
-    the sentence is about.) */
+    the sentence is about.) (🆕🆕🆕 D631 (D539): "on every board without one" is narrowed too — a live
+    Sniper's Eye returns `cost.filter`'s FRESH array at any net, 0 included; the identity holds on a
+    board with neither.) */
 export function effectiveAttackCost(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -6537,9 +6661,12 @@ export function effectiveAttackCost(
   // 🆕🆕🆕 D568 — Sparkling Crystal's ANY-TYPE Energy, applied LAST, on the {C}-adjusted
   // array, against the holder's attached Energy (`anyTypeCostRemoval`). Zero on every
   // board without a Crystal on a Tera body, which then returns `colorlessNetCost`'s own
-  // answer — the printed array ITSELF when `net` is 0, as before.
+  // answer — the printed array ITSELF when `net` is 0, as before (🆕🆕🆕 D631: unless Sniper's Eye is live).
   const anyType = toolAnyTypeCostDiscount(state, pokemon);
-  const colorlessAdjusted = colorlessNetCost(cost, net);
+  // 🆕🆕🆕 D631 — Sniper's Eye: every {C} goes, a surcharge's included (R-SNE1 ⚠️ UNRULED).
+  const colorlessAdjusted = selfIgnoresColorlessCost(state, pokemon)
+    ? cost.filter((symbol) => symbol !== "Colorless")
+    : colorlessNetCost(cost, net);
   return anyType === 0
     ? colorlessAdjusted
     : anyTypeCostRemoval(colorlessAdjusted, providedEnergy(state, pokemon), anyType);

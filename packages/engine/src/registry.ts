@@ -985,6 +985,13 @@ export interface PassiveEffects {
       interpreter.ts snipeActive) via the shared `conditionHolds` — the only
       sites that know the attacker's seat, which a BoardCondition is relative to. */
   damageBonusBeforeWRIf?: { amount: number; cond: BoardCondition };
+  /** 🆕🆕🆕 §8.5 (D631) — Kingambit `me02.5-148` "Supreme Overlord": *"Attacks used by this Pokémon do 30
+      more damage to your opponent's Active Pokémon for each Prize card your opponent has taken (before
+      applying Weakness and Resistance)."* A per-Prize rate, `attackCostDiscountPerOpponentPrize`'s count
+      (`takenPrizes` on the holder's opponent) on the damage step. Read by a scan (continuous.ts
+      `selfPreWRBonusPerOpponentPrize`, the seat derived from the body) inside `attackerPreWRBonus`, so the
+      two pre-W/R sites (the main hit and `snipeActive`) add it; §9-suppressible. */
+  damageBonusBeforeWRPerOpponentPrize?: number;
   /** Like `damageBonusBeforeWR`, but applied ONLY when the DEFENDER (the
       opponent's Active being hit) is a Pokémon of a given rule-box suffix
       (Choice Belt — "…do 30 more damage to your opponent's Active Pokémon V
@@ -1797,6 +1804,15 @@ export interface PassiveEffects {
       shield it does not print. An Ability, so a §9 lock (Watchtower on a {C} body, Klefki on a
       Basic) switches it off through the fold's `disabled` drop. */
   preventDamageWhileBenched?: true;
+  /** 🆕🆕🆕 §8.5 (D631) — Bastiodon `mep-085` / `me05-062` / `-093` "Ancient Bulwark": *"As long as this
+      Pokémon is on your Bench, prevent all damage done to each of your Pokémon by attacks from your
+      opponent's Pokémon that have 2 or less Energy attached."* The number is the printed ceiling on the
+      ATTACKER's attached Energy CARDS (`countAttachedEnergy(…, null)`, D128's reading), counted when the
+      damage is done (R-AB1 ⚠️ UNRULED). A SIDE shield, so it is read by a scan (continuous.ts
+      `seatShieldedFromLowEnergyAttacker`), not folded by `passivesOf`: the holder must be on its owner's
+      Bench, the shielded body is any of that side's Pokémon (the holder included) and the attacker is the
+      other side's. Read at the four §8.5 damage sites; §9 per source. */
+  preventSeatDamageWhileBenchedFromEnergyAtMost?: number;
   /** §8.5 continuous holder-modifying PREVENTION, GATED ON THE ATTACKER'S PRINTED
       RULE-BOX CLASS — the SIXTH member of the prevent family and the first whose
       gate is PARAMETERISED since D159's type list. TWO Standard-legal sentences,
@@ -2041,6 +2057,12 @@ export interface PassiveEffects {
       dropped, an attached Tool's is kept, and an attached ENERGY's is kept (D174 —
       an Energy is not an Ability). */
   statusImmunities?: StatusName[];
+  /** 🆕🆕🆕 §8 (D631) — Yveltal `30th-100` "Life-Locked": *"Your opponent's Active Pokémon can't be
+      healed."* No spot clause, so a holder anywhere in play locks the opponent's Active. Read by
+      continuous.ts `healLocked` at every heal site in interpreter.ts (`healEach`, `healEachAll`,
+      `healSubject`'s Active arm, `healSelf`, `healChosen`): a locked heal heals 0 and files nothing. Moving damage
+      counters off the body is not a heal (R-LL1 ⚠️ UNRULED). §9 per source. */
+  opponentActiveCantBeHealed?: true;
   /** §12 RECOVERY (D174): the printed Special Conditions this body is CLEARED of
       while this effect is live — Therapeutic Energy sv02-193's first clause, "The
       Pokémon this card is attached to RECOVERS FROM BEING Asleep, Confused, or
@@ -2793,6 +2815,14 @@ export interface PassiveEffects {
       an attack INSTALLATION that no Ability-lock can reach. Same sentence, same
       step, two sources: the read sites SUM them. */
   opponentActiveAttackDebuff?: number;
+  /** 🆕🆕🆕 §8.5 (D631) — Garbodor `me04-057` "Gloomy Garbage": *"Attacks used by your opponent's Active
+      Pokémon that has a Pokémon Tool attached do 20 less damage (before applying Weakness and Resistance)."*
+      The field above's step and sign with no source spot clause (a holder anywhere in play counts) and a
+      Tool clause on the ATTACKER (`tools.length > 0`, the D369 read: an attached Tool under Jamming Tower
+      is still attached). Its own scan (continuous.ts `opposingToolAttackDebuff`), added beside
+      `opposingAttackDebuff` at the same four sites; one term per holder, §9 per source. Where the attack is "not
+      affected by any effects on" its target, only a holder that IS the target loses its term (R-GG1 ⚠️ UNRULED). */
+  opponentActiveToolAttackDebuff?: number;
   /** §8.2 continuous OPPONENT-side aura: while BOTH this Pokémon and the attacker
       are in the Active Spot, every attack the OPPOSING side's Active Pokémon uses
       costs this many {C} MORE (Seismitoad sv03-052 "Quaking Zone" — "As long as
@@ -2914,6 +2944,12 @@ export interface PassiveEffects {
       Bench discounts nothing, which is the arm that separates this field from a
       count of "Pokémon in play". */
   attackCostDiscountPerOpponentBenched?: number;
+  /** 🆕🆕🆕 §8.2 (D631) — Decidueye ex `me03-012` / `-100` "Sniper's Eye": *"If your opponent has exactly 4
+      cards in their hand, ignore all {C} Energy in the costs of attacks used by this Pokémon."* The number is
+      the printed hand size, read on the holder's opponent (the seat derived from the body). When it holds,
+      `effectiveAttackCost` drops every Colorless symbol, a surcharge's included (R-SNE1 ⚠️ UNRULED);
+      §9-suppressible (continuous.ts `selfIgnoresColorlessCost`). */
+  ignoreColorlessCostIfOpponentHandExactly?: number;
   /** 🆕🆕🆕 §8.2 (D558) — the ATTACHED TOOL's {C} discount on its holder's attacks:
       Counter Gain `sv08-169`/`-249` (*"If you have more Prize cards remaining than
       your opponent, attacks used by the Pokémon this card is attached to cost {C}
@@ -18693,6 +18729,50 @@ const IRON_DEFENDER: CardProgram = {
   trainer: [{ op: "installSideDamageReductionNextTurn", amount: 30, pokemonType: "Metal" }],
 };
 
+// ── 🆕🆕🆕 D631 — P1, THE REST OF THE PASSIVE MODIFIERS: six NEW objects on 9 printings (`me` + `30th`), one
+//    per printed Ability. Five new `PassiveEffects` fields and one `BoardCondition` member; nothing is
+//    persisted (`MATCH_RECORD_VERSION` stays 44). Texts off the LOCAL D1 (2026-10-10, `legal_standard = 1`).
+//    `passiveRestMeD631.test.ts` plays each. ──
+
+/** 🆕🆕🆕 **D631 — Bastiodon `mep-085` / `me05-062` / `-093` "Ancient Bulwark"** (the field's doc block). */
+const ANCIENT_BULWARK: CardProgram = { passive: { preventSeatDamageWhileBenchedFromEnergyAtMost: 2 } };
+
+/** 🆕🆕🆕 **D631 — Decidueye ex `me03-012` / `-100` "Sniper's Eye"**: exactly 4 cards in the opponent's hand. */
+const SNIPERS_EYE: CardProgram = { passive: { ignoreColorlessCostIfOpponentHandExactly: 4 } };
+
+/** 🆕🆕🆕 **D631 — Kingambit `me02.5-148` "Supreme Overlord"**: 30 per Prize the opponent has taken. */
+const SUPREME_OVERLORD: CardProgram = { passive: { damageBonusBeforeWRPerOpponentPrize: 30 } };
+
+/** 🆕🆕🆕 **D631 — Garbodor `me04-057` "Gloomy Garbage"**: 20 off a Tool-carrying opposing Active's attacks. */
+const GLOOMY_GARBAGE: CardProgram = { passive: { opponentActiveToolAttackDebuff: 20 } };
+
+/** 🆕🆕🆕 **D631 — Yveltal `30th-100` "Life-Locked"**: the opponent's Active can't be healed. */
+const LIFE_LOCKED: CardProgram = { passive: { opponentActiveCantBeHealed: true } };
+
+/** 🆕🆕🆕 **D631 — Snorlax `30th-119` "Good Sleep"**: *"If this Pokémon remains Asleep during Pokémon Checkup,
+    heal all damage from this Pokémon."* `TOXIC_SUBJUGATION`'s shape (`betweenTurns`, `activeOnly`, a
+    `conditionGate`) on the NEW `yourActiveAsleep`, over the shipped `heal` at `"all"`. The Checkup triggers
+    run after the Asleep flip (flow.ts), so "remains Asleep" is "still Asleep when the trigger runs" (R-GS1
+    ⚠️ UNRULED). Like Toxic Subjugation it files `ABILITY_TRIGGERED` at every Checkup while Active, the gate
+    true or not (D556 R6). Mandatory, no downside. Its attack "Collapse" stays reader-built. */
+const GOOD_SLEEP: CardProgram = {
+  triggered: [
+    {
+      name: "Good Sleep",
+      trigger: "betweenTurns",
+      activeOnly: true,
+      program: [
+        {
+          op: "conditionGate",
+          cond: { kind: "yourActiveAsleep" },
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [{ op: "heal", target: "self", amount: "all" }],
+        },
+      ],
+    },
+  ],
+};
+
 // ── 🆕🆕🆕 D608 — WP30: TWO `30th` ATTACK OBJECTS, KEYED BY ID. Text off the LOCAL D1; both printed
 //    tcgdex's `<em>` markup (WP06), so no reader claimed them. `snipeSpreadMeD608.test.ts`.
 //    🆕🆕🆕 D612 — ONE now: the normaliser (cardText.ts) strips the `<em>`. Stealthy Slash's text is
@@ -20279,6 +20359,16 @@ const REGISTRY: Record<string, CardProgram> = {
   // 🆕🆕🆕 D630 — M1, the persisted-record bundle: 2 keys / 1 object, MID-MAP (`raw[last]` does not move).
   "me01-118": IRON_DEFENDER, // Iron Defender — opponent's next turn: your {M} Pokémon take 30 less (after W/R); stacks
   "me05-110": IRON_DEFENDER, // Iron Defender
+  // 🆕🆕🆕 D631 — P1, the rest of the passive modifiers: 9 keys / 6 objects, MID-MAP (`raw[last]` does not move).
+  "mep-085": ANCIENT_BULWARK, // Bastiodon — on your Bench: no damage to your Pokémon from attackers with 2 or less Energy
+  "me05-062": ANCIENT_BULWARK, // Bastiodon
+  "me05-093": ANCIENT_BULWARK, // Bastiodon
+  "me03-012": SNIPERS_EYE, // Decidueye ex — opponent's hand exactly 4: ignore all {C} in this Pokémon's attack costs
+  "me03-100": SNIPERS_EYE, // Decidueye ex
+  "me02.5-148": SUPREME_OVERLORD, // Kingambit — +30 before W/R per Prize the opponent has taken
+  "me04-057": GLOOMY_GARBAGE, // Garbodor — the opponent's Tool-carrying Active's attacks do 20 less before W/R
+  "30th-100": LIFE_LOCKED, // Yveltal — the opponent's Active can't be healed
+  "30th-119": GOOD_SLEEP, // Snorlax — Checkup, still Asleep: heal all damage from it
   // 🆕🆕🆕 D608 — WP30: 5 `30th` ATTACK-only keys / 2 objects, MID-MAP (`raw[last]` does not move).
   // 🆕🆕🆕 D612 — 3 now: Stealthy Slash ×2 RETIRED (the normalised text is `mep-099`'s, reader-built).
   "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex
