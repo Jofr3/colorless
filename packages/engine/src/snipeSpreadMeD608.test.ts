@@ -617,6 +617,6 @@ describe("D608 §7 — Stealthy Slash and Photon Bullets on a board", () => {
 
 describe("D608 §8 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.515.0");
+    expect(engineVersion).toBe("0.516.0");
   });
 });

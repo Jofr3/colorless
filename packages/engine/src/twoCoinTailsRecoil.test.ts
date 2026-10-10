@@ -724,7 +724,7 @@ const RAW: Record<string, string> = (
 describe("D521 §4 — the version steps, the heading is written, and what stands still", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.515.0");
+    expect(engineVersion).toBe("0.516.0");
     expect(manifest.version).toBe(engineVersion);
   });
 
@@ -743,7 +743,8 @@ describe("D521 §4 — the version steps, the heading is written, and what stand
     // raw producer count of the two ops reads CODE — one new site each.
     // 🆕🆕🆕 D595 — 21 → 22: arm 46b's one `coinFlipGate` producer (the WP13 coin gates). Stepped off the red run.
     expect(effects.split('op: "coinFlipGate",').length - 1).toBe(22);
-    expect(effects.split('op: "damageSelf",').length - 1).toBe(6);
+    // 🆕🆕🆕 D633 — 6 → 7: arm 10e's Voltaic Fist confirm.
+    expect(effects.split('op: "damageSelf",').length - 1).toBe(7);
   });
 
   it("🛑 `MATCH_RECORD_VERSION` HOLDS at 30: zero new serialized bytes, `damageSelf` never parks, the gate is spliced", () => {

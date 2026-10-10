@@ -30151,7 +30151,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   keys the two "[R]" `mep` Inferno X [🆕🆕🆕 D612: RETIRED — WP06].
 - **No new op, field or persisted member.** The `sv` reader output is byte-identical.
 - **Dropped and named:** Mega Eelektross ex "Disaster Shock" ×3 [🆕🆕🆕 D608: BUILT — WP30], Slowpoke "All-You-Can-Yeet", Team Rocket's Honchkrow
-  "Rocket Feathers", Pawmot "Voltaic Fist".
+  "Rocket Feathers", Pawmot "Voltaic Fist". [🆕🆕🆕 D633 (D539): all three BUILT at D633 (O1).]
 - **Reading R-IX1 (UNRULED).** tcgdex's "[R]" on the two `mep` Inferno X is read as {R}. [🆕🆕🆕 D612: RESOLVED — the WP06 normaliser writes and reads it as {R}; `INFERNO_X` retired.]
 - **Suite.** `discardScaledMeD597.test.ts` (22): readings, near misses, each attack on a board (offers, ceilings, filters,
   decline, the kept base, the mill count). +29 mutant rows.
@@ -30246,6 +30246,26 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Suite.** `activatedMeD602.test.ts` (22) and a census D602 block (3). +21 mutant rows.
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D633 — O1: attack odds and ends (engine 0.516.0, `MATCH_RECORD_VERSION` stays 44)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D632 (`3a27f924`), NOT committed. 5 texts / 7 printings (`me` + `30th`), all
+reader rows (effects.ts arm 10e).
+
+- **All-You-Can-Yeet** (Slowpoke `me05-029`) and **Rocket Feathers** (Team Rocket's Honchkrow `me02.5-127`): D617's uncapped declinable
+  `payFromHand` (`cap: "any"`); Rocket Feathers filters `supporterNameContaining` "Team Rocket" and scales `damageDefender` by `discarded`.
+  The "You may" is the declinable pick (0 is an answer).
+- **Weaponized Swords** (Doublade ×3): the NEW `revealFromHand` op parks `chooseCards` with the NEW `dest: "reveal"` (min 0, every match;
+  an empty match asks nothing), emits the NEW `HAND_CARDS_REVEALED` (a named log row; nothing moves) and files `revealed` for
+  `damageDefender`. Both HUD verb records gain "Reveal"; the wire enum widens (deploy the client first).
+- **Voltaic Fist** (Pawmot `me02-034`): one `optional` over `damageSelf` 60 + Paralysis (the D590 rule: the self-damage is a downside).
+- **Elemental Blast** (Lugia `30th-121`): three count-1 typed discards; the NEW optional `discardEnergy.reserve` names the types still owed,
+  and interpreter.ts `reservedDiscards` keeps only the picks that leave the most of them fillable, so Legacy Energy cannot fill {R} and
+  dodge {L} (R-EB1 ⚠️ UNRULED).
+- **Dropped.** Overwriting Bolt `30th-040`: *"(Apply Weakness as ×2.)"* gives a Weakness to a body that prints none, which D552's
+  amount-keeping retype cannot carry; it needs a persisted field (an MRV bump, L1's).
+- **Suite.** `attackOddsMeD633.test.ts` (20) and a census D633 block (1). +21 mutant rows, all KILLED; `D552-recordslot-drops-the-hand-attach`
+  re-pointed. Census: attacks **2,740 / 2,771**, 1200 `me` printings fully built. Sweep PENDING.
 
 ## D632 — D1: Damp (engine 0.515.0, `MATCH_RECORD_VERSION` stays 44)
 
@@ -30408,7 +30428,7 @@ registry objects.
 - **Send Flowers.** `attachFromDeck` of any Energy card onto 1 Benched {G} body, then the shuffle.
 - **Chirp.** `searchDeck` over the NEW `CardFilter` member `pokemonWithResistance` (the printed Resistance type, D371's read).
 - **Dropped and named.** Elemental Blast (a matched multi-type discard), Pleasing Present (an opponent-answered attach), Skill Thief ×2
-  (a whole-board copy source plus a hand gate).
+  (a whole-board copy source plus a hand gate). [🆕🆕🆕 D633 (D539): Elemental Blast BUILT at D633 (O1).]
 - **MRV stays 43.** Additions only; the two parked shapes are never re-read by their apply (`eachAttachTopUp`, the `each` apply, does read `max`, but `"opponentEnergyInPlay"` is never set beside `each`) (match.ts "STAYS 43 AT D624").
 - **Suite.** `deckHandMiscMeD624.test.ts` (22) and a census D624 block (2). +21 mutant rows; seven D568 / D569 rows re-pointed onto
   the resolved `max`. Census: attacks **2,709 / 2,771**, 1125 `me` printings fully built. Sweep PENDING.
@@ -30423,7 +30443,7 @@ registry objects.
 - **Pika Chain.** The body-map key "Pikachu and Pikachu ex" on the shipped `pokemonInPlay` fold (14 keys / 36 nouns).
 - **Riptide.** One anchor, two readers over one filter: the `cardsInDiscardPile` fold and D538's `discardPileRetrieval` +
   `shuffleDeck` tail. The count is taken before the shuffle.
-- **Dropped and named.** Doublade ×3 (own-hand partial reveal) and Okidogi (Prizes taken last turn, an MRV bump). [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
+- **Dropped and named.** Doublade ×3 (own-hand partial reveal) and Okidogi (Prizes taken last turn, an MRV bump). [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).] [🆕🆕🆕 D633 (D539): Doublade ×3 BUILT at D633 (O1).]
 - **MRV stays 43.** Fold-only members, a non-parking tail, no `cardPool` face change (match.ts "STAYS 43 AT D623").
 - **Suite.** `scalingCountsMeD623.test.ts` (12) and a census D623 block (2). +19 mutant rows. Sweep PENDING.
 
@@ -30574,6 +30594,7 @@ registry objects.
   your deck for a card" attack derivations still shuffle on a zero pick, unchanged.
 - **Dropped (WP31c).** Elemental Blast needs a matched multi-type discard (Legacy Energy fills any slot); Send Flowers a deck
   attach of any Energy; Chirp a Resistance filter; Tail Generator, Hand Trim, Select a Snack, Pleasing Present, Skill Thief.
+  [🆕🆕🆕 D633 (D539): Elemental Blast BUILT at D633 (O1, `discardEnergy.reserve`).]
   [🆕🆕🆕 D624 (D539): Tail Generator, Hand Trim, Select a Snack, Send Flowers and Chirp are BUILT at D624.]
 - **Suite.** `deckHandMiscMeD616.test.ts` (31) and a census D616 block (2). +32 mutant rows, all killed; two D540 rows
   re-pointed onto the narrowed set. D539: `devolveChosen`'s FIELD-FREE claims annotated; D615 §1, census D613 and `discardShuffleBack.test.ts`'s producer counts stepped.
@@ -30750,7 +30771,7 @@ registry objects.
   (`energyOnOpponent` active) and the comma-joined reveal with an "Energy card" hand noun. No op, prompt, key or event.
 - **8 texts / 14 `me` printings.** Delphox ×2, Bronzong, Sylveon ex ×3, Beedrill ex ×2, Paldean Tauros, Raticate ×2,
   Tinkaton, Beautifly ×2 — all fully built. `sv` reader output byte-identical.
-- **Left for WP28b.** Doublade ×3, Kyogre, Igglybuff, Pikachu `30th-034` (WP06 markup), Armarouge ×2, Gourgeist ex ×2, Okidogi. [🆕🆕🆕 D623 (D539): five are BUILT at D623 — Kyogre, Igglybuff, Pikachu `30th-034`, Armarouge ×2, Gourgeist ex ×2; Doublade ×3 and Okidogi are dropped and named there]
+- **Left for WP28b.** Doublade ×3, Kyogre, Igglybuff, Pikachu `30th-034` (WP06 markup), Armarouge ×2, Gourgeist ex ×2, Okidogi. [🆕🆕🆕 D633 (D539): Doublade ×3 BUILT at D633 (O1).] [🆕🆕🆕 D623 (D539): five are BUILT at D623 — Kyogre, Igglybuff, Pikachu `30th-034`, Armarouge ×2, Gourgeist ex ×2; Doublade ×3 and Okidogi are dropped and named there]
 - **Readings.** None new.
 - **Suite.** `scalingCountsMeD607.test.ts` (14) and a census D607 block (2). +15 mutant rows; four rows re-pointed.
 - **Census.** Standard pool attacks **2,614 / 2,771**; 949 `me` printings fully built.

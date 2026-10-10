@@ -1876,6 +1876,9 @@ const CHOOSE_CARDS_VERB: Record<
   // 🆕🆕🆕 D580 — Mr. Mime "Look-Alike Show"'s "You may use the effect of a Supporter card you find
   // there" (an up-to pick of the OPPONENT's card, which moves nowhere — "Take" would promise a move).
   use: { mandatory: "Use", upTo: "Use" },
+  // 🆕🆕🆕 D633 — Doublade "Weaponized Swords"'s "Reveal any number of … from your hand" (an up-to pick of
+  // the controller's OWN cards, which stay in the hand — "Take" would promise a move).
+  reveal: { mandatory: "Reveal", upTo: "Reveal" },
 };
 
 function ChooseCardsDialog({

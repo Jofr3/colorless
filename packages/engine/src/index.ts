@@ -20271,6 +20271,16 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.515.0 → **0.516.0** (D633 — O1: ATTACK ODDS AND ENDS, 5 TEXTS / 7 PRINTINGS (`me` + `30th`);
+    `MATCH_RECORD_VERSION` STAYS 44 (apps/api match.ts "STAYS 44 AT D633")). effects.ts arm 10e: All-You-Can-Yeet
+    (`me05-029`) and Rocket Feathers (`me02.5-127`) on D617's uncapped declinable `payFromHand` (the second on
+    `supporterNameContaining`, then `damageDefender` per discarded card); Weaponized Swords (Doublade ×3) on the NEW
+    `revealFromHand` op (a `chooseCards` park with the NEW `dest: "reveal"`, the NEW `HAND_CARDS_REVEALED` event; nothing
+    moves) and `damageDefender` per revealed card; Voltaic Fist (`me02-034`) as one `optional` over `damageSelf` +
+    `applyStatus` (the D590 confirm); Elemental Blast (`30th-121`) as three count-1 typed discards on the NEW optional
+    `discardEnergy.reserve` (interpreter.ts `reservedDiscards`: a multi-type Energy cannot fill one slot and dodge a
+    later one). Overwriting Bolt `30th-040` dropped and named (it gives a Weakness; the persisted record needs a field,
+    an MRV bump). `attackOddsMeD633.test.ts`.)
     🆕🆕🆕 engineVersion 0.514.0 → **0.515.0** (D632 — D1: DAMP, 2 TEXTS / 5 `me` PRINTINGS; `MATCH_RECORD_VERSION`
     STAYS 44 (apps/api match.ts "STAYS 44 AT D632")). registry.ts: two NEW objects, one per printed wording
     (`DAMP_KNOCK_OUT_ITSELF` for `me02.5-039` / `-040` / `-226`, `DAMP_REQUIRE_KNOCKED_OUT` for `mep-007` / `-008`,
@@ -20362,7 +20372,8 @@ import type { GameState, Seat } from "./types";
     value `"opponentEnergyInPlay"`), Hand Trim (`randomFromOpponentHand` with the NEW `untilHandSize`), Select a
     Snack ×2 (Explorer's Guidance's `lookAtTopN` program, revealed, R-SAS1 UNRULED), Send Flowers
     (`attachFromDeck` `anyEnergy` onto a Benched {G} body) and Chirp (`searchDeck` over the NEW `CardFilter`
-    member `pokemonWithResistance`). Dropped and named: Lugia "Elemental Blast" (a matched multi-type discard),
+    member `pokemonWithResistance`). Dropped and named: Lugia "Elemental Blast" (a matched multi-type discard)
+    [🆕🆕🆕 D633 (D539): BUILT at D633 on `discardEnergy.reserve`],
     Delibird "Pleasing Present" (an opponent-chosen attach) and Thievul "Skill Thief" ×2 (a hand-gated copy over
     the opponent's whole board). `deckHandMiscMeD624.test.ts`.)
     🆕🆕🆕 engineVersion 0.505.0 → **0.506.0** (D623 — WP28b: THE REST OF THE SCALING COUNT SOURCES, 5 TEXTS /
@@ -20373,7 +20384,7 @@ import type { GameState, Seat } from "./types";
     "Pikachu and Pikachu ex" (Pikachu `30th-034` "Pika Chain"); Kyogre "Riptide" read by two readers on one
     anchor — the `cardsInDiscardPile` fold and the shipped `discardPileRetrieval` + `shuffleDeck` tail. Dropped and
     named: Doublade ×3 (an own-hand partial reveal) and Okidogi (a per-turn Prize record, an MRV bump) [🆕🆕🆕
-    D630 (D539): Okidogi BUILT at D630]. `scalingCountsMeD623.test.ts`.)
+    D630 (D539): Okidogi BUILT at D630] [🆕🆕🆕 D633 (D539): Doublade ×3 BUILT at D633]. `scalingCountsMeD623.test.ts`.)
     🆕🆕🆕 engineVersion 0.504.0 → **0.505.0** (D622 — FIX-UP: R-AM2 RETIRED, THE BARE W/R TAIL IS W/R ONLY;
     `MATCH_RECORD_VERSION` STAYS 43 (apps/api match.ts "STAYS 43 AT D622")). effects.ts: the NEW optional
     `damageChosen.wrOnly`, set beside `ignoreWR` by the three bare-tail readers (`CHOSEN_ANY_TARGET` without the
@@ -25673,7 +25684,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.515.0";
+export const engineVersion = "0.516.0";
 
 export type {
   ApplyResult,

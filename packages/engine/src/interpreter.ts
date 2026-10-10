@@ -483,8 +483,12 @@ export type EffectPrompt =
           it stays in their hand, and only its EFFECT is used (R-LA1) — so no zone's verb is true
           of it, and `"name"`'s "Name" would describe the wrong act. A union widening (D125),
           `"name"`'s precedent; the wire enum (`packages/schema` redacted.ts) widens with it, so
-          DEPLOY THE CLIENT FIRST. */
-      dest: "bench" | "hand" | "deck" | "deckBottom" | "deckTop" | "discard" | "evolve" | "attach" | "swap" | "name" | "use";
+          DEPLOY THE CLIENT FIRST.
+
+          🆕🆕🆕 **D633 — `"reveal"` IS THE TWELFTH MEMBER** (Doublade "Weaponized Swords",
+          `revealFromHand`): the controller's OWN picked cards are shown and stay in the hand. A union
+          widening; the wire enum widens with it, so DEPLOY THE CLIENT FIRST. */
+      dest: "bench" | "hand" | "deck" | "deckBottom" | "deckTop" | "discard" | "evolve" | "attach" | "swap" | "name" | "use" | "reveal";
       /** 🆕 **D332 — PER-KIND CAPS OVER THE SAME CANDIDATE LIST**, the printed
           *"you may reveal **a Pokémon and a Trainer card**"* (Drayton, the sole
           consumer today through `lookAtTopN.also`). Each entry caps how many of
@@ -1446,7 +1450,9 @@ function recordSlotOf(op: EffectOp): EffectSlot | undefined {
     // `withConsequence` appends nothing either way — the payoff is the attack's own hit,
     // D402/D403's captioning — but a future "If you do," consequent must not lose its
     // clause to a missing enrolment.
-    op.op === "attachFromHand"
+    op.op === "attachFromHand" ||
+    // 🆕🆕🆕 D633 — `revealFromHand` (Weaponized Swords) files `revealed`; enrolled for D206's reason.
+    op.op === "revealFromHand"
     ? op.recordAs
     : // 🆕🆕🆕 D579 — `putCountersOnSelfChosen` is the TENTH recorder and the first whose slot is
       // FIXED rather than an op field: Walking Wake prints "for each damage counter you placed
@@ -4530,7 +4536,12 @@ function stepOp(
         if (!bodies.some((ref) => refKeyOf(ref) === refKeyOf(entry.from))) bodies.push(entry.from);
       }
       const allowed = new Set(unshieldedRefs(state, bodies, ctx, events).map(refKeyOf));
-      const discardable = allDiscardable.filter((entry) => allowed.has(refKeyOf(entry.from)));
+      const unreserved = allDiscardable.filter((entry) => allowed.has(refKeyOf(entry.from)));
+      // 🆕🆕🆕 D633 — Elemental Blast's `reserve`: keep only the picks that leave the most later slots fillable.
+      const discardable =
+        op.from === "opponentEach" || op.reserve === undefined
+          ? unreserved
+          : reservedDiscards(state, ctx.seat, op.from, unreserved, op.reserve);
       if (discardable.length === 0) {
         // A whiff still FILES an empty record, so a downstream reader (Hail
         // Blade's damageDefender) counts 0 rather than a stale slot — the same
@@ -4699,6 +4710,19 @@ function stepOp(
     // 🆕🆕🆕 D567 — Bother-Bot's switch: reads the two RECORDED uids, never parks.
     case "swapTurnedPrizeWithRevealed":
       return { done: swapTurnedPrizeWithRevealed(state, ctx, events, record) };
+    case "revealFromHand": {
+      // 🆕🆕🆕 D633 — Weaponized Swords: 0..every match, so any non-empty offer parks (D489's rule:
+      // revealing one card and revealing none are two damage numbers). No collapse: the count is the
+      // answer. An empty offer files `[]` and asks nothing.
+      const candidates = state.players[ctx.seat].hand.filter((uid) => matchesFilter(cardOf(state, uid), op.filter));
+      if (candidates.length === 0) {
+        recordMoved(record, op.recordAs, []);
+        return { done: state };
+      }
+      return {
+        park: { kind: "chooseCards", candidates, min: 0, max: candidates.length, dest: "reveal", note: op.note },
+      };
+    }
     case "payFromHand": {
       // Pay the printed hand cost — to the DISCARD (Ultra Ball / Earthen Vessel /
       // Tinkaton / Revavroom / Meowscarada ex / Radiant Blastoise) or to the
@@ -8505,6 +8529,18 @@ export function applyChoice(
           },
         },
       };
+    }
+    case "revealFromHand": {
+      // 🆕🆕🆕 D633 — `validateChoice` has checked the answer against the PROMPT (membership, count); what is
+      // revealed is what is still in the hand, once each. Nothing moves.
+      const hand = new Set(state.players[ctx.seat].hand);
+      const revealed: string[] = [];
+      for (const uid of choice.kind === "cards" ? choice.uids : []) {
+        if (hand.has(uid) && !revealed.includes(uid)) revealed.push(uid);
+      }
+      if (revealed.length > 0) events.push({ type: "HAND_CARDS_REVEALED", seat: ctx.seat, uids: revealed });
+      recordMoved(record, op.recordAs, revealed);
+      return state;
     }
     case "payFromHand": {
       if (choice.kind !== "cards") return state;
@@ -19796,6 +19832,41 @@ export function discardableEnergies(
     const host = refPokemon(state, entry.from);
     return host !== undefined && topUid(host) === narrowTo;
   });
+}
+
+/** 🆕🆕🆕 D633 — `discardEnergy.reserve` (Lugia "Elemental Blast"): of the typed `offered` picks, the
+    ones whose removal leaves the MOST of `reserve` matchable, one Energy per type, by the rest of the
+    Energy on the op's own scope (any filter). A full matching keeps every pick that preserves it; a
+    board with none keeps the picks that lose the least ("as much as you can"). */
+function reservedDiscards(
+  state: GameState,
+  seat: Seat,
+  from: Exclude<Extract<EffectOp, { op: "discardEnergy" }>["from"], "opponentEach">,
+  offered: readonly { uid: string; from: PokemonRef }[],
+  reserve: readonly BasicEnergyType[],
+): { uid: string; from: PokemonRef }[] {
+  const pool = discardableEnergies(state, seat, { op: "discardEnergy", from, filter: { kind: "anyEnergy" } });
+  const provides = (entry: { uid: string; from: PokemonRef }, energyType: BasicEnergyType): boolean => {
+    const host = refPokemon(state, entry.from);
+    return host !== undefined && matchesAttached(state, host, entry.uid, { kind: "providesEnergy", energyType });
+  };
+  // The largest number of `types` one-to-one matchable by `rest` (a tiny exhaustive search: <= 2 types).
+  const matched = (types: readonly BasicEnergyType[], rest: readonly { uid: string; from: PokemonRef }[]): number => {
+    const [head, ...tail] = types;
+    if (head === undefined) return 0;
+    let best = matched(tail, rest);
+    rest.forEach((entry, index) => {
+      if (!provides(entry, head)) return;
+      best = Math.max(best, 1 + matched(tail, rest.filter((_, other) => other !== index)));
+    });
+    return best;
+  };
+  const scored = offered.map((entry) => ({
+    entry,
+    score: matched(reserve, pool.filter((other) => other.uid !== entry.uid)),
+  }));
+  const top = Math.max(...scored.map((s) => s.score));
+  return scored.filter((s) => s.score === top).map((s) => s.entry);
 }
 
 /** What a card IS, for the purpose of "would taking this one rather than that

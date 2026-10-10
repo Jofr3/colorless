@@ -154,6 +154,8 @@ describe("🛑 OnlineHud chooseCards — the MANDATORY deck pick D542 made reach
       ["evolve", "Evolve"],
       // 🆕🆕🆕 D580 — Look-Alike Show's `use` (its only producer parks `min: 0`; the cell is filled anyway).
       ["use", "Use"],
+      // 🆕🆕🆕 D633 — Weaponized Swords' `reveal` (its only producer parks `min: 0`; the cell is filled anyway).
+      ["reveal", "Reveal"],
     ];
     for (const [dest, verb] of cells) {
       cleanup();
@@ -190,6 +192,8 @@ describe("🛑 OnlineHud chooseCards — the MANDATORY deck pick D542 made reach
       ["evolve", "Evolve"],
       // 🆕🆕🆕 D580 — Look-Alike Show's "You may use the effect of a Supporter card…" (the live cell).
       ["use", "Use"],
+      // 🆕🆕🆕 D633 — Weaponized Swords' "Reveal any number of … from your hand" (the live cell).
+      ["reveal", "Reveal"],
     ];
     for (const [dest, verb] of cells) {
       cleanup();

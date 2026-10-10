@@ -36,7 +36,8 @@ import {
 //   Send Flowers       — `attachFromDeck` `anyEnergy` onto 1 Benched {G} body, then the shuffle.
 //   Chirp              — `searchDeck` over the NEW `CardFilter` member `pokemonWithResistance`, revealed.
 //
-// Dropped and named (§1): Elemental Blast, Pleasing Present and Skill Thief ×2.
+// Dropped and named (§1): Elemental Blast, Pleasing Present and Skill Thief ×2. [🆕🆕🆕 D633 (D539): Elemental Blast
+// BUILT at D633 (O1, `discardEnergy.reserve`).]
 
 const TAIL_GENERATOR =
   "Choose Basic {L} Energy cards from your discard pile up to the amount of Energy attached to all of your opponent's Pokémon and attach them to your {L} Pokémon in any way you like.";
@@ -88,11 +89,12 @@ describe("D624 §1 — the texts", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(7);
   });
 
-  it("the dropped texts stay unbuilt: 3 texts / 4 printings, named", () => {
+  it("the dropped texts stay unbuilt: 3 texts / 4 printings, named (🆕🆕🆕 D633: Elemental Blast BUILT — O1; 2 / 3 stay)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, ids] of DROPPED) {
       expect([text, me.get(text)]).toEqual([text, ids.length]);
-      expect(resolvedByAnyReader(text), text).toBe(false);
+      // 🆕🆕🆕 D633 (D539): WITHDRAWN for Elemental Blast — the matched discard is `discardEnergy.reserve`.
+      expect(resolvedByAnyReader(text), text).toBe(ids[0] === "30th-121");
       for (const id of ids) expect(programFor(id)?.attack, id).toBeUndefined();
     }
     expect(DROPPED.flatMap(([, ids]) => ids)).toHaveLength(4);
@@ -528,6 +530,6 @@ describe("D624 §7 — Chirp: up to 2 Pokémon with {F} Resistance, revealed int
 
 describe("D624 §8 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.515.0");
+    expect(engineVersion).toBe("0.516.0");
   });
 });

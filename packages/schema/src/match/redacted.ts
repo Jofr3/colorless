@@ -734,6 +734,8 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     // 🆕🆕🆕 D580 — "use" (Mr. Mime "Look-Alike Show": the EFFECT of a Supporter in the
     // opponent's revealed hand is used; the card moves nowhere). A widening — a 0.463 client
     // refuses it, so DEPLOY THE CLIENT FIRST.
+    // 🆕🆕🆕 D633 — "reveal" (Doublade "Weaponized Swords": cards in the controller's own hand are
+    // REVEALED and stay there). A widening — a 0.515 client refuses it, so DEPLOY THE CLIENT FIRST.
     dest: z.enum([
       "bench",
       "hand",
@@ -746,6 +748,7 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
       "swap",
       "name",
       "use",
+      "reveal",
     ]),
     /** 🆕 D332 — PER-KIND CAPS over the same candidate list, the printed "a
         Pokémon **and** a Trainer card" (Drayton). `max` above stays the TOTAL;

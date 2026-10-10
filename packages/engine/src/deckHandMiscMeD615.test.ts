@@ -137,6 +137,8 @@ const BUILT_AT_D616: ReadonlySet<string> = new Set([
 
 /** 🆕🆕🆕 D624 — the first printing of each WP31_REST text WP31c builds. */
 const BUILT_AT_D624: ReadonlySet<string> = new Set(["me03-029", "me03-067", "30th-061", "me03-003", "me03-066"]);
+/** 🆕🆕🆕 D633 (D539) — O1 reads Elemental Blast (`attackOddsMeD633.test.ts`). */
+const BUILT_AT_D633: ReadonlySet<string> = new Set(["30th-121"]);
 
 describe("D615 §1 — the texts", () => {
   it("8 sentences / 13 printings, each a row of the committed `me` corpus, none printed in legal `sv`, each now read", () => {
@@ -151,13 +153,16 @@ describe("D615 §1 — the texts", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(13);
   });
 
-  it("WP31's rest stays unbuilt: 17 texts / 22 printings, named (🆕🆕🆕 D616: 9 of them / 11 printings are built — WP31b; 8 / 11 stay; 🆕🆕🆕 D624: 5 more / 7 — WP31c; 3 / 4 stay)", () => {
+  it("WP31's rest stays unbuilt: 17 texts / 22 printings, named (🆕🆕🆕 D616: 9 of them / 11 printings are built — WP31b; 8 / 11 stay; 🆕🆕🆕 D624: 5 more / 7 — WP31c; 3 / 4 stay; 🆕🆕🆕 D633: Elemental Blast too — O1; 2 / 3 stay)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, ids] of WP31_REST) {
       expect([text, me.get(text)]).toEqual([text, ids.length]);
       // 🆕🆕🆕 D616 (D539): WP31b reads nine of these (`deckHandMiscMeD616.test.ts`); the rest stay unbuilt.
       // 🆕🆕🆕 D624 (D539): and WP31c reads five more (`deckHandMiscMeD624.test.ts`).
-      expect(resolvedByAnyReader(text), text).toBe(BUILT_AT_D616.has(ids[0] ?? "") || BUILT_AT_D624.has(ids[0] ?? ""));
+      // 🆕🆕🆕 D633 (D539): and O1 reads Elemental Blast.
+      expect(resolvedByAnyReader(text), text).toBe(
+        BUILT_AT_D616.has(ids[0] ?? "") || BUILT_AT_D624.has(ids[0] ?? "") || BUILT_AT_D633.has(ids[0] ?? ""),
+      );
       for (const id of ids) expect(programFor(id)?.attack, id).toBeUndefined();
     }
     expect(WP31_REST.filter(([, ids]) => BUILT_AT_D616.has(ids[0] ?? "")).flatMap(([, ids]) => ids)).toHaveLength(11);
@@ -700,6 +705,6 @@ describe("D615 §9 — Cold Cyclone: a {W} Energy from this Pokémon to a Benche
 
 describe("D615 §10 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.515.0");
+    expect(engineVersion).toBe("0.516.0");
   });
 });

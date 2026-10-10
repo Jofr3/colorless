@@ -1086,7 +1086,9 @@ describe("D507 §8 — the FOUR-ZONE sibling is REFUSED, and the condition that 
     // `spreadDamage` untouched at 10.
     // 🆕🆕🆕 D620 — `damageDefender` 15 → 16: `bonusConsequentProgram`'s Huge Bite arm (`baseOverride`) is one
     // more raw site; `spreadDamage` untouched at 10.
-    expect(producers("damageDefender")).toBe(16);
+    // 🆕🆕🆕 D633 — `damageDefender` 16 → 18: arm 10e's Rocket Feathers and Weaponized Swords hits are two more
+    // raw sites; `spreadDamage` untouched at 10.
+    expect(producers("damageDefender")).toBe(18);
     expect(producers("spreadDamage")).toBe(10);
     expect(producers("damageDefender")).toBeGreaterThan(producers("spreadDamage") - 4);
   });

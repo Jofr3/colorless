@@ -30,7 +30,8 @@ import {
 // `30th-034`) and Kyogre "Riptide", one anchor read by the multiplier (the count) and by
 // `deriveAttackEffect` (the shipped retrieval + shuffle tail). Every id and text off the LOCAL D1,
 // 2026-10-09, `legal_standard = 1`; no id was referenced in the tree outside docs before this slice.
-// Dropped and named: Doublade ×3 and Okidogi (§1) [🆕🆕🆕 D630 (D539): Okidogi BUILT at D630 (M1)].
+// Dropped and named: Doublade ×3 and Okidogi (§1) [🆕🆕🆕 D630 (D539): Okidogi BUILT at D630 (M1)] [🆕🆕🆕 D633 (D539):
+// Doublade ×3 BUILT at D633 (O1)].
 
 const RONDO = "This attack does 50 more damage for each of your Benched Pokémon that has any damage counters on it.";
 const FLAME_LEGION = "This attack does 40 more damage for each of your Benched Pokémon that has any {R} Energy attached.";
@@ -50,7 +51,8 @@ const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
 
 /** Dropped from WP28b and named: each needs vocabulary beyond a count source. */
 const DROPPED: readonly (readonly [string, number])[] = [
-  // An own-hand pick that moves nothing plus a partial public reveal (a new op and event).
+  // An own-hand pick that moves nothing plus a partial public reveal (a new op and event). [🆕🆕🆕 D633 (D539):
+  // WITHDRAWN — built at D633 on that new op and event (`revealFromHand`, `HAND_CARDS_REVEALED`).]
   [
     "Reveal any number of Honedge, Doublade, and Aegislash from your hand, and this attack does 60 damage for each card you revealed in this way.",
     3,
@@ -72,12 +74,13 @@ describe("D623 §1 — the texts: 5 attack sentences / 7 printings", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(7);
   });
 
-  it("Doublade ×3 and Okidogi stay unbuilt: 2 texts / 4 printings, named (🆕🆕🆕 D630 (D539): WITHDRAWN for Okidogi — built at D630, `persistedRecordsMeD630.test.ts`)", () => {
+  it("Doublade ×3 and Okidogi stay unbuilt: 2 texts / 4 printings, named (🆕🆕🆕 D630 (D539): WITHDRAWN for Okidogi — built at D630, `persistedRecordsMeD630.test.ts`) (🆕🆕🆕 D633 (D539): WITHDRAWN for Doublade — built at D633, `attackOddsMeD633.test.ts`)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, n] of DROPPED) {
       expect([text, me.get(text)]).toEqual([text, n]);
       // 🆕🆕🆕 D630 — Settle the Score reads now (the persisted `PlayerSide.prizesTakenOnTurn`, MRV 43 → 44).
-      expect(resolvedByAnyReader(text), text).toBe(text.startsWith("This attack does 60 more damage"));
+      // 🆕🆕🆕 D633 — and Weaponized Swords reads (the new `revealFromHand`): both are built.
+      expect(resolvedByAnyReader(text), text).toBe(true);
     }
     expect(DROPPED.reduce((sum, [, n]) => sum + n, 0)).toBe(4);
   });
@@ -373,6 +376,6 @@ describe("D623 §4 — the two texts on shipped members, on a board", () => {
 
 describe("D623 §5 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.515.0");
+    expect(engineVersion).toBe("0.516.0");
   });
 });

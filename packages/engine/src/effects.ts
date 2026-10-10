@@ -11985,6 +11985,15 @@ export type EffectOp =
           narrows ONLY the ceiling: the pick is still 0..min(cap, matches) and
           still DECLINABLE, so a capped op parks identically to the uncapped one. */
       cap?: number;
+      /** 🆕🆕🆕 **D633 — THE TYPES A LATER DISCARD OF THE SAME SENTENCE STILL OWES** (Lugia `30th-121`
+          "Elemental Blast": *"Discard a {R} Energy, a {W} Energy, and a {L} Energy from this Pokémon."*).
+          Only beside a count-1 typed pick off the attacker. The offer keeps the candidates whose removal
+          leaves the most of `reserve` still matchable by the Energy left on the same side's offer scope,
+          so a multi-type Energy (Legacy Energy provides every type) cannot fill this slot and dodge a
+          later one (R-EB1 ⚠️ UNRULED: each printed slot takes a different Energy card; with no full
+          matching, as many slots as can be filled are). Absent: the plain pick. A 0.515 ROLLBACK resumes a
+          parked pick unchanged and runs a later op without the narrowing (the dodge is open again). */
+      reserve?: BasicEnergyType[];
     }
   /** The `opponentEach` sweep, split out so a NUMERIC count cannot ride it: "one
       from EACH" already fixes how many come off (one per Pokémon with a match),
@@ -13151,6 +13160,20 @@ export type EffectOp =
       /** 🆕🆕🆕 D611 — the swap is an exact one-card payment; unrepresentable here. */
       swapWithTop?: never;
     }
+  /** 🆕🆕🆕 **D633 — REVEAL ANY NUMBER OF MATCHING CARDS FROM YOUR OWN HAND; NOTHING MOVES.** Doublade
+      `mep-067`, `me03-057` / `-098` "Weaponized Swords": *"Reveal any number of Honedge, Doublade, and
+      Aegislash from your hand, and this attack does 60 damage for each card you revealed in this way."*
+      The controller picks 0..every match (a `chooseCards` park, `dest: "reveal"`, min 0, no collapse: the
+      count is the answer); the picked uids are shown to both players (`HAND_CARDS_REVEALED`) and filed
+      under `recordAs`, which `damageDefender.count` reads. An empty match files `[]` and asks nothing.
+      Not a cost: the floor is zero and the consequent is a multiple of the reveal (D489's reasoning).
+      `note` is the printed clause. A NEW member (D125); a 0.515 ROLLBACK has no `stepOp` arm for it. */
+  | {
+      op: "revealFromHand";
+      filter: CardFilter;
+      note: string;
+      recordAs: EffectSlot;
+    }
   /** REVEAL the opponent's hand, then the CONTROLLER chooses one card matching
       `filter` from it and puts it on the bottom of the OPPONENT's deck — the
       printed "Your opponent reveals their hand, and you choose a card you find
@@ -13375,7 +13398,7 @@ export type EffectOp =
       cards go back face-down the moment it is over), so a build that opened the
       hand in the projection would be lying about every later turn. The reveal is
       a LOG fact, and `log.ts`'s `HAND_REVEALED` row — the one hand row that names
-      cards — is the whole channel. So this op costs `redact.ts` ZERO, which is
+      cards [🆕🆕🆕 D633 (D539): one of two — `HAND_CARDS_REVEALED` names its cards too] — is the whole channel. So this op costs `redact.ts` ZERO, which is
       the opposite of what the backlog row predicted, and it is DRIVEN rather than
       argued (`opponentHandFamily.test.ts`).
 
@@ -25669,6 +25692,39 @@ const COMMA_DISCARD_SCALED_DAMAGE = new RegExp(
   `^Discard (?:(any amount) of|up to (\\d+)) (?:(Basic) )?(?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy(?: cards)? from (among your Pokémon|this Pokémon|your hand), and this attack does (\\d+) damage for each card you discarded in this way\\.$`,
 );
 
+// ── 🆕🆕🆕 D633 — O1: FIVE ATTACK SENTENCES — TWO SHIPPED PAYMENTS, A NEW REVEAL OP, A CONFIRM, A MATCHED DISCARD ──
+// Every text off the LOCAL D1, 2026-10-10, `legal_standard = 1`, one printing per sentence unless noted:
+//   Slowpoke `me05-029` "All-You-Can-Yeet" — *"You may discard any number of cards from your hand."*
+//   Team Rocket's Honchkrow `me02.5-127` "Rocket Feathers" — *"You may discard any number of Supporter cards
+//     that have "Team Rocket" in their name from your hand, and this attack does 60 damage for each card you
+//     discarded in this way."*
+//   Doublade `mep-067`, `me03-057` / `-098` "Weaponized Swords" (3 printings) — *"Reveal any number of Honedge,
+//     Doublade, and Aegislash from your hand, and this attack does 60 damage for each card you revealed in this way."*
+//   Pawmot `me02-034` "Voltaic Fist" — *"You may have this Pokémon also do 60 damage to itself and make your
+//     opponent's Active Pokémon Paralyzed."*
+//   Lugia `30th-121` "Elemental Blast" — *"Discard a {R} Energy, a {W} Energy, and a {L} Energy from this Pokémon."*
+// No sentence is printed in legal `sv`, and no anchor below claims an `sv` row (measured).
+//
+// HAND_DISCARD_ANY_NUMBER: D617's uncapped declinable `payFromHand` (`cap: "any"`) on the attack side. The
+// "You may" IS the declinable pick (0 is an answer), D597's Shooting Moons reading. Captures: [1] the
+// Team Rocket noun, [2] the per-card amount (absent: Slowpoke, no tail).
+const HAND_DISCARD_ANY_NUMBER =
+  /^You may discard any number of (?:cards|(Supporter) cards that have ["“]Team Rocket["”] in their name) from your hand(?:, and this attack does (\d+) damage for each card you discarded in this way)?\.$/;
+// HAND_REVEAL_NAMED_SCALED: the NEW `revealFromHand` (nothing moves; the revealed uids file `"revealed"`),
+// then D402's slot fold. Captures: [1] the printed name list ("A, B, and C"), [2] the per-card amount.
+const HAND_REVEAL_NAMED_SCALED =
+  /^Reveal any number of ((?:[A-Z][A-Za-z'’é-]*, )+and [A-Z][A-Za-z'’é-]*) from your hand, and this attack does (\d+) damage for each card you revealed in this way\.$/;
+// SELF_DAMAGE_AND_PARALYZE_OPTIONAL: one `optional` over `damageSelf` + `applyStatus` (the D590 rule: the
+// self-damage is a downside, so the "You may" is a confirm). The status word is the printed one only.
+const SELF_DAMAGE_AND_PARALYZE_OPTIONAL =
+  /^You may have this Pokémon also do (\d+) damage to itself and make your opponent['’]s Active Pokémon Paralyzed\.$/;
+// SELF_DISCARD_THREE_TYPED: three `discardEnergy` count-1 ops off the Active in printed order, each but the
+// last carrying `reserve` (the types still owed), so a multi-type Energy (Legacy Energy) cannot fill one slot
+// and dodge a later one. Captures: the three codes.
+const SELF_DISCARD_THREE_TYPED = new RegExp(
+  `^Discard a \\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} Energy, a \\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} Energy, and a \\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} Energy from this Pokémon\\.$`,
+);
+
 // ── D181: the TRAINER-PATH OPS, printed as ATTACK text. ─────────────────────
 //
 // Four families the engine has executed since M4 on the Trainer path and had no
@@ -31855,6 +31911,72 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           commaHit,
         ];
       }
+    }
+  }
+
+  // 10e. 🆕🆕🆕 D633 — O1: All-You-Can-Yeet / Rocket Feathers (the uncapped declinable hand discard),
+  //      Weaponized Swords (the NEW `revealFromHand`), Voltaic Fist (a confirm) and Elemental Blast (the
+  //      matched three-type discard). See the anchors' own block.
+  match = HAND_DISCARD_ANY_NUMBER.exec(effect);
+  if (match !== null) {
+    const pay: EffectOp = {
+      op: "payFromHand",
+      count: "any",
+      cap: "any",
+      to: "discard",
+      ...(match[1] === undefined ? {} : { filter: { kind: "supporterNameContaining", fragment: "Team Rocket" } }),
+      ...(match[2] === undefined ? {} : { recordAs: "discarded" }),
+    };
+    if (match[2] === undefined) return [pay];
+    const per = Number(match[2]);
+    if (per >= 1) return [pay, { op: "damageDefender", per, count: "discarded" }];
+  }
+  match = HAND_REVEAL_NAMED_SCALED.exec(effect);
+  if (match !== null) {
+    const names = (match[1] ?? "").split(/, (?:and )?/);
+    const per = Number(match[2]);
+    if (per >= 1 && names.length >= 2 && names.every((name) => name.length > 0)) {
+      return [
+        {
+          op: "revealFromHand",
+          filter: { kind: "anyOf", filters: names.map((name) => ({ kind: "byName", name })) },
+          note: `Reveal any number of ${match[1]} from your hand.`,
+          recordAs: "revealed",
+        },
+        { op: "damageDefender", per, count: "revealed" },
+      ];
+    }
+  }
+  match = SELF_DAMAGE_AND_PARALYZE_OPTIONAL.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    if (amount >= 1) {
+      return [
+        {
+          op: "optional",
+          note: effect,
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [
+            { op: "damageSelf", amount },
+            { op: "applyStatus", target: "defender", status: "paralyzed" },
+          ],
+        },
+      ];
+    }
+  }
+  match = SELF_DISCARD_THREE_TYPED.exec(effect);
+  if (match !== null) {
+    const types = [match[1], match[2], match[3]].map((code) => ENERGY_TYPE_BY_CODE[code ?? ""]);
+    const [first, second, third] = types;
+    if (first !== undefined && second !== undefined && third !== undefined) {
+      const typed = (energyType: BasicEnergyType, reserve: BasicEnergyType[]): EffectOp => ({
+        op: "discardEnergy",
+        from: "yourActive",
+        filter: { kind: "providesEnergy", energyType },
+        count: 1,
+        ...(reserve.length === 0 ? {} : { reserve }),
+      });
+      return [typed(first, [second, third]), typed(second, [third]), typed(third, [])];
     }
   }
 

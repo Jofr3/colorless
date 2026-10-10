@@ -1799,6 +1799,8 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       ]);
     }
     case "HAND_REVEALED": {
+      // 🆕🆕🆕 D633 (D539): "The ONE hand row" below is WITHDRAWN — `HAND_CARDS_REVEALED` (Weaponized Swords)
+      // names its cards too, for the same reason.
       // Ortega / Greavard "Underworld Stroll". The ONE hand row that is not
       // count-only, and deliberately: a reveal is the moment those cards stop
       // being hidden, so the module header's rule ("never name a card in a
@@ -1817,6 +1819,13 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(countedNames(event.uids.map((uid) => cardName(state, uid)))),
       ]);
     }
+    case "HAND_CARDS_REVEALED":
+      // 🆕🆕🆕 D633 — Doublade "Weaponized Swords": the picked cards are public now (HAND_REVEALED's
+      // reason), so they are named; they stay in the hand. Never emitted for an empty pick.
+      return row(event.seat, [
+        plain("revealed from their hand: "),
+        strong(countedNames(event.uids.map((uid) => cardName(state, uid)))),
+      ]);
     case "CARD_TO_BOTTOM_OF_DECK":
       // The chosen card going under its owner's deck (Ortega / Greavard). Named,
       // unlike HAND_COST_PAID's deckBottom row, because this move happened face

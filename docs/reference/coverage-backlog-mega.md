@@ -6,6 +6,24 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D633 update (engine 0.516.0) — O1, attack odds and ends (`MATCH_RECORD_VERSION` stays 44)
+
+5 texts / 7 printings (`attackOddsMeD633.test.ts`): Slowpoke "All-You-Can-Yeet" `me05-029` and Team Rocket's Honchkrow "Rocket
+Feathers" `me02.5-127` (D617's uncapped declinable hand discard), Doublade "Weaponized Swords" ×3 `mep-067`, `me03-057` / `-098` (the new
+`revealFromHand` op, `chooseCards` `dest: "reveal"`, the `HAND_CARDS_REVEALED` event), Pawmot "Voltaic Fist" `me02-034` (one confirm over
+the self-damage and the Paralysis) and Lugia "Elemental Blast" `30th-121` (three typed discards on the new `discardEnergy.reserve`,
+R-EB1 UNRULED). **Finished:** all 7. **Dropped and named:** Pikachu "Overwriting Bolt" `30th-040` — *"(Apply Weakness as ×2.)"* gives a
+Weakness to a body that prints none, which needs a new field on the persisted `weaknessRetype` (an MRV bump; it can ride L1's).
+
+| Column | `me` built / units (D633) | Standard pool D633 |
+|---|---|---|
+| Attacks | 1,008 / 1,039 (+7) | **2,740 / 2,771** |
+| Abilities | 215 / 234 | **591 / 610** |
+| Trainers | 170 / 183 | **434 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1200** (1193 + 7).
+
 ## 🆕 D632 update (engine 0.515.0) — D1, Damp (`MATCH_RECORD_VERSION` stays 44)
 
 2 texts / 5 printings (`dampD632.test.ts`): Psyduck `me02.5-039` / `-226` and Golduck `me02.5-040` ("lose any Ability that requires the
@@ -159,7 +177,7 @@ with the NEW `whose` / `pokemonType` / `depth`, the `turnPlayed` stamp, R-ST1). 
 (`attachFromDiscard` at the NEW `max: "opponentEnergyInPlay"`), Furfrou "Hand Trim" `me03-067` (`randomFromOpponentHand` with the NEW
 `untilHandSize`), Morpeko "Select a Snack" ×2 `30th-061` / `-135` (Explorer's Guidance's `lookAtTopN`, R-SAS1 UNRULED), Shaymin "Send
 Flowers" `me03-003` (`attachFromDeck` of any Energy onto a Benched {G} body) and Fletchling "Chirp" `me03-066` (the NEW `CardFilter`
-`pokemonWithResistance`). **Finished:** all 7. **Dropped and named:** Lugia "Elemental Blast" `30th-121` (a matched multi-type discard),
+`pokemonWithResistance`). **Finished:** all 7. **Dropped and named:** Lugia "Elemental Blast" `30th-121` (a matched multi-type discard) [🆕🆕🆕 D633 (D539): BUILT at D633 (O1)],
 Delibird "Pleasing Present" `me04-018` (an attach answered by the opponent first) and Thievul "Skill Thief" ×2 `me05-054` / `-092` (a
 whole-board copy source plus a hand gate). WP31 is closed but for those three.
 
@@ -180,6 +198,7 @@ Bench: Gourgeist ex `me04-041` / `-102` "Horrifying Rondo" (`damagedBenchedPokem
 "Pika Chain" on the body-map key "Pikachu and Pikachu ex"; Kyogre `me01-034` "Riptide" on two readers (the discard count and the
 retrieval + shuffle tail). **Finished:** all 7. **Dropped and named:** Doublade ×3 `mep-067`, `me03-057` / `-098` (an own-hand
 partial reveal) and Okidogi `me02.5-122` (Prizes taken last turn; an MRV bump). [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
+[🆕🆕🆕 D633 (D539): and Doublade ×3 BUILT at D633 (O1, the new `revealFromHand`).]
 
 | Column | `me` built / units (D623) | Standard pool D623 |
 |---|---|---|
@@ -315,7 +334,7 @@ Rotom "Roto Call" `me02.5-092` (`optional` over a name-fragment Bench search), D
 program), Celebi "Traverse Time" `me01-012` (`anyOf` search) and Eevee "Fetch and Hide" `30th-116` (`bottomFromOpponentHand`
 Item). **Finished:** all 11 cards. One new reading (UNRULED): R-RCL1, Roto Call's decline does not shuffle (`progress.md` NEXT).
 **Left for WP31c** (8 texts / 11 printings) [🆕🆕🆕 D624: 5 texts / 7 printings BUILT by WP31c, above — Tail Generator ×2, Hand Trim, Select a Snack ×2, Send Flowers, Chirp; Elemental Blast, Pleasing Present and Skill Thief ×2 dropped and named]: Dedenne "Tail Generator" ×2 `me03-029` / `-093` (a count-scaled discard attach),
-Lugia "Elemental Blast" `30th-121` (a matched multi-type discard), Furfrou "Hand Trim" `me03-067` (a random discard to a hand
+Lugia "Elemental Blast" `30th-121` (a matched multi-type discard) [🆕🆕🆕 D633: BUILT (O1)], Furfrou "Hand Trim" `me03-067` (a random discard to a hand
 size), Morpeko "Select a Snack" ×2 `30th-061` / `-135` (a mill with a pick), Delibird "Pleasing Present" `me04-018` (an attach
 for both players), Shaymin "Send Flowers" `me03-003` (a deck attach of any Energy), Fletchling "Chirp" `me03-066` (a Resistance
 filter) and Thievul "Skill Thief" ×2 `me05-054` / `-092` (a gated copy of an opponent's attack).
@@ -338,7 +357,7 @@ filter) and Thievul "Skill Thief" ×2 `me05-054` / `-092` (a gated copy of an op
 (`devolveEach.toHand`, NEW) and Cold Cyclone `me02.5-053` (typed `moveEnergy`). **Finished:** all 13 cards (Mega Delphox ex,
 Pikachu ex ×3, Mega Floette ex ×3 and Frosmoth among them). One new reading (UNRULED): R-GLT1, Gentle Light's heal is not
 refused by a §11 shield (`progress.md` NEXT). **Left for WP31b / WP31c** (17 texts / 22 printings; [🆕🆕🆕 D616: 9 texts / 11 printings BUILT by WP31b, above — 8 / 11 left for WP31c] [🆕🆕🆕 D624: 5 / 7 of those BUILT by WP31c; 3 / 4 stay]): Dedenne "Tail Generator" ×2
-`me03-029` / `-093`, Regice ex "Ice Prison" `me02.5-048`, Lugia "Elemental Blast" `30th-121`, Furfrou "Hand Trim" `me03-067`,
+`me03-029` / `-093`, Regice ex "Ice Prison" `me02.5-048`, Lugia "Elemental Blast" `30th-121` [🆕🆕🆕 D633: BUILT (O1)], Furfrou "Hand Trim" `me03-067`,
 Morpeko "Select a Snack" ×2, Delibird "Pleasing Present" `me04-018`, Meloetta "Soothing Melody" ×2, Claydol "Devolution Ray" ×2,
 Volcanion "Backfire" `me01-025`, Shaymin "Send Flowers" `me03-003`, Fletchling "Chirp" `me03-066`, Sudowoodo "Trials and
 Trip-ulations" `me04-043`, Celebi "Traverse Time" `me01-012`, Dialga "Reversed Clock" `30th-103`, Rotom "Roto Call"
@@ -385,7 +404,7 @@ cardText.ts `normalizeCardText` at ingest (map.ts) and at read (cards.ts `cardOf
 `swsh10.5` re-ingested, the `me` corpus regenerated (451 → 442 sentences). The 18 "markup only" texts / 21 `30th` printings below
 are BUILT on shipped readers (`cardTextD612.test.ts`, census D612 block). `INFERNO_X` and `STEALTHY_SLASH` retired (their clean text
 is reader-built; R-IX1 resolved); Photon Bullets ×3 stays keyed. Still unbuilt, now as clean text in their packages: Elemental Blast
-`30th-121`, Lightning Crash `30th-051` (WP30) [🆕🆕🆕 D629: BUILT], Charge-Up Dash `30th-042` (WP13), Overwriting Bolt `30th-040`, Pika Chain `30th-034`
+`30th-121` [🆕🆕🆕 D633: BUILT], Lightning Crash `30th-051` (WP30) [🆕🆕🆕 D629: BUILT], Charge-Up Dash `30th-042` (WP13), Overwriting Bolt `30th-040` [🆕🆕🆕 D633: still unbuilt — it gives a Weakness, an MRV bump (L1)], Pika Chain `30th-034`
 (WP28b) [🆕🆕🆕 D623: BUILT], Kaboom Needles `30th-104` (WP30) [🆕🆕🆕 D629: BUILT]. The data gap below ("43 `me` rows carry tcgdex HTML") is closed on the LOCAL D1; the
 remote D1 still needs the re-ingest, run with the D612 ingest code.
 
@@ -491,6 +510,7 @@ and Paldean Tauros "Raging Charge" (`pokemonInPlay`, new body-map keys), Raticat
 Beautifly ×2 "Energy Straw" (the comma-joined reveal, "Energy card" in the opponent's hand). **Finished:** all 14. **Left for
 WP28b** (7 texts / 11 printings) [🆕🆕🆕 D623 (D539): five are BUILT at D623 — Kyogre, Igglybuff, Pikachu `30th-034`, Armarouge ×2, Gourgeist ex ×2; Doublade ×3 and Okidogi are dropped and named there]: Doublade ×3, Kyogre `me01-034`, Igglybuff `30th-120`, Pikachu `30th-034` (WP06 markup), [🆕🆕🆕 D612: the markup is normalised; the sentence is still unread]
 Armarouge ×2, Gourgeist ex ×2, Okidogi `me02.5-122` — each tagged below. [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
+[🆕🆕🆕 D633 (D539): Doublade ×3 BUILT at D633 (O1).]
 
 | Column | `me` built / units (D607) | Standard pool D607 |
 |---|---|---|
@@ -663,7 +683,7 @@ keyed on `INFERNO_X` [🆕🆕🆕 D612: RETIRED — WP06 normalises the text]. 
 `me04-024`, Skarmory `me05-060`, Mawile `me03-032`. Mega Clefable ex ×4 still wait on "Luminous Wing". [🆕🆕🆕 D614: no longer — built at D614]
 **Still open in WP29 (named):** Mega Eelektross ex "Disaster Shock" ×3 (status payoff; Split Bomb is WP30) [🆕🆕🆕 D608: both BUILT — WP30], Slowpoke
 "All-You-Can-Yeet" `me05-029`, Team Rocket's Honchkrow "Rocket Feathers" `me02.5-127`, Pawmot "Voltaic Fist"
-`me02-034`.
+`me02-034`. [🆕🆕🆕 D633 (D539): all three BUILT at D633 (O1).]
 
 | Column | `me` built / units (D597) | Standard pool D597 |
 |---|---|---|
@@ -1102,7 +1122,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 4× Discard any amount of {R} Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way. [🆕🆕🆕 D597: BUILT]
 - 4× You may discard up to 4 Energy cards from your hand, and this attack does 40 more damage for each card you discarded in this way. [🆕🆕🆕 D597: BUILT]
 - 3× Discard up to 2 Energy cards from this Pokémon, and this attack does 120 damage for each card you discarded in this way. [🆕🆕🆕 D597: BUILT]
-- 3× Reveal any number of Honedge, Doublade, and Aegislash from your hand, and this attack does 60 damage for each card you revealed in this way. [🆕🆕🆕 D607: WP28b] [🆕🆕🆕 D623: dropped from WP28b — an own-hand pick that moves nothing plus a partial public reveal needs a new op and event]
+- 3× Reveal any number of Honedge, Doublade, and Aegislash from your hand, and this attack does 60 damage for each card you revealed in this way. [🆕🆕🆕 D607: WP28b] [🆕🆕🆕 D623: dropped from WP28b — an own-hand pick that moves nothing plus a partial public reveal needs a new op and event] [🆕🆕🆕 D633: BUILT (O1)]
 - 3× This attack does 50 damage for each type of Basic Energy attached to all of your Pokémon. [🆕🆕🆕 D607: BUILT]
 - 2× Discard any amount of [R] Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way. [🆕🆕🆕 D597: BUILT — keyed by id on `INFERNO_X`] [🆕🆕🆕 D612: the text is normalised to {R}, the key retired; reader-built]
 - 2× Discard the top 6 cards of your deck, and this attack does 100 damage for each Basic {W} Energy card that you discarded in this way. [🆕🆕🆕 D597: BUILT]
@@ -1122,7 +1142,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× This attack does 40 damage for each Pokémon Tool attached to all Pokémon. [🆕🆕🆕 D607: BUILT]
 - 1× This attack does 40 damage for each of your Pikachu and Pikachu &lt;em>ex&lt;/em> in play. [🆕🆕🆕 D607: WP28b] [🆕🆕🆕 D623: BUILT]
 - 1× This attack does 60 less damage for each Energy attached to your opponent's Active Pokémon. [🆕🆕🆕 D607: BUILT]
-- 1× You may discard any number of Supporter cards that have "Team Rocket" in their name from your hand, and this attack does 60 damage for each card you discarded in this way.
+- 1× You may discard any number of Supporter cards that have "Team Rocket" in their name from your hand, and this attack does 60 damage for each card you discarded in this way. [🆕🆕🆕 D633: BUILT (O1)]
 
 ### Conditional damage bonus / base change — 22 text(s) / 37 printing(s)
 
@@ -1214,14 +1234,14 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× Search your deck for up to 2 Pokémon with {F} Resistance, reveal them, and put them into your hand. Then, shuffle your deck.
 - 1× Search your deck for up to 2 Transformation Tome cards, reveal them, and put them into your hand. Then, shuffle your deck.
 - 1× Search your deck for up to 3 in any combination of {G} Pokémon and Stadium cards, reveal them, and put them into your hand. Then, shuffle your deck.
-- 1× You may discard any number of cards from your hand.
+- 1× You may discard any number of cards from your hand. [🆕🆕🆕 D633: BUILT (O1)]
 - 1× You may search your deck for any number of Pokémon that have "Rotom" in their name and put them onto your Bench. Then, shuffle your deck.
 - 1× Your opponent reveals their hand, and you put an Item card you find there on the bottom of your opponent's deck.
 
 ### Special Conditions — 2 text(s) / 2 printing(s)
 
 - 1× If your opponent's Active Pokémon isn't Confused, this attack does nothing. [🆕🆕🆕 D593: BUILT]
-- 1× You may have this Pokémon also do 60 damage to itself and make your opponent's Active Pokémon Paralyzed.
+- 1× You may have this Pokémon also do 60 damage to itself and make your opponent's Active Pokémon Paralyzed. [🆕🆕🆕 D633: BUILT (O1)]
 
 ### Other — 4 text(s) / 8 printing(s)
 

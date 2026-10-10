@@ -823,7 +823,7 @@ const RAW: Record<string, string> = (
 describe("D520 §8 — the version steps, and the heading is written", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.515.0");
+    expect(engineVersion).toBe("0.516.0");
     expect(manifest.version).toBe(engineVersion);
   });
 
@@ -875,7 +875,8 @@ describe("D520 §9 — no new op kind, the producer counts moved as stated, and 
     // `spreadDamage` untouched at 10.
     // 🆕🆕🆕 D620 — `damageDefender` 15 → 16: `bonusConsequentProgram`'s Huge Bite arm (`baseOverride`) is one
     // more raw site; `spreadDamage` untouched at 10.
-    expect(producers("damageDefender")).toBe(16);
+    // 🆕🆕🆕 D633 — `damageDefender` 16 → 18: arm 10e's Rocket Feathers and Weaponized Swords hits.
+    expect(producers("damageDefender")).toBe(18);
   });
 
   it("🛑 `MATCH_RECORD_VERSION` HOLDS at 30: zero new serialized bytes, no op parks, the gate is spliced", () => {

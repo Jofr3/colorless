@@ -1516,6 +1516,8 @@ const CHOOSE_CARDS_VERB: Record<
   name: { mandatory: "Name", upTo: "Name" },
   // 🆕🆕🆕 D580 — Mr. Mime "Look-Alike Show"'s "You may use the effect of a Supporter card…" (GameHud's cell).
   use: { mandatory: "Use", upTo: "Use" },
+  // 🆕🆕🆕 D633 — Doublade "Weaponized Swords"'s "Reveal any number of … from your hand" (GameHud's cell).
+  reveal: { mandatory: "Reveal", upTo: "Reveal" },
 };
 
 /** chooseCards (§15.E / §7.1 / §7.5) — pick min..max cards: a deck search, a

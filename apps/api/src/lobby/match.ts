@@ -2159,6 +2159,18 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 44 AT D633 — O1 ADDS ONE `EffectOp` (`revealFromHand`), ONE OPTIONAL `discardEnergy` KEY
+    (`reserve`), ONE `chooseCards.dest` VALUE (`"reveal"`) AND ONE EVENT (`HAND_CARDS_REVEALED`); NO PHASE, STAGE
+    SHAPE, SIDE KEY OR `InPlayPokemon` FIELD.** (Placed ABOVE the D632 block.) Every program is derived from the printed
+    text at the attack, so the 7 faces in a v44 `cardPool` (no face changes) read the new programs mid-match. What can be
+    persisted: a parked `revealFromHand` (`phase.cont.pendingOp`, its prompt a `chooseCards` with `dest: "reveal"`) and
+    an Elemental Blast `discardEnergy` carrying `reserve` (parked, or in `cont.rest`). Rollback readings, NAMED: a 0.515
+    reader has no `applyChoice` arm for `revealFromHand`, so the answer whiffs through the default arm and the slot reads
+    unfiled — Weaponized Swords deals 0 (D580 ⑴'s inert whiff, in the player's disfavour); a 0.515 reader ignores
+    `reserve`, so a later Elemental Blast pick is the plain typed pick. The event is not persisted (D141).
+    🛑 **DEPLOY THE CLIENT FIRST** (or both together): the wire `chooseCards.dest` `z.enum` gains `"reveal"`, which a
+    0.515 client refuses; both HUDs' `CHOOSE_CARDS_VERB` records gain the `reveal` cell ("Reveal").
+
     🆕🆕🆕 **STAYS 44 AT D632 — DAMP ADDS ONE OPTIONAL `disableAbilities` FIELD (`selfKnockOutAbility`) AND TWO
     REGISTRY OBJECTS; NO PROMPT, PHASE, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD OR EVENT.** (Placed ABOVE the
     D631 block.) The lock is re-derived from the board on every read (`disabledAbilityUids`) and keyed by id, so the

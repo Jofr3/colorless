@@ -2026,6 +2026,10 @@ export type GameEvent =
       HAND_DISCARDED "(0 cards)" precedent; reachable only via the attack twin,
       the Trainer path being gated on the public hand count). */
   | { type: "HAND_REVEALED"; seat: Seat; uids: string[] }
+  /** 🆕🆕🆕 D633 — `seat` REVEALED SOME of its hand: the `uids` it picked under a `revealFromHand`
+      (Doublade "Weaponized Swords"). Named, `HAND_REVEALED`'s reason: those cards are public now.
+      Nothing moves; the cards stay in the hand. Never emitted for an empty pick. */
+  | { type: "HAND_CARDS_REVEALED"; seat: Seat; uids: string[] }
   /** ONE card went from `seat`'s hand to the BOTTOM of `seat`'s own deck,
       chosen by `actor` — the other player (Ortega, Greavard: the reveal-and-
       bottom family; `actor` is the ENERGY_DISCARDED precedent). Names the uid
