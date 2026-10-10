@@ -6,6 +6,24 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D635 update (engine 0.518.0) — F1, the Antique archetype, its unpersisted half (`MATCH_RECORD_VERSION` stays 44)
+
+2 texts / 2 printings (`fossilQuarryD635.test.ts`): Fossil Quarry `me05-076` (a Stadium on the new `itemNameContaining`; only a fossil with
+an in-play face is benched, R-FQ1 UNRULED) and Relicanth "Fossil Beatdown" `me05-017` (the fifteenth `IN_PLAY_BODY_NOUNS` key).
+**Finished:** both. **Dropped and named:** Antique Jaw Fossil `me03-068`, Antique Sail Fossil `me03-069` and Antique Skull Fossil
+`me05-073` — a new fossil id in a stack owes MRV 44 → 45 (D576's twelfth position; they can ride L1's bump; Sail also needs a
+Supporter-only holder shield) — and Antique Armor Fossil `me05-072` (that, plus a source-Active rider). Fossil Quarry does not offer
+them until they are built.
+
+| Column | `me` built / units (D635) | Standard pool D635 |
+|---|---|---|
+| Attacks | 1,017 / 1,039 (+1) | **2,749 / 2,771** |
+| Abilities | 215 / 234 | **591 / 610** |
+| Trainers | 171 / 183 (+1) | **435 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1210** (1208 + 2).
+
 ## 🆕 D634 update (engine 0.517.0) — C1, the coin rest (`MATCH_RECORD_VERSION` stays 44)
 
 7 texts / 8 printings (`coinRestMeD634.test.ts`): Bewear "Hyper Lariat" `me01-112` (the new `bonusOnAllHeads`), Bombirdier
@@ -309,7 +327,7 @@ ex "Wicked Impact" `me02.5-162`, Espurr "Buddy Attack" `me04-036`, Hippowdon "Tw
 `me02.5-194` (Revavroom's discard-an-Energy cost, then `drawUntilHandSize` with the NEW `per` count of your {P} Pokémon in play;
 R-MYG1) and Forest of Vitality ×3 `me01-117`, `me02.5-188`, `me03-109` (the Stadium evolution permission,
 `StadiumEffects.sameTurnEvolution`, NEW; R-FOV1). **Finished:** all 8. **Dropped and named:** Dizzying Valley (Confusion kept
-through evolution), Fossil Quarry (Antique Items deck-to-Bench), Risky Ruins (a Stadium on-Bench trigger) and Ange Floette (a play
+through evolution), Fossil Quarry (Antique Items deck-to-Bench) [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky Ruins (a Stadium on-Bench trigger) and Ange Floette (a play
 gate on Prism Tower in play, a second Stadium the same turn, and a named HP bonus).
 
 | Column | `me` built / units (D618) | Standard pool D618 |
@@ -547,9 +565,9 @@ Stadium program `programPlayable` can refuse), Nighttime Mine (League HQ's {C} s
 `StadiumEffects.attackCostSurcharge`), Lumiose City ×2 and Celebratory Fanfare ×2 (the new turn-ending Stadium use,
 `StadiumAbility.endsTurn: "always" | "ifHealed"`; R-LC1, R-CF1). **Finished:** all 9. **Dropped and named:** Battle Cage ×2 (a
 Bench damage-counter shield — the brief's other new piece), Mystery Garden ×3 (a draw-until count source), Forest of Vitality ×3
-(a same-turn evolution rule), Dizzying Valley (Confusion kept through evolution), Fossil Quarry (Antique Items deck-to-Bench),
+(a same-turn evolution rule), Dizzying Valley (Confusion kept through evolution), Fossil Quarry (Antique Items deck-to-Bench) [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)],
 Risky Ruins (an on-Bench Stadium trigger). **Excluded by the brief:** Ange Floette. [🆕🆕🆕 D618: Battle Cage, Mystery Garden and
-Forest of Vitality BUILT by WP25b, above; Dizzying Valley, Fossil Quarry, Risky Ruins and Ange Floette dropped again.]
+Forest of Vitality BUILT by WP25b, above; Dizzying Valley, Fossil Quarry [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky Ruins and Ange Floette dropped again.]
 
 | Column | `me` built / units (D606) | Standard pool D606 |
 |---|---|---|
@@ -1157,7 +1175,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× Reveal the bottom 7 cards of your deck, and this attack does 50 damage for each Pokémon you find there that has the Bug Out attack. Then, shuffle any revealed Pokémon back into your deck. Discard the other cards.
 - 1× This attack does 20 damage for each Basic {W} Energy card in your discard pile. Then, shuffle those cards into your deck. [🆕🆕🆕 D607: WP28b] [🆕🆕🆕 D623: BUILT]
 - 1× This attack does 30 damage for each of your Benched Pokémon that has a maximum HP of 30. [🆕🆕🆕 D607: WP28b] [🆕🆕🆕 D623: BUILT]
-- 1× This attack does 30 more damage for each of your Benched Pokémon that has "Antique" in its name.
+- 1× This attack does 30 more damage for each of your Benched Pokémon that has "Antique" in its name. [🆕🆕🆕 D635: BUILT (F1)]
 - 1× This attack does 40 damage for each Pokémon Tool attached to all Pokémon. [🆕🆕🆕 D607: BUILT]
 - 1× This attack does 40 damage for each of your Pikachu and Pikachu &lt;em>ex&lt;/em> in play. [🆕🆕🆕 D607: WP28b] [🆕🆕🆕 D623: BUILT]
 - 1× This attack does 60 less damage for each Energy attached to your opponent's Active Pokémon. [🆕🆕🆕 D607: BUILT]
@@ -1435,16 +1453,16 @@ Search your deck for a Pokémon, reveal it, and put it into your hand. Then, shu
 
 ### Pokémon-faced Trainers (fossils, Core Memory) — 5 text(s) / 5 printing(s)
 
-- 1× **Antique Armor Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat.
+- 1× **Antique Armor Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat. [🆕🆕🆕 D635: dropped — a new fossil id in a stack owes MRV 44 → 45, plus a source-Active rider]
 
 At any time during your turn, you may discard this card from play.
-- 1× **Antique Jaw Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat.
+- 1× **Antique Jaw Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat. [🆕🆕🆕 D635: dropped — a new fossil id in a stack owes MRV 44 → 45]
 
 At any time during your turn, you may discard this card from play.
-- 1× **Antique Sail Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat.
+- 1× **Antique Sail Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat. [🆕🆕🆕 D635: dropped — a new fossil id in a stack owes MRV 44 → 45, plus a Supporter-only holder shield]
 
 At any time during your turn, you may discard this card from play.
-- 1× **Antique Skull Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat.
+- 1× **Antique Skull Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat. [🆕🆕🆕 D635: dropped — a new fossil id in a stack owes MRV 44 → 45]
 
 At any time during your turn, you may discard this card from play.
 - 1× **Core Memory** — The Mega Zygarde ex this card is attached to can use the attack on this card. (You still need the necessary Energy to use this attack.) [🆕🆕🆕 D620: BUILT]
@@ -1460,7 +1478,7 @@ Each Mega Floette ex in play (both yours and your opponent's) gets +150 HP. [�
 - 2× **Celebratory Fanfare** — Once during each player's turn, that player may heal 10 damage from each of their Pokémon. If a player healed any damage in this way, their turn ends. [🆕🆕🆕 D606: BUILT]
 - 1× **Dizzying Valley** — Confused Pokémon (both yours and your opponent's) don't recover from that Special Condition when they evolve or devolve. [🆕🆕🆕 D606: dropped — Confusion kept through evolution] [🆕🆕🆕 D618: dropped again]
 - 3× **Forest of Vitality** — Each player's {G} Pokémon can evolve into {G} Pokémon during the turn they play those Pokémon, except during their first turn. [🆕🆕🆕 D606: dropped — a same-turn evolution rule] [🆕🆕🆕 D618: BUILT]
-- 1× **Fossil Quarry** — Once during each player's turn, that player may search their deck for up to 2 Item cards that have "Antique" in their name and put them onto their Bench. Then, that player shuffles their deck. [🆕🆕🆕 D606: dropped — Antique Items deck-to-Bench] [🆕🆕🆕 D618: dropped again]
+- 1× **Fossil Quarry** — Once during each player's turn, that player may search their deck for up to 2 Item cards that have "Antique" in their name and put them onto their Bench. Then, that player shuffles their deck. [🆕🆕🆕 D606: dropped — Antique Items deck-to-Bench] [🆕🆕🆕 D618: dropped again] [🆕🆕🆕 D635: BUILT (F1)]
 - 2× **Lumiose City** — Once during each player's turn, that player may search their deck for a Basic Pokémon and put it onto their Bench. Then, that player shuffles their deck. If a player searches their deck in this way, their turn ends. [🆕🆕🆕 D606: BUILT]
 - 3× **Mystery Garden** — Once during each player's turn, that player may discard an Energy card from their hand in order to draw cards until they have as many cards in their hand as they have {P} Pokémon in play. [🆕🆕🆕 D606: dropped — a draw-until count source] [🆕🆕🆕 D618: BUILT]
 - 1× **Nighttime Mine** — Attacks used by each Tera Pokémon in play (both yours and your opponent's) cost {C} more. [🆕🆕🆕 D606: BUILT]

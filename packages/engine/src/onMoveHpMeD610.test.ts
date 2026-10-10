@@ -734,7 +734,7 @@ describe("D610 §9 — what WP37 leaves, and the version", () => {
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["attack", "triggered"]);
   });
 
-  it("is built at engine 0.517.0", () => {
-    expect(engineVersion).toBe("0.517.0");
+  it("is built at engine 0.518.0", () => {
+    expect(engineVersion).toBe("0.518.0");
   });
 });

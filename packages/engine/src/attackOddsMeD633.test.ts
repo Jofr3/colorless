@@ -450,7 +450,7 @@ describe("D633 §6 — Elemental Blast on a board (the matched discard, R-EB1)",
 });
 
 describe("D633 §7 — the version", () => {
-  it("is built at engine 0.517.0", () => {
-    expect(engineVersion).toBe("0.517.0");
+  it("is built at engine 0.518.0", () => {
+    expect(engineVersion).toBe("0.518.0");
   });
 });

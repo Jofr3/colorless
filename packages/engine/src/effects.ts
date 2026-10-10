@@ -654,6 +654,13 @@ export type CardFilter =
       reveals exactly the printed class) while attaching one may still refuse with
       `TRAINER_NOT_SIMULATED`. That is the Tools' debt, not this filter's. */
   | { kind: "toolNameContaining"; fragment: string }
+  /** 🆕🆕🆕 **D635 — AN ITEM CARD WHOSE PRINTED NAME CONTAINS `fragment`.** Fossil Quarry `me05-076`
+      (Stadium) — *"…search their deck for up to 2 Item cards that have "Antique" in their name and put
+      them onto their Bench."* `toolNameContaining`'s two conjuncts with the head noun swapped for
+      `item`'s (delegated through `matchesFilter`, D159) and the same unanchored, case-sensitive
+      `.includes`. The Bench half is `benchMatches`' (cards.ts): a Trainer goes onto the Bench only if
+      it has an in-play Pokémon face (`FOSSIL_IDS`), so an unbuilt Antique Item is never offered. */
+  | { kind: "itemNameContaining"; fragment: string }
   /** An ITEM Trainer card — the catalog's `trainerType: "Item"`, read exactly as
       `supporter` and `toolCard` read theirs one field over (D231).
 
@@ -19642,6 +19649,7 @@ const IN_PLAY_BODY_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
   // (below), makes it **10** exact keys and **32** nouns; it carries no apostrophe either.)
   // (🆕🆕🆕 D607 (D539): 13 exact keys / 35 nouns since WP28a's three keys, none with an apostrophe.)
   // (🆕🆕🆕 D623 (D539): 14 exact keys / 36 nouns since WP28b's key, none with an apostrophe.)
+  // (🆕🆕🆕 D635 (D539): 15 exact keys / 37 nouns since the Antique key, none with an apostrophe.)
   //
   // 🛑 **AND THE COUNT IS *NOT* DERIVED FROM `IN_PLAY_BODY_NOUNS.size` — D539 CHECKED THE
   // CLAIM THAT SAID IT WAS AND WITHDREW IT** (`inPlayBodyFilter`'s doc block below, and
@@ -19671,14 +19679,14 @@ const IN_PLAY_BODY_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
   // `CLAUSE_POKEMON_TYPES`: it is a banner, not a type) — which means the "Ancient Pokémon"
   // witness `inPlayBodyFilter`'s doc gives for "the map refuses, not the regex" is SPENT
   // (annotated there). The exact keys are now **10** and the vocabulary **32** (10 exact + 11
-  // `POKEMON_TYPES` names + 11 `{X}` codes). (🆕🆕🆕 D607 (D539): 13 exact keys / 35 nouns since WP28a's three keys, none with an apostrophe.) (🆕🆕🆕 D623 (D539): 14 / 36 since WP28b's key.) Like every key here it is the vocabulary of the
+  // `POKEMON_TYPES` names + 11 `{X}` codes). (🆕🆕🆕 D607 (D539): 13 exact keys / 35 nouns since WP28a's three keys, none with an apostrophe.) (🆕🆕🆕 D623 (D539): 14 / 36 since WP28b's key.) (🆕🆕🆕 D635 (D539): 15 / 37 since the Antique key.) Like every key here it is the vocabulary of the
   // sibling anchors too; the column prints "Ancient Pokémon" in no other sentence they reach
   // (measured over `legalAttackCorpus()` — the Benched Ancient heal/move are registry rows,
   // and Iron Moth's "attacks from Ancient Pokémon" is a different reader, still unbuilt).
   // (🆕🆕🆕 D575 (D539): ~~"still unbuilt"~~ — Iron Moth's sentence is BUILT at D575 by its OWN anchor,
   // `PREVENT_DAMAGE_FROM_ANCIENT`; it is still a different reader, so this key's vocabulary is unchanged)
   ["Ancient Pokémon", { kind: "bannerPokemon", banner: "Ancient" }],
-  // 🆕🆕🆕 D607 — WP28a: three more exact keys, so **13** exact keys and **35** nouns (13 + 11 + 11) [🆕🆕🆕 D623 (D539): 14 / 36 since WP28b's key];
+  // 🆕🆕🆕 D607 — WP28a: three more exact keys, so **13** exact keys and **35** nouns (13 + 11 + 11) [🆕🆕🆕 D623 (D539): 14 / 36 since WP28b's key] [🆕🆕🆕 D635 (D539): 15 / 37 since the Antique key];
   // none carries an apostrophe. A Drifloon-shaped name pair (Beedrill ex "Rumbling Bees" — "Beedrill
   // ex" is the printed card name), a bare card name (Raticate's "Benched Rattata", Charjabug's shape)
   // and a quoted name fragment (Paldean Tauros "Raging Charge", `pokemonNameContaining`).
@@ -19694,7 +19702,11 @@ const IN_PLAY_BODY_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
   ],
   ["Rattata", { kind: "byName", name: "Rattata" }],
   ['Pokémon that has "Tauros" in its name', { kind: "pokemonNameContaining", fragment: "Tauros" }],
-  // 🆕🆕🆕 D623 — WP28b: the fourteenth exact key, so **14** exact keys and **36** nouns; no apostrophe.
+  // 🆕🆕🆕 D635 — the fifteenth exact key, so **15** exact keys and **37** nouns; no apostrophe. Relicanth
+  // `me05-017` "Fossil Beatdown" (*"…for each of your Benched Pokémon that has "Antique" in its name."*) —
+  // the Tauros key's shape; a benched Antique Fossil is read through its in-play face (`inPlayCardOf`).
+  ['Pokémon that has "Antique" in its name', { kind: "pokemonNameContaining", fragment: "Antique" }],
+  // 🆕🆕🆕 D623 — WP28b: the fourteenth exact key, so **14** exact keys and **36** nouns; no apostrophe [🆕🆕🆕 D635 (D539): 15 / 37].
   // Pikachu `30th-034` "Pika Chain" — Beedrill's name-pair shape ("Pikachu ex" is the printed name).
   [
     "Pikachu and Pikachu ex",
@@ -19903,6 +19915,7 @@ const IN_PLAY_TYPED_NOUN = /^(.+) Pokémon$/;
     moved BY HAND to match, for the reason given below.)
     (🆕🆕🆕 D607 (D539): 13 exact keys / 35 nouns since WP28a's three keys, none with an apostrophe.)
     (🆕🆕🆕 D623 (D539): 14 exact keys / 36 nouns since WP28b's key, none with an apostrophe.)
+    (🆕🆕🆕 D635 (D539): 15 exact keys / 37 nouns since the Antique key, none with an apostrophe.)
     🆕 **D539 — `30 nouns / 8 exact keys` UNTIL NOW**, and it is RE-DERIVED at the new
     count rather than incremented on faith: the ninth exact key is
     *"Drifloon and Drifblim"* and it carries no apostrophe either. ⚠️ **The rung that

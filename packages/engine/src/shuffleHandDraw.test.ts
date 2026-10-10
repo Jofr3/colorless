@@ -618,6 +618,6 @@ describe("D479 §7 — what this slice did NOT buy, measured", () => {
     //   • REACHABILITY (D450) — the op NEVER PARKS, so no `phase.cont.pendingOp` or
     //     `rest` can hold it and no saved match can contain a shape an older deploy
     //     could not read. `interpreter.ts`'s case returns `{ done: … }` and nothing else.
-    expect(engineVersion).toBe("0.517.0");
+    expect(engineVersion).toBe("0.518.0");
   });
 });

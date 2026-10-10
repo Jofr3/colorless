@@ -751,7 +751,7 @@ describe("D560 §7 — `MATCH_RECORD_VERSION` HOLDS AT 35: the widened ops ride 
     expect([after.poisonDamage, after.burned]).toEqual([0, true]);
   });
 
-  it("the engine is 0.517.0", () => {
-    expect(engineVersion).toBe("0.517.0");
+  it("the engine is 0.518.0", () => {
+    expect(engineVersion).toBe("0.518.0");
   });
 });

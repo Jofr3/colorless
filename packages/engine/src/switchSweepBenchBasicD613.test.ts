@@ -333,13 +333,16 @@ describe("D613 §6 — the opponent's hand onto their Bench: Basic only", () => 
 
 describe("D613 §7 — the predicate, and the version", () => {
   const card = (id: string) => POOL[id] as Card;
-  it("`benchMatches`: a matching Basic yes, a matching Stage 1 no unless named, a non-match no, a matching non-Pokémon is the filter's business", () => {
+  it("`benchMatches`: a matching Basic yes, a matching Stage 1 no unless named, a non-match no, a matching non-Pokémon is the filter's business (🆕🆕🆕 D635 (D539): a Trainer only with an in-play face)", () => {
     const water: CardFilter = { kind: "typedPokemon", pokemonType: "Water" };
     expect(benchMatches(card(W_BASIC), water)).toBe(true);
     expect(benchMatches(card(W_STAGE1), water)).toBe(false);
     expect(benchMatches(card(N_BASIC), water)).toBe(false);
     expect(benchMatches(card(CHARJABUG), { kind: "byName", name: "Charjabug" })).toBe(true);
-    expect(benchMatches(card(TRAINER), { kind: "item" })).toBe(true);
+    // 🆕🆕🆕 D635 (D539): ~~true~~ — a Trainer goes onto the Bench only with an in-play Pokémon face
+    // (`FOSSIL_IDS`, Fossil Quarry); this Item has none. An Energy is still the filter's business.
+    expect(benchMatches(card(TRAINER), { kind: "item" })).toBe(false);
+    expect(benchMatches(card("fix-energy"), { kind: "anyEnergy" })).toBe(true);
     expect(benchMatches(undefined, { kind: "anyCard" })).toBe(false);
   });
 
@@ -353,7 +356,7 @@ describe("D613 §7 — the predicate, and the version", () => {
     expect(namesItsCard({ kind: "anyPokemon" })).toBe(false);
   });
 
-  it("is built at engine 0.517.0", () => {
-    expect(engineVersion).toBe("0.517.0");
+  it("is built at engine 0.518.0", () => {
+    expect(engineVersion).toBe("0.518.0");
   });
 });

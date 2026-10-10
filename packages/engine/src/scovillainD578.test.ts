@@ -214,8 +214,8 @@ function damageRow(events: readonly GameEvent[]): Extract<GameEvent, { type: "DA
 const SCOV_SPOT: Spot = { id: SCOVILLAIN, under: [CAPSAKID] };
 
 describe("D578 Scovillain §0 — the version", () => {
-  it("is built at engine 0.517.0", () => {
-    expect(engineVersion).toBe("0.517.0");
+  it("is built at engine 0.518.0", () => {
+    expect(engineVersion).toBe("0.518.0");
   });
 });
 
@@ -458,6 +458,7 @@ const ALLOWLIST: Record<string, string> = {
   "filter · cards.ts · matchesFilter · card · { kind: \"anyPokemon\" }": B,
   "filter · cards.ts · matchesFilter · card · { kind: \"supporter\" }": B,
   "filter · cards.ts · matchesFilter · card · { kind: \"toolCard\" }": B,
+  "filter · cards.ts · matchesFilter · card · { kind: \"item\" }": B, // 🆕🆕🆕 D635 — `itemNameContaining`'s head noun
   // 🆕🆕🆕 D619 — Sacred Charm / Thick Scale / Thick Fat: the four §8.5 callers pass the in-play attacker view.
   "filter · continuous.ts · attackerGatedReductionOf · attacker · reduction.attacker": `${E} — the four §8.5 callers pass the in-play attacker`,
   // 🆕🆕🆕 D620 — Core Memory's holder gate: its one producer is `byName` (Mega Zygarde ex), blind to type.

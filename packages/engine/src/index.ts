@@ -20271,6 +20271,15 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.517.0 → **0.518.0** (D635 — F1: THE ANTIQUE ARCHETYPE, ITS UNPERSISTED HALF, 2 TEXTS / 2
+    PRINTINGS; `MATCH_RECORD_VERSION` STAYS 44 (apps/api match.ts "STAYS 44 AT D635")). registry.ts: `FOSSIL_QUARRY`
+    (`me05-076`, Stadium — up to 2 Antique Items from the deck onto the Bench, then the shuffle; Lumiose City's program
+    without the turn end) on the NEW `CardFilter` member `itemNameContaining`; cards.ts `benchMatches` sends a Trainer
+    onto the Bench only with an in-play face (`FOSSIL_IDS`, R-IC1's reading); R-FQ1 UNRULED (benching is not an Item
+    play). effects.ts: the fifteenth `IN_PLAY_BODY_NOUNS` key, Relicanth `me05-017` "Fossil Beatdown" (+30 per benched
+    Pokémon with "Antique" in its name). Dropped and named: Antique Jaw / Sail / Skull Fossil `me03-068` / `-069` /
+    `me05-073` (each owes MRV 44 → 45 — D576's twelfth position) and Antique Armor Fossil `me05-072` (that, plus a
+    source-Active rider). `fossilQuarryD635.test.ts`.)
     🆕🆕🆕 engineVersion 0.516.0 → **0.517.0** (D634 — C1: THE COIN REST, 7 TEXTS / 8 PRINTINGS (`me` + `30th`);
     `MATCH_RECORD_VERSION` STAYS 44 (apps/api match.ts "STAYS 44 AT D634")). effects.ts: two NEW `AttackCoinFlip`
     members — `bonusOnAllHeads` (Hyper Lariat `me01-112`: the bonus only on all heads) and `deckUpToHeads`
@@ -20446,7 +20455,7 @@ import type { GameState, Seat } from "./types";
     `drawUntilHandSize` with the NEW `per` member, the actor's {P} Pokémon in play; R-MYG1) and Forest of
     Vitality ×3 (the NEW `StadiumEffects.sameTurnEvolution`, continuous.ts
     `stadiumLicensesSameTurnEvolve`, read at turn.ts `evolve`'s §10 ban only; R-FOV1). Dropped and named:
-    Dizzying Valley, Fossil Quarry, Risky Ruins, Ange Floette. `stadiumsMeD618.test.ts`.)
+    Dizzying Valley, Fossil Quarry [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky Ruins, Ange Floette. `stadiumsMeD618.test.ts`.)
     🆕🆕🆕 engineVersion 0.499.0 → **0.500.0** (D617 — WP24b: FIVE MORE `me` SUPPORTERS, 5 TEXTS / 11
     PRINTINGS; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D617")). registry.ts, five
     NEW objects: Pokémon Center Lady (`healChosen` 60 + the NEW `recoverHealed`: a picked Active also gets
@@ -20574,7 +20583,7 @@ import type { GameState, Seat } from "./types";
     `stadiumFilteredCostSurcharge` in `effectiveAttackCost`'s Stadium term), Lumiose City ×2 and
     Celebratory Fanfare ×2 (the NEW `StadiumAbility.endsTurn: "always" | "ifHealed"`, cardplay.ts
     `stadiumUseEndsTurn` → `settleProgram`'s shipped `endsTurn`; R-LC1, R-CF1). Dropped: Battle Cage,
-    Mystery Garden, Forest of Vitality, Dizzying Valley, Fossil Quarry, Risky Ruins [🆕🆕🆕 D618 (D539): the
+    Mystery Garden, Forest of Vitality, Dizzying Valley, Fossil Quarry [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky Ruins [🆕🆕🆕 D618 (D539): the
     first three BUILT at D618]. `stadiumsMeD606.test.ts`.)
     🆕🆕🆕 engineVersion 0.487.0 → **0.488.0** (D605 — WP34: COIN (THE REST); `MATCH_RECORD_VERSION`
     STAYS 42 (apps/api match.ts "STAYS 42 AT D605")). effects.ts: two NEW `damageChosen` riders —
@@ -25694,7 +25703,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.517.0";
+export const engineVersion = "0.518.0";
 
 export type {
   ApplyResult,

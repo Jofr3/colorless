@@ -2159,6 +2159,18 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 44 AT D635 — F1 ADDS ONE `CardFilter` MEMBER (`itemNameContaining`), ONE `IN_PLAY_BODY_NOUNS` KEY AND
+    ONE STADIUM PROGRAM (Fossil Quarry `me05-076`); NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY OR `InPlayPokemon`
+    FIELD.** (Placed ABOVE the D634 block.) What can be persisted: a parked Fossil Quarry `searchDeck` whose filter is
+    the new member (its prompt a shipped `chooseCards`, the candidates in the prompt). Rollback reading, NAMED: a 0.517
+    reader resumes it the same — the answer moves the picked uids, and every uid Fossil Quarry can offer is an `sv`
+    Antique Fossil 0.517 already faces in play (cards.ts `benchMatches` offers a Trainer only with an in-play face,
+    `FOSSIL_IDS`, which this slice does NOT widen). 🛑 **THAT LAST CLAUSE IS WHY THE FOUR `me` FOSSILS ARE DROPPED**:
+    adding Antique Jaw / Sail / Armor / Skull Fossil to `FOSSIL_IDS` puts a NEW id's uid in a stack, which a 0.517
+    rollback reads as a catalog Item (`hpOf` null: never Knocked Out, no Ability, no card rules) — D576's TWELFTH
+    POSITION per id, so they owe 44 → 45 and wait for L1's bump. Relicanth "Fossil Beatdown" is derived from the
+    printed text at the attack, so the face in a v44 `cardPool` reads the new bonus mid-match; nothing is serialized.
+
     🆕🆕🆕 **STAYS 44 AT D634 — C1 ADDS TWO `AttackCoinFlip` MEMBERS (`bonusOnAllHeads`, `deckUpToHeads`), ONE
     `bottomFromOpponentHand.dest` VALUE (`"deck"`), THE `returnBenched.includeActive` RIDER ON THE `"opponent"` SIDE AND
     ONE EVENT (`HAND_CARD_SHUFFLED_INTO_DECK`); NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY OR `InPlayPokemon` FIELD.**

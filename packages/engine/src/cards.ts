@@ -842,6 +842,10 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       // NOUN delegated to the `toolCard` arm through THIS function (D159), and the same
       // UNANCHORED, case-sensitive `.includes` on the printed name.
       return matchesFilter(card, { kind: "toolCard" }) && card.name.includes(filter.fragment);
+    case "itemNameContaining":
+      // 🆕🆕🆕 D635 — Fossil Quarry's *"Item cards that have "Antique" in their name"*: the arm above
+      // with the head noun delegated to `item` (D159).
+      return matchesFilter(card, { kind: "item" }) && card.name.includes(filter.fragment);
     case "supporterNameContaining":
       // 🆕🆕🆕 D510 — the printed *"Supporter card that has "Team Rocket" in its
       // name"* (`censusAttackCorpus.ts` FILE LINE 543, 2 legal printings). TWO
@@ -949,13 +953,19 @@ export function namesItsCard(filter: CardFilter): boolean {
 /** 🆕🆕🆕 D613 — `matchesFilter` for a card an effect puts ONTO THE BENCH (§7: only Basic Pokémon
     can be put onto the Bench unless the card says otherwise). A Pokémon card that is not Basic is
     refused unless the noun names its card (`namesItsCard`: Ninjask's "a Shedinja", Charjabug's
-    "up to 3 Charjabug"). A non-Pokémon card that matches is the filter's business, as before
+    "up to 3 Charjabug"). A non-Pokémon card that matches is the filter's business, as before [🆕🆕🆕 D635
+    (D539): a TRAINER only with an in-play face — below]
     (`BENCHABLE_RETRIEVAL_KINDS`, effects.ts). Read off the FILTER and not off a new op field, so
     a program persisted in a v42 `MatchRecord` (a parked Cast-Off Shell confirm holds its
     `searchDeck` op) reads the same permission after the deploy. Retires R-BC1 and D238's
-    any-stage reading. */
+    any-stage reading.
+
+    🆕🆕🆕 D635 — A TRAINER GOES ONTO THE BENCH ONLY WITH AN IN-PLAY POKÉMON FACE (`FOSSIL_IDS`): Fossil
+    Quarry's Antique Items. An unbuilt Antique Item (Antique Armor / Jaw / Sail / Skull Fossil, `me`) is
+    not offered — R-IC1's reading (Impromptu Carrier offers simulated Tools only), carried. */
 export function benchMatches(card: Card | undefined, filter: CardFilter): boolean {
   if (card === undefined || !matchesFilter(card, filter)) return false;
+  if (card.category === "Trainer") return FOSSIL_IDS.has(card.id);
   return card.category !== "Pokemon" || card.stage === "Basic" || namesItsCard(filter);
 }
 

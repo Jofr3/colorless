@@ -18073,7 +18073,7 @@ const VOLTAIC_LIGHTNING_ENERGY: CardProgram = {
 //    Texts off the LOCAL D1. Dropped and named (vocabulary beyond the brief): Battle Cage ×2 (a Bench
 //    damage-counter shield — the brief's other new piece), Mystery Garden ×3 (a draw-until count
 //    source), Forest of Vitality ×3 (a same-turn evolution rule), Dizzying Valley (Confusion kept
-//    through evolution), Fossil Quarry (Antique Items deck-to-Bench) and Risky Ruins (a Stadium
+//    through evolution), Fossil Quarry (Antique Items deck-to-Bench) [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)] and Risky Ruins (a Stadium
 //    on-Bench trigger). Excluded by the brief: Ange Floette. `stadiumsMeD606.test.ts`.
 //    [🆕🆕🆕 D618 (D539): Battle Cage, Mystery Garden and Forest of Vitality are BUILT at D618, below.] ──
 
@@ -18153,7 +18153,7 @@ const CELEBRATORY_FANFARE: CardProgram = {
 //    evolution permission (`StadiumEffects.sameTurnEvolution`) and a draw-until count
 //    (`drawUntilHandSize.per`) for the Stadium use with a discard cost. Texts off the LOCAL D1
 //    (2026-10-09). Dropped and named: Dizzying Valley (Confusion kept through evolution), Fossil
-//    Quarry (Antique Items deck-to-Bench), Risky Ruins (a Stadium on-Bench trigger) and Ange Floette
+//    Quarry (Antique Items deck-to-Bench) [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky Ruins (a Stadium on-Bench trigger) and Ange Floette
 //    (a play gate on Prism Tower in play, a second Stadium the same turn, and a named HP bonus).
 //    `stadiumsMeD618.test.ts`. ──
 
@@ -18802,6 +18802,31 @@ const DAMP_KNOCK_OUT_ITSELF: CardProgram = {
     Body …), since those do not require one to be used. Its own object so a reversal moves this wording only. */
 const DAMP_REQUIRE_KNOCKED_OUT: CardProgram = {
   passive: { disableAbilities: { side: "both", selfKnockOutAbility: true } },
+};
+
+// ── 🆕🆕🆕 D635 — F1, THE ANTIQUE ARCHETYPE (its unpersisted half): ONE NEW object, Fossil Quarry. Relicanth
+//    `me05-017` "Fossil Beatdown" is a reader row (effects.ts `IN_PLAY_BODY_NOUNS`), no key. Texts off the LOCAL
+//    D1 (2026-10-10, `legal_standard = 1`). Dropped and named: Antique Jaw / Sail / Skull Fossil `me03-068` /
+//    `me03-069` / `me05-073` (a new fossil id's uid in a stack is read by 0.518 as a Pokémon and by a 0.517
+//    rollback as an Item — D576's twelfth position, so each owes `MATCH_RECORD_VERSION` 44 → 45) and Antique
+//    Armor Fossil `me05-072` (that, plus a source-Active rider no shipped field has). `fossilQuarryD635.test.ts`. ──
+
+/** 🆕🆕🆕 **D635 — Fossil Quarry `me05-076` (Stadium)**: *"Once during each player's turn, that player may
+    search their deck for up to 2 Item cards that have "Antique" in their name and put them onto their Bench.
+    Then, that player shuffles their deck."* Lumiose City's program on the NEW `itemNameContaining` filter,
+    `max: 2`, no turn end. Each card lands as its fossil body (`makeInPlay`; cards.ts `cardOfUid` gives the
+    in-play face), and only a built fossil is offered (`benchMatches`, R-IC1's reading). Putting a card onto
+    the Bench is not playing it, so no Item bar applies (R-FQ1 ⚠️ UNRULED). */
+const FOSSIL_QUARRY: CardProgram = {
+  stadium: {
+    ability: {
+      label: "Fossil Quarry",
+      program: [
+        { op: "searchDeck", filter: { kind: "itemNameContaining", fragment: "Antique" }, dest: "bench", max: 2 },
+        { op: "shuffleDeck" },
+      ],
+    },
+  },
 };
 
 // ── 🆕🆕🆕 D608 — WP30: TWO `30th` ATTACK OBJECTS, KEYED BY ID. Text off the LOCAL D1; both printed
@@ -20406,6 +20431,8 @@ const REGISTRY: Record<string, CardProgram> = {
   "me02.5-226": DAMP_KNOCK_OUT_ITSELF, // Psyduck
   "mep-007": DAMP_REQUIRE_KNOCKED_OUT, // Psyduck — the "require those Pokémon to be Knocked Out" wording (R-DMP1)
   "mep-008": DAMP_REQUIRE_KNOCKED_OUT, // Golduck
+  // 🆕🆕🆕 D635 — F1, the Antique archetype: 1 key / 1 object, MID-MAP (`raw[last]` does not move).
+  "me05-076": FOSSIL_QUARRY, // Fossil Quarry — up to 2 Antique Items from the deck onto the Bench, then shuffle
   // 🆕🆕🆕 D608 — WP30: 5 `30th` ATTACK-only keys / 2 objects, MID-MAP (`raw[last]` does not move).
   // 🆕🆕🆕 D612 — 3 now: Stealthy Slash ×2 RETIRED (the normalised text is `mep-099`'s, reader-built).
   "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex

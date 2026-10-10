@@ -30247,6 +30247,24 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D635 — F1: the Antique archetype, its unpersisted half (engine 0.518.0, `MATCH_RECORD_VERSION` stays 44)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D634 (`1fd6b84a`), NOT committed. 2 texts / 2 `me` printings of F1's 6.
+
+- **Fossil Quarry** (`me05-076`, Stadium): a NEW `stadium` object, Lumiose City's program without the turn end — `searchDeck` up to 2
+  onto the Bench, then `shuffleDeck` — over the NEW `CardFilter` member `itemNameContaining` (an Item whose name holds the fragment;
+  caption "Item cards that have "Antique" in their name"). cards.ts `benchMatches` sends a Trainer onto the Bench only with an in-play
+  Pokémon face (`FOSSIL_IDS`), so an unbuilt Antique Item is not offered (R-IC1's reading). Benching is not an Item play (R-FQ1 ⚠️ UNRULED).
+- **Fossil Beatdown** (Relicanth `me05-017`): the fifteenth `IN_PLAY_BODY_NOUNS` key, `pokemonNameContaining` "Antique", on
+  `YOUR_BENCHED_NOUN_SCALE`. A benched fossil counts through its in-play face; an evolved one does not (the top card is read).
+- **Dropped and named.** Antique Jaw / Sail / Skull Fossil (`me03-068` / `-069`, `me05-073`): a new `FOSSIL_IDS` id in a stack is read by
+  a 0.517 rollback as a catalog Item (no HP, no Ability, no card rules) — D576's twelfth position, so each owes MRV 44 → 45 (L1's bump).
+  Jaw and Skull would reuse `INTIMIDATING_FANG`'s and `COUNTERATTACK_QUILLS`' fields; Sail needs a Supporter-only holder shield. Antique
+  Armor Fossil (`me05-072`): the same, plus a source-Active rider on `seatDamageReductionAfterWR`.
+- **Suite.** `fossilQuarryD635.test.ts` (15) and a census D635 block (2). +11 mutant rows, all KILLED. D613's Trainer pin inverted in
+  place (an Energy still benches by the filter). Census: attacks **2,749 / 2,771**, trainers **435 / 447**, 1210 `me` printings fully
+  built. Sweep PENDING.
+
 ## D634 — C1: the coin rest (engine 0.517.0, `MATCH_RECORD_VERSION` stays 44)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D633 (`6157c1c8`), NOT committed. 7 texts / 8 printings (`me` + `30th`), all
@@ -30570,7 +30588,7 @@ registry objects.
 - **Readings.** R-BCG1 ⚠️ UNRULED (a move onto a Benched body is a placement; refused whole), R-BCG2 ⚠️ UNRULED (targets stay
   offered; nothing lands, no row), R-MYG1 ⚠️ UNRULED (usable when the draw would be 0), R-FOV1 ⚠️ UNRULED (a {G} body that
   evolved this turn may evolve again).
-- **Dropped.** Dizzying Valley, Fossil Quarry, Risky Ruins, Ange Floette (each needs vocabulary beyond the brief).
+- **Dropped.** Dizzying Valley, Fossil Quarry [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky Ruins, Ange Floette (each needs vocabulary beyond the brief).
 - **Suite.** `stadiumsMeD618.test.ts` (30) and a census D618 block (2). +26 mutant rows, all killed; two older rows re-pointed
   (`D451-section-11-gate-reads-the-active-for-every-body`, `D574-loop-shield-not-filtered`). D539: D606's drop notes and two
   "asks no shield" / "No §11 question" claims annotated.
@@ -30814,7 +30832,7 @@ registry objects.
   with no Benched {W}), so `D210-programPlayable` (wire) and `D213-programPlayable` (local HUD) lose their `survives` and are
   KILLED by new D606 blocks in `redactStadiumAbility.test.ts` and `GameHud.stadiumAbility.dom.test.tsx`; the
   "no printed Stadium ability whiff-gates" claim is annotated WITHDRAWN at every site (D539).
-- **Dropped and named.** Battle Cage ×2, Mystery Garden ×3, Forest of Vitality ×3, Dizzying Valley, Fossil Quarry, Risky
+- **Dropped and named.** Battle Cage ×2, Mystery Garden ×3, Forest of Vitality ×3, Dizzying Valley, Fossil Quarry [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky
   Ruins. Ange Floette excluded by the brief. [🆕🆕🆕 D618 (D539): the first three BUILT at D618.]
 - **Readings.** R-LC1, R-CF1, UNRULED (`progress.md` NEXT).
 - **Suite.** `stadiumsMeD606.test.ts` (23) and a census D606 block (2). +17 mutant rows.

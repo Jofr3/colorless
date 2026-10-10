@@ -21665,6 +21665,12 @@ export function retrieveNoun(filter: CardFilter): { singular: string; plural: st
         singular: `a Pokémon Tool card that has "${filter.fragment}" in its name`,
         plural: `Pokémon Tool cards that have "${filter.fragment}" in their name`,
       };
+    case "itemNameContaining":
+      // 🆕🆕🆕 D635 — Fossil Quarry's printed noun (*"Item cards that have "Antique" in their name"*).
+      return {
+        singular: `an Item card that has "${filter.fragment}" in its name`,
+        plural: `Item cards that have "${filter.fragment}" in their name`,
+      };
     case "item":
       // D231 — the printed "an Item card" / "Item cards". The ARTICLE is "an",
       // which is why these phrases are spelled per kind here rather than built

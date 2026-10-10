@@ -1443,6 +1443,8 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
       supporterNameContaining: { kind: "supporterNameContaining", fragment: "Team Rocket" },
       // 🆕🆕🆕 D557 — TM Machine's filter; the alphabet gate fired a FOURTH time (below).
       toolNameContaining: { kind: "toolNameContaining", fragment: "Technical Machine" },
+      // 🆕🆕🆕 D635 — Fossil Quarry's filter; the alphabet gate fired a NINTH time (below).
+      itemNameContaining: { kind: "itemNameContaining", fragment: "Antique" },
       item: { kind: "item" },
       stadium: { kind: "stadium" },
       trainerCard: { kind: "trainerCard" },
@@ -1501,7 +1503,11 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
     // `TS2741: Property 'pokemonWithResistance' is missing` and nowhere else in `packages/**` (the
     // `switch`es — `matchesFilter`, `retrieveNoun` — were written first). Its ANTI-VACUITY is carried by
     // `deckHandMiscMeD624.test.ts` (a {F}-resistant Pokémon, a {G}-resistant one and a Trainer).
-    expect(Object.keys(EVERY_KIND)).toHaveLength(29);
+    // 🆕🆕🆕 **D635 — A NINTH TIME, 29 → 30**: adding `itemNameContaining` made `tsc` fail HERE with
+    // `TS2741: Property 'itemNameContaining' is missing` and nowhere else in `packages/**` (the
+    // `switch`es — `matchesFilter`, `retrieveNoun` — were written first). Its ANTI-VACUITY is carried by
+    // `fossilQuarryD635.test.ts` (an Antique Item, a non-Antique Item and an "Antique"-named Tool).
+    expect(Object.keys(EVERY_KIND)).toHaveLength(30);
     // 🛑 **THE BYTES.** Each filter is written out and read back the way
     // `MatchRecord.state` is, and `matchesFilter` must give the IDENTICAL answer over
     // a cast that spans every category the catalog has — a Pokémon with a rule box
@@ -1687,7 +1693,7 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.517.0");
+    expect(engineVersion).toBe("0.518.0");
   });
 });
 
