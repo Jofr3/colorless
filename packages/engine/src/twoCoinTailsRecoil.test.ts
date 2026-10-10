@@ -724,7 +724,7 @@ const RAW: Record<string, string> = (
 describe("D521 §4 — the version steps, the heading is written, and what stands still", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.523.0");
+    expect(engineVersion).toBe("0.524.0");
     expect(manifest.version).toBe(engineVersion);
   });
 
@@ -742,7 +742,8 @@ describe("D521 §4 — the version steps, the heading is written, and what stand
     // …and the anchor's own commentary does NOT spell the `op: "…",` form (D516/D520 (4)): the
     // raw producer count of the two ops reads CODE — one new site each.
     // 🆕🆕🆕 D595 — 21 → 22: arm 46b's one `coinFlipGate` producer (the WP13 coin gates). Stepped off the red run.
-    expect(effects.split('op: "coinFlipGate",').length - 1).toBe(22);
+    // 🆕🆕🆕 D641 — 22 → 23: the Ditto arm (`FLIP_SWITCH_WITH_DECK_POKEMON`).
+    expect(effects.split('op: "coinFlipGate",').length - 1).toBe(23);
     // 🆕🆕🆕 D633 — 6 → 7: arm 10e's Voltaic Fist confirm.
     expect(effects.split('op: "damageSelf",').length - 1).toBe(7);
   });

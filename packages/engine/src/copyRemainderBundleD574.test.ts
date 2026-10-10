@@ -1225,7 +1225,7 @@ describe("D574 §6 — the parks: wire-legal, serialisable, and INERT under a 0.
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D574 §7 — the version", () => {
-  it("the engine is 0.523.0", () => {
-    expect(engineVersion).toBe("0.523.0");
+  it("the engine is 0.524.0", () => {
+    expect(engineVersion).toBe("0.524.0");
   });
 });

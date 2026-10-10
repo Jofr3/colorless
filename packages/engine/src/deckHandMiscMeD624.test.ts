@@ -38,7 +38,7 @@ import {
 //
 // Dropped and named (§1): Elemental Blast, Pleasing Present and Skill Thief ×2. [🆕🆕🆕 D633 (D539): Elemental Blast
 // BUILT at D633 (O1, `discardEnergy.reserve`).] [🆕🆕🆕 D638 (D539): Skill Thief ×2 BUILT at D638 (X1, `deriveAttackCopy`'s
-// in-play kind).]
+// in-play kind).] [🆕🆕🆕 D641 (D539): Pleasing Present BUILT at D641 (W1).]
 
 const TAIL_GENERATOR =
   "Choose Basic {L} Energy cards from your discard pile up to the amount of Energy attached to all of your opponent's Pokémon and attach them to your {L} Pokémon in any way you like.";
@@ -96,7 +96,8 @@ describe("D624 §1 — the texts", () => {
       expect([text, me.get(text)]).toEqual([text, ids.length]);
       // 🆕🆕🆕 D633 (D539): WITHDRAWN for Elemental Blast — the matched discard is `discardEnergy.reserve`.
       // 🆕🆕🆕 D638 (D539): WITHDRAWN for Skill Thief — `deriveAttackCopy`'s in-play kind.
-      expect(resolvedByAnyReader(text), text).toBe(ids[0] === "30th-121" || ids[0] === "me05-054");
+      // 🆕🆕🆕 D641 (D539): WITHDRAWN for Pleasing Present — two `attachFromHand { max }`, the opponent's first.
+      expect(resolvedByAnyReader(text), text).toBe(true);
       for (const id of ids) expect(programFor(id)?.attack, id).toBeUndefined();
     }
     expect(DROPPED.flatMap(([, ids]) => ids)).toHaveLength(4);
@@ -532,6 +533,6 @@ describe("D624 §7 — Chirp: up to 2 Pokémon with {F} Resistance, revealed int
 
 describe("D624 §8 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.523.0");
+    expect(engineVersion).toBe("0.524.0");
   });
 });

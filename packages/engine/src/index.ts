@@ -20271,6 +20271,14 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.523.0 → **0.524.0** (D641 — W1 + Y1b: EFFECTS THE OPPONENT ANSWERS, AND DECK SWAP / REVEAL, 4
+    TEXTS / 7 PRINTINGS (`me` + `mep` + `30th`); `MATCH_RECORD_VERSION` STAYS 47 (apps/api match.ts "STAYS 47 AT D641")).
+    effects.ts: Ditto `mep-106` / `30th-115` "Surprisingly Transform" on `coinFlipGate` over the NEW `switchWithDeckChosen`
+    (R-DIT1); Sizzlipede `me05-009` "Bug Out" on the NEW `revealDeckBottomCount` + `damageDefender { per, count }`
+    (R-BUG1); Delibird `me04-018` "Pleasing Present" on two `attachFromHand` with the NEW optional `max` / `whose`, the
+    opponent's first and answered by them (R-PP1). registry.ts: Lt. Surge's Bargain `me01-120` / `-170` / `-185` on
+    `optional` with the NEW `askOpponent` over the NEW `eachPlayerTakesPrize` or `drawCards 4`; flow.ts `settleProgram`
+    drains a program's queued Prize stages behind a §14 tie guard (R-LSB1). `opponentAnsweredMeD641.test.ts`.)
     🆕🆕🆕 engineVersion 0.522.0 → **0.523.0** (D640 — Y1a + MRV47, CUT TO OVERWRITING BOLT AND CELEBRATION: 2 TEXTS / 3
     PRINTINGS (`30th`); `MATCH_RECORD_VERSION` 46 → 47 WITH A v46 MIGRATION, A RE-STAMP (apps/api match.ts "46 → 47 AT
     D640")). effects.ts: Pikachu `30th-040` "Overwriting Bolt" on `retypeDefenderWeakness { type: "Lightning", asTimesTwo }`
@@ -20443,7 +20451,7 @@ import type { GameState, Seat } from "./types";
     (`attachFromDeck` `anyEnergy` onto a Benched {G} body) and Chirp (`searchDeck` over the NEW `CardFilter`
     member `pokemonWithResistance`). Dropped and named: Lugia "Elemental Blast" (a matched multi-type discard)
     [🆕🆕🆕 D633 (D539): BUILT at D633 on `discardEnergy.reserve`],
-    Delibird "Pleasing Present" (an opponent-chosen attach) and Thievul "Skill Thief" ×2 (a hand-gated copy over
+    Delibird "Pleasing Present" (an opponent-chosen attach) [🆕🆕🆕 D641 (D539): BUILT at D641 (W1)] and Thievul "Skill Thief" ×2 (a hand-gated copy over
     the opponent's whole board). [🆕🆕🆕 D638 (D539): Skill Thief ×2 BUILT at D638 (X1)] `deckHandMiscMeD624.test.ts`.)
     🆕🆕🆕 engineVersion 0.505.0 → **0.506.0** (D623 — WP28b: THE REST OF THE SCALING COUNT SOURCES, 5 TEXTS /
     7 `me` PRINTINGS; `MATCH_RECORD_VERSION` STAYS 43 (apps/api match.ts "STAYS 43 AT D623")). effects.ts: three NEW
@@ -20643,7 +20651,7 @@ import type { GameState, Seat } from "./types";
     arms 46c / 46d; a sixth `COIN_GATED_CONSEQUENTS` row (Grafaiai "Miraculous Paint": "choose a
     Special Condition" as four labelled `optional` confirms; R-MP1); and two `deriveAttackCoinFlip`
     `programPerHeads` arms (Maushold "Gnaw Together": `pokemonInPlay` over `byName`; Mega Audino ex
-    "Kaleidowaltz": the bare search-and-attach per heads; R-KW1). Dropped: Watchog, Ditto [🆕🆕🆕 D634 (D539): Watchog BUILT at D634].
+    "Kaleidowaltz": the bare search-and-attach per heads; R-KW1). Dropped: Watchog, Ditto [🆕🆕🆕 D634 (D539): Watchog BUILT at D634]. [🆕🆕🆕 D641 (D539): Ditto BUILT at D641 (W1).]
     `coinRestMeD605.test.ts`.)
     🆕🆕🆕 engineVersion 0.486.0 → **0.487.0** (D604 — WP18: THE MEGA EVOLUTION TYPED SPECIAL ENERGIES;
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D604")). registry.ts: eight NEW `energy`
@@ -25753,7 +25761,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.523.0";
+export const engineVersion = "0.524.0";
 
 export type {
   ApplyResult,

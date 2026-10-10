@@ -6,6 +6,23 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D641 update (engine 0.524.0) — W1 + Y1b, effects the opponent answers and deck swap / reveal (`MATCH_RECORD_VERSION` stays 47)
+
+4 texts / 7 printings (`opponentAnsweredMeD641.test.ts`): Ditto ×2 "Surprisingly Transform" `mep-106` / `30th-115` (the new
+`switchWithDeckChosen` behind the coin — R-DIT1), Sizzlipede "Bug Out" `me05-009` (the new `revealDeckBottomCount` — R-BUG1), Delibird
+"Pleasing Present" `me04-018` (two capped `attachFromHand`, the opponent's first and answered by them — R-PP1) and Lt. Surge's Bargain ×3
+`me01-120` / `-170` / `-185` (the opponent answers an `optional`; the new `eachPlayerTakesPrize` — R-LSB1). **Finished:** all 7.
+**Dropped:** none.
+
+| Column | `me` built / units (D641) | Standard pool D641 |
+|---|---|---|
+| Attacks | 1,038 / 1,039 (+4) | **2,770 / 2,771** |
+| Abilities | 220 / 234 | **596 / 610** |
+| Trainers | 178 / 183 (+3) | **442 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+1243 `me` printings fully built (1236 + 7).
+
 ## 🆕 D640 update (engine 0.523.0) — Overwriting Bolt and Celebration (`MATCH_RECORD_VERSION` 46 → 47)
 
 2 texts / 3 printings (`prizeOverwriteMeD640.test.ts`), reader rows: Pikachu "Overwriting Bolt" `30th-040` (D552's retype with the new
@@ -303,7 +320,7 @@ with the NEW `whose` / `pokemonType` / `depth`, the `turnPlayed` stamp, R-ST1). 
 `untilHandSize`), Morpeko "Select a Snack" ×2 `30th-061` / `-135` (Explorer's Guidance's `lookAtTopN`, R-SAS1 UNRULED), Shaymin "Send
 Flowers" `me03-003` (`attachFromDeck` of any Energy onto a Benched {G} body) and Fletchling "Chirp" `me03-066` (the NEW `CardFilter`
 `pokemonWithResistance`). **Finished:** all 7. **Dropped and named:** Lugia "Elemental Blast" `30th-121` (a matched multi-type discard) [🆕🆕🆕 D633 (D539): BUILT at D633 (O1)],
-Delibird "Pleasing Present" `me04-018` (an attach answered by the opponent first) and Thievul "Skill Thief" ×2 `me05-054` / `-092` (a
+Delibird "Pleasing Present" `me04-018` (an attach answered by the opponent first) [🆕🆕🆕 D641 (D539): BUILT at D641 (W1)] and Thievul "Skill Thief" ×2 `me05-054` / `-092` (a
 whole-board copy source plus a hand gate). [🆕🆕🆕 D638 (D539): Skill Thief ×2 BUILT at D638 (X1)] WP31 is closed but for those three.
 
 | Column | `me` built / units (D624) | Standard pool D624 |
@@ -458,10 +475,10 @@ Meloetta "Soothing Melody" ×2 `mep-026` / `me02-040` (`healChosen` Bench + `typ
 Rotom "Roto Call" `me02.5-092` (`optional` over a name-fragment Bench search), Dialga "Reversed Clock" `30th-103` (Super Rod's
 program), Celebi "Traverse Time" `me01-012` (`anyOf` search) and Eevee "Fetch and Hide" `30th-116` (`bottomFromOpponentHand`
 Item). **Finished:** all 11 cards. One new reading (UNRULED): R-RCL1, Roto Call's decline does not shuffle (`progress.md` NEXT).
-**Left for WP31c** (8 texts / 11 printings) [🆕🆕🆕 D624: 5 texts / 7 printings BUILT by WP31c, above — Tail Generator ×2, Hand Trim, Select a Snack ×2, Send Flowers, Chirp; Elemental Blast, Pleasing Present and Skill Thief ×2 dropped and named] [🆕🆕🆕 D638 (D539): Skill Thief ×2 BUILT at D638 (X1)]: Dedenne "Tail Generator" ×2 `me03-029` / `-093` (a count-scaled discard attach),
+**Left for WP31c** (8 texts / 11 printings) [🆕🆕🆕 D624: 5 texts / 7 printings BUILT by WP31c, above — Tail Generator ×2, Hand Trim, Select a Snack ×2, Send Flowers, Chirp; Elemental Blast, Pleasing Present and Skill Thief ×2 dropped and named] [🆕🆕🆕 D638 (D539): Skill Thief ×2 BUILT at D638 (X1)] [🆕🆕🆕 D641 (D539): Pleasing Present BUILT at D641 (W1)]: Dedenne "Tail Generator" ×2 `me03-029` / `-093` (a count-scaled discard attach),
 Lugia "Elemental Blast" `30th-121` (a matched multi-type discard) [🆕🆕🆕 D633: BUILT (O1)], Furfrou "Hand Trim" `me03-067` (a random discard to a hand
 size), Morpeko "Select a Snack" ×2 `30th-061` / `-135` (a mill with a pick), Delibird "Pleasing Present" `me04-018` (an attach
-for both players), Shaymin "Send Flowers" `me03-003` (a deck attach of any Energy), Fletchling "Chirp" `me03-066` (a Resistance
+for both players) [🆕🆕🆕 D641: BUILT (W1)], Shaymin "Send Flowers" `me03-003` (a deck attach of any Energy), Fletchling "Chirp" `me03-066` (a Resistance
 filter) and Thievul "Skill Thief" ×2 `me05-054` / `-092` (a gated copy of an opponent's attack). [🆕🆕🆕 D638 (D539): Skill Thief ×2 BUILT at D638 (X1)]
 
 | Column | `me` built / units (D616) | Standard pool D616 |
@@ -483,7 +500,7 @@ filter) and Thievul "Skill Thief" ×2 `me05-054` / `-092` (a gated copy of an op
 Pikachu ex ×3, Mega Floette ex ×3 and Frosmoth among them). One new reading (UNRULED): R-GLT1, Gentle Light's heal is not
 refused by a §11 shield (`progress.md` NEXT). **Left for WP31b / WP31c** (17 texts / 22 printings; [🆕🆕🆕 D616: 9 texts / 11 printings BUILT by WP31b, above — 8 / 11 left for WP31c] [🆕🆕🆕 D624: 5 / 7 of those BUILT by WP31c; 3 / 4 stay]): Dedenne "Tail Generator" ×2
 `me03-029` / `-093`, Regice ex "Ice Prison" `me02.5-048`, Lugia "Elemental Blast" `30th-121` [🆕🆕🆕 D633: BUILT (O1)], Furfrou "Hand Trim" `me03-067`,
-Morpeko "Select a Snack" ×2, Delibird "Pleasing Present" `me04-018`, Meloetta "Soothing Melody" ×2, Claydol "Devolution Ray" ×2,
+Morpeko "Select a Snack" ×2, Delibird "Pleasing Present" `me04-018` [🆕🆕🆕 D641: BUILT (W1)], Meloetta "Soothing Melody" ×2, Claydol "Devolution Ray" ×2,
 Volcanion "Backfire" `me01-025`, Shaymin "Send Flowers" `me03-003`, Fletchling "Chirp" `me03-066`, Sudowoodo "Trials and
 Trip-ulations" `me04-043`, Celebi "Traverse Time" `me01-012`, Dialga "Reversed Clock" `30th-103`, Rotom "Roto Call"
 `me02.5-092`, Eevee "Fetch and Hide" `30th-116` and Thievul "Skill Thief" ×2 `me05-054` / `-092`. [🆕🆕🆕 D638 (D539): Skill Thief ×2 BUILT at D638 (X1)]
@@ -677,7 +694,7 @@ R-MP1), and a flip count by name in play (`pokemonInPlay` over `byName`, Maushol
 "Kaleidowaltz" repeats the bare search-and-attach per heads (R-KW1). **Finished:** Mega Zygarde ex ×5, Mega Audino ex ×2,
 Tauros ×2, Maushold ×2, Grafaiai. **Dropped and named:** Watchog ×2 "Snap Inspection" (a revealed-hand pick shuffled into
 the deck: `bottomFromOpponentHand.dest` has no shuffle member) [🆕🆕🆕 D634 (D539): BUILT at D634 (C1), `dest: "deck"`] and Ditto ×2 "Surprisingly Transform" (a deck Pokémon swapped
-in for the attacker: no op).
+in for the attacker: no op) [🆕🆕🆕 D641 (D539): BUILT at D641 (W1), the NEW `switchWithDeckChosen`].
 
 | Column | `me` built / units (D605) | Standard pool D605 |
 |---|---|---|
@@ -1261,7 +1278,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× Discard the top 6 cards of your deck, and this attack does 60 damage for each Basic {W} Energy card you discarded in this way. [🆕🆕🆕 D597: BUILT]
 - 1× Discard up to 2 Basic {M} Energy cards from your hand, and this attack does 40 damage for each card you discarded in this way. [🆕🆕🆕 D597: BUILT]
 - 1× Discard up to 2 Energy cards from your hand, and this attack does 60 damage for each card you discarded in this way. [🆕🆕🆕 D597: BUILT]
-- 1× Reveal the bottom 7 cards of your deck, and this attack does 50 damage for each Pokémon you find there that has the Bug Out attack. Then, shuffle any revealed Pokémon back into your deck. Discard the other cards.
+- 1× Reveal the bottom 7 cards of your deck, and this attack does 50 damage for each Pokémon you find there that has the Bug Out attack. Then, shuffle any revealed Pokémon back into your deck. Discard the other cards. [🆕🆕🆕 D641: BUILT (W1)]
 - 1× This attack does 20 damage for each Basic {W} Energy card in your discard pile. Then, shuffle those cards into your deck. [🆕🆕🆕 D607: WP28b] [🆕🆕🆕 D623: BUILT]
 - 1× This attack does 30 damage for each of your Benched Pokémon that has a maximum HP of 30. [🆕🆕🆕 D607: WP28b] [🆕🆕🆕 D623: BUILT]
 - 1× This attack does 30 more damage for each of your Benched Pokémon that has "Antique" in its name. [🆕🆕🆕 D635: BUILT (F1)]
@@ -1601,7 +1618,7 @@ During this turn, attacks used by your Pokémon that don't have a Rule Box do 80
 - 3× **Gwynn** — Discard up to 2 Pokémon that don't have a Rule Box from your hand, and draw 3 cards for each card you discarded in this way. (Pokémon ex, Pokémon V, etc. have Rule Boxes.) [🆕🆕🆕 D599: DROPPED — a draw per recorded card] [🆕🆕🆕 D617: BUILT]
 - 3× **Jacinthe** — Heal 150 damage from 1 of your {P} Pokémon. [🆕🆕🆕 D587: BUILT]
 - 4× **Lillie's Determination** — Shuffle your hand into your deck. Then, draw 6 cards. If you have exactly 6 Prize cards remaining, draw 8 cards instead. [🆕🆕🆕 D588: BUILT]
-- 3× **Lt. Surge's Bargain** — Ask your opponent if each player may take a Prize card. If yes, each player takes a Prize card. If no, you draw 4 cards.
+- 3× **Lt. Surge's Bargain** — Ask your opponent if each player may take a Prize card. If yes, each player takes a Prize card. If no, you draw 4 cards. [🆕🆕🆕 D641: BUILT (Y1b)]
 - 2× **Misty's Vitality** — Search your deck for up to 4 Basic {W} Energy cards and attach them to 1 of your Pokémon. Then, shuffle your deck. Your turn ends. [🆕🆕🆕 D588: BUILT]
 - 2× **Naveen** — Draw cards until you have 5 cards in your hand. Before drawing cards, you may discard any number of cards from your hand. (If you can't draw any cards in this way, you can't use this card.) [🆕🆕🆕 D599: DROPPED — an uncapped declinable hand discard and a deck-not-empty gate] [🆕🆕🆕 D617: BUILT]
 - 2× **Philippe** — Attach up to 2 Basic {M} Energy cards from your discard pile to 1 of your {M} Pokémon. [🆕🆕🆕 D587: BUILT]

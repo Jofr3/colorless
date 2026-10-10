@@ -85,6 +85,9 @@ const CLAUSES = [
         🆕🆕🆕 D573 — indices 0 and 2 ONLY: index 1 (Ethan's Sudowoodo "Try to Imitate", the
         slot's D299 replacement) is MAPPED by a different reader now, `deriveAttackCopy`, and
         sits with index 6 in the third group below; nothing unmapped is left to re-point at.
+        🆕🆕🆕 D641 (D539) — index 2 ONLY: index 0 (Ditto "Surprisingly Transform", the slot's D634
+        replacement) is MAPPED by this reader now (`switchWithDeckChosen` behind the coin) and kept in
+        place; again nothing unmapped is left to re-point at.
       • MAPPED BY ANOTHER ARM OF THIS VERY READER (indices 3–5). The Paralyze form
         (`FLIP_DEFENDER_NOW`, 16 printings), the Energy hammer
         (`FLIP_OPPONENT_ACTIVE_DISCARD`, 4) and — since D181 — the GATED GUST
@@ -97,7 +100,8 @@ const CLAUSES = [
 
     ⚠️ D181 MOVED BOMBIRDIER'S SWITCH-IN FROM THE FIRST GROUP TO THE SECOND, WHICH IS
     THIS NOTE'S STANDING INSTRUCTION BEING FOLLOWED RATHER THAN A REWRITE. The row was
-    RE-POINTED, not deleted: three unmapped witnesses remain, so the "an unread
+    RE-POINTED, not deleted: three unmapped witnesses remain [🆕🆕🆕 D573 / D641 (D539): ONE remains
+    now, index 2 — see the group note above], so the "an unread
     sentence stays LOUD" claim still has live subjects. ⚠️ AND IT IS ALSO THE STRONGEST
     PROVENANCE D181's gated-gust anchor has. That slice ran without the catalog (see
     `derivedDrawAndGust.test.ts`), and this row — transcribed VERBATIM off the local D1
@@ -121,6 +125,8 @@ const REAL_NEAR_MISSES = [
   // `returnBenched.includeActive` row). Its replacement is Ditto `mep-106` / `30th-115`'s *"…search
   // your deck for a Pokémon and switch it with this Pokémon. …"* (D605 dropped it), measured as the
   // only unresolved "Flip a coin. If heads, …" sentence left in either legal corpus.
+  // 🆕🆕🆕 **D641 — MAPPED NOW, BY THIS READER, AND KEPT IN PLACE** (`switchWithDeckChosen` behind the coin). NOT
+  // re-pointed: measured at D641, no "Flip a coin. If heads, …" sentence in either corpus is unread by every reader.
   "Flip a coin. If heads, search your deck for a Pokémon and switch it with this Pokémon. Any attached cards, damage counters, Special Conditions, turns in play, and any other effects remain on the new Pokémon. If you switched a Pokémon in this way, put this card into your deck. Then, shuffle your deck.",
   // 🆕 **RE-POINTED AT D299, THE STANDING INSTRUCTION BEING FOLLOWED FOR THE
   // SECOND TIME.** This slot held Sylveon `svp-172`/`sv06.5-022`'s *"…choose 1 of
@@ -141,6 +147,7 @@ const REAL_NEAR_MISSES = [
   // index 6's shape. ⚠️ **NOT RE-POINTED, BECAUSE THERE IS NOTHING LEFT TO RE-POINT AT**:
   // measured at D573, no "Flip a coin. If heads, …" attack sentence in the legal corpus or in
   // the audit card set (sv05 onward) is unresolved. The unmapped group is TWO witnesses now.
+  // [🆕🆕🆕 D641 (D539): ONE witness now — index 0 (Ditto) is mapped by this reader, kept in place.]
   "Flip a coin. If heads, choose 1 of your opponent's Active Pokémon's attacks and use it as this attack.",
   "Flip a coin. If heads, search your deck for up to 5 Grass Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.",
   "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed.",
@@ -149,10 +156,11 @@ const REAL_NEAR_MISSES = [
   "Flip a coin. If heads, this attack does 20 more damage.",
 ] as const;
 
-/** The three of the seven that are unmapped EVERYWHERE. Split out rather than sliced
-    inline, because the other four's exclusion is a CLAIM (they are simulated, by a
-    named arm or a named reader) and not a loop bound. */
-const UNMAPPED_NEAR_MISSES = REAL_NEAR_MISSES.filter((_, i) => i === 0 || i === 2); // 🆕🆕🆕 D573: index 1 (Try to Imitate) is mapped by `deriveAttackCopy`
+/** The one of the seven that is unmapped EVERYWHERE (index 2; three until D573 mapped index 1,
+    two until D641 mapped index 0). Split out rather than sliced inline, because the other six's
+    exclusion is a CLAIM (they are simulated, by a named arm or a named reader) and not a loop
+    bound. */
+const UNMAPPED_NEAR_MISSES = REAL_NEAR_MISSES.filter((_, i) => i === 2); // 🆕🆕🆕 D573: index 1 (Try to Imitate) is mapped by `deriveAttackCopy`. 🆕🆕🆕 D641: index 0 (Ditto) is mapped by THIS reader — kept in place, NOT re-pointed: measured at D641, no "Flip a coin. If heads, …" sentence in either legal corpus is left unread by `deriveAttackEffect` and every reader
 
 /** U+00A0, spelled as an ESCAPE rather than typed. Byte-different from an ASCII
     space and INVISIBLE in a diff, which is exactly why the case names it instead of
@@ -349,10 +357,13 @@ describe("the anchors — 3 printings, 2 clauses, two literal arms", () => {
     // this list is D181's, and moved to the mapped group above; the Benched
     // shuffle-back that sat second is D299's `returnBenched`, and this list was
     // RE-POINTED rather than shortened — the claim needs three live witnesses.)
+    // [🆕🆕🆕 D573 / D641 (D539): "THREE" / "All three" is WITHDRAWN, the title kept as written —
+    // ONE row is left (index 2, the Energy search); Try to Imitate (D573) and Ditto (D641) were
+    // mapped and kept in place, with nothing unmapped left to re-point at.]
     for (const text of UNMAPPED_NEAR_MISSES) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
-    expect(UNMAPPED_NEAR_MISSES).toHaveLength(REAL_NEAR_MISSES.length - 5); // 🆕🆕🆕 D573: − 4 → − 5 (index 1 left the group)
+    expect(UNMAPPED_NEAR_MISSES).toHaveLength(REAL_NEAR_MISSES.length - 6); // 🆕🆕🆕 D573: − 4 → − 5 (index 1 left the group). 🆕🆕🆕 D641: − 6 (index 0 left it)
     // …and they are not quietly picked up by the coin reader either, so each row is a
     // genuine gap rather than a half-simulation.
     for (const text of UNMAPPED_NEAR_MISSES) {
@@ -363,6 +374,12 @@ describe("the anchors — 3 printings, 2 clauses, two literal arms", () => {
     expect(deriveAttackEffect(REAL_NEAR_MISSES[1])).toBeNull();
     expect(deriveAttackCoinFlip(REAL_NEAR_MISSES[1])).toBeNull();
     expect(deriveAttackCopy(REAL_NEAR_MISSES[1])).toEqual({ from: "opponentActive", flip: true });
+    // 🆕🆕🆕 D641 — index 0 (Ditto "Surprisingly Transform") is MAPPED by this reader: the coin over the NEW
+    // `switchWithDeckChosen` (`opponentAnsweredMeD641.test.ts`).
+    expect(deriveAttackEffect(REAL_NEAR_MISSES[0])).toEqual([
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+      { op: "coinFlipGate", then: [{ op: "switchWithDeckChosen", filter: { kind: "anyPokemon" } }] },
+    ]);
   });
 
   it("leaves the family's THREE OTHER members to their own arms", () => {

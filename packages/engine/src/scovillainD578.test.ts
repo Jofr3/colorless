@@ -214,8 +214,8 @@ function damageRow(events: readonly GameEvent[]): Extract<GameEvent, { type: "DA
 const SCOV_SPOT: Spot = { id: SCOVILLAIN, under: [CAPSAKID] };
 
 describe("D578 Scovillain §0 — the version", () => {
-  it("is built at engine 0.523.0", () => {
-    expect(engineVersion).toBe("0.523.0");
+  it("is built at engine 0.524.0", () => {
+    expect(engineVersion).toBe("0.524.0");
   });
 });
 
@@ -544,6 +544,9 @@ const ALLOWLIST: Record<string, string> = {
   "filter · interpreter.ts · subgroupRefs · refTopCard(state, ref) · { kind: \"ownerPokemon\", owner }": B,
   "filter · interpreter.ts · swapBodies · top · filter": `${E} — \`inPlayCardOf\``,
   "filter · interpreter.ts · swapDiscardCards · card · filter": `${P} — a discard card`,
+  // 🆕🆕🆕 D641 — Ditto's deck offer (a deck card) and Bug Out's "Pokémon" test on a revealed deck card.
+  "filter · interpreter.ts · deckSwapCandidates · card · filter": `${P} — a deck card`,
+  "filter · interpreter.ts · stepOp · cardOfUid(state, uid) · { kind: \"anyPokemon\" }": `${P} — a revealed deck card`,
   "filter · interpreter.ts · switchBenchNarrowing · card · { kind: \"typedPokemon\", pokemonType: op.targetType }": `${E} — \`refTopCard\` is \`inPlayCardOf\``,
 };
 

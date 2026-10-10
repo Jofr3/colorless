@@ -11126,6 +11126,26 @@ const MEMORY_DIVE: CardProgram = { passive: { memoryDive: true } };
     decisions.md D638). Its printed attack "Teleportation Burst" keeps deriving (no `attack` key). */
 const MEMORY_HELIX: CardProgram = { passive: { memoryHelix: true } };
 
+/** 🆕🆕🆕 **D641 — Lt. Surge's Bargain `me01-120` / `-170` / `-185` (Supporter)**: *"Ask your opponent if each player
+    may take a Prize card. If yes, each player takes a Prize card. If no, you draw 4 cards."* D557's labelled
+    `optional` with the NEW `askOpponent` (the confirm goes to the opponent, D52's `answerer`): yes runs the NEW
+    `eachPlayerTakesPrize` (the controller's stage first, R-LSB1), no runs `drawCards 4` for the controller. Always
+    playable (the question can always be asked). R-LSB1 ⚠️ UNRULED: the two Prizes are one instant, so both rows
+    emptied is the §14 tie. */
+const LT_SURGES_BARGAIN: CardProgram = {
+  trainer: [
+    {
+      op: "optional",
+      note: "Your opponent played Lt. Surge's Bargain: may each player take a Prize card? If you say no, they draw 4 cards.",
+      askOpponent: true,
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [{ op: "eachPlayerTakesPrize" }],
+      otherwise: [{ op: "drawCards", count: 4 }],
+      labels: { yes: "Yes: each player takes a Prize card", no: "No: they draw 4 cards" },
+    },
+  ],
+};
+
 /** 🆕🆕🆕 **D578 — Technical Machine: Fluorite `sv08-188` (Tool, 1 legal printing)**: *"The Pokémon
     this card is attached to can use the attack on this card. (You still need the necessary
     Energy to use this attack.) If this card is attached to 1 of your Pokémon, discard it at the
@@ -20546,6 +20566,10 @@ const REGISTRY: Record<string, CardProgram> = {
   "30th-066": MEMORY_HELIX, // Mew ex — Memory Helix: it can use the attacks of your Benched Pokémon
   "30th-152": MEMORY_HELIX, // Mew ex
   "30th-158": MEMORY_HELIX, // Mew ex
+  // 🆕🆕🆕 D641 — Y1b, Lt. Surge's Bargain: 3 keys / 1 object, MID-MAP (`raw[last]` does not move).
+  "me01-120": LT_SURGES_BARGAIN, // Lt. Surge's Bargain — the opponent answers: each player takes a Prize, or you draw 4
+  "me01-170": LT_SURGES_BARGAIN, // Lt. Surge's Bargain
+  "me01-185": LT_SURGES_BARGAIN, // Lt. Surge's Bargain
   // 🆕🆕🆕 D608 — WP30: 5 `30th` ATTACK-only keys / 2 objects, MID-MAP (`raw[last]` does not move).
   // 🆕🆕🆕 D612 — 3 now: Stealthy Slash ×2 RETIRED (the normalised text is `mep-099`'s, reader-built).
   "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex

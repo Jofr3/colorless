@@ -720,8 +720,8 @@ describe("§11 — the v33 bytes round-trip, and a v32-shaped body THROWS at its
     );
   });
 
-  it("the engine version stepped to 0.523.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.523.0");
-    expect(manifest.version).toBe("0.523.0");
+  it("the engine version stepped to 0.524.0 in BOTH places", () => {
+    expect(engineVersion).toBe("0.524.0");
+    expect(manifest.version).toBe("0.524.0");
   });
 });

@@ -2161,6 +2161,25 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 47 AT D641 — W1 + Y1b ADD THREE `EffectOp` MEMBERS (`switchWithDeckChosen`, `revealDeckBottomCount`,
+    `eachPlayerTakesPrize`) AND THREE OPTIONAL OP KEYS (`optional.askOpponent`, `attachFromHand.max` / `.whose`); NO
+    PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY OR `InPlayPokemon` FIELD.** (Placed ABOVE the D640 block.) What can be
+    persisted, with the 0.523 rollback reading NAMED: ⑴ a parked Ditto pick — `switchWithDeckChosen` in
+    `phase.cont.pendingOp`, its prompt a shipped `chooseCards { dest: "swap" }`; 0.523 has no apply arm, so the answer
+    whiffs through the default arm (no swap, no shuffle — D580 ⑴'s inert whiff). ⑵ A parked Pleasing Present half —
+    `attachFromHand { max, whose }`, its prompt a shipped `attachCards`, the opponent filed as the SHIPPED
+    `phase.answerer`; 0.523 applies the answer to the CONTROLLER's hand, where none of the offered uids sit, so nothing
+    moves for the first half — and `cont.rest` then runs the controller's `attachFromHand { max: 3 }`, whose `max`
+    0.523 does not read, so the controller is offered EVERY Basic Energy card in their hand, not up to 3. ⑶ A parked
+    Lt. Surge's Bargain confirm — `optional { askOpponent }`, the opponent the shipped `answerer`. Rollback is NOT
+    clean: answered YES, 0.523's resume returns `[eachPlayerTakesPrize]`, an op 0.523 does not know, and its `stepOp`
+    has no `default:` arm — it returns `undefined` and `runProgram`'s `"park" in stepped` THROWS a TypeError on resume
+    (D611's class, it does not whiff); answered NO, `otherwise` resolves as before. Only a match parked inside the
+    Bargain's confirm at the moment of a rollback is exposed. Its yes branch's `eachPlayerTakesPrize`
+    never parks: it queues two SHIPPED `takePrizes` stages, which a parked Prize pick persists in `pending` and 0.523's
+    `advance` drains the same (only the final `resumeTurn` it queues is the shipped mid-turn stage). Bug Out never parks.
+    No wire shape moves; the deploy order is the usual one.
+
     🆕🆕🆕 **46 → 47 AT D640 — THE TWENTIETH POSITION, AND THE SIXTH MIGRATION: OVERWRITING BOLT AND CELEBRATION.**
     (Placed ABOVE the D639 block.) The addresses, named first (D456's rule): ⑴ **`WeaknessRetype.asTimesTwo?: true`** on
     `InPlayPokemon.weaknessRetype` — Pikachu `30th-040` "Overwriting Bolt" (*"…is now {L} until the end of your next turn.

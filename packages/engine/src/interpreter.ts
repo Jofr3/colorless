@@ -2937,6 +2937,17 @@ function stepOp(
       // 🆕🆕🆕 D565 — Palafin "Zero to Hero": the in-place swap from the deck. NON-PARKING
       // (the watched runner keeps `.state`), so the forced pick is the whole answer.
       return { done: switchWithDeckNamed(state, op.name, ctx, events) };
+    case "switchWithDeckChosen": {
+      // 🆕🆕🆕 D641 — Ditto "Surprisingly Transform": the deck cards passing `filter`, copies of one card collapsed
+      // (D42), offered as a declinable pick of one (a search may find nothing). No source body or no candidate:
+      // the search still ends in the printed shuffle.
+      const offered = deckSwapCandidates(state, ctx.seat, op.filter);
+      if (offered.length === 0 || sourceRef(state, ctx).length === 0) {
+        return { done: switchWithDeckCard(state, undefined, ctx, events) };
+      }
+      const note = `Search your deck for ${retrieveNoun(op.filter).singular} to switch with this Pokémon.`;
+      return { park: { kind: "chooseCards", candidates: offered, min: 0, max: 1, dest: "swap", note } };
+    }
     case "switchWithDiscardNamed": {
       // 🆕🆕🆕 D566 — Ogre's Mask's two questions, told apart by the ENGINE-WRITTEN `bodyUid`
       // (D216's two parks; Ruffian's body-first shape). Question 1: the in-play body — an
@@ -4210,6 +4221,29 @@ function stepOp(
         },
       };
     }
+    case "revealDeckBottomCount": {
+      // 🆕🆕🆕 D641 — Bug Out: the bottom `n` (clamped by the deck), the matches filed (the empty list too), every
+      // revealed non-Pokémon discarded, the deck shuffled (R-BUG1: before the printed damage, which reads the file).
+      const side = state.players[ctx.seat];
+      const window = side.deck.slice(Math.max(0, side.deck.length - Math.max(0, op.n)));
+      recordMoved(
+        record,
+        op.recordAs,
+        window.filter((uid) => matchesFilter(cardOfUid(state, uid), op.filter)),
+      );
+      if (window.length === 0) return { done: state };
+      const shed = window.filter((uid) => !matchesFilter(cardOfUid(state, uid), { kind: "anyPokemon" }));
+      const gone = new Set(shed);
+      const [deck, rngState] = shuffle(
+        side.deck.filter((uid) => !gone.has(uid)),
+        state.rngState,
+      );
+      if (shed.length > 0) events.push({ type: "DECK_BOTTOM_DISCARDED", seat: ctx.seat, uids: shed });
+      events.push({ type: "SHUFFLE", seat: ctx.seat });
+      return {
+        done: { ...withSide(state, ctx.seat, { ...side, deck, discard: [...side.discard, ...shed] }), rngState },
+      };
+    }
     case "attachFromDeck": {
       // SEARCH the deck for Energy and attach it onto your own Pokémon (Charizard
       // ex "Infernal Reign" / Janine's Secret Art). The same compound decision
@@ -4317,6 +4351,14 @@ function stepOp(
       // moved nothing must overwrite its slot); it still returns `state` — no
       // leftovers clause to charge. An empty hand, or a host no longer a board top,
       // is `moved = 0` and the hit is the declaration-time head, with no park.
+      // 🆕🆕🆕 D641 — Pleasing Present's "Your opponent does this first": the OPPONENT's hand and board, and the
+      // opponent answers (the park's `decider`). No `recordAs` rides this row (the print files nothing).
+      if (op.whose === "opponent") {
+        const owner = { ...ctx, seat: otherSeat(ctx.seat) };
+        const offer = attachFromHandOffer(state, owner, op);
+        if (offer.candidates.length === 0 || offer.targets.length === 0 || offer.max <= 0) return { done: state };
+        return { park: { kind: "attachCards", ...offer, note: attachFromHandNote(op) }, decider: owner.seat };
+      }
       const { candidates, targets, max } = attachFromHandOffer(state, ctx, op);
       if (candidates.length === 0 || targets.length === 0 || max <= 0) {
         recordMoved(record, op.recordAs, []);
@@ -5145,6 +5187,8 @@ function stepOp(
           ...(op.cards === undefined ? {} : { cards: { ...op.cards } }),
           ...(op.targets === undefined ? {} : { targets: op.targets.map((ref) => ({ ...ref, spot: { ...ref.spot } })) }),
         },
+        // 🆕🆕🆕 D641 — Lt. Surge's Bargain's printed "Ask your opponent": the OPPONENT answers (D52's channel).
+        ...(op.askOpponent === true ? { decider: otherSeat(ctx.seat) } : {}),
       };
     case "handRefresh":
       // Put the affected player(s)' hand back into their deck — shuffled in
@@ -5466,6 +5510,10 @@ function stepOp(
       // forced auto-resolve and the §14 win check. See `queueTakePrize` below for the
       // seat, the queue POSITION and the closed-world audit that position rests on.
       return { done: queueTakePrize(state, ctx, op.count ?? 1, op.thenShuffleHand === true) };
+    case "eachPlayerTakesPrize":
+      // 🆕🆕🆕 D641 — Lt. Surge's Bargain's "each player takes a Prize card": the controller's stage, then the
+      // opponent's, each through the ONE queueing function (R-LSB1; flow.ts `settleProgram` drains them).
+      return { done: queueTakePrize(queueTakePrize(state, ctx, 1, false), { ...ctx, seat: otherSeat(ctx.seat) }, 1, false) };
     case "discardStadium":
       // 🆕🆕 D380 — the printed *"Discard a Stadium in play."* It is the THIRD op in
       // this file that can change a body's MAXIMUM without touching its damage (a
@@ -8911,6 +8959,11 @@ export function applyChoice(
       if (bodyUid === undefined || picked === undefined) return state;
       return switchWithDiscard(state, bodyUid, picked, ctx, events);
     }
+    case "switchWithDeckChosen": {
+      // 🆕🆕🆕 D641 — Ditto: the picked deck card is switched in (or none), then the deck is shuffled.
+      const [picked] = choice.kind === "cards" ? choice.uids : [];
+      return switchWithDeckCard(state, picked, ctx, events);
+    }
     case "damageChosen":
       // 🆕🆕🆕 D530 — the per-TARGET fold on the RESUMED side: the multiplier is the
       // chosen body's own counters, so the pick is walked ref by ref with the
@@ -8994,6 +9047,12 @@ export function applyChoice(
       // stays attached — which is also exactly what a v33 ROLLBACK deploy computes on a
       // v34 record parked here (apps/api match.ts, THE SEVENTH POSITION).
       if (choice.kind !== "attachCards") return state;
+      // 🆕🆕🆕 D641 — Pleasing Present's first half: the answer is applied out of the OPPONENT's hand onto their
+      // board, under their seat (they are the one attaching).
+      if (op.whose === "opponent") {
+        return attachFromZoneApply(state, choice.assignments, "hand", { ...ctx, seat: otherSeat(ctx.seat) }, events)
+          .state;
+      }
       // 🆕🆕🆕 D628 — the printed singular is MANDATORY (Lethargic Charge, R-LGC1): an empty answer is topped up
       // with the first offered card onto the first offered target, both re-read off the live offer.
       const attached = attachFromZoneApply(
@@ -14363,6 +14422,46 @@ function swappedUid(uid: string, emitted: readonly GameEvent[]): string {
   return current;
 }
 
+/** 🆕🆕🆕 D641 — Ditto "Surprisingly Transform"'s offer: the controller's deck cards passing `filter`, in deck
+    order, one representative per catalog card (D42 — two copies of one print are one answer). */
+function deckSwapCandidates(state: GameState, seat: Seat, filter: CardFilter): string[] {
+  const seen = new Set<string>();
+  return state.players[seat].deck.filter((uid) => {
+    const card = cardOf(state, uid);
+    if (card === undefined || !matchesFilter(card, filter) || seen.has(card.id)) return false;
+    seen.add(card.id);
+    return true;
+  });
+}
+
+/** 🆕🆕🆕 D641 — Ditto "Surprisingly Transform": `found` (a deck card, or none) switched in for the program's own
+    body IN PLACE — `switchWithDeckNamed`'s swap with the card chosen — the replaced top card into the deck, and the
+    deck shuffled on every ending (the printed "Then, shuffle your deck"). A card no longer in the deck, or a body
+    that left play, swaps nothing (the wire belt) and still shuffles. */
+function switchWithDeckCard(
+  state: GameState,
+  found: string | undefined,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const seat = ctx.seat;
+  const side = state.players[seat];
+  const [ref] = sourceRef(state, ctx);
+  const body = ref === undefined ? undefined : refPokemon(state, ref);
+  const oldTop = body === undefined ? undefined : topUid(body);
+  if (ref === undefined || body === undefined || oldTop === undefined || found === undefined || !side.deck.includes(found)) {
+    const [deck, rngState] = shuffle([...side.deck], state.rngState);
+    events.push({ type: "SHUFFLE", seat });
+    const unswapped = withSide(state, seat, { ...side, deck });
+    return { ...unswapped, rngState };
+  }
+  const switched: InPlayPokemon = { ...body, stack: [...body.stack.slice(0, -1), found] };
+  const [deck, rngState] = shuffle([...side.deck.filter((uid) => uid !== found), oldTop], state.rngState);
+  events.push({ type: "POKEMON_SWAPPED_FROM_DECK", seat, toUid: found, fromUid: oldTop });
+  events.push({ type: "SHUFFLE", seat });
+  return { ...withBodyAt(withSide(state, seat, { ...side, deck }), ref, switched), rngState };
+}
+
 /** 🆕🆕🆕 D566 — Ogre's Mask's question-1 offer: the controller's in-play bodies (Active first,
     then the Bench) whose TOP card passes `filter` — the printed *"1 of your Pokémon ex in play
     that has "Ogerpon" in its name"*. Exported for `programPlayable` (cardplay.ts), which
@@ -17133,6 +17232,10 @@ function queueStadiumLeaveTrims(before: GameState, after: GameState): GameState 
     `settleProgram`'s other routes drain `pending` too, so a future Ability route works
     unchanged — but the branch is declared as an `unreachable-population` survivor in
     the mutant corpus rather than tested around (D205).
+    🆕🆕🆕 **D641 (D539) — "UNREACHABLE TODAY" AND "A FUTURE ABILITY ROUTE WORKS UNCHANGED" ARE WITHDRAWN**, kept as
+    written: Lt. Surge's Bargain (a Supporter) reaches the `-1` branch through `eachPlayerTakesPrize`, and the route did
+    NOT work unchanged — `settleProgram`'s DONE fold went through `resolveMidTurnKnockOuts`, which rebuilds `pending` and
+    so dropped the appended stages. flow.ts `settleProgram` now drains them (with a §14 tie guard) before that sweep.
 
     ⚠️ **NO CLAMP AND NO WIN CHECK HERE, DELIBERATELY.** A seat with an empty prize row
     has already won, and `advance`'s own arm pops a stage whose clamped count is 0
@@ -19107,6 +19210,15 @@ function attachFromHandOffer(
       ...(op.ownerPokemon === undefined ? {} : { ownerPokemon: op.ownerPokemon }),
     };
     return { candidates, targets: attachEnergyTargets(state, seat, riders), max: Math.min(1, candidates.length) };
+  }
+  // 🆕🆕🆕 D641 — the printed "up to N" (Pleasing Present): D247's offer under a cap. `ctx.seat` is the hand's owner
+  // here (the opponent's half passes their seat), so the board read is theirs too.
+  if (op.max !== undefined) {
+    return {
+      candidates,
+      targets: attachEnergyTargets(state, seat, { source: "hand" }),
+      max: Math.min(op.max, candidates.length),
+    };
   }
   return { candidates, targets: attachEnergyTargets(state, seat, { source: "hand" }), max: candidates.length };
 }
@@ -21510,6 +21622,10 @@ function attachFromHandNote(op: Extract<EffectOp, { op: "attachFromHand" }>): st
   // hand to your Active Larry's Pokémon." (`attachTargetNoun` has no Active word; the zone is spelled here.)
   if (op.one === true) {
     return `Attach ${retrieveNoun(op.filter).singular} from your hand to your ${op.activeOnly === true ? "Active " : ""}${ownerNoun(op.ownerPokemon)}Pokémon.`;
+  }
+  // 🆕🆕🆕 D641 — the printed "up to N" (Pleasing Present), addressed to whichever player answers it.
+  if (op.max !== undefined) {
+    return `Attach up to ${String(op.max)} ${retrieveNoun(op.filter).plural} from your hand to your ${attachTargetNoun({})} in any way you like.`;
   }
   return `Attach any number of ${retrieveNoun(op.filter).plural} from your hand to your ${attachTargetNoun({})} in any way you like.`;
 }

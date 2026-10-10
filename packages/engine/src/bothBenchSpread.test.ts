@@ -1088,7 +1088,9 @@ describe("D507 §8 — the FOUR-ZONE sibling is REFUSED, and the condition that 
     // more raw site; `spreadDamage` untouched at 10.
     // 🆕🆕🆕 D633 — `damageDefender` 16 → 18: arm 10e's Rocket Feathers and Weaponized Swords hits are two more
     // raw sites; `spreadDamage` untouched at 10.
-    expect(producers("damageDefender")).toBe(18);
+    // 🆕🆕🆕 D641 — `damageDefender` 18 → 19: the Bug Out arm (`BOTTOM_REVEAL_NAMED_ATTACK_SCALE`) is one more raw
+    // site; `spreadDamage` untouched at 10.
+    expect(producers("damageDefender")).toBe(19);
     expect(producers("spreadDamage")).toBe(10);
     expect(producers("damageDefender")).toBeGreaterThan(producers("spreadDamage") - 4);
   });

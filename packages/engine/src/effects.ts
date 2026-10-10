@@ -9460,6 +9460,18 @@ export type EffectOp =
       member that can ride `phase.cont` with its optional engine-written key — a D125
       widening, `MATCH_RECORD_VERSION` holds. */
   | { op: "switchWithDiscardNamed"; filter: CardFilter; bodyUid?: string }
+  /** 🆕🆕🆕 **D641 — THE IN-PLACE SWAP FROM THE DECK, CHOSEN: DITTO "SURPRISINGLY TRANSFORM".** `mep-106` /
+      `30th-115` (attack, behind its coin): *"…search your deck for a Pokémon and switch it with this Pokémon. Any
+      attached cards, damage counters, Special Conditions, turns in play, and any other effects remain on the new
+      Pokémon. If you switched a Pokémon in this way, put this card into your deck. Then, shuffle your deck."*
+      `switchWithDeckNamed`'s swap (the TOP of the source body's stack replaced IN PLACE, every other
+      `InPlayPokemon` field riding along, the old top card into the deck) with the card CHOSEN: a `chooseCards
+      { min 0, max 1, dest "swap" }` over the deck cards passing `filter`, copies of one card collapsed (D42). The
+      deck is shuffled on every answer, the empty one included (a search may find nothing). Not an evolution (no
+      `onEvolve`, no `EVOLVED`). R-DIT1 ⚠️ UNRULED: the swapped-in card is not the Pokémon that used the attack
+      (the epilogue's uid is the old card's, so `usedAttack` is not stamped on it). A new member (D125) that parks:
+      a 0.523 reader resuming it has no apply arm, so the answer whiffs (named, match.ts). */
+  | { op: "switchWithDeckChosen"; filter: CardFilter }
   /** 🆕 D345 — THE PRINTED SELF-KNOCK-OUT COST. *"**If you use this Ability, this
       Pokémon is Knocked Out.**"* — Dusclops `sv06.5-019`/`-069`/`sv08.5-036` and
       Dusknoir `sv06.5-020`/`-070`/`sv08.5-037` "Cursed Blast", plus Magneton
@@ -9811,6 +9823,13 @@ export type EffectOp =
       the hand. R-CEL1 ⚠️ UNRULED: "If you do" is read as "the gate held and the Prize stage resolved"; a
       take that empties the row ends the game (§14.1) before the shuffle stage drains. */
   | { op: "takePrize"; count?: number; thenShuffleHand?: true }
+  /** 🆕🆕🆕 §8.1 (D641) — *"each player takes a Prize card"*: Lt. Surge's Bargain `me01-120` / `-170` / `-185`
+      (Supporter), the yes branch of its opponent-answered `optional`. Two SHIPPED `takePrizes` stages of 1, the
+      controller's FIRST (R-LSB1 ⚠️ UNRULED: §8.1's "the player whose turn it is takes their Prize card(s) first"),
+      each queued by `queueTakePrize` exactly as `takePrize` queues one. A Trainer program has no attack tail, so
+      flow.ts `settleProgram` drains them, behind a §14 tie guard over BOTH (R-LSB1: both rows emptied by the one
+      sentence is the §14 tie, not a win for whoever is first). Never parks. A new member (D125). */
+  | { op: "eachPlayerTakesPrize" }
   /** 🆕🆕 **D433 — §10, THE FIRST DEVOLUTION IN THIS ENGINE.**
       *"Devolve each of your opponent's evolved Pokémon by shuffling the highest Stage
       Evolution card on it into your opponent's deck."* — **1 sentence / 3 legal
@@ -11500,6 +11519,20 @@ export type EffectOp =
       filter: CardFilter;
       recordAs?: EffectSlot;
     }
+  /** 🆕🆕🆕 **D641 — REVEAL THE BOTTOM `n` OF THE CONTROLLER's DECK, COUNT THE MATCHES, KEEP THE POKÉMON.**
+      Sizzlipede `me05-009` "Bug Out" — *"Reveal the bottom 7 cards of your deck, and this attack does 50 damage for
+      each Pokémon you find there that has the Bug Out attack. Then, shuffle any revealed Pokémon back into your
+      deck. Discard the other cards."* The window is the last `min(n, deck)` cards; the ones matching `filter`
+      (`attackNamePokemon`) are filed under `recordAs` (the empty list too) for the `damageDefender { per, count }`
+      behind it; every revealed card that is not a Pokémon goes to the discard pile (one `DECK_BOTTOM_DISCARDED`);
+      the deck is then shuffled (one `SHUFFLE`). R-BUG1 ⚠️ UNRULED: the discard and the shuffle run before the
+      damage (Destructo-Press's R-DP1: the count is fixed at the reveal). Never parks. A new member (D125). */
+  | {
+      op: "revealDeckBottomCount";
+      n: number;
+      filter: CardFilter;
+      recordAs: EffectSlot;
+    }
   /** SEARCH the controller's whole deck for up to `max` Energy cards matching
       `filter` and ATTACH them straight onto the controller's own in-play Pokémon
       — the deck-SEARCH sibling of `attachFromTop`, which reaches only a window on
@@ -11875,6 +11908,19 @@ export type EffectOp =
       activeOnly?: true;
       /** 🆕🆕🆕 D628 — the printed "**Larry's** Pokémon", `AttachTargetRiders.ownerPokemon` (the bare owner). */
       ownerPokemon?: string;
+      /** 🆕🆕🆕 **D641 — THE PRINTED *"up to 3"*** (Delibird `me04-018` "Pleasing Present"): the offer's cap is
+          `min(max, candidates)`, declinable like "any number". Absent = D247's "any number" (D125). */
+      max?: number;
+      /** 🆕🆕🆕 **D641 — *"Each player may attach … from THEIR hand to THEIR Pokémon … Your opponent does this
+          first."*** Pleasing Present's first half: the OPPONENT's hand and the OPPONENT's board, and the
+          opponent ANSWERS (the park's `decider`, filed as the phase's `answerer`; their own hand cards are sent
+          to them alone, redact.ts' answerer gate). R-PP1 ⚠️ UNRULED: the opponent, not the controller, chooses where
+          their own Energy goes, and their half is declinable like the controller's. Literal `"opponent"` only (`attachEnergyFrom.whose`'s
+          spelling); ABSENT = the controller's own hand and board. A 0.523 reader resuming such a park applies
+          the answer to the CONTROLLER's hand, where none of the offered uids sit, so nothing moves; the
+          controller's own half then runs without its `max` (0.523 does not read it), offering every Basic
+          Energy card in their hand, not up to 3 (named, match.ts). */
+      whose?: "opponent";
     }
   /** Discard Energy attached to an in-play Pokémon — the §15 energy-removal
       ("hammer") family on the opponent's side (Crushing Hammer, Giacomo, Mawile
@@ -14105,6 +14151,14 @@ export type EffectOp =
       /** Optional card faces for a binary card choice; resolution still uses the branches. */
       cards?: { yes: string; no?: string };
       targets?: PokemonRef[];
+      /** 🆕🆕🆕 **D641 — THE PRINTED *"Ask your opponent if …"***: Lt. Surge's Bargain `me01-120` / `-170` /
+          `-185`. The park files the controller's OPPONENT as its `decider` (the phase's `answerer`, D52's
+          channel), so the confirm reaches the other seat; `then` / `otherwise` still run for the controller's
+          program. ABSENT = the controller answers, every shipped `optional` byte for byte. Rollback is NOT
+          clean (named, match.ts): a 0.523 reader resuming such a park answered YES returns the unknown
+          `eachPlayerTakesPrize` and throws on resume (D611's class: no `default:` arm in `stepOp`); answered
+          NO, `otherwise` resolves as before. */
+      askOpponent?: true;
     }
   /** 🆕🆕🆕 **D625 — THE PRINTED *"Choose 1"* OVER BRANCHES THAT MAY HAVE NOTHING TO DO.** Blowtorch
       `me02-086` / `-117` (Item): *"Discard a Pokémon Tool or Special Energy card from 1 of your opponent's
@@ -18499,6 +18553,17 @@ const KO_BY_THIS_ATTACK_MORE_PRIZES =
 // Yveltal ex "Soul Destroyer" ×2: the NEW `knockOutEach` (R-SDS1); the HP is captured (`>= 10`).
 const KO_EACH_AT_REMAINING_HP =
   /^Knock Out each of your opponent['’]s Pokémon that has (\d+) HP or less remaining\.$/;
+// 🆕🆕🆕 D641 — W1, three literal `me` anchors (LOCAL D1, 2026-10-10), none printed in legal `sv`.
+// Ditto "Surprisingly Transform" ×2: `coinFlipGate` over the NEW `switchWithDeckChosen` (R-DIT1).
+const FLIP_SWITCH_WITH_DECK_POKEMON =
+  /^Flip a coin\. If heads, search your deck for a Pokémon and switch it with this Pokémon\. Any attached cards, damage counters, Special Conditions, turns in play, and any other effects remain on the new Pokémon\. If you switched a Pokémon in this way, put this card into your deck\. Then, shuffle your deck\.$/;
+// Sizzlipede "Bug Out": the NEW `revealDeckBottomCount` filing the named-attack Pokémon, then the shipped
+// `damageDefender { per, count }` (R-BUG1). The window, the per-card damage and the attack name are captured.
+const BOTTOM_REVEAL_NAMED_ATTACK_SCALE =
+  /^Reveal the bottom (\d+) cards of your deck, and this attack does (\d+) damage for each Pokémon you find there that has the ([A-Z][A-Za-z'’ -]*) attack\. Then, shuffle any revealed Pokémon back into your deck\. Discard the other cards\.$/;
+// Delibird "Pleasing Present": two `attachFromHand { max }` ops, the OPPONENT's first (`whose`, R-PP1).
+const EACH_PLAYER_HAND_ATTACH =
+  /^Each player may attach up to (\d+) Basic Energy cards from their hand to their Pokémon in any way they like\. Your opponent does this first\.$/;
 // 🆕🆕🆕 D615 — WP31a, eight literal `me` anchors (LOCAL D1, 2026-10-09), none printed in legal `sv`, each
 // onto a shipped op (arm 6e-ter). Mega Delphox ex "Trick Portal": `ATTACK_LOOK_TOP_BENCH`'s sentence with
 // the comma join.
@@ -30530,6 +30595,38 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     const hp = Number(match[1]);
     if (hp >= 10) return [{ op: "knockOutEach", remainingHpAtMost: hp }];
+  }
+  // 🆕🆕🆕 D641 — W1 (anchors beside D639's).
+  if (FLIP_SWITCH_WITH_DECK_POKEMON.test(effect)) {
+    return [
+      {
+        op: "coinFlipGate",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "switchWithDeckChosen", filter: { kind: "anyPokemon" } }],
+      },
+    ];
+  }
+  match = BOTTOM_REVEAL_NAMED_ATTACK_SCALE.exec(effect);
+  if (match !== null) {
+    const n = Number(match[1]);
+    const each = Number(match[2]);
+    const attack = match[3] ?? "";
+    if (n >= 1 && each >= 10) {
+      return [
+        { op: "revealDeckBottomCount", n, filter: { kind: "attackNamePokemon", attack }, recordAs: "revealed" },
+        { op: "damageDefender", per: each, count: "revealed" },
+      ];
+    }
+  }
+  match = EACH_PLAYER_HAND_ATTACH.exec(effect);
+  if (match !== null) {
+    const max = Number(match[1]);
+    if (max >= 1) {
+      return [
+        { op: "attachFromHand", filter: { kind: "basicEnergy" }, max, whose: "opponent" },
+        { op: "attachFromHand", filter: { kind: "basicEnergy" }, max },
+      ];
+    }
   }
   if (DOUBLE_OPPONENT_COUNTERS.test(effect)) {
     return [

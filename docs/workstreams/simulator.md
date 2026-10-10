@@ -30248,6 +30248,25 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D641 — W1 + Y1b: effects the opponent answers, and deck swap / reveal (engine 0.524.0, `MATCH_RECORD_VERSION` stays 47)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D640 (`93df22ea`), NOT committed. 4 texts / 7 printings (`me` + `mep` +
+`30th`) — the D625 re-rank's W1 and Y1b groups, whole.
+
+- **Surprisingly Transform** (Ditto `mep-106` / `30th-115`): `coinFlipGate` over the NEW `switchWithDeckChosen { filter: anyPokemon }` —
+  a declinable pick of one deck Pokémon (`chooseCards { dest: "swap" }`), switched in for the attacker in place (everything kept), Ditto
+  into the deck, the deck shuffled on every answer. R-DIT1 ⚠️ UNRULED: the new card is not the Pokémon that used the attack.
+- **Bug Out** (Sizzlipede `me05-009`): the NEW `revealDeckBottomCount` (bottom 7; the Bug Out Pokémon filed; every non-Pokémon
+  discarded; the deck shuffled) + `damageDefender { per: 50, count }`. R-BUG1 ⚠️ UNRULED: discard and shuffle before the damage.
+- **Pleasing Present** (Delibird `me04-018`): two `attachFromHand { basicEnergy, max: 3 }`, the first with the NEW `whose: "opponent"`
+  (their hand and board; the park's `decider` is the opponent). R-PP1 ⚠️ UNRULED: the opponent chooses their own attaches.
+- **Lt. Surge's Bargain** (`me01-120` / `-170` / `-185`, Supporter): `optional` with the NEW `askOpponent` (the confirm goes to the
+  opponent); yes = the NEW `eachPlayerTakesPrize` (two `takePrizes` stages, the controller's first), no = draw 4. flow.ts `settleProgram`
+  drains a program's queued Prize stages behind a §14 tie guard. R-LSB1 ⚠️ UNRULED: both rows emptied by the one sentence is a tie.
+- **MRV stays 47** (match.ts "STAYS 47 AT D641"): new op members and optional keys only; the 0.523 rollback readings are named — NOT clean for a parked Bargain confirm answered yes (it throws on 0.523, D611's class; no resolves as before).
+- **Suite.** `opponentAnsweredMeD641.test.ts` (23), census D641 block (2). +17 mutant rows, all KILLED. Census: attacks
+  **2,770 / 2,771**, trainers **442 / 447**, 1243 `me` printings fully built. Sweep PENDING.
+
 ## D640 — Y1a + MRV47, cut to Overwriting Bolt and Celebration (engine 0.523.0, `MATCH_RECORD_VERSION` 46 → 47)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D639 (`c275888b`), NOT committed. 2 texts / 3 printings (`30th`) — the D625
@@ -30380,7 +30399,7 @@ D625 re-rank's X1 group, whole, on the shipped copy family.
 ## D634 — C1: the coin rest (engine 0.517.0, `MATCH_RECORD_VERSION` stays 44)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D633 (`6157c1c8`), NOT committed. 7 texts / 8 printings (`me` + `30th`), all
-reader rows; the texts D595 and D605 dropped, less Octillery and Ditto. [🆕🆕🆕 D636 (D539): Octillery BUILT at D636.]
+reader rows; the texts D595 and D605 dropped, less Octillery and Ditto. [🆕🆕🆕 D641 (D539): Ditto BUILT at D641 (W1).] [🆕🆕🆕 D636 (D539): Octillery BUILT at D636.]
 
 - **Hyper Lariat** (Bewear `me01-112`): the NEW `AttackCoinFlip` member `bonusOnAllHeads` — the printed 100 plus 100 only when both coins
   are heads. Catalog Magikarp `sv02-042` and its `sv02-203` / `30th-c-030` reprints ("Expert Splasher", +20), plus Dondozo `svp-012` ("Dangerous Wave", +100) — four non-legal printings, no legal or census effect — read the same way now; three refusal controls were inverted in place.
@@ -30395,7 +30414,7 @@ reader rows; the texts D595 and D605 dropped, less Octillery and Ditto. [🆕�
   revealed, one card is picked and shuffled into its owner's deck (the NEW `HAND_CARD_SHUFFLED_INTO_DECK` event and log row, then
   `SHUFFLE`). 0 heads reveals nothing. The park uses the existing `chooseCards.dest: "deck"`, so the wire does not change.
 - **Suite.** `coinRestMeD634.test.ts` (22) and a census D634 block (1). +22 mutant rows, all KILLED; `D561-scoop-active-pick-does-nothing`
-  re-pointed. `flipGatedOp.test.ts`'s near-miss slot 0 re-pointed to Ditto. Census: attacks **2,748 / 2,771**, 1208 `me` printings
+  re-pointed. `flipGatedOp.test.ts`'s near-miss slot 0 re-pointed to Ditto. [🆕🆕🆕 D641 (D539): Ditto BUILT at D641; the slot kept in place.] Census: attacks **2,748 / 2,771**, 1208 `me` printings
   fully built. Sweep PENDING.
 
 ## D633 — O1: attack odds and ends (engine 0.516.0, `MATCH_RECORD_VERSION` stays 44)
@@ -30578,7 +30597,7 @@ registry objects.
 - **Select a Snack ×2.** Explorer's Guidance's `lookAtTopN` program (exact 1 of 3, the rest discarded), revealed. R-SAS1 UNRULED.
 - **Send Flowers.** `attachFromDeck` of any Energy card onto 1 Benched {G} body, then the shuffle.
 - **Chirp.** `searchDeck` over the NEW `CardFilter` member `pokemonWithResistance` (the printed Resistance type, D371's read).
-- **Dropped and named.** Elemental Blast (a matched multi-type discard), Pleasing Present (an opponent-answered attach), Skill Thief ×2
+- **Dropped and named.** Elemental Blast (a matched multi-type discard), Pleasing Present (an opponent-answered attach) [🆕🆕🆕 D641 (D539): Pleasing Present BUILT at D641 (W1)], Skill Thief ×2
   (a whole-board copy source plus a hand gate). [🆕🆕🆕 D638 (D539): Skill Thief ×2 BUILT at D638 (X1)] [🆕🆕🆕 D633 (D539): Elemental Blast BUILT at D633 (O1).]
 - **MRV stays 43.** Additions only; the two parked shapes are never re-read by their apply (`eachAttachTopUp`, the `each` apply, does read `max`, but `"opponentEnergyInPlay"` is never set beside `each`) (match.ts "STAYS 43 AT D624").
 - **Suite.** `deckHandMiscMeD624.test.ts` (22) and a census D624 block (2). +21 mutant rows; seven D568 / D569 rows re-pointed onto
@@ -30744,7 +30763,7 @@ registry objects.
 - **Reading.** R-RCL1 ⚠️ UNRULED: Roto Call's "You may" is a confirm; a "no" does not shuffle. Fennel's and the "You may search
   your deck for a card" attack derivations still shuffle on a zero pick, unchanged.
 - **Dropped (WP31c).** Elemental Blast needs a matched multi-type discard (Legacy Energy fills any slot); Send Flowers a deck
-  attach of any Energy; Chirp a Resistance filter; Tail Generator, Hand Trim, Select a Snack, Pleasing Present, Skill Thief. [🆕🆕🆕 D638 (D539): Skill Thief ×2 BUILT at D638 (X1)]
+  attach of any Energy; Chirp a Resistance filter; Tail Generator, Hand Trim, Select a Snack, Pleasing Present, Skill Thief. [🆕🆕🆕 D641 (D539): Pleasing Present BUILT at D641 (W1)] [🆕🆕🆕 D638 (D539): Skill Thief ×2 BUILT at D638 (X1)]
   [🆕🆕🆕 D633 (D539): Elemental Blast BUILT at D633 (O1, `discardEnergy.reserve`).]
   [🆕🆕🆕 D624 (D539): Tail Generator, Hand Trim, Select a Snack, Send Flowers and Chirp are BUILT at D624.]
 - **Suite.** `deckHandMiscMeD616.test.ts` (31) and a census D616 block (2). +32 mutant rows, all killed; two D540 rows
@@ -30964,11 +30983,11 @@ registry objects.
   `programPerHeads` over `pokemonInPlay` + `byName`), Kaleidowaltz ×2 (Mega Audino ex; `programPerHeads` over the bare
   search-and-attach). The Miraculous Paint row also builds Vivillon `sv01-010` (not Standard-legal).
 - **Dropped and named.** Watchog ×2 "Snap Inspection" (a revealed-hand pick shuffled into the deck) and Ditto ×2
-  "Surprisingly Transform" (a deck Pokémon switched in for the attacker). [🆕🆕🆕 D634 (D539): Watchog ×2 BUILT at D634.]
+  "Surprisingly Transform" (a deck Pokémon switched in for the attacker). [🆕🆕🆕 D634 (D539): Watchog ×2 BUILT at D634.] [🆕🆕🆕 D641 (D539): Ditto ×2 BUILT at D641 (W1).]
 - **Readings.** R-NZ1, R-MP1, R-KW1, UNRULED (`progress.md` NEXT).
 - **Suite.** `coinRestMeD605.test.ts` (24) and a census D605 block (2). +35 mutant rows. D595's "five-row" table claims
   annotated in place; `flipGatedOp.test.ts`'s near-miss witness re-pointed to Shiftry `me01-015` [🆕🆕🆕 D634 (D539): and
-  again, to Ditto].
+  again, to Ditto] [🆕🆕🆕 D641 (D539): Ditto BUILT at D641; the slot kept in place].
 - **Census.** Standard pool attacks **2,600 / 2,771**; 926 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 

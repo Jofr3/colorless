@@ -1870,6 +1870,16 @@ export function settleProgram(
     return advance({ ...settled, pending: [...queued, ...turnTail(controller)] }, events);
   }
   const resumed: GameState = { ...settled, phase: { kind: "turn:action", seat: controller } };
+  // 🆕🆕🆕 D641 — a Trainer / Ability program that QUEUED Prize stages (Lt. Surge's Bargain's
+  // `eachPlayerTakesPrize`) has no attack tail to splice them in front of, so they drain here, in
+  // their queued order, behind a §14 TIE GUARD over all of them (R-LSB1 ⚠️ UNRULED: the Prizes the one
+  // sentence hands both players are one instant). A one-sided win is the stage path's.
+  const prizes = resumed.pending.filter((stage) => stage.kind === "takePrizes");
+  if (prizes.length > 0) {
+    const tie = tiedOverTheBatch(resumed, prizes);
+    if (tie !== null) return finishGame(resumed, tie, events);
+    return advance({ ...resumed, pending: [...resumed.pending, { kind: "resumeTurn", seat: controller }] }, events);
+  }
   return resolveMidTurnKnockOuts(resumed, controller, SEATS, events);
 }
 

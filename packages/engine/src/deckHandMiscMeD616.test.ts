@@ -122,6 +122,8 @@ const BUILT_AT_D624: ReadonlySet<string> = new Set(["me03-029", "me03-067", "30t
 const BUILT_AT_D633: ReadonlySet<string> = new Set(["30th-121"]);
 /** 🆕🆕🆕 D638 (D539) — X1 reads Skill Thief (`copyBorrowedMeD638.test.ts`). */
 const BUILT_AT_D638: ReadonlySet<string> = new Set(["me05-054"]);
+/** 🆕🆕🆕 D641 (D539) — W1 reads Pleasing Present. */
+const BUILT_AT_D641: ReadonlySet<string> = new Set(["me04-018"]);
 
 describe("D616 §1 — the texts", () => {
   it("9 sentences / 11 printings, each a row of the committed `me` corpus, none printed in legal `sv`, each now read", () => {
@@ -140,12 +142,16 @@ describe("D616 §1 — the texts", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, ids] of WP31_REST) {
       expect([text, me.get(text)]).toEqual([text, ids.length]);
-      // 🆕🆕🆕 D624 (D539): WP31c reads five of these; Elemental Blast, Pleasing Present and Skill Thief stay unbuilt.
+      // 🆕🆕🆕 D624 (D539): WP31c reads five of these; Elemental Blast, Pleasing Present and Skill Thief stay unbuilt. [🆕🆕🆕 D641 (D539): Pleasing Present no longer — W1.]
       // [🆕🆕🆕 D633 (D539): Elemental Blast no longer — O1.] [🆕🆕🆕 D638 (D539): Skill Thief no longer — X1.]
       // 🆕🆕🆕 D633 (D539): and O1 reads Elemental Blast.
       // 🆕🆕🆕 D638 (D539): and X1 reads Skill Thief.
+      // 🆕🆕🆕 D641 (D539): and W1 reads Pleasing Present.
       expect(resolvedByAnyReader(text), text).toBe(
-        BUILT_AT_D624.has(ids[0] ?? "") || BUILT_AT_D633.has(ids[0] ?? "") || BUILT_AT_D638.has(ids[0] ?? ""),
+        BUILT_AT_D624.has(ids[0] ?? "") ||
+          BUILT_AT_D633.has(ids[0] ?? "") ||
+          BUILT_AT_D638.has(ids[0] ?? "") ||
+          BUILT_AT_D641.has(ids[0] ?? ""),
       );
       for (const id of ids) expect(programFor(id)?.attack, id).toBeUndefined();
     }
@@ -723,6 +729,6 @@ describe("D616 §11 — Fetch and Hide: an Item from the opponent's hand to the 
 
 describe("D616 §12 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.523.0");
+    expect(engineVersion).toBe("0.524.0");
   });
 });

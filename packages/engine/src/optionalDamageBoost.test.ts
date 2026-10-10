@@ -855,6 +855,10 @@ describe("D316 §7 — 🛑 THE WIDENING, DRIVEN AT ITS PREMISE RATHER THAN ASSE
       "sv08.5-174",
       "sv07-006",
       "sv07-006",
+      // 🆕🆕🆕 D641 — Lt. Surge's Bargain ×3: the opponent-answered confirm (`askOpponent`), `otherwise` = draw 4.
+      "me01-120",
+      "me01-170",
+      "me01-185",
     ]);
     // …and the ATTACK producer is this reader's assembly site — `optionalBoostProgram`,
     // which lived inside attack.ts until D318 MOVED it into effects.ts so a sweep

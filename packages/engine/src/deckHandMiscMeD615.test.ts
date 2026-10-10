@@ -141,6 +141,8 @@ const BUILT_AT_D624: ReadonlySet<string> = new Set(["me03-029", "me03-067", "30t
 const BUILT_AT_D633: ReadonlySet<string> = new Set(["30th-121"]);
 /** 🆕🆕🆕 D638 (D539) — X1 reads Skill Thief (`copyBorrowedMeD638.test.ts`). */
 const BUILT_AT_D638: ReadonlySet<string> = new Set(["me05-054"]);
+/** 🆕🆕🆕 D641 (D539) — W1 reads Pleasing Present (two `attachFromHand { max }`, the opponent's first). */
+const BUILT_AT_D641: ReadonlySet<string> = new Set(["me04-018"]);
 
 describe("D615 §1 — the texts", () => {
   it("8 sentences / 13 printings, each a row of the committed `me` corpus, none printed in legal `sv`, each now read", () => {
@@ -163,11 +165,13 @@ describe("D615 §1 — the texts", () => {
       // 🆕🆕🆕 D624 (D539): and WP31c reads five more (`deckHandMiscMeD624.test.ts`).
       // 🆕🆕🆕 D633 (D539): and O1 reads Elemental Blast.
       // 🆕🆕🆕 D638 (D539): and X1 reads Skill Thief.
+      // 🆕🆕🆕 D641 (D539): and W1 reads Pleasing Present — none of WP31's rest stays unbuilt.
       expect(resolvedByAnyReader(text), text).toBe(
         BUILT_AT_D616.has(ids[0] ?? "") ||
           BUILT_AT_D624.has(ids[0] ?? "") ||
           BUILT_AT_D633.has(ids[0] ?? "") ||
-          BUILT_AT_D638.has(ids[0] ?? ""),
+          BUILT_AT_D638.has(ids[0] ?? "") ||
+          BUILT_AT_D641.has(ids[0] ?? ""),
       );
       for (const id of ids) expect(programFor(id)?.attack, id).toBeUndefined();
     }
@@ -711,6 +715,6 @@ describe("D615 §9 — Cold Cyclone: a {W} Energy from this Pokémon to a Benche
 
 describe("D615 §10 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.523.0");
+    expect(engineVersion).toBe("0.524.0");
   });
 });

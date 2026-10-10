@@ -410,6 +410,13 @@ describe("the pool sweep, structurally", () => {
       // trigger's `optional.then` (the confirm), which the enumerated walk does not descend.
       "me01-055 trigger :: drawCards",
       "me01-056 trigger :: drawCards",
+      // 🆕🆕🆕 D641 — Lt. Surge's Bargain ×3 (`LT_SURGES_BARGAIN`): the `optional`'s two branches, one row each per key.
+      "me01-120 trainer :: drawCards",
+      "me01-120 trainer :: eachPlayerTakesPrize",
+      "me01-170 trainer :: drawCards",
+      "me01-170 trainer :: eachPlayerTakesPrize",
+      "me01-185 trainer :: drawCards",
+      "me01-185 trainer :: eachPlayerTakesPrize",
       // 🆕🆕🆕 D590 — Brambleghast `me02-047` "Prison Panic": its Confused sits inside the same
       // trigger-level `optional.then` (the confirm).
       "me02-047 trigger :: applyStatus",

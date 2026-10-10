@@ -1132,7 +1132,7 @@ describe("D539 §7 — the widening at a persisted address, and the version does
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.523.0");
+    expect(engineVersion).toBe("0.524.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

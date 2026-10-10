@@ -1325,8 +1325,8 @@ describe("D541 §8 — the parked op IS persisted, and `MATCH_RECORD_VERSION` HO
 
 describe("D541 §9 — the version tax and the byte pins", () => {
   it("🛑 the engine version is the CURRENT one in BOTH places (🆕 D541 — the TITLE is de-valued on purpose: D460's fifth site kind is the `it()` title, and a title carrying BOTH arrows is a site the next bump has to edit twice)", () => {
-    expect(engineVersion).toBe("0.523.0");
-    expect(manifest.version).toBe("0.523.0");
+    expect(engineVersion).toBe("0.524.0");
+    expect(manifest.version).toBe("0.524.0");
   });
 
   it("🛑 the OP NAME is untouched by the funnel RENAME — it is a persisted member", () => {

@@ -31,7 +31,8 @@ import {
 // named: Watchog `me04-071` / `-097` (a revealed-hand pick shuffled into the deck — a new
 // `bottomFromOpponentHand.dest`) and Ditto `mep-106` / `30th-115` (a deck Pokémon swapped in for the
 // attacker) — §2 keeps them unbuilt. [🆕🆕🆕 D634 (D539): Watchog is BUILT at D634 (C1, the new
-// `bottomFromOpponentHand.dest: "deck"`); only Ditto stays unbuilt.]
+// `bottomFromOpponentHand.dest: "deck"`); only Ditto stays unbuilt.] [🆕🆕🆕 D641 (D539): Ditto BUILT at D641 (W1,
+// `switchWithDeckChosen`); §2's pin is inverted.]
 
 const T = {
   together:
@@ -56,7 +57,7 @@ const ROWS: readonly (readonly [string, number, readonly string[]])[] = [
 const DROPPED: Record<string, string> = {
   "Watchog — the revealed-hand pick goes INTO THE DECK (`bottomFromOpponentHand.dest` has no shuffle member)":
     "Flip 3 coins. If any of them are heads, your opponent reveals their hand. For each heads, choose a card you find there and shuffle it into your opponent's deck.",
-  "Ditto — a deck Pokémon switched in for the attacker, everything kept (no op)":
+  "Ditto — a deck Pokémon switched in for the attacker, everything kept (no op; 🆕🆕🆕 D641: BUILT)":
     "Flip a coin. If heads, search your deck for a Pokémon and switch it with this Pokémon. Any attached cards, damage counters, Special Conditions, turns in play, and any other effects remain on the new Pokémon. If you switched a Pokémon in this way, put this card into your deck. Then, shuffle your deck.",
 };
 
@@ -209,11 +210,12 @@ describe("D605 §2 — near misses and the dropped texts stay unbuilt", () => {
     expect(crossings.filter((text) => printed.has(text)).sort()).toEqual([...printedGates].sort());
   });
 
-  it("Watchog and Ditto are unbuilt (🆕🆕🆕 D634: Watchog is built at D634; Ditto stays unbuilt)", () => {
+  it("Watchog and Ditto are unbuilt (🆕🆕🆕 D634: Watchog is built at D634; Ditto stays unbuilt; 🆕🆕🆕 D641: Ditto is built at D641)", () => {
     const me = new Set(meAttackCorpus().map(([, text]) => text));
     for (const [why, text] of Object.entries(DROPPED)) {
       // 🆕🆕🆕 D634 (D539): Watchog is reader-built at D634 (C1).
-      expect(resolvedByAnyReader(text), why).toBe(why.startsWith("Watchog"));
+      // 🆕🆕🆕 D641 (D539): and Ditto at D641 (W1, `switchWithDeckChosen`) — both are built now.
+      expect(resolvedByAnyReader(text), why).toBe(true);
       expect(me.has(text), why).toBe(true);
     }
   });
@@ -564,7 +566,7 @@ describe("D605 §7 — Miraculous Paint on a board: heads asks for a Special Con
 });
 
 describe("D605 §8 — the version", () => {
-  it("is built at engine 0.523.0", () => {
-    expect(engineVersion).toBe("0.523.0");
+  it("is built at engine 0.524.0", () => {
+    expect(engineVersion).toBe("0.524.0");
   });
 });
