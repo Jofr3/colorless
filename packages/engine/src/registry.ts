@@ -1278,6 +1278,14 @@ export interface PassiveEffects {
       the holder may sit on the Bench. In HP (§12). Each holder pays its own amount (R-SSW1 / R-CAG1: no "doesn't
       stack" is printed). §9-gated per holder; an Ability, so Luminous Wing refuses it with the Ability share. */
   damageAttackerWatched?: { amount: number; activeType?: PokemonType; activeNames?: readonly string[] };
+  /** 🆕🆕🆕 §7.4 (D643) — THE RAISED TOOL CAP: Rotom ex `me02-029` / `-111` / `-126` "Multi Adapter" (*"Each of
+      your Pokémon that has "Rotom" in its name may have up to 2 Pokémon Tool cards attached. If this Ability goes
+      away, discard Pokémon Tools from those Pokémon until only 1 remains on each."*). Read by ONE function,
+      continuous.ts `toolCapOf`: a body on the holder's OWN board whose top card's name contains `nameContains` may
+      carry `cap` Tools while one holder (Active or Bench) is in play with its Ability live (§9-gated). Several
+      holders do not stack. The second sentence is continuous.ts `toolTrimStages`, the state check queued at
+      flow.ts `advance` and index.ts `applyAction` (R-MAD1, R-MAD2). Catalog-only: never persisted. */
+  toolCapForName?: { nameContains: string; cap: number };
   /** 🆕 §8.1 (D298) — the CAUSE-CONDITIONED PRIZE REDUCTION borne by an ATTACHED
       CARD. See `KoPrizeReduction` for the vocabulary; the two printings that reach
       this field are
@@ -11229,6 +11237,15 @@ const ANGE_FLOETTE: CardProgram = {
   },
 };
 
+// ── 🆕🆕🆕 D643 — Y1a: MULTI ADAPTER. One object, 3 printings, text off the LOCAL D1 (2026-10-10,
+//    `legal_standard = 1`). New pieces: `PassiveEffects.toolCapForName`, the `PendingStage` `toolTrim` and the
+//    `EffectOp` `trimTools`. `multiAdapterMeD643.test.ts`. ──
+
+/** 🆕🆕🆕 **D643 — Rotom ex `me02-029` / `-111` / `-126` "Multi Adapter"**: each of the owner's Pokémon with "Rotom"
+    in its name may carry 2 Tools (R-MAD2, R-MAD3); when the Ability goes away the owner discards down to 1 on each
+    (R-MAD1). Its attack "Thunderbolt" keeps deriving. */
+const MULTI_ADAPTER: CardProgram = { passive: { toolCapForName: { nameContains: "Rotom", cap: 2 } } };
+
 /** 🆕🆕🆕 **D578 — Technical Machine: Fluorite `sv08-188` (Tool, 1 legal printing)**: *"The Pokémon
     this card is attached to can use the attack on this card. (You still need the necessary
     Energy to use this attack.) If this card is attached to 1 of your Pokémon, discard it at the
@@ -20660,6 +20677,10 @@ const REGISTRY: Record<string, CardProgram> = {
   "me01-127": RISKY_RUINS, // Risky Ruins — a Basic non-{D} put onto its owner's Bench on their turn: 2 counters
   "me02-088": DIZZYING_VALLEY, // Dizzying Valley — Confused Pokémon stay Confused when they evolve or devolve
   "me04-075": ANGE_FLOETTE, // Ange Floette — only over a Prism Tower; each Mega Floette ex in play +150 HP
+  // 🆕🆕🆕 D643 — Y1a: 3 keys / 1 object, MID-MAP (`raw[last]` does not move).
+  "me02-029": MULTI_ADAPTER, // Rotom ex — each of your Rotom Pokémon may have up to 2 Pokémon Tools attached
+  "me02-111": MULTI_ADAPTER, // Rotom ex
+  "me02-126": MULTI_ADAPTER, // Rotom ex
   // 🆕🆕🆕 D608 — WP30: 5 `30th` ATTACK-only keys / 2 objects, MID-MAP (`raw[last]` does not move).
   // 🆕🆕🆕 D612 — 3 now: Stealthy Slash ×2 RETIRED (the normalised text is `mep-099`'s, reader-built).
   "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex

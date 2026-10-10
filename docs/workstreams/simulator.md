@@ -880,7 +880,7 @@ continuous.
 
 **Tool (§7.4).** A new action **`attachTool` {seat, uid, target}** (Tools carry
 a target, so they do NOT go through playTrainer — routing a Tool there rejects
-`TRAINER_TYPE_UNSUPPORTED`). One Tool per Pokémon (`TOOL_ALREADY_ATTACHED`),
+`TRAINER_TYPE_UNSUPPORTED`). One Tool per Pokémon (`TOOL_ALREADY_ATTACHED`) [🆕🆕🆕 D643 (D539): 2 on a Rotom under Multi Adapter],
 uncapped per turn, consumes NO allowance, no detach — the `InPlayPokemon.tools`
 slot M1 reserved is finally populated. It rides the stack through evolution
 (the §10 spread preserves `tools`) and switch/gust (`switchInto` moves the whole
@@ -30248,6 +30248,24 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D643 — Y1a: Multi Adapter (engine 0.526.0, `MATCH_RECORD_VERSION` 47 → 48)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D642 (`4f9ce7fc`), NOT committed. 1 text / 3 printings (`me`) — the D625
+re-rank's Y1a, alone.
+
+- **The cap.** Rotom ex `me02-029` / `-111` / `-126`: the NEW `PassiveEffects.toolCapForName { nameContains: "Rotom", cap: 2 }`, read by
+  continuous.ts `toolCapOf` (a live, §9-unlocked holder on the body's own board) at both cardplay.ts `attachTool` arms and the deck attach.
+  `InPlayPokemon.tools` was already a list; every other Tool reader already walked it.
+- **The trim.** A state check (the D578 places): continuous.ts `owesToolTrim` / `toolTrimStages` queue the NEW `PendingStage` `toolTrim` at
+  flow.ts `advance`'s entry and in `applyAction` at `turn:action`; flow.ts `runToolTrim` runs the NEW `trimTools` op per over-cap body, the
+  owner answering the shipped `discardTools` prompt at an exact `total` (one card's copies: the newest goes, no question). `TOOLS_DISCARDED`
+  gains `when: "trimmed"`. R-MAD1 … R-MAD4 ⚠️ UNRULED (`progress.md` NEXT). Ruffian on a two-Tool body parks an exact pick (R-MAD4).
+- **Client.** Each Tool anchor carries its `--attached-stack`; a second Tool steps off the first (playmat.css).
+- **MRV 47 → 48** (match.ts "47 → 48 AT D643"), a v47 record re-stamped (`toolTrimMigrationD643.test.ts`). No wire shape moves.
+- **Suite.** `multiAdapterMeD643.test.ts` (17), `toolTrimMigrationD643.test.ts` (10), `Card.toolStack.dom.test.tsx` (2), census D643 block
+  (2). +27 mutant rows, all KILLED; 16 older rows re-anchored. Census: abilities **602 / 610**, 1252 `me` printings fully built. Sweep
+  PENDING.
+
 ## D642 — Z1 + K2: the `me` Stadium rest and the watched-Active damage triggers (engine 0.525.0, `MATCH_RECORD_VERSION` stays 47)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D641 (`ad5eb285`), NOT committed. 5 texts / 6 printings (`me` + `30th`) —
@@ -30296,7 +30314,7 @@ the D625 re-rank's Z1 and K2 groups, whole.
 ## D640 — Y1a + MRV47, cut to Overwriting Bolt and Celebration (engine 0.523.0, `MATCH_RECORD_VERSION` 46 → 47)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D639 (`c275888b`), NOT committed. 2 texts / 3 printings (`30th`) — the D625
-re-rank's Y1a + MRV47 group less Multi Adapter (the brief's off-ramp).
+re-rank's Y1a + MRV47 group less Multi Adapter (the brief's off-ramp). [🆕🆕🆕 D643 (D539): Multi Adapter BUILT at D643 (47 → 48).]
 
 - **Overwriting Bolt** (Pikachu `30th-040`): D552's `retypeDefenderWeakness` at `{L}` with the NEW `asTimesTwo`, stored on
   `WeaknessRetype.asTimesTwo` and read by the NEW continuous.ts `installedWeaknessRewriteOf` as `weaknessOf`'s rewrite (one {L}×2
@@ -30307,7 +30325,7 @@ re-rank's Y1a + MRV47 group less Multi Adapter (the brief's off-ramp).
   = the gate held and the Prize stage resolved; a take that ends the game never shuffles.
 - **MRV 46 → 47** (match.ts "46 → 47 AT D640"): a 0.522 rollback drops `asTimesTwo` and has no arm for the stage. A v46 record is
   migrated by a re-stamp (`PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION = 46`). No wire shape moves.
-- **Named, not taken:** Rotom ex ×3 "Multi Adapter" (~59 `.tools` read sites, the §7.4 cap at every attach, Tool-discard picks, the
+- **Named, not taken:** Rotom ex ×3 "Multi Adapter" (~59 `.tools` read sites, the §7.4 cap at every attach, Tool-discard picks, the [🆕🆕🆕 D643 (D539): Multi Adapter BUILT at D643 (47 → 48).]
   client's Tool display, a forced owner's discard wherever the Ability goes away) owes 47 → 48 on its own.
 - **Suite.** `prizeOverwriteMeD640.test.ts` (18), `prizeStageMigrationD640.test.ts` (10), census D640 block (2). +25 mutant rows, all
   KILLED. Census: attacks **2,766 / 2,771**, 1236 `me` printings fully built. Sweep PENDING.
@@ -30370,7 +30388,7 @@ D625 re-rank's X1 group, whole, on the shipped copy family.
 - **MRV 45 → 46** (match.ts "45 → 46 AT D637"): D576's twelfth position per new id (a 0.519 rollback reads an in-play `me` fossil as the
   catalog Item). A v45 record is migrated by its version alone (`FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION`; no D1 read, no key); it skips
   every earlier step. No wire shape moves.
-- **Named, not taken.** Rotom ex ×3 "Multi Adapter" (Y1a: every Tool reader, a §7.4 two-Tool cap and an owner's forced discard wherever [🆕🆕🆕 D640 (D539): Multi Adapter still unbuilt, owes 47 → 48.]
+- **Named, not taken.** Rotom ex ×3 "Multi Adapter" (Y1a: every Tool reader, a §7.4 two-Tool cap and an owner's forced discard wherever [🆕🆕🆕 D640 (D539): Multi Adapter still unbuilt, owes 47 → 48.] [🆕🆕🆕 D643 (D539): Multi Adapter BUILT at D643 (47 → 48).]
   the Ability goes away — its own bump) and Overwriting Bolt `30th-040`: each owes 46 → 47. [🆕🆕🆕 D640 (D539): Overwriting Bolt BUILT at D640 (MRV 46 → 47).]
 - **Suite.** `antiqueFossilsMeD637.test.ts` (24), `fossilsMigrationD637.test.ts` (11), census D637 block (2). +17 mutant rows, all KILLED;
   14 re-pointed. No new reading. Census: trainers **439 / 447**, 1221 `me` printings fully built. Sweep PENDING.
@@ -30397,9 +30415,9 @@ D625 re-rank's X1 group, whole, on the shipped copy family.
   (R-FBR1 ⚠️ UNRULED — R-MR1's use-time reading).
 - **MRV 44 → 45** (match.ts "44 → 45 AT D636"): the four REQUIRED keys and the `Stadium` stamp; a v44 record is migrated with no D1 read
   (`withD636LockKeys`; D621's and D630's steps skipped for it). Cursed Roots needed no key, as D630 measured.
-- **Named, not taken.** Rotom ex ×3 "Multi Adapter" (Y1a: a §7.4 two-Tool cap and a forced Tool discard when the Ability goes away), [🆕🆕🆕 D640 (D539): Multi Adapter still unbuilt, owes 47 → 48.]
+- **Named, not taken.** Rotom ex ×3 "Multi Adapter" (Y1a: a §7.4 two-Tool cap and a forced Tool discard when the Ability goes away), [🆕🆕🆕 D640 (D539): Multi Adapter still unbuilt, owes 47 → 48.] [🆕🆕🆕 D643 (D539): Multi Adapter BUILT at D643 (47 → 48).]
   Overwriting Bolt `30th-040` and the four `me` Antique Fossils — each owes a later bump (45 → 46). [🆕🆕🆕 D637 (D539): the fossils BUILT at [🆕🆕🆕 D640 (D539): Overwriting Bolt BUILT at D640 (MRV 46 → 47).]
-  D637; Multi Adapter and Overwriting Bolt now owe 46 → 47.] [🆕🆕🆕 D640 (D539): Overwriting Bolt BUILT at D640 (MRV 46 → 47); Multi Adapter still unbuilt, owes 47 → 48.]
+  D637; Multi Adapter and Overwriting Bolt now owe 46 → 47.] [🆕🆕🆕 D640 (D539): Overwriting Bolt BUILT at D640 (MRV 46 → 47); Multi Adapter still unbuilt, owes 47 → 48.] [🆕🆕🆕 D643 (D539): Multi Adapter BUILT at D643 (47 → 48).]
 - **Suite.** `nextTurnLocksD636.test.ts` (45), `lockKeysMigrationD636.test.ts` (10), census D636 block (2), `coinFlips.test.ts` (1).
   +49 mutant rows, all KILLED; 26 re-pointed. Two review passes, fixed in the same tree (NEXT, "REVIEW FIXES"). Census: attacks **2,754 / 2,771**, abilities **593 / 610**, 1217 `me` printings fully built. Sweep PENDING.
 

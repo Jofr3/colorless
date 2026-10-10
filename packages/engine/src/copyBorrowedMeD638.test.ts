@@ -452,7 +452,7 @@ describe("D638 §5 — Supernatural Shapeshifter on a board (R-NS1)", () => {
 });
 
 describe("D638 §6 — the version", () => {
-  it("is built at engine 0.525.0", () => {
-    expect(engineVersion).toBe("0.525.0");
+  it("is built at engine 0.526.0", () => {
+    expect(engineVersion).toBe("0.526.0");
   });
 });

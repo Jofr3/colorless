@@ -123,8 +123,8 @@ function attackNames(state: GameState): string[] {
 }
 
 describe("D583 — the version and the gate", () => {
-  it("MATCH_RECORD_VERSION is 42 (🆕🆕🆕 43 since D621; 🆕🆕🆕 44 since D630; 🆕🆕🆕 45 since D636; 🆕🆕🆕 46 since D637; 🆕🆕🆕 47 since D640) and the one migratable version is 41 (🆕🆕🆕 D621 (D539): the one POOL-refreshed version; v42 is migrated with no D1 read, sideStateMigrationD621.test.ts; 🆕🆕🆕 D630: v43 too, recordKeysMigrationD630.test.ts; 🆕🆕🆕 D636: v44 too, lockKeysMigrationD636.test.ts; 🆕🆕🆕 D637: v45 too, fossilsMigrationD637.test.ts; 🆕🆕🆕 D640: v46 too, prizeStageMigrationD640.test.ts)", () => {
-    expect(MATCH_RECORD_VERSION).toBe(47); // 🆕🆕🆕 D640 — 46 → 47
+  it("MATCH_RECORD_VERSION is 42 (🆕🆕🆕 43 since D621; 🆕🆕🆕 44 since D630; 🆕🆕🆕 45 since D636; 🆕🆕🆕 46 since D637; 🆕🆕🆕 47 since D640; 🆕🆕🆕 48 since D643) and the one migratable version is 41 (🆕🆕🆕 D621 (D539): the one POOL-refreshed version; v42 is migrated with no D1 read, sideStateMigrationD621.test.ts; 🆕🆕🆕 D630: v43 too, recordKeysMigrationD630.test.ts; 🆕🆕🆕 D636: v44 too, lockKeysMigrationD636.test.ts; 🆕🆕🆕 D637: v45 too, fossilsMigrationD637.test.ts; 🆕🆕🆕 D640: v46 too, prizeStageMigrationD640.test.ts)", () => {
+    expect(MATCH_RECORD_VERSION).toBe(48); // 🆕🆕🆕 D640 — 46 → 47 🆕🆕🆕 D643 — 47 → 48.
     expect(MIGRATABLE_MATCH_RECORD_VERSION).toBe(41);
   });
 
@@ -133,13 +133,13 @@ describe("D583 — the version and the gate", () => {
     expect(readMatchRecord(old)).toBeNull();
     expect(migratablePoolIdsOf(old)?.sort()).toEqual([BODY, FOSSIL, TM].sort());
     const migrated = migrateMatchRecord(old, { [TM]: FRESH_TM, [FOSSIL]: FRESH_FOSSIL, [BODY]: BODY_CARD });
-    expect(migrated?.version).toBe(47); // 🆕🆕🆕 D621 — 42 → 43 (the migration lands on this build's version). 🆕🆕🆕 D630 — 43 → 44. 🆕🆕🆕 D636 — 44 → 45. 🆕🆕🆕 D637 — 45 → 46. 🆕🆕🆕 D640 — 46 → 47.
+    expect(migrated?.version).toBe(48); // 🆕🆕🆕 D621 — 42 → 43 (the migration lands on this build's version). 🆕🆕🆕 D630 — 43 → 44. 🆕🆕🆕 D636 — 44 → 45. 🆕🆕🆕 D637 — 45 → 46. 🆕🆕🆕 D640 — 46 → 47 🆕🆕🆕 D643 — 47 → 48.
     expect(readMatchRecord(migrated)).not.toBeNull();
   });
 
   it("every other version is neither read nor migrated (v40, v42, v43, none) (🆕🆕🆕 D621 (D539): v40, v44 and none; v42 IS migrated now, v43 is this build's own) (🆕🆕🆕 D630 (D539): v40, v45 and none; v43 IS migrated now, v44 is this build's own) (🆕🆕🆕 D636 (D539): v40, v46 and none; v44 IS migrated now, v45 is this build's own) (🆕🆕🆕 D637 (D539): v40, v47 and none; v45 IS migrated now, v46 is this build's own) (🆕🆕🆕 D640 (D539): v40, v48 and none; v46 IS migrated now, v47 is this build's own)", () => {
     const old = v41Record();
-    for (const version of [40, 48]) { // 🆕🆕🆕 D640 — 47 is this build's own
+    for (const version of [40, 49]) { // 🆕🆕🆕 D640 — 47 is this build's own 🆕🆕🆕 D643 — 48 is.
       expect(readMatchRecord({ ...old, version })).toBeNull();
       expect(migratablePoolIdsOf({ ...old, version })).toBeNull();
       expect(migrateMatchRecord({ ...old, version }, {})).toBeNull();
@@ -149,9 +149,10 @@ describe("D583 — the version and the gate", () => {
     // migrated too, with no pool ids, and v44 is this build's own.] [🆕🆕🆕 D636 (D539): v44 is
     // migrated too, with no pool ids, and v45 is this build's own.] [🆕🆕🆕 D637 (D539): v45 is
     // migrated too, with no pool ids, and v46 is this build's own.] [🆕🆕🆕 D640 (D539): v46 is
-    // migrated too, with no pool ids, and v47 is this build's own.]
+    // migrated too, with no pool ids, and v47 is this build's own.] [🆕🆕🆕 D643 (D539): v47 is
+    // migrated too, with no pool ids, and v48 is this build's own.]
     expect(migratablePoolIdsOf({ ...old, version: 42 })).toEqual([]);
-    expect(migrateMatchRecord({ ...old, version: 42 }, {})?.version).toBe(47); // 🆕🆕🆕 D640 — 46 → 47
+    expect(migrateMatchRecord({ ...old, version: 42 }, {})?.version).toBe(48); // 🆕🆕🆕 D640 — 46 → 47 🆕🆕🆕 D643 — 47 → 48.
     expect(migratablePoolIdsOf({ ...old, version: 43 })).toEqual([]);
     expect(readMatchRecord({ ...old, version: 43 })).toBeNull();
     expect(migratablePoolIdsOf({ ...old, version: 44 })).toEqual([]);
@@ -160,7 +161,9 @@ describe("D583 — the version and the gate", () => {
     expect(readMatchRecord({ ...old, version: 45 })).toBeNull();
     expect(migratablePoolIdsOf({ ...old, version: 46 })).toEqual([]);
     expect(readMatchRecord({ ...old, version: 46 })).toBeNull();
-    expect(readMatchRecord({ ...old, version: 47 })).not.toBeNull();
+    expect(migratablePoolIdsOf({ ...old, version: 47 })).toEqual([]);
+    expect(readMatchRecord({ ...old, version: 47 })).toBeNull();
+    expect(readMatchRecord({ ...old, version: 48 })).not.toBeNull();
     const { version: _version, ...unversioned } = old;
     expect(migratablePoolIdsOf(unversioned)).toBeNull();
     for (const raw of [null, undefined, 41, "x"]) expect(migratablePoolIdsOf(raw)).toBeNull();
@@ -241,7 +244,7 @@ function fakeSlot(value: unknown) {
 const FRESH_POOL = { [TM]: FRESH_TM, [FOSSIL]: FRESH_FOSSIL, [BODY]: BODY_CARD };
 
 describe("D583 — the DO's read migrates a v41 record, writes it back, and re-reads after the D1 load", () => {
-  it("a v41 record: D1 is asked for its pool ids, the v42 (🆕🆕🆕 v43 since D621; 🆕🆕🆕 v44 since D630; 🆕🆕🆕 v45 since D636; 🆕🆕🆕 v46 since D637; 🆕🆕🆕 v47 since D640) record is written once, and its TM grants Fluorite", async () => {
+  it("a v41 record: D1 is asked for its pool ids, the v42 (🆕🆕🆕 v43 since D621; 🆕🆕🆕 v44 since D630; 🆕🆕🆕 v45 since D636; 🆕🆕🆕 v46 since D637; 🆕🆕🆕 v47 since D640; 🆕🆕🆕 v48 since D643) record is written once, and its TM grants Fluorite", async () => {
     const { slot, api } = fakeSlot(v41Record());
     const asked: string[][] = [];
     const load = await loadMatchRecord(api, async (ids) => {
@@ -253,7 +256,7 @@ describe("D583 — the DO's read migrates a v41 record, writes it back, and re-r
     expect(load.record.version).toBe(MATCH_RECORD_VERSION);
     expect(slot.puts).toEqual([load.record]);
     expect(attackNames(tmOnActive(load.record.state))).toEqual(["Tap", "Fluorite"]);
-    // The next read finds the v42 (🆕🆕🆕 D621: v43; 🆕🆕🆕 D630: v44; 🆕🆕🆕 D636: v45; 🆕🆕🆕 D637: v46; 🆕🆕🆕 D640: v47) record: no second D1 load, no second write.
+    // The next read finds the v42 (🆕🆕🆕 D621: v43; 🆕🆕🆕 D630: v44; 🆕🆕🆕 D636: v45; 🆕🆕🆕 D637: v46; 🆕🆕🆕 D640: v47; 🆕🆕🆕 D643: v48) record: no second D1 load, no second write.
     const again = await loadMatchRecord(api, async () => {
       throw new Error("D1 asked twice");
     });
@@ -261,7 +264,7 @@ describe("D583 — the DO's read migrates a v41 record, writes it back, and re-r
     expect(slot.puts).toHaveLength(1);
   });
 
-  it("a v42 (🆕🆕🆕 D621: v43 — the migrated record; 🆕🆕🆕 D630: v44; 🆕🆕🆕 D636: v45; 🆕🆕🆕 D637: v46; 🆕🆕🆕 D640: v47) record is read as-is; a v40 record is stale; an empty slot is none — D1 never asked, nothing written", async () => {
+  it("a v42 (🆕🆕🆕 D621: v43 — the migrated record; 🆕🆕🆕 D630: v44; 🆕🆕🆕 D636: v45; 🆕🆕🆕 D637: v46; 🆕🆕🆕 D640: v47; 🆕🆕🆕 D643: v48) record is read as-is; a v40 record is stale; an empty slot is none — D1 never asked, nothing written", async () => {
     const never = async (): Promise<Record<string, Card>> => {
       throw new Error("D1 asked");
     };

@@ -140,7 +140,9 @@
    to the right with a small bottom inset. `--attached-stick` is the fraction
    of the rotated card's long axis (= card-h * scale) that sticks past the
    host edge — bigger value, more visible strip.
-   Multiple energies stack with `--attached-stack` (set per-card inline). */
+   Multiple energies stack with `--attached-stack` (set per-card inline).
+   D643 — so do Tools (Rotom ex "Multi Adapter" allows 2): a second Tool steps down
+   (side) or across (behind) by a fraction of the card; stack 0 is unchanged. */
 .playmat-card__attached {
   --attached-scale: 0.92;
   --attached-stick: 0.22;
@@ -159,7 +161,11 @@
     (var(--card-w) - var(--card-h)) *
     var(--attached-scale) *
     0.5 +
-    var(--attached-edge-gap)
+    var(--attached-edge-gap) +
+    var(--attached-stack) *
+    var(--card-w) *
+    var(--attached-scale) *
+    0.3
   );
   left: calc(
     var(--card-h) *
@@ -173,7 +179,7 @@
 
 .playmat-card__attached--tool-behind {
   --attached-behind-peek: 0.12;
-  left: calc(var(--card-w) * (1 - var(--attached-scale)) * 0.5);
+  left: calc(var(--card-w) * (1 - var(--attached-scale)) * 0.5 + var(--attached-stack) * var(--card-w) * 0.18);
 }
 
 .playmat-card__attached--tool-behind-bottom {

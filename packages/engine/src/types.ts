@@ -2800,6 +2800,14 @@ export type PendingStage =
       answerer (R-AZ4; flow.ts `runBenchTrim`, the `koTrigger` routing). A new union member
       (D125) — `MATCH_RECORD_VERSION` 39 → 40. */
   | { kind: "benchTrim"; seat: Seat }
+  /** 🆕🆕🆕 §7.4 (D643) — Rotom ex "Multi Adapter"'s *"If this Ability goes away, discard Pokémon Tools from those
+      Pokémon until only 1 remains on each."*: `seat` has a body carrying more Tools than continuous.ts `toolCapOf`
+      now allows. Queued by continuous.ts `toolTrimStages` at flow.ts `advance`'s entry (in FRONT of the queue) and
+      by index.ts `applyAction` (a board back at `turn:action`, ahead of a `resumeTurn`) — R-MAD1. The excess is
+      RE-READ when the stage drains (flow.ts `runToolTrim`), one `trimTools` op per over-cap body, the OWNER
+      choosing which Tools go (the shipped `discardTools` prompt at an exact `total`). A new union member (D125) —
+      `MATCH_RECORD_VERSION` 47 → 48. */
+  | { kind: "toolTrim"; seat: Seat }
   | { kind: "startTurn"; seat: Seat };
 
 // The phase is the discriminant every action is validated against: mandatory

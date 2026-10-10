@@ -6250,7 +6250,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.525.0";',
+    find: 'export const engineVersion = "0.526.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -11472,8 +11472,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540) — D636 stepped the constant 44 → 45; the patch is still ONE step back.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540) — D637 stepped the constant 45 → 46; the patch is still ONE step back.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540) — D640 stepped the constant 46 → 47; the patch is still ONE step back.
-    find: "export const MATCH_RECORD_VERSION = 47;",
-    replace: "export const MATCH_RECORD_VERSION = 46;",
+    // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540) — D643 stepped the constant 47 → 48; the patch is still ONE step back.
+    find: "export const MATCH_RECORD_VERSION = 48;",
+    replace: "export const MATCH_RECORD_VERSION = 47;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a
@@ -29602,8 +29603,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540) — D636 stepped the constant 44 → 45; the patch is still ONE step back.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540) — D637 stepped the constant 45 → 46; the patch is still ONE step back.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540) — D640 stepped the constant 46 → 47; the patch is still ONE step back.
-    find: "export const MATCH_RECORD_VERSION = 47;\n",
-    replace: "export const MATCH_RECORD_VERSION = 46;\n",
+    // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540) — D643 stepped the constant 47 → 48; the patch is still ONE step back.
+    find: "export const MATCH_RECORD_VERSION = 48;\n",
+    replace: "export const MATCH_RECORD_VERSION = 47;\n",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ────────────────────────────────────────────────────────────────────────────
@@ -35008,7 +35010,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 47;",
+    // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 48 since D643; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 48;",
     // 🆕🆕🆕 D549 - RE-ANCHORED AGAIN off the bytes (D540): D549's block now sits between
     //    D548's doc tail and the constant, so the anchor is D549's last two lines and the
     //    patch drops the constant THREE steps, to D547's pre-bump 30.
@@ -35216,7 +35219,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 47;",
+    // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 48 since D643; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 48;",
     // 🆕🆕🆕 D549 - RE-ANCHORED off the bytes onto D549's doc tail; the patch drops the
     //    constant TWO steps, to D548's pre-bump 31 (a different patch from
     //    `D549-record-version-not-bumped`, one step, same anchor).
@@ -35722,7 +35726,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 47;",
+    // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 48 since D643; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 48;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 32;",
     expectKilledBy: ["packages/engine/src/sideAttackLock.test.ts", "apps/api/src/lobby/match.test.ts"],
   },
@@ -36334,7 +36339,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 47;",
+    // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 48 since D643; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 48;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 33;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -37282,7 +37288,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 47;",
+    // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 48 since D643; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 48;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 34;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -40658,7 +40665,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 47;",
+    // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 48 since D643; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 48;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 35;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -43524,7 +43532,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 47;",
+    // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 48 since D643; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 48;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 36;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -44970,7 +44979,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 47;",
+    // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 48 since D643; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 48;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 37;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -46430,7 +46440,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
-    find: "export const MATCH_RECORD_VERSION = 47;",
+    // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 48 since D643; the replace and the claim are unchanged.
+    find: "export const MATCH_RECORD_VERSION = 48;",
     replace: "export const MATCH_RECORD_VERSION = 40;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts", "packages/engine/src/koraidonD579.test.ts"],
   },
@@ -47115,7 +47126,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the version test gained D636's v44 conjunct; the patch still deletes the whole test.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the version test gained D637's v45 conjunct; the patch still deletes the whole test.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the version test gained D640's v46 conjunct; the patch still deletes the whole test.
-    find: "  if (\n    version !== MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION\n  )\n    return null;\n",
+    // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540): the version test gained D643's v47 conjunct; the patch still deletes the whole test.
+    find: "  if (\n    version !== MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION\n  )\n    return null;\n",
     replace: "",
     expectKilledBy: ["apps/api/src/lobby/poolMigrationD583.test.ts"],
   },
@@ -58541,8 +58553,9 @@ export const MUTANTS: Mutant[] = [
     what: "the v45 re-stamp is gone: D636's step runs on a v45 record and wipes a live lock. Killed by fossilsMigrationD637.",
     file: "apps/api/src/lobby/match.ts",
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the re-stamp takes v45 OR v46; the patch still drops v45 from it alone.
-    find: "  if (\n    record.version === FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION ||\n    record.version === PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION\n  )\n",
-    replace: "  if (record.version === PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION)\n",
+    // 🆕🆕🆕 D643 — RE-ANCHORED again (D540): the re-stamp takes v45, v46 OR v47; the patch still drops v45 alone.
+    find: "  if (\n    record.version === FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION ||\n    record.version === PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION ||\n",
+    replace: "  if (\n    record.version === PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION ||\n",
     expectKilledBy: ["apps/api/src/lobby/fossilsMigrationD637.test.ts"],
   },
   {
@@ -58551,8 +58564,9 @@ export const MUTANTS: Mutant[] = [
     what: "the v45 re-stamp keeps the old version: the record is never readable. Killed by fossilsMigrationD637.",
     file: "apps/api/src/lobby/match.ts",
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the re-stamp takes v45 OR v46; the patch still keeps a v45 record at 45.
-    find: "    record.version === PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION\n  )\n    return { ...record, version: MATCH_RECORD_VERSION };",
-    replace: "    record.version === PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION\n  )\n    return {\n      ...record,\n      version:\n        record.version === FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION ? FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION : MATCH_RECORD_VERSION,\n    };",
+    // 🆕🆕🆕 D643 — RE-ANCHORED again (D540): the last disjunct is now v47's.
+    find: "    record.version === TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION\n  )\n    return { ...record, version: MATCH_RECORD_VERSION };",
+    replace: "    record.version === TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION\n  )\n    return {\n      ...record,\n      version:\n        record.version === FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION ? FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION : MATCH_RECORD_VERSION,\n    };",
     expectKilledBy: ["apps/api/src/lobby/fossilsMigrationD637.test.ts"],
   },
   {
@@ -59147,8 +59161,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D640",
     what: "the migratable-version test drops v46: a v46 record is retired, not re-stamped. Killed by prizeStageMigrationD640.",
     file: "apps/api/src/lobby/match.ts",
-    find: "    version !== FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION\n",
-    replace: "    version !== FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION\n",
+    // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540): D643's v47 conjunct follows the v46 one; the patch still drops v46 alone.
+    find: "    version !== PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION &&\n",
+    replace: "",
     expectKilledBy: ["apps/api/src/lobby/prizeStageMigrationD640.test.ts"],
   },
   {
@@ -59156,8 +59171,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D640",
     what: "the re-stamp drops v46: a v46 record takes D621's / D630's / D636's steps, nulling live keys. Killed by prizeStageMigrationD640.",
     file: "apps/api/src/lobby/match.ts",
-    find: "    record.version === FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION ||\n    record.version === PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION\n  )",
-    replace: "    record.version === FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION\n  )",
+    // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540): the re-stamp takes v47 too; the patch still drops v46 alone.
+    find: "    record.version === PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION ||\n",
+    replace: "",
     expectKilledBy: ["apps/api/src/lobby/prizeStageMigrationD640.test.ts"],
   },
   {
@@ -59649,5 +59665,250 @@ export const MUTANTS: Mutant[] = [
     find: "            ((game.allowances.stadiumPlayed && !stadiumSpentPlayLifted(game, seat, card)) ||",
     replace: "            ((game.allowances.stadiumPlayed) ||",
     expectKilledBy: ["src/features/game/GameHud.angeFloette.dom.test.tsx"],
+  },
+  // ── 🆕🆕🆕 D643 — Y1a: Multi Adapter (continuous / flow / index / interpreter / cardplay / log), the Tool display
+  //    (Card.tsx) and the v47 re-stamp (apps/api match.ts). ──
+  {
+    id: "D643-cap-never-raised",
+    decision: "D643",
+    what: "`toolCapOf` answers 1 under a live holder: a Rotom ex cannot take a second Tool. Killed by multiAdapterMeD643 §2 / §3.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (uid !== undefined && disabledAbilityUids(state).has(uid)) continue; // §9\n    return raise.cap;",
+    replace: "    if (uid !== undefined && disabledAbilityUids(state).has(uid)) continue; // §9\n    return 1;",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-cap-ignores-the-name",
+    decision: "D643",
+    what: "the raise drops its \"Rotom\" name test: every one of the holder's Pokémon may carry 2 Tools. Killed by multiAdapterMeD643 §2.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (raise === undefined || !name.includes(raise.nameContains)) continue;",
+    replace: "    if (raise === undefined) continue;",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-cap-not-section-9-gated",
+    decision: "D643",
+    what: "the raise ignores a §9 lock on its holder: a silenced Rotom ex keeps the cap and nothing is trimmed. Killed by multiAdapterMeD643 §2 / §4.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    const uid = topUid(holder);\n    if (uid !== undefined && disabledAbilityUids(state).has(uid)) continue; // §9\n    return raise.cap;",
+    replace: "    return raise.cap;",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-cap-read-off-the-wrong-board",
+    decision: "D643",
+    what: "the holders are read off the OPPONENT's board: an own Rotom ex raises the opponent's Rotom instead. Killed by multiAdapterMeD643 §2.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  const name = topCardOf(state, body)?.name ?? \"\";\n  const side = state.players[seat];\n  const holders = side.active === null ? side.bench : [side.active, ...side.bench];\n  for (const holder of holders) {\n    const top = topCardOf(state, holder);\n    const raise",
+    replace: "  const name = topCardOf(state, body)?.name ?? \"\";\n  const side = state.players[otherSeat(seat)];\n  const holders = side.active === null ? side.bench : [side.active, ...side.bench];\n  for (const holder of holders) {\n    const top = topCardOf(state, holder);\n    const raise",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-trim-ignores-those-pokemon",
+    decision: "D643",
+    what: "the trim drops its \"those Pokémon\" name test: a surgical two-Tool non-Rotom body is trimmed too. Killed by multiAdapterMeD643 §3.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return toolCapNames().some((part) => name.includes(part)) && body.tools.length > toolCapOf(state, seat, body);",
+    replace: "  return name.length >= 0 && body.tools.length > toolCapOf(state, seat, body);",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-trim-requeues-forever",
+    decision: "D643",
+    what: "the state check no longer skips a seat already queued: `advance`'s re-entry queues the trim again without end. Killed by multiAdapterMeD643 §3 (the stack overflows).",
+    file: "packages/engine/src/continuous.ts",
+    find: "      if (queued.some((stage) => stage.kind === \"toolTrim\" && stage.seat === seat)) return false;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-advance-check-dropped",
+    decision: "D643",
+    what: "`advance` no longer asks the state check: the holder's Knock Out leaves a Rotom over its cap. Killed by multiAdapterMeD643 §3.",
+    file: "packages/engine/src/flow.ts",
+    find: "  if (toolTrims.length > 0) return advance({ ...state, pending: [...toolTrims, ...state.pending] }, events);\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-advance-trims-behind-the-queue",
+    decision: "D643",
+    what: "the trim is queued BEHIND the sweep's stages: the Prize pick comes before the owner's discard. Killed by multiAdapterMeD643 §3.",
+    file: "packages/engine/src/flow.ts",
+    find: "  if (toolTrims.length > 0) return advance({ ...state, pending: [...toolTrims, ...state.pending] }, events);",
+    replace: "  if (toolTrims.length > 0) return advance({ ...state, pending: [...state.pending, ...toolTrims] }, events);",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-runner-runs-nothing",
+    decision: "D643",
+    what: "`runToolTrim` runs no `trimTools` op: the stage drains and the Rotom keeps both Tools. Killed by multiAdapterMeD643 §3 / §4.",
+    file: "packages/engine/src/flow.ts",
+    find: "  const program = Array.from({ length: over }, (): EffectOp => ({ op: \"trimTools\" }));",
+    replace: "  const program = Array.from({ length: 0 }, (): EffectOp => ({ op: \"trimTools\" }));",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-apply-action-check-dropped",
+    decision: "D643",
+    what: "`applyAction` no longer asks the state check on a board back at `turn:action`: a lock brought in by a retreat trims nothing. Killed by multiAdapterMeD643 §4.",
+    file: "packages/engine/src/index.ts",
+    find: "    const trims = toolTrimStages(cleared, cleared.phase.seat);\n    if (trims.length > 0) {",
+    replace: "    const trims = toolTrimStages(cleared, cleared.phase.seat);\n    if (trims.length < 0) {",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-apply-action-no-resume",
+    decision: "D643",
+    what: "the `applyAction` trim queues no `resumeTurn`: the turn is not handed back after the owner's answer. Killed by multiAdapterMeD643 §4.",
+    file: "packages/engine/src/index.ts",
+    find: "      return advance({ ...cleared, pending: [...trims, resume, ...cleared.pending] }, result.events);",
+    replace: "      return advance({ ...cleared, pending: [...trims, ...cleared.pending] }, result.events);",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-one-card-tools-ask",
+    decision: "D643",
+    what: "the M1 rule is gone: two Tools of one card park a question. Killed by multiAdapterMeD643 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (new Set(over.body.tools.map((uid) => cardIdentity(state, uid))).size === 1) {",
+    replace: "      if (new Set(over.body.tools.map((uid) => cardIdentity(state, uid))).size === 0) {",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-one-card-tools-older-off",
+    decision: "D643",
+    what: "the inline discard takes the OLDER Tool off, not the newer. Killed by multiAdapterMeD643 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        return { done: trimToolsApply(state, over.body.tools.slice(-excess), ctx, events) };",
+    replace: "        return { done: trimToolsApply(state, over.body.tools.slice(0, excess), ctx, events) };",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-trim-declinable",
+    decision: "D643",
+    what: "the trim parks at `upTo`: the owner may discard nothing and keep both Tools. Killed by multiAdapterMeD643 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          scope: { kind: \"total\", count: excess },",
+    replace: "          scope: { kind: \"upTo\", max: excess },",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-trim-answer-dropped",
+    decision: "D643",
+    what: "the RESUMED half of `trimTools` is gone: the owner's answer discards nothing. Killed by multiAdapterMeD643 §3 / §4.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return choice.kind === \"discardTools\" ? trimToolsApply(state, choice.uids, ctx, events) : state;",
+    replace: "      return state;",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-trim-row-says-effect",
+    decision: "D643",
+    what: "the trim's row is filed at `when: \"effect\"`: the log loses its Multi Adapter tail. Killed by multiAdapterMeD643 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      when: \"trimmed\",",
+    replace: "      when: \"effect\",",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-trim-tool-not-discarded",
+    decision: "D643",
+    what: "the trimmed Tool leaves the body but never reaches the discard pile. Killed by multiAdapterMeD643 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return withSide(state, ctx.seat, { ...side, active, bench, discard: [...side.discard, ...discarded] });",
+    replace: "  return withSide(state, ctx.seat, { ...side, active, bench });",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-ruffian-declinable",
+    decision: "D643",
+    what: "Ruffian's pick on a two-Tool body parks at `upTo`: the mandatory discard may be declined. Killed by multiAdapterMeD643 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "            scope: { kind: \"total\", count: op.count },",
+    replace: "            scope: { kind: \"upTo\", max: op.count },",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-attach-active-cap-one",
+    decision: "D643",
+    what: "the Active `attachTool` arm keeps §7.4's one Tool: a Rotom ex under its own Multi Adapter refuses a second. Killed by multiAdapterMeD643 §2.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "    if (side.active.tools.length >= toolCapOf(state, action.seat, side.active)) {",
+    replace: "    if (side.active.tools.length >= 1) {",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-attach-bench-cap-one",
+    decision: "D643",
+    what: "the Bench `attachTool` arm keeps §7.4's one Tool: a benched Rotom refuses a second. Killed by multiAdapterMeD643 §2.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "    if (benched.tools.length >= toolCapOf(state, action.seat, benched)) {",
+    replace: "    if (benched.tools.length >= 1) {",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-attach-message-not-named",
+    decision: "D643",
+    what: "the refusal at a raised cap still reads \"one Tool per Pokémon\". Killed by multiAdapterMeD643 §2.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  return carried <= 1 ? \"one Tool per Pokémon (§7.4)\" : `at most ${carried} Pokémon Tools on this Pokémon (Multi Adapter)`;",
+    replace: "  return \"one Tool per Pokémon (§7.4)\";",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-validator-count-not-exact",
+    decision: "D643",
+    what: "the `discardTools` validator drops the exact `total` count: an empty trim answer is accepted. Killed by multiAdapterMeD643 §3 / §5.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "      if (prompt.scope.kind === \"total\" && choice.uids.length !== prompt.scope.count) {",
+    replace: "      if (prompt.scope.kind === \"total\" && choice.uids.length > prompt.scope.count) {",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-log-tail-dropped",
+    decision: "D643",
+    what: "the `\"trimmed\"` row loses its tail: the log does not say Multi Adapter went away. Killed by multiAdapterMeD643 §3.",
+    file: "packages/engine/src/log.ts",
+    find: "        ...(event.when === \"trimmed\" ? [plain(\" — Multi Adapter no longer applies\")] : []),\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
+  },
+  {
+    id: "D643-tool-anchor-not-stacked",
+    decision: "D643",
+    what: "the second Tool anchor sits on the first: every Tool gets stack 0. Killed by Card.toolStack.dom.",
+    file: "src/features/playmat/components/Card.tsx",
+    find: "            style={{ \"--attached-stack\": String(index) } as CSSProperties}",
+    replace: "            style={{ \"--attached-stack\": String(0) } as CSSProperties}",
+    expectKilledBy: ["src/features/playmat/components/Card.toolStack.dom.test.tsx"],
+  },
+  {
+    id: "D643-migration-v47-refused",
+    decision: "D643",
+    what: "the migratable-version test drops v47: a v47 record is retired, not re-stamped. Killed by toolTrimMigrationD643.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "    version !== PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION\n",
+    replace: "    version !== PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION\n",
+    expectKilledBy: ["apps/api/src/lobby/toolTrimMigrationD643.test.ts"],
+  },
+  {
+    id: "D643-migration-reruns-the-steps-on-v47",
+    decision: "D643",
+    what: "the re-stamp drops v47: a v47 record takes D621's / D630's / D636's steps, nulling live keys. Killed by toolTrimMigrationD643.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "    record.version === PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION ||\n    record.version === TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION\n  )",
+    replace: "    record.version === PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION\n  )",
+    expectKilledBy: ["apps/api/src/lobby/toolTrimMigrationD643.test.ts"],
+  },
+  {
+    id: "D643-tool-trim-version-46",
+    decision: "D643",
+    what: "the re-stamped version is named 46: the constant collides with D640's and v47 is retired. Killed by toolTrimMigrationD643.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "export const TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION = 47;",
+    replace: "export const TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION = 46;",
+    expectKilledBy: ["apps/api/src/lobby/toolTrimMigrationD643.test.ts"],
   },
 ];

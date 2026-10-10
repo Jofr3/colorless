@@ -648,7 +648,7 @@ describe("§11 — the rows say what this path keeps true (D421)", () => {
 // §12 — `MATCH_RECORD_VERSION` 30 → 31.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("§12 — the v31 bytes round-trip, and a v30-shaped body is why the version moved (🆕🆕🆕 D547's bump; the record is v32 since D548 and v33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570, 38 since D575, 39 since D576, 40 since D577, 41 since D579, 42 since D583, 43 since D621, 44 since D630, 45 since D636, 46 since D637, 47 since D640, and still carries the field)", () => {
+describe("§12 — the v31 bytes round-trip, and a v30-shaped body is why the version moved (🆕🆕🆕 D547's bump; the record is v32 since D548 and v33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570, 38 since D575, 39 since D576, 40 since D577, 41 since D579, 42 since D583, 43 since D621, 44 since D630, 45 since D636, 46 since D637, 47 since D640, 48 since D643, and still carries the field)", () => {
   const RAW: Record<string, string> = (
     import.meta as unknown as {
       glob(
@@ -681,12 +681,12 @@ describe("§12 — the v31 bytes round-trip, and a v30-shaped body is why the ve
     expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 47 (🆕🆕🆕 D640 stepped it 46 → 47; D637 stepped it 45 → 46; D636 stepped it 44 → 45; D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; this slice's own bump was 30 → 31) — read off the raw source, not retyped", () => {
-    expect(matchTs).toContain("export const MATCH_RECORD_VERSION = 47;");
+  it("🛑 `MATCH_RECORD_VERSION` is 48 (🆕🆕🆕 D643 stepped it 47 → 48; D640 stepped it 46 → 47; D637 stepped it 45 → 46; D636 stepped it 44 → 45; D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; this slice's own bump was 30 → 31) — read off the raw source, not retyped", () => {
+    expect(matchTs).toContain("export const MATCH_RECORD_VERSION = 48;");
   });
 
-  it("the engine version stepped to 0.525.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.525.0");
-    expect(manifest.version).toBe("0.525.0");
+  it("the engine version stepped to 0.526.0 in BOTH places", () => {
+    expect(engineVersion).toBe("0.526.0");
+    expect(manifest.version).toBe("0.526.0");
   });
 });

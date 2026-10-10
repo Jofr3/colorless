@@ -29,7 +29,9 @@ import {
   useAbility,
   useStadiumAbility,
 } from "./cardplay";
-import { clearDepartedChosenShields, concede, discardMisplacedEnergy } from "./flow";
+import { advance, clearDepartedChosenShields, concede, discardMisplacedEnergy } from "./flow";
+// 🆕🆕🆕 D643 — Multi Adapter's state check on a board back at `turn:action` (`applyAction`).
+import { toolTrimStages } from "./continuous";
 import {
   chooseFirstPlayer,
   setupDrawExtra,
@@ -20271,6 +20273,15 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.525.0 → **0.526.0** (D643 — Y1a: MULTI ADAPTER, 1 TEXT / 3 PRINTINGS (`me`);
+    `MATCH_RECORD_VERSION` 47 → 48 WITH A v47 MIGRATION, A RE-STAMP (apps/api match.ts "47 → 48 AT D643")). registry.ts:
+    Rotom ex `me02-029` / `-111` / `-126` on the NEW `PassiveEffects.toolCapForName` (continuous.ts `toolCapOf`, read at
+    both cardplay.ts `attachTool` arms and interpreter.ts's deck attach; R-MAD2, R-MAD3). Its second sentence is a STATE
+    CHECK: continuous.ts `toolTrimStages` / `owesToolTrim` queue the NEW persisted `PendingStage` `toolTrim` at flow.ts
+    `advance`'s entry and in `applyAction` on a board back at `turn:action`; flow.ts `runToolTrim` runs the NEW `EffectOp`
+    `trimTools`, which parks the shipped `discardTools` prompt at an exact `total` for the OWNER (one Tool card offers
+    nothing) and files `TOOLS_DISCARDED` at the NEW `when: "trimmed"` (R-MAD1). The `discardTools` validator reads
+    `total`; Ruffian's mandatory pick on a two-Tool body parks there too (R-MAD4). `multiAdapterMeD643.test.ts`.)
     🆕🆕🆕 engineVersion 0.524.0 → **0.525.0** (D642 — Z1 + K2: THE `me` STADIUM REST AND THE WATCHED-ACTIVE DAMAGE
     TRIGGERS, 5 TEXTS / 6 PRINTINGS (`me` + `30th`); `MATCH_RECORD_VERSION` STAYS 47 (apps/api match.ts "STAYS 47 AT
     D642")). registry.ts: Spiritomb `me01-087` / `-148` "Spiteful Swirl" and Wishiwashi `30th-022` "Counterattack
@@ -20297,7 +20308,7 @@ import type { GameState, Seat } from "./types";
     rewrite at the three Weakness sites, ahead of the seat rewrite (R-OWB1); Gholdengo `30th-108` / `-142` "Celebration" on
     `conditionGate { yourHandExactly 30 }` over `takePrize { count: 2, thenShuffleHand }`, which queues the NEW
     `PendingStage` `shuffleHandIntoDeck` behind its Prize stage (flow.ts `advance`, R-CEL1). Rotom ex ×3 "Multi Adapter"
-    (Y1a) named for 47 → 48. `prizeOverwriteMeD640.test.ts`.)
+    (Y1a) named for 47 → 48 [🆕🆕🆕 D643 (D539): BUILT at D643, 47 → 48]. `prizeOverwriteMeD640.test.ts`.)
     🆕🆕🆕 engineVersion 0.521.0 → **0.522.0** (D639 — K3 + R1: KO-BY-THIS-ATTACK CONSEQUENTS AND THE KO SWEEP, 3 TEXTS /
     6 PRINTINGS (`me` + `30th`); `MATCH_RECORD_VERSION` STAYS 46 (apps/api match.ts "STAYS 46 AT D639")). effects.ts:
     Shadowy Side Kick (Marshadow `me01-080` / `-146`) = Critical Slash (Golisopod `me04-026`) as `conditionGate` on the NEW
@@ -20322,7 +20333,8 @@ import type { GameState, Seat } from "./types";
     `PROTECTIVE_ARMOR` (`seatDamageReductionAfterWR` 10 with the NEW source-zone rider `sourceActive`) and
     `SPINY_SKULL` (`damageAttacker` 30, Counterattack Quills' field). Fossil Quarry now offers all eight fossils;
     Relicanth "Fossil Beatdown" counts them. Named for a later bump: Rotom ex ×3 "Multi Adapter", Overwriting Bolt
-    `30th-040` [🆕🆕🆕 D640 (D539): Overwriting Bolt BUILT at D640 (46 → 47); Multi Adapter owes 47 → 48].
+    `30th-040` [🆕🆕🆕 D640 (D539): Overwriting Bolt BUILT at D640 (46 → 47); Multi Adapter owes 47 → 48] [🆕🆕🆕 D643
+    (D539): Multi Adapter BUILT at D643 (47 → 48)].
     `antiqueFossilsMeD637.test.ts`.)
     🆕🆕🆕 engineVersion 0.518.0 → **0.519.0** (D636 — L1 + CLAWITZER: THE NEXT-TURN OPPONENT LOCKS AND FALL BACK TO
     RELOAD, 6 TEXTS / 7 PRINTINGS (`me` + `30th`); `MATCH_RECORD_VERSION` 44 → 45 WITH A v44 MIGRATION (apps/api match.ts
@@ -20339,7 +20351,7 @@ import type { GameState, Seat } from "./types";
     `InPlayPokemon.benchedTurn` (written by `retreat` / `switchInto`, R-FBR1). Named for a later bump: Rotom ex ×3
     "Multi Adapter", Overwriting Bolt `30th-040`, the four `me` Antique Fossils [🆕🆕🆕 D637 (D539): the fossils BUILT at
     D637; Multi Adapter and Overwriting Bolt now owe 46 → 47] [🆕🆕🆕 D640 (D539): Overwriting Bolt BUILT at D640; Multi
-    Adapter owes 47 → 48]. `nextTurnLocksD636.test.ts`.)
+    Adapter owes 47 → 48] [🆕🆕🆕 D643 (D539): Multi Adapter BUILT at D643]. `nextTurnLocksD636.test.ts`.)
     🆕🆕🆕 engineVersion 0.517.0 → **0.518.0** (D635 — F1: THE ANTIQUE ARCHETYPE, ITS UNPERSISTED HALF, 2 TEXTS / 2
     PRINTINGS; `MATCH_RECORD_VERSION` STAYS 44 (apps/api match.ts "STAYS 44 AT D635")). registry.ts: `FOSSIL_QUARRY`
     (`me05-076`, Stadium — up to 2 Antique Items from the deck onto the Bench, then the shuffle; Lumiose City's program
@@ -25772,7 +25784,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.525.0";
+export const engineVersion = "0.526.0";
 
 export type {
   ApplyResult,
@@ -26082,6 +26094,16 @@ export function applyAction(state: GameState, action: GameAction): ApplyResult {
   // record whose base uid is no longer in play on its seat is cleared (flow.ts
   // `clearDepartedChosenShields`, the identity when nothing changes).
   const cleared = clearDepartedChosenShields(swept);
+  // 🆕🆕🆕 §7.4 (D643) — Multi Adapter's state check (R-MAD1) on a board back at `turn:action` (a retreat or a
+  // promotion that brought a §9 lock in, a program that settled with an empty queue): the trims, then `resumeTurn`
+  // hands the turn back. A parked board is asked when its queue next drains (flow.ts `advance`).
+  if (cleared.phase.kind === "turn:action") {
+    const trims = toolTrimStages(cleared, cleared.phase.seat);
+    if (trims.length > 0) {
+      const resume = { kind: "resumeTurn" as const, seat: cleared.phase.seat };
+      return advance({ ...cleared, pending: [...trims, resume, ...cleared.pending] }, result.events);
+    }
+  }
   return cleared === result.state ? result : ok(cleared, result.events);
 }
 

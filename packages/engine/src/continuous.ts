@@ -56,7 +56,7 @@ import type {
   PassiveEffects,
   StadiumEffects,
 } from "./registry";
-import { programFor } from "./registry";
+import { programFor, registryCardIds } from "./registry";
 import type {
   AttackBlock,
   GameState,
@@ -159,6 +159,75 @@ export function benchTrimStages(
         !queued.some((stage) => stage.kind === "benchTrim" && stage.seat === seat),
     )
     .map((seat): PendingStage => ({ kind: "benchTrim", seat }));
+}
+
+/** 🆕🆕🆕 §7.4 (D643) — how many Pokémon Tools `body` (on `seat`'s board) may have attached right now: 1, or a
+    live `PassiveEffects.toolCapForName`'s `cap` when the body's top card's name contains its `nameContains` —
+    Rotom ex "Multi Adapter" (R-MAD3: the holder counts itself; the name is the TOP card's). A holder is any of
+    `seat`'s OWN in-play Pokémon (Active or Bench, no zone clause) whose Ability `disabledAbilityUids` does not
+    silence; the first live one answers (R-MAD2: several holders do not stack). Read by both `attachTool` arms
+    (cardplay.ts), interpreter.ts's deck attach (`freeToolSlotsOfSource` / `searchAttachToSelf`) and
+    `toolTrimStages`. The lock scan runs only once a holder is found. */
+export function toolCapOf(state: GameState, seat: Seat, body: InPlayPokemon): number {
+  const name = topCardOf(state, body)?.name ?? "";
+  const side = state.players[seat];
+  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  for (const holder of holders) {
+    const top = topCardOf(state, holder);
+    const raise = top === undefined ? undefined : programFor(top.id)?.passive?.toolCapForName;
+    if (raise === undefined || !name.includes(raise.nameContains)) continue;
+    const uid = topUid(holder);
+    if (uid !== undefined && disabledAbilityUids(state).has(uid)) continue; // §9
+    return raise.cap;
+  }
+  return 1;
+}
+
+/** 🆕🆕🆕 §7.4 (D643) — the name fragments a `toolCapForName` raise is printed for ("Rotom"), read off the whole
+    registry once: the trim's "those Pokémon" outlives the Ability that named them. */
+let toolCapNamesMemo: readonly string[] | undefined;
+function toolCapNames(): readonly string[] {
+  toolCapNamesMemo ??= [
+    ...new Set(
+      registryCardIds().flatMap((id) => {
+        const raise = programFor(id)?.passive?.toolCapForName;
+        return raise === undefined ? [] : [raise.nameContains];
+      }),
+    ),
+  ];
+  return toolCapNamesMemo;
+}
+
+/** 🆕🆕🆕 §7.4 (D643) — does `body` (on `seat`'s board) owe Multi Adapter's trim: one of "those Pokémon" (its top
+    card's name contains a `toolCapNames` fragment, R-MAD3) carrying more Tools than `toolCapOf` now allows? A body
+    with one Tool or none answers at once. Read by `toolTrimStages`, flow.ts `runToolTrim` and interpreter.ts
+    `trimTools`. */
+export function owesToolTrim(state: GameState, seat: Seat, body: InPlayPokemon): boolean {
+  if (body.tools.length <= 1) return false;
+  const name = topCardOf(state, body)?.name ?? "";
+  return toolCapNames().some((part) => name.includes(part)) && body.tools.length > toolCapOf(state, seat, body);
+}
+
+/** 🆕🆕🆕 §7.4 (D643) — Multi Adapter's *"If this Ability goes away, discard Pokémon Tools from those Pokémon until
+    only 1 remains on each."*, as a STATE CHECK (R-MAD1): one `toolTrim` stage per seat with a body that
+    `owesToolTrim`, `first` then the other seat, skipping a seat `queued` already holds a trim for.
+    Over-cap is the whole test, so the holder leaving play, a §9 lock arriving on it and any other way the cap
+    drops are one predicate; a body not named by a raise is never trimmed. Queued at flow.ts `advance`'s entry (in front of the queue) and by index.ts
+    `applyAction` on a board back at `turn:action`; `runToolTrim` re-reads the excess. A board with no body
+    carrying two Tools pays one length read per body. */
+export function toolTrimStages(
+  state: GameState,
+  first: Seat,
+  queued: readonly PendingStage[] = [],
+): PendingStage[] {
+  return [first, otherSeat(first)]
+    .filter((seat) => {
+      if (queued.some((stage) => stage.kind === "toolTrim" && stage.seat === seat)) return false;
+      const side = state.players[seat];
+      const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+      return bodies.some((body) => owesToolTrim(state, seat, body));
+    })
+    .map((seat): PendingStage => ({ kind: "toolTrim", seat }));
 }
 
 /** 🆕🆕🆕 §6.1 (D577) — does the Energy card `uid` print Boomerang Energy's *"attach this card
@@ -308,7 +377,8 @@ export function attackerGatedReductionOf(
     Out, and its remaining HP becomes 10. Then, discard this card."*), or `undefined`.
     Only the SOURCE half: the full-HP and lethality halves are `koSurvivalClamp`'s, which
     calls this and names the uid in its result so the damage write can discard it. The
-    first in-effect Brace (§7.4 allows one Tool per body). */
+    first in-effect Brace (§7.4 allows one Tool per body). [🆕🆕🆕 D643 (D539): ~~one Tool per body~~ — a Rotom under
+    Multi Adapter may carry 2; the first in-effect Brace still answers (R-MAD3).] */
 export function survivalBraceOf(
   state: GameState,
   holder: InPlayPokemon,

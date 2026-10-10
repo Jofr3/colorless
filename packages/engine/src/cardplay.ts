@@ -21,6 +21,8 @@ import {
   inPlayToHandBlocked,
   remainingHpWithin,
   toolCardSimulated,
+  // 🆕🆕🆕 D643 — Multi Adapter's raised Tool cap, at both `attachTool` arms.
+  toolCapOf,
 } from "./continuous";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
@@ -494,9 +496,14 @@ export function stadiumSpentPlayLifted(state: GameState, seat: Seat, card: Card)
 
 /** §7.4 — attach a Pokémon Tool from hand to one of the actor's own in-play
     Pokémon. Not capped per turn and consumes NO allowance (unlike energy);
-    one Tool per Pokémon at a time; there is no detach — it rides the stack
+    one Tool per Pokémon at a time [🆕🆕🆕 D643 (D539): up to `toolCapOf` — 2 on a Rotom under Multi Adapter]; there is no detach — it rides the stack
     through evolution and leaves play only with a KO. Its effects are
     continuous (continuous.ts), so nothing runs here. */
+/** 🆕🆕🆕 D643 — the refusal's words: §7.4's one Tool, or the Multi Adapter cap a body already carries. */
+function toolCapMessage(carried: number): string {
+  return carried <= 1 ? "one Tool per Pokémon (§7.4)" : `at most ${carried} Pokémon Tools on this Pokémon (Multi Adapter)`;
+}
+
 export function attachTool(state: GameState, action: AttachToolAction): ApplyResult {
   const rejected = turnGate(state, action);
   if (rejected !== null) return rejected;
@@ -564,8 +571,9 @@ export function attachTool(state: GameState, action: AttachToolAction): ApplyRes
     if (side.active === null) {
       return err("NO_TARGET", "no Active Pokémon to attach to");
     }
-    if (side.active.tools.length > 0) {
-      return err("TOOL_ALREADY_ATTACHED", "one Tool per Pokémon (§7.4)");
+    // 🆕🆕🆕 D643 — the cap is `toolCapOf`'s: 1, or Multi Adapter's 2 on a Rotom.
+    if (side.active.tools.length >= toolCapOf(state, action.seat, side.active)) {
+      return err("TOOL_ALREADY_ATTACHED", toolCapMessage(side.active.tools.length));
     }
     updated = {
       ...side,
@@ -578,8 +586,8 @@ export function attachTool(state: GameState, action: AttachToolAction): ApplyRes
     if (benched === undefined) {
       return err("BAD_BENCH_INDEX", `no benched Pokémon at index ${String(index)}`);
     }
-    if (benched.tools.length > 0) {
-      return err("TOOL_ALREADY_ATTACHED", "one Tool per Pokémon (§7.4)");
+    if (benched.tools.length >= toolCapOf(state, action.seat, benched)) {
+      return err("TOOL_ALREADY_ATTACHED", toolCapMessage(benched.tools.length));
     }
     const bench = side.bench.map((pokemon, i) =>
       i === index ? { ...pokemon, tools: [...pokemon.tools, action.uid] } : pokemon,
@@ -2167,8 +2175,13 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       if (choice.kind !== "discardTools" || !Array.isArray(choice.uids)) {
         return err("BAD_EFFECT_CHOICE", "expected a tool-discard choice");
       }
-      const scope = prompt.scope;
-      // The prompt is authored `upTo`-only today. A future `total`/`each` Tool
+      // 🆕🆕🆕 D643 — an EXACT `total` (Multi Adapter's trim, R-MAD1; Ruffian on a two-Tool body, R-MAD4): exactly
+      // `count` uids, then the `upTo` rules below at that ceiling (every uid offered, none twice).
+      if (prompt.scope.kind === "total" && choice.uids.length !== prompt.scope.count) {
+        return err("BAD_EFFECT_CHOICE", `discard exactly ${prompt.scope.count} Pokémon Tools`);
+      }
+      const scope = prompt.scope.kind === "total" ? { kind: "upTo" as const, max: prompt.scope.count } : prompt.scope;
+      // The prompt is authored `upTo`-only today. [🆕🆕🆕 D643 (D539): ~~`upTo`-only~~ — `total` too, read above.] A future `total`/`each` Tool
       // discard would arrive here as a scope this branch does not read, so the
       // NON-`upTo` case is refused rather than waved through: an unrecognised scope
       // must not become "anything goes".

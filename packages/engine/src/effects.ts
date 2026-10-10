@@ -9291,6 +9291,13 @@ export type EffectOp =
       5), re-read when the op runs. It PARKS, so `{"op":"trimBench"}` is written into
       `phase.cont.pendingOp` — a D125 widening that rides `MATCH_RECORD_VERSION` 39 → 40. */
   | { op: "trimBench" }
+  /** 🆕🆕🆕 **D643 — MULTI ADAPTER'S TRIM: the CONTROLLER discards Pokémon Tools from their OWN first over-cap body
+      until it carries what continuous.ts `toolCapOf` allows.** No deriver produces it: flow.ts `runToolTrim` runs one
+      per over-cap body for ONE `toolTrim` stage, the body's OWNER as the controller (R-MAD1). `trimBench`'s sibling:
+      the count is the LIVE excess, re-read when the op runs; it parks on the shipped `discardTools` prompt at an exact
+      `total` (Tools of one card ask nothing — the M1 rule). It PARKS, so `{"op":"trimTools"}` is written into
+      `phase.cont.pendingOp` — a D125 widening that rides `MATCH_RECORD_VERSION` 47 → 48. */
+  | { op: "trimTools" }
   /** 🆕🆕🆕 **D577 — TYME `sv08-190`/`sv08.5-143` (Supporter): THE NAMED, FACE-DOWN HP GUESS.**
       *"Tell your opponent the name of a Pokémon in your hand and put that Pokémon face down in
       front of you. Your opponent guesses that Pokémon's HP, and then you reveal it. If your

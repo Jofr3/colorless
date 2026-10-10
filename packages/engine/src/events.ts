@@ -1314,8 +1314,11 @@ export type GameEvent =
           doing damage", and it is not the attack's effect. A NEW member rather than a
           reuse, for the field's own D543 reason (a reused member inherits a tail that
           lies). A union widening on an unpersisted event (`GameEvent` is not in
-          `MatchRecord`), so `MATCH_RECORD_VERSION` stays 35. */
-      when: "preDamage" | "effect" | "consumed";
+          `MatchRecord`), so `MATCH_RECORD_VERSION` stays 35.
+          🆕🆕🆕 **D643 — `"trimmed"`, A FOURTH PRODUCER**: Multi Adapter's trim (interpreter.ts `trimToolsApply`) —
+          the OWNER discarding down to the cap once the Ability went away (`seat === actor`). Unpersisted, so no
+          version moves for it. */
+      when: "preDamage" | "effect" | "consumed" | "trimmed";
     }
   /** §7.3 — the Stadium `uid` left play for its OWNER `seat`'s discard pile,
       replaced by a different-named Stadium (whose own TRAINER_PLAYED rides in

@@ -35,7 +35,7 @@ import {
 //                                                 behind the Prize stage (R-CEL1).
 //
 // `MATCH_RECORD_VERSION` 46 → 47 (both shapes are persisted; apps/api `prizeStageMigrationD640.test.ts`). NAMED, NOT
-// TAKEN: Rotom ex ×3 "Multi Adapter" (Y1a) owes 47 → 48 on its own.
+// TAKEN: Rotom ex ×3 "Multi Adapter" (Y1a) owes 47 → 48 on its own. [🆕🆕🆕 D643 (D539): BUILT at D643, 47 → 48.]
 
 const BOLT =
   "The Defending Pokémon's Weakness is now {L} until the end of your next turn. (Apply Weakness as ×2.)";
@@ -68,8 +68,9 @@ describe("D640 §1 — the texts", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(3);
   });
 
-  it("Multi Adapter (Rotom ex ×3) stays unbuilt, named for 47 → 48: no program", () => {
-    for (const id of ["me02-029", "me02-111", "me02-126"]) expect(programFor(id), id).toBeUndefined();
+  it("Multi Adapter (Rotom ex ×3) stays unbuilt, named for 47 → 48: no program (🆕🆕🆕 D643 (D539): WITHDRAWN — built at D643, 47 → 48; inverted)", () => {
+    // 🆕🆕🆕 D643 (D539) — WITHDRAWN: Rotom ex ×3 is keyed since D643 (`multiAdapterMeD643.test.ts`); inverted.
+    for (const id of ["me02-029", "me02-111", "me02-126"]) expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
   });
 });
 
@@ -430,7 +431,7 @@ describe("D640 §5 — Celebration: 2 Prizes at exactly 30 in hand, then the han
 });
 
 describe("D640 §6 — the version", () => {
-  it("is built at engine 0.525.0", () => {
-    expect(engineVersion).toBe("0.525.0");
+  it("is built at engine 0.526.0", () => {
+    expect(engineVersion).toBe("0.526.0");
   });
 });

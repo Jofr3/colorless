@@ -122,6 +122,9 @@ import {
   // 🆕🆕🆕 D642 — Dizzying Valley's kept Confusion (the deck evolves, the devolves) and the watched recoil.
   stageChangeConditions,
   withWatchedRecoil,
+  // 🆕🆕🆕 D643 — Multi Adapter's raised Tool cap (the deck attach, `trimTools`) and its trim predicate.
+  toolCapOf,
+  owesToolTrim,
 } from "./continuous";
 import type { KoSurvival } from "./continuous";
 import { POKEMON_TYPES, STATUS_WORD_OF, foldApostrophes } from "./effects";
@@ -4715,6 +4718,8 @@ function stepOp(
       // no "up to"): an offer no bigger than the count comes off INLINE (the M1 rule), and
       // §7.4's one Tool per Pokémon makes that every reachable board. A number over a
       // larger offer (unreachable) keeps the `upTo` park below.
+      // 🆕🆕🆕 D643 (D539): ~~"every reachable board"~~ / ~~"(unreachable)"~~ — a Multi Adapter body carries 2
+      // Tools, and the mandatory pick then parks at an EXACT `total` below, never `upTo` (R-MAD4).
       if (op.bodyUid !== undefined && op.count !== "all" && discardable.length <= op.count) {
         return {
           done: toolDiscardApply(
@@ -4723,6 +4728,16 @@ function stepOp(
             ctx,
             events,
           ).state,
+        };
+      }
+      if (op.bodyUid !== undefined && op.count !== "all") {
+        return {
+          park: {
+            kind: "discardTools",
+            discardable,
+            scope: { kind: "total", count: op.count },
+            note: `Discard ${op.count === 1 ? "a Pokémon Tool" : `${op.count} Pokémon Tools`} from that Pokémon.`,
+          },
         };
       }
       // 🆕🆕🆕 D557 — Megaton Blower's printed *"all"*: NO question, so no park — every
@@ -5440,6 +5455,27 @@ function stepOp(
           max: excess,
           declinable: false,
           note: `Your Bench can hold only ${BENCH_MAX} Pokémon: discard ${excess} of your Benched Pokémon (and all attached cards).`,
+        },
+      };
+    }
+    case "trimTools": {
+      // 🆕🆕🆕 §7.4 (D643) — Multi Adapter's trim (R-MAD1): the controller (the body's OWNER, flow.ts `runToolTrim`)
+      // discards EXACTLY the excess over `toolCapOf` from their first over-cap body, picking which. Tools that are
+      // all one card ask nothing (the M1 rule) and the newest come off. No §11 shield: the owner discards their own.
+      const over = overCapToolBody(state, ctx.seat);
+      if (over === undefined) return { done: state };
+      const cap = toolCapOf(state, ctx.seat, over.body);
+      const excess = over.body.tools.length - cap;
+      if (new Set(over.body.tools.map((uid) => cardIdentity(state, uid))).size === 1) {
+        return { done: trimToolsApply(state, over.body.tools.slice(-excess), ctx, events) };
+      }
+      const name = topCardOf(state, over.body)?.name ?? "This Pokémon";
+      return {
+        park: {
+          kind: "discardTools",
+          discardable: over.body.tools.map((uid) => ({ uid, from: over.ref })),
+          scope: { kind: "total", count: excess },
+          note: `${name} can have only ${cap} Pokémon Tool${cap === 1 ? "" : "s"} attached: discard ${excess}.`,
         },
       };
     }
@@ -8815,6 +8851,10 @@ export function applyChoice(
       // and discard the owner's answer silently (D541's measurement at the neighbour), so it
       // is driven parked in `areaZeroUnderdepthsD577.test.ts`.
       return choice.kind === "pokemonMulti" ? discardBenchedRefs(state, choice.refs, ctx, events) : state;
+    case "trimTools":
+      // 🆕🆕🆕 §7.4 (D643) — the RESUMED half of Multi Adapter's trim: the answer names the Tools that GO (the
+      // owner's one over-cap body; `validateChoice` already held them to the offer and the exact count).
+      return choice.kind === "discardTools" ? trimToolsApply(state, choice.uids, ctx, events) : state;
     case "returnBenchedChosen": {
       // 🛑🛑 **🆕🆕🆕 D541 — THE RESUMED HALF, AND IT IS THE ONE SITE IN THIS SLICE
       // THE COMPILER CANNOT SEE.** This `switch` ends in a `default:` that returns
@@ -15002,14 +15042,16 @@ function attachableToolCard(state: GameState, uid: string): boolean {
 }
 
 /** 🆕🆕🆕 D565 — §7.4's free Tool slots on the program's own body: 1 when it carries no
-    Tool, 0 when it carries one or has left play. Gates `searchDeck { dest: "attachToSelf" }`'s
+    Tool, 0 when it carries one or has left play. [🆕🆕🆕 D643 (D539): ~~"no Tool" / "carries one"~~ — fewer than
+    / as many as `toolCapOf` allows (Multi Adapter's 2).] Gates `searchDeck { dest: "attachToSelf" }`'s
     OFFER (no free slot, no candidate, no park) the way `benchSpace` clamps a Bench-bound
     search's ceiling. */
 function freeToolSlotsOfSource(state: GameState, ctx: EffectContext): number {
   const [ref] = sourceRef(state, ctx);
   if (ref === undefined) return 0;
   const body = refPokemon(state, ref);
-  return body !== undefined && body.tools.length === 0 ? 1 : 0;
+  // 🆕🆕🆕 D643 — the slot count is `toolCapOf`'s (Multi Adapter), still at most ONE card per attach.
+  return body !== undefined && body.tools.length < toolCapOf(state, ctx.seat, body) ? 1 : 0;
 }
 
 /** 🆕🆕🆕 D565 — Farfetch'd "Impromptu Carrier": attach the picked Tool from the deck to
@@ -15030,7 +15072,7 @@ function searchAttachToSelf(
   const uid = uids.find((u) => side.deck.includes(u) && attachableToolCard(state, u));
   if (ref === undefined || uid === undefined) return { state, moved: [] };
   const body = refPokemon(state, ref);
-  if (body === undefined || body.tools.length > 0) return { state, moved: [] };
+  if (body === undefined || body.tools.length >= toolCapOf(state, ctx.seat, body)) return { state, moved: [] };
   const withTool: InPlayPokemon = { ...body, tools: [...body.tools, uid] };
   const deck = side.deck.filter((u) => u !== uid);
   const updated: PlayerSide =
@@ -16158,6 +16200,44 @@ function hpGuessApply(
   const drawer = right ? otherSeat(ctx.seat) : ctx.seat;
   events.push({ type: "HP_GUESSED", seat: ctx.seat, uid, guess, hp, right, drawer });
   return drawToHand(state, drawer, op.draw, "effect", events);
+}
+
+/** 🆕🆕🆕 §7.4 (D643) — the controller's first body (Active, then the Bench in order) that `owesToolTrim`, with its
+    ref, or `undefined`. */
+function overCapToolBody(state: GameState, seat: Seat): { body: InPlayPokemon; ref: PokemonRef } | undefined {
+  const side = state.players[seat];
+  const refs: { body: InPlayPokemon; ref: PokemonRef }[] = [
+    ...(side.active === null ? [] : [{ body: side.active, ref: { seat, spot: { spot: "active" as const } } }]),
+    ...side.bench.map((body, index) => ({ body, ref: { seat, spot: { spot: "bench" as const, index } } })),
+  ];
+  return refs.find(({ body }) => owesToolTrim(state, seat, body));
+}
+
+/** 🆕🆕🆕 §7.4 (D643) — Multi Adapter's discard: the controller's own Tools `uids` names come off their hosts into
+    the controller's discard pile, one `TOOLS_DISCARDED` row per host at `when: "trimmed"` (the owner discards their
+    own, so `seat === actor`). A uid on no own body is ignored; an empty answer changes nothing. */
+function trimToolsApply(state: GameState, uids: readonly string[], ctx: EffectContext, events: GameEvent[]): GameState {
+  const picks = new Set(uids);
+  const side = state.players[ctx.seat];
+  const discarded: string[] = [];
+  const strip = (pokemon: InPlayPokemon): InPlayPokemon => {
+    const taken = pokemon.tools.filter((uid) => picks.has(uid));
+    if (taken.length === 0) return pokemon;
+    discarded.push(...taken);
+    events.push({
+      type: "TOOLS_DISCARDED",
+      seat: ctx.seat,
+      actor: ctx.seat,
+      uids: taken,
+      host: topUid(pokemon) ?? "",
+      when: "trimmed",
+    });
+    return { ...pokemon, tools: pokemon.tools.filter((uid) => !picks.has(uid)) };
+  };
+  const active = side.active === null ? null : strip(side.active);
+  const bench = side.bench.map(strip);
+  if (discarded.length === 0) return state;
+  return withSide(state, ctx.seat, { ...side, active, bench, discard: [...side.discard, ...discarded] });
 }
 
 /** 🆕🆕🆕 §7.3 (D577) — discard the controller's Benched bodies `refs` names, each with its

@@ -6,6 +6,22 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D643 update (engine 0.526.0) — Y1a, Multi Adapter (`MATCH_RECORD_VERSION` 47 → 48)
+
+1 text / 3 printings (`multiAdapterMeD643.test.ts`): Rotom ex ×3 "Multi Adapter" `me02-029` / `-111` / `-126` — the new
+`PassiveEffects.toolCapForName` (continuous.ts `toolCapOf`, read at both `attachTool` arms and the deck attach) and the trim as a state
+check (the new persisted `PendingStage` `toolTrim` and `EffectOp` `trimTools`, the owner's exact `discardTools` pick — R-MAD1 … R-MAD4).
+The client steps a second Tool off the first. A v47 match record is migrated by a re-stamp. **Finished:** all 3. **Dropped:** none.
+
+| Column | `me` built / units (D643) | Standard pool D643 |
+|---|---|---|
+| Attacks | 1,038 / 1,039 | **2,770 / 2,771** |
+| Abilities | 226 / 234 (+3) | **602 / 610** |
+| Trainers | 181 / 183 | **445 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+1252 `me` printings fully built (1249 + 3).
+
 ## 🆕 D642 update (engine 0.525.0) — Z1 + K2, the `me` Stadium rest and the watched-Active damage triggers (`MATCH_RECORD_VERSION` stays 47)
 
 5 texts / 6 printings (`stadiumWatchedMeD642.test.ts`): Spiritomb ×2 "Spiteful Swirl" `me01-087` / `-148` and Wishiwashi "Counterattack
@@ -46,7 +62,7 @@ normaliser leaves them; the key is by id).
 2 texts / 3 printings (`prizeOverwriteMeD640.test.ts`), reader rows: Pikachu "Overwriting Bolt" `30th-040` (D552's retype with the new
 `asTimesTwo`, read as a {L}×2 rewrite — R-OWB1) and Gholdengo ×2 "Celebration" `30th-108` / `-142` (`takePrize { count: 2,
 thenShuffleHand }` and the new post-Prize stage `shuffleHandIntoDeck` — R-CEL1). A v46 match record is migrated by a re-stamp.
-**Finished:** all 3. **Not taken (named):** Rotom ex ×3 "Multi Adapter" `me02-029` / `-111` / `-126` (Y1a) — owes 47 → 48 on its own.
+**Finished:** all 3. **Not taken (named):** Rotom ex ×3 "Multi Adapter" `me02-029` / `-111` / `-126` (Y1a) — owes 47 → 48 on its own. [🆕🆕🆕 D643 (D539): Multi Adapter BUILT at D643 (47 → 48).]
 
 | Column | `me` built / units (D640) | Standard pool D640 |
 |---|---|---|
@@ -98,7 +114,7 @@ and Bench, behind an empty hand — R-SKT1; parked as the new `useInPlayAttackAs
 Sail" (the new Supporter-only holder shield `preventSupporterEffects`), Antique Armor Fossil `me05-072` "Protective Armor"
 (`seatDamageReductionAfterWR` with the new `sourceActive` rider) and Antique Skull Fossil `me05-073` "Spiny Skull" (Counterattack Quills'
 recoil). A v45 match record is MIGRATED by a re-stamp (no D1 read). Fossil Quarry now offers them. **Finished:** all 4 — F1 is complete.
-**Not taken (named):** Rotom ex ×3 "Multi Adapter" (Y1a — every Tool reader, the two-Tool cap and the forced discard wherever the [🆕🆕🆕 D640 (D539): Multi Adapter still unbuilt, owes 47 → 48.]
+**Not taken (named):** Rotom ex ×3 "Multi Adapter" (Y1a — every Tool reader, the two-Tool cap and the forced discard wherever the [🆕🆕🆕 D640 (D539): Multi Adapter still unbuilt, owes 47 → 48.] [🆕🆕🆕 D643 (D539): Multi Adapter BUILT at D643 (47 → 48).]
 Ability goes away; its own bump) and Overwriting Bolt `30th-040` — each owes 46 → 47. [🆕🆕🆕 D640 (D539): Overwriting Bolt BUILT at D640 (MRV 46 → 47).]
 
 | Column | `me` built / units (D637) | Standard pool D637 |
@@ -117,9 +133,9 @@ shipped bar), Pachirisu "Electrified Incisors" `me01-051` (the new `HandAttachMa
 (the new two-coin stamp `attackTwoFlipLockTurn`, R-JOI1), Seismitoad "Quaking Fist" `30th-084` (the new `PlayerSide.trainerFlipLockTurn`,
 a coin at every Trainer play from hand, R-QF1), Chi-Yu "Scorching Earth" `me01-031` (the new `opponentStadiumInPlay` and a stamped
 `Stadium` bar, R-SCE1) and Clawitzer "Fall Back to Reload" ×2 `me01-038` / `-141` (the new `InPlayPokemon.benchedTurn`, R-FBR1). A v44
-match record is MIGRATED (no D1 read). **Finished:** all 7. **Not taken (named):** Rotom ex ×3 "Multi Adapter" (Y1a: a two-Tool cap and a [🆕🆕🆕 D640 (D539): Multi Adapter still unbuilt, owes 47 → 48.]
+match record is MIGRATED (no D1 read). **Finished:** all 7. **Not taken (named):** Rotom ex ×3 "Multi Adapter" (Y1a: a two-Tool cap and a [🆕🆕🆕 D640 (D539): Multi Adapter still unbuilt, owes 47 → 48.] [🆕🆕🆕 D643 (D539): Multi Adapter BUILT at D643 (47 → 48).]
 forced Tool discard when the Ability goes away), Overwriting Bolt `30th-040` and the four `me` Antique Fossils — each owes a later bump [🆕🆕🆕 D640 (D539): Overwriting Bolt BUILT at D640 (MRV 46 → 47).]
-(45 → 46). [🆕🆕🆕 D637 (D539): the fossils BUILT at D637; Multi Adapter and Overwriting Bolt now owe 46 → 47.] [🆕🆕🆕 D640 (D539): Overwriting Bolt BUILT at D640 (MRV 46 → 47); Multi Adapter still unbuilt, owes 47 → 48.]
+(45 → 46). [🆕🆕🆕 D637 (D539): the fossils BUILT at D637; Multi Adapter and Overwriting Bolt now owe 46 → 47.] [🆕🆕🆕 D640 (D539): Overwriting Bolt BUILT at D640 (MRV 46 → 47); Multi Adapter still unbuilt, owes 47 → 48.] [🆕🆕🆕 D643 (D539): Multi Adapter BUILT at D643 (47 → 48).]
 
 | Column | `me` built / units (D636) | Standard pool D636 |
 |---|---|---|
@@ -1509,7 +1525,7 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### HP, Retreat, type and Energy-provision passives — 8 text(s) / 15 printing(s)
 
-- 3× **Multi Adapter** — Each of your Pokémon that has "Rotom" in its name may have up to 2 Pokémon Tool cards attached. If this Ability goes away, discard Pokémon Tools from those Pokémon until only 1 remains on each. [🆕🆕🆕 D636: not taken — a two-Tool cap and a forced discard when the Ability goes away; owes its own bump (45 → 46)] [🆕🆕🆕 D637: not taken at the fossils' bump either; owes 46 → 47] [🆕🆕🆕 D640 (D539): Multi Adapter still unbuilt, owes 47 → 48.]
+- 3× **Multi Adapter** — Each of your Pokémon that has "Rotom" in its name may have up to 2 Pokémon Tool cards attached. If this Ability goes away, discard Pokémon Tools from those Pokémon until only 1 remains on each. [🆕🆕🆕 D636: not taken — a two-Tool cap and a forced discard when the Ability goes away; owes its own bump (45 → 46)] [🆕🆕🆕 D637: not taken at the fossils' bump either; owes 46 → 47] [🆕🆕🆕 D640 (D539): Multi Adapter still unbuilt, owes 47 → 48.] [🆕🆕🆕 D643 (D539): Multi Adapter BUILT at D643 (47 → 48).]
 - 2× **Double Type** — As long as this Pokémon is in play, it is {F} and {P} type. [🆕🆕🆕 D586: BUILT]
 - 2× **Scale Up** — If this Pokémon has 6 or more Grass Energy attached, it gets +250 HP. [🆕🆕🆕 D610: BUILT]
 - 2× **Slimy Sliding** — When your opponent's Active Pokémon retreats, your opponent flips a coin. If tails, Energy for its Retreat Cost is not discarded, and they don't switch Pokémon. The effect of Slimy Sliding doesn't stack.

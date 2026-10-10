@@ -5,6 +5,9 @@ import { activeTop, cardOfUid, matchesFilter, pokemonSuffixOf, prizeValueOf, top
 import {
   // 🆕🆕🆕 D577 — the Area Zero Underdepths state check, queued at the three sweeps.
   benchTrimStages,
+  // 🆕🆕🆕 D643 — Multi Adapter's state check (`advance`, `runToolTrim`).
+  owesToolTrim,
+  toolTrimStages,
   effectiveRetreatCost,
   // 🆕🆕🆕 D578 — Team Rocket's Energy's owner restriction, swept at the top of `advance`.
   energyMayBeAttachedTo,
@@ -25,6 +28,7 @@ import {
   stadiumEffectsOf,
   stadiumShieldsStatus,
 } from "./continuous";
+import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import type { PokemonRef, RunResult } from "./interpreter";
 import {
@@ -2045,7 +2049,7 @@ function runDamagedTrigger(
         and only for the DEFENDER's seat. The Checkup and the mid-turn sweep call
         `collectKnockOuts` directly and can never reach here.
 
-    Fires the FIRST match (§7.4 allows one Tool per Pokémon; several holders on one
+    Fires the FIRST match (§7.4 allows one Tool per Pokémon [🆕🆕🆕 D643 (D539): 2 on a Rotom under Multi Adapter]; several holders on one
     board would each print their own sentence, and chaining a second PARKING trigger
     behind the first is the same follow-up the board triggers already defer).
     🆕🆕🆕 D566 — the first LIVE match: the scan now also yields the dying Active's OWN
@@ -2592,6 +2596,18 @@ function runBenchTrim(state: GameState, seat: Seat, events: GameEvent[]): ApplyR
   });
 }
 
+/** 🆕🆕🆕 §7.4 (D643) — drain ONE `toolTrim` stage: `seat` discards Pokémon Tools from each of its bodies over
+    `toolCapOf` until each is back at the cap (Multi Adapter gone, R-MAD1). `runBenchTrim`'s shape: one `trimTools` op
+    per over-cap body at drain time, each re-reading its excess, run with the OWNER as controller (the park answers
+    through `effect:choose` on either seat) and folded with `resumeTail` so the queue behind it resumes. */
+function runToolTrim(state: GameState, seat: Seat, events: GameEvent[]): ApplyResult {
+  const side = state.players[seat];
+  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  const over = bodies.filter((body) => owesToolTrim(state, seat, body)).length;
+  const program = Array.from({ length: over }, (): EffectOp => ({ op: "trimTools" }));
+  return settleProgram(runProgram(state, program, { seat }, events), seat, events, { resumeTail: true });
+}
+
 /** 🆕🆕🆕 §6.1 (D577) — Boomerang Energy `sv06-166`: re-attach every uid the attack's own
     program discarded off its attacker (`stage.boomerang`, written by interpreter.ts
     `discardEnergyApply`, R-BE1) to THAT body, found by uid across its seat's board — a
@@ -2984,6 +3000,14 @@ export function advance(stateIn: GameState, events: GameEvent[]): ApplyResult {
   // 🆕🆕🆕 D578 — Team Rocket's Energy's state check, at the ONE drain point (the identity on
   // every board without a misplaced restricted Energy).
   const state = discardMisplacedEnergy(stateIn, events);
+  // 🆕🆕🆕 §7.4 (D643) — Multi Adapter's state check (R-MAD1), at the same drain point: a seat with a body over
+  // `toolCapOf` trims FIRST, in front of whatever the queue holds (the head stage's seat first). Only a non-empty
+  // queue is asked (an empty one has no tail to resume into; index.ts `applyAction` asks that board), and a board
+  // with no body carrying two Tools queues nothing, so every pre-D643 board drains byte for byte. The re-entry
+  // skips the seats it queued, so it runs once.
+  const head = state.pending[0];
+  const toolTrims = head === undefined ? [] : toolTrimStages(state, head.seat, state.pending);
+  if (toolTrims.length > 0) return advance({ ...state, pending: [...toolTrims, ...state.pending] }, events);
   const stage = state.pending[0];
   if (stage === undefined) return ok(state, events);
   switch (stage.kind) {
@@ -3171,6 +3195,8 @@ export function advance(stateIn: GameState, events: GameEvent[]): ApplyResult {
       );
     case "benchTrim":
       return runBenchTrim(popStage(state), stage.seat, events);
+    case "toolTrim":
+      return runToolTrim(popStage(state), stage.seat, events);
     case "startTurn":
       return startTurn(popStage(state), stage.seat, events);
   }

@@ -1577,6 +1577,8 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         // 🆕🆕🆕 D562 — the consumable's tail: the card discarded ITSELF after its own
         // effect paid, so the row says so (it is filed under its owner, `actor === seat`).
         ...(event.when === "consumed" ? [plain(" after it took effect")] : []),
+        // 🆕🆕🆕 D643 — Multi Adapter's trim: the owner discarded down to the cap.
+        ...(event.when === "trimmed" ? [plain(" — Multi Adapter no longer applies")] : []),
       ]);
     }
     case "STADIUM_DISCARDED":

@@ -108,11 +108,15 @@ function PokemonChoice({
               <span
                 key={tool.id}
                 className={`playmat-card__attached ${collapsed ? "playmat-card__attached--tool-behind playmat-card__attached--tool-behind-bottom" : "playmat-card__attached--tool"}`}
-                style={{
-                  visibility: "visible",
-                  transform: collapsed ? undefined : "rotate(-90deg)",
-                  zIndex: index,
-                }}
+                style={
+                  {
+                    visibility: "visible",
+                    transform: collapsed ? undefined : "rotate(-90deg)",
+                    zIndex: index,
+                    // 🆕🆕🆕 D643 — a second Tool (Rotom ex "Multi Adapter") steps off the first.
+                    "--attached-stack": String(index),
+                  } as CSSProperties
+                }
                 title={tool.name}
               >
                 <CardImage

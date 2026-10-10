@@ -175,11 +175,13 @@ export function PlaymatCard({
           />
         </div>
       </div>
-      {tools.map((tool) => {
+      {tools.map((tool, index) => {
         const isBehind = toolAttachmentPlacement === "behind";
         return (
           <div
             key={tool.id}
+            // 🆕🆕🆕 D643 — a second Tool (Rotom ex "Multi Adapter") steps off the first.
+            style={{ "--attached-stack": String(index) } as CSSProperties}
             className={`playmat-card__attached ${
               isBehind
                 ? `playmat-card__attached--tool-behind playmat-card__attached--tool-behind-${toolAttachmentSide}`

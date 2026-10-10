@@ -141,7 +141,8 @@ export interface AttachToolAction {
   seat: Seat;
   /** A Pokémon Tool uid from the actor's hand (§7.4). */
   uid: string;
-  /** Which of the actor's own in-play Pokémon wears it (one Tool each). */
+  /** Which of the actor's own in-play Pokémon wears it (one Tool each). [🆕🆕🆕 D643 (D539): ~~one Tool each~~ — up to
+      continuous.ts `toolCapOf`, 2 on a Rotom under Multi Adapter.] */
   target: PokemonTarget;
 }
 
