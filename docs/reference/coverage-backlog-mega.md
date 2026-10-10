@@ -6,6 +6,23 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D638 update (engine 0.521.0) — X1, copy / borrowed effects (`MATCH_RECORD_VERSION` stays 46)
+
+3 texts / 6 printings (`copyBorrowedMeD638.test.ts`) on the shipped copy family: Mew ex ×3 "Memory Helix" `30th-066` / `-152` / `-158`
+(the new `PassiveEffects.memoryHelix`, a fourth `attackMenuOf` section: the Benched Pokémon's printed attacks, copy-family attacks
+excluded — R-MH1 / R-MH2), Thievul ×2 "Skill Thief" `me05-054` / `-092` (`deriveAttackCopy`'s new in-play kind over the opponent's Active
+and Bench, behind an empty hand — R-SKT1; parked as the new `useInPlayAttackAs`) and Ninetales "Supernatural Shapeshifter" `me01-020`
+(the new `useMilledSupporterEffect`, Look-Alike Show's filter over the milled card — R-NS1). **Finished:** all 6. **Dropped:** none.
+
+| Column | `me` built / units (D638) | Standard pool D638 |
+|---|---|---|
+| Attacks | 1,025 / 1,039 (+3) | **2,757 / 2,771** |
+| Abilities | 220 / 234 (+3) | **596 / 610** |
+| Trainers | 175 / 183 | **439 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1227** (1221 + 6).
+
 ## 🆕 D637 update (engine 0.520.0) — the four `me` Antique Fossils (`MATCH_RECORD_VERSION` 45 → 46)
 
 4 texts / 4 printings (`antiqueFossilsMeD637.test.ts`, `fossilsMigrationD637.test.ts`), each a new `FOSSIL_IDS` id on D576's
@@ -254,7 +271,7 @@ with the NEW `whose` / `pokemonType` / `depth`, the `turnPlayed` stamp, R-ST1). 
 Flowers" `me03-003` (`attachFromDeck` of any Energy onto a Benched {G} body) and Fletchling "Chirp" `me03-066` (the NEW `CardFilter`
 `pokemonWithResistance`). **Finished:** all 7. **Dropped and named:** Lugia "Elemental Blast" `30th-121` (a matched multi-type discard) [🆕🆕🆕 D633 (D539): BUILT at D633 (O1)],
 Delibird "Pleasing Present" `me04-018` (an attach answered by the opponent first) and Thievul "Skill Thief" ×2 `me05-054` / `-092` (a
-whole-board copy source plus a hand gate). WP31 is closed but for those three.
+whole-board copy source plus a hand gate). [🆕🆕🆕 D638 (D539): Skill Thief ×2 BUILT at D638 (X1)] WP31 is closed but for those three.
 
 | Column | `me` built / units (D624) | Standard pool D624 |
 |---|---|---|
@@ -408,11 +425,11 @@ Meloetta "Soothing Melody" ×2 `mep-026` / `me02-040` (`healChosen` Bench + `typ
 Rotom "Roto Call" `me02.5-092` (`optional` over a name-fragment Bench search), Dialga "Reversed Clock" `30th-103` (Super Rod's
 program), Celebi "Traverse Time" `me01-012` (`anyOf` search) and Eevee "Fetch and Hide" `30th-116` (`bottomFromOpponentHand`
 Item). **Finished:** all 11 cards. One new reading (UNRULED): R-RCL1, Roto Call's decline does not shuffle (`progress.md` NEXT).
-**Left for WP31c** (8 texts / 11 printings) [🆕🆕🆕 D624: 5 texts / 7 printings BUILT by WP31c, above — Tail Generator ×2, Hand Trim, Select a Snack ×2, Send Flowers, Chirp; Elemental Blast, Pleasing Present and Skill Thief ×2 dropped and named]: Dedenne "Tail Generator" ×2 `me03-029` / `-093` (a count-scaled discard attach),
+**Left for WP31c** (8 texts / 11 printings) [🆕🆕🆕 D624: 5 texts / 7 printings BUILT by WP31c, above — Tail Generator ×2, Hand Trim, Select a Snack ×2, Send Flowers, Chirp; Elemental Blast, Pleasing Present and Skill Thief ×2 dropped and named] [🆕🆕🆕 D638 (D539): Skill Thief ×2 BUILT at D638 (X1)]: Dedenne "Tail Generator" ×2 `me03-029` / `-093` (a count-scaled discard attach),
 Lugia "Elemental Blast" `30th-121` (a matched multi-type discard) [🆕🆕🆕 D633: BUILT (O1)], Furfrou "Hand Trim" `me03-067` (a random discard to a hand
 size), Morpeko "Select a Snack" ×2 `30th-061` / `-135` (a mill with a pick), Delibird "Pleasing Present" `me04-018` (an attach
 for both players), Shaymin "Send Flowers" `me03-003` (a deck attach of any Energy), Fletchling "Chirp" `me03-066` (a Resistance
-filter) and Thievul "Skill Thief" ×2 `me05-054` / `-092` (a gated copy of an opponent's attack).
+filter) and Thievul "Skill Thief" ×2 `me05-054` / `-092` (a gated copy of an opponent's attack). [🆕🆕🆕 D638 (D539): Skill Thief ×2 BUILT at D638 (X1)]
 
 | Column | `me` built / units (D616) | Standard pool D616 |
 |---|---|---|
@@ -436,7 +453,7 @@ refused by a §11 shield (`progress.md` NEXT). **Left for WP31b / WP31c** (17 te
 Morpeko "Select a Snack" ×2, Delibird "Pleasing Present" `me04-018`, Meloetta "Soothing Melody" ×2, Claydol "Devolution Ray" ×2,
 Volcanion "Backfire" `me01-025`, Shaymin "Send Flowers" `me03-003`, Fletchling "Chirp" `me03-066`, Sudowoodo "Trials and
 Trip-ulations" `me04-043`, Celebi "Traverse Time" `me01-012`, Dialga "Reversed Clock" `30th-103`, Rotom "Roto Call"
-`me02.5-092`, Eevee "Fetch and Hide" `30th-116` and Thievul "Skill Thief" ×2 `me05-054` / `-092`.
+`me02.5-092`, Eevee "Fetch and Hide" `30th-116` and Thievul "Skill Thief" ×2 `me05-054` / `-092`. [🆕🆕🆕 D638 (D539): Skill Thief ×2 BUILT at D638 (X1)]
 
 | Column | `me` built / units (D615) | Standard pool D615 |
 |---|---|---|
@@ -1260,7 +1277,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 3× This attack does 50 damage to each of your opponent's Pokémon &lt;em>ex&lt;/em>. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em> [🆕🆕🆕 D608: BUILT]
 - 3× This attack does 60 damage to each of 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: BUILT]
 - 2× Discard 2 Energy from this Pokémon, and this attack does 60 damage to each of 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: BUILT]
-- 2× If you have no cards in your hand, choose an attack from 1 of your opponent's Pokémon in play and use it as this attack.
+- 2× If you have no cards in your hand, choose an attack from 1 of your opponent's Pokémon in play and use it as this attack. [🆕🆕🆕 D638: BUILT]
 - 2× Shuffle all Energy attached to this Pokémon into your deck, and this attack does 220 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: BUILT]
 - 1× Discard all &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy from this Pokémon, and this attack does 90 damage to 1 of your opponent's Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em> [🆕🆕🆕 D608: WP30 rest] [🆕🆕🆕 D612: the markup is normalised (WP06); the clean text still needs a reader] [🆕🆕🆕 D629: BUILT]
 - 1× If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: WP30 rest] [🆕🆕🆕 D629: dropped and named (S1) — the gate reads the declared attack's cost]
@@ -1301,7 +1318,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× Choose a random card from your opponent's hand, and your opponent reveals that card and shuffles it into their deck. [🆕🆕🆕 D592: BUILT]
 - 1× Devolve each of your opponent's evolved Pokémon by putting the highest Stage Evolution card on it into your opponent's hand. [🆕🆕🆕 D615: BUILT]
 - 1× Discard random cards from your opponent's hand until they have 5 cards in their hand.
-- 1× Discard the top card of your deck, and if that card is a Supporter card, use the effect of that card as the effect of this attack.
+- 1× Discard the top card of your deck, and if that card is a Supporter card, use the effect of that card as the effect of this attack. [🆕🆕🆕 D638: BUILT]
 - 1× If you played Tarragon from your hand during this turn, discard the top 3 cards of your opponent's deck. [🆕🆕🆕 D619: BUILT]
 - 1× If your opponent has a Stadium in play, discard it. If you do, your opponent can't play any Stadium cards from their hand during their next turn. [🆕🆕🆕 D636: BUILT (L1)]
 - 1× Look at the top 6 cards of your deck, and you may reveal any number of Pokémon you find there and put them into your hand. Shuffle the other cards back into your deck. [🆕🆕🆕 D615: BUILT]
@@ -1445,7 +1462,7 @@ group wins; the grouping is a reading aid, not a census figure).
 ### Other passives — 10 text(s) / 17 printing(s)
 
 - 3× **Ancient Bulwark** — As long as this Pokémon is on your Bench, prevent all damage done to each of your Pokémon by attacks from your opponent's Pokémon that have 2 or less Energy attached. [🆕🆕🆕 D631: BUILT]
-- 3× **Memory Helix** — This Pokémon can use the attacks of any of your Benched Pokémon. (You still need the necessary Energy to use each attack.)
+- 3× **Memory Helix** — This Pokémon can use the attacks of any of your Benched Pokémon. (You still need the necessary Energy to use each attack.) [🆕🆕🆕 D638: BUILT]
 - 2× **Holes** — Whenever your opponent's Active Pokémon moves to the Bench during their turn, place 2 damage counters on that Pokémon. [🆕🆕🆕 D610: BUILT]
 - 2× **Sniper's Eye** — If your opponent has exactly 4 cards in their hand, ignore all {C} Energy in the costs of attacks used by this Pokémon. [🆕🆕🆕 D631: BUILT]
 - 2× **Swirling Prose** — As long as this Pokémon is in the Active Spot, whenever your opponent's Active Pokémon moves to the Bench during their turn, their new Active Pokémon is now Confused. [🆕🆕🆕 D610: BUILT]

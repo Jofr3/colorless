@@ -6281,6 +6281,39 @@ export type EffectOp =
       member is a D125 widening, read by a 0.463 rollback as an op it has no arm for — nothing is
       used, an inert whiff (apps/api match.ts "STAYS 41 AT D580"). */
   | { op: "useOpponentSupporterEffect" }
+  /** 🆕🆕🆕 **D638 — USE THE EFFECT OF THE SUPPORTER THIS ATTACK MILLED AS THE EFFECT OF THIS ATTACK.** Ninetales
+      `me01-020` "Supernatural Shapeshifter" ({C}, no damage, attack index 0): *"Discard the top card of your deck,
+      and if that card is a Supporter card, use the effect of that card as the effect of this attack."* FIELD-FREE
+      and NEVER PARKS: the step discards the controller's top card (`DECK_TOP_DISCARDED`; an empty deck discards
+      nothing and ends), and when that card is a Supporter whose effect Look-Alike Show would offer — a registry
+      `trainer` program and its PRINTED play conditions met for the attacker (`copiedSupporterOps`, R-LA2 / R-LA2a
+      carried) — it emits `SUPPORTER_EFFECT_USED { milled: true }` and SCHEDULES that program in this attack's
+      context (R-LA1 / R-LA4 / R-LA6 carried: the card stays in the discard pile, no Supporter allowance is spent).
+      Mandatory (no *"You may"*). R-NS1 (⚠️ UNRULED): the card is already in the discard pile when its effect
+      runs, and a Supporter whose printed condition fails for the attacker does nothing. Never persisted: it is
+      the program's only op, so nothing parks before it; a parked Supporter op is a shipped op. */
+  | { op: "useMilledSupporterEffect" }
+  /** 🆕🆕🆕 **D638 — THE IN-PLAY COPY CHOICE, ONLY EVER *PARKED*, NEVER STEPPED.** Thievul `me05-054` / `-092`
+      "Skill Thief": *"If you have no cards in your hand, choose an attack from 1 of your opponent's Pokémon in
+      play and use it as this attack."* (`deriveAttackCopy`'s `InPlayAttackCopy`). attack.ts writes it as the
+      `pendingOp` of a declaration-time `effect:choose` park (D573's shape: no `resumeTail`, before
+      ATTACK_DECLARED and every coin) when two or more (body, attack) pairs are eligible; the `chooseAttack`
+      answer indexes `candidates` (the D574 flattened list, each `name` labelled with its card). cardplay.ts
+      `resolveEffect` routes the answer to attack.ts `resolveInPlayCopiedAttack` BEFORE `settleProgram`.
+
+      🛑 **A NEW NAME, NOT A `useAttackAs` WIDENING — D574's ROLLBACK ARGUMENT.** A 0.520 deploy routes every
+      `useAttackAs` to `resolveCopiedAttack`, whose `deriveAttackCopy` returns `null` for this sentence:
+      PHASE_DESYNC, a park no answer leaves. Under this name 0.520 has no route — `applyChoice`'s default, no
+      `continuationOps`, an empty `rest`, back to `turn:action`: an INERT park (D125), so `MATCH_RECORD_VERSION`
+      stays 46. `index` is the copier's printed attack index; `candidates` are (top uid, printed attack index,
+      label). All engine-written. */
+  | {
+      op: "useInPlayAttackAs";
+      /** The copier's declared attack index. Engine-written only. */
+      index: number;
+      /** The eligible (body, attack) pairs. Engine-written only. */
+      candidates: { uid: string; attackIndex: number; name: string }[];
+    }
   /** 🆕🆕🆕 **D574 — MOVE ANY NUMBER OF DAMAGE COUNTERS BETWEEN THE OPPONENT'S OWN BODIES, ONE
       ROUND AT A TIME, UNDER AN ENGINE-WRITTEN BUDGET.** Sableye `sv05-107` "Damage Collection"
       (*"You may move any number of damage counters from your opponent's Benched Pokémon to their
@@ -25857,6 +25890,11 @@ const SELF_DISCARD_THREE_TYPED = new RegExp(
   `^Discard a \\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} Energy, a \\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} Energy, and a \\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} Energy from this Pokémon\\.$`,
 );
 
+// 🆕🆕🆕 D638 — Ninetales `me01-020` "Supernatural Shapeshifter" (`me` corpus, 1 printing; no legal `sv` row),
+// WHOLE: the NEW field-free `useMilledSupporterEffect` (the discard and the Supporter's effect in one step).
+const MILL_TOP_USE_SUPPORTER_EFFECT =
+  /^Discard the top card of your deck, and if that card is a Supporter card, use the effect of that card as the effect of this attack\.$/;
+
 // ── D181: the TRAINER-PATH OPS, printed as ATTACK text. ─────────────────────
 //
 // Four families the engine has executed since M4 on the Trainer path and had no
@@ -32124,6 +32162,9 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       return [typed(first, [second, third]), typed(second, [third]), typed(third, [])];
     }
   }
+
+  // 10f. 🆕🆕🆕 D638 — Supernatural Shapeshifter: the milled Supporter's effect (see the anchor's own note).
+  if (MILL_TOP_USE_SUPPORTER_EFFECT.test(effect)) return [{ op: "useMilledSupporterEffect" }];
 
   // 11/12. "Discard a[n] [Special|{X}] Energy from your opponent's Active
   //        Pokémon.", bare and behind a coin flip — the hammer family's attack
@@ -40820,6 +40861,9 @@ const ATTACK_COPY_OPPONENT_DECK_TOP =
   /^Reveal the top 10 cards of your opponent['’]s deck\. You may choose an attack from a Pokémon you find there and use it as this attack\. Shuffle the revealed cards into your opponent['’]s deck\.$/;
 const ATTACK_COPY_OWN_DECK_TOP_MILL =
   /^Discard the top card of your deck, and if that card is a Pokémon that doesn['’]t have a Rule Box, choose 1 of its attacks and use it as this attack\. \(Pokémon ex, Pokémon V, etc\. have Rule Boxes\.\)$/;
+// 🆕🆕🆕 D638 — Thievul `me05-054` / `-092` "Skill Thief" (`me` corpus, 2 printings; no legal `sv` row), WHOLE.
+const ATTACK_COPY_OPPONENT_IN_PLAY_EMPTY_HAND =
+  /^If you have no cards in your hand, choose an attack from 1 of your opponent['’]s Pokémon in play and use it as this attack\.$/;
 
 /** 🆕🆕🆕 D573 — the marker every copy-family sentence prints (all SIX corpus rows, built or
     not: 77, 78, 80, 131, 245, 434). attack.ts drops every candidate attack whose text carries
@@ -40856,8 +40900,22 @@ export type ResolvedAttackCopy =
   | { from: "opponentDeckTop"; count: 10; may: true }
   | { from: "ownDeckTopMill"; count: 1 };
 
+/** 🆕🆕🆕 D638 — Skill Thief's DECLARATION-TIME kind: every Pokémon the opponent has in play (Active first, then
+    the Bench in order) is a source, read by its top card's printed attacks under R-CP3 / R-CP4, and only while the
+    copier's controller has NO cards in hand, read at declaration (R-SKT1, ⚠️ UNRULED). A SEPARATE type, so
+    `useAttackAs.from` (a persisted field) keeps its three members; its park is `useInPlayAttackAs`. */
+export interface InPlayAttackCopy {
+  from: "opponentInPlay";
+  ifEmptyHand: true;
+}
+
+/** 🆕🆕🆕 D638 — is this Skill Thief's in-play kind? */
+export function isInPlayAttackCopy(copy: AttackCopy | ResolvedAttackCopy | InPlayAttackCopy): copy is InPlayAttackCopy {
+  return copy.from === "opponentInPlay";
+}
+
 /** 🆕🆕🆕 D574 — does this copy resolve in the MIDDLE of the attack rather than at declaration? */
-export function isResolvedAttackCopy(copy: AttackCopy | ResolvedAttackCopy): copy is ResolvedAttackCopy {
+export function isResolvedAttackCopy(copy: AttackCopy | ResolvedAttackCopy | InPlayAttackCopy): copy is ResolvedAttackCopy {
   return copy.from === "opponentDeckTop" || copy.from === "ownDeckTopMill";
 }
 
@@ -40867,7 +40925,7 @@ export function isResolvedAttackCopy(copy: AttackCopy | ResolvedAttackCopy): cop
     anchors, 6 sentences / 13 printings, the whole marker family). On the ATTACK READER
     SURFACE by its `deriveAttack` prefix (`censusAttackCorpus.ts` `surface()`), which goes
     13 → 14 with it (and stays 14 at D574: a widening, not a reader). */
-export function deriveAttackCopy(text: string): AttackCopy | ResolvedAttackCopy | null {
+export function deriveAttackCopy(text: string): AttackCopy | ResolvedAttackCopy | InPlayAttackCopy | null {
   const trimmed = text.trim();
   if (ATTACK_COPY_OPPONENT_ACTIVE.test(trimmed)) return { from: "opponentActive" };
   if (ATTACK_COPY_OPPONENT_ACTIVE_TERA.test(trimmed)) return { from: "opponentActiveTera" };
@@ -40875,5 +40933,6 @@ export function deriveAttackCopy(text: string): AttackCopy | ResolvedAttackCopy 
   if (ATTACK_COPY_FLIP_OPPONENT_ACTIVE.test(trimmed)) return { from: "opponentActive", flip: true };
   if (ATTACK_COPY_OPPONENT_DECK_TOP.test(trimmed)) return { from: "opponentDeckTop", count: 10, may: true };
   if (ATTACK_COPY_OWN_DECK_TOP_MILL.test(trimmed)) return { from: "ownDeckTopMill", count: 1 };
+  if (ATTACK_COPY_OPPONENT_IN_PLAY_EMPTY_HAND.test(trimmed)) return { from: "opponentInPlay", ifEmptyHand: true };
   return null;
 }

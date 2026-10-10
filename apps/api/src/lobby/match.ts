@@ -2160,6 +2160,18 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 46 AT D638 — X1 ADDS TWO `EffectOp` MEMBERS (`useInPlayAttackAs`, `useMilledSupporterEffect`), ONE
+    OPTIONAL EVENT KEY (`SUPPORTER_EFFECT_USED.milled`, not persisted) AND ONE CATALOG-SIDE FIELD
+    (`PassiveEffects.memoryHelix`); NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY OR `InPlayPokemon` FIELD.** (Placed ABOVE
+    the D637 block.) What can be persisted: ⑴ a parked Skill Thief choice — `useInPlayAttackAs { index, candidates }` in
+    `phase.cont.pendingOp`, its prompt a shipped `chooseAttack`. A NEW name and not a `useAttackAs` widening ON PURPOSE
+    (D574's argument): 0.520 routes every `useAttackAs` to `resolveCopiedAttack`, whose `deriveAttackCopy` returns `null`
+    for Skill Thief — PHASE_DESYNC; under the new name 0.520 has no route, `applyChoice`'s default and an empty `rest` fold
+    back to `turn:action` (an INERT whiff, D125). ⑵ A Supporter program Supernatural Shapeshifter scheduled, parked
+    mid-attack: shipped ops only (`useMilledSupporterEffect` is its program's only op and never parks). ⑶ Memory Helix
+    rows are never persisted (`attackMenuOf`'s flat index never is, D578); R-MH2 keeps every copy park at a PRINTED
+    copier index, so a 0.520 reader resumes any `useAttackAs` / `useFoundAttackAs` it finds the same.
+
     🆕🆕🆕 **45 → 46 AT D637 — THE NINETEENTH POSITION, AND THE FIFTH MIGRATION: THE FOUR `me` ANTIQUE FOSSILS.**
     (Placed ABOVE the D636 block.) The address, named first (D456's rule): D576's TWELFTH POSITION, once per id — no key
     and no widened type, but a NEW `FOSSIL_IDS` id (Antique Jaw / Sail Fossil `me03-068` / `-069`, Antique Armor / Skull

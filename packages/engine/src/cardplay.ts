@@ -9,7 +9,7 @@ import type {
   UseStadiumAbilityAction,
 } from "./actions";
 import { err, ok } from "./actions";
-import { resolveCopiedAttack, resolveFoundAttack } from "./attack";
+import { resolveCopiedAttack, resolveFoundAttack, resolveInPlayCopiedAttack } from "./attack";
 import { cardOfUid, isBasicPokemon, topUid } from "./cards";
 import {
   // 🆕🆕🆕 D577 — the live per-seat Bench limit (Area Zero Underdepths, R-AZ1).
@@ -1208,6 +1208,8 @@ export function resolveEffect(state: GameState, action: ResolveEffectAction): Ap
   // `turn:action`; decisions.md D573.)
   const pendingOp = phase.cont.pendingOp;
   if (pendingOp.op === "useAttackAs") return resolveCopiedAttack(state, phase, pendingOp, action.choice);
+  // 🆕🆕🆕 D638 — Skill Thief's in-play copy park, the same route (a 0.520 deploy has none: inert, D125).
+  if (pendingOp.op === "useInPlayAttackAs") return resolveInPlayCopiedAttack(state, phase, pendingOp, action.choice);
   // 🆕🆕🆕 D574 — the MID-ATTACK copy park (Haughty Order / Seek Inspiration), routed the same way —
   // EXCEPT Haughty Order's *"You may"* DECLINE, which takes the default drain below: no arm applies,
   // the empty `rest` finishes and `resumeTail` runs the queued attack epilogue (exactly what a

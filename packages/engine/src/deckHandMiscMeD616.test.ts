@@ -120,6 +120,8 @@ const WP31_REST: readonly (readonly [string, readonly string[], string])[] = [
 const BUILT_AT_D624: ReadonlySet<string> = new Set(["me03-029", "me03-067", "30th-061", "me03-003", "me03-066"]);
 /** 🆕🆕🆕 D633 (D539) — O1 reads Elemental Blast (`attackOddsMeD633.test.ts`). */
 const BUILT_AT_D633: ReadonlySet<string> = new Set(["30th-121"]);
+/** 🆕🆕🆕 D638 (D539) — X1 reads Skill Thief (`copyBorrowedMeD638.test.ts`). */
+const BUILT_AT_D638: ReadonlySet<string> = new Set(["me05-054"]);
 
 describe("D616 §1 — the texts", () => {
   it("9 sentences / 11 printings, each a row of the committed `me` corpus, none printed in legal `sv`, each now read", () => {
@@ -134,14 +136,17 @@ describe("D616 §1 — the texts", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(11);
   });
 
-  it("WP31's rest stays unbuilt: 8 texts / 11 printings, named (🆕🆕🆕 D624: 5 of them / 7 printings are built — WP31c; 3 / 4 stay; 🆕🆕🆕 D633: Elemental Blast too — O1; 2 / 3 stay)", () => {
+  it("WP31's rest stays unbuilt: 8 texts / 11 printings, named (🆕🆕🆕 D624: 5 of them / 7 printings are built — WP31c; 3 / 4 stay; 🆕🆕🆕 D633: Elemental Blast too — O1; 2 / 3 stay; 🆕🆕🆕 D638: Skill Thief ×2 too — X1; 1 / 1 stays)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, ids] of WP31_REST) {
       expect([text, me.get(text)]).toEqual([text, ids.length]);
       // 🆕🆕🆕 D624 (D539): WP31c reads five of these; Elemental Blast, Pleasing Present and Skill Thief stay unbuilt.
-      // [🆕🆕🆕 D633 (D539): Elemental Blast no longer — O1.]
+      // [🆕🆕🆕 D633 (D539): Elemental Blast no longer — O1.] [🆕🆕🆕 D638 (D539): Skill Thief no longer — X1.]
       // 🆕🆕🆕 D633 (D539): and O1 reads Elemental Blast.
-      expect(resolvedByAnyReader(text), text).toBe(BUILT_AT_D624.has(ids[0] ?? "") || BUILT_AT_D633.has(ids[0] ?? ""));
+      // 🆕🆕🆕 D638 (D539): and X1 reads Skill Thief.
+      expect(resolvedByAnyReader(text), text).toBe(
+        BUILT_AT_D624.has(ids[0] ?? "") || BUILT_AT_D633.has(ids[0] ?? "") || BUILT_AT_D638.has(ids[0] ?? ""),
+      );
       for (const id of ids) expect(programFor(id)?.attack, id).toBeUndefined();
     }
     expect(WP31_REST.filter(([, ids]) => BUILT_AT_D624.has(ids[0] ?? "")).flatMap(([, ids]) => ids)).toHaveLength(7);
@@ -718,6 +723,6 @@ describe("D616 §11 — Fetch and Hide: an Item from the opponent's hand to the 
 
 describe("D616 §12 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.520.0");
+    expect(engineVersion).toBe("0.521.0");
   });
 });

@@ -2799,6 +2799,10 @@ function stepOp(
     // through `resolveFoundAttack`. Inert (tsc's exhaustive switch).
     case "useFoundAttackAs":
       return { done: state };
+    // 🆕🆕🆕 D638 — NEVER QUEUED either: `useInPlayAttackAs` is only ever the `pendingOp` of Skill Thief's
+    // declaration-time park, answered through `resolveInPlayCopiedAttack`. Inert (tsc's exhaustive switch).
+    case "useInPlayAttackAs":
+      return { done: state };
     case "moveCountersOpponentAnyWay": {
       // 🆕🆕🆕 D574 — Sableye "Damage Collection" / Alakazam "Strange Hacking": one ROUND of the
       // opponent-to-opponent move. FIRST STEP: write the budget (R-AK1) and, when there is anything
@@ -4908,6 +4912,19 @@ function stepOp(
       // "they showed me nothing" is a real thing that happened at the table.
       revealHand(state, otherSeat(ctx.seat), events);
       return { done: state };
+    case "useMilledSupporterEffect": {
+      // 🆕🆕🆕 D638 — Ninetales "Supernatural Shapeshifter": discard the top card; a Supporter Look-Alike Show
+      // would offer has its program SCHEDULED in this attack's context (R-LA1 / R-LA2 carried, R-NS1).
+      const side = state.players[ctx.seat];
+      const top = side.deck[0];
+      if (top === undefined) return { done: state };
+      events.push({ type: "DECK_TOP_DISCARDED", seat: ctx.seat, actor: ctx.seat, uids: [top] });
+      const milled = withSide(state, ctx.seat, { ...side, deck: side.deck.slice(1), discard: [...side.discard, top] });
+      const ops = copiedSupporterOps(milled, ctx, top);
+      if (ops === undefined) return { done: milled };
+      events.push({ type: "SUPPORTER_EFFECT_USED", seat: ctx.seat, uid: top, milled: true });
+      return { done: milled, schedule: [...ops] };
+    }
     case "useOpponentSupporterEffect": {
       // 🆕🆕🆕 D580 — Mr. Mime "Look-Alike Show"'s SECOND sentence. The reveal is the op before
       // this one (the printed order; `revealOpponentHand` above), so this arm only OFFERS. The
@@ -15443,6 +15460,20 @@ export function opponentSupporterOffer(state: GameState, ctx: EffectContext): st
     candidates.push(uid);
   }
   return candidates;
+}
+
+/** 🆕🆕🆕 D638 — the program of the Supporter `uid` as an ATTACK may use it (Supernatural Shapeshifter): a
+    Supporter with a registry `trainer` program whose PRINTED play conditions hold for the attacker — Look-Alike
+    Show's filter (`opponentSupporterOffer`) for one card wherever it lies (R-LA2 / R-LA2a carried). `undefined`
+    when the card is not one. */
+function copiedSupporterOps(state: GameState, ctx: EffectContext, uid: string): readonly EffectOp[] | undefined {
+  const card = cardOf(state, uid);
+  if (card === undefined || card.category !== "Trainer" || card.trainerType !== "Supporter") return undefined;
+  const effect = supporterEffectOf(card.id);
+  if (effect === undefined) return undefined;
+  if (effect.playableIf !== undefined && !conditionHolds(state, ctx.seat, copiedPlayableIf(effect.playableIf))) return undefined;
+  if (handCostUnmet(state, ctx.seat, effect.ops) !== null) return undefined;
+  return effect.ops;
 }
 
 /** Move the chosen card out of the OPPONENT's hand onto the bottom of the

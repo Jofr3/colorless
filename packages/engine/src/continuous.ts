@@ -40,7 +40,9 @@ import type {
 // 🆕🆕 D444 — the ONE value import this file takes from `effects.ts`: the second
 // producer behind `attackGateOf` below. No cycle — `effects.ts` takes nothing from
 // this file, and its only edge back to `registry.ts` is type-only.
-import { timingGateFromAttackText } from "./effects";
+// [🆕🆕🆕 D638 (D539): *"the ONE value import"* is WITHDRAWN — `COPY_FAMILY_MARKER` (a regex constant) is the
+// second, for `attackMenuOf`'s Memory Helix section (R-MH2). The no-cycle argument is unchanged.]
+import { COPY_FAMILY_MARKER, timingGateFromAttackText } from "./effects";
 import type { GameEvent, StatusName } from "./events";
 // 🆕🆕🆕 D556 — the turn OWNER for `sideAttackBonusThisTurn`'s seat guard (THE one
 // exhaustive switch over `Phase`; phaseView.ts takes only types from here, so no cycle).
@@ -3503,7 +3505,7 @@ export interface AttackMenuEntry {
       lock or a boost (R-MD4) [🆕🆕🆕 D578 landing (R-MD4, RULED: fixed): a borrowed row's own
       self-lock is stamped by its NAME instead (`LockedAttack.attackName`, `attackIndex: -1`)]. */
   sourceIndex: number;
-  origin: "printed" | "memoryDive" | "tool";
+  origin: "printed" | "memoryDive" | "tool" | "memoryHelix";
 }
 
 /** 🆕🆕🆕 §9 (D578) — is Relicanth "Memory Dive" live for `seat`: any in-play body of that seat
@@ -3573,6 +3575,25 @@ export function attackMenuOf(
     granted.forEach((attack, sourceIndex) => {
       menu.push({ attack, card: tool, sourceIndex, origin: "tool" });
     });
+  }
+  // 🆕🆕🆕 D638 — Mew ex "Memory Helix": THIS body's own licence (its top card's `memoryHelix`, no §9 lock on it) —
+  // each of the seat's OTHER Benched Pokémon's printed attacks, Bench order, copy-family attacks excluded (R-MH1 /
+  // R-MH2). A phantom (no seat) gets none.
+  const helixUid = topUid(pokemon);
+  if (
+    seat !== undefined &&
+    programFor(top.id)?.passive?.memoryHelix === true &&
+    helixUid !== undefined &&
+    !disabledAbilityUids(state).has(helixUid)
+  ) {
+    for (const benched of state.players[seat].bench) {
+      if (benched === pokemon) continue;
+      const card = topCardOf(state, benched);
+      if (card === undefined) continue;
+      attacksOf(card).forEach((attack, sourceIndex) => {
+        if (!COPY_FAMILY_MARKER.test(attack.effect ?? "")) menu.push({ attack, card, sourceIndex, origin: "memoryHelix" });
+      });
+    }
   }
   return menu;
 }

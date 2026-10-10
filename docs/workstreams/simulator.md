@@ -7100,7 +7100,7 @@ themselves (not by eye): **45 mapped / 31 unmapped** after this slice.
 | `…is now Paralyzed and Poisoned.` | 2 | ❌ a COMPOUND status, not a `StatusName` |
 | `…search your deck for up to 5 Grass Energy cards…` | 2 | ❌ a deck search behind a gate |
 | `…switch in 1 of your opponent's Benched Pokémon…` / `…switch this Pokémon with 1 of your Benched…` | 1 + 1 | ❌ a gust / a self-switch |
-| `…choose a Special Condition…` / `…choose an attack from 1 of your opponent's Pokémon…` / `…choose 1 of your opponent's Benched Pokémon. Shuffle…` | 3 | ❌ three parks (🆕🆕🆕 D605 (D539): the first is built — arm 46b's sixth row) |
+| `…choose a Special Condition…` / `…choose an attack from 1 of your opponent's Pokémon…` / `…choose 1 of your opponent's Benched Pokémon. Shuffle…` | 3 | ❌ three parks (🆕🆕🆕 D605 (D539): the first is built — arm 46b's sixth row) (🆕🆕🆕 D638 (D539): the second is built — `deriveAttackCopy`'s in-play kind) |
 | `…put your opponent's Active Pokémon and all attached cards into your opponent's hand.` | 1 | ❌ a scoop |
 | `…they can't play any Item cards…` | 1 | ❌ an Item lock |
 | `…this attack does 10 damage to 1 of your opponent's Pokémon.` | 1 | ❌ a gated snipe |
@@ -30247,6 +30247,28 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D638 — X1: copy / borrowed effects (engine 0.521.0, `MATCH_RECORD_VERSION` stays 46)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D637 (`85a9bb88`), NOT committed. 3 texts / 6 printings (`me` + `30th`) — the
+D625 re-rank's X1 group, whole, on the shipped copy family.
+
+- **Memory Helix** (Mew ex `30th-066` / `-152` / `-158`): the NEW `PassiveEffects.memoryHelix` (`MEMORY_HELIX`). continuous.ts
+  `attackMenuOf` gains a fourth section (`origin: "memoryHelix"`): while the body's own Ability is live (no §9 lock), each of the seat's
+  Benched Pokémon's PRINTED attacks, Bench order (R-MH1 ⚠️ UNRULED), no copy-family attack (R-MH2 ⚠️ UNRULED — every copy park keeps a
+  printed copier index). D578's borrowed-row seam does the rest: the row's own cost is charged, its gate and program are read off its card.
+- **Skill Thief** (Thievul `me05-054` / `-092`): `deriveAttackCopy`'s NEW `InPlayAttackCopy`. At declaration (R-CP8's moment) a card in
+  hand is the empty override (R-SKT1 ⚠️ UNRULED); otherwise every eligible (body, attack) pair over the opponent's Active and Bench
+  (`usableCopies`, R-CP3 / R-CP4) is flattened into one `chooseAttack` (D574's shape) — 0 empty, 1 forced, 2+ parked as the NEW
+  `useInPlayAttackAs`, answered by attack.ts `resolveInPlayCopiedAttack` (cardplay.ts route), which re-validates and re-enters `attack()`.
+- **Supernatural Shapeshifter** (Ninetales `me01-020`): the NEW field-free `useMilledSupporterEffect` (effects.ts arm 10f). The step mills
+  1; a Supporter Look-Alike Show would offer (`copiedSupporterOps`: a registry program, its printed condition for the attacker — R-LA2 /
+  R-LA2a) has its program SCHEDULED in the attack's context (R-LA1 / R-LA4 / R-LA6 carried). R-NS1 ⚠️ UNRULED: the card is already in the
+  discard pile when its effect runs. `SUPPORTER_EFFECT_USED` gains `milled`; the log row names Ninetales.
+- **MRV stays 46** (match.ts "STAYS 46 AT D638"): the Skill Thief park is a NEW op name (D574's argument), inert on a 0.520 rollback; the
+  milled op never parks; Memory Helix rows are never persisted.
+- **Suite.** `copyBorrowedMeD638.test.ts` (22), census D638 block (2). +19 mutant rows, all KILLED. Census: attacks **2,757 / 2,771**,
+  abilities **596 / 610**, 1227 `me` printings fully built. Sweep PENDING.
+
 ## D637 — the four `me` Antique Fossils (engine 0.520.0, `MATCH_RECORD_VERSION` 45 → 46)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D636 (`7c0da7ca`), NOT committed. 4 texts / 4 printings — the D625 re-rank's
@@ -30518,7 +30540,7 @@ registry objects.
 - **Send Flowers.** `attachFromDeck` of any Energy card onto 1 Benched {G} body, then the shuffle.
 - **Chirp.** `searchDeck` over the NEW `CardFilter` member `pokemonWithResistance` (the printed Resistance type, D371's read).
 - **Dropped and named.** Elemental Blast (a matched multi-type discard), Pleasing Present (an opponent-answered attach), Skill Thief ×2
-  (a whole-board copy source plus a hand gate). [🆕🆕🆕 D633 (D539): Elemental Blast BUILT at D633 (O1).]
+  (a whole-board copy source plus a hand gate). [🆕🆕🆕 D638 (D539): Skill Thief ×2 BUILT at D638 (X1)] [🆕🆕🆕 D633 (D539): Elemental Blast BUILT at D633 (O1).]
 - **MRV stays 43.** Additions only; the two parked shapes are never re-read by their apply (`eachAttachTopUp`, the `each` apply, does read `max`, but `"opponentEnergyInPlay"` is never set beside `each`) (match.ts "STAYS 43 AT D624").
 - **Suite.** `deckHandMiscMeD624.test.ts` (22) and a census D624 block (2). +21 mutant rows; seven D568 / D569 rows re-pointed onto
   the resolved `max`. Census: attacks **2,709 / 2,771**, 1125 `me` printings fully built. Sweep PENDING.
@@ -30683,7 +30705,7 @@ registry objects.
 - **Reading.** R-RCL1 ⚠️ UNRULED: Roto Call's "You may" is a confirm; a "no" does not shuffle. Fennel's and the "You may search
   your deck for a card" attack derivations still shuffle on a zero pick, unchanged.
 - **Dropped (WP31c).** Elemental Blast needs a matched multi-type discard (Legacy Energy fills any slot); Send Flowers a deck
-  attach of any Energy; Chirp a Resistance filter; Tail Generator, Hand Trim, Select a Snack, Pleasing Present, Skill Thief.
+  attach of any Energy; Chirp a Resistance filter; Tail Generator, Hand Trim, Select a Snack, Pleasing Present, Skill Thief. [🆕🆕🆕 D638 (D539): Skill Thief ×2 BUILT at D638 (X1)]
   [🆕🆕🆕 D633 (D539): Elemental Blast BUILT at D633 (O1, `discardEnergy.reserve`).]
   [🆕🆕🆕 D624 (D539): Tail Generator, Hand Trim, Select a Snack, Send Flowers and Chirp are BUILT at D624.]
 - **Suite.** `deckHandMiscMeD616.test.ts` (31) and a census D616 block (2). +32 mutant rows, all killed; two D540 rows

@@ -104,6 +104,7 @@ import {
   deriveAttackCancelRequirement,
   deriveAttackPreDamage,
   deriveAttackRequirement,
+  isInPlayAttackCopy,
   isResolvedAttackCopy,
   optionalBoostProgram,
   discardScaledBoostProgram,
@@ -1690,6 +1691,10 @@ export function attack(
   // FOUND while the attack resolves: it takes no branch here and is resolved below the Confusion
   // block (`copyAtResolution`, R-HO2 / R-SI1 ⚠️ UNRULED — the asymmetry with R-CP8 is the printed
   // order: there is nothing to choose from until the cards are revealed or milled).
+  // 🆕🆕🆕 D638 — Skill Thief's in-play kind takes its own declaration-time branch (D573's moment, R-CP8).
+  if (copy !== null && isInPlayAttackCopy(copy)) {
+    return declareInPlayAttackCopy(state, action, attackerUid, declared.name);
+  }
   if (copy !== null && !isResolvedAttackCopy(copy)) {
     return declareAttackCopy(state, action, copy, attackerUid, declared.name);
   }
@@ -4343,7 +4348,8 @@ export function resolveCopiedAttack(
   // `evolveFrom` — and PINNED in the suite only by §10's 13-printing count of copy holders; a new
   // card evolving FROM an existing holder would turn nothing red]) and
   // no Technical Machine prints one, so a copy is always declared from the printed section,
-  // where the flat index IS the printed index.
+  // where the flat index IS the printed index. [🆕🆕🆕 D638: and Memory Helix's section offers no copy-family
+  // attack (continuous.ts, R-MH2), so the guarantee holds with a fourth section.]
   const printed = copierCard === undefined ? undefined : attacksOf(copierCard)[op.index];
   const copy = printed?.effect === undefined ? null : deriveAttackCopy(printed.effect);
   if (
@@ -4383,6 +4389,104 @@ export function resolveCopiedAttack(
     return attack(resumed, action, copiedOverride(source, picked, op.flip));
   }
   return err("BAD_EFFECT_CHOICE", "expected an attack or Pokémon choice");
+}
+
+// ── 🆕🆕🆕 D638 — SKILL THIEF: THE COPY FROM ANY OF THE OPPONENT'S POKÉMON IN PLAY, BEHIND AN EMPTY HAND ──
+//
+// *"If you have no cards in your hand, choose an attack from 1 of your opponent's Pokémon in play and use it as
+// this attack."* (Thievul `me05-054` / `-092`). D573's declaration-time seam over a wider source: the opponent's
+// Active, then each Benched body in order, each read by its TOP card's printed attacks under R-CP3 / R-CP4
+// (`usableCopies`, asked for the COPIER). The pairs are flattened into one `chooseAttack` list (D574's shape,
+// `foundPairs`' collapse on card name / index / printed attack), so no `choosePokemon` over the opponent's board
+// is needed. R-SKT1 (⚠️ UNRULED): the hand is read at declaration, before the choice and every coin; a hand
+// with any card in it is the EMPTY override (declared, Confusion flipped, nothing resolved).
+
+/** The (top uid, printed index, label) pairs Skill Thief may copy for `seat`, Active first. */
+function inPlayCopyPairs(state: GameState, seat: Seat): FoundPair[] {
+  const side = state.players[otherSeat(seat)];
+  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  const seen = new Set<string>();
+  return bodies.flatMap((body) => {
+    const uid = topUid(body);
+    const card = topCardOf(state, body);
+    if (uid === undefined || card === undefined) return [];
+    return usableCopies(state, seat, body, card).flatMap(({ index, attack }) => {
+      const key = `${card.name}#${String(index)}#${JSON.stringify(attack)}`;
+      if (seen.has(key)) return [];
+      seen.add(key);
+      return [{ uid, attackIndex: index, name: `${attack.name} (${card.name})` }];
+    });
+  });
+}
+
+/** Re-enter `attack()` with one in-play pair, re-validated on the live board: the uid is still the top card of
+    one of the opponent's in-play bodies and its attack is still eligible. */
+function reenterInPlay(state: GameState, action: AttackAction, pair: FoundPair): ApplyResult {
+  const side = state.players[otherSeat(action.seat)];
+  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  const body = bodies.find((b) => topUid(b) === pair.uid);
+  const card = body === undefined ? undefined : topCardOf(state, body);
+  const picked =
+    body === undefined || card === undefined
+      ? undefined
+      : usableCopies(state, action.seat, body, card).find((c) => c.index === pair.attackIndex);
+  if (body === undefined || card === undefined || picked === undefined) {
+    return err("PHASE_DESYNC", "that attack is no longer one this copy can use");
+  }
+  return attack(state, action, { attack: picked.attack, card, body, index: picked.index });
+}
+
+/** 🆕🆕🆕 D638 — Skill Thief at declaration: a card in hand → EMPTY; 0 pairs → EMPTY; 1 → re-enter with it (M1);
+    2+ → PARK `chooseAttack` over the flattened pairs (`useInPlayAttackAs`, D573's park shape). */
+function declareInPlayAttackCopy(
+  state: GameState,
+  action: AttackAction,
+  attackerUid: string,
+  copierName: string,
+): ApplyResult {
+  if (state.players[action.seat].hand.length > 0) return attack(state, action, { empty: true });
+  const pairs = inPlayCopyPairs(state, action.seat);
+  const only = pairs.length === 1 ? pairs[0] : undefined;
+  if (pairs.length === 0) return attack(state, action, { empty: true });
+  if (only !== undefined) return reenterInPlay(state, action, only);
+  return settleProgram(
+    {
+      kind: "parked",
+      state,
+      prompt: chooseFoundAttack(pairs, copierName),
+      cont: {
+        pendingOp: { op: "useInPlayAttackAs", index: action.index, candidates: pairs },
+        rest: [],
+        ctx: { seat: action.seat, sourceUid: attackerUid },
+      },
+    },
+    action.seat,
+    [],
+  );
+}
+
+/** 🆕🆕🆕 D638 — resolve a Skill Thief park (cardplay.ts `resolveEffect` routes here, after `validateChoice` and
+    BEFORE `settleProgram`). Restores `turn:action`, re-validates the COPIER (still the Active that declared, its
+    printed attack at `op.index` still this copy) and re-enters `attack()` with the pair the answer indexes. */
+export function resolveInPlayCopiedAttack(
+  state: GameState,
+  phase: Extract<Phase, { kind: "effect:choose" }>,
+  op: Extract<EffectOp, { op: "useInPlayAttackAs" }>,
+  choice: EffectChoice,
+): ApplyResult {
+  const seat = phase.seat;
+  if (choice.kind !== "attack") return err("BAD_EFFECT_CHOICE", "expected an attack choice");
+  const pair = op.candidates[choice.index];
+  if (pair === undefined) return err("BAD_EFFECT_CHOICE", "that is not an attack this copy can use");
+  const reopened: GameState = { ...state, phase: { kind: "turn:action", seat } };
+  const copier = reopened.players[seat].active;
+  const copierCard = copier === null ? undefined : topCardOf(reopened, copier);
+  const printed = copierCard === undefined ? undefined : attacksOf(copierCard)[op.index];
+  const copy = printed?.effect === undefined ? null : deriveAttackCopy(printed.effect);
+  if (copier === null || topUid(copier) !== phase.cont.ctx.sourceUid || copy === null || !isInPlayAttackCopy(copy)) {
+    return err("PHASE_DESYNC", "the copying Pokémon is no longer the Active that declared this attack");
+  }
+  return reenterInPlay(reopened, { type: "attack", seat, index: op.index }, pair);
 }
 
 // ── 🆕🆕🆕 D574 — THE COPY MADE IN THE MIDDLE OF THE ATTACK (Haughty Order, Seek Inspiration) ──
@@ -4594,7 +4698,8 @@ export function resolveFoundAttack(
   // `evolveFrom` — and PINNED in the suite only by §10's 13-printing count of copy holders; a new
   // card evolving FROM an existing holder would turn nothing red]) and
   // no Technical Machine prints one, so a copy is always declared from the printed section,
-  // where the flat index IS the printed index.
+  // where the flat index IS the printed index. [🆕🆕🆕 D638: and Memory Helix's section offers no copy-family
+  // attack (continuous.ts, R-MH2), so the guarantee holds with a fourth section.]
   const printed = copierCard === undefined ? undefined : attacksOf(copierCard)[op.index];
   const copy = printed?.effect === undefined ? null : deriveAttackCopy(printed.effect);
   const zone = op.from === "opponentDeckTop" ? restored.players[otherSeat(seat)].deck : restored.players[seat].discard;

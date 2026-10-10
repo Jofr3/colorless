@@ -1333,8 +1333,10 @@ export type GameEvent =
   | { type: "HP_GUESSED"; seat: Seat; uid: string; guess: number; hp: number | null; right: boolean; drawer: Seat }
   /** 🆕🆕🆕 D580 — Mr. Mime "Look-Alike Show": `seat` (the ATTACKER) used the effect of the
       Supporter `uid` found in the opponent's revealed hand as the effect of the attack. The card
-      does not move (R-LA1). Public — the hand was revealed. Not persisted (D141). */
-  | { type: "SUPPORTER_EFFECT_USED"; seat: Seat; uid: string }
+      does not move (R-LA1). Public — the hand was revealed. Not persisted (D141).
+      🆕🆕🆕 D638 — `milled`: Ninetales "Supernatural Shapeshifter" used a Supporter it discarded from the top of
+      its controller's deck (absent: Look-Alike Show). */
+  | { type: "SUPPORTER_EFFECT_USED"; seat: Seat; uid: string; milled?: true }
   /** `seat` used the Ability named `ability` on their in-play `uid`. */
   | { type: "ABILITY_USED"; seat: Seat; uid: string; ability: string }
   /** §7.3 — `seat` activated the shared Stadium's "once during each player's

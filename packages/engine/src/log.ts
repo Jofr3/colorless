@@ -1586,6 +1586,10 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     case "SUPPORTER_EFFECT_USED":
       // 🆕🆕🆕 D580 — Look-Alike Show, under the ATTACKER. The op's one producer is Mr. Mime
       // `sv05-063` (registry.ts `MR_MIME_LOOK_ALIKE_SHOW`), so the attack is named as printed.
+      // 🆕🆕🆕 D638 — `milled`: Ninetales `me01-020` (`useMilledSupporterEffect`'s one producer).
+      if (event.milled === true) {
+        return row(event.seat, [plain("Ninetales's Supernatural Shapeshifter used the effect of "), strong(cardName(state, event.uid))]);
+      }
       return row(event.seat, [
         plain("Mr. Mime's Look-Alike Show used the effect of "),
         strong(cardName(state, event.uid)),

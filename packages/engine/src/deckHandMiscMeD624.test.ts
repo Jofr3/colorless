@@ -37,7 +37,8 @@ import {
 //   Chirp              — `searchDeck` over the NEW `CardFilter` member `pokemonWithResistance`, revealed.
 //
 // Dropped and named (§1): Elemental Blast, Pleasing Present and Skill Thief ×2. [🆕🆕🆕 D633 (D539): Elemental Blast
-// BUILT at D633 (O1, `discardEnergy.reserve`).]
+// BUILT at D633 (O1, `discardEnergy.reserve`).] [🆕🆕🆕 D638 (D539): Skill Thief ×2 BUILT at D638 (X1, `deriveAttackCopy`'s
+// in-play kind).]
 
 const TAIL_GENERATOR =
   "Choose Basic {L} Energy cards from your discard pile up to the amount of Energy attached to all of your opponent's Pokémon and attach them to your {L} Pokémon in any way you like.";
@@ -89,12 +90,13 @@ describe("D624 §1 — the texts", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(7);
   });
 
-  it("the dropped texts stay unbuilt: 3 texts / 4 printings, named (🆕🆕🆕 D633: Elemental Blast BUILT — O1; 2 / 3 stay)", () => {
+  it("the dropped texts stay unbuilt: 3 texts / 4 printings, named (🆕🆕🆕 D633: Elemental Blast BUILT — O1; 2 / 3 stay; 🆕🆕🆕 D638: Skill Thief ×2 BUILT — X1; 1 / 1 stays)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, ids] of DROPPED) {
       expect([text, me.get(text)]).toEqual([text, ids.length]);
       // 🆕🆕🆕 D633 (D539): WITHDRAWN for Elemental Blast — the matched discard is `discardEnergy.reserve`.
-      expect(resolvedByAnyReader(text), text).toBe(ids[0] === "30th-121");
+      // 🆕🆕🆕 D638 (D539): WITHDRAWN for Skill Thief — `deriveAttackCopy`'s in-play kind.
+      expect(resolvedByAnyReader(text), text).toBe(ids[0] === "30th-121" || ids[0] === "me05-054");
       for (const id of ids) expect(programFor(id)?.attack, id).toBeUndefined();
     }
     expect(DROPPED.flatMap(([, ids]) => ids)).toHaveLength(4);
@@ -530,6 +532,6 @@ describe("D624 §7 — Chirp: up to 2 Pokémon with {F} Resistance, revealed int
 
 describe("D624 §8 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.520.0");
+    expect(engineVersion).toBe("0.521.0");
   });
 });

@@ -20271,6 +20271,14 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.520.0 → **0.521.0** (D638 — X1: COPY / BORROWED EFFECTS, 3 TEXTS / 6 PRINTINGS (`me` + `30th`);
+    `MATCH_RECORD_VERSION` STAYS 46 (apps/api match.ts "STAYS 46 AT D638")). registry.ts: `MEMORY_HELIX` (Mew ex
+    `30th-066` / `-152` / `-158`) on the NEW `PassiveEffects.memoryHelix`, a fourth `attackMenuOf` section (continuous.ts:
+    each Benched Pokémon's printed attacks, copy-family attacks excluded — R-MH1 / R-MH2). effects.ts: `deriveAttackCopy`'s
+    NEW `InPlayAttackCopy` (Thievul `me05-054` / `-092` "Skill Thief": the opponent's Active and Bench, behind an empty
+    hand, R-SKT1), parked as the NEW `useInPlayAttackAs` (attack.ts `resolveInPlayCopiedAttack`); the NEW field-free
+    `useMilledSupporterEffect` (Ninetales `me01-020` "Supernatural Shapeshifter": Look-Alike Show's filter over the
+    milled card, R-NS1). `SUPPORTER_EFFECT_USED` gains `milled`. `copyBorrowedMeD638.test.ts`.)
     🆕🆕🆕 engineVersion 0.519.0 → **0.520.0** (D637 — THE FOUR `me` ANTIQUE FOSSILS, 4 TEXTS / 4 PRINTINGS;
     `MATCH_RECORD_VERSION` 45 → 46 WITH A v45 MIGRATION (apps/api match.ts "45 → 46 AT D637")). fossils.ts:
     `FOSSIL_IDS` gains Antique Jaw / Sail Fossil `me03-068` / `-069` and Antique Armor / Skull Fossil `me05-072` /
@@ -20419,7 +20427,7 @@ import type { GameState, Seat } from "./types";
     member `pokemonWithResistance`). Dropped and named: Lugia "Elemental Blast" (a matched multi-type discard)
     [🆕🆕🆕 D633 (D539): BUILT at D633 on `discardEnergy.reserve`],
     Delibird "Pleasing Present" (an opponent-chosen attach) and Thievul "Skill Thief" ×2 (a hand-gated copy over
-    the opponent's whole board). `deckHandMiscMeD624.test.ts`.)
+    the opponent's whole board). [🆕🆕🆕 D638 (D539): Skill Thief ×2 BUILT at D638 (X1)] `deckHandMiscMeD624.test.ts`.)
     🆕🆕🆕 engineVersion 0.505.0 → **0.506.0** (D623 — WP28b: THE REST OF THE SCALING COUNT SOURCES, 5 TEXTS /
     7 `me` PRINTINGS; `MATCH_RECORD_VERSION` STAYS 43 (apps/api match.ts "STAYS 43 AT D623")). effects.ts: three NEW
     `DamageCountSource` members, evaluated by attack.ts — `damagedBenchedPokemon` (Gourgeist ex ×2 "Horrifying
@@ -25728,7 +25736,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.520.0";
+export const engineVersion = "0.521.0";
 
 export type {
   ApplyResult,

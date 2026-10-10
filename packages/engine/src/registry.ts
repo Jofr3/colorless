@@ -3353,6 +3353,15 @@ export interface PassiveEffects {
       stack only — a stage Rare Candy skipped contributes nothing). R-MD1 … R-MD5,
       decisions.md D578. Catalog-only: never persisted. */
   memoryDive?: true;
+  /** 🆕🆕🆕 **§9 (D638) — "MEMORY HELIX": THIS POKÉMON CAN USE THE ATTACKS OF ANY OF YOUR BENCHED POKÉMON.** Mew ex
+      `30th-066` / `-152` / `-158` (3 legal printings, 1 text) — *"This Pokémon can use the attacks of any of your
+      Benched Pokémon. (You still need the necessary Energy to use each attack.)"* A PER-BODY licence (the holder
+      only, unlike `memoryDive`'s seat), read off the body's own top card by continuous.ts `attackMenuOf` while no
+      §9 lock silences it: the printed attacks of each of the controller's Benched Pokémon's top cards, Bench order,
+      after the Tool section (R-MH1, ⚠️ UNRULED: printed attacks only — a benched body's own Memory Dive / Tool
+      rows are not offered), minus every copy-family attack (R-MH2, ⚠️ UNRULED: so every copy park keeps a PRINTED
+      index). Catalog-only: never persisted. */
+  memoryHelix?: true;
 }
 
 /** A Stadium's "once during each player's turn" ACTIVATED ability (§7.3) —
@@ -11110,6 +11119,12 @@ const TEAM_ROCKETS_ENERGY: CardProgram = {
     `memoryDiveLive` for `attackMenuOf`'s Memory Dive section (R-MD1 … R-MD5, decisions.md D578).
     Its printed attack "Razor Fin" keeps deriving (no `attack` key). */
 const MEMORY_DIVE: CardProgram = { passive: { memoryDive: true } };
+
+/** 🆕🆕🆕 **D638 — Mew ex `30th-066` / `-152` / `-158` (3 legal printings)** "Memory Helix": *"This Pokémon can use
+    the attacks of any of your Benched Pokémon. (You still need the necessary Energy to use each attack.)"* ONE
+    passive key, `memoryHelix`, read by continuous.ts `attackMenuOf`'s Memory Helix section (R-MH1 / R-MH2,
+    decisions.md D638). Its printed attack "Teleportation Burst" keeps deriving (no `attack` key). */
+const MEMORY_HELIX: CardProgram = { passive: { memoryHelix: true } };
 
 /** 🆕🆕🆕 **D578 — Technical Machine: Fluorite `sv08-188` (Tool, 1 legal printing)**: *"The Pokémon
     this card is attached to can use the attack on this card. (You still need the necessary
@@ -20527,6 +20542,10 @@ const REGISTRY: Record<string, CardProgram> = {
   // 🆕🆕🆕 D636 — L1 + Clawitzer: 2 keys / 1 object, MID-MAP (`raw[last]` does not move).
   "me01-038": FALL_BACK_TO_RELOAD, // Clawitzer — moved Active→Bench this turn: up to 2 Basic {W} from hand to it
   "me01-141": FALL_BACK_TO_RELOAD, // Clawitzer
+  // 🆕🆕🆕 D638 — X1, Memory Helix: 3 keys / 1 object, MID-MAP (`raw[last]` does not move).
+  "30th-066": MEMORY_HELIX, // Mew ex — Memory Helix: it can use the attacks of your Benched Pokémon
+  "30th-152": MEMORY_HELIX, // Mew ex
+  "30th-158": MEMORY_HELIX, // Mew ex
   // 🆕🆕🆕 D608 — WP30: 5 `30th` ATTACK-only keys / 2 objects, MID-MAP (`raw[last]` does not move).
   // 🆕🆕🆕 D612 — 3 now: Stealthy Slash ×2 RETIRED (the normalised text is `mep-099`'s, reader-built).
   "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex
