@@ -455,6 +455,8 @@ describe("placement", () => {
       // `toEqual` is one of the places a v30 body (the key ABSENT) differs from a
       // fresh v31 one — the distinction `MATCH_RECORD_VERSION` 30 -> 31 enforces.
       attackFlipLockTurn: null,
+      // 🆕🆕🆕 …nor a TWO-COIN one (D636, Jet of Ink — MRV 44 -> 45).
+      attackTwoFlipLockTurn: null,
       // …and no durated damage reduction (D147), read the same way again:
       // `installedReductionOf` compares the stamp to `state.turn` and returns 0
       // for a `null`, so a fresh body reduces nothing rather than reducing on
@@ -524,6 +526,8 @@ describe("placement", () => {
       // Placed Active from the HAND, which is not a move from the Bench — the
       // one in-play Pokémon that never gets a `promotedTurn` stamp (D124).
       promotedTurn: null,
+      // 🆕🆕🆕 …and it has never gone down from the Active Spot (D636, Fall Back to Reload).
+      benchedTurn: null,
       // …and nothing has healed it either (D386): a card arriving from the hand
       // carries no damage, so there is nothing for a heal to remove. The stamp's
       // absence is `null` and not `0`, because turn 0 is a real turn number here.

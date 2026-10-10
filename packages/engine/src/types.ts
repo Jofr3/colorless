@@ -805,7 +805,8 @@ export interface SideRetreatLock {
 
 /** 🆕🆕🆕 §6.2/§11 (D575) — the DEFENDING Pokémon's next-turn HAND-ATTACH mark, written by
     the `markHandAttach` op on the opponent's Active, stamped `state.turn + 1` (the victim's
-    own turn). Two printed consequents on one window:
+    own turn). Two printed consequents on one window [🆕🆕🆕 D636 (D539): three — `counters`, Electrified
+    Incisors, see the field below]:
       `barred` — Glimmora `sv08-115` "Corrosive Shards": Energy cards can't be attached from
         the victim's hand to this body (turn.ts `attachEnergy` → `ENERGY_ATTACH_BARRED`; the
         effect attaches from hand drop the body from their targets — R-GL1 ⚠️ UNRULED);
@@ -825,6 +826,12 @@ export interface HandAttachMark {
   barred: boolean;
   endsTurn: boolean;
   tripped: boolean;
+  /** 🆕🆕🆕 (D636) — Pachirisu `me01-051` "Electrified Incisors": *"…whenever they attach an Energy card
+      from their hand to the Defending Pokémon, place 8 damage counters on that Pokémon."* The counters
+      placed per Energy card attached from the victim's hand (the attach action and an effect's hand
+      attach, R-HY1's reach — R-EIC1 ⚠️ UNRULED), `0` when the mark prints none. A second install in
+      the window SUMS (two printed effects). REQUIRED: a v44 mark is migrated with `counters: 0`. */
+  counters: number;
 }
 
 /** §9/§11 (D152, WIDENED D456) — an attack-installed REACTIVE RECOIL on one
@@ -1506,6 +1513,16 @@ export interface InPlayPokemon {
       `clearOnLeavingActive`, `switchInto`'s benched body, `devolvedBodyOf`); only
       `makeInPlay` is compiler-forced, and the other four are held by mutants. */
   attackFlipLockTurn: number | null;
+  /** 🆕🆕🆕 §8/§11 (D636) — the TWO-COIN flip-to-attack lock: Octillery `me04-017` "Jet of Ink",
+      *"During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent
+      flips 2 coins. If either of them is tails, that attack doesn't happen."* `attackFlipLockTurn`'s
+      sibling stamp (`state.turn + 1` on the opponent's Active, written by `flipLockAttack` with
+      `coins: 2`), read by `attackFlipLockCoins` (continuous.ts) at the same `attack.ts` seam. A
+      separate stamp, not a count beside the old one: two live locks are two printed effects, so the
+      coins ADD (1 + 2 = 3, any tails stops the attack — R-JOI1 ⚠️ UNRULED). The same five literals
+      write it `null` (`makeInPlay`, `evolveOnto`, `clearOnLeavingActive`, `switchInto`'s benched body,
+      `devolvedBodyOf`). REQUIRED (not `?`): `MATCH_RECORD_VERSION` 44 → 45, migrated as `null`. */
+  attackTwoFlipLockTurn: number | null;
   /** §8.5/§11 (D147) — the attack-installed DAMAGE REDUCTION on this Pokémon
       (see `DamageReduction` above), or `null` when none has been installed. Read
       through `installedReductionOf` (continuous.ts) rather than by touching this
@@ -1932,6 +1949,16 @@ export interface InPlayPokemon {
       `placeEvolution` spreads it through, because evolving does not un-move a
       Pokémon (§10 sheds the effects of ATTACKS, and this is neither). */
   promotedTurn: number | null;
+  /** 🆕🆕🆕 (D636) — the turn this Pokémon last moved from the ACTIVE SPOT to the BENCH, or `null` if
+      it never has: `promotedTurn`'s mirror, for Clawitzer `me01-038` / `-141` "Fall Back to Reload"
+      (*"Once during your turn, when this Pokémon moves from the Active Spot to your Bench, you may use
+      this Ability."*), read by `AbilityProgram.benchedThisTurn` in cardplay.ts `abilityBodyGateMet` — the printed moment as a
+      use-time gate (R-MR1's reading; R-FBR1 ⚠️ UNRULED). Written by the engine's TWO Active→Bench
+      moves, `retreat` (turn.ts) and `switchInto` (interpreter.ts), on the body that went down. A turn
+      STAMP for D124's three reasons: no boundary clear, no seat guard (a gust on the opponent's turn
+      stamps THEIR turn number), and it survives evolution and every zone move by spread.
+      REQUIRED (not `?`): `MATCH_RECORD_VERSION` 44 → 45, migrated as `null`. */
+  benchedTurn: number | null;
   /** 🆕🆕 **D386 — the turn this Pokémon was last HEALED, or `null` if it never
       has been.** Maractus `sv10.5b-008`/`-093` "Lively Needles" ({G}, `20+`):
       *"If this Pokémon was healed during this turn, this attack does 100 more
@@ -2132,6 +2159,7 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // 🆕🆕🆕 …nor armed a FLIP-TO-ATTACK lock on it (D547). The ONE site the
     // compiler forces for that required field; the other four are held by mutants.
     attackFlipLockTurn: null,
+    attackTwoFlipLockTurn: null, // 🆕🆕🆕 D636
     // …nor has one locked its RETREAT for its own next turn (D412). This is the
     // ONE site the compiler forces for a new required field — the other three
     // constructors spread an existing body, so a missing §10 clear there is
@@ -2191,6 +2219,8 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // Never moved: a card entering play arrives from the HAND (or a deck
     // search), never from the Bench. The three bench→Active routes stamp it.
     promotedTurn: null,
+    // 🆕🆕🆕 …nor gone down from the Active Spot (D636, `benchedTurn`).
+    benchedTurn: null,
     // …and nothing has healed it either: a card entering play carries no damage,
     // so there is nothing to remove. The seven `HEALED` sites stamp it (D386).
     healedTurn: null,
@@ -2330,6 +2360,14 @@ export interface PlayerSide {
 
       REQUIRED (not `?`): `MATCH_RECORD_VERSION` 42 → 43, migrated as `chosenAttackShield` is. */
   sideRetreatLock: SideRetreatLock | null;
+  /** 🆕🆕🆕 §7 (D636) — Seismitoad `30th-084` "Quaking Fist": *"During your opponent's next turn, whenever
+      they try to use a Trainer card from their hand, they flip a coin. If tails, your opponent discards
+      that Trainer card instead of using it."* The single turn this seat's Trainer plays are flip-locked
+      (`state.turn + 1`, written by `flipLockTrainerPlay` onto the VICTIM's side), or `null`. Read by
+      cardplay.ts `trainerFlipFails` at every Trainer play from hand (Item, Supporter, Stadium, Tool,
+      Rare Candy, an Antique Fossil), after the play is otherwise legal (R-QF1 ⚠️ UNRULED).
+      REQUIRED (not `?`): `MATCH_RECORD_VERSION` 44 → 45, migrated as `null`. */
+  trainerFlipLockTurn: number | null;
   active: InPlayPokemon | null;
   /** Dense (no empty slots), capped at BENCH_MAX. (🆕🆕🆕 D577 (D539): *"capped at BENCH_MAX"*
       is WITHDRAWN as the whole rule, kept as written — the cap is continuous.ts
@@ -2835,8 +2873,8 @@ export type TurnPhase = Extract<Phase, { kind: "turn:action" }>;
     Every class present with `null`; see `GameState.handPlayLockedTurn`. */
 export function freshHandPlayLocks(): Record<Seat, Record<StampedPlayLockKey, number | null>> {
   return {
-    p1: { Item: null, Supporter: null, evolve: null },
-    p2: { Item: null, Supporter: null, evolve: null },
+    p1: { Item: null, Supporter: null, Stadium: null, evolve: null }, // 🆕🆕🆕 D636 — `Stadium` (Scorching Earth)
+    p2: { Item: null, Supporter: null, Stadium: null, evolve: null },
   };
 }
 
@@ -3274,9 +3312,10 @@ function stampedPlayLockBarred(state: GameState, seat: Seat, key: StampedPlayLoc
     ⚠️ EXPORTED FOR `continuous.ts` ONLY. `handPlayBarred` there is the reader
     every SITE calls; this is the seam between the two modules. */
 export function stampedBarFor(state: GameState, seat: Seat, klass: HandPlayClass): boolean {
-  return klass === "Tool" || klass === "Stadium"
-    ? false
-    : stampedPlayLockBarred(state, seat, klass);
+  // 🆕🆕🆕 D636 — `"Stadium"` is a STAMPED class now (Chi-Yu "Scorching Earth", `handPlayLockedTurn`'s
+  // NEW key, MRV 44 → 45); `"Tool"` is still turned away by the type (D539: the doc's "`"Stadium"` (D287)
+  // … absent from `handPlayLockedTurn` by construction" is WITHDRAWN as of D636, kept as written).
+  return klass === "Tool" ? false : stampedPlayLockBarred(state, seat, klass);
 }
 
 /** §10 (D285) — the stamped half read for a POKÉMON-SURFACE act, and
@@ -3452,6 +3491,7 @@ export function evolveOnto(
     // out of it is the victim's played line: the evolved card declares with no coin
     // (evolve clear, D547).
     attackFlipLockTurn: null,
+    attackTwoFlipLockTurn: null, // 🆕🆕🆕 D636 — Jet of Ink's stamp (evolve clear)
     // …and D412's self-installed RETREAT lock, whose story here is the lock's
     // rather than the block's, for the same reason and by the same arithmetic:
     // the window is the HOLDER's own next turn, so evolving out of it is a line

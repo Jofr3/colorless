@@ -54,6 +54,8 @@ import {
 // COLUMN'S ONE.** It is what keeps `"Stadium"` out of `StampedHandPlayClass`,
 // and therefore out of `GameState.handPlayLockedTurn`, and therefore out of
 // `MATCH_RECORD_VERSION` — §7 drives that consequence rather than asserting it.
+// [🆕🆕🆕 D636 (D539): WITHDRAWN — Scorching Earth `me01-031` is a printed ATTACK that stamps `"Stadium"` (`attacks_json` 1 at
+// D636): `StampedHandPlayClass` has the member, `handPlayLockedTurn` the key, and MRV moved 44 → 45.]
 //
 // ⚠️ **AND THE BARRED SIDE WAS QUERIED TOO** (D286's rule: query both sides of
 // an interaction, not just the side that carries the sentence). **26 legal
@@ -425,17 +427,18 @@ describe("D287 §1 — the printing, the class list, and the census that priced 
     expect(programFor(COPPERAJAH)?.passive?.preventOpponentPokemonPlay).toBeUndefined();
   });
 
-  it("🛑 `\"Stadium\"` IS A `HandPlayClass` AND *NOT* A `StampedHandPlayClass` — the seam", () => {
+  it("🛑 `\"Stadium\"` IS A `HandPlayClass` AND *NOT* A `StampedHandPlayClass` — the seam (🆕🆕🆕 D636 (D539): WITHDRAWN — Scorching Earth stamps it, so the key is present and `null` here; the continuous half still answers)", () => {
     // The type says so and tsc enforces it; what a TEST can drive is the
     // CONSEQUENCE, which is that the persisted record has no key for it. §7
     // drives the round trip; this is the literal anchor beside it.
     const state = turnOf(board(SEEDS[0], "p1", "p1", COPPERAJAH), "p2");
     expect(Object.keys(state.handPlayLockedTurn.p2).sort()).toEqual(
-      ["Item", "Supporter", "evolve"].sort(),
+      ["Item", "Supporter", "Stadium", "evolve"].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
     );
-    expect(Object.keys(state.handPlayLockedTurn.p2)).not.toContain("Stadium");
+    // 🆕🆕🆕 D636 (D539): the key IS present now (`Stadium: null` — no attack stamped it on this board).
+    expect(state.handPlayLockedTurn.p2.Stadium).toBeNull();
     // ⚠️ AND THE READER ANSWERS ANYWAY, rather than throwing or returning
-    // `undefined` — `stampedBarFor` turns the class away by the TYPE and the
+    // `undefined` — `stampedBarFor` turns the class away by the TYPE [D636 (D539): WITHDRAWN — it reads the `Stadium` stamp] and the
     // honest answer is "no stamp". The CONTINUOUS half is what says `true` here.
     expect(handPlayBarred(state, "p2", "Stadium", undefined)).toBe(true);
   });
@@ -590,7 +593,8 @@ describe("D287 §5 — one funnel, two sources, and only one of them can name a 
   it("🛑 A STAMPED ITEM LOCK DOES NOT REACH A STADIUM — the split, driven", () => {
     // `StampedHandPlayClass` is why: no printed ATTACK can name a Stadium bar
     // (`attacks_json` 0, measured), so the stamped source answers `false` for
-    // `"Stadium"` BY CONSTRUCTION. Driven off a real attack that really does
+    // `"Stadium"` BY CONSTRUCTION. [🆕🆕🆕 D636 (D539): WITHDRAWN — Scorching Earth `me01-031` is a printed ATTACK that stamps `"Stadium"`;
+    // the stamps are keyed per class, so an ITEM stamp still leaves the Stadium open — what this test drives.] Driven off a real attack that really does
     // stamp, so a build that keyed the stamp by a string could go red here.
     for (const seed of SEEDS) {
       const stamped = swing(turnOf(board(seed, "p1", "p1", GALVANTULA), "p1"), "p1");
@@ -735,10 +739,10 @@ describe("D287 §7 — the version does NOT move, and the claim is driven both w
     );
     for (const seat of ["p1", "p2"] as const) {
       expect(Object.keys(barred.handPlayLockedTurn[seat]).sort()).toEqual(
-        ["Item", "Supporter", "evolve"].sort(),
+        ["Item", "Supporter", "Stadium", "evolve"].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
       );
       expect(Object.keys(free.handPlayLockedTurn[seat]).sort()).toEqual(
-        ["Item", "Supporter", "evolve"].sort(),
+        ["Item", "Supporter", "Stadium", "evolve"].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
       );
     }
   });

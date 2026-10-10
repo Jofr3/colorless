@@ -995,7 +995,7 @@ describe("the self-lock — the §10 clear set is SWEPT, not listed", () => {
       boostedAttack: { turn: 99, attackIndex: 0, amount: 20 },
       // 🆕🆕🆕 D575 — the HAND-ATTACH mark (Glimmora's bar, Hypno's turn end), a stamp for turn 99:
       // it blocks no route, so all three carry it and all three must shed it.
-      handAttachMark: { turn: 99, barred: true, endsTurn: true, tripped: false },
+      handAttachMark: { turn: 99, barred: true, endsTurn: true, tripped: false, counters: 8 }, // 🆕🆕🆕 D636 — `counters`
     };
   }
 

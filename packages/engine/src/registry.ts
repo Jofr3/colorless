@@ -207,6 +207,12 @@ export interface AbilityProgram {
       *"if this Pokémon has any Energy attached"* — no type, so any attached Energy card passes
       (`abilityBodyGateMet`); the reason text drops the type word. */
   requiresEnergyType?: BasicEnergyType | "any";
+  /** 🆕🆕🆕 **D636 — §9's THIRD PER-BODY printed gate: *"when this Pokémon moves from the Active Spot to your
+      Bench, you may use this Ability"*** (Clawitzer `me01-038` / `-141` "Fall Back to Reload"). The printed
+      moment read as a USE-TIME gate (R-MR1's reading, Metal Road's frame; R-FBR1 ⚠️ UNRULED): this body's
+      `InPlayPokemon.benchedTurn` is the turn now in progress. Read inside `abilityBodyGateMet`, so all three
+      readers inherit it; the reason text is `abilityBodyGateClause`'s. Optional, absent-means-no-gate. */
+  benchedThisTurn?: true;
   /** The Ability may only be used while this Pokémon is the Active (Chien-Pao's
       "if this Pokémon is in the Active Spot"). */
   activeOnly: boolean;
@@ -18682,7 +18688,8 @@ const HIDE_N_SNEAK: CardProgram = {
 //    (2026-10-10, `legal_standard = 1`). Dropped and named: Clawitzer `me01-038` / `-141` "Fall Back to Reload"
 //    (*"Attach up to 2 Basic {W} Energy cards from your hand to this Pokémon"* is a choice, and the
 //    Active→Bench self sweep cannot park — `switchInto` runs mid-program; R-MR1's use-time reading would need a
-//    moved-to-Bench stamp, a persisted `InPlayPokemon` field). `onBenchMoveMeD628.test.ts` plays each. ──
+//    moved-to-Bench stamp, a persisted `InPlayPokemon` field) [🆕🆕🆕 D636 (D539): BUILT at D636 on that stamp,
+//    `benchedTurn` — `FALL_BACK_TO_RELOAD` below]. `onBenchMoveMeD628.test.ts` plays each. ──
 
 /** 🆕🆕🆕 **D628 — Latios `me01-101` "Lustrous Assist"**: *"Once during your turn, when your Mega Latias ex
     moves from your Bench to the Active Spot, you may use this Ability. Move any amount of Energy from your
@@ -18808,7 +18815,8 @@ const DAMP_REQUIRE_KNOCKED_OUT: CardProgram = {
 //    `me05-017` "Fossil Beatdown" is a reader row (effects.ts `IN_PLAY_BODY_NOUNS`), no key. Texts off the LOCAL
 //    D1 (2026-10-10, `legal_standard = 1`). Dropped and named: Antique Jaw / Sail / Skull Fossil `me03-068` /
 //    `me03-069` / `me05-073` (a new fossil id's uid in a stack is read by 0.518 as a Pokémon and by a 0.517
-//    rollback as an Item — D576's twelfth position, so each owes `MATCH_RECORD_VERSION` 44 → 45) and Antique
+//    rollback as an Item — D576's twelfth position, so each owes `MATCH_RECORD_VERSION` 44 → 45 [🆕🆕🆕 D636 (D539):
+//    not taken at 44 → 45; now 45 → 46]) and Antique
 //    Armor Fossil `me05-072` (that, plus a source-Active rider no shipped field has). `fossilQuarryD635.test.ts`. ──
 
 /** 🆕🆕🆕 **D635 — Fossil Quarry `me05-076` (Stadium)**: *"Once during each player's turn, that player may
@@ -18827,6 +18835,33 @@ const FOSSIL_QUARRY: CardProgram = {
       ],
     },
   },
+};
+
+// ── 🆕🆕🆕 D636 — L1 + CLAWITZER, THE PERSISTED-RECORD BUNDLE (MRV 44 → 45): ONE NEW object. L1's five attack
+//    texts are reader rows (effects.ts arm 19c-D636), no key. Text off the LOCAL D1 (2026-10-10, `legal_standard =
+//    1`). `nextTurnLocksD636.test.ts`. ──
+
+/** 🆕🆕🆕 **D636 — Clawitzer `me01-038` / `-141` "Fall Back to Reload"**: *"Once during your turn, when this Pokémon
+    moves from the Active Spot to your Bench, you may use this Ability. Attach up to 2 Basic {W} Energy cards from
+    your hand to this Pokémon."* The moment read as a USE-TIME gate on the NEW per-body field `benchedThisTurn`
+    (`InPlayPokemon.benchedTurn` is this turn — R-MR1's reading, R-FBR1 ⚠️ UNRULED), from the Bench (`benchOnly`).
+    *"up to 2"* to ONE named body is two `toSelf` hand attaches, each `declinable` (Dino Cry's spelling: `toSelf`
+    pins both to this Pokémon, so the answer set is {0, 1, 2}); the *"you may"* is spent by using it. No Basic {W}
+    Energy card in hand refuses the use (`programPlayable`). */
+const FALL_BACK_TO_RELOAD: CardProgram = {
+  abilities: [
+    {
+      name: "Fall Back to Reload",
+      oncePerTurn: true,
+      activeOnly: false,
+      benchOnly: true,
+      benchedThisTurn: true,
+      program: [
+        { op: "attachEnergyFrom", source: "hand", energyType: "Water", toSelf: true, declinable: true },
+        { op: "attachEnergyFrom", source: "hand", energyType: "Water", toSelf: true, declinable: true },
+      ],
+    },
+  ],
 };
 
 // ── 🆕🆕🆕 D608 — WP30: TWO `30th` ATTACK OBJECTS, KEYED BY ID. Text off the LOCAL D1; both printed
@@ -20433,6 +20468,9 @@ const REGISTRY: Record<string, CardProgram> = {
   "mep-008": DAMP_REQUIRE_KNOCKED_OUT, // Golduck
   // 🆕🆕🆕 D635 — F1, the Antique archetype: 1 key / 1 object, MID-MAP (`raw[last]` does not move).
   "me05-076": FOSSIL_QUARRY, // Fossil Quarry — up to 2 Antique Items from the deck onto the Bench, then shuffle
+  // 🆕🆕🆕 D636 — L1 + Clawitzer: 2 keys / 1 object, MID-MAP (`raw[last]` does not move).
+  "me01-038": FALL_BACK_TO_RELOAD, // Clawitzer — moved Active→Bench this turn: up to 2 Basic {W} from hand to it
+  "me01-141": FALL_BACK_TO_RELOAD, // Clawitzer
   // 🆕🆕🆕 D608 — WP30: 5 `30th` ATTACK-only keys / 2 objects, MID-MAP (`raw[last]` does not move).
   // 🆕🆕🆕 D612 — 3 now: Stealthy Slash ×2 RETIRED (the normalised text is `mep-099`'s, reader-built).
   "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex

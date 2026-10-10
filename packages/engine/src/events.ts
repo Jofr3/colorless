@@ -602,7 +602,9 @@ export type GameEvent =
       for D113's reason (one fact — "this body's attacks are constrained next turn"
       — with a presence branch); the seat rule is unchanged (`seat` owns the LOCKED
       Pokémon). Written only by `flipLockAttack`'s installer; never beside
-      `attack`/`until`. A `GameEvent` is not persisted (D141). */
+      `attack`/`until`. A `GameEvent` is not persisted (D141).
+      🆕🆕🆕 D636 — `coins?: 2` beside `flip` for Jet of Ink's two coins ("flips 2 coins. If either of them is
+      tails"): without it the row would promise one coin. Written only by `flipLockAttack`'s `coins === 2` arm. */
   | {
       type: "ATTACK_LOCKED";
       seat: Seat;
@@ -610,6 +612,7 @@ export type GameEvent =
       attack?: string;
       until?: "leavesActive";
       flip?: true;
+      coins?: 2;
     }
   /** §8.5/§11 (D147) — an attack INSTALLED a durated DAMAGE REDUCTION on its own
       Active ("During your opponent's next turn, this Pokémon takes {N} less
@@ -796,7 +799,14 @@ export type GameEvent =
       `seat`'s next turn: `barred` — Energy cards can't be attached to it from `seat`'s hand
       (Glimmora "Corrosive Shards"); `endsTurn` — attaching one from hand ends `seat`'s turn
       (Hypno "Daydream"). The MERGED mark after this install. */
-  | { type: "HAND_ATTACH_MARKED"; seat: Seat; uid: string; barred: boolean; endsTurn: boolean }
+  // 🆕🆕🆕 D636 — `counters`: Electrified Incisors' damage counters per Energy card attached from hand (0 when none).
+  | { type: "HAND_ATTACH_MARKED"; seat: Seat; uid: string; barred: boolean; endsTurn: boolean; counters: number }
+  /** 🆕🆕🆕 §7 (D636) — `seat`'s Trainer plays from hand are flip-locked for its next turn (Seismitoad "Quaking
+      Fist", `PlayerSide.trainerFlipLockTurn`). `seat` owns the LOCKED side (HAND_PLAY_BLOCKED's rule). */
+  | { type: "TRAINER_FLIP_LOCKED"; seat: Seat }
+  /** 🆕🆕🆕 §7 (D636) — the Quaking Fist coin `seat` flipped trying to use the Trainer card `uid` from hand:
+      heads, the play goes on; tails, `uid` went from the hand to the discard pile instead (R-QF1). */
+  | { type: "TRAINER_FLIP_LOCK_CHECK"; seat: Seat; uid: string; result: CoinFace }
   /** 🆕🆕🆕 (D575) — `actor` LOOKED AT the face-down Prize card in slot `index` of `seat`'s
       row (Team Rocket's Blipbug "Searching Eyes"). SLOT-ONLY, and that is the
       confidentiality rule (`DECK_TOP_REORDERED`'s): the log is broadcast to BOTH seats, so

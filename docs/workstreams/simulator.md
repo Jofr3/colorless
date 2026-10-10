@@ -30104,7 +30104,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Dropped (beyond WP13's brief):** Bombirdier (the bench search reads "a Pokémon" as `byName "Pokémon"`; only a Basic
   may go onto the Bench, so it needs a Basic bench-search arm outside the coin reader), Bewear (a threshold bonus needs a new coin member), Gholdengo / Snorlax / Pikachu (a deck source
   capped at the heads count; Pikachu's row is also markup), Shiftry (`returnBenched` cannot take the Active), Octillery (a
-  two-coin flip lock). [🆕🆕🆕 D634 (D539): all but Octillery BUILT at D634 (C1).]
+  two-coin flip lock). [🆕🆕🆕 D634 (D539): all but Octillery BUILT at D634 (C1).] [🆕🆕🆕 D636 (D539): Octillery BUILT at D636 (L1).]
 - **D539.** D452's "the until-tails singular mill is printed by nothing" and D491's "all six GATE-present points refuse"
   are withdrawn in place for the `me` prints (effects.ts, index.ts, four suites, and the D495 rows in decisions.md and
   progress.md).
@@ -30247,6 +30247,33 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D636 — L1 + Clawitzer: the next-turn opponent locks (engine 0.519.0, `MATCH_RECORD_VERSION` 44 → 45)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D635 (`c98326dc`), NOT committed. 6 texts / 7 printings (`me` + `30th`).
+
+- **Cursed Roots** (Trevenant `me04-039`): Glimmora's second sentence alone — the shipped `markHandAttach { barred }`, no key.
+- **Electrified Incisors** (Pachirisu `me01-051`): `markHandAttach` with the NEW `counters` (`HandAttachMark.counters`, REQUIRED). Each
+  Energy card from the victim's hand onto the marked body takes 8 counters — the attach action (after the watched triggers, then the
+  Knock Out sweep) and an effect's hand attach (`shockHandAttach`); two installs in one window sum (R-EIC1 ⚠️ UNRULED).
+- **Jet of Ink** (Octillery `me04-017`): `flipLockAttack { coins: 2 }` on the NEW `InPlayPokemon.attackTwoFlipLockTurn`; continuous.ts
+  `attackFlipLockCoins` counts the coins at D547's seam (1 + 2 when both are live); every coin is flipped and any tails stops the attack
+  (R-JOI1 ⚠️ UNRULED). Shed by §10 with the one-coin stamp. `ATTACK_LOCKED` gains `coins?: 2`, so its log row says two coins.
+- **Quaking Fist** (Seismitoad `30th-084`): the NEW op `flipLockTrainerPlay` on the NEW `PlayerSide.trainerFlipLockTurn`; cardplay.ts
+  `trainerFlipFails` flips at all five Trainer-play sites once the play is otherwise legal. Tails: the card goes to the discard pile, a
+  Supporter or Stadium spends the turn's allowance, nothing else is written (R-QF1 ⚠️ UNRULED). New events `TRAINER_FLIP_LOCKED` and
+  `TRAINER_FLIP_LOCK_CHECK` (log rows; not persisted); the client's coin display shows the coin.
+- **Scorching Earth** (Chi-Yu `me01-031`): `conditionGate` on the NEW `opponentStadiumInPlay` over `discardStadium` and `preventHandPlay`
+  at `"Stadium"` — `StampedHandPlayClass` widened, `GameState.handPlayLockedTurn` gains the `Stadium` key (R-SCE1 ⚠️ UNRULED).
+- **Fall Back to Reload** (Clawitzer `me01-038` / `-141`): `FALL_BACK_TO_RELOAD`, `benchOnly` + the NEW per-body gate `benchedThisTurn`
+  over the NEW `InPlayPokemon.benchedTurn` (stamped by `retreat` and `switchInto`), two declinable `toSelf` hand attaches of Basic {W}
+  (R-FBR1 ⚠️ UNRULED — R-MR1's use-time reading).
+- **MRV 44 → 45** (match.ts "44 → 45 AT D636"): the four REQUIRED keys and the `Stadium` stamp; a v44 record is migrated with no D1 read
+  (`withD636LockKeys`; D621's and D630's steps skipped for it). Cursed Roots needed no key, as D630 measured.
+- **Named, not taken.** Rotom ex ×3 "Multi Adapter" (Y1a: a §7.4 two-Tool cap and a forced Tool discard when the Ability goes away),
+  Overwriting Bolt `30th-040` and the four `me` Antique Fossils — each owes a later bump (45 → 46).
+- **Suite.** `nextTurnLocksD636.test.ts` (45), `lockKeysMigrationD636.test.ts` (10), census D636 block (2), `coinFlips.test.ts` (1).
+  +49 mutant rows, all KILLED; 26 re-pointed. Two review passes, fixed in the same tree (NEXT, "REVIEW FIXES"). Census: attacks **2,754 / 2,771**, abilities **593 / 610**, 1217 `me` printings fully built. Sweep PENDING.
+
 ## D635 — F1: the Antique archetype, its unpersisted half (engine 0.518.0, `MATCH_RECORD_VERSION` stays 44)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D634 (`1fd6b84a`), NOT committed. 2 texts / 2 `me` printings of F1's 6.
@@ -30258,7 +30285,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Fossil Beatdown** (Relicanth `me05-017`): the fifteenth `IN_PLAY_BODY_NOUNS` key, `pokemonNameContaining` "Antique", on
   `YOUR_BENCHED_NOUN_SCALE`. A benched fossil counts through its in-play face; an evolved one does not (the top card is read).
 - **Dropped and named.** Antique Jaw / Sail / Skull Fossil (`me03-068` / `-069`, `me05-073`): a new `FOSSIL_IDS` id in a stack is read by
-  a 0.517 rollback as a catalog Item (no HP, no Ability, no card rules) — D576's twelfth position, so each owes MRV 44 → 45 (L1's bump).
+  a 0.517 rollback as a catalog Item (no HP, no Ability, no card rules) — D576's twelfth position, so each owes MRV 44 → 45 (L1's bump). [🆕🆕🆕 D636 (D539): they did not ride it; now 45 → 46.]
   Jaw and Skull would reuse `INTIMIDATING_FANG`'s and `COUNTERATTACK_QUILLS`' fields; Sail needs a Supporter-only holder shield. Antique
   Armor Fossil (`me05-072`): the same, plus a source-Active rider on `seatDamageReductionAfterWR`.
 - **Suite.** `fossilQuarryD635.test.ts` (15) and a census D635 block (2). +11 mutant rows, all KILLED. D613's Trainer pin inverted in
@@ -30268,7 +30295,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 ## D634 — C1: the coin rest (engine 0.517.0, `MATCH_RECORD_VERSION` stays 44)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D633 (`6157c1c8`), NOT committed. 7 texts / 8 printings (`me` + `30th`), all
-reader rows; the texts D595 and D605 dropped, less Octillery and Ditto.
+reader rows; the texts D595 and D605 dropped, less Octillery and Ditto. [🆕🆕🆕 D636 (D539): Octillery BUILT at D636.]
 
 - **Hyper Lariat** (Bewear `me01-112`): the NEW `AttackCoinFlip` member `bonusOnAllHeads` — the printed 100 plus 100 only when both coins
   are heads. Catalog Magikarp `sv02-042` and its `sv02-203` / `30th-c-030` reprints ("Expert Splasher", +20), plus Dondozo `svp-012` ("Dangerous Wave", +100) — four non-legal printings, no legal or census effect — read the same way now; three refusal controls were inverted in place.
@@ -30302,7 +30329,7 @@ reader rows (effects.ts arm 10e).
   and interpreter.ts `reservedDiscards` keeps only the picks that leave the most of them fillable, so Legacy Energy cannot fill {R} and
   dodge {L} (R-EB1 ⚠️ UNRULED).
 - **Dropped.** Overwriting Bolt `30th-040`: *"(Apply Weakness as ×2.)"* gives a Weakness to a body that prints none, which D552's
-  amount-keeping retype cannot carry; it needs a persisted field (an MRV bump, L1's).
+  amount-keeping retype cannot carry; it needs a persisted field (an MRV bump, L1's). [🆕🆕🆕 D636 (D539): it did not ride L1's bump; now 45 → 46.]
 - **Suite.** `attackOddsMeD633.test.ts` (20) and a census D633 block (1). +21 mutant rows, all KILLED; `D552-recordslot-drops-the-hand-attach`
   re-pointed. Census: attacks **2,740 / 2,771**, 1200 `me` printings fully built. Sweep PENDING.
 
@@ -30357,7 +30384,7 @@ registry objects.
   taker's own turn, by turn-number parity, so a Cursed Blast take on the other turn never displaces it), read as `opponentPrizesTakenLastTurn` (R-STS1).
 - **Plunging Headbutt.** The NEW op `exposeSelf` on D547's `damageVulnerability` (`turn + 1`; summed on one window, R-PH1).
 - **MRV 43 → 44.** A v43 record is migrated with no D1 read (null keys, the reduction wrapped into a list); v42 / v41 take their earlier
-  steps too (match.ts "43 → 44 AT D630", `recordKeysMigrationD630.test.ts`). L1 owes the next bump (44 → 45).
+  steps too (match.ts "43 → 44 AT D630", `recordKeysMigrationD630.test.ts`). L1 owes the next bump (44 → 45). [🆕🆕🆕 D636 (D539): PAID at D636.]
 - **Suite.** `persistedRecordsMeD630.test.ts` (44), `recordKeysMigrationD630.test.ts` (12), a census D630 block (2). +39 mutant rows and 36
   re-pointed, all KILLED. Census: attacks **2,733 / 2,771**, trainers **434 / 447**, 1179 `me` printings fully built. Sweep PENDING.
 
@@ -30388,7 +30415,7 @@ registry objects.
   `BoardCondition`) over `moveEnergy benchToActive`, any amount, any source. R-LSA1 UNRULED (Metal Road's use-time reading).
 - **Larry's Komala "Lethargic Charge".** `benchOnly` over `attachFromHand` with the NEW `one` (cap 1, mandatory, topped up; R-LGC1
   UNRULED) and the NEW `AttachTargetRiders.activeOnly` + `ownerPokemon "Larry"`; `programPlayable` gates a `one` row.
-- **Dropped and named.** Clawitzer ×2 "Fall Back to Reload" (a choice inside the non-parking Active→Bench self sweep).
+- **Dropped and named.** Clawitzer ×2 "Fall Back to Reload" (a choice inside the non-parking Active→Bench self sweep). [🆕🆕🆕 D636 (D539): BUILT at D636 on the persisted stamp `benchedTurn`.]
 - **Finding 0b.** The deck builder (`toBuilderCard`) and the catalog API's brief ask the engine's `isBasicEnergy` / `isSpecialEnergy`
   (now typed on `EnergyFace`), so the 14 "Normal"-tagged Special Energies obey the 4-copy rule. Cache v8 → v9.
 - **MRV stays 43.** No new prompt, phase, stage or persisted field (match.ts "STAYS 43 AT D628"); `loadCardPool` faces untouched.
@@ -30754,7 +30781,7 @@ registry objects.
 - **8 texts / 16 `me` printings, seven objects.** Solar Transfer ×4 (Mega Venusaur ex), Bubble Gathering (Azumarill ex), Metal
   Road ×2 (Cobalion ex), Swirling Prose ×2 (Mismagius ex), Holes ×2 (Team Rocket's Dugtrio), Scale Up ×3 (Alolan Exeggutor),
   Tyrannically Gutsy ×2 (Tyrantrum) — all 16 fully built.
-- **Left and named.** Fall Back to Reload ×2, Last-Ditch Catch ×3 [🆕🆕🆕 D628 (D539): Last-Ditch Catch BUILT at D628 (A1)], Luminous Wing ×4 (WP37b; Mega Clefable ex not finished),
+- **Left and named.** Fall Back to Reload ×2 [🆕🆕🆕 D636 (D539): BUILT at D636], Last-Ditch Catch ×3 [🆕🆕🆕 D628 (D539): Last-Ditch Catch BUILT at D628 (A1)], Luminous Wing ×4 (WP37b; Mega Clefable ex not finished),
   Supreme Overlord, Gloomy Garbage, Sniper's Eye ×2, Ancient Bulwark ×3, Life-Locked. [🆕🆕🆕 D631 (D539): Supreme Overlord, Gloomy Garbage, Sniper's Eye ×2, Ancient Bulwark ×3 and Life-Locked BUILT at D631 (P1)]
 - **Readings.** Two new, **R-HL1 ⚠️ UNRULED**: on the Active→Bench move the opponent's watched triggers (Holes) resolve
   before the mover's own (Palafin "Zero to Hero"), with no Knock Out check between, so lethal Holes counters on Palafin

@@ -23,7 +23,8 @@ import {
 // `TUCK_TAIL`, with the NEW `TriggeredAbility.oncePerTurn: "sharedByName"` read by `runBoardTrigger`), Latios
 // "Lustrous Assist" (the NEW `BoardCondition` `yourActiveNamed` beside `yourActivePromotedThisTurn`) and Larry's
 // Komala "Lethargic Charge" (`attachFromHand` with the NEW `one` and the riders `activeOnly` (NEW) +
-// `ownerPokemon`). Clawitzer ×2 "Fall Back to Reload" is dropped and named (§1). Every id and text off the LOCAL
+// `ownerPokemon`). Clawitzer ×2 "Fall Back to Reload" is dropped and named (§1) [🆕🆕🆕 D636 (D539): BUILT at D636,
+// `nextTurnLocksD636.test.ts` §7]. Every id and text off the LOCAL
 // D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-10, `legal_standard = 1`. No `me` row is a fixture, so
 // the printed bytes are carried HERE and the suite drives a LOCAL `cardPool` (D275).
 
@@ -198,7 +199,7 @@ const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) 
 const benchIndexOf = (state: GameState, id: string) =>
   state.players.p1.bench.findIndex((b) => state.cardIdByUid[b.stack.at(-1) ?? ""] === id);
 
-describe("D628 §1 — the programs: Meowth ex on D593's object, two new objects, Clawitzer dropped", () => {
+describe("D628 §1 — the programs: Meowth ex on D593's object, two new objects, Clawitzer dropped (🆕🆕🆕 D636 (D539): Clawitzer keyed at D636)", () => {
   it("Meowth ex ×3: `Tuck Tail` kept, plus an `onPlayToBench` trigger with the name lock and an inner confirm", () => {
     for (const id of MEOWTH) {
       expect(programFor(id), id).toEqual({
@@ -258,8 +259,9 @@ describe("D628 §1 — the programs: Meowth ex on D593's object, two new objects
     });
   });
 
-  it("Clawitzer ×2 'Fall Back to Reload' stays unkeyed: a hand-attach choice inside the non-parking Active→Bench self sweep", () => {
-    for (const id of CLAWITZER) expect(programFor(id), id).toBeUndefined();
+  it("Clawitzer ×2 'Fall Back to Reload' stays unkeyed: a hand-attach choice inside the non-parking Active→Bench self sweep (🆕🆕🆕 D636 (D539): WITHDRAWN — keyed at D636 on the persisted moved-to-Bench stamp, `nextTurnLocksD636.test.ts`)", () => {
+    // 🆕🆕🆕 D636 (D539): both ids are keyed now, on one object (`FALL_BACK_TO_RELOAD`).
+    for (const id of CLAWITZER) expect(programFor(id)?.abilities?.[0]?.name, id).toBe("Fall Back to Reload");
   });
 });
 
@@ -441,7 +443,7 @@ describe("D628 §4 — Lethargic Charge: from the Bench, the chosen Energy card 
 });
 
 describe("D628 §5 — the version", () => {
-  it("is built at engine 0.518.0", () => {
-    expect(engineVersion).toBe("0.518.0");
+  it("is built at engine 0.519.0", () => {
+    expect(engineVersion).toBe("0.519.0");
   });
 });

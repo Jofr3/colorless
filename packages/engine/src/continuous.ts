@@ -2837,7 +2837,8 @@ function attackerMatchesStage(
     Glimmora's bar, Hypno's turn end), or `null`. `attackBlockOf`'s contract: the field holds
     a turn STAMP, so the mark is live iff that stamp is the turn now being played, and an
     expired one stops answering without anyone having cleared it. The ONE read of the field
-    (turn.ts `attachEnergy`, interpreter.ts `attachEnergyTargets` / `attachEnergyFrom`). */
+    (turn.ts `attachEnergy`, interpreter.ts `attachEnergyTargets` / `attachEnergyFrom`; 🆕🆕🆕 D636: and
+    interpreter.ts `shockHandAttach`, Electrified Incisors' counters). */
 export function liveHandAttachMark(state: GameState, pokemon: InPlayPokemon): HandAttachMark | null {
   const mark = pokemon.handAttachMark;
   return mark !== null && mark.turn === state.turn ? mark : null;
@@ -3248,7 +3249,8 @@ export function installedCostTaxOf(state: GameState, pokemon: InPlayPokemon): nu
     YES under it: the attack is declared, the locked player flips at `attack.ts`'s
     §8 step-3 seam, and only a tails stops it (and ends the turn [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED]). An `||` into
     `attackLocked` would grey a button the player is entitled to press and turn a
-    coin into a certainty. So this has ONE caller, `attack.ts`, and redact.ts,
+    coin into a certainty. So this has ONE caller, `attack.ts` [🆕🆕🆕 D636 (D539): its one caller is
+    `attackFlipLockCoins` below, whose one caller is `attack.ts`], and redact.ts,
     `packages/schema` and GameHud take no byte (`attackFlipLock.test.ts` pins
     `playable` true while only this lock is live). Immune to §9 like its sibling: it
     reads an attack INSTALLATION, not `passivesOf`. */
@@ -3256,6 +3258,14 @@ export function attackFlipLocked(state: GameState, pokemon: InPlayPokemon): bool
   // No defensive `=== undefined` arm (D124): the field is REQUIRED and a v30
   // record is retired by MATCH_RECORD_VERSION 31 rather than read benignly here.
   return pokemon.attackFlipLockTurn === state.turn;
+}
+
+/** 🆕🆕🆕 §8/§11 (D636) — how many coins `pokemon`'s declared attack must survive right now: 1 for a live D547
+    lock (`attackFlipLocked`), 2 for a live Jet of Ink lock (`attackTwoFlipLockTurn`), SUMMED when both are live
+    (two printed effects — R-JOI1 ⚠️ UNRULED: every coin is flipped and any tails stops the attack). 0 = no
+    lock, so `attack.ts` draws no rng. ONE caller, `attack.ts`'s §8 step-3 seam. */
+export function attackFlipLockCoins(state: GameState, pokemon: InPlayPokemon): number {
+  return (attackFlipLocked(state, pokemon) ? 1 : 0) + (pokemon.attackTwoFlipLockTurn === state.turn ? 2 : 0);
 }
 
 /** §11 (D412) — is `pokemon` held in place right now by an ATTACK EFFECT, from

@@ -428,12 +428,12 @@ describe("D285 §1 — the census, and the two printings it reaches", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D285 §2 — GameState.handPlayLockedTurn gains an ACT key", () => {
-  it("a fresh game has no lock on either seat, for any of the three keys", () => {
+  it("a fresh game has no lock on either seat, for any of the three keys (🆕🆕🆕 D636 (D539): four — `Stadium`)", () => {
     const created = createGame({ seed: SEEDS[0], decks: { p1: LOCK_DECK, p2: LOCK_DECK }, cardPool: POOL });
     if (!created.ok) throw new Error("createGame failed");
     expect(created.state.handPlayLockedTurn).toEqual({
-      p1: { Item: null, Supporter: null, evolve: null },
-      p2: { Item: null, Supporter: null, evolve: null },
+      p1: { Item: null, Supporter: null, Stadium: null, evolve: null },
+      p2: { Item: null, Supporter: null, Stadium: null, evolve: null },
     });
   });
 
@@ -453,6 +453,7 @@ describe("D285 §2 — GameState.handPlayLockedTurn gains an ACT key", () => {
       expect(state.handPlayLockedTurn[attacker]).toEqual({
         Item: null,
         Supporter: null,
+        Stadium: null, // 🆕🆕🆕 D636
         evolve: null,
       });
     });
@@ -466,6 +467,7 @@ describe("D285 §2 — GameState.handPlayLockedTurn gains an ACT key", () => {
       expect(state.handPlayLockedTurn[seat]).toEqual({
         Item: null,
         Supporter: null,
+        Stadium: null, // 🆕🆕🆕 D636
         evolve: null,
       });
     }
@@ -538,7 +540,7 @@ describe("D285 §4 — two acts, and the stamp names exactly one", () => {
     // …and the record itself never grew the key. `"Tool"` (D284) is absent for
     // the same measured reason: no printed writer can set either.
     const keys = Object.keys(stamped.handPlayLockedTurn.p2);
-    expect(keys.sort()).toEqual(["Item", "Supporter", "evolve"].sort());
+    expect(keys.sort()).toEqual(["Item", "Supporter", "Stadium", "evolve"].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */);
   });
 
   it("the TRAINER surface is untouched by an act stamp, and vice versa", () => {
@@ -658,7 +660,7 @@ describe("D285 §6 — MATCH_RECORD_VERSION 15 → 16, driven both directions", 
           Object.keys(plain.handPlayLockedTurn[seat]).sort(),
         );
         expect(Object.keys(stamped.handPlayLockedTurn[seat]).sort()).toEqual(
-          ["Item", "Supporter", "evolve"].sort(),
+          ["Item", "Supporter", "Stadium", "evolve"].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
         );
       }
     }

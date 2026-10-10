@@ -102,7 +102,8 @@ const COPPERAJAH = "sv06.5-042";
     Stadium row off ANY bar is green on every barred-board line and RED here. */
 const TYRANITAR = "sv09-095";
 /** The STAMPED `"Item"` source (an attack rider) — §4's half. `StampedHandPlayClass`
-    cannot NAME a Stadium, so a stamped bar must leave these rows lit. */
+    cannot NAME a Stadium, so a stamped bar must leave these rows lit. [🆕🆕🆕 D636 (D539): WITHDRAWN — Scorching Earth `me01-031` is a printed ATTACK that stamps `"Stadium"`: the class
+    is named; an ITEM stamp still leaves these rows lit, because the stamps are keyed per class.] */
 const GALVANTULA = "sv07-051";
 
 /** Beach Court — an AUTHORED Stadium, so a refusal at its row is a RULE and never
@@ -446,7 +447,7 @@ describe("D288 §3 — the wire row is greyed EXACTLY when the engine refuses", 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D288 §4 — a STAMPED Item bar greys Items and leaves Stadiums lit", () => {
-  it("🛑 `StampedHandPlayClass` HAS NO `\"Stadium\"` MEMBER, DRIVEN OFF A REAL ATTACK", () => {
+  it("🛑 a STAMPED ITEM bar leaves the Stadium rows LIT, DRIVEN OFF A REAL ATTACK (🆕🆕🆕 D636 (D539): ~~`StampedHandPlayClass` HAS NO `\"Stadium\"` MEMBER~~ WITHDRAWN — Scorching Earth stamps it, keyed apart from `Item`)", () => {
     // The mirror asks `handPlayBarred` — ONE funnel that consults BOTH the
     // continuous source and the turn-stamped one — rather than a fifth predicate
     // of its own. This drives the stamped half through a printed attack rider, so
@@ -598,7 +599,7 @@ describe("D288 §7 — the version does NOT move, and the claim is driven", () =
     );
     for (const seat of ["p1", "p2"] as const) {
       expect(Object.keys(barred.handPlayLockedTurn[seat]).sort()).toEqual(
-        ["Item", "Supporter", "evolve"].sort(),
+        ["Item", "Supporter", "Stadium", "evolve"].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
       );
     }
     // And the wire phase's own key list — the surface this slice DID change, whose

@@ -560,6 +560,7 @@ describe("D284 §4 — the printed window", () => {
       expect(state.handPlayLockedTurn[seat]).toEqual({
         Item: null,
         Supporter: null,
+        Stadium: null, // 🆕🆕🆕 D636
         evolve: null,
       });
     }
@@ -720,7 +721,7 @@ describe("D284 §8 — the version does NOT move, and that is driven", () => {
     );
   });
 
-  it("🆕 D285 — THE PERSISTED KEYS ARE EXACTLY THREE, AND `\"Tool\"` IS STILL NOT ONE", () => {
+  it("🆕 D285 — THE PERSISTED KEYS ARE EXACTLY THREE, AND `\"Tool\"` IS STILL NOT ONE (🆕🆕🆕 D636 (D539): FOUR — `Stadium` joined; `Tool` still is not one)", () => {
     // D284's line read "STILL EXACTLY TWO": `HandPlayClass` had gained `"Tool"`
     // and, had `handPlayLockedTurn` been keyed by it, every board would have grown
     // a key NO WRITER CAN SET. D285 added a third key that a writer CAN set
@@ -730,7 +731,7 @@ describe("D284 §8 — the version does NOT move, and that is driven", () => {
     const barred = turnOf(board(SEEDS[0], "p1", "p1", JELLICENT), "p2");
     for (const seat of ["p1", "p2"] as const) {
       const keys = Object.keys(barred.handPlayLockedTurn[seat]).sort();
-      expect(keys).toEqual(["Item", "Supporter", "evolve"].sort());
+      expect(keys).toEqual(["Item", "Supporter", "Stadium", "evolve"].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */);
       expect(keys).not.toContain("Tool");
       expect(keys).not.toContain("bench");
     }
@@ -783,7 +784,7 @@ describe("D284 §9 — the widened funnel, with both sources live", () => {
       ...state,
       handPlayLockedTurn: {
         ...state.handPlayLockedTurn,
-        p2: { Item: state.turn, Supporter: null, evolve: null },
+        p2: { Item: state.turn, Supporter: null, Stadium: null, evolve: null }, // 🆕🆕🆕 D636 — the `Stadium` key
       },
     };
     expect(handPlayBarred(stamped, "p2", "Item", undefined)).toBe(true);
@@ -801,7 +802,7 @@ describe("D284 §9 — the widened funnel, with both sources live", () => {
       ...state,
       handPlayLockedTurn: {
         ...state.handPlayLockedTurn,
-        p2: { Item: state.turn, Supporter: state.turn, evolve: null },
+        p2: { Item: state.turn, Supporter: state.turn, Stadium: null, evolve: null },
       },
     };
     expect(play(both, "p2", ITEM)).toBe("HAND_PLAY_BLOCKED");

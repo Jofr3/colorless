@@ -205,7 +205,7 @@ describe("D612 §4 — a raw face in a persisted pool reads like the re-ingested
 });
 
 describe("D612 §5 — the version", () => {
-  it("is built at engine 0.518.0", () => {
-    expect(engineVersion).toBe("0.518.0");
+  it("is built at engine 0.519.0", () => {
+    expect(engineVersion).toBe("0.519.0");
   });
 });

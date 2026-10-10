@@ -611,6 +611,8 @@ describe("§6 — persistence, purity, and the property the export did not cost"
       // suite's slice added none.
       "attackFlipLockTurn",
       "attackLockedTurn",
+      "attackTwoFlipLockTurn", // 🆕🆕🆕 D636 (44 -> 45) — Jet of Ink's stamp; the pin is on the HEAD's key set
+      "benchedTurn", // 🆕🆕🆕 D636 (44 -> 45) — Fall Back to Reload's stamp
       "boostedAttack",
       "conditions",
       "costTaxTurn", // 🆕🆕🆕 D549 (32 -> 33) — the cost tax's stamp; the pin is on the HEAD's key set
@@ -699,6 +701,6 @@ describe("§7 — the version", () => {
     // `manifest.version`) plus `package.json`, the declaration and the mutant `find`.
     // The increment is this line — the pin being AUTHORED, which is the one D427 named
     // as the thing every note forgets.
-    expect(engineVersion).toBe("0.518.0");
+    expect(engineVersion).toBe("0.519.0");
   });
 });

@@ -411,8 +411,8 @@ describe("D283 §2 — GameState.handPlayLockedTurn, the stamp", () => {
   it("a fresh game has no lock on either seat, for either class", () => {
     const state = localSetup(SEEDS[0], "p1");
     expect(state.handPlayLockedTurn).toEqual({
-      p1: { Item: null, Supporter: null, evolve: null },
-      p2: { Item: null, Supporter: null, evolve: null },
+      p1: { Item: null, Supporter: null, Stadium: null, evolve: null },
+      p2: { Item: null, Supporter: null, Stadium: null, evolve: null },
     });
   });
 
@@ -434,6 +434,7 @@ describe("D283 §2 — GameState.handPlayLockedTurn, the stamp", () => {
       expect(state.handPlayLockedTurn[attacker]).toEqual({
         Item: null,
         Supporter: null,
+        Stadium: null, // 🆕🆕🆕 D636
         evolve: null,
       });
     });
@@ -455,8 +456,8 @@ describe("D283 §2 — GameState.handPlayLockedTurn, the stamp", () => {
     let state = openingFor(board(SEEDS[0], "p1", "p1", PLAIN), "p1");
     state = swing(state, "p1");
     expect(state.handPlayLockedTurn).toEqual({
-      p1: { Item: null, Supporter: null, evolve: null },
-      p2: { Item: null, Supporter: null, evolve: null },
+      p1: { Item: null, Supporter: null, Stadium: null, evolve: null },
+      p2: { Item: null, Supporter: null, Stadium: null, evolve: null },
     });
   });
 
@@ -713,7 +714,7 @@ describe("D283 §6 — the bump, driven", () => {
         // Bronzong's act became stampable. This anchor is the guard that went RED
         // on its own the moment the key landed, which is what it is for.
         expect(Object.keys(state.handPlayLockedTurn[seat]).sort()).toEqual(
-          ["Item", "Supporter", "evolve"].sort(),
+          ["Item", "Supporter", "Stadium", "evolve"].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
         );
       }
     }

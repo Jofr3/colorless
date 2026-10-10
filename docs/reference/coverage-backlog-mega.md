@@ -6,12 +6,32 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D636 update (engine 0.519.0) — L1 + Clawitzer, the next-turn opponent locks (`MATCH_RECORD_VERSION` 44 → 45)
+
+6 texts / 7 printings (`nextTurnLocksD636.test.ts`, `lockKeysMigrationD636.test.ts`): Trevenant "Cursed Roots" `me04-039` (Glimmora's
+shipped bar), Pachirisu "Electrified Incisors" `me01-051` (the new `HandAttachMark.counters`, R-EIC1), Octillery "Jet of Ink" `me04-017`
+(the new two-coin stamp `attackTwoFlipLockTurn`, R-JOI1), Seismitoad "Quaking Fist" `30th-084` (the new `PlayerSide.trainerFlipLockTurn`,
+a coin at every Trainer play from hand, R-QF1), Chi-Yu "Scorching Earth" `me01-031` (the new `opponentStadiumInPlay` and a stamped
+`Stadium` bar, R-SCE1) and Clawitzer "Fall Back to Reload" ×2 `me01-038` / `-141` (the new `InPlayPokemon.benchedTurn`, R-FBR1). A v44
+match record is MIGRATED (no D1 read). **Finished:** all 7. **Not taken (named):** Rotom ex ×3 "Multi Adapter" (Y1a: a two-Tool cap and a
+forced Tool discard when the Ability goes away), Overwriting Bolt `30th-040` and the four `me` Antique Fossils — each owes a later bump
+(45 → 46).
+
+| Column | `me` built / units (D636) | Standard pool D636 |
+|---|---|---|
+| Attacks | 1,022 / 1,039 (+5) | **2,754 / 2,771** |
+| Abilities | 217 / 234 (+2) | **593 / 610** |
+| Trainers | 171 / 183 | **435 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1217** (1210 + 7).
+
 ## 🆕 D635 update (engine 0.518.0) — F1, the Antique archetype, its unpersisted half (`MATCH_RECORD_VERSION` stays 44)
 
 2 texts / 2 printings (`fossilQuarryD635.test.ts`): Fossil Quarry `me05-076` (a Stadium on the new `itemNameContaining`; only a fossil with
 an in-play face is benched, R-FQ1 UNRULED) and Relicanth "Fossil Beatdown" `me05-017` (the fifteenth `IN_PLAY_BODY_NOUNS` key).
 **Finished:** both. **Dropped and named:** Antique Jaw Fossil `me03-068`, Antique Sail Fossil `me03-069` and Antique Skull Fossil
-`me05-073` — a new fossil id in a stack owes MRV 44 → 45 (D576's twelfth position; they can ride L1's bump; Sail also needs a
+`me05-073` — a new fossil id in a stack owes MRV 44 → 45 (D576's twelfth position; they can ride L1's bump [🆕🆕🆕 D636 (D539): they did not — beyond D636's brief; now 45 → 46]; Sail also needs a
 Supporter-only holder shield) — and Antique Armor Fossil `me05-072` (that, plus a source-Active rider). Fossil Quarry does not offer
 them until they are built.
 
@@ -31,7 +51,7 @@ them until they are built.
 Snorlax "Gormandizer" `me03-063` and Pikachu "Charge-Up Dash" `30th-042` (the new `deckUpToHeads`: heads as the search's max; 0 heads
 does nothing, R-UTH1 UNRULED), Shiftry "Reversing Gust" `me01-015` (an arm 46b row on `returnBenched.includeActive`, opponent side)
 and Watchog "Snap Inspection" ×2 `me04-071` / `-097` (per heads, `bottomFromOpponentHand` at the new `dest: "deck"`). **Finished:**
-all 8. **Dropped:** none. Octillery "Jet of Ink" `me04-017` (D595's seventh drop) was not in C1 and stays unbuilt.
+all 8. **Dropped:** none. Octillery "Jet of Ink" `me04-017` (D595's seventh drop) was not in C1 and stays unbuilt. [🆕🆕🆕 D636 (D539): BUILT at D636 (L1).]
 
 | Column | `me` built / units (D634) | Standard pool D634 |
 |---|---|---|
@@ -103,7 +123,7 @@ R-LVW1, R-PSY1), Bronzong "Metal Block" `me05-064` (`DamageReduction.fromClass`)
 `sideDamageReduction` list, R-ID1), Okidogi "Settle the Score" `me02.5-122` (the NEW `PlayerSide.prizesTakenOnTurn`, R-STS1) and Mabosstiff
 "Plunging Headbutt" `me05-058` (the NEW op `exposeSelf`, R-PH1). A v43 match record is MIGRATED (no D1 read). **Finished:** all 13. **Not
 taken:** L1 (Cursed Roots `me04-039`, Electrified Incisors `me01-051`, Jet of Ink `me04-017`, Quaking Fist `30th-084`, Scorching Earth
-`me01-031`) — the next MRV step (44 → 45).
+`me01-031`) — the next MRV step (44 → 45). [🆕🆕🆕 D636 (D539): BUILT at D636, which paid 44 → 45.]
 
 | Column | `me` built / units (D630) | Standard pool D630 |
 |---|---|---|
@@ -139,7 +159,7 @@ context carries).
 `me01-101` (the NEW `BoardCondition` `yourActiveNamed` beside `yourActivePromotedThisTurn`; R-LSA1) and Larry's Komala "Lethargic
 Charge" `me02.5-175` (`attachFromHand` with the NEW `one` and `activeOnly`; R-LGC1). **Finished:** all 5. **Dropped and named:** Clawitzer
 "Fall Back to Reload" ×2 `me01-038` / `-141` (a hand-attach choice inside the non-parking Active→Bench self sweep, or a persisted
-moved-to-Bench stamp). Also closed: finding 0b (the deck builder's Basic Energy test is the engine's).
+moved-to-Bench stamp) [🆕🆕🆕 D636 (D539): BUILT at D636 on the persisted stamp `benchedTurn`]. Also closed: finding 0b (the deck builder's Basic Energy test is the engine's).
 
 | Column | `me` built / units (D628) | Standard pool D628 |
 |---|---|---|
@@ -440,7 +460,7 @@ cardText.ts `normalizeCardText` at ingest (map.ts) and at read (cards.ts `cardOf
 `swsh10.5` re-ingested, the `me` corpus regenerated (451 → 442 sentences). The 18 "markup only" texts / 21 `30th` printings below
 are BUILT on shipped readers (`cardTextD612.test.ts`, census D612 block). `INFERNO_X` and `STEALTHY_SLASH` retired (their clean text
 is reader-built; R-IX1 resolved); Photon Bullets ×3 stays keyed. Still unbuilt, now as clean text in their packages: Elemental Blast
-`30th-121` [🆕🆕🆕 D633: BUILT], Lightning Crash `30th-051` (WP30) [🆕🆕🆕 D629: BUILT], Charge-Up Dash `30th-042` (WP13) [🆕🆕🆕 D634: BUILT], Overwriting Bolt `30th-040` [🆕🆕🆕 D633: still unbuilt — it gives a Weakness, an MRV bump (L1)], Pika Chain `30th-034`
+`30th-121` [🆕🆕🆕 D633: BUILT], Lightning Crash `30th-051` (WP30) [🆕🆕🆕 D629: BUILT], Charge-Up Dash `30th-042` (WP13) [🆕🆕🆕 D634: BUILT], Overwriting Bolt `30th-040` [🆕🆕🆕 D633: still unbuilt — it gives a Weakness, an MRV bump (L1)] [🆕🆕🆕 D636: did not ride L1's bump; owes 45 → 46], Pika Chain `30th-034`
 (WP28b) [🆕🆕🆕 D623: BUILT], Kaboom Needles `30th-104` (WP30) [🆕🆕🆕 D629: BUILT]. The data gap below ("43 `me` rows carry tcgdex HTML") is closed on the LOCAL D1; the
 remote D1 still needs the re-ingest, run with the D612 ingest code.
 
@@ -482,7 +502,7 @@ ex) and Bubble Gathering (Azumarill ex) are "as often as you like" `moveEnergy` 
 Boost's promoted-this-turn gate over a typed any-amount sweep; Swirling Prose ×2 (Mismagius ex) and Holes ×2 (Team Rocket's
 Dugtrio) ride Lava Zone's opponent-side `onActiveMovedToBench`; Scale Up ×3 and Tyrannically Gutsy ×2 are `hpBonus` gates (the new
 `requiresEnergyCount`, and "special"). **Finished:** all 16 cards (Mega Venusaur ex ×4 among them). **WP37 rest, left and named**
-(8 texts / 17 printings): Fall Back to Reload ×2, Last-Ditch Catch ×3 [🆕🆕🆕 D628 (D539): Last-Ditch Catch BUILT at D628 (A1)], Luminous Wing ×4 (WP37b — Mega Clefable ex ×4 still waits
+(8 texts / 17 printings): Fall Back to Reload ×2 [🆕🆕🆕 D636 (D539): BUILT at D636], Last-Ditch Catch ×3 [🆕🆕🆕 D628 (D539): Last-Ditch Catch BUILT at D628 (A1)], Luminous Wing ×4 (WP37b — Mega Clefable ex ×4 still waits
 on it [🆕🆕🆕 D614: BUILT, Mega Clefable ex ×4 finished]), Supreme Overlord, Gloomy Garbage, Sniper's Eye ×2, Ancient Bulwark ×3, Life-Locked. [🆕🆕🆕 D631 (D539): Supreme Overlord, Gloomy Garbage, Sniper's Eye ×2, Ancient Bulwark ×3 and Life-Locked BUILT at D631 (P1)] Two new readings (UNRULED): R-HL1, Holes
 resolves before Palafin's Zero to Hero with no Knock Out check between; R-MR1, Metal Road's moment is a use-time gate, which affords
 a delayed use (`progress.md` NEXT). [🆕🆕🆕 D625 (D610 MINOR 2): R-HL1 INVERTS D356's principle (turn.ts, Magearna "Auto Heal": the turn player's own effects resolve first when two triggers answer one moment), and its listed reversal "Zero to Hero first" IS D356's order. The departure is the reading because under D356's order Holes' subject has already gone to the deck and Holes does nothing; still UNRULED.]
@@ -758,7 +778,7 @@ Smeargle (Tyrantrum ×2 still wait on Tyrannically Gutsy [🆕🆕🆕 D610 (D53
 "a Pokémon" as a card name; only a Basic may go onto the Bench, so it needs a Basic bench-search arm), Hyper Lariat (a threshold bonus needs a new coin
 member), All-You-Can-Grab, Gormandizer and Charge-Up Dash (a deck source capped at the heads count; Charge-Up Dash also
 needs WP06 [🆕🆕🆕 D612: done]), Reversing Gust (the shuffled body may be the Active) and Jet of Ink (a two-coin flip lock). [🆕🆕🆕 D634 (D539): all but
-Jet of Ink BUILT at D634 (C1).]
+Jet of Ink BUILT at D634 (C1).] [🆕🆕🆕 D636 (D539): Jet of Ink BUILT at D636 (L1).]
 
 | Column | `me` built / units (D595) | Standard pool D595 |
 |---|---|---|
@@ -1114,7 +1134,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× This attack does 50 more damage for each of your Benched Pokémon that has any damage counters on it. [🆕🆕🆕 D607: WP28b] [🆕🆕🆕 D623: BUILT]
 - 1× Discard all Energy from this Pokémon and place 12 damage counters on 1 of your opponent's Pokémon. [🆕🆕🆕 D608: BUILT]
 - 1× Double the number of damage counters on each of your opponent's Pokémon. [🆕🆕🆕 D609: BUILT]
-- 1× During your opponent's next turn, whenever they attach an Energy card from their hand to the Defending Pokémon, place 8 damage counters on that Pokémon.
+- 1× During your opponent's next turn, whenever they attach an Energy card from their hand to the Defending Pokémon, place 8 damage counters on that Pokémon. [🆕🆕🆕 D636: BUILT (L1)]
 - 1× If any of your Benched Pancham have any damage counters on them, this attack does 120 more damage. [🆕🆕🆕 D593: BUILT]
 - 1× If this Pokémon has 2 or more damage counters on it, this attack does 90 more damage. This attack's damage isn't affected by Weakness. [🆕🆕🆕 D594: BUILT]
 - 1× If this Pokémon has any damage counters on it, this attack can be used for {D}. [🆕🆕🆕 D593: BUILT]
@@ -1138,7 +1158,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× Flip 3 coins. If any of them are heads, your opponent reveals their hand. For each heads, choose a card you find there and shuffle it into your opponent's deck. [🆕🆕🆕 D605: dropped from WP34 — the revealed-hand pick goes into the deck; `bottomFromOpponentHand.dest` has no shuffle member] [🆕🆕🆕 D634: BUILT (C1)]
 - 2× Flip a coin for each Maushold you have in play. For each heads, discard the top 2 cards of your opponent's deck. [🆕🆕🆕 D605: BUILT]
 - 2× Flip a coin until you get tails. For each heads, choose a random card from your opponent's hand. Your opponent reveals those cards and shuffles them into their deck. [🆕🆕🆕 D595: BUILT]
-- 1× During your opponent's next turn, whenever they try to use a Trainer card from their hand, they flip a coin. If tails, your opponent discards that Trainer card instead of using it.
+- 1× During your opponent's next turn, whenever they try to use a Trainer card from their hand, they flip a coin. If tails, your opponent discards that Trainer card instead of using it. [🆕🆕🆕 D636: BUILT (L1)]
 - 1× Flip 2 coins. If both of them are heads, heal all damage from 1 of your Pokémon. [🆕🆕🆕 D595: BUILT]
 - 1× Flip 2 coins. If both of them are heads, search your deck for a Pokémon and put it onto your Bench. Then, shuffle your deck. [🆕🆕🆕 D595: dropped from WP13 — the bench search reads "a Pokémon" as a card name; only a Basic may go onto the Bench, so it needs a Basic bench-search arm] [🆕🆕🆕 D634: BUILT (C1)]
 - 1× Flip 2 coins. If both of them are heads, this attack does 100 more damage. [🆕🆕🆕 D595: dropped from WP13 — a bonus behind a coin threshold needs a new `AttackCoinFlip` member] [🆕🆕🆕 D634: BUILT (C1)]
@@ -1209,8 +1229,8 @@ group wins; the grouping is a reading aid, not a census figure).
 ### Next-turn effects on either Active (protection, vulnerability, locks) — 6 text(s) / 7 printing(s)
 
 - 2× During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Evolution Pokémon. [🆕🆕🆕 D619: dropped — a new attacker class on persisted state owes an MRV bump] [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
-- 1× During your opponent's next turn, Energy can't be attached from your opponent's hand to the Defending Pokémon.
-- 1× During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips 2 coins. If either of them is tails, that attack doesn't happen. [🆕🆕🆕 D595: dropped from WP13 — `flipLockAttack` is one coin and field-free]
+- 1× During your opponent's next turn, Energy can't be attached from your opponent's hand to the Defending Pokémon. [🆕🆕🆕 D636: BUILT (L1)]
+- 1× During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips 2 coins. If either of them is tails, that attack doesn't happen. [🆕🆕🆕 D595: dropped from WP13 — `flipLockAttack` is one coin and field-free] [🆕🆕🆕 D636: BUILT (L1) — `flipLockAttack` gains `coins: 2`]
 - 1× During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Burned Pokémon. [🆕🆕🆕 D619: dropped — a new attacker class on persisted state owes an MRV bump] [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
 - 1× During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Pokémon that have an Ability. [🆕🆕🆕 D619: dropped — a new attacker class on persisted state owes an MRV bump] [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
 - 1× The Defending Pokémon's Weakness is now &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> until the end of your next turn. &lt;em>(Apply Weakness as ×2.)&lt;/em> [🆕🆕🆕 D612: the markup is normalised (WP06); the clean text still needs a reader]
@@ -1264,7 +1284,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× Discard random cards from your opponent's hand until they have 5 cards in their hand.
 - 1× Discard the top card of your deck, and if that card is a Supporter card, use the effect of that card as the effect of this attack.
 - 1× If you played Tarragon from your hand during this turn, discard the top 3 cards of your opponent's deck. [🆕🆕🆕 D619: BUILT]
-- 1× If your opponent has a Stadium in play, discard it. If you do, your opponent can't play any Stadium cards from their hand during their next turn.
+- 1× If your opponent has a Stadium in play, discard it. If you do, your opponent can't play any Stadium cards from their hand during their next turn. [🆕🆕🆕 D636: BUILT (L1)]
 - 1× Look at the top 6 cards of your deck, and you may reveal any number of Pokémon you find there and put them into your hand. Shuffle the other cards back into your deck. [🆕🆕🆕 D615: BUILT]
 - 1× Look at the top 9 cards of your deck, and you may put any number of Pokémon you find there onto your Bench. Shuffle the other cards back into your deck. [🆕🆕🆕 D615: BUILT]
 - 1× Put up to 3 Basic Pokémon from your discard pile onto your Bench. [🆕🆕🆕 D615: BUILT]
@@ -1304,7 +1324,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 3× **Sandy Flapping** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. You may also use this Ability if this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon. Discard the top 2 cards of your opponent's deck. [🆕🆕🆕 D590: NOT BUILT — the KO half needs an Active-Spot / by-attack gate on an `onKnockOut` program] [🆕🆕🆕 D598: the by-attack half exists — `TriggeredAbility.byOpponentAttack`; the Active-Spot gate is still owed] [🆕🆕🆕 D626: BUILT]
 - 2× **Cast-Off Shell** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Search your deck for a Shedinja and put it onto your Bench. Then, shuffle your deck. [🆕🆕🆕 D590: BUILT]
 - 2× **Enriching Melody** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Heal all damage from 1 of your Pokémon. [🆕🆕🆕 D590: BUILT]
-- 2× **Fall Back to Reload** — Once during your turn, when this Pokémon moves from the Active Spot to your Bench, you may use this Ability. Attach up to 2 Basic {W} Energy cards from your hand to this Pokémon. [🆕🆕🆕 D610: left — a hand-attach choice inside the non-parking Active→Bench self sweep] [🆕🆕🆕 D628: dropped again (A1) — the same reason, or a persisted moved-to-Bench stamp]
+- 2× **Fall Back to Reload** — Once during your turn, when this Pokémon moves from the Active Spot to your Bench, you may use this Ability. Attach up to 2 Basic {W} Energy cards from your hand to this Pokémon. [🆕🆕🆕 D610: left — a hand-attach choice inside the non-parking Active→Bench self sweep] [🆕🆕🆕 D628: dropped again (A1) — the same reason, or a persisted moved-to-Bench stamp] [🆕🆕🆕 D636: BUILT — the persisted stamp `benchedTurn`, MRV 44 → 45]
 - 2× **Metal Road** — Once during your turn, when this Pokémon moves from your Bench to the Active Spot, you may use this Ability. Move any amount of {M} Energy from your other Pokémon to this Pokémon. [🆕🆕🆕 D610: BUILT]
 - 1× **Energized Steps** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Look at the top 4 cards of your deck and attach any number of Basic Energy cards you find there to your Pokémon in any way you like. Shuffle the other cards back into your deck. [🆕🆕🆕 D590: BUILT]
 - 1× **Haphazard Hammer** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Flip a coin. If heads, discard an Energy from your opponent's Active Pokémon. [🆕🆕🆕 D590: BUILT]
@@ -1385,7 +1405,7 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### HP, Retreat, type and Energy-provision passives — 8 text(s) / 15 printing(s)
 
-- 3× **Multi Adapter** — Each of your Pokémon that has "Rotom" in its name may have up to 2 Pokémon Tool cards attached. If this Ability goes away, discard Pokémon Tools from those Pokémon until only 1 remains on each.
+- 3× **Multi Adapter** — Each of your Pokémon that has "Rotom" in its name may have up to 2 Pokémon Tool cards attached. If this Ability goes away, discard Pokémon Tools from those Pokémon until only 1 remains on each. [🆕🆕🆕 D636: not taken — a two-Tool cap and a forced discard when the Ability goes away; owes its own bump (45 → 46)]
 - 2× **Double Type** — As long as this Pokémon is in play, it is {F} and {P} type. [🆕🆕🆕 D586: BUILT]
 - 2× **Scale Up** — If this Pokémon has 6 or more Grass Energy attached, it gets +250 HP. [🆕🆕🆕 D610: BUILT]
 - 2× **Slimy Sliding** — When your opponent's Active Pokémon retreats, your opponent flips a coin. If tails, Energy for its Retreat Cost is not discarded, and they don't switch Pokémon. The effect of Slimy Sliding doesn't stack.
@@ -1453,16 +1473,16 @@ Search your deck for a Pokémon, reveal it, and put it into your hand. Then, shu
 
 ### Pokémon-faced Trainers (fossils, Core Memory) — 5 text(s) / 5 printing(s)
 
-- 1× **Antique Armor Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat. [🆕🆕🆕 D635: dropped — a new fossil id in a stack owes MRV 44 → 45, plus a source-Active rider]
+- 1× **Antique Armor Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat. [🆕🆕🆕 D635: dropped — a new fossil id in a stack owes MRV 44 → 45, plus a source-Active rider] [🆕🆕🆕 D636: not taken at L1's bump; owes 45 → 46]
 
 At any time during your turn, you may discard this card from play.
-- 1× **Antique Jaw Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat. [🆕🆕🆕 D635: dropped — a new fossil id in a stack owes MRV 44 → 45]
+- 1× **Antique Jaw Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat. [🆕🆕🆕 D635: dropped — a new fossil id in a stack owes MRV 44 → 45] [🆕🆕🆕 D636: not taken at L1's bump; owes 45 → 46]
 
 At any time during your turn, you may discard this card from play.
-- 1× **Antique Sail Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat. [🆕🆕🆕 D635: dropped — a new fossil id in a stack owes MRV 44 → 45, plus a Supporter-only holder shield]
+- 1× **Antique Sail Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat. [🆕🆕🆕 D635: dropped — a new fossil id in a stack owes MRV 44 → 45, plus a Supporter-only holder shield] [🆕🆕🆕 D636: not taken at L1's bump; owes 45 → 46]
 
 At any time during your turn, you may discard this card from play.
-- 1× **Antique Skull Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat. [🆕🆕🆕 D635: dropped — a new fossil id in a stack owes MRV 44 → 45]
+- 1× **Antique Skull Fossil** — Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any Special Conditions and can't retreat. [🆕🆕🆕 D635: dropped — a new fossil id in a stack owes MRV 44 → 45] [🆕🆕🆕 D636: not taken at L1's bump; owes 45 → 46]
 
 At any time during your turn, you may discard this card from play.
 - 1× **Core Memory** — The Mega Zygarde ex this card is attached to can use the attack on this card. (You still need the necessary Energy to use this attack.) [🆕🆕🆕 D620: BUILT]

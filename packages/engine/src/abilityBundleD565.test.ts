@@ -487,7 +487,8 @@ describe("§1 — the prints and the registry rows", () => {
     // 🆕🆕🆕 D602 — Solgaleo `30th-105` "Sunrise" prints the same Bench clause (`SUNRISE`).
     // 🆕🆕🆕 D603 — Linoone `me02-082` "Excited Dash" prints it too (`EXCITED_DASH`).
     // 🆕🆕🆕 D628 — Larry's Komala `me02.5-175` "Lethargic Charge" prints it too (`LETHARGIC_CHARGE`).
-    expect(benchOnly.sort()).toEqual([...PSYDUCK, "30th-105", "me02-082", "me02.5-175"].sort());
+    // 🆕🆕🆕 D636 — Clawitzer `me01-038` / `-141` "Fall Back to Reload" too (`FALL_BACK_TO_RELOAD`).
+    expect(benchOnly.sort()).toEqual([...PSYDUCK, "30th-105", "me02-082", "me02.5-175", "me01-038", "me01-141"].sort());
   });
 
   it("the TRIGGERED `oncePerTurn` is carried by Zero to Hero alone (🆕🆕🆕 D628 (D539): WITHDRAWN as the whole field — `true` is still Zero to Hero alone, and Meowth ex ×3 \"Last-Ditch Catch\" carries the widened `\"sharedByName\"`)", () => {
@@ -506,8 +507,8 @@ describe("§1 — the prints and the registry rows", () => {
     expect(abilityUsedKey("p1#7", zero)).toBe("p1#7:Zero to Hero");
   });
 
-  it("the engine is 0.518.0", () => {
-    expect(engineVersion).toBe("0.518.0");
+  it("the engine is 0.519.0", () => {
+    expect(engineVersion).toBe("0.519.0");
   });
 });
 

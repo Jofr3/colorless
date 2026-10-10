@@ -68,6 +68,7 @@ import {
 } from "./interpreter";
 import type { AbilityProgram, StadiumAbility } from "./registry";
 import { programFor } from "./registry";
+import { flipCoin } from "./rng";
 import { isBenchIndex, isPokemonTarget, placeEvolution, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
 import { SEATS, isFirstTurnOf, makeInPlay, otherSeat, withSide, without } from "./types";
@@ -80,6 +81,32 @@ import { SEATS, isFirstTurnOf, makeInPlay, otherSeat, withSide, without } from "
 // different animals — a Stadium (§7.3) moves into the shared zone and a Tool
 // (§7.4, attachTool) onto a Pokémon, both with CONTINUOUS effects the
 // pipeline reads (continuous.ts) rather than programs the interpreter runs.
+
+/** 🆕🆕🆕 §7 (D636) — Seismitoad "Quaking Fist"'s coin, flipped by `seat` trying to use the Trainer card `uid`
+    from hand while `PlayerSide.trainerFlipLockTurn` is the turn now in progress. `null` when no lock is live (no
+    rng is drawn). Otherwise the flip's row, and on TAILS the card moved from the hand to the discard pile
+    instead of being used (`failed`). Asked at all five Trainer-play sites (Item / Supporter, Stadium, Tool, Rare
+    Candy, an Antique Fossil) AFTER every check that would refuse the play, so only a legal try flips.
+    R-QF1 ⚠️ UNRULED: the try IS the play for the per-turn limits — a tails Supporter or Stadium spends
+    `supporterPlayed` / `stadiumPlayed` (the caller writes it) — and nothing else a use writes is written
+    (no `TRAINER_PLAYED`, no `supporterPlayedUid`, no effect). */
+function trainerFlipFails(
+  state: GameState,
+  seat: Seat,
+  uid: string,
+): { state: GameState; events: GameEvent[]; failed: boolean } | null {
+  const side = state.players[seat];
+  if (side.trainerFlipLockTurn !== state.turn) return null;
+  const [face, rngState] = flipCoin(state.rngState);
+  const events: GameEvent[] = [{ type: "TRAINER_FLIP_LOCK_CHECK", seat, uid, result: face }];
+  if (face === "heads") return { state: { ...state, rngState }, events, failed: false };
+  const discarded = withSide(state, seat, {
+    ...side,
+    hand: without(side.hand, uid),
+    discard: [...side.discard, uid],
+  });
+  return { state: { ...discarded, rngState }, events, failed: true };
+}
 
 /** §7.1–§7.3 — play a Trainer from hand: an Item (any number) or Supporter
     (one per turn) resolves its authored program then discards; a Stadium (one
@@ -205,14 +232,24 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
   if (!trainerProgramPlayable(state, program, action.seat)) {
     return err("NO_LEGAL_TARGET", `${card.name} has no legal target`);
   }
+  // 🆕🆕🆕 D636 — Quaking Fist: the try flips (R-QF1); tails discards the card and spends a Supporter's turn.
+  const flip = trainerFlipFails(state, action.seat, action.uid);
+  if (flip?.failed === true) {
+    const spent =
+      trainerType === "Supporter"
+        ? { ...flip.state, allowances: { ...flip.state.allowances, supporterPlayed: true } }
+        : flip.state;
+    return ok(spent, flip.events);
+  }
 
   // Play it: the card leaves hand for the discard (Item/Supporter discard after
   // resolving — none in scope references itself mid-effect, so discarding up
   // front is equivalent and spares threading its uid through the continuation).
   const events: GameEvent[] = [
+    ...(flip?.events ?? []),
     { type: "TRAINER_PLAYED", seat: action.seat, uid: action.uid, trainerType },
   ];
-  let next: GameState = withSide(state, action.seat, {
+  let next: GameState = withSide(flip?.state ?? state, action.seat, {
     ...side,
     hand: without(side.hand, action.uid),
     discard: [...side.discard, action.uid],
@@ -273,12 +310,16 @@ function playFossil(state: GameState, action: PlayTrainerAction, card: Card): Ap
   if (!fossilPlayable(state, action.seat)) {
     return err("BENCH_FULL", `the bench holds at most ${benchLimitOf(state, action.seat)} Pokémon`);
   }
+  // 🆕🆕🆕 D636 — Quaking Fist (R-QF1): an Antique Fossil is an Item play, so the try flips.
+  const flip = trainerFlipFails(state, action.seat, action.uid);
+  if (flip?.failed === true) return ok(flip.state, flip.events);
   const events: GameEvent[] = [
+    ...(flip?.events ?? []),
     { type: "TRAINER_PLAYED", seat: action.seat, uid: action.uid, trainerType: "Item" },
     { type: "POKEMON_BENCHED", seat: action.seat, uid: action.uid },
   ];
   return ok(
-    withSide(state, action.seat, {
+    withSide(flip?.state ?? state, action.seat, {
       ...side,
       hand: without(side.hand, action.uid),
       bench: [...side.bench, makeInPlay(action.uid, state.turn)],
@@ -326,7 +367,8 @@ function playStadium(state: GameState, action: PlayTrainerAction, card: Card): A
   //
   // ⚠️ `handPlayBarred` AND NOT A FIFTH PREDICATE: the SAME funnel every other read
   // site asks, so the stamped source — which can never name `"Stadium"`, by
-  // `StampedHandPlayClass` — is consulted and answers `false` without this line
+  // `StampedHandPlayClass` [🆕🆕🆕 D636 (D539): WITHDRAWN — Scorching Earth stamps `"Stadium"`, and this
+  // line now meets that stamp] — is consulted and answers `false` without this line
   // knowing there are two sources at all.
   if (handPlayBarred(state, action.seat, "Stadium", card)) {
     return err(
@@ -352,11 +394,17 @@ function playStadium(state: GameState, action: PlayTrainerAction, card: Card): A
     return err("STADIUM_SAME_NAME", `${card.name} is already in play (§7.3)`);
   }
 
+  // 🆕🆕🆕 D636 — Quaking Fist (R-QF1): tails discards the Stadium and spends the turn's Stadium play.
+  const flip = trainerFlipFails(state, action.seat, action.uid);
+  if (flip?.failed === true) {
+    return ok({ ...flip.state, allowances: { ...flip.state.allowances, stadiumPlayed: true } }, flip.events);
+  }
   const events: GameEvent[] = [
+    ...(flip?.events ?? []),
     { type: "TRAINER_PLAYED", seat: action.seat, uid: action.uid, trainerType: "Stadium" },
   ];
   const side = state.players[action.seat];
-  let next: GameState = withSide(state, action.seat, {
+  let next: GameState = withSide(flip?.state ?? state, action.seat, {
     ...side,
     hand: without(side.hand, action.uid),
   });
@@ -507,7 +555,13 @@ export function attachTool(state: GameState, action: AttachToolAction): ApplyRes
     );
     updated = { ...side, hand, bench };
   }
+  // 🆕🆕🆕 D636 — Quaking Fist (R-QF1): a Tool is a Trainer card used from hand, so the try flips — AFTER the
+  // target and slot checks above (only a legal attach flips); tails discards the Tool.
+  const flip = trainerFlipFails(state, action.seat, action.uid);
+  if (flip?.failed === true) return ok(flip.state, flip.events);
+  const flipped = flip?.state ?? state;
   const events: GameEvent[] = [
+    ...(flip?.events ?? []),
     // The target is copied: the action object belongs to the caller (events.ts).
     { type: "TOOL_ATTACHED", seat: action.seat, uid: action.uid, target: { ...action.target } },
   ];
@@ -535,7 +589,7 @@ export function attachTool(state: GameState, action: AttachToolAction): ApplyRes
   // already be on the body for its own clause to be one of the sources. A BENCH
   // target sweeps nothing (the sweep is Active-only, §12) — correct rather than
   // incomplete, since a benched body carries no conditions to recover from.
-  return ok(recoverStatuses(withSide(state, action.seat, updated), events), events);
+  return ok(recoverStatuses(withSide(flipped, action.seat, updated), events), events);
 }
 
 /** §7.1 — Rare Candy: evolve one of the actor's own Basic Pokémon straight to a
@@ -679,13 +733,17 @@ export function rareCandy(state: GameState, action: RareCandyAction): ApplyResul
   // Play it: Rare Candy → discard, the Stage 2 leaves hand onto the stack. Both
   // leave hand together (up front), then the shared placement runs the evolve +
   // its on-evolve trigger + the evolve-below-HP mid-turn KO check.
+  // 🆕🆕🆕 D636 — Quaking Fist (R-QF1): Rare Candy is the Trainer tried; tails discards it and the Stage 2 stays.
+  const flip = trainerFlipFails(state, action.seat, action.uid);
+  if (flip?.failed === true) return ok(flip.state, flip.events);
   const hand = without(without(side.hand, action.uid), action.evolutionUid);
-  const stateAfterHand = withSide(state, action.seat, {
+  const stateAfterHand = withSide(flip?.state ?? state, action.seat, {
     ...side,
     hand,
     discard: [...side.discard, action.uid],
   });
   const events: GameEvent[] = [
+    ...(flip?.events ?? []),
     { type: "TRAINER_PLAYED", seat: action.seat, uid: action.uid, trainerType: "Item" },
   ];
   return placeEvolution(
@@ -842,6 +900,9 @@ export function abilityBodyGateMet(
   if (ability.requiresEnergyType !== undefined && !hasAttachedEnergy(state, pokemon, ability.requiresEnergyType)) {
     return false;
   }
+  // 🆕🆕🆕 D636 — Fall Back to Reload's moment as a use-time gate (R-FBR1): this body went down from the
+  // Active Spot during the turn now in progress (`benchedTurn`, written by `retreat` / `switchInto`).
+  if (ability.benchedThisTurn === true && pokemon.benchedTurn !== state.turn) return false;
   if (ability.remainingHpAtMost === undefined) return true;
   // 🆕 D349 — WAS THIS FUNCTION'S OWN THREE LINES, NOW `remainingHpWithin`
   // (continuous.ts). The arithmetic is byte-identical; what changed is that the
@@ -866,6 +927,8 @@ export function abilityBodyGateClause(ability: AbilityProgram): string | null {
   if (ability.remainingHpAtMost !== undefined) {
     return `this Pokémon's remaining HP is ${ability.remainingHpAtMost} or less`;
   }
+  // 🆕🆕🆕 D636 — Fall Back to Reload (R-FBR1).
+  if (ability.benchedThisTurn === true) return "this Pokémon moved from the Active Spot to your Bench this turn";
   return null;
 }
 

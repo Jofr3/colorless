@@ -215,7 +215,8 @@ describe("D613 §2 — the switchInto audit", () => {
     const turn = RAW["./turn.ts"] ?? "";
     expect(turn.match(/switchInto\(/g)?.length).toBe(1);
     expect(turn).toContain("    switched = moved !== next;\n");
-    expect(turn).toContain("    if (watched !== next || switched) {\n");
+    // 🆕🆕🆕 D636 (D539): the sweep's board is `shocked` (Electrified Incisors placed after the watched triggers).
+    expect(turn).toContain("    if (shocked !== next || switched) {\n");
     for (const f of ["cardplay", "flow", "triggers", "attack"]) {
       const text = RAW[`./${f}.ts`];
       expect(text, f).toBeDefined();
@@ -356,7 +357,7 @@ describe("D613 §7 — the predicate, and the version", () => {
     expect(namesItsCard({ kind: "anyPokemon" })).toBe(false);
   });
 
-  it("is built at engine 0.518.0", () => {
-    expect(engineVersion).toBe("0.518.0");
+  it("is built at engine 0.519.0", () => {
+    expect(engineVersion).toBe("0.519.0");
   });
 });

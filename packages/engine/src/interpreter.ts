@@ -2510,9 +2510,13 @@ function stepOp(
       };
     case "preventAttack":
       return { done: preventAttack(state, op, ctx, events) };
-    // 🆕🆕🆕 D547 — field-free, so no `op.` read (`installNoWeakness`'s shape).
+    // 🆕🆕🆕 D547 — field-free, so no `op.` read (`installNoWeakness`'s shape). [D539: WITHDRAWN at D636 — `coins`.]
     case "flipLockAttack":
-      return { done: flipLockAttack(state, ctx, events) };
+      // 🆕🆕🆕 D636 — `op.coins` rides through (Jet of Ink's two coins).
+      return { done: flipLockAttack(state, ctx, events, op.coins) };
+    // 🆕🆕🆕 D636 — Quaking Fist's next-turn Trainer flip lock, on the OPPONENT's side.
+    case "flipLockTrainerPlay":
+      return { done: flipLockTrainerPlay(state, ctx, events) };
     // 🆕🆕🆕 D549 — the SIDE-WIDE lock: one record per seat, `whose` names the seat.
     case "lockSideAttacks":
       return { done: lockSideAttacks(state, op, ctx, events) };
@@ -5736,6 +5740,9 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
     case "yourStadiumInPlay":
       // §7.3 — presence is not enough; the Stadium must be the one YOU played.
       return state.stadium !== null && state.stadium.owner === seat;
+    case "opponentStadiumInPlay":
+      // 🆕🆕🆕 D636 — the arm above from the other seat (Scorching Earth, R-SCE1).
+      return state.stadium !== null && state.stadium.owner === otherSeat(seat);
     case "stadiumInPlay":
       // 🆕 D378 — "a Stadium is in play" (Probopass sv10-098 "Mountain Drop", +70)
       // and, through `ATTACK_REQUIREMENT_CLAUSES`, the printed NEGATION on Fan Rotom
@@ -7580,6 +7587,8 @@ export function conditionNote(cond: BoardCondition): string {
       return "you have more Prize cards remaining than your opponent";
     case "yourStadiumInPlay":
       return "you have a Stadium in play";
+    case "opponentStadiumInPlay":
+      return "your opponent has a Stadium in play"; // 🆕🆕🆕 D636 — the printed clause verbatim
     case "stadiumInPlay":
       // 🆕 D378 — the printed clause verbatim, which is unusual in this switch: most
       // arms drop a pronoun or re-voice a noun phrase (D116, D296) because a
@@ -9622,7 +9631,7 @@ function preventAttack(
     The row is ATTACK_LOCKED with `flip: true` — without the rider it would say
     "can't attack next turn", which is false (D421). Never parks; NO rng here: the
     coin belongs to the locked player's declaration, not to this install. */
-function flipLockAttack(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
+function flipLockAttack(state: GameState, ctx: EffectContext, events: GameEvent[], coins?: 2): GameState {
   const seat = otherSeat(ctx.seat);
   const active = state.players[seat].active;
   if (active === null) return state;
@@ -9632,9 +9641,24 @@ function flipLockAttack(state: GameState, ctx: EffectContext, events: GameEvent[
   // announced even on an already-locked body (`preventRetreat`'s ordering).
   if (effectRefused(state, seat, ctx, events)) return state;
   const turn = state.turn + 1;
+  // 🆕🆕🆕 D636 — Jet of Ink's two coins write their own stamp (types.ts `attackTwoFlipLockTurn`).
+  if (coins === 2) {
+    if (active.attackTwoFlipLockTurn === turn) return state;
+    events.push({ type: "ATTACK_LOCKED", seat, uid, flip: true, coins: 2 });
+    return withActive(state, seat, { ...active, attackTwoFlipLockTurn: turn });
+  }
   if (active.attackFlipLockTurn === turn) return state;
   events.push({ type: "ATTACK_LOCKED", seat, uid, flip: true });
   return withActive(state, seat, { ...active, attackFlipLockTurn: turn });
+}
+
+/** 🆕🆕🆕 §7 (D636) — INSTALL Seismitoad "Quaking Fist"'s next-turn Trainer flip lock on the OPPONENT's side
+    (`PlayerSide.trainerFlipLockTurn = state.turn + 1`). `preventHandPlay`'s seat, window and reasons: no §11
+    refusal (its object is the hand), no Active precondition, idempotent by the stamp. */
+function flipLockTrainerPlay(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
+  const seat = otherSeat(ctx.seat);
+  events.push({ type: "TRAINER_FLIP_LOCKED", seat });
+  return withSide(state, seat, { ...state.players[seat], trainerFlipLockTurn: state.turn + 1 });
 }
 
 /** 🆕🆕🆕 §8/§11 (D549) — INSTALL the printed SIDE-WIDE ATTACK LOCK on a whole side
@@ -9863,11 +9887,13 @@ function markHandAttach(
   const same = prior !== null && prior.turn === turn;
   const barred = op.barred === true || (same && prior.barred);
   const endsTurn = op.endsTurn === true || (same && prior.endsTurn);
-  if (same && barred === prior.barred && endsTurn === prior.endsTurn) return state;
-  events.push({ type: "HAND_ATTACH_MARKED", seat: victimSeat, uid: markedUid, barred, endsTurn });
+  // 🆕🆕🆕 D636 — Electrified Incisors' counters SUM inside one window (two printed effects, R-EIC1).
+  const counters = (op.counters ?? 0) + (same ? prior.counters : 0);
+  if (same && barred === prior.barred && endsTurn === prior.endsTurn && counters === prior.counters) return state;
+  events.push({ type: "HAND_ATTACH_MARKED", seat: victimSeat, uid: markedUid, barred, endsTurn, counters });
   return withActive(state, victimSeat, {
     ...marked,
-    handAttachMark: { turn, barred, endsTurn, tripped: false },
+    handAttachMark: { turn, barred, endsTurn, tripped: false, counters },
   });
 }
 
@@ -16091,6 +16117,7 @@ function devolvedBodyOf(body: InPlayPokemon): InPlayPokemon {
     attackLockedTurn: null,
     // 🆕🆕🆕 D547 — the flip-to-attack lock (devolve clear, D547).
     attackFlipLockTurn: null,
+    attackTwoFlipLockTurn: null, // 🆕🆕🆕 D636 — Jet of Ink's stamp, shed with the one-coin stamp (devolve clear)
     damageReduction: null,
     noWeaknessTurn: null,
     // 🆕🆕 D434 — the SCHEDULED counter placement, and it is the ONE member of
@@ -18218,6 +18245,8 @@ export function switchInto(
   // literal is one of three that have to agree with nothing making them.
   const benched = {
     ...active,
+    // 🆕🆕🆕 D636 — the body that went DOWN remembers when (types.ts `benchedTurn`, Fall Back to Reload).
+    benchedTurn: state.turn,
     conditions: noConditions(),
     retreatBlocked: false,
     // D412 — and unlike the retreat path's copy of this line, THIS one is live:
@@ -18229,6 +18258,7 @@ export function switchInto(
     // 🆕🆕🆕 D547 — the FLIP-TO-ATTACK lock goes with the body, D148's story: the
     // victim Switches out of it and attacks with no coin (switch clear, D547).
     attackFlipLockTurn: null,
+    attackTwoFlipLockTurn: null, // 🆕🆕🆕 D636 — Jet of Ink's stamp, shed with the one-coin stamp (switch clear)
     damageReduction: null,
     // 🆕🆕 D432 — and the NO-WEAKNESS bar's story here is the reduction's
     // above it verbatim: the window is the OPPONENT's turn, so the only player who
@@ -19014,6 +19044,25 @@ function tripHandAttachMark(state: GameState, body: InPlayPokemon): InPlayPokemo
   return mark?.endsTurn ? { ...body, handAttachMark: { ...mark, tripped: true } } : body;
 }
 
+/** 🆕🆕🆕 D636 — Pachirisu "Electrified Incisors" (R-EIC1 ⚠️ UNRULED): `cards` Energy cards just went from
+    `seat`'s hand onto `body`; a live mark's `counters` are placed for EACH card (`counters × 10 × cards` damage),
+    filed as an attack's placement (`COUNTERS_PLACED` `"attack"`). Used on the effect path (the two hand-attach
+    applies) and by turn.ts `attachEnergy` (the action). No Knock Out check here: the caller's sweep owns it. */
+export function shockHandAttach(
+  state: GameState,
+  seat: Seat,
+  body: InPlayPokemon,
+  cards: number,
+  events: GameEvent[],
+): InPlayPokemon {
+  const counters = liveHandAttachMark(state, body)?.counters ?? 0;
+  const uid = topUid(body);
+  if (counters <= 0 || cards <= 0 || uid === undefined) return body;
+  const amount = counters * 10 * cards;
+  events.push({ type: "COUNTERS_PLACED", seat, uid, amount, source: "attack" });
+  return { ...body, damage: body.damage + amount };
+}
+
 /** Apply a deck-search attach (Charizard ex "Infernal Reign" / Janine's Secret
     Art): move each assigned card out of the deck onto the Pokémon it was assigned
     to, and hand back the uids that ACTUALLY moved (§9.2 — the record).
@@ -19087,6 +19136,15 @@ function attachFromZoneApply(
       target:
         to.spot.spot === "active" ? { spot: "active" } : { spot: "bench", index: to.spot.index },
     });
+    // 🆕🆕🆕 D636 — Electrified Incisors on the effect path (R-EIC1): each HAND card onto a marked body.
+    if (zone === "hand") {
+      if (to.spot.spot === "active") {
+        if (active !== null) active = shockHandAttach(state, ctx.seat, active, 1, events);
+      } else {
+        const index = to.spot.index;
+        bench = bench.map((p, i) => (i === index ? shockHandAttach(state, ctx.seat, p, 1, events) : p));
+      }
+    }
   }
   if (attached.size === 0) return { state, attached: [] };
   return {
@@ -19200,6 +19258,8 @@ function attachEnergyFrom(
       target: { ...ref.spot },
     });
   }
+  // 🆕🆕🆕 D636 — Electrified Incisors on the effect path (R-EIC1): one placement per Energy card from hand.
+  if (op.source === "hand") updated = shockHandAttach(state, ctx.seat, updated, energyUids.length, events);
   if (op.bonusCounters !== undefined && op.bonusCounters > 0) {
     updated = { ...updated, damage: updated.damage + op.bonusCounters };
     events.push({

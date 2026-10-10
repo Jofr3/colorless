@@ -53,6 +53,7 @@ import {
   evolveAliasLicensed,
   evolveEarlyLicensed,
   runProgram,
+  shockHandAttach,
   switchInto,
 } from "./interpreter";
 import { programFor } from "./registry";
@@ -399,10 +400,13 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
       events,
       atAttach,
     );
+    // 🆕🆕🆕 D636 — Pachirisu "Electrified Incisors" (R-EIC1): the marked body that took the card takes its
+    // counters, AFTER the watched triggers (the opponent's Gnawing Curse first); the sweep below owns the KO.
+    const shocked = shockAttachedBody(watched, action.seat, attachedTo, events);
     // 🆕🆕🆕 D613 — `|| switched`: a Jet Energy switch can make the moved body lethal (Holes, D610)
     // with no watched trigger answering the attach, and D610 left that Knock Out unchecked.
-    if (watched !== next || switched) {
-      next = watched;
+    if (shocked !== next || switched) {
+      next = shocked;
       // 🆕🆕🆕 D604 — the search's settle runs the mid-turn sweep once it is done (R-TP1).
       if (benchSearch !== undefined) return searchAfterAttach(next, action.seat, benchSearch, endsTurn, events);
       // The counters can be lethal, and this is the acting seat's own board
@@ -425,6 +429,22 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
   if (benchSearch !== undefined) return searchAfterAttach(next, action.seat, benchSearch, endsTurn, events);
   if (endsTurn) return advance({ ...next, pending: turnTail(action.seat) }, events);
   return ok(next, events);
+}
+
+/** 🆕🆕🆕 D636 — the body on `seat`'s board whose top is `uid` after ONE Energy card from hand landed on it,
+    through `shockHandAttach` (Electrified Incisors); `state` itself when nothing was placed. */
+function shockAttachedBody(state: GameState, seat: Seat, uid: string, events: GameEvent[]): GameState {
+  const side = state.players[seat];
+  if (side.active !== null && topUid(side.active) === uid) {
+    const shocked = shockHandAttach(state, seat, side.active, 1, events);
+    return shocked === side.active ? state : withSide(state, seat, { ...side, active: shocked });
+  }
+  const index = side.bench.findIndex((p) => topUid(p) === uid);
+  const benched = side.bench[index];
+  if (benched === undefined) return state;
+  const shocked = shockHandAttach(state, seat, benched, 1, events);
+  if (shocked === benched) return state;
+  return withSide(state, seat, { ...side, bench: side.bench.map((p, i) => (i === index ? shocked : p)) });
 }
 
 /** 🆕🆕🆕 D604 — Telepathic Psychic Energy `me03-088`'s *"search your deck for up to 2 Basic {P} Pokémon and
@@ -894,6 +914,7 @@ function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
     // 🆕🆕🆕 D547 — the FLIP-TO-ATTACK lock, the defender lock's story one line up:
     // the victim retreats out of it on the very turn it is live (retreat clear, D547).
     attackFlipLockTurn: null,
+    attackTwoFlipLockTurn: null, // 🆕🆕🆕 D636 — Jet of Ink's stamp, shed with the one-coin stamp
     // D147 — the durated damage reduction, whose story here is D142's block's:
     // the RETREAT half of this path is unreachable inside the window (the window
     // is the opponent's turn, and the holder's controller cannot retreat on it),
@@ -1067,7 +1088,8 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
   // The cost payment is the shared "cards leave play for the discard" move
   // (types.ts) — the same primitive KO cleanup uses.
   const paid = discardFromStack(side, active, chosenSet);
-  const benched = clearOnLeavingActive(paid.pokemon);
+  // 🆕🆕🆕 D636 — and it remembers WHEN it went down (types.ts `benchedTurn`, Fall Back to Reload).
+  const benched = { ...clearOnLeavingActive(paid.pokemon), benchedTurn: state.turn };
   // Swap into the promoted Pokémon's bench slot, preserving the other slots.
   const bench = [
     ...side.bench.slice(0, promoteBenchIndex),

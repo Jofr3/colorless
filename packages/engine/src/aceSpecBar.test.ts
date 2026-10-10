@@ -960,9 +960,10 @@ describe("D291 §7 — the bar is DERIVED, and the wire greys the row it should"
     const state = turnOf(board(SEEDS[0], "p1", "p1", ARMED), "p2");
     expect(play(state, "p2", ACE_ITEM)).toBe("HAND_PLAY_BLOCKED");
     for (const seat of ["p1", "p2"] as const) {
-      expect(state.handPlayLockedTurn[seat]).toEqual({ Item: null, Supporter: null, evolve: null });
+      expect(state.handPlayLockedTurn[seat]).toEqual({ Item: null, Supporter: null, Stadium: null, evolve: null });
       expect(Object.keys(state.handPlayLockedTurn[seat]).sort()).toEqual([
         "Item",
+        "Stadium", // 🆕🆕🆕 D636 — the stamped `Stadium` key (Scorching Earth, MRV 44 → 45)
         "Supporter",
         "evolve",
       ]);

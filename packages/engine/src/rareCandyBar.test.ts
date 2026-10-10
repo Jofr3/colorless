@@ -699,7 +699,7 @@ describe("D286 §6 — the version does NOT move, and the claim is driven", () =
     );
     for (const seat of ["p1", "p2"] as const) {
       expect(Object.keys(barred.handPlayLockedTurn[seat]).sort()).toEqual(
-        ["Item", "Supporter", "evolve"].sort(),
+        ["Item", "Supporter", "Stadium", "evolve"].sort() /* 🆕🆕🆕 D636 — `Stadium` (Scorching Earth) */,
       );
     }
     expect(Object.keys(barred.allowances).sort()).toEqual(Object.keys(free.allowances).sort());

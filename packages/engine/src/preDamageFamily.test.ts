@@ -958,6 +958,8 @@ describe("§9 — nothing persisted moves, and it is DRIVEN rather than argued",
       // suite's slice added none.
       "attackFlipLockTurn",
       "attackLockedTurn",
+      "attackTwoFlipLockTurn", // 🆕🆕🆕 D636 (44 -> 45) — Jet of Ink's stamp; the pin is on the HEAD's key set
+      "benchedTurn", // 🆕🆕🆕 D636 (44 -> 45) — Fall Back to Reload's stamp
       "boostedAttack",
       "conditions",
       "costTaxTurn", // 🆕🆕🆕 D549 (32 -> 33) — the cost tax's stamp; the pin is on the HEAD's key set
@@ -1062,6 +1064,6 @@ describe("§10 — purity and the version", () => {
     // anchor. ⚠️ D427 named the mechanism — **every note counts the pins it INHERITED
     // and never the one it is about to AUTHOR** — and D428 was the first note to get it
     // right. This line is the one being authored.
-    expect(engineVersion).toBe("0.518.0");
+    expect(engineVersion).toBe("0.519.0");
   });
 });

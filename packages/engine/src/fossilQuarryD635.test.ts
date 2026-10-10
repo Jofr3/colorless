@@ -29,7 +29,7 @@ import {
 // (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-10, `legal_standard = 1`. Before this slice the two ids
 // appeared only in D606's / D618's drop lists and their census pins. Dropped and named: Antique Jaw / Sail /
 // Skull Fossil `me03-068` / `me03-069` / `me05-073` (a new fossil id in a stack is read by a 0.517 rollback as
-// an Item — D576's twelfth position, so each owes `MATCH_RECORD_VERSION` 44 → 45) and Antique Armor Fossil
+// an Item — D576's twelfth position, so each owes `MATCH_RECORD_VERSION` 44 → 45 [🆕🆕🆕 D636 (D539): not taken at 44 → 45; now 45 → 46]) and Antique Armor Fossil
 // `me05-072` (that, plus a source-Active rider no shipped field has). Driven on a LOCAL `cardPool` (D275) in
 // the suite's OWN 60-card deck (D270).
 
@@ -354,7 +354,7 @@ describe("D635 §4 — Relicanth \"Fossil Beatdown\": +30 per benched Antique", 
     expect(beat(state)).toBe(40);
   });
 
-  it("the engine is 0.518.0", () => {
-    expect(engineVersion).toBe("0.518.0");
+  it("the engine is 0.519.0", () => {
+    expect(engineVersion).toBe("0.519.0");
   });
 });

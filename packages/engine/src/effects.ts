@@ -1073,7 +1073,12 @@ export type HandPlayClass = "Item" | "Supporter" | "Tool" | "Stadium";
     that tree. The attack-column census quoted on `HandPlayClass` is the same
     claim with a number behind it. **A GUESS AND A MEASUREMENT CAN AGREE, AND
     ONLY ONE OF THEM CAN BE CITED.** */
-export type StampedHandPlayClass = Extract<HandPlayClass, "Item" | "Supporter">;
+/** 🆕🆕🆕 D636 — WIDENED by `"Stadium"`: Chi-Yu `me01-031` "Scorching Earth" (*"…your opponent can't play any
+    Stadium cards from their hand during their next turn."*) is the first ATTACK that stamps a Stadium bar, so
+    `GameState.handPlayLockedTurn` gains the `Stadium` key (`MATCH_RECORD_VERSION` 44 → 45, migrated as `null`).
+    D539: the paragraphs above that measure `"Stadium"` as a key no writer could set are WITHDRAWN as of D636,
+    kept as written. `"Tool"` is still passive-only. */
+export type StampedHandPlayClass = Extract<HandPlayClass, "Item" | "Supporter" | "Stadium">;
 
 /** §7.5/§10 (D285) — the ACTS by which a POKÉMON card leaves a hand and reaches
     the board, and the vocabulary of the one question `pokemonPlayBarred`
@@ -1236,6 +1241,10 @@ export type BoardCondition =
       play at a time, so there is no count to parameterise and no "whose" to store.
       False with an empty zone. */
   | { kind: "stadiumInPlay" }
+  /** 🆕🆕🆕 D636 — §7.3, the Stadium in play is your OPPONENT's (they played it): `yourStadiumInPlay` read from
+      the other seat. Chi-Yu `me01-031` "Scorching Earth" — *"If your opponent has a Stadium in play, discard it."*
+      — the gate of a `conditionGate`, evaluated SERVER-side at the attack (no client mirror reads it). */
+  | { kind: "opponentStadiumInPlay" }
   /** None of your in-play Pokémon (Active or Benched) has ANY Energy attached —
       Basic or Special (Grusha's "if none of your Pokémon have any Energy
       attached"). Vacuously true with nothing in play. */
@@ -4552,7 +4561,20 @@ export type EffectOp =
       Both keys optional on the OP (the printed word adds the key, D135); the persisted MARK
       carries both as booleans and merges by OR within one window. Shed by §10 with every other
       effect of an attack (the five spread literals). Never parks. */
-  | { op: "markHandAttach"; barred?: true; endsTurn?: true }
+  | {
+      op: "markHandAttach";
+      barred?: true;
+      endsTurn?: true;
+      /** 🆕🆕🆕 D636 — Pachirisu `me01-051` "Electrified Incisors": the damage counters placed per Energy card
+          attached from the victim's hand to the marked body (`HandAttachMark.counters`, R-EIC1). */
+      counters?: number;
+    }
+  /** 🆕🆕🆕 §7 (D636) — Seismitoad `30th-084` "Quaking Fist": *"During your opponent's next turn, whenever they
+      try to use a Trainer card from their hand, they flip a coin. If tails, your opponent discards that Trainer
+      card instead of using it."* Writes `PlayerSide.trainerFlipLockTurn = state.turn + 1` on the OPPONENT's side
+      (`preventHandPlay`'s seat and window); read by cardplay.ts `trainerFlipFails`. Its object is the hand, not a
+      body, so no §11 refusal is asked (`preventHandPlay`'s reason). Never parks; no rng at the install. */
+  | { op: "flipLockTrainerPlay" }
   /** 🆕🆕🆕 (D575) — Team Rocket's Blipbug `sv10-015` "Searching Eyes": *"Look at 1 of your
       opponent's face-down Prize cards."* A NEW name, NOT a `turnPrizeFaceUp` widening (that
       op turns a card face UP for both players; this one turns nothing). Zero face-down prizes
@@ -5097,7 +5119,8 @@ export type EffectOp =
       and would put a legal-to-declare lock through `attackLocked`, which
       `redactedAttacksOf` and GameHud read as "may not declare".
 
-      FIELD-FREE, AND BARE MEANS THE DEFENDER — D412/D434's positive statement: both
+      FIELD-FREE, AND BARE MEANS THE DEFENDER [🆕🆕🆕 D636 (D539): no longer field-free — the optional `coins: 2`
+      (Jet of Ink) is the one field; bare is still D547's one-coin defender lock] — D412/D434's positive statement: both
       printings say "the Defending Pokémon", and the pool prints no self twin of
       this sentence (`censusAttackCorpus.ts`, measured over all 640 rows by the
       anchor below). The stamp is `state.turn + 1` — the locked body's controller's
@@ -5110,7 +5133,13 @@ export type EffectOp =
       TAIL like every other `EffectOp` (D125: its whole effect is in the future).
       Never parks and consumes NO rng at the install: the coin is flipped by the
       LOCKED player at the declaration it gates, and only while the lock is live. */
-  | { op: "flipLockAttack" }
+  | {
+      op: "flipLockAttack";
+      /** 🆕🆕🆕 D636 — Octillery `me04-017` "Jet of Ink"'s *"your opponent flips 2 coins. If either of them is
+          tails, that attack doesn't happen."*: the stamp is written on `attackTwoFlipLockTurn` instead
+          (types.ts), read as two more coins at the same seam. Absent = the D547 single coin, byte-identical. */
+      coins?: 2;
+    }
   /** 🆕🆕🆕 §8/§11 (D549) — THE SIDE-WIDE ATTACK LOCK, on a whole side for one turn. TWO
       printings (`censusAttackCorpus.ts:169` and `:170`, 1 legal printing each; the
       anchors are `SIDE_CANT_ATTACK_NEXT_TURN` and `OPPONENT_LOW_ENERGY_CANT_ATTACK`
@@ -14852,6 +14881,26 @@ const POISON_AND_BAR_HAND_ATTACH =
 //   • Hypno `sv06.5-017` "Daydream" (index 0) — `markHandAttach { endsTurn }` (R-HY1 / R-HY2);
 const HAND_ATTACH_ENDS_TURN =
   /^During your opponent['’]s next turn, if they attach an Energy card from their hand to the Defending Pokémon, their turn ends\.$/;
+// 🆕🆕🆕 D636 — L1, THE NEXT-TURN OPPONENT LOCKS: five whole-sentence anchors, one printing each (LOCAL D1,
+// 2026-10-10, `legal_standard = 1`), `^…$`, no `/i`, `['’]` on every apostrophe slot:
+//   • Trevenant `me04-039` "Cursed Roots" (index 0) — Glimmora's second sentence on its own: the shipped
+//     `markHandAttach { barred }` (R-GL1 inherited; no new key);
+const BAR_HAND_ATTACH_DEFENDER =
+  /^During your opponent['’]s next turn, Energy can['’]t be attached from your opponent['’]s hand to the Defending Pokémon\.$/;
+//   • Pachirisu `me01-051` "Electrified Incisors" (index 0) — `markHandAttach` with the NEW `counters` (R-EIC1);
+//     the printed "place" is read as "put" (`normaliseMeWording`, D592), so the anchor spells "put";
+const HAND_ATTACH_COUNTERS =
+  /^During your opponent['’]s next turn, whenever they attach an Energy card from their hand to the Defending Pokémon, put (\d+) damage counters on that Pokémon\.$/;
+//   • Octillery `me04-017` "Jet of Ink" (index 0) — `flipLockAttack` with the NEW `coins: 2` (R-JOI1);
+const DEFENDER_TWO_COIN_ATTACK_LOCK =
+  /^During your opponent['’]s next turn, if the Defending Pokémon tries to use an attack, your opponent flips 2 coins\. If either of them is tails, that attack doesn['’]t happen\.$/;
+//   • Seismitoad `30th-084` "Quaking Fist" (index 0) — the NEW `flipLockTrainerPlay` (R-QF1);
+const TRAINER_PLAY_FLIP_LOCK =
+  /^During your opponent['’]s next turn, whenever they try to use a Trainer card from their hand, they flip a coin\. If tails, your opponent discards that Trainer card instead of using it\.$/;
+//   • Chi-Yu `me01-031` "Scorching Earth" (index 0) — a `conditionGate` on the NEW `opponentStadiumInPlay` over the
+//     shipped `discardStadium` and `preventHandPlay` at the NEW stamped class `"Stadium"` (R-SCE1).
+const DISCARD_OPPONENT_STADIUM_AND_BAR =
+  /^If your opponent has a Stadium in play, discard it\. If you do, your opponent can['’]t play any Stadium cards from their hand during their next turn\.$/;
 //   • Team Rocket's Blipbug `sv10-015` "Searching Eyes" (index 0) — `lookAtPrize` (R-BL1 / R-BL2);
 const LOOK_AT_OPPONENT_PRIZE = /^Look at 1 of your opponent['’]s face-down Prize cards\.$/;
 //   • N's Sigilyph `sv09-064` "Victory Symbol" (index 1) — `conditionGate` on the shipped
@@ -32492,6 +32541,25 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     ];
   }
   if (HAND_ATTACH_ENDS_TURN.test(effect)) return [{ op: "markHandAttach", endsTurn: true }];
+  // 🆕🆕🆕 19c-D636. L1's five next-turn locks (anchors at `BAR_HAND_ATTACH_DEFENDER`).
+  if (BAR_HAND_ATTACH_DEFENDER.test(effect)) return [{ op: "markHandAttach", barred: true }];
+  match = HAND_ATTACH_COUNTERS.exec(effect);
+  if (match !== null) {
+    const counters = Number(match[1]);
+    if (counters >= 1) return [{ op: "markHandAttach", counters }];
+  }
+  if (DEFENDER_TWO_COIN_ATTACK_LOCK.test(effect)) return [{ op: "flipLockAttack", coins: 2 }];
+  if (TRAINER_PLAY_FLIP_LOCK.test(effect)) return [{ op: "flipLockTrainerPlay" }];
+  if (DISCARD_OPPONENT_STADIUM_AND_BAR.test(effect)) {
+    return [
+      {
+        op: "conditionGate",
+        cond: { kind: "opponentStadiumInPlay" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "discardStadium" }, { op: "preventHandPlay", bars: "Stadium" }],
+      },
+    ];
+  }
   // 🆕🆕🆕 19c-D630. M1's attacker-class texts (anchors at `PREVENT_DAMAGE_FROM_CLASS_D630`).
   match = PREVENT_DAMAGE_FROM_CLASS_D630.exec(effect);
   if (match !== null) {

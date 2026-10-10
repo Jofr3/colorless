@@ -209,7 +209,14 @@ describe("D592 §2 — the table cannot reach an `sv` sentence", () => {
       "If your opponent's Active Pokémon is affected by a Special Condition, place 6 damage counters on 1 of your opponent's Benched Pokémon.";
     expect(unbuilt).toContain(assassin);
     expect(deriveAttackEffect(assassin)).not.toBeNull();
-    const built = [powerfulHand, barrage, sneaky, furtive, matcha, assassin];
+    // 🆕🆕🆕 D636 (D539): and one more — Pachirisu "Electrified Incisors" (`HAND_ATTACH_COUNTERS`, read after this
+    // table rewrote its lower-case "place") is built by L1. The rewritten sentences that stay unbuilt: none.
+    const incisors =
+      "During your opponent's next turn, whenever they attach an Energy card from their hand to the Defending Pokémon, place 8 damage counters on that Pokémon.";
+    expect(unbuilt).toContain(incisors);
+    expect(deriveAttackEffect(incisors)).not.toBeNull();
+    const built = [powerfulHand, barrage, sneaky, furtive, matcha, assassin, incisors];
+    expect(unbuilt.filter((t) => !built.includes(t))).toHaveLength(0);
     for (const text of unbuilt.filter((t) => !built.includes(t))) {
       expect(deriveAttackEffect(text), text).toBeNull();
     }
@@ -498,7 +505,7 @@ describe("D592 §6 — Claw of Darkness and Thunder on a board", () => {
 });
 
 describe("D592 §7 — the version", () => {
-  it("is built at engine 0.518.0", () => {
-    expect(engineVersion).toBe("0.518.0");
+  it("is built at engine 0.519.0", () => {
+    expect(engineVersion).toBe("0.519.0");
   });
 });

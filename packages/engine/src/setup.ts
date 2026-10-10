@@ -165,6 +165,8 @@ function emptySide(deck: string[]): PlayerSide {
     // 🆕🆕🆕 D621 — no Supporter has shielded a body or locked a retreat on a side not yet dealt.
     chosenAttackShield: null,
     sideRetreatLock: null,
+    // 🆕🆕🆕 D636 — no attack has flip-locked the Trainer plays of a side not yet dealt.
+    trainerFlipLockTurn: null,
     active: null,
     bench: [],
     mulligans: 0,

@@ -28,7 +28,7 @@ import {
 // the ids appeared in the tree only as Mega Venusaur ex's rule-box fixture (D582) and Tyrantrum's
 // Wreak Havoc fixture (D595), neither of which reads a program. One new piece:
 // `hpBonus.requiresEnergyCount` (plus `requiresEnergyType` widened to "special"). Left and named (§9):
-// Fall Back to Reload ×2, Last-Ditch Catch ×3, [🆕🆕🆕 D628 (D539): Last-Ditch Catch BUILT at D628 (A1)] Luminous Wing ×4 (WP37b) and five passives.
+// Fall Back to Reload ×2 [🆕🆕🆕 D636 (D539): BUILT at D636], Last-Ditch Catch ×3, [🆕🆕🆕 D628 (D539): Last-Ditch Catch BUILT at D628 (A1)] Luminous Wing ×4 (WP37b) and five passives.
 // Two new readings, both ⚠️ UNRULED: R-HL1 (§6), Holes resolves before Palafin's Zero to Hero, with no
 // Knock Out check between them [🆕🆕🆕 D625 (D610 MINOR 2): R-HL1 INVERTS D356's principle (turn.ts, Magearna "Auto Heal": the turn player's own effects resolve first when two triggers answer one moment), and its listed reversal "Zero to Hero first" IS D356's order. The departure is the reading because under D356's order Holes' subject has already gone to the deck and Holes does nothing; still UNRULED.]; R-MR1 (§4), Metal Road's printed moment is Buzzing Boost's use-time gate,
 // so a use later the same turn sweeps {M} attached to the Bench after the move.
@@ -711,11 +711,12 @@ describe("D610 §8 — Tyrannically Gutsy: any Special Energy attached, +150 HP"
 });
 
 describe("D610 §9 — what WP37 leaves, and the version", () => {
-  it("the dropped and out-of-scope texts stay unkeyed (Meowth ex keeps only its attack key) (🆕🆕🆕 D628 (D539): WITHDRAWN for Meowth ex — \"Last-Ditch Catch\" is keyed since D628; Clawitzer stays dropped) (🆕🆕🆕 D631 (D539): WITHDRAWN for Kingambit, Garbodor, Decidueye ex ×2, Bastiodon ×3 and Yveltal — keyed since D631)", () => {
+  it("the dropped and out-of-scope texts stay unkeyed (Meowth ex keeps only its attack key) (🆕🆕🆕 D628 (D539): WITHDRAWN for Meowth ex — \"Last-Ditch Catch\" is keyed since D628; Clawitzer stays dropped) (🆕🆕🆕 D631 (D539): WITHDRAWN for Kingambit, Garbodor, Decidueye ex ×2, Bastiodon ×3 and Yveltal — keyed since D631) (🆕🆕🆕 D636 (D539): WITHDRAWN for Clawitzer — keyed since D636)", () => {
+    // 🆕🆕🆕 D636 (D539) — Clawitzer ×2 is keyed at D636 (L1 + Clawitzer, `nextTurnLocksD636.test.ts`).
     for (const id of [
       ...["me01-038", "me01-141"], // Clawitzer "Fall Back to Reload"
     ])
-      expect(programFor(id), id).toBeUndefined();
+      expect(Object.keys(programFor(id) ?? {}), id).toEqual(["abilities"]);
     // 🆕🆕🆕 D631 (D539) — the WP37 rest is keyed at D631 (P1, `passiveRestMeD631.test.ts`).
     for (const id of [
       "me02.5-148", // Kingambit "Supreme Overlord"
@@ -734,7 +735,7 @@ describe("D610 §9 — what WP37 leaves, and the version", () => {
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["attack", "triggered"]);
   });
 
-  it("is built at engine 0.518.0", () => {
-    expect(engineVersion).toBe("0.518.0");
+  it("is built at engine 0.519.0", () => {
+    expect(engineVersion).toBe("0.519.0");
   });
 });

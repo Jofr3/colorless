@@ -771,6 +771,13 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     // owns the LOCKED body, whose own next turn it is), so "next turn" stays true
     // under either seat; rendered under both (`attackFlipLock.test.ts`).
     case "ATTACK_LOCKED":
+      // 🆕🆕🆕 D636 — Jet of Ink's two coins (R-JOI1): its own row, so neither seat is told "a coin".
+      if (event.flip === true && event.coins === 2) {
+        return row(event.seat, [
+          strong(cardName(state, event.uid)),
+          plain(" must flip 2 coins to attack next turn — if either is tails, the attack doesn't happen"),
+        ]);
+      }
       if (event.flip === true) {
         return row(event.seat, [
           strong(cardName(state, event.uid)),
@@ -956,6 +963,10 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       const parts = [
         ...(event.barred ? ["can't have Energy cards attached from hand"] : []),
         ...(event.endsTurn ? ["ends its owner's turn if an Energy card is attached to it from hand"] : []),
+        // 🆕🆕🆕 D636 — Electrified Incisors.
+        ...(event.counters > 0
+          ? [`takes ${event.counters} damage counters for each Energy card attached to it from hand`]
+          : []),
       ];
       return row(event.seat, [
         strong(cardName(state, event.uid)),
@@ -1304,6 +1315,17 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     // 🆕🆕🆕 D547 — the FLIP-TO-ATTACK lock's coin, CONFUSION_CHECK's shape: the
     // declaring seat's voice (they flip), the face in bold, the CONSEQUENCE left to
     // the ATTACK_FAILED row that follows a tails.
+    // 🆕🆕🆕 D636 — Seismitoad "Quaking Fist": the lock, then each coin at a Trainer play.
+    case "TRAINER_FLIP_LOCKED":
+      return row(event.seat, [plain("must flip a coin to use each Trainer card from hand next turn")]);
+    case "TRAINER_FLIP_LOCK_CHECK":
+      return row(event.seat, [
+        plain("flipped for "),
+        strong(cardName(state, event.uid)),
+        plain(" — "),
+        strong(event.result),
+        plain(event.result === "tails" ? ": it is discarded instead of used" : ""),
+      ]);
     case "ATTACK_FLIP_LOCK_CHECK":
       return row(event.seat, [
         strong(cardName(state, event.uid)),

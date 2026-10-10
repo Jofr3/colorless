@@ -31,7 +31,7 @@ import {
   attackBlockOf,
   // 🆕🆕🆕 D547 — the flip-to-attack lock, read at the §8 step-3 seam below; NOT
   // folded into `attackLocked` (the declaration stays legal).
-  attackFlipLocked,
+  attackFlipLockCoins,
   attackGateOf,
   attackLocked,
   // 🆕🆕🆕 D578 — the ATTACK MENU (printed, Memory Dive, Tool): `declared`, the charged cost.
@@ -1773,7 +1773,7 @@ export function attack(
   // attack resolves normally.
   //
   // ⚠️ THE RNG IS SPENT ONLY WHILE THE LOCK IS LIVE: the whole block is behind
-  // `attackFlipLocked`, so an unlocked declaration draws nothing and every
+  // `attackFlipLockCoins` (🆕🆕🆕 D636; `attackFlipLocked` before), so an unlocked declaration draws nothing and every
   // pre-D547 rng sequence — a Confused attacker's included — is byte-identical.
   //
   // 🛑 BEFORE THE CONFUSION FLIP, AND THAT ORDER IS THE RULEBOOK'S (docs/decisions.md
@@ -1790,11 +1790,18 @@ export function attack(
   // who is the declaring player.
   // 🆕🆕🆕 D574 — not on a RESUMED half: this coin was flipped in the first half (heads, or the
   // attack would have ended there) and is never flipped twice.
-  if (copiedFrom?.resumed !== true && attackFlipLocked(state, active)) {
-    const [face, rngState] = flipCoin(next.rngState);
-    next = { ...next, rngState };
-    events.push({ type: "ATTACK_FLIP_LOCK_CHECK", seat: action.seat, uid: attackerUid, result: face });
-    if (face === "tails") {
+  // 🆕🆕🆕 D636 — Jet of Ink's TWO coins (`attackFlipLockCoins`): every coin is flipped, one row each, and any
+  // tails stops the attack (R-JOI1). A lone D547 lock is one coin, byte-identical.
+  const lockCoins = copiedFrom?.resumed === true ? 0 : attackFlipLockCoins(state, active);
+  if (lockCoins > 0) {
+    let lockTails = false;
+    for (let coin = 0; coin < lockCoins; coin++) {
+      const [face, rngState] = flipCoin(next.rngState);
+      next = { ...next, rngState };
+      events.push({ type: "ATTACK_FLIP_LOCK_CHECK", seat: action.seat, uid: attackerUid, result: face });
+      if (face === "tails") lockTails = true;
+    }
+    if (lockTails) {
       events.push({
         type: "ATTACK_FAILED",
         seat: action.seat,

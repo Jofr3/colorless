@@ -706,7 +706,7 @@ describe("D575 §4 — Glimmora: no Energy from hand to that Pokémon, next turn
     const state = shattered();
     const victim = bodyAt(state, "p2", "active");
     expect(victim.conditions.poisonDamage).toBeGreaterThan(0);
-    expect(victim.handAttachMark).toEqual({ turn: state.turn, barred: true, endsTurn: false, tripped: false });
+    expect(victim.handAttachMark).toEqual({ turn: state.turn, barred: true, endsTurn: false, tripped: false, counters: 0 }); // 🆕🆕🆕 D636 — `counters`
     expect(liveHandAttachMark(state, victim)).not.toBeNull();
   });
 
@@ -1108,7 +1108,7 @@ describe("D575 §8 — the persisted addresses, and THE FIFTH POSITION's optiona
     expect(redactedGameOverReasonSchema.safeParse("cardEffect").success).toBe(true);
   });
 
-  it("the engine is 0.518.0", () => {
-    expect(engineVersion).toBe("0.518.0");
+  it("the engine is 0.519.0", () => {
+    expect(engineVersion).toBe("0.519.0");
   });
 });

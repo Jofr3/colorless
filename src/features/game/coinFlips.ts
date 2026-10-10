@@ -24,6 +24,8 @@ export function coinFlipsFromEvents(
       case "CHECKUP_COIN_FLIP":
       case "CONFUSION_CHECK":
       case "ATTACK_FLIP_LOCK_CHECK":
+      // D636 — Quaking Fist's coin at a Trainer play from hand.
+      case "TRAINER_FLIP_LOCK_CHECK":
         return [{ result: event.result, player: names[event.seat], seat: event.seat }];
       default:
         // Setup has its own starting-player flow; don't replay its toss here.

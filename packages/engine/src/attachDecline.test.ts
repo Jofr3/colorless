@@ -480,7 +480,11 @@ describe("D358 §1 — which printings carry the decline, walked off the registr
       .sort();
     // 🆕🆕🆕 D566 — and Powerglass ×2, the "you may" of a Tool's end-of-turn attach (by
     // name, as D360's Koraidon ex was: the guard fired, and this is the slice saying why).
-    expect(declinable).toEqual([...ARCHALUDON_IDS, ...MAGNETON_IDS, ...KORAIDON_IDS, ...POWERGLASS_IDS].sort());
+    // 🆕🆕🆕 D636 — and Clawitzer ×2 "Fall Back to Reload" (`me01-038` / `-141`): *"up to 2"* to "this Pokémon" as
+    // two declinable `toSelf` hand attaches (the guard fired by name; this is the slice saying why).
+    expect(declinable).toEqual(
+      [...ARCHALUDON_IDS, ...MAGNETON_IDS, ...KORAIDON_IDS, ...POWERGLASS_IDS, "me01-038", "me01-141"].sort(),
+    );
     // The two halves of the set, kept apart on purpose: the printed-legal six this
     // engine can be played with today, and the four rotated ones that print the
     // same sentence and are reachable through `programFor` all the same.

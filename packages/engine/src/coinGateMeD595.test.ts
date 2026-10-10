@@ -34,6 +34,7 @@ import {
 // Bombirdier `me05-071`, Bewear `me01-112`, Gholdengo `me01-099`, Pikachu `30th-042`, Snorlax
 // `me03-063`, Shiftry `me01-015`, Octillery `me04-017` — §2 keeps them null. [🆕🆕🆕 D634 (D539): all but
 // Octillery are BUILT at D634 (C1, `coinRestMeD634.test.ts`); §2 now pins the six built and Octillery null.]
+// [🆕🆕🆕 D636 (D539): Octillery is BUILT at D636 (L1, `nextTurnLocksD636.test.ts`); §2 pins all seven built.]
 
 const T = {
   bellyful: "Flip 2 coins. If both of them are heads, heal all damage from 1 of your Pokémon.",
@@ -60,7 +61,7 @@ const ROWS: readonly (readonly [string, number, readonly string[]])[] = [
 ];
 
 /** The seven WP13 texts this slice drops, each on vocabulary the brief does not allow. [🆕🆕🆕 D634 (D539): six
-    are BUILT at D634; only Octillery's stays unbuilt.] */
+    are BUILT at D634; only Octillery's stays unbuilt.] [🆕🆕🆕 D636 (D539): and Octillery's at D636 (L1).] */
 const DROPPED: Record<string, string> = {
   "Bombirdier — the bench search reads 'a Pokémon' as a card NAME; by the standing rule only a Basic goes onto the Bench, which needs a bench-search arm outside the coin reader":
     "Flip 2 coins. If both of them are heads, search your deck for a Pokémon and put it onto your Bench. Then, shuffle your deck.",
@@ -74,7 +75,7 @@ const DROPPED: Record<string, string> = {
     "Flip a coin until you get tails. Search your deck for an amount of Basic {L} Energy up to the number of heads and attach it to this Pokémon. Then, shuffle your deck.",
   "Shiftry — the shuffled body may be the Active (`returnBenched` reads the Bench)":
     "Flip a coin. If heads, choose 1 of your opponent's Pokémon. Shuffle that Pokémon and all attached cards into their deck.",
-  "Octillery — a two-coin flip lock (`flipLockAttack` is one coin, field-free)":
+  "Octillery — a two-coin flip lock (`flipLockAttack` is one coin, field-free) [🆕🆕🆕 D636 (D539): BUILT — `coins: 2`]":
     "During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips 2 coins. If either of them is tails, that attack doesn't happen.",
 };
 
@@ -204,11 +205,12 @@ describe("D595 §2 — near misses and the dropped texts stay null", () => {
     );
   });
 
-  it("the seven dropped texts are unbuilt (🆕🆕🆕 D634: six are built at D634; Octillery stays unbuilt)", () => {
+  it("the seven dropped texts are unbuilt (🆕🆕🆕 D634: six are built at D634; Octillery stays unbuilt) (🆕🆕🆕 D636 (D539): WITHDRAWN — Octillery is built at D636; all seven are built)", () => {
     const me = new Set(meAttackCorpus().map(([, text]) => text));
     for (const [why, text] of Object.entries(DROPPED)) {
       // 🆕🆕🆕 D634 (D539): every text but Octillery's is reader-built at D634 (C1).
-      expect(resolvedByAnyReader(text), why).toBe(!why.startsWith("Octillery"));
+      // 🆕🆕🆕 D636 (D539): and Octillery's too (D636, L1 — `flipLockAttack` with `coins: 2`).
+      expect(resolvedByAnyReader(text), why).toBe(true);
       // Pikachu's D1 row prints the {L} as markup, so its corpus line is not this string. [🆕🆕🆕 D634
       // (D539): WITHDRAWN — since D612's re-ingest the corpus line IS this string.]
       expect(me.has(text), why).toBe(true);
@@ -508,7 +510,7 @@ describe("D595 §5 — the `programPerHeads` arms on a board", () => {
 });
 
 describe("D595 §6 — the version", () => {
-  it("is built at engine 0.518.0", () => {
-    expect(engineVersion).toBe("0.518.0");
+  it("is built at engine 0.519.0", () => {
+    expect(engineVersion).toBe("0.519.0");
   });
 });

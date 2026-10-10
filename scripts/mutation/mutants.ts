@@ -6250,7 +6250,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.518.0";',
+    find: 'export const engineVersion = "0.519.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -7416,8 +7416,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D284",
     what: "🛑 THE VERSION BUMP THIS SLICE DID NOT HAVE TO TAKE, INSTALLED BY ACCIDENT: `freshHandPlayLocks` grows a `Tool` key, so every persisted board carries a third class key NO WRITER CAN EVER SET and every v15 record is missing it. ⚠️ NO BEHAVIOUR CHANGES AT ALL — the bar still bites, the mirrors still grey, the reader still answers — and the ONLY thing that can see it is a literal key-list anchor, which is exactly the guard D280-D282 installed and D283 watched all three of theirs fire",
     file: "packages/engine/src/types.ts",
-    find: "    p1: { Item: null, Supporter: null, evolve: null },",
-    replace: "    p1: { Item: null, Supporter: null, evolve: null, Tool: null },",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the fresh record gained the stamped `Stadium` key; the patch still leaks `Tool`.
+    find: "    p1: { Item: null, Supporter: null, Stadium: null, evolve: null },",
+    replace: "    p1: { Item: null, Supporter: null, Stadium: null, evolve: null, Tool: null },",
     expectKilledBy: [
       "packages/engine/src/activeHandLock.test.ts",
       "packages/engine/src/screamTail.test.ts",
@@ -7571,6 +7572,8 @@ export const MUTANTS: Mutant[] = [
   // a TYPE error rather than of the behaviour it names (D278's false-kill defect).
   // **THAT SEAM IS ENFORCED BY THE COMPILER, NOT BY THE SUITE**, and a `survives`
   // row claiming otherwise would be a lie about which guard is holding it up.
+  // [🆕🆕🆕 D636 (D539): WITHDRAWN — Scorching Earth `me01-031` is a printed ATTACK that stamps `"Stadium"`: the disjunct is
+  // GONE (the key exists), and its return is the row `D636-stadium-stamp-turned-away`, KILLED by nextTurnLocksD636 §6.]
   {
     id: "D287-stadium-play-escapes-the-bar",
     decision: "D287",
@@ -11464,8 +11467,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540) — D583 stepped the constant 41 → 42; the patch is still ONE step back.
     // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540) — D621 stepped the constant 42 → 43; the patch is still ONE step back.
     // 🆕🆕🆕 D630 — RE-ANCHORED off the bytes (D540) — D630 stepped the constant 43 → 44; the patch is still ONE step back.
-    find: "export const MATCH_RECORD_VERSION = 44;",
-    replace: "export const MATCH_RECORD_VERSION = 43;",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540) — D636 stepped the constant 44 → 45; the patch is still ONE step back.
+    find: "export const MATCH_RECORD_VERSION = 45;",
+    replace: "export const MATCH_RECORD_VERSION = 44;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a
@@ -29585,8 +29589,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540) — D583 stepped the constant 41 → 42; the patch is still ONE step back.
     // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540) — D621 stepped the constant 42 → 43; the patch is still ONE step back.
     // 🆕🆕🆕 D630 — RE-ANCHORED off the bytes (D540) — D630 stepped the constant 43 → 44; the patch is still ONE step back.
-    find: "export const MATCH_RECORD_VERSION = 44;\n",
-    replace: "export const MATCH_RECORD_VERSION = 43;\n",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540) — D636 stepped the constant 44 → 45; the patch is still ONE step back.
+    find: "export const MATCH_RECORD_VERSION = 45;\n",
+    replace: "export const MATCH_RECORD_VERSION = 44;\n",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ────────────────────────────────────────────────────────────────────────────
@@ -34633,8 +34638,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D547",
     what: "🛑 **THE §11 REFUSAL IS DELETED FROM THE FLIP INSTALLER** — Mist Energy on the Defending Pokémon no longer stops the lock (an effect of an attack done TO it). Killed by §10.",
     file: "packages/engine/src/interpreter.ts",
-    find: "  // announced even on an already-locked body (`preventRetreat`'s ordering).\n  if (effectRefused(state, seat, ctx, events)) return state;\n  const turn = state.turn + 1;\n  if (active.attackFlipLockTurn === turn) return state;",
-    replace: "  // announced even on an already-locked body (`preventRetreat`'s ordering).\n  const turn = state.turn + 1;\n  if (active.attackFlipLockTurn === turn) return state;",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): D636's two-coin arm follows the stamp; the patch still drops the §11 refusal (both arms).
+    find: "  if (effectRefused(state, seat, ctx, events)) return state;\n  const turn = state.turn + 1;\n  // 🆕🆕🆕 D636 — Jet of Ink's two coins write their own stamp (types.ts `attackTwoFlipLockTurn`).\n",
+    replace: "  const turn = state.turn + 1;\n  // 🆕🆕🆕 D636 — Jet of Ink's two coins write their own stamp (types.ts `attackTwoFlipLockTurn`).\n",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   {
@@ -34642,8 +34648,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D547",
     what: "⚠️ **THE FLIP LOCK IS STAMPED `turn + 2`** — the installer's own turn, when the locked body cannot attack; the victim's real window (T+1) has no coin at all. `preventAttack`'s defender-arm number, which this op must share. Killed by §2/§3.",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const turn = state.turn + 1;\n  if (active.attackFlipLockTurn === turn) return state;",
-    replace: "  const turn = state.turn + 2;\n  if (active.attackFlipLockTurn === turn) return state;",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): D636's two-coin arm follows the stamp; the patch still stamps `+ 2` (both arms).
+    find: "  const turn = state.turn + 1;\n  // 🆕🆕🆕 D636 — Jet of Ink's two coins write their own stamp (types.ts `attackTwoFlipLockTurn`).\n",
+    replace: "  const turn = state.turn + 2;\n  // 🆕🆕🆕 D636 — Jet of Ink's two coins write their own stamp (types.ts `attackTwoFlipLockTurn`).\n",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   {
@@ -34651,8 +34658,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D547",
     what: "🛑 **THE FLIP LOCK IS WRITTEN ON THE INSTALLER'S OWN ACTIVE** — \"the Defending Pokémon\" read as \"this Pokémon\"; the victim flips nothing. Killed by §2.",
     file: "packages/engine/src/interpreter.ts",
-    find: "function flipLockAttack(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {\n  const seat = otherSeat(ctx.seat);",
-    replace: "function flipLockAttack(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {\n  const seat = ctx.seat;",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the signature gained `coins` (Jet of Ink).
+    find: "function flipLockAttack(state: GameState, ctx: EffectContext, events: GameEvent[], coins?: 2): GameState {\n  const seat = otherSeat(ctx.seat);",
+    replace: "function flipLockAttack(state: GameState, ctx: EffectContext, events: GameEvent[], coins?: 2): GameState {\n  const seat = ctx.seat;",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   {
@@ -34660,8 +34668,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D547",
     what: "⚠️ **THE INSTALL ROW LOSES `flip: true`** and renders *\"can't attack next turn\"* — FALSE in the direction that costs a player a turn (D421). Killed by §2's row pin and §11.",
     file: "packages/engine/src/interpreter.ts",
-    find: "  events.push({ type: \"ATTACK_LOCKED\", seat, uid, flip: true });",
-    replace: "  events.push({ type: \"ATTACK_LOCKED\", seat, uid });",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the two-coin arm prints the same row, so the anchor takes the one-coin write below it.
+    find: "  events.push({ type: \"ATTACK_LOCKED\", seat, uid, flip: true });\n  return withActive(state, seat, { ...active, attackFlipLockTurn: turn });",
+    replace: "  events.push({ type: \"ATTACK_LOCKED\", seat, uid });\n  return withActive(state, seat, { ...active, attackFlipLockTurn: turn });",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   {
@@ -34724,8 +34733,9 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 **THE CONFUSION COIN IS FLIPPED BEFORE THE LOCK'S** — the two blocks swapped, which is the order D547's first draft shipped as \"UNRULED\" and review withdrew: the official rulebook's \"Full details of attacking\" puts B) \"Apply any effects that might alter or cancel the attack\" (its printed example IS this sentence family) before C) the Confusion check (docs/decisions.md D547 ruling 1). On the swapped build a flip-locked Confused body whose Confusion coin comes up tails takes its counters and never flips for the lock. Killed by §6.",
     file: "packages/engine/src/attack.ts",
     // 🆕🆕🆕 RE-ANCHORED AT D574 (by script off the new bytes — D540): the flip-lock and Confusion blocks each gained D574's `resumed` guard and its one-line comment; the mutation itself (the swap / the burned coin) is unchanged.
-    find: "  // 🆕🆕🆕 §8 (D547) — THE FLIP-TO-ATTACK LOCK: \"During your opponent's next turn, if\n  // the Defending Pokémon tries to use an attack, your opponent flips a coin. If\n  // tails, that attack doesn't happen.\" (`censusAttackCorpus.ts:176`). The attack\n  // was DECLARED — the §8 gate above let it through, because this lock is NOT\n  // `attackLocked` (a hard lock still REJECTS the declaration there, first) — and\n  // now the locked player flips. Tails: ATTACK_FAILED `\"flipLock\"`, nothing\n  // resolves, no counters, and the turn ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED] (§5.3, `finishAttack`); heads: the\n  // attack resolves normally.\n  //\n  // ⚠️ THE RNG IS SPENT ONLY WHILE THE LOCK IS LIVE: the whole block is behind\n  // `attackFlipLocked`, so an unlocked declaration draws nothing and every\n  // pre-D547 rng sequence — a Confused attacker's included — is byte-identical.\n  //\n  // 🛑 BEFORE THE CONFUSION FLIP, AND THAT ORDER IS THE RULEBOOK'S (docs/decisions.md\n  // D547 ruling 1). The official rulebook's \"Full details of attacking\" (pokemon.com\n  // `par_rulebook_en.pdf`, p. 20) lists B) \"Apply any effects that might alter or\n  // cancel the attack\" — and the worked example it prints is THIS sentence family —\n  // before C) \"If your Active Pokémon is Confused, check now to see if its attack\n  // doesn't happen.\" So a lock TAILS ends the attack with NO Confusion coin and NO\n  // Confusion counters, and only a lock HEADS reaches the Confusion block below.\n  //\n  // `active`, the declaration snapshot, is the right binding for the reason the\n  // Confusion block below gives: nothing before §8.5 has rebound the body. The seat\n  // is `action.seat` — \"your opponent flips\" names the LOCKED body's controller,\n  // who is the declaring player.\n  // 🆕🆕🆕 D574 — not on a RESUMED half: this coin was flipped in the first half (heads, or the\n  // attack would have ended there) and is never flipped twice.\n  if (copiedFrom?.resumed !== true && attackFlipLocked(state, active)) {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };\n    events.push({ type: \"ATTACK_FLIP_LOCK_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n    if (face === \"tails\") {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"flipLock\",\n      });\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n  // §8 step 3 — the confusion flip, AFTER every gate and the cost check\n  // passed (§12): tails and the declared attack does not resolve at all —\n  // no damage, no effects — the attacker takes 30 itself (possibly a\n  // self-KO, prized to the defender) and the turn still ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED].\n  // 🆕🆕🆕 D574 — and not on a RESUMED half either (the first half flipped it, heads).\n  if (rotation === \"confused\" && copiedFrom?.resumed !== true) {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };\n    events.push({ type: \"CONFUSION_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n    if (face === \"tails\") {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"confusion\",\n      });\n      // 🆕🆕🆕 **D501 — THE AMOUNT IS READ OFF THE BODY, NOT HARD-CODED.** This was a\n      // literal `30` in two places from P3-M3 (2026-07-17) until D501, and the two\n      // places are the whole of the observable behaviour: the DAMAGE and the ROW.\n      // `SpecialConditions.confusionDamage` carries the rulebook's 3 counters for\n      // every body that has never met a raising effect, so every pre-D501 board\n      // answers the identical number.\n      //\n      // ⚠️ **THE ATTACKER'S OWN CONDITIONS, AND `active` IS THE RIGHT BINDING HERE\n      // EVEN THOUGH IT IS THE DECLARATION SNAPSHOT (D429).** This block runs BEFORE\n      // §8.5 and before any pre-damage act — it is §8 step 3 — so nothing has\n      // rebound the body yet and `attackerBody` is still `active`. `rotation` on the\n      // line above is read off the same snapshot, so a read that reached elsewhere\n      // would be asking two questions of two boards.\n      const confusionDamage = active.conditions.confusionDamage;\n      const hurt = { ...active, damage: active.damage + confusionDamage };\n      next = withActive(next, action.seat, hurt);\n      events.push({\n        type: \"COUNTERS_PLACED\",\n        seat: action.seat,\n        uid: attackerUid,\n        amount: confusionDamage,\n        source: \"confusion\",\n      });\n      // The self-hit can KO the attacker itself — prized to the DEFENDER\n      // (collectKnockOuts owes each KO's prize to the KO'd side's opponent). The\n      // epilogue sweeps both boards; the defender took no damage on this failed\n      // attack, so only the attacker's own board can be lethal here.\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n",
-    replace: "  // §8 step 3 — the confusion flip, AFTER every gate and the cost check\n  // passed (§12): tails and the declared attack does not resolve at all —\n  // no damage, no effects — the attacker takes 30 itself (possibly a\n  // self-KO, prized to the defender) and the turn still ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED].\n  // 🆕🆕🆕 D574 — and not on a RESUMED half either (the first half flipped it, heads).\n  if (rotation === \"confused\" && copiedFrom?.resumed !== true) {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };\n    events.push({ type: \"CONFUSION_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n    if (face === \"tails\") {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"confusion\",\n      });\n      // 🆕🆕🆕 **D501 — THE AMOUNT IS READ OFF THE BODY, NOT HARD-CODED.** This was a\n      // literal `30` in two places from P3-M3 (2026-07-17) until D501, and the two\n      // places are the whole of the observable behaviour: the DAMAGE and the ROW.\n      // `SpecialConditions.confusionDamage` carries the rulebook's 3 counters for\n      // every body that has never met a raising effect, so every pre-D501 board\n      // answers the identical number.\n      //\n      // ⚠️ **THE ATTACKER'S OWN CONDITIONS, AND `active` IS THE RIGHT BINDING HERE\n      // EVEN THOUGH IT IS THE DECLARATION SNAPSHOT (D429).** This block runs BEFORE\n      // §8.5 and before any pre-damage act — it is §8 step 3 — so nothing has\n      // rebound the body yet and `attackerBody` is still `active`. `rotation` on the\n      // line above is read off the same snapshot, so a read that reached elsewhere\n      // would be asking two questions of two boards.\n      const confusionDamage = active.conditions.confusionDamage;\n      const hurt = { ...active, damage: active.damage + confusionDamage };\n      next = withActive(next, action.seat, hurt);\n      events.push({\n        type: \"COUNTERS_PLACED\",\n        seat: action.seat,\n        uid: attackerUid,\n        amount: confusionDamage,\n        source: \"confusion\",\n      });\n      // The self-hit can KO the attacker itself — prized to the DEFENDER\n      // (collectKnockOuts owes each KO's prize to the KO'd side's opponent). The\n      // epilogue sweeps both boards; the defender took no damage on this failed\n      // attack, so only the attacker's own board can be lethal here.\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n  // 🆕🆕🆕 §8 (D547) — THE FLIP-TO-ATTACK LOCK: \"During your opponent's next turn, if\n  // the Defending Pokémon tries to use an attack, your opponent flips a coin. If\n  // tails, that attack doesn't happen.\" (`censusAttackCorpus.ts:176`). The attack\n  // was DECLARED — the §8 gate above let it through, because this lock is NOT\n  // `attackLocked` (a hard lock still REJECTS the declaration there, first) — and\n  // now the locked player flips. Tails: ATTACK_FAILED `\"flipLock\"`, nothing\n  // resolves, no counters, and the turn ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED] (§5.3, `finishAttack`); heads: the\n  // attack resolves normally.\n  //\n  // ⚠️ THE RNG IS SPENT ONLY WHILE THE LOCK IS LIVE: the whole block is behind\n  // `attackFlipLocked`, so an unlocked declaration draws nothing and every\n  // pre-D547 rng sequence — a Confused attacker's included — is byte-identical.\n  //\n  // 🛑 BEFORE THE CONFUSION FLIP, AND THAT ORDER IS THE RULEBOOK'S (docs/decisions.md\n  // D547 ruling 1). The official rulebook's \"Full details of attacking\" (pokemon.com\n  // `par_rulebook_en.pdf`, p. 20) lists B) \"Apply any effects that might alter or\n  // cancel the attack\" — and the worked example it prints is THIS sentence family —\n  // before C) \"If your Active Pokémon is Confused, check now to see if its attack\n  // doesn't happen.\" So a lock TAILS ends the attack with NO Confusion coin and NO\n  // Confusion counters, and only a lock HEADS reaches the Confusion block below.\n  //\n  // `active`, the declaration snapshot, is the right binding for the reason the\n  // Confusion block below gives: nothing before §8.5 has rebound the body. The seat\n  // is `action.seat` — \"your opponent flips\" names the LOCKED body's controller,\n  // who is the declaring player.\n  // 🆕🆕🆕 D574 — not on a RESUMED half: this coin was flipped in the first half (heads, or the\n  // attack would have ended there) and is never flipped twice.\n  if (copiedFrom?.resumed !== true && attackFlipLocked(state, active)) {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };\n    events.push({ type: \"ATTACK_FLIP_LOCK_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n    if (face === \"tails\") {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"flipLock\",\n      });\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the lock block now counts its coins (`attackFlipLockCoins`, Jet of Ink); the patch still moves the whole block below the Confusion flip.
+    find: "  // 🆕🆕🆕 §8 (D547) — THE FLIP-TO-ATTACK LOCK: \"During your opponent's next turn, if\n  // the Defending Pokémon tries to use an attack, your opponent flips a coin. If\n  // tails, that attack doesn't happen.\" (`censusAttackCorpus.ts:176`). The attack\n  // was DECLARED — the §8 gate above let it through, because this lock is NOT\n  // `attackLocked` (a hard lock still REJECTS the declaration there, first) — and\n  // now the locked player flips. Tails: ATTACK_FAILED `\"flipLock\"`, nothing\n  // resolves, no counters, and the turn ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED] (§5.3, `finishAttack`); heads: the\n  // attack resolves normally.\n  //\n  // ⚠️ THE RNG IS SPENT ONLY WHILE THE LOCK IS LIVE: the whole block is behind\n  // `attackFlipLockCoins` (🆕🆕🆕 D636; `attackFlipLocked` before), so an unlocked declaration draws nothing and every\n  // pre-D547 rng sequence — a Confused attacker's included — is byte-identical.\n  //\n  // 🛑 BEFORE THE CONFUSION FLIP, AND THAT ORDER IS THE RULEBOOK'S (docs/decisions.md\n  // D547 ruling 1). The official rulebook's \"Full details of attacking\" (pokemon.com\n  // `par_rulebook_en.pdf`, p. 20) lists B) \"Apply any effects that might alter or\n  // cancel the attack\" — and the worked example it prints is THIS sentence family —\n  // before C) \"If your Active Pokémon is Confused, check now to see if its attack\n  // doesn't happen.\" So a lock TAILS ends the attack with NO Confusion coin and NO\n  // Confusion counters, and only a lock HEADS reaches the Confusion block below.\n  //\n  // `active`, the declaration snapshot, is the right binding for the reason the\n  // Confusion block below gives: nothing before §8.5 has rebound the body. The seat\n  // is `action.seat` — \"your opponent flips\" names the LOCKED body's controller,\n  // who is the declaring player.\n  // 🆕🆕🆕 D574 — not on a RESUMED half: this coin was flipped in the first half (heads, or the\n  // attack would have ended there) and is never flipped twice.\n  // 🆕🆕🆕 D636 — Jet of Ink's TWO coins (`attackFlipLockCoins`): every coin is flipped, one row each, and any\n  // tails stops the attack (R-JOI1). A lone D547 lock is one coin, byte-identical.\n  const lockCoins = copiedFrom?.resumed === true ? 0 : attackFlipLockCoins(state, active);\n  if (lockCoins > 0) {\n    let lockTails = false;\n    for (let coin = 0; coin < lockCoins; coin++) {\n      const [face, rngState] = flipCoin(next.rngState);\n      next = { ...next, rngState };\n      events.push({ type: \"ATTACK_FLIP_LOCK_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n      if (face === \"tails\") lockTails = true;\n    }\n    if (lockTails) {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"flipLock\",\n      });\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n  // §8 step 3 — the confusion flip, AFTER every gate and the cost check\n  // passed (§12): tails and the declared attack does not resolve at all —\n  // no damage, no effects — the attacker takes 30 itself (possibly a\n  // self-KO, prized to the defender) and the turn still ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED].\n  // 🆕🆕🆕 D574 — and not on a RESUMED half either (the first half flipped it, heads).\n  if (rotation === \"confused\" && copiedFrom?.resumed !== true) {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };\n    events.push({ type: \"CONFUSION_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n    if (face === \"tails\") {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"confusion\",\n      });\n      // 🆕🆕🆕 **D501 — THE AMOUNT IS READ OFF THE BODY, NOT HARD-CODED.** This was a\n      // literal `30` in two places from P3-M3 (2026-07-17) until D501, and the two\n      // places are the whole of the observable behaviour: the DAMAGE and the ROW.\n      // `SpecialConditions.confusionDamage` carries the rulebook's 3 counters for\n      // every body that has never met a raising effect, so every pre-D501 board\n      // answers the identical number.\n      //\n      // ⚠️ **THE ATTACKER'S OWN CONDITIONS, AND `active` IS THE RIGHT BINDING HERE\n      // EVEN THOUGH IT IS THE DECLARATION SNAPSHOT (D429).** This block runs BEFORE\n      // §8.5 and before any pre-damage act — it is §8 step 3 — so nothing has\n      // rebound the body yet and `attackerBody` is still `active`. `rotation` on the\n      // line above is read off the same snapshot, so a read that reached elsewhere\n      // would be asking two questions of two boards.\n      const confusionDamage = active.conditions.confusionDamage;\n      const hurt = { ...active, damage: active.damage + confusionDamage };\n      next = withActive(next, action.seat, hurt);\n      events.push({\n        type: \"COUNTERS_PLACED\",\n        seat: action.seat,\n        uid: attackerUid,\n        amount: confusionDamage,\n        source: \"confusion\",\n      });\n      // The self-hit can KO the attacker itself — prized to the DEFENDER\n      // (collectKnockOuts owes each KO's prize to the KO'd side's opponent). The\n      // epilogue sweeps both boards; the defender took no damage on this failed\n      // attack, so only the attacker's own board can be lethal here.\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n",
+    replace: "  // §8 step 3 — the confusion flip, AFTER every gate and the cost check\n  // passed (§12): tails and the declared attack does not resolve at all —\n  // no damage, no effects — the attacker takes 30 itself (possibly a\n  // self-KO, prized to the defender) and the turn still ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED].\n  // 🆕🆕🆕 D574 — and not on a RESUMED half either (the first half flipped it, heads).\n  if (rotation === \"confused\" && copiedFrom?.resumed !== true) {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };\n    events.push({ type: \"CONFUSION_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n    if (face === \"tails\") {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"confusion\",\n      });\n      // 🆕🆕🆕 **D501 — THE AMOUNT IS READ OFF THE BODY, NOT HARD-CODED.** This was a\n      // literal `30` in two places from P3-M3 (2026-07-17) until D501, and the two\n      // places are the whole of the observable behaviour: the DAMAGE and the ROW.\n      // `SpecialConditions.confusionDamage` carries the rulebook's 3 counters for\n      // every body that has never met a raising effect, so every pre-D501 board\n      // answers the identical number.\n      //\n      // ⚠️ **THE ATTACKER'S OWN CONDITIONS, AND `active` IS THE RIGHT BINDING HERE\n      // EVEN THOUGH IT IS THE DECLARATION SNAPSHOT (D429).** This block runs BEFORE\n      // §8.5 and before any pre-damage act — it is §8 step 3 — so nothing has\n      // rebound the body yet and `attackerBody` is still `active`. `rotation` on the\n      // line above is read off the same snapshot, so a read that reached elsewhere\n      // would be asking two questions of two boards.\n      const confusionDamage = active.conditions.confusionDamage;\n      const hurt = { ...active, damage: active.damage + confusionDamage };\n      next = withActive(next, action.seat, hurt);\n      events.push({\n        type: \"COUNTERS_PLACED\",\n        seat: action.seat,\n        uid: attackerUid,\n        amount: confusionDamage,\n        source: \"confusion\",\n      });\n      // The self-hit can KO the attacker itself — prized to the DEFENDER\n      // (collectKnockOuts owes each KO's prize to the KO'd side's opponent). The\n      // epilogue sweeps both boards; the defender took no damage on this failed\n      // attack, so only the attacker's own board can be lethal here.\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n  // 🆕🆕🆕 §8 (D547) — THE FLIP-TO-ATTACK LOCK: \"During your opponent's next turn, if\n  // the Defending Pokémon tries to use an attack, your opponent flips a coin. If\n  // tails, that attack doesn't happen.\" (`censusAttackCorpus.ts:176`). The attack\n  // was DECLARED — the §8 gate above let it through, because this lock is NOT\n  // `attackLocked` (a hard lock still REJECTS the declaration there, first) — and\n  // now the locked player flips. Tails: ATTACK_FAILED `\"flipLock\"`, nothing\n  // resolves, no counters, and the turn ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED] (§5.3, `finishAttack`); heads: the\n  // attack resolves normally.\n  //\n  // ⚠️ THE RNG IS SPENT ONLY WHILE THE LOCK IS LIVE: the whole block is behind\n  // `attackFlipLockCoins` (🆕🆕🆕 D636; `attackFlipLocked` before), so an unlocked declaration draws nothing and every\n  // pre-D547 rng sequence — a Confused attacker's included — is byte-identical.\n  //\n  // 🛑 BEFORE THE CONFUSION FLIP, AND THAT ORDER IS THE RULEBOOK'S (docs/decisions.md\n  // D547 ruling 1). The official rulebook's \"Full details of attacking\" (pokemon.com\n  // `par_rulebook_en.pdf`, p. 20) lists B) \"Apply any effects that might alter or\n  // cancel the attack\" — and the worked example it prints is THIS sentence family —\n  // before C) \"If your Active Pokémon is Confused, check now to see if its attack\n  // doesn't happen.\" So a lock TAILS ends the attack with NO Confusion coin and NO\n  // Confusion counters, and only a lock HEADS reaches the Confusion block below.\n  //\n  // `active`, the declaration snapshot, is the right binding for the reason the\n  // Confusion block below gives: nothing before §8.5 has rebound the body. The seat\n  // is `action.seat` — \"your opponent flips\" names the LOCKED body's controller,\n  // who is the declaring player.\n  // 🆕🆕🆕 D574 — not on a RESUMED half: this coin was flipped in the first half (heads, or the\n  // attack would have ended there) and is never flipped twice.\n  // 🆕🆕🆕 D636 — Jet of Ink's TWO coins (`attackFlipLockCoins`): every coin is flipped, one row each, and any\n  // tails stops the attack (R-JOI1). A lone D547 lock is one coin, byte-identical.\n  const lockCoins = copiedFrom?.resumed === true ? 0 : attackFlipLockCoins(state, active);\n  if (lockCoins > 0) {\n    let lockTails = false;\n    for (let coin = 0; coin < lockCoins; coin++) {\n      const [face, rngState] = flipCoin(next.rngState);\n      next = { ...next, rngState };\n      events.push({ type: \"ATTACK_FLIP_LOCK_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n      if (face === \"tails\") lockTails = true;\n    }\n    if (lockTails) {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"flipLock\",\n      });\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   {
@@ -34734,8 +34744,9 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 **A COIN IS BURNED ON EVERY DECLARATION** — the rng advances even when no lock is live, so every pre-D547 game's replay desynchronises after its first attack. Killed by §5.",
     file: "packages/engine/src/attack.ts",
     // 🆕🆕🆕 RE-ANCHORED AT D574 (by script off the new bytes — D540): the flip-lock and Confusion blocks each gained D574's `resumed` guard and its one-line comment; the mutation itself (the swap / the burned coin) is unchanged.
-    find: "  // 🆕🆕🆕 D574 — not on a RESUMED half: this coin was flipped in the first half (heads, or the\n  // attack would have ended there) and is never flipped twice.\n  if (copiedFrom?.resumed !== true && attackFlipLocked(state, active)) {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };",
-    replace: "  next = { ...next, rngState: flipCoin(next.rngState)[1] };\n  // 🆕🆕🆕 D574 — not on a RESUMED half: this coin was flipped in the first half (heads, or the\n  // attack would have ended there) and is never flipped twice.\n  if (copiedFrom?.resumed !== true && attackFlipLocked(state, active)) {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the gate is the coin count since D636; the patch still spends a flip on every declaration.
+    find: "  const lockCoins = copiedFrom?.resumed === true ? 0 : attackFlipLockCoins(state, active);\n",
+    replace: "  next = { ...next, rngState: flipCoin(next.rngState)[1] };\n  const lockCoins = copiedFrom?.resumed === true ? 0 : attackFlipLockCoins(state, active);\n",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   {
@@ -34982,7 +34993,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
     // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 43 since D621; the replace and the claim are unchanged.
     // 🆕🆕🆕 D630 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 44 since D630; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 44;",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 45;",
     // 🆕🆕🆕 D549 - RE-ANCHORED AGAIN off the bytes (D540): D549's block now sits between
     //    D548's doc tail and the constant, so the anchor is D549's last two lines and the
     //    patch drops the constant THREE steps, to D547's pre-bump 30.
@@ -35187,7 +35199,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
     // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 43 since D621; the replace and the claim are unchanged.
     // 🆕🆕🆕 D630 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 44 since D630; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 44;",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 45;",
     // 🆕🆕🆕 D549 - RE-ANCHORED off the bytes onto D549's doc tail; the patch drops the
     //    constant TWO steps, to D548's pre-bump 31 (a different patch from
     //    `D549-record-version-not-bumped`, one step, same anchor).
@@ -35690,7 +35703,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
     // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 43 since D621; the replace and the claim are unchanged.
     // 🆕🆕🆕 D630 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 44 since D630; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 44;",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 45;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 32;",
     expectKilledBy: ["packages/engine/src/sideAttackLock.test.ts", "apps/api/src/lobby/match.test.ts"],
   },
@@ -36289,7 +36303,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
     // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 43 since D621; the replace and the claim are unchanged.
     // 🆕🆕🆕 D630 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 44 since D630; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 44;",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 45;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 33;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -37234,7 +37249,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
     // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 43 since D621; the replace and the claim are unchanged.
     // 🆕🆕🆕 D630 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 44 since D630; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 44;",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 45;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 34;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -40601,7 +40617,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
     // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 43 since D621; the replace and the claim are unchanged.
     // 🆕🆕🆕 D630 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 44 since D630; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 44;",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 45;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 35;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -43464,7 +43481,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
     // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 43 since D621; the replace and the claim are unchanged.
     // 🆕🆕🆕 D630 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 44 since D630; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 44;",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 45;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 36;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -44326,8 +44344,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D574",
     what: "the RESUMED half flips the flip-to-attack lock's coin again. Killed by §2's resumed-half flip-lock rung (one ATTACK_FLIP_LOCK_CHECK).",
     file: "packages/engine/src/attack.ts",
-    find: "  if (copiedFrom?.resumed !== true && attackFlipLocked(state, active)) {",
-    replace: "  if (attackFlipLocked(state, active)) {",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the resumed-half guard is the coin count's first arm since D636.
+    find: "  const lockCoins = copiedFrom?.resumed === true ? 0 : attackFlipLockCoins(state, active);\n",
+    replace: "  const lockCoins = attackFlipLockCoins(state, active);\n",
     expectKilledBy: ["packages/engine/src/copyRemainderBundleD574.test.ts"],
   },
   {
@@ -44906,7 +44925,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
     // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 43 since D621; the replace and the claim are unchanged.
     // 🆕🆕🆕 D630 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 44 since D630; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 44;",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 45;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 37;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -46360,7 +46380,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): D583 stepped the constant 41 → 42; the patch still writes 40, the claim unchanged.
     // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): D621 stepped the constant 42 → 43; the patch still writes 40, the claim unchanged.
     // 🆕🆕🆕 D630 — RE-ANCHORED off the bytes (D540): D630 stepped the constant 43 → 44; the patch still writes 40, the claim unchanged.
-    find: "export const MATCH_RECORD_VERSION = 44;",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
+    find: "export const MATCH_RECORD_VERSION = 45;",
     replace: "export const MATCH_RECORD_VERSION = 40;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts", "packages/engine/src/koraidonD579.test.ts"],
   },
@@ -47042,7 +47063,8 @@ export const MUTANTS: Mutant[] = [
     file: "apps/api/src/lobby/match.ts",
     // 🆕🆕🆕 D621 — RE-ANCHORED off the bytes (D540): the gate admits v41 OR v42 since D621; deleting it still admits every version.
     // 🆕🆕🆕 D630 — RE-POINTED off the bytes (D540): the version gate names v43 too since D630; the same mutation (no gate at all).
-    find: "  if (\n    version !== MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION\n  )\n    return null;\n",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the version test gained D636's v44 conjunct; the patch still deletes the whole test.
+    find: "  if (\n    version !== MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION\n  )\n    return null;\n",
     replace: "",
     expectKilledBy: ["apps/api/src/lobby/poolMigrationD583.test.ts"],
   },
@@ -52897,8 +52919,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D613",
     what: "the Jet Energy attach sweeps only when a watched trigger changed the board (D610's open finding): Holes' lethal counters after the switch leave a Knocked Out body in play. Killed by switchSweepBenchBasicD613 §1/§2.",
     file: "packages/engine/src/turn.ts",
-    find: "    if (watched !== next || switched) {\n",
-    replace: "    if (watched !== next) {\n",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the sweep's board is `shocked` since D636 (Electrified Incisors after the watched triggers).
+    find: "    if (shocked !== next || switched) {\n",
+    replace: "    if (shocked !== next) {\n",
     expectKilledBy: ["packages/engine/src/switchSweepBenchBasicD613.test.ts"],
   },
   {
@@ -54929,8 +54952,9 @@ export const MUTANTS: Mutant[] = [
     what: "The migration restamps the version without writing the two side keys: the first attack throws. Killed by sideStateMigrationD621.",
     file: "apps/api/src/lobby/match.ts",
     // 🆕🆕🆕 D630 — RE-POINTED off the bytes (D540): D621's step is skipped for a v43 record since D630; the same mutation (never taken).
-    find: "  const sided = record.version === RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION ? withPool : withD621SideKeys(withPool);",
-    replace: "  const sided = withPool;",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): `sided` is a two-line ternary since D636 (the v44 arm); the patch still skips D621's step.
+    find: "    v44 || record.version === RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION ? withPool : withD621SideKeys(withPool);",
+    replace: "    withPool;",
     expectKilledBy: ["apps/api/src/lobby/sideStateMigrationD621.test.ts"],
   },
   {
@@ -56852,8 +56876,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D630",
     what: "a v43 record is not migratable: it is retired. Killed by recordKeysMigrationD630.",
     file: "apps/api/src/lobby/match.ts",
-    find: "    version !== SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION\n",
-    replace: "    version !== SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION\n",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): D636's v44 conjunct follows; the patch still drops the v43 one.
+    find: "    version !== SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n",
+    replace: "    version !== SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n",
     expectKilledBy: ["apps/api/src/lobby/recordKeysMigrationD630.test.ts"],
   },
   {
@@ -56870,8 +56895,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D630",
     what: "the in-play bodies are not migrated: `attackDamageTaken` stays absent. Killed by recordKeysMigrationD630.",
     file: "apps/api/src/lobby/match.ts",
-    find: "      active: side.active === null ? null : body(side.active),\n",
-    replace: "      active: side.active,\n",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): `withD636LockKeys` prints the same body line, so the anchor takes D630's line above it.
+    find: "      sideDamageReduction,\n      active: side.active === null ? null : body(side.active),\n",
+    replace: "      sideDamageReduction,\n      active: side.active,\n",
     expectKilledBy: ["apps/api/src/lobby/recordKeysMigrationD630.test.ts"],
   },
   {
@@ -56879,8 +56905,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D630",
     what: "D621's step runs on a v43 record too: a live Acerola's Mischief shield is wiped. Killed by recordKeysMigrationD630.",
     file: "apps/api/src/lobby/match.ts",
-    find: "  const sided = record.version === RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION ? withPool : withD621SideKeys(withPool);",
-    replace: "  const sided = withD621SideKeys(withPool);",
+    // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the v43 arm is the right-hand disjunct since D636; the patch still runs D621's step on a v43 record.
+    find: "    v44 || record.version === RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION ? withPool : withD621SideKeys(withPool);",
+    replace: "    v44 ? withPool : withD621SideKeys(withPool);",
     expectKilledBy: ["apps/api/src/lobby/recordKeysMigrationD630.test.ts"],
   },
   {
@@ -57881,5 +57908,448 @@ export const MUTANTS: Mutant[] = [
     find: "        plural: `Item cards that have \"${filter.fragment}\" in their name`,",
     replace: "        plural: \"Item cards\",",
     expectKilledBy: ["packages/engine/src/fossilQuarryD635.test.ts"],
+  },
+  {
+    id: "D636-cursed-roots-anchor-unread",
+    decision: "D636",
+    what: "Cursed Roots' anchor is unread: the text stays null. Killed by nextTurnLocksD636 §1 / §2 and the census D636 block.",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (BAR_HAND_ATTACH_DEFENDER.test(effect)) return [{ op: \"markHandAttach\", barred: true }];\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D636-incisors-counters-dropped",
+    decision: "D636",
+    what: "Electrified Incisors reads as Cursed Roots' bar: no counters. Killed by nextTurnLocksD636 §1 / §3.",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (counters >= 1) return [{ op: \"markHandAttach\", counters }];",
+    replace: "    if (counters >= 1) return [{ op: \"markHandAttach\", barred: true }];",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-incisors-zero-admitted",
+    decision: "D636",
+    what: "a printed 0 counters is admitted. Killed by nextTurnLocksD636 §1.",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (counters >= 1) return [{ op: \"markHandAttach\", counters }];",
+    replace: "    if (counters >= 0) return [{ op: \"markHandAttach\", counters }];",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-jet-coins-dropped",
+    decision: "D636",
+    what: "Jet of Ink installs the one-coin lock. Killed by nextTurnLocksD636 §1 / §4.",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (DEFENDER_TWO_COIN_ATTACK_LOCK.test(effect)) return [{ op: \"flipLockAttack\", coins: 2 }];",
+    replace: "  if (DEFENDER_TWO_COIN_ATTACK_LOCK.test(effect)) return [{ op: \"flipLockAttack\" }];",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-quaking-anchor-unread",
+    decision: "D636",
+    what: "Quaking Fist's anchor is unread: no lock. Killed by nextTurnLocksD636 §1 / §5 and the census D636 block.",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (TRAINER_PLAY_FLIP_LOCK.test(effect)) return [{ op: \"flipLockTrainerPlay\" }];\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D636-scorching-gate-presence",
+    decision: "D636",
+    what: "Scorching Earth's gate reads presence: the attacker's own Stadium is discarded and the opponent barred. Killed by nextTurnLocksD636 §1 / §6.",
+    file: "packages/engine/src/effects.ts",
+    find: "        cond: { kind: \"opponentStadiumInPlay\" },",
+    replace: "        cond: { kind: \"stadiumInPlay\" },",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-scorching-bar-dropped",
+    decision: "D636",
+    what: "Scorching Earth discards the Stadium and bars nothing. Killed by nextTurnLocksD636 §1 / §6.",
+    file: "packages/engine/src/effects.ts",
+    find: "        then: [{ op: \"discardStadium\" }, { op: \"preventHandPlay\", bars: \"Stadium\" }],",
+    replace: "        then: [{ op: \"discardStadium\" }],",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-opponent-stadium-owner-inverted",
+    decision: "D636",
+    what: "`opponentStadiumInPlay` asks the asker's own ownership. Killed by nextTurnLocksD636 §6.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return state.stadium !== null && state.stadium.owner === otherSeat(seat);",
+    replace: "      return state.stadium !== null && state.stadium.owner === seat;",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-two-coin-stamp-on-one-coin-field",
+    decision: "D636",
+    what: "Jet of Ink writes the one-coin stamp: one coin next turn. Killed by nextTurnLocksD636 §4.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    return withActive(state, seat, { ...active, attackTwoFlipLockTurn: turn });",
+    replace: "    return withActive(state, seat, { ...active, attackFlipLockTurn: turn });",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-trainer-lock-on-installer",
+    decision: "D636",
+    what: "Quaking Fist stamps the attacker's own side. Killed by nextTurnLocksD636 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const seat = otherSeat(ctx.seat);\n  events.push({ type: \"TRAINER_FLIP_LOCKED\", seat });",
+    replace: "  const seat = ctx.seat;\n  events.push({ type: \"TRAINER_FLIP_LOCKED\", seat });",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-trainer-lock-plus-two",
+    decision: "D636",
+    what: "Quaking Fist stamps `+ 2`: the victim's next turn plays free. Killed by nextTurnLocksD636 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "{ ...state.players[seat], trainerFlipLockTurn: state.turn + 1 }",
+    replace: "{ ...state.players[seat], trainerFlipLockTurn: state.turn + 2 }",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-incisors-counters-overwrite",
+    decision: "D636",
+    what: "a second install in one window overwrites the counters instead of summing (R-EIC1). Killed by nextTurnLocksD636 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const counters = (op.counters ?? 0) + (same ? prior.counters : 0);",
+    replace: "  const counters = op.counters ?? 0;",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-effect-hand-attach-unshocked",
+    decision: "D636",
+    what: "an effect's hand attach onto the marked body places nothing. Killed by nextTurnLocksD636 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.source === \"hand\") updated = shockHandAttach(state, ctx.seat, updated, energyUids.length, events);\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-shock-reads-no-mark",
+    decision: "D636",
+    what: "`shockHandAttach` places on every hand attach, marked or not. Killed by nextTurnLocksD636 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const counters = liveHandAttachMark(state, body)?.counters ?? 0;",
+    replace: "  const counters = 8;",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-switch-unstamped",
+    decision: "D636",
+    what: "`switchInto` does not stamp the body that went down: a Switch or a gust leaves `benchedTurn` null. Killed by nextTurnLocksD636 §7.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    benchedTurn: state.turn,\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-action-attach-unshocked",
+    decision: "D636",
+    what: "the attach action onto the marked Defending Pokémon places nothing. Killed by nextTurnLocksD636 §3.",
+    file: "packages/engine/src/turn.ts",
+    find: "    const shocked = shockAttachedBody(watched, action.seat, attachedTo, events);",
+    replace: "    const shocked = watched;",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-retreat-unstamped",
+    decision: "D636",
+    what: "a retreat does not stamp the body that went down. Killed by nextTurnLocksD636 §7.",
+    file: "packages/engine/src/turn.ts",
+    find: "  const benched = { ...clearOnLeavingActive(paid.pokemon), benchedTurn: state.turn };",
+    replace: "  const benched = clearOnLeavingActive(paid.pokemon);",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-two-coin-not-shed-on-retreat",
+    decision: "D636",
+    what: "a retreat keeps Jet of Ink's stamp on the benched body. Killed by nextTurnLocksD636 §4.",
+    file: "packages/engine/src/turn.ts",
+    find: "    attackTwoFlipLockTurn: null, // 🆕🆕🆕 D636 — Jet of Ink's stamp, shed with the one-coin stamp\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-two-coin-lock-unread",
+    decision: "D636",
+    what: "`attackFlipLockCoins` ignores the two-coin stamp: Jet of Ink never flips. Killed by nextTurnLocksD636 §4.",
+    file: "packages/engine/src/continuous.ts",
+    find: "(pokemon.attackTwoFlipLockTurn === state.turn ? 2 : 0)",
+    replace: "0",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-two-coin-lock-one-coin",
+    decision: "D636",
+    what: "Jet of Ink is one coin. Killed by nextTurnLocksD636 §4.",
+    file: "packages/engine/src/continuous.ts",
+    find: "(pokemon.attackTwoFlipLockTurn === state.turn ? 2 : 0)",
+    replace: "(pokemon.attackTwoFlipLockTurn === state.turn ? 1 : 0)",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-lock-stops-at-first-tails",
+    decision: "D636",
+    what: "the lock stops flipping at the first tails: only one row on heads-tails' sibling tails-heads. Killed by nextTurnLocksD636 §4.",
+    file: "packages/engine/src/attack.ts",
+    find: "      if (face === \"tails\") lockTails = true;",
+    replace: "      if (face === \"tails\") {\n        lockTails = true;\n        break;\n      }",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-trainer-flip-unread",
+    decision: "D636",
+    what: "`trainerFlipFails` never flips: the lock is inert. Killed by nextTurnLocksD636 §5.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (side.trainerFlipLockTurn !== state.turn) return null;",
+    replace: "  return null;",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-trainer-flip-always",
+    decision: "D636",
+    what: "`trainerFlipFails` flips with no lock: every Trainer play draws a coin. Killed by nextTurnLocksD636 §5.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (side.trainerFlipLockTurn !== state.turn) return null;",
+    replace: "  if (side.trainerFlipLockTurn === undefined) return null;",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-trainer-flip-before-supporter-limit",
+    decision: "D636",
+    what: "the Quaking Fist coin is flipped above §7.2's once-per-turn check: a second Supporter's tails try discards it. Killed by nextTurnLocksD636 §5.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "    if (state.allowances.supporterPlayed) {",
+    replace:
+      "    const early = trainerFlipFails(state, action.seat, action.uid);\n    if (early?.failed === true) return ok(early.state, early.events);\n    if (state.allowances.supporterPlayed) {",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-trainer-flip-before-target-check",
+    decision: "D636",
+    what: "the Quaking Fist coin is flipped above the no-legal-target check: a targetless Switch's tails try discards it. Killed by nextTurnLocksD636 §5.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (!trainerProgramPlayable(state, program, action.seat)) {",
+    replace:
+      "  const early = trainerFlipFails(state, action.seat, action.uid);\n  if (early?.failed === true) return ok(early.state, early.events);\n  if (!trainerProgramPlayable(state, program, action.seat)) {",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-evolve-clears-benched-stamp",
+    decision: "D636",
+    what: "evolving clears `benchedTurn`: a Clauncher that retreated and evolved into Clawitzer on the Bench loses Fall Back to Reload (R-FBR1's stated reading reversed). Killed by nextTurnLocksD636 §7.",
+    file: "packages/engine/src/types.ts",
+    find: "    attackTwoFlipLockTurn: null, // 🆕🆕🆕 D636 — Jet of Ink's stamp (evolve clear)",
+    replace: "    attackTwoFlipLockTurn: null, // 🆕🆕🆕 D636 — Jet of Ink's stamp (evolve clear)\n    benchedTurn: null,",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-trainer-flip-discard-lost",
+    decision: "D636",
+    what: "a tails Trainer leaves the hand for nowhere. Killed by nextTurnLocksD636 §5.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "    hand: without(side.hand, uid),\n    discard: [...side.discard, uid],\n  });\n  return { state: { ...discarded, rngState }, events, failed: true };",
+    replace: "    hand: without(side.hand, uid),\n    discard: side.discard,\n  });\n  return { state: { ...discarded, rngState }, events, failed: true };",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-supporter-tails-unspent",
+    decision: "D636",
+    what: "a tails Supporter does not spend the turn's Supporter (R-QF1's reversal). Killed by nextTurnLocksD636 §5.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "      trainerType === \"Supporter\"\n        ? { ...flip.state, allowances: { ...flip.state.allowances, supporterPlayed: true } }",
+    replace: "      false\n        ? { ...flip.state, allowances: { ...flip.state.allowances, supporterPlayed: true } }",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-stadium-tails-unspent",
+    decision: "D636",
+    what: "a tails Stadium does not spend the turn's Stadium play. Killed by nextTurnLocksD636 §5.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "    return ok({ ...flip.state, allowances: { ...flip.state.allowances, stadiumPlayed: true } }, flip.events);",
+    replace: "    return ok(flip.state, flip.events);",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-tool-flip-skipped",
+    decision: "D636",
+    what: "a tails Tool attaches anyway. Killed by nextTurnLocksD636 §5.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (flip?.failed === true) return ok(flip.state, flip.events);\n  const flipped = flip?.state ?? state;",
+    replace: "  const flipped = flip?.state ?? state;",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-candy-flip-skipped",
+    decision: "D636",
+    what: "a tails Rare Candy evolves anyway. Killed by nextTurnLocksD636 §5.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (flip?.failed === true) return ok(flip.state, flip.events);\n  const hand = without(without(side.hand, action.uid), action.evolutionUid);",
+    replace: "  const hand = without(without(side.hand, action.uid), action.evolutionUid);",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-fossil-flip-skipped",
+    decision: "D636",
+    what: "a tails Antique Fossil is benched anyway. Killed by nextTurnLocksD636 §5.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (flip?.failed === true) return ok(flip.state, flip.events);\n  const events: GameEvent[] = [\n    ...(flip?.events ?? []),\n    { type: \"TRAINER_PLAYED\", seat: action.seat, uid: action.uid, trainerType: \"Item\" },\n    { type: \"POKEMON_BENCHED\"",
+    replace: "  const events: GameEvent[] = [\n    ...(flip?.events ?? []),\n    { type: \"TRAINER_PLAYED\", seat: action.seat, uid: action.uid, trainerType: \"Item\" },\n    { type: \"POKEMON_BENCHED\"",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-benched-gate-unread",
+    decision: "D636",
+    what: "the per-body gate ignores `benchedTurn`: an unmoved Clawitzer uses it. Killed by nextTurnLocksD636 §7.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (ability.benchedThisTurn === true && pokemon.benchedTurn !== state.turn) return false;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-fall-back-one-attach",
+    decision: "D636",
+    what: "Fall Back to Reload attaches at most one. Killed by nextTurnLocksD636 §1 / §7.",
+    file: "packages/engine/src/registry.ts",
+    find: "        { op: \"attachEnergyFrom\", source: \"hand\", energyType: \"Water\", toSelf: true, declinable: true },\n        { op: \"attachEnergyFrom\", source: \"hand\", energyType: \"Water\", toSelf: true, declinable: true },\n      ],\n    },\n  ],\n};\n\n// ── 🆕🆕🆕 D608",
+    replace: "        { op: \"attachEnergyFrom\", source: \"hand\", energyType: \"Water\", toSelf: true, declinable: true },\n      ],\n    },\n  ],\n};\n\n// ── 🆕🆕🆕 D608",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-fall-back-mandatory",
+    decision: "D636",
+    what: "Fall Back to Reload's picks are mandatory: one or none cannot be chosen. Killed by nextTurnLocksD636 §1 / §7.",
+    file: "packages/engine/src/registry.ts",
+    find: "        { op: \"attachEnergyFrom\", source: \"hand\", energyType: \"Water\", toSelf: true, declinable: true },\n        { op: \"attachEnergyFrom\", source: \"hand\", energyType: \"Water\", toSelf: true, declinable: true },\n      ],\n    },\n  ],\n};\n\n// ── 🆕🆕🆕 D608",
+    replace: "        { op: \"attachEnergyFrom\", source: \"hand\", energyType: \"Water\", toSelf: true },\n        { op: \"attachEnergyFrom\", source: \"hand\", energyType: \"Water\", toSelf: true },\n      ],\n    },\n  ],\n};\n\n// ── 🆕🆕🆕 D608",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-fall-back-gate-dropped",
+    decision: "D636",
+    what: "Fall Back to Reload loses its moved-to-Bench gate. Killed by nextTurnLocksD636 §1 / §7.",
+    file: "packages/engine/src/registry.ts",
+    find: "      benchOnly: true,\n      benchedThisTurn: true,\n",
+    replace: "      benchOnly: true,\n",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-stadium-stamp-turned-away",
+    decision: "D636",
+    what: "`stampedBarFor` still turns `\"Stadium\"` away: Scorching Earth's bar is never read. Killed by nextTurnLocksD636 §6.",
+    file: "packages/engine/src/types.ts",
+    find: "  return klass === \"Tool\" ? false : stampedPlayLockBarred(state, seat, klass);",
+    replace: "  return klass === \"Tool\" || klass === \"Stadium\" ? false : stampedPlayLockBarred(state, seat, klass);",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-two-coin-not-shed-on-switch",
+    decision: "D636",
+    what: "a Switch keeps Jet of Ink's stamp on the switched-out body. Killed by nextTurnLocksD636 §4.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    attackTwoFlipLockTurn: null, // 🆕🆕🆕 D636 — Jet of Ink's stamp, shed with the one-coin stamp (switch clear)\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-two-coin-not-shed-on-evolve",
+    decision: "D636",
+    what: "evolving keeps Jet of Ink's stamp: the evolved card still flips. Killed by nextTurnLocksD636 §4.",
+    file: "packages/engine/src/types.ts",
+    find: "    attackTwoFlipLockTurn: null, // 🆕🆕🆕 D636 — Jet of Ink's stamp (evolve clear)\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-two-coin-not-shed-on-devolve",
+    decision: "D636",
+    what: "devolving keeps Jet of Ink's stamp. Killed by nextTurnLocksD636 §4.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    attackTwoFlipLockTurn: null, // 🆕🆕🆕 D636 — Jet of Ink's stamp, shed with the one-coin stamp (devolve clear)\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-attach-from-hand-unshocked",
+    decision: "D636",
+    what: "an `attachFromHand` answer onto the marked body places nothing (R-EIC1's effect path). Killed by nextTurnLocksD636 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    if (zone === \"hand\") {\n      if (to.spot.spot === \"active\") {\n        if (active !== null) active = shockHandAttach(",
+    replace: "    if (zone === \"discard\") {\n      if (to.spot.spot === \"active\") {\n        if (active !== null) active = shockHandAttach(",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-jet-row-coins-unwritten",
+    decision: "D636",
+    what: "Jet of Ink's ATTACK_LOCKED row carries no `coins`: the log promises one coin. Killed by nextTurnLocksD636 §8.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    events.push({ type: \"ATTACK_LOCKED\", seat, uid, flip: true, coins: 2 });",
+    replace: "    events.push({ type: \"ATTACK_LOCKED\", seat, uid, flip: true });",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-jet-row-arm-dropped",
+    decision: "D636",
+    what: "the two-coin log arm reads the wrong presence: Jet of Ink's row reads \"must flip a coin\". Killed by nextTurnLocksD636 §8.",
+    file: "packages/engine/src/log.ts",
+    find: "      if (event.flip === true && event.coins === 2) {\n",
+    replace: "      if (event.flip === true && event.coins === undefined) {\n",
+    expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
+  },
+  {
+    id: "D636-trainer-coin-not-shown",
+    decision: "D636",
+    what: "the tabletop coin display skips Quaking Fist's coin. Killed by coinFlips.test.",
+    file: "src/features/game/coinFlips.ts",
+    find: "      case \"TRAINER_FLIP_LOCK_CHECK\":\n",
+    replace: "",
+    expectKilledBy: ["src/features/game/coinFlips.test.ts"],
+  },
+  {
+    id: "D636-migration-v44-refused",
+    decision: "D636",
+    what: "a v44 record is not migratable: it is retired. Killed by lockKeysMigrationD636.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "    version !== RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION\n",
+    replace: "    version !== RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION\n",
+    expectKilledBy: ["apps/api/src/lobby/lockKeysMigrationD636.test.ts"],
+  },
+  {
+    id: "D636-migration-reruns-d630-on-v44",
+    decision: "D636",
+    what: "D630's step runs on a v44 record too: a live Settle the Score / Juggernaut Horn record is wiped. Killed by lockKeysMigrationD636.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "  const keyed = v44 ? sided : withD630RecordKeys(sided);",
+    replace: "  const keyed = withD630RecordKeys(sided);",
+    expectKilledBy: ["apps/api/src/lobby/lockKeysMigrationD636.test.ts"],
+  },
+  {
+    id: "D636-migration-mark-counters-unwritten",
+    decision: "D636",
+    what: "a live v44 hand-attach mark keeps no `counters` key. Killed by lockKeysMigrationD636.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "      handAttachMark: pokemon.handAttachMark === null ? null : { ...pokemon.handAttachMark, counters: 0 },",
+    replace: "      handAttachMark: pokemon.handAttachMark,",
+    expectKilledBy: ["apps/api/src/lobby/lockKeysMigrationD636.test.ts"],
+  },
+  {
+    id: "D636-migration-stadium-key-unwritten",
+    decision: "D636",
+    what: "the v44 hand-play stamps gain no `Stadium` key. Killed by lockKeysMigrationD636.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "    handPlayLockedTurn[seat] = { ...handPlayLockedTurn[seat], Stadium: null };\n",
+    replace: "",
+    expectKilledBy: ["apps/api/src/lobby/lockKeysMigrationD636.test.ts"],
+  },
+  {
+    id: "D636-migration-side-key-unwritten",
+    decision: "D636",
+    what: "a v44 side gains no `trainerFlipLockTurn`. Killed by lockKeysMigrationD636.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "      trainerFlipLockTurn: null,\n",
+    replace: "",
+    expectKilledBy: ["apps/api/src/lobby/lockKeysMigrationD636.test.ts"],
   },
 ];
