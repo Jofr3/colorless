@@ -55,6 +55,9 @@ import {
   trainerProgramPlayable,
   providedEnergy,
   rareCandyOptions,
+  // 🆕🆕🆕 D642 — Ange Floette's two Stadium-row terms (R-ANF1, R-ANF2).
+  stadiumPlayOverUnmet,
+  stadiumSpentPlayLifted,
   STATUS_LABELS,
   topCardOf,
   topUid,
@@ -276,7 +279,11 @@ function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
         : isSupporter
           ? (game.turn === 1 && program.trainerFirstTurnExempt !== true) ||
             game.allowances.supporterPlayed
-          : isStadium && (game.allowances.stadiumPlayed || card.name === inPlayStadium));
+          : // 🆕🆕🆕 D642 — Ange Floette's lifted spent play (R-ANF2) and its Prism Tower gate (R-ANF1).
+            isStadium &&
+            ((game.allowances.stadiumPlayed && !stadiumSpentPlayLifted(game, seat, card)) ||
+              card.name === inPlayStadium ||
+              stadiumPlayOverUnmet(game, card)));
     out.push({
       uid,
       name: card.name,

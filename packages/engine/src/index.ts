@@ -20271,6 +20271,17 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.524.0 → **0.525.0** (D642 — Z1 + K2: THE `me` STADIUM REST AND THE WATCHED-ACTIVE DAMAGE
+    TRIGGERS, 5 TEXTS / 6 PRINTINGS (`me` + `30th`); `MATCH_RECORD_VERSION` STAYS 47 (apps/api match.ts "STAYS 47 AT
+    D642")). registry.ts: Spiritomb `me01-087` / `-148` "Spiteful Swirl" and Wishiwashi `30th-022` "Counterattack
+    Grouping" on the NEW `PassiveEffects.damageAttackerWatched` (continuous.ts `watchedRecoilOf` / `withWatchedRecoil`
+    at attack.ts's main hit and interpreter.ts `reactWithRecoilAndAbility`; R-SSW1, R-CAG1); Risky Ruins `me01-127` on
+    the NEW `StadiumEffects.benchArrivalCounters` (interpreter.ts `benchArrivalCounters` at the hand play, the fossil
+    play and the search / retrieval / look-at-top Bench arms; R-RR1, R-RR2); Dizzying Valley `me02-088` on the NEW
+    `StadiumEffects.confusionSurvivesStageChange` (continuous.ts `stageChangeConditions`, handed to `evolveOnto` and
+    `devolvedBodyOf`; R-DV1); Ange Floette `me04-075` on the NEW `StadiumEffects.playOnlyOverStadium` (cardplay.ts
+    `stadiumPlayOverUnmet` / `stadiumSpentPlayLifted`, read by `playStadium`, redact.ts and GameHud.tsx; R-ANF1,
+    R-ANF2) and the NEW `hpDelta.name`. `stadiumWatchedMeD642.test.ts`, `GameHud.angeFloette.dom.test.tsx`.)
     🆕🆕🆕 engineVersion 0.523.0 → **0.524.0** (D641 — W1 + Y1b: EFFECTS THE OPPONENT ANSWERS, AND DECK SWAP / REVEAL, 4
     TEXTS / 7 PRINTINGS (`me` + `mep` + `30th`); `MATCH_RECORD_VERSION` STAYS 47 (apps/api match.ts "STAYS 47 AT D641")).
     effects.ts: Ditto `mep-106` / `30th-115` "Surprisingly Transform" on `coinFlipGate` over the NEW `switchWithDeckChosen`
@@ -20513,7 +20524,7 @@ import type { GameState, Seat } from "./types";
     `drawUntilHandSize` with the NEW `per` member, the actor's {P} Pokémon in play; R-MYG1) and Forest of
     Vitality ×3 (the NEW `StadiumEffects.sameTurnEvolution`, continuous.ts
     `stadiumLicensesSameTurnEvolve`, read at turn.ts `evolve`'s §10 ban only; R-FOV1). Dropped and named:
-    Dizzying Valley, Fossil Quarry [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky Ruins, Ange Floette. `stadiumsMeD618.test.ts`.)
+    Dizzying Valley [🆕🆕🆕 D642 (D539): Dizzying Valley, Risky Ruins, Ange Floette BUILT at D642 (Z1).], Fossil Quarry [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky Ruins, Ange Floette. `stadiumsMeD618.test.ts`.)
     🆕🆕🆕 engineVersion 0.499.0 → **0.500.0** (D617 — WP24b: FIVE MORE `me` SUPPORTERS, 5 TEXTS / 11
     PRINTINGS; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D617")). registry.ts, five
     NEW objects: Pokémon Center Lady (`healChosen` 60 + the NEW `recoverHealed`: a picked Active also gets
@@ -20641,7 +20652,7 @@ import type { GameState, Seat } from "./types";
     `stadiumFilteredCostSurcharge` in `effectiveAttackCost`'s Stadium term), Lumiose City ×2 and
     Celebratory Fanfare ×2 (the NEW `StadiumAbility.endsTurn: "always" | "ifHealed"`, cardplay.ts
     `stadiumUseEndsTurn` → `settleProgram`'s shipped `endsTurn`; R-LC1, R-CF1). Dropped: Battle Cage,
-    Mystery Garden, Forest of Vitality, Dizzying Valley, Fossil Quarry [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky Ruins [🆕🆕🆕 D618 (D539): the
+    Mystery Garden, Forest of Vitality, Dizzying Valley [🆕🆕🆕 D642 (D539): Dizzying Valley, Risky Ruins BUILT at D642 (Z1).], Fossil Quarry [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky Ruins [🆕🆕🆕 D618 (D539): the
     first three BUILT at D618]. `stadiumsMeD606.test.ts`.)
     🆕🆕🆕 engineVersion 0.487.0 → **0.488.0** (D605 — WP34: COIN (THE REST); `MATCH_RECORD_VERSION`
     STAYS 42 (apps/api match.ts "STAYS 42 AT D605")). effects.ts: two NEW `damageChosen` riders —
@@ -20716,7 +20727,7 @@ import type { GameState, Seat } from "./types";
     "N Pokémon cards" beside D572's "N Basic Energy") and Pecharunt "Final Chain" (an on-KO program
     behind `TriggeredAbility.byOpponentAttack`). flow.ts `koByOpponentAttack` / `koByOpponentPokemonEx`
     are the shared cause predicates ("KO'd by an ex"). Registry-only fields; no persisted member.
-    Fainting Spell, Photon Cord, Spiteful Swirl, Counterattack Grouping and Damp dropped and named
+    Fainting Spell, Photon Cord, Spiteful Swirl [🆕🆕🆕 D642 (D539): Spiteful Swirl, Counterattack Grouping BUILT at D642 (K2).], Counterattack Grouping and Damp dropped and named
     [🆕🆕🆕 D626 (D539): Fainting Spell and Photon Cord BUILT at D626 (K1)] [🆕🆕🆕 D632 (D539): Damp BUILT at D632 (D1)].
     `koAbilitiesMeD598.test.ts`.)
     🆕🆕🆕 engineVersion 0.480.0 → **0.481.0** (D597 — WP29: THE DISCARD-SCALED ATTACKS;
@@ -25761,7 +25772,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.524.0";
+export const engineVersion = "0.525.0";
 
 export type {
   ApplyResult,
@@ -25949,6 +25960,8 @@ export { programPlayable, trainerProgramPlayable } from "./cardplay";
 /** 🆕🆕🆕 D576 — the Antique Fossil play's one gate (a free Bench slot), shared by both Trainer
     lists and `playTrainer` so a fossil row greys exactly when the play is refused. */
 export { fossilPlayable } from "./cardplay";
+// 🆕🆕🆕 D642 — Ange Floette's two Stadium-row terms, for the local HUD's Trainer list (R-ANF1, R-ANF2).
+export { stadiumPlayOverUnmet, stadiumSpentPlayLifted } from "./cardplay";
 /** D272 — the SOLE FUNNEL for the §9/§15.J `allowances.abilitiesUsed` key.
     Exported for the same reason `programPlayable` is: `useAbility` both READS and
     WRITES this key, and the two HUD mirrors (this app's `GameHud`, the wire's

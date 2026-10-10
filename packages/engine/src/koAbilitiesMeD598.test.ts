@@ -94,12 +94,14 @@ describe("D598 §1 — the texts and the registry rows", () => {
     expect(programFor(PECHARUNT)?.triggered?.[0]?.program).toEqual(deriveAttackEffect(consequent));
   });
 
-  it("the five dropped WP32 texts stay unkeyed (decisions.md D598) (🆕🆕🆕 D626 (D539): ~~five~~ — Fainting Spell ×2 and Photon Cord ×2 are keyed since D626, K1) (🆕🆕🆕 D632 (D539): WITHDRAWN for Damp — keyed since D632, D1)", () => {
-    // Spiteful Swirl ×2, Counterattack Grouping, Damp [🆕🆕🆕 D632 (D539): BUILT at D632]. [🆕🆕🆕 D626 (D539): Fainting Spell ×2 and Photon Cord ×2
+  it("the five dropped WP32 texts stay unkeyed (decisions.md D598) (🆕🆕🆕 D626 (D539): ~~five~~ — Fainting Spell ×2 and Photon Cord ×2 are keyed since D626, K1) (🆕🆕🆕 D632 (D539): WITHDRAWN for Damp — keyed since D632, D1) (🆕🆕🆕 D642 (D539): WITHDRAWN for the rest — Spiteful Swirl ×2 and Counterattack Grouping keyed since D642, K2)", () => {
+    // Spiteful Swirl ×2, Counterattack Grouping [🆕🆕🆕 D642 (D539): BUILT at D642], Damp [🆕🆕🆕 D632 (D539): BUILT at D632]. [🆕🆕🆕 D626 (D539): Fainting Spell ×2 and Photon Cord ×2
     // BUILT at D626 — `koTriggerRestMeD626.test.ts`.]
     // 🆕🆕🆕 D632 (D539) — Damp `me02.5-039` / `-040` left this list: keyed at D632 (`dampD632.test.ts`).
+    // 🆕🆕🆕 D642 (D539) — WITHDRAWN for Spiteful Swirl ×2 and Counterattack Grouping: keyed since D642 (K2,
+    // `stadiumWatchedMeD642.test.ts`); the rung is inverted.
     for (const id of ["me01-087", "me01-148", "30th-022"]) {
-      expect(programFor(id), id).toBeUndefined();
+      expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
     }
     for (const id of ["me02.5-039", "me02.5-040"]) expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
     for (const id of ["30th-090", "30th-154", "me05-028", "mep-082"]) expect(programFor(id), id).toBeDefined();
@@ -709,7 +711,7 @@ describe("D598 §7 — Final Chain: an on-KO search behind the printed cause", (
 });
 
 describe("D598 §8 — the version", () => {
-  it("is built at engine 0.524.0", () => {
-    expect(engineVersion).toBe("0.524.0");
+  it("is built at engine 0.525.0", () => {
+    expect(engineVersion).toBe("0.525.0");
   });
 });

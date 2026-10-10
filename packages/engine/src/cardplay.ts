@@ -65,6 +65,8 @@ import {
   swapBodies,
   swapDiscardCards,
   switchActiveTargets,
+  // 🆕🆕🆕 D642 — Risky Ruins' counters, at an Antique Fossil's play.
+  benchArrivalCounters,
 } from "./interpreter";
 import type { AbilityProgram, StadiumAbility } from "./registry";
 import { programFor } from "./registry";
@@ -318,14 +320,13 @@ function playFossil(state: GameState, action: PlayTrainerAction, card: Card): Ap
     { type: "TRAINER_PLAYED", seat: action.seat, uid: action.uid, trainerType: "Item" },
     { type: "POKEMON_BENCHED", seat: action.seat, uid: action.uid },
   ];
-  return ok(
-    withSide(flip?.state ?? state, action.seat, {
-      ...side,
-      hand: without(side.hand, action.uid),
-      bench: [...side.bench, makeInPlay(action.uid, state.turn)],
-    }),
-    events,
-  );
+  const seated = withSide(flip?.state ?? state, action.seat, {
+    ...side,
+    hand: without(side.hand, action.uid),
+    bench: [...side.bench, makeInPlay(action.uid, state.turn)],
+  });
+  // 🆕🆕🆕 D642 — Risky Ruins: the seated fossil is a Basic {C} Pokémon (R-RR2), so it takes the counters.
+  return ok(benchArrivalCounters(seated, action.seat, [action.uid], events), events);
 }
 
 /** 🆕🆕🆕 D576 — can `seat` put an Antique Fossil onto its Bench right now? A free Bench slot is
@@ -381,7 +382,8 @@ function playStadium(state: GameState, action: PlayTrainerAction, card: Card): A
     // Stadium cannot be played rather than sitting in the zone doing nothing.
     return err("TRAINER_NOT_SIMULATED", `${card.name} is not simulated yet`);
   }
-  if (state.allowances.stadiumPlayed) {
+  // 🆕🆕🆕 D642 — Ange Floette's *"during the same turn you play Prism Tower"* lifts the spent play (R-ANF2).
+  if (state.allowances.stadiumPlayed && !stadiumSpentPlayLifted(state, action.seat, card)) {
     return err("STADIUM_ALREADY_PLAYED", "only one Stadium play per turn (§7.3)");
   }
   const current = state.stadium;
@@ -392,6 +394,10 @@ function playStadium(state: GameState, action: PlayTrainerAction, card: Card): A
   // replaceable — stay total.
   if (currentCard !== undefined && currentCard.name === card.name) {
     return err("STADIUM_SAME_NAME", `${card.name} is already in play (§7.3)`);
+  }
+  // 🆕🆕🆕 D642 — Ange Floette's *"only if you discard a Prism Tower in play"* (R-ANF1).
+  if (stadiumPlayOverUnmet(state, card)) {
+    return err("PLAY_CONDITION_NOT_MET", `${card.name} can be put into play only by discarding the Stadium it names`);
   }
 
   // 🆕🆕🆕 D636 — Quaking Fist (R-QF1): tails discards the Stadium and spends the turn's Stadium play.
@@ -459,6 +465,31 @@ function playStadium(state: GameState, action: PlayTrainerAction, card: Card): A
   // Stadium replaced the sweep's state check runs actor-first, as every sweep does.
   next = recoverStatuses(next, events);
   return resolveMidTurnKnockOuts(next, action.seat, SEATS, events, undefined, current?.owner);
+}
+
+/** 🆕🆕🆕 §7.3 (D642) — is the Stadium in play the one `card`'s `playOnlyOverStadium` names (Ange Floette: a
+    Prism Tower, R-ANF1)? By NAME, either owner's. */
+function stadiumPlayOverMet(state: GameState, card: Card): boolean {
+  const over = programFor(card.id)?.stadium?.playOnlyOverStadium;
+  if (over === undefined || state.stadium === null) return false;
+  return cardOfUid(state, state.stadium.uid)?.name === over;
+}
+
+/** 🆕🆕🆕 §7.3 (D642) — Ange Floette's *"only if you discard a Prism Tower in play"* is UNMET: the card names a
+    Stadium and that Stadium is not the one in play (R-ANF1). False for every card without the key. The ONE
+    answer `playStadium` refuses on (`PLAY_CONDITION_NOT_MET`) and both Trainer lists (redact.ts
+    `redactedTrainersOf`, GameHud.tsx) grey a Stadium row on. */
+export function stadiumPlayOverUnmet(state: GameState, card: Card): boolean {
+  return programFor(card.id)?.stadium?.playOnlyOverStadium !== undefined && !stadiumPlayOverMet(state, card);
+}
+
+/** 🆕🆕🆕 §7.3 (D642) — Ange Floette's *"you can put this card into play during the same turn you play Prism
+    Tower"*: the turn's spent Stadium play does not refuse `card` while the Stadium it names is in play AND is
+    `seat`'s own (R-ANF2 — read off the board; no new persisted key). A stated limitation, pinned: an actor whose
+    own earlier Prism Tower is still in play and whose Stadium play this turn FAILED (Quaking Fist tails, R-QF1) is
+    let through too. Asked by `playStadium` and both Trainer lists beside `allowances.stadiumPlayed`. */
+export function stadiumSpentPlayLifted(state: GameState, seat: Seat, card: Card): boolean {
+  return stadiumPlayOverMet(state, card) && state.stadium?.owner === seat;
 }
 
 /** §7.4 — attach a Pokémon Tool from hand to one of the actor's own in-play

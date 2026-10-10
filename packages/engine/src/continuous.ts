@@ -66,8 +66,9 @@ import type {
   PendingStage,
   PlayerSide,
   Seat,
+  SpecialConditions,
 } from "./types";
-import { BENCH_MAX, SEATS, otherSeat, stampedActBarFor, stampedBarFor, takenPrizes } from "./types";
+import { BENCH_MAX, SEATS, noConditions, otherSeat, stampedActBarFor, stampedBarFor, takenPrizes } from "./types";
 
 // The continuous-modifier pipeline (M4 slice 3): the one place the always-on
 // effects of the shared Stadium (§7.3) and of attached Tools / printed
@@ -3149,6 +3150,63 @@ export function installedRecoilOf(
     : installed.amount;
 }
 
+/** 🆕🆕🆕 §9 (D642) — THE WATCHED-ACTIVE RECOIL (`PassiveEffects.damageAttackerWatched`): the HP every live holder
+    on `seat`'s board pays the Attacking Pokémon because `damaged`, that seat's Active, was just damaged by an
+    attack (Spiritomb "Spiteful Swirl", Wishiwashi "Counterattack Grouping"). Asked at the two recoil sites only
+    (attack.ts's main hit, interpreter.ts `reactWithRecoilAndAbility`), under their `dealt > 0` gate, and summed
+    into their ONE `"counterattack"` row. The holder is any body, Active or Bench (the damaged body itself
+    included); each pays its own amount (R-SSW1, R-CAG1). §9 per holder (`disabledAbilityUids`). The watched
+    clause is answered off the damaged body's IN-PLAY card: `activeType` among its types, `activeNames` holding
+    its name. All of it is an Ability's, so the sites add it to the share Luminous Wing refuses. */
+export function watchedRecoilOf(state: GameState, seat: Seat, damaged: InPlayPokemon): number {
+  const side = state.players[seat];
+  const watched = inPlayCardOf(state, damaged);
+  if (watched === undefined) return 0;
+  const disabled = disabledAbilityUids(state);
+  let total = 0;
+  for (const holder of side.active === null ? side.bench : [side.active, ...side.bench]) {
+    const uid = topUid(holder);
+    if (uid === undefined || disabled.has(uid)) continue;
+    const top = topCardOf(state, holder);
+    const recoil = top === undefined ? undefined : programFor(top.id)?.passive?.damageAttackerWatched;
+    if (recoil === undefined) continue;
+    if (recoil.activeType !== undefined && !(watched.types ?? []).includes(recoil.activeType)) continue;
+    if (recoil.activeNames !== undefined && !recoil.activeNames.includes(watched.name)) continue;
+    total += recoil.amount;
+  }
+  return total;
+}
+
+/** 🆕🆕🆕 §9 (D642) — `passives` (the damaged body's own fold) with `watchedRecoilOf` added to BOTH recoil
+    numbers: `damageAttacker` (what is placed) and `damageAttackerFromAbility` (the share Luminous Wing refuses).
+    The two recoil sites wrap their fold in it, so their placement, refusal and one `"counterattack"` row take a
+    zero diff. The same object when nothing watches (every board without a holder). */
+export function withWatchedRecoil<P extends { damageAttacker: number; damageAttackerFromAbility: number }>(
+  state: GameState,
+  seat: Seat,
+  damaged: InPlayPokemon,
+  passives: P,
+): P {
+  const watched = watchedRecoilOf(state, seat, damaged);
+  if (watched === 0) return passives;
+  return {
+    ...passives,
+    damageAttacker: passives.damageAttacker + watched,
+    damageAttackerFromAbility: passives.damageAttackerFromAbility + watched,
+  };
+}
+
+/** 🆕🆕🆕 §12 (D642) — the Special Conditions a body keeps when its top card changes by an evolution or a
+    devolution: none (§12), except Confused — with its `confusionDamage` — while Dizzying Valley is the Stadium in
+    play (`StadiumEffects.confusionSurvivesStageChange`, R-DV1). The ONE answer `evolveOnto` (types.ts) and
+    `devolvedBodyOf`'s callers (interpreter.ts) are handed. Not §9-gated (a Stadium is no Ability). */
+export function stageChangeConditions(state: GameState, conditions: SpecialConditions): SpecialConditions {
+  if (stadiumEffectsOf(state)?.confusionSurvivesStageChange !== true || conditions.rotation !== "confused") {
+    return noConditions();
+  }
+  return { ...noConditions(), rotation: "confused", confusionDamage: conditions.confusionDamage };
+}
+
 /** §8/§11 (D143) — is `pokemon` under an attack-installed SELF-LOCK right now
     ("During your next turn, this Pokémon can't attack.")? The ONE read of
     `InPlayPokemon.attackLockedTurn`, and `attackBlockOf`'s sibling in every
@@ -4023,6 +4081,8 @@ export function seatMaxHpBonus(state: GameState, pokemon: InPlayPokemon): number
 function stadiumHpDelta(state: GameState, top: Card): number {
   const delta = stadiumEffectsOf(state)?.hpDelta;
   if (delta === undefined) return 0;
+  // 🆕🆕🆕 D642 — Ange Floette's "Each Mega Floette ex": the NAME rider (absent on Lively Stadium / Gravity Mountain).
+  if (delta.name !== undefined && top.name !== delta.name) return 0;
   const matches = delta.stage === "basic" ? isBasicPokemon : isStage2Pokemon;
   return matches(top) ? delta.amount : 0;
 }

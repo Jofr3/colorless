@@ -32,7 +32,7 @@ import {
 // Stadium use with a discard cost, `drawUntilHandSize.per`; R-MYG1) and Forest of Vitality ×3 (the
 // Stadium evolution permission, `StadiumEffects.sameTurnEvolution`; R-FOV1). Every id and text measured
 // on the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-09, `legal_standard = 1`. Dropped
-// and named: Dizzying Valley, Fossil Quarry [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky Ruins, Ange Floette. Driven on a LOCAL `cardPool`
+// and named: Dizzying Valley [🆕🆕🆕 D642 (D539): Dizzying Valley, Risky Ruins, Ange Floette BUILT at D642 (Z1).], Fossil Quarry [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky Ruins, Ange Floette. Driven on a LOCAL `cardPool`
 // (D275) in the suite's OWN 60-card deck (D270).
 
 const CAGE_TEXT =
@@ -313,9 +313,10 @@ describe("D618 §1 — the programs: three objects over 8 printings", () => {
     );
   });
 
-  it("the dropped Stadiums stay unkeyed (🆕🆕🆕 D635 (D539): but Fossil Quarry, keyed since D635)", () => {
+  it("the dropped Stadiums stay unkeyed (🆕🆕🆕 D635 (D539): but Fossil Quarry, keyed since D635; 🆕🆕🆕 D642 (D539): WITHDRAWN — the other three are keyed since D642, the rung is inverted)", () => {
     // 🆕🆕🆕 D635 (D539) — Fossil Quarry `me05-076` left this list (`fossilQuarryD635.test.ts`).
-    for (const id of ["me02-088", "me01-127", "me04-075"]) expect(programFor(id), id).toBeUndefined();
+    // 🆕🆕🆕 D642 (D539) — Dizzying Valley, Risky Ruins and Ange Floette: Z1 (`stadiumWatchedMeD642.test.ts`).
+    for (const id of ["me02-088", "me01-127", "me04-075"]) expect(Object.keys(programFor(id) ?? {}), id).toEqual(["stadium"]);
   });
 });
 
@@ -627,7 +628,7 @@ describe("D618 §6 — Forest of Vitality: {G} into {G} the turn it is played, n
 });
 
 describe("D618 §7 — the version", () => {
-  it("is built at engine 0.524.0", () => {
-    expect(engineVersion).toBe("0.524.0");
+  it("is built at engine 0.525.0", () => {
+    expect(engineVersion).toBe("0.525.0");
   });
 });

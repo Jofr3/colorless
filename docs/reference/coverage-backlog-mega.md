@@ -6,6 +6,24 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D642 update (engine 0.525.0) — Z1 + K2, the `me` Stadium rest and the watched-Active damage triggers (`MATCH_RECORD_VERSION` stays 47)
+
+5 texts / 6 printings (`stadiumWatchedMeD642.test.ts`): Spiritomb ×2 "Spiteful Swirl" `me01-087` / `-148` and Wishiwashi "Counterattack
+Grouping" `30th-022` (the new `PassiveEffects.damageAttackerWatched`, read across the damaged seat's board at the two recoil sites —
+R-SSW1 / R-CAG1), Risky Ruins `me01-127` (the new `StadiumEffects.benchArrivalCounters` — R-RR1 / R-RR2), Dizzying Valley `me02-088` (the
+new `StadiumEffects.confusionSurvivesStageChange` — R-DV1) and Ange Floette `me04-075` (the new `StadiumEffects.playOnlyOverStadium` and
+`hpDelta.name` — R-ANF1 / R-ANF2). **Finished:** all 6. **Dropped:** none. Wishiwashi's D1 text keeps its two TAB bytes (the D612
+normaliser leaves them; the key is by id).
+
+| Column | `me` built / units (D642) | Standard pool D642 |
+|---|---|---|
+| Attacks | 1,038 / 1,039 | **2,770 / 2,771** |
+| Abilities | 223 / 234 (+3) | **599 / 610** |
+| Trainers | 181 / 183 (+3) | **445 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+1249 `me` printings fully built (1243 + 6).
+
 ## 🆕 D641 update (engine 0.524.0) — W1 + Y1b, effects the opponent answers and deck swap / reveal (`MATCH_RECORD_VERSION` stays 47)
 
 4 texts / 7 printings (`opponentAnsweredMeD641.test.ts`): Ditto ×2 "Surprisingly Transform" `mep-106` / `30th-115` (the new
@@ -282,7 +300,7 @@ the opponent 2 behind a confirm; R-SF1), Miraidon "Photon Cord" ×2 `mep-082`, `
 `koToolTrigger` stage, before the Knock Out discards the stack; R-PHC1), Gengar ex "Fainting Spell" ×2 `30th-090` / `-154` (the NEW
 `koAttackerOnCoinFlip`: heads Knocks Out the Attacking Pokémon in the same batch, through the §11 funnel; R-FS1) and Adversity Policy
 `me04-074` (an `onDamagedByAttack` Tool behind the NEW `BoardCondition` `yourActiveWeakToOpponentActiveType`; R-AP1). **Finished:**
-all 8. **Out of scope (K2, named):** Spiritomb "Spiteful Swirl" ×2 and Wishiwashi "Counterattack Grouping" (a watched Active's damage
+all 8. **Out of scope (K2, named):** Spiritomb "Spiteful Swirl" ×2 and Wishiwashi "Counterattack Grouping" [🆕🆕🆕 D642 (D539): Spiteful Swirl, Counterattack Grouping BUILT at D642 (K2).] (a watched Active's damage
 moment).
 
 | Column | `me` built / units (D626) | Standard pool D626 |
@@ -432,7 +450,7 @@ ex "Wicked Impact" `me02.5-162`, Espurr "Buddy Attack" `me04-036`, Hippowdon "Tw
 (the Bench damage-counter shield, `StadiumEffects.benchCounterShield`, NEW; R-BCG1, R-BCG2), Mystery Garden ×3 `me01-122` / `-172`,
 `me02.5-194` (Revavroom's discard-an-Energy cost, then `drawUntilHandSize` with the NEW `per` count of your {P} Pokémon in play;
 R-MYG1) and Forest of Vitality ×3 `me01-117`, `me02.5-188`, `me03-109` (the Stadium evolution permission,
-`StadiumEffects.sameTurnEvolution`, NEW; R-FOV1). **Finished:** all 8. **Dropped and named:** Dizzying Valley (Confusion kept
+`StadiumEffects.sameTurnEvolution`, NEW; R-FOV1). **Finished:** all 8. **Dropped and named:** Dizzying Valley [🆕🆕🆕 D642 (D539): Dizzying Valley BUILT at D642 (Z1).] (Confusion kept
 through evolution), Fossil Quarry (Antique Items deck-to-Bench) [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky Ruins (a Stadium on-Bench trigger) and Ange Floette (a play
 gate on Prism Tower in play, a second Stadium the same turn, and a named HP bonus).
 
@@ -671,9 +689,9 @@ Stadium program `programPlayable` can refuse), Nighttime Mine (League HQ's {C} s
 `StadiumEffects.attackCostSurcharge`), Lumiose City ×2 and Celebratory Fanfare ×2 (the new turn-ending Stadium use,
 `StadiumAbility.endsTurn: "always" | "ifHealed"`; R-LC1, R-CF1). **Finished:** all 9. **Dropped and named:** Battle Cage ×2 (a
 Bench damage-counter shield — the brief's other new piece), Mystery Garden ×3 (a draw-until count source), Forest of Vitality ×3
-(a same-turn evolution rule), Dizzying Valley (Confusion kept through evolution), Fossil Quarry (Antique Items deck-to-Bench) [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)],
+(a same-turn evolution rule), Dizzying Valley [🆕🆕🆕 D642 (D539): Dizzying Valley BUILT at D642 (Z1).] (Confusion kept through evolution), Fossil Quarry (Antique Items deck-to-Bench) [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)],
 Risky Ruins (an on-Bench Stadium trigger). **Excluded by the brief:** Ange Floette. [🆕🆕🆕 D618: Battle Cage, Mystery Garden and
-Forest of Vitality BUILT by WP25b, above; Dizzying Valley, Fossil Quarry [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky Ruins and Ange Floette dropped again.]
+Forest of Vitality BUILT by WP25b, above; Dizzying Valley, Fossil Quarry [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky Ruins and Ange Floette [🆕🆕🆕 D642 (D539): Dizzying Valley, Risky Ruins, Ange Floette BUILT at D642 (Z1).] dropped again.]
 
 | Column | `me` built / units (D606) | Standard pool D606 |
 |---|---|---|
@@ -730,7 +748,7 @@ D582's `isMegaEvolutionPokemonEx`: `BoardCondition.yourMegaExInPlay { type? }` a
 heal 60 from 1), Excited Dash (Linoone; on the Bench, any Mega ex, switch with the Active), Excited Power (Seviper; {D} gate,
 +120 before W/R), Mega Signal ×3 (a Mega ex from the deck) and Jett (a card per opponent's Mega ex). **Finished:** all 11.
 **Dropped:** Latios `me01-101` "Lustrous Assist" [🆕🆕🆕 D628 (D539): Lustrous Assist BUILT at D628 (A1)] (a gate on a named Active's Bench-to-Active move) and Wally's Compassion ×3
-(all Energy to the hand from the healed body). **Excluded by the brief:** Tremendous Bomb ×2, Ange Floette, Core Memory. [🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory BUILT at D620 (WP26).] [🆕🆕🆕 D625 (D539): Wally's Compassion ×3 BUILT at D625 (`healChosen.energyToHandFromHealed`).]
+(all Energy to the hand from the healed body). **Excluded by the brief:** Tremendous Bomb ×2, Ange Floette [🆕🆕🆕 D642 (D539): Ange Floette BUILT at D642 (Z1).], Core Memory. [🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory BUILT at D620 (WP26).] [🆕🆕🆕 D625 (D539): Wally's Compassion ×3 BUILT at D625 (`healChosen.energyToHandFromHealed`).]
 
 | Column | `me` built / units (D603) | Standard pool D603 |
 |---|---|---|
@@ -802,9 +820,9 @@ KO'd side), Tenacious Body ×3 and Durable Body (the coin-flip survive), Fragile
 Infinite Shadow (return-to-hand on KO) and Final Chain (an on-KO search behind the attack cause). **Finished:** Mega
 Gengar ex ×5, Mega Hawlucha ex ×3, Annihilape `me05-041`, Shedinja ×2, Gengar `me03-050`, Pecharunt `me02.5-143`.
 **Still open in WP32 (named):** Gengar ex "Fainting Spell" ×2 (KO the Attacking Pokémon on heads), Miraidon "Photon
-Cord" ×2 (an Energy move off the dying body), Spiritomb "Spiteful Swirl" ×2 and Wishiwashi "Counterattack Grouping"
+Cord" ×2 (an Energy move off the dying body), Spiritomb "Spiteful Swirl" ×2 and Wishiwashi "Counterattack Grouping" [🆕🆕🆕 D642 (D539): Spiteful Swirl, Counterattack Grouping BUILT at D642 (K2).]
 (a seat-wide filtered recoil), Damp ×2 (WP38). [🆕🆕🆕 D626 (D539): Fainting Spell ×2 and Photon Cord ×2 BUILT at D626 (K1);
-Spiteful Swirl ×2 and Counterattack Grouping are K2.] [🆕🆕🆕 D632 (D539): Damp BUILT at D632 (D1).]
+Spiteful Swirl ×2 and Counterattack Grouping [🆕🆕🆕 D642 (D539): Spiteful Swirl, Counterattack Grouping BUILT at D642 (K2).] are K2.] [🆕🆕🆕 D632 (D539): Damp BUILT at D632 (D1).]
 
 | Column | `me` built / units (D598) | Standard pool D598 |
 |---|---|---|
@@ -1471,8 +1489,8 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× **Fainting Spell** — If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, flip a coin. If heads, the Attacking Pokémon is Knocked Out. [🆕🆕🆕 D626: BUILT]
 - 2× **Fragile Husk** — If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon ex, your opponent can't take any Prize cards for it. [🆕🆕🆕 D598: BUILT]
 - 2× **Photon Cord** — If this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon, move up to 2 Basic {L} Energy cards from this Pokémon to 1 of your Benched Pokémon. [🆕🆕🆕 D626: BUILT]
-- 2× **Spiteful Swirl** — If your Active {D} Pokémon is damaged by an attack from your opponent's Pokémon (even if your Active {D} Pokémon is Knocked Out), place 1 damage counter on the Attacking Pokémon.
-- 1× **Counterattack Grouping** — If your Wishiwashi or Wishiwashi ex is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if your Pokémon  is Knocked Out), place 3 damage counters on the Attacking Pokémon.
+- 2× **Spiteful Swirl** — If your Active {D} Pokémon is damaged by an attack from your opponent's Pokémon (even if your Active {D} Pokémon is Knocked Out), place 1 damage counter on the Attacking Pokémon. [🆕🆕🆕 D642 (D539): Spiteful Swirl BUILT at D642 (K2).]
+- 1× **Counterattack Grouping** — If your Wishiwashi or Wishiwashi ex is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if your Pokémon  is Knocked Out), place 3 damage counters on the Attacking Pokémon. [🆕🆕🆕 D642 (D539): Counterattack Grouping BUILT at D642 (K2).]
 - 1× **Counterattack Quills** — If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 3 damage counters on the Attacking Pokémon. [🆕🆕🆕 D584: BUILT]
 - 1× **Durable Body** — If this Pokémon would be Knocked Out by damage from an attack, flip a coin. If heads, this Pokémon is not Knocked Out, and its remaining HP becomes 10. [🆕🆕🆕 D598: BUILT]
 - 1× **Final Chain** — If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, search your deck for a card and put it into your hand. Then, shuffle your deck. [🆕🆕🆕 D598: BUILT]
@@ -1575,21 +1593,21 @@ At any time during your turn, you may discard this card from play.
 
 ### Stadium — Mega Evolution-conditioned — 1 text(s) / 1 printing(s)
 
-- 1× **Ange Floette** — You can put this card into play only if you discard a Prism Tower in play, and you can put this card into play during the same turn you play Prism Tower.
+- 1× **Ange Floette** — You can put this card into play only if you discard a Prism Tower in play, and you can put this card into play during the same turn you play Prism Tower. [🆕🆕🆕 D642 (D539): Ange Floette BUILT at D642 (Z1).]
 Each Mega Floette ex in play (both yours and your opponent's) gets +150 HP. [🆕🆕🆕 D618: dropped — a play gate on Prism Tower in play, a second Stadium the same turn, a named HP bonus]
 
 ### Stadium — 11 text(s) / 20 printing(s)
 
 - 2× **Battle Cage** — Prevent all damage counters from being placed on Benched Pokémon (both yours and your opponent's) by effects of attacks and Abilities from the opponent's Pokémon. (Damage from attacks is still taken.) [🆕🆕🆕 D606: dropped — a Bench damage-counter shield] [🆕🆕🆕 D618: BUILT]
 - 2× **Celebratory Fanfare** — Once during each player's turn, that player may heal 10 damage from each of their Pokémon. If a player healed any damage in this way, their turn ends. [🆕🆕🆕 D606: BUILT]
-- 1× **Dizzying Valley** — Confused Pokémon (both yours and your opponent's) don't recover from that Special Condition when they evolve or devolve. [🆕🆕🆕 D606: dropped — Confusion kept through evolution] [🆕🆕🆕 D618: dropped again]
+- 1× **Dizzying Valley** — Confused Pokémon (both yours and your opponent's) don't recover from that Special Condition when they evolve or devolve. [🆕🆕🆕 D606: dropped — Confusion kept through evolution] [🆕🆕🆕 D618: dropped again] [🆕🆕🆕 D642 (D539): Dizzying Valley BUILT at D642 (Z1).]
 - 3× **Forest of Vitality** — Each player's {G} Pokémon can evolve into {G} Pokémon during the turn they play those Pokémon, except during their first turn. [🆕🆕🆕 D606: dropped — a same-turn evolution rule] [🆕🆕🆕 D618: BUILT]
 - 1× **Fossil Quarry** — Once during each player's turn, that player may search their deck for up to 2 Item cards that have "Antique" in their name and put them onto their Bench. Then, that player shuffles their deck. [🆕🆕🆕 D606: dropped — Antique Items deck-to-Bench] [🆕🆕🆕 D618: dropped again] [🆕🆕🆕 D635: BUILT (F1)]
 - 2× **Lumiose City** — Once during each player's turn, that player may search their deck for a Basic Pokémon and put it onto their Bench. Then, that player shuffles their deck. If a player searches their deck in this way, their turn ends. [🆕🆕🆕 D606: BUILT]
 - 3× **Mystery Garden** — Once during each player's turn, that player may discard an Energy card from their hand in order to draw cards until they have as many cards in their hand as they have {P} Pokémon in play. [🆕🆕🆕 D606: dropped — a draw-until count source] [🆕🆕🆕 D618: BUILT]
 - 1× **Nighttime Mine** — Attacks used by each Tera Pokémon in play (both yours and your opponent's) cost {C} more. [🆕🆕🆕 D606: BUILT]
 - 2× **Prism Tower** — Once during each player's turn, that player may discard 2 cards from their hand in order to draw a card. [🆕🆕🆕 D606: BUILT]
-- 1× **Risky Ruins** — Whenever any player puts a Basic non-{D} Pokémon onto their Bench during their turn, place 2 damage counters on that Pokémon. [🆕🆕🆕 D606: dropped — an on-Bench Stadium trigger] [🆕🆕🆕 D618: dropped again]
+- 1× **Risky Ruins** — Whenever any player puts a Basic non-{D} Pokémon onto their Bench during their turn, place 2 damage counters on that Pokémon. [🆕🆕🆕 D606: dropped — an on-Bench Stadium trigger] [🆕🆕🆕 D618: dropped again] [🆕🆕🆕 D642 (D539): Risky Ruins BUILT at D642 (Z1).]
 - 2× **Surfing Beach** — Once during each player's turn, that player may switch their Active {W} Pokémon with 1 of their Benched {W} Pokémon. [🆕🆕🆕 D606: BUILT]
 
 ### Supporter — Mega Evolution-conditioned — 2 text(s) / 4 printing(s)

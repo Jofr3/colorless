@@ -63,6 +63,9 @@ import {
   fossilPlayable,
   programPlayable,
   rareCandyOptions,
+  // 🆕🆕🆕 D642 — Ange Floette's two Stadium-row terms (R-ANF1, R-ANF2).
+  stadiumPlayOverUnmet,
+  stadiumSpentPlayLifted,
   trainerProgramPlayable,
 } from "./cardplay";
 import { cardOfUid, topCardOf, topUid } from "./cards";
@@ -1052,7 +1055,12 @@ function redactedTrainersOf(
             // play per turn, and the same NAME cannot replace itself. Both are
             // board facts this projection already carries, which is why the row
             // costs no new field — a DERIVED READ, not a new `GameState` key.
-            isStadium && (state.allowances.stadiumPlayed || card.name === inPlayStadium));
+            // 🆕🆕🆕 D642 — Ange Floette's lifted spent play (R-ANF2) and its Prism Tower gate (R-ANF1),
+            // `playStadium`'s two helpers verbatim.
+            isStadium &&
+            ((state.allowances.stadiumPlayed && !stadiumSpentPlayLifted(state, viewerSeat, card)) ||
+              card.name === inPlayStadium ||
+              stadiumPlayOverUnmet(state, card)));
     out.push({
       uid,
       name: card.name,

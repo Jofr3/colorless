@@ -36,6 +36,8 @@ import {
   retreatLocked,
   // 🆕🆕🆕 D618 — Forest of Vitality's same-turn evolution, at the §10 ban.
   stadiumLicensesSameTurnEvolve,
+  // 🆕🆕🆕 D642 — Dizzying Valley's kept Confusion, at the hand evolve.
+  stageChangeConditions,
 } from "./continuous";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
@@ -48,6 +50,8 @@ import {
   turnTail,
 } from "./flow";
 import {
+  // 🆕🆕🆕 D642 — Risky Ruins' counters, at the hand play to the Bench.
+  benchArrivalCounters,
   conditionHolds,
   conditionNote,
   evolveAliasLicensed,
@@ -580,12 +584,14 @@ export function playBasicToBench(state: GameState, action: PlayBasicToBenchActio
       : [{ type: "ABILITY_USED" as const, seat: action.seat, uid: action.uid, ability: rotation.name }]),
     { type: "POKEMON_BENCHED", seat: action.seat, uid: action.uid },
   ];
+  // 🆕🆕🆕 D642 — Risky Ruins: the counters land with the body, before its own on-bench trigger (R-RR1).
+  const landed = benchArrivalCounters(next, action.seat, [action.uid], events);
   // §9 — a "when you play this Pokémon onto your Bench during your turn"
   // triggered Ability (Flamigo's Insta-Flock) fires now, on the freshly
   // benched Pokémon (the last, dense slot). It may park on effect:choose.
-  const benchIndex = next.players[action.seat].bench.length - 1;
+  const benchIndex = landed.players[action.seat].bench.length - 1;
   return runBoardTrigger(
-    next,
+    landed,
     action.seat,
     { spot: "bench", index: benchIndex },
     "onPlayToBench",
@@ -823,6 +829,7 @@ export function placeEvolution(
     fromUid,
     evolutionUid,
     events,
+    stageChangeConditions(state, from.conditions), // 🆕🆕🆕 D642 — Dizzying Valley (R-DV1)
   );
   if (isLethallyDamaged(next, evolved)) {
     return resolveMidTurnKnockOuts(next, seat, [seat], events);

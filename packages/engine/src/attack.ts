@@ -87,6 +87,8 @@ import {
   // 🆕🆕🆕 D556 — the this-turn side-wide pre-W/R bonus (Black Belt's Training).
   sideAttackBonusThisTurn,
   stadiumPreventsDamage,
+  // 🆕🆕🆕 D642 — the watched-Active recoil (Spiteful Swirl, Counterattack Grouping), at the main hit.
+  withWatchedRecoil,
 } from "./continuous";
 import {
   bonusConsequentProgram,
@@ -3626,7 +3628,9 @@ export function attack(
       0,
       applyDamageModifier(applyDamageModifier(preWR, weakness), resistance),
     );
-    const defenderPassives = passivesOf(next, defender);
+    // 🆕🆕🆕 D642 — the fold plus the watched-Active recoil (Spiteful Swirl, Counterattack Grouping), read only
+    // by the recoil below (`damageAttacker`, and the Ability share Luminous Wing refuses).
+    const defenderPassives = withWatchedRecoil(next, defenderSeat, defender, passivesOf(next, defender));
     // §8.5 step 5, the reduction — the printed "takes {N} less damage from attacks
     // (after applying Weakness and Resistance)", read from BOTH of the places that
     // sentence is printed and SUMMED because each source is its own card effect:

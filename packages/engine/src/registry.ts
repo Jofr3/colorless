@@ -1267,6 +1267,17 @@ export interface PassiveEffects {
         seated in its zone when the fold reads it. A benched Maractus finished by a
         spread pays 0; an Active one merely damaged pays 0 (the KO is the antecedent). */
   damageAttackerOnKo?: { amount: number; activeOnly?: true };
+  /** 🆕🆕🆕 §9 (D642) — THE WATCHED-ACTIVE RECOIL: an ABILITY printed on one body about ANOTHER (or the same)
+      body, the controller's Active. Spiritomb `me01-087` / `-148` "Spiteful Swirl" (*"If your Active {D} Pokémon
+      is damaged by an attack from your opponent's Pokémon (even if your Active {D} Pokémon is Knocked Out), place
+      1 damage counter on the Attacking Pokémon."* — `activeType: "Darkness"`) and Wishiwashi `30th-022`
+      "Counterattack Grouping" (*"If your Wishiwashi or Wishiwashi ex is in the Active Spot and is damaged by an
+      attack …, place 3 damage counters on the Attacking Pokémon."* — `activeNames`). `damageAttacker`'s moment
+      (the two recoil sites, attack.ts's main hit and interpreter.ts `reactToAttackDamage`, `dealt > 0`), read off
+      the DAMAGED seat's whole board by continuous.ts `watchedRecoilOf` rather than off the damaged body's fold:
+      the holder may sit on the Bench. In HP (§12). Each holder pays its own amount (R-SSW1 / R-CAG1: no "doesn't
+      stack" is printed). §9-gated per holder; an Ability, so Luminous Wing refuses it with the Ability share. */
+  damageAttackerWatched?: { amount: number; activeType?: PokemonType; activeNames?: readonly string[] };
   /** 🆕 §8.1 (D298) — the CAUSE-CONDITIONED PRIZE REDUCTION borne by an ATTACHED
       CARD. See `KoPrizeReduction` for the vocabulary; the two printings that reach
       this field are
@@ -3529,7 +3540,14 @@ export interface StadiumEffects {
       FLOOR IS UNREACHABLE AND IS DECLARED RATHER THAN DRIVEN** (D257's precedent):
       the MINIMUM printed HP over all **169** Standard-legal Stage 2 Pokémon is
       **120**, so the only sentence that subtracts bottoms out at 90. */
-  hpDelta?: { amount: number; stage: "basic" | "stage2" };
+  hpDelta?: {
+    amount: number;
+    stage: "basic" | "stage2";
+    /** 🆕🆕🆕 D642 — Ange Floette `me04-075`'s *"Each Mega Floette ex in play … gets +150 HP"*: the
+        bonus is paid only to a top card of this exact NAME (all three Mega Floette ex printings are
+        Basic, so `stage` stays the Basic predicate). Absent = every body of the stage, byte for byte. */
+    name?: string;
+  };
   /** 🆕🆕🆕 §8.5 (D558) — the in-play Stadium's POST-W/R reduction on attack damage to
       every Pokémon its `beneficiary` names, on BOTH sides: Full Metal Lab `sv05-148`
       (*"{M} Pokémon (both yours and your opponent's) take 30 less damage from attacks
@@ -3654,6 +3672,36 @@ export interface StadiumEffects {
       this turn may evolve again (Oddish → Gloom → Vileplume, the Forest of Giant Plants precedent and
       D594's reading of "the turn you play it"). Not §9-gated. Catalog-only: never persisted. */
   sameTurnEvolution?: { type: PokemonType };
+  /** 🆕🆕🆕 §7.3 (D642) — Risky Ruins `me01-127`: *"Whenever any player puts a Basic non-{D} Pokémon onto their
+      Bench during their turn, place 2 damage counters on that Pokémon."* `amount` in HP (§12). Read by ONE
+      function, interpreter.ts `benchArrivalCounters`, at every route that puts a card from outside play onto its
+      OWNER's Bench by that owner's own act — the hand play (turn.ts), an Antique Fossil's play (cardplay.ts), and
+      `searchMove` / `retrieveMove` / `revealFromTop`'s Bench arms — and only during the owner's turn. R-RR1 ⚠️
+      UNRULED: a switch or a retreat moves a body already in play and is no "put onto the Bench"; a placement the
+      OPPONENT makes onto your Bench (`bottomFromOpponentHandApply`) is not yours, during their turn, so it pays
+      nothing. R-RR2 ⚠️ UNRULED: an Antique Fossil in play is a Basic {C} Pokémon (R-FO2) and takes the counters.
+      `excludesType` is matched against the landed body's IN-PLAY types. No Knock Out is reachable: the minimum
+      printed HP of a Standard-legal Basic is 30 (and the Stadium zone holds no HP subtrahend beside it). Not
+      §9-gated. Catalog-only: never persisted. */
+  benchArrivalCounters?: { amount: number; excludesType: PokemonType };
+  /** 🆕🆕🆕 §12 (D642) — Dizzying Valley `me02-088`: *"Confused Pokémon (both yours and your opponent's) don't
+      recover from that Special Condition when they evolve or devolve."* Read by ONE function, continuous.ts
+      `stageChangeConditions`, which `evolveOnto` (types.ts — every evolution route) and `devolvedBodyOf`'s two
+      callers (interpreter.ts) ask for the conditions the new top keeps. R-DV1 ⚠️ UNRULED: Confused is kept with
+      its `confusionDamage`; Poisoned and Burned still clear, and so does an Asleep / Paralyzed rotation (it is
+      not Confused). Every other recovery moment (a retreat, the Bench, Festival Grounds) is untouched. Not
+      §9-gated. Catalog-only: never persisted. */
+  confusionSurvivesStageChange?: true;
+  /** 🆕🆕🆕 §7.3 (D642) — Ange Floette `me04-075`: *"You can put this card into play only if you discard a Prism
+      Tower in play, and you can put this card into play during the same turn you play Prism Tower."* The NAME the
+      Stadium in play must carry. Read by cardplay.ts `stadiumPlayOverUnmet` and `stadiumSpentPlayLifted`, which
+      `playStadium` and both Trainer lists (redact.ts, GameHud.tsx) ask: with no Stadium of that name in play the
+      play is refused (`PLAY_CONDITION_NOT_MET`); the replacement itself is §7.3's own discard. R-ANF1 ⚠️ UNRULED: a Prism Tower of
+      either player's qualifies. R-ANF2 ⚠️ UNRULED: the turn's spent Stadium play is lifted when the Prism Tower in
+      play is the ACTOR's own — the reading of "the same turn you play Prism Tower" off the board, with no new
+      persisted key. A stated limitation, pinned: an actor whose own earlier Prism Tower is still in play and whose
+      Stadium play this turn FAILED (Quaking Fist tails, R-QF1) is let through too. Catalog-only: never persisted. */
+  playOnlyOverStadium?: string;
 }
 
 /** A Special Energy's on-attach effect (§6.1) — runs the moment it is attached
@@ -11146,6 +11194,41 @@ const LT_SURGES_BARGAIN: CardProgram = {
   ],
 };
 
+// ── 🆕🆕🆕 D642 — Z1 + K2: THE `me` STADIUM REST AND THE WATCHED-ACTIVE DAMAGE TRIGGERS. Five objects, 6 printings,
+//    texts off the LOCAL D1 (2026-10-10, `legal_standard = 1`). New pieces: `PassiveEffects.damageAttackerWatched`
+//    and the three `StadiumEffects` keys `benchArrivalCounters`, `confusionSurvivesStageChange` and
+//    `playOnlyOverStadium`, plus `hpDelta.name`. `stadiumWatchedMeD642.test.ts`. ──
+
+/** 🆕🆕🆕 **D642 — Spiritomb `me01-087` / `-148` "Spiteful Swirl"**: 1 counter on the Attacking Pokémon when your
+    Active {D} Pokémon is damaged by an attack (R-SSW1). Its attack "Mountain Breaker" keeps deriving. */
+const SPITEFUL_SWIRL: CardProgram = { passive: { damageAttackerWatched: { amount: 10, activeType: "Darkness" } } };
+
+/** 🆕🆕🆕 **D642 — Wishiwashi `30th-022` "Counterattack Grouping"**: 3 counters on the Attacking Pokémon when your
+    Active Wishiwashi or Wishiwashi ex is damaged by an attack (R-CAG1). The LOCAL D1 text carries two TAB bytes
+    ("Pokémon\t\tis"), which the D612 normaliser leaves (it strips a tab run only after an `<em>`); the key is
+    by id, so no reader reads it. Its attack "Surprise Attack" keeps deriving. */
+const COUNTERATTACK_GROUPING: CardProgram = {
+  passive: { damageAttackerWatched: { amount: 30, activeNames: ["Wishiwashi", "Wishiwashi ex"] } },
+};
+
+/** 🆕🆕🆕 **D642 — Risky Ruins `me01-127` (Stadium)**: 2 counters on each Basic non-{D} Pokémon a player puts onto
+    their own Bench during their turn (`StadiumEffects.benchArrivalCounters`, R-RR1, R-RR2). */
+const RISKY_RUINS: CardProgram = { stadium: { benchArrivalCounters: { amount: 20, excludesType: "Darkness" } } };
+
+/** 🆕🆕🆕 **D642 — Dizzying Valley `me02-088` (Stadium)**: Confused Pokémon stay Confused through an evolution or
+    a devolution (`StadiumEffects.confusionSurvivesStageChange`, R-DV1). */
+const DIZZYING_VALLEY: CardProgram = { stadium: { confusionSurvivesStageChange: true } };
+
+/** 🆕🆕🆕 **D642 — Ange Floette `me04-075` (Stadium)**: played only over a Prism Tower, also on the turn its player
+    played that Prism Tower (`StadiumEffects.playOnlyOverStadium`, R-ANF1, R-ANF2); each Mega Floette ex in play
+    gets +150 HP (`hpDelta` with the NEW `name`). */
+const ANGE_FLOETTE: CardProgram = {
+  stadium: {
+    playOnlyOverStadium: "Prism Tower",
+    hpDelta: { amount: 150, stage: "basic", name: "Mega Floette ex" },
+  },
+};
+
 /** 🆕🆕🆕 **D578 — Technical Machine: Fluorite `sv08-188` (Tool, 1 legal printing)**: *"The Pokémon
     this card is attached to can use the attack on this card. (You still need the necessary
     Energy to use this attack.) If this card is attached to 1 of your Pokémon, discard it at the
@@ -17995,7 +18078,7 @@ const SUNRISE: CardProgram = {
 //    Texts off the LOCAL D1. Dropped and named (vocabulary beyond the brief): Latios `me01-101`
 //    "Lustrous Assist" [🆕🆕🆕 D628 (D539): Lustrous Assist BUILT at D628 (A1)] (a gate on a NAMED Active's Bench-to-Active move) and Wally's Compassion
 //    `me01-132` / `-176` / `-186` (an all-Energy-to-hand consequent on the healed body). Excluded by
-//    the brief: Tremendous Bomb ×2, Ange Floette, Core Memory. `megaGatedMeD603.test.ts`.
+//    the brief: Tremendous Bomb ×2, Ange Floette [🆕🆕🆕 D642 (D539): Ange Floette BUILT at D642 (Z1).], Core Memory. `megaGatedMeD603.test.ts`.
 //    [🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory BUILT at D620 (WP26).]
 //    [🆕🆕🆕 D625 (D539): Wally's Compassion ×3 BUILT at D625 (`healChosen.energyToHandFromHealed`).] ──
 
@@ -18164,7 +18247,7 @@ const VOLTAIC_LIGHTNING_ENERGY: CardProgram = {
 //    damage-counter shield — the brief's other new piece), Mystery Garden ×3 (a draw-until count
 //    source), Forest of Vitality ×3 (a same-turn evolution rule), Dizzying Valley (Confusion kept
 //    through evolution), Fossil Quarry (Antique Items deck-to-Bench) [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)] and Risky Ruins (a Stadium
-//    on-Bench trigger). Excluded by the brief: Ange Floette. `stadiumsMeD606.test.ts`.
+//    on-Bench trigger). Excluded by the brief: Ange Floette [🆕🆕🆕 D642 (D539): Ange Floette BUILT at D642 (Z1).]. `stadiumsMeD606.test.ts`.
 //    [🆕🆕🆕 D618 (D539): Battle Cage, Mystery Garden and Forest of Vitality are BUILT at D618, below.] ──
 
 /** 🆕🆕🆕 **D606 — Prism Tower `me04-080` / `-111` (Stadium)**: *"Once during each player's turn, that
@@ -18243,7 +18326,7 @@ const CELEBRATORY_FANFARE: CardProgram = {
 //    evolution permission (`StadiumEffects.sameTurnEvolution`) and a draw-until count
 //    (`drawUntilHandSize.per`) for the Stadium use with a discard cost. Texts off the LOCAL D1
 //    (2026-10-09). Dropped and named: Dizzying Valley (Confusion kept through evolution), Fossil
-//    Quarry (Antique Items deck-to-Bench) [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky Ruins (a Stadium on-Bench trigger) and Ange Floette
+//    Quarry (Antique Items deck-to-Bench) [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky Ruins [🆕🆕🆕 D642 (D539): Risky Ruins, Ange Floette BUILT at D642 (Z1).] (a Stadium on-Bench trigger) and Ange Floette
 //    (a play gate on Prism Tower in play, a second Stadium the same turn, and a named HP bonus).
 //    `stadiumsMeD618.test.ts`. ──
 
@@ -18647,7 +18730,7 @@ const STRANGE_TIMEPIECE: CardProgram = {
 //    Ability twin on the shipped `koToolTrigger` stage), `PassiveEffects.koAttackerOnCoinFlip` (flow.ts
 //    `finishAttack`) and the `BoardCondition` `yourActiveWeakToOpponentActiveType`. No new park shape: every
 //    program parks through a shipped op on a shipped stage. `koTriggerRestMeD626.test.ts` plays each. Out of
-//    scope and named: Spiritomb ×2 "Spiteful Swirl" and Wishiwashi "Counterattack Grouping" (K2, a watched
+//    scope and named: Spiritomb ×2 "Spiteful Swirl" [🆕🆕🆕 D642 (D539): Spiteful Swirl, Counterattack Grouping BUILT at D642 (K2).] and Wishiwashi "Counterattack Grouping" (K2, a watched
 //    Active's damage moment). ──
 
 const SANDY_FLAPPING_TEXT =
@@ -20570,6 +20653,13 @@ const REGISTRY: Record<string, CardProgram> = {
   "me01-120": LT_SURGES_BARGAIN, // Lt. Surge's Bargain — the opponent answers: each player takes a Prize, or you draw 4
   "me01-170": LT_SURGES_BARGAIN, // Lt. Surge's Bargain
   "me01-185": LT_SURGES_BARGAIN, // Lt. Surge's Bargain
+  // 🆕🆕🆕 D642 — Z1 + K2: 6 keys / 5 objects, MID-MAP (`raw[last]` does not move).
+  "me01-087": SPITEFUL_SWIRL, // Spiritomb — your Active {D} damaged by an attack: 1 counter on the Attacking Pokémon
+  "me01-148": SPITEFUL_SWIRL, // Spiritomb
+  "30th-022": COUNTERATTACK_GROUPING, // Wishiwashi — your Active Wishiwashi damaged by an attack: 3 counters on it
+  "me01-127": RISKY_RUINS, // Risky Ruins — a Basic non-{D} put onto its owner's Bench on their turn: 2 counters
+  "me02-088": DIZZYING_VALLEY, // Dizzying Valley — Confused Pokémon stay Confused when they evolve or devolve
+  "me04-075": ANGE_FLOETTE, // Ange Floette — only over a Prism Tower; each Mega Floette ex in play +150 HP
   // 🆕🆕🆕 D608 — WP30: 5 `30th` ATTACK-only keys / 2 objects, MID-MAP (`raw[last]` does not move).
   // 🆕🆕🆕 D612 — 3 now: Stealthy Slash ×2 RETIRED (the normalised text is `mep-099`'s, reader-built).
   "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex

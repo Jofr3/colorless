@@ -331,8 +331,8 @@ describe("D626 §1 — the texts and the registry rows", () => {
     });
   });
 
-  it("out of scope (K2): Spiteful Swirl ×2 and Counterattack Grouping stay unkeyed", () => {
-    for (const id of ["me01-087", "me01-148", "30th-022"]) expect(programFor(id), id).toBeUndefined();
+  it("out of scope (K2): Spiteful Swirl ×2 and Counterattack Grouping stay unkeyed (🆕🆕🆕 D642 (D539): WITHDRAWN — keyed since D642, the rung is inverted)", () => {
+    for (const id of ["me01-087", "me01-148", "30th-022"]) expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
   });
 });
 
@@ -653,7 +653,7 @@ describe("D626 §6 — Adversity Policy: a holder Weak to the opponent's Active,
 });
 
 describe("D626 §7 — the version", () => {
-  it("is built at engine 0.524.0", () => {
-    expect(engineVersion).toBe("0.524.0");
+  it("is built at engine 0.525.0", () => {
+    expect(engineVersion).toBe("0.525.0");
   });
 });

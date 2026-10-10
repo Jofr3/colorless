@@ -119,6 +119,9 @@ import {
   supporterEffectOf,
   // 🆕🆕🆕 D618 — Battle Cage's flag, read by `benchCountersCaged`.
   stadiumEffectsOf,
+  // 🆕🆕🆕 D642 — Dizzying Valley's kept Confusion (the deck evolves, the devolves) and the watched recoil.
+  stageChangeConditions,
+  withWatchedRecoil,
 } from "./continuous";
 import type { KoSurvival } from "./continuous";
 import { POKEMON_TYPES, STATUS_WORD_OF, foldApostrophes } from "./effects";
@@ -168,6 +171,7 @@ import type {
   ScheduledEffect,
   Seat,
   SideDamageReduction,
+  SpecialConditions,
 } from "./types";
 import {
   BENCH_CEILING,
@@ -3834,6 +3838,8 @@ function stepOp(
         }
         const forced = retrieveMove(state, candidates, op.dest, ctx, events);
         recordMoved(record, op.recordAs, forced.moved);
+        // 🆕🆕🆕 D642 — NO Risky Ruins call here: no printing spells *"all … onto your Bench"* (above), so the
+        // Bench arm of this forced path is unreachable and a call could not go red.
         return { done: forced.state };
       }
       const retrieveMax =
@@ -8556,7 +8562,8 @@ export function applyChoice(
       }
       const searched = searchMove(state, choice.uids, op.dest, op.reveal, ctx, events);
       recordMoved(record, op.recordAs, searched.moved);
-      return searched.state;
+      // 🆕🆕🆕 D642 — Risky Ruins on what landed on the Bench (a no-op for every other `dest`).
+      return benchArrivalCounters(searched.state, ctx.seat, searched.moved, events);
     }
     case "evolveFromDeck":
       // 🆕🆕🆕 D611 — the HAND route (Spiteful Evolution) files the placement for its "If you do".
@@ -8589,10 +8596,14 @@ export function applyChoice(
       // (one no longer in the discard) never moved, so Miriam's "if you
       // shuffled any cards into your deck in this way" must not count it.
       recordMoved(record, op.recordAs, retrieved.moved);
-      return retrieved.state;
+      // 🆕🆕🆕 D642 — Risky Ruins on what landed on the Bench (a no-op for every other `dest`).
+      return benchArrivalCounters(retrieved.state, ctx.seat, retrieved.moved, events);
     }
     case "lookAtTopN":
-      return choice.kind === "cards" ? revealFromTop(state, choice.uids, op, ctx, events) : state;
+      // 🆕🆕🆕 D642 — Risky Ruins on what landed on the controller's own Bench (the picked uids that did).
+      return choice.kind === "cards"
+        ? benchArrivalCounters(revealFromTop(state, choice.uids, op, ctx, events), ctx.seat, choice.uids, events)
+        : state;
     case "reorderTop": {
       // 🆕 D341 — THE ANSWER'S POSITIONS ARE THE EFFECT. `validateChoice` has
       // already established that `choice.uids` is a permutation of the offered
@@ -12955,7 +12966,8 @@ function reactWithRecoilAndAbility(
 ): GameState {
   let next = state;
   const attacker = activeTop(next, attackerSeat);
-  const damagedPassives = passivesOf(next, damagedBody);
+  // 🆕🆕🆕 D642 — plus the watched-Active recoil (Spiteful Swirl, Counterattack Grouping): an Ability's share.
+  const damagedPassives = withWatchedRecoil(next, damagedSeat, damagedBody, passivesOf(next, damagedBody));
   // 🆕🆕🆕 D614 — Luminous Wing on the attacker refuses the Ability share (attack.ts's main-hit rule).
   const refusedRecoil =
     attacker !== null && passivesOf(next, attacker.active).preventAbilityEffects
@@ -14881,6 +14893,37 @@ function handRefreshDrawCount(
     *inside this function*, so `moved` is the only place the truth exists. The state
     half is returned unchanged in every other respect; a caller with no `recordAs`
     reads `.state` and the board is byte-identical to what it was. */
+/** 🆕🆕🆕 §7.3 (D642) — RISKY RUINS (`StadiumEffects.benchArrivalCounters`): the counters on each of `uids` that
+    `seat` has just put onto its OWN Bench, when that is `seat`'s own turn, the body is a Basic Pokémon in play
+    (an Antique Fossil included — its in-play face is a Basic {C} Pokémon, R-RR2) and its IN-PLAY types do not
+    hold `excludesType`. One `COUNTERS_PLACED { source: "trainer" }` row per body (the Stadium is a Trainer
+    card). The ONE function every arrival route calls after the body is seated (turn.ts `playBasicToBench`,
+    cardplay.ts `playFossil`, `searchMove` / `retrieveMove` / `revealFromTop`'s Bench arms here); a placement
+    onto the OTHER seat's Bench (`bottomFromOpponentHandApply`) never calls it (R-RR1). No sweep: no
+    Standard-legal Basic has 20 HP or less. */
+export function benchArrivalCounters(
+  state: GameState,
+  seat: Seat,
+  uids: readonly string[],
+  events: GameEvent[],
+): GameState {
+  const rule = stadiumEffectsOf(state)?.benchArrivalCounters;
+  if (rule === undefined) return state;
+  // "during their turn" — odd turns belong to `firstPlayer` (types.ts `isFirstTurnOf`'s reading).
+  if ((state.turn % 2 === 1) !== (seat === state.firstPlayer)) return state;
+  const landed = new Set(uids);
+  const side = state.players[seat];
+  const bench = side.bench.map((body) => {
+    const uid = topUid(body);
+    if (uid === undefined || !landed.has(uid)) return body;
+    const card = inPlayCardOf(state, body);
+    if (card === undefined || !isBasicPokemon(card) || (card.types ?? []).includes(rule.excludesType)) return body;
+    events.push({ type: "COUNTERS_PLACED", seat, uid, amount: rule.amount, source: "trainer" });
+    return { ...body, damage: body.damage + rule.amount };
+  });
+  return withSide(state, seat, { ...side, bench });
+}
+
 function searchMove(
   state: GameState,
   uids: readonly string[],
@@ -15189,6 +15232,7 @@ function evolveFromDeckMove(
     offer.bodyUid,
     uid,
     events,
+    stageChangeConditions(pulled, offer.body.conditions), // 🆕🆕🆕 D642 — Dizzying Valley (R-DV1)
   ).state;
 }
 
@@ -15208,7 +15252,8 @@ function evolveFromHandMove(
   if (offer === undefined || uid === undefined || !offer.candidates.includes(uid)) return { state, moved: [] };
   const side = state.players[ctx.seat];
   const pulled = withSide(state, ctx.seat, { ...side, hand: side.hand.filter((inHand) => inHand !== uid) });
-  const evolved = evolveOnto(pulled, ctx.seat, offer.target, offer.benchIndex, offer.body, offer.bodyUid, uid, events);
+  const kept = stageChangeConditions(pulled, offer.body.conditions); // 🆕🆕🆕 D642 — Dizzying Valley (R-DV1)
+  const evolved = evolveOnto(pulled, ctx.seat, offer.target, offer.benchIndex, offer.body, offer.bodyUid, uid, events, kept);
   return { state: evolved.state, moved: [uid] };
 }
 
@@ -16303,7 +16348,7 @@ function devolveTargets(state: GameState, seat: Seat): PokemonRef[] {
     decision. What it is NOT is a re-argument of the set; `devolveEach.test.ts` §7 pins
     every field one by one and remains the authority, and `devolveChosen.test.ts` rides
     it rather than re-pinning twenty fields on a second board. */
-function devolvedBodyOf(body: InPlayPokemon): InPlayPokemon {
+function devolvedBodyOf(body: InPlayPokemon, kept: SpecialConditions): InPlayPokemon {
   return {
     ...body,
     // "the highest Stage Evolution card" — ONE card off the top, not the whole
@@ -16311,8 +16356,9 @@ function devolvedBodyOf(body: InPlayPokemon): InPlayPokemon {
     // Basic). `evolveOnto`'s APPEND read backwards.
     stack: body.stack.slice(0, -1),
     // §12 — devolving removes Special Conditions, named in the same clause as
-    // evolving and retreating.
-    conditions: noConditions(),
+    // evolving and retreating. 🆕🆕🆕 D642 — except what `kept` holds (continuous.ts
+    // `stageChangeConditions`: Confused under Dizzying Valley, R-DV1).
+    conditions: kept,
     // …and §10's effects of attacks, the same ~~TWELVE~~ `switchInto` and
     // `clearOnLeavingActive` shed (eleven until D434; 🆕🆕🆕 FOURTEEN since D547 —
     // `attackFlipLockTurn` and `damageVulnerability` below, `devolveEach.test.ts` §7). Every one of them was
@@ -16507,14 +16553,17 @@ function devolveEach(state: GameState, ctx: EffectContext, events: GameEvent[]):
     devolved.push({
       ref,
       from,
-      cleared: presentStatuses(body.conditions),
+      // 🆕🆕🆕 D642 — less the Confusion Dizzying Valley keeps (R-DV1).
+      cleared: presentStatuses(body.conditions).filter(
+        (status) => !presentStatuses(stageChangeConditions(state, body.conditions)).includes(status),
+      ),
       wasLethal: isLethallyDamaged(state, body),
       // 🆕🆕🆕 **D540 EXTRACTED THIS §10/§12 SHED OBJECT INTO `devolvedBodyOf`**
       // (immediately above this function) so row 87's writer and row 88's cannot drift
       // apart on twenty fields — which is the hazard the extracted block's own text
       // names ("the four §10 literals AGREE about the durated set"). The object is
       // byte-for-byte what was written here, and every field's reason moved with it.
-      body: devolvedBodyOf(body),
+      body: devolvedBodyOf(body, stageChangeConditions(state, body.conditions)),
     });
     returned.push(from);
   }
@@ -16643,9 +16692,11 @@ function devolveBodyToHand(
   if (inPlayToHandBlocked(state, ref.seat)) return state;
   const from = body.stack[body.stack.length - 1];
   if (from === undefined) return state;
-  const cleared = presentStatuses(body.conditions);
+  // 🆕🆕🆕 D642 — what the devolved top keeps (Dizzying Valley's Confused, R-DV1), and the rest cleared.
+  const kept = stageChangeConditions(state, body.conditions);
+  const cleared = presentStatuses(body.conditions).filter((status) => !presentStatuses(kept).includes(status));
   const wasLethal = isLethallyDamaged(state, body);
-  const devolved = devolvedBodyOf(body);
+  const devolved = devolvedBodyOf(body, kept);
   let next = withSide(
     state,
     ref.seat,

@@ -3477,11 +3477,14 @@ export function evolveOnto(
   fromUid: string,
   evolutionUid: string,
   events: GameEvent[],
+  // 🆕🆕🆕 §12 (D642) — the conditions the new top KEEPS (continuous.ts `stageChangeConditions`: Confused under
+  // Dizzying Valley, R-DV1). Every engine caller passes it; absent = none kept, the §12 clear byte for byte.
+  kept: SpecialConditions = noConditions(),
 ): { state: GameState; evolved: InPlayPokemon } {
   const evolved: InPlayPokemon = {
     ...from,
     stack: [...from.stack, evolutionUid],
-    conditions: noConditions(),
+    conditions: kept,
     // §10 — evolving sheds the effects of attacks too, not just conditions. That
     // covers the retreat block and, since D142, the attack-installed damage
     // block. The second one is UNREACHABLE and deliberately written anyway: the
@@ -3629,7 +3632,8 @@ export function evolveOnto(
   });
   // §10/§12 — evolving removed the Pokémon's Special Conditions. Announced only
   // when there was something to remove; `uid` is the NEW top (see events.ts).
-  const cleared = presentStatuses(from.conditions);
+  // 🆕🆕🆕 D642 — less what the new top keeps (Dizzying Valley's Confused, R-DV1).
+  const cleared = presentStatuses(from.conditions).filter((status) => !presentStatuses(kept).includes(status));
   if (cleared.length > 0) {
     events.push({
       type: "STATUS_CLEARED",

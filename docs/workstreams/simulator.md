@@ -30171,7 +30171,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **The cause predicates.** flow.ts `koByOpponentAttack` (an attack epilogue from the other seat, lethal by damage) and
   `koByOpponentPokemonEx` (plus an ex attacker, read off the attacker's uid).
 - **No op, persisted member, prompt or event.** Every event already existed.
-- **Dropped and named:** Fainting Spell ×2, Photon Cord ×2, Spiteful Swirl ×2, Counterattack Grouping, Damp ×2. [🆕🆕🆕 D626 (D539): Fainting Spell ×2 and Photon Cord ×2 BUILT at D626 (K1).] [🆕🆕🆕 D632 (D539): Damp ×2 BUILT at D632 (D1).]
+- **Dropped and named:** Fainting Spell ×2, Photon Cord ×2, Spiteful Swirl [🆕🆕🆕 D642 (D539): Spiteful Swirl, Counterattack Grouping BUILT at D642 (K2).] ×2, Counterattack Grouping, Damp ×2. [🆕🆕🆕 D626 (D539): Fainting Spell ×2 and Photon Cord ×2 BUILT at D626 (K1).] [🆕🆕🆕 D632 (D539): Damp ×2 BUILT at D632 (D1).]
 - **Readings (UNRULED).** R-IS1, R-GC1, R-TN1, R-KO1, R-PD1, R-SB2 (`progress.md` NEXT). R-SB2: a Survival Brace / full-HP Sturdy
   answers first and no coin is flipped (`clamped === null ? koSurvivalCoinFlip(…) : …` at all four writes).
   🆕 D601: plus R-GC2 and R-GC3 (two Shadowy Concealment readings), and R-TN1 amended (self-damage never asks the coin).
@@ -30247,6 +30247,32 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Suite.** `activatedMeD602.test.ts` (22) and a census D602 block (3). +21 mutant rows.
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D642 — Z1 + K2: the `me` Stadium rest and the watched-Active damage triggers (engine 0.525.0, `MATCH_RECORD_VERSION` stays 47)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D641 (`ad5eb285`), NOT committed. 5 texts / 6 printings (`me` + `30th`) —
+the D625 re-rank's Z1 and K2 groups, whole.
+
+- **Spiteful Swirl** (Spiritomb `me01-087` / `-148`) and **Counterattack Grouping** (Wishiwashi `30th-022`): the NEW
+  `PassiveEffects.damageAttackerWatched { amount, activeType?, activeNames? }`. continuous.ts `watchedRecoilOf` walks the damaged seat's
+  whole board (the holder may be benched or be the Active), §9 per holder, the watched clause off the Active's in-play card;
+  `withWatchedRecoil` adds it at the two recoil sites (attack.ts's main hit, interpreter.ts `reactWithRecoilAndAbility`), one
+  `"counterattack"` row, refused by Luminous Wing with the Ability share. R-SSW1 / R-CAG1 ⚠️ UNRULED: each holder pays (no "doesn't
+  stack"). The Wishiwashi D1 text's two TAB bytes are left by the D612 normaliser; nothing reads it (keyed by id).
+- **Risky Ruins** (`me01-127`): the NEW `StadiumEffects.benchArrivalCounters`, interpreter.ts `benchArrivalCounters` at the hand play,
+  the Antique Fossil play and the search / retrieval / look-at-top Bench arms (`COUNTERS_PLACED { source: "trainer" }`). R-RR1 ⚠️
+  UNRULED: only the owner's own placement during the owner's turn. R-RR2 ⚠️ UNRULED: a fossil in play is a Basic {C} Pokémon.
+- **Dizzying Valley** (`me02-088`): the NEW `StadiumEffects.confusionSurvivesStageChange`; continuous.ts `stageChangeConditions` is
+  handed to `evolveOnto` (NEW defaulted `kept`) and `devolvedBodyOf` (NEW `kept`). R-DV1 ⚠️ UNRULED: Confused kept with its
+  `confusionDamage`; everything else still clears.
+- **Ange Floette** (`me04-075`): the NEW `StadiumEffects.playOnlyOverStadium` (cardplay.ts `stadiumPlayOverUnmet`,
+  `stadiumSpentPlayLifted`; read by `playStadium`, redact.ts and GameHud.tsx) and the NEW `hpDelta.name` (+150 HP to each Mega Floette
+  ex). R-ANF1 ⚠️ UNRULED: either player's Prism Tower. R-ANF2 ⚠️ UNRULED: "the same turn you play Prism Tower" = the Prism Tower in
+  play is the actor's own (no new key); the Quaking Fist corner is a pinned limitation.
+- **MRV stays 47** (match.ts "STAYS 47 AT D642"): catalog-only keys; the 0.524 rollback readings are named.
+- **Suite.** `stadiumWatchedMeD642.test.ts` (31), `GameHud.angeFloette.dom.test.tsx` (3), census D642 block (2). +36 mutant rows, all
+  KILLED; five D288 / D576 rows re-anchored. Census: abilities **599 / 610**, trainers **445 / 447**, 1249 `me` printings fully built.
+  Sweep PENDING.
 
 ## D641 — W1 + Y1b: effects the opponent answers, and deck swap / reveal (engine 0.524.0, `MATCH_RECORD_VERSION` stays 47)
 
@@ -30559,7 +30585,7 @@ registry objects.
   refuses it (Luminous Wing); the attacker falls in the same batch, so its Prizes (3 for a Mega ex) go to the Gengar side. R-FS1 UNRULED.
 - **Adversity Policy.** Team Rocket's Hypnotizer's stage behind the NEW `BoardCondition` `yourActiveWeakToOpponentActiveType`
   (the effective Weakness: retype, rewrite, the "no Weakness" bars). D620's drop annotated. R-AP1 UNRULED.
-- **Out of scope (K2).** Spiteful Swirl ×2 and Counterattack Grouping.
+- **Out of scope (K2).** Spiteful Swirl [🆕🆕🆕 D642 (D539): Spiteful Swirl, Counterattack Grouping BUILT at D642 (K2).] ×2 and Counterattack Grouping.
 - **MRV stays 43.** Keyed by id; no new park, stage or persisted shape (match.ts "STAYS 43 AT D626").
 - **Suite.** `koTriggerRestMeD626.test.ts` (37) and a census D626 block (2). +22 mutant rows; two D598 rows re-pointed. Census:
   abilities **568 / 610**, trainers **432 / 447**, 1146 `me` printings fully built. Sweep PENDING.
@@ -30719,7 +30745,7 @@ registry objects.
 - **Readings.** R-BCG1 ⚠️ UNRULED (a move onto a Benched body is a placement; refused whole), R-BCG2 ⚠️ UNRULED (targets stay
   offered; nothing lands, no row), R-MYG1 ⚠️ UNRULED (usable when the draw would be 0), R-FOV1 ⚠️ UNRULED (a {G} body that
   evolved this turn may evolve again).
-- **Dropped.** Dizzying Valley, Fossil Quarry [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky Ruins, Ange Floette (each needs vocabulary beyond the brief).
+- **Dropped.** Dizzying Valley [🆕🆕🆕 D642 (D539): Dizzying Valley, Risky Ruins, Ange Floette BUILT at D642 (Z1).], Fossil Quarry [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky Ruins, Ange Floette (each needs vocabulary beyond the brief).
 - **Suite.** `stadiumsMeD618.test.ts` (30) and a census D618 block (2). +26 mutant rows, all killed; two older rows re-pointed
   (`D451-section-11-gate-reads-the-active-for-every-body`, `D574-loop-shield-not-filtered`). D539: D606's drop notes and two
   "asks no shield" / "No §11 question" claims annotated.
@@ -30964,7 +30990,7 @@ registry objects.
   KILLED by new D606 blocks in `redactStadiumAbility.test.ts` and `GameHud.stadiumAbility.dom.test.tsx`; the
   "no printed Stadium ability whiff-gates" claim is annotated WITHDRAWN at every site (D539).
 - **Dropped and named.** Battle Cage ×2, Mystery Garden ×3, Forest of Vitality ×3, Dizzying Valley, Fossil Quarry [🆕🆕🆕 D635 (D539): BUILT at D635 (F1)], Risky
-  Ruins. Ange Floette excluded by the brief. [🆕🆕🆕 D618 (D539): the first three BUILT at D618.]
+  Ruins. Ange Floette [🆕🆕🆕 D642 (D539): Ange Floette BUILT at D642 (Z1).] excluded by the brief. [🆕🆕🆕 D618 (D539): the first three BUILT at D618.]
 - **Readings.** R-LC1, R-CF1, UNRULED (`progress.md` NEXT).
 - **Suite.** `stadiumsMeD606.test.ts` (23) and a census D606 block (2). +17 mutant rows.
 - **Census.** Standard pool trainers **373 / 447**; 935 `me` printings fully built.
@@ -31018,7 +31044,7 @@ registry objects.
   untyped gate), Seviper "Excited Power" (`damageBonusBeforeWRIf` 120), Mega Signal ×3 (search a Mega ex) and Jett
   (`drawCards.per` over the opponent's Mega ex).
 - **Dropped and named:** Latios "Lustrous Assist" [🆕🆕🆕 D628 (D539): Lustrous Assist BUILT at D628 (A1)] (a named Active's move gate) and Wally's Compassion ×3 (all Energy to
-  the hand from the healed body). Tremendous Bomb, Ange Floette and Core Memory stay out (the brief). [🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory BUILT at D620 (WP26).] [🆕🆕🆕 D625 (D539): Wally's Compassion ×3 BUILT at D625 (`healChosen.energyToHandFromHealed`).]
+  the hand from the healed body). Tremendous Bomb, Ange Floette [🆕🆕🆕 D642 (D539): Ange Floette BUILT at D642 (Z1).] and Core Memory stay out (the brief). [🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory BUILT at D620 (WP26).] [🆕🆕🆕 D625 (D539): Wally's Compassion ×3 BUILT at D625 (`healChosen.energyToHandFromHealed`).]
 - **Readings.** None new; Jett with none in play inherits R-PX6 (`progress.md` NEXT).
 - **Suite.** `megaGatedMeD603.test.ts` (26) and a census D603 block (2). +25 mutant rows.
 - **Census.** Standard pool abilities **520 / 610**, trainers **364 / 447**; 906 `me` printings fully built.

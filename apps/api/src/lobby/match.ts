@@ -2161,6 +2161,17 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 47 AT D642 — Z1 + K2 ADD ONE `PassiveEffects` KEY (`damageAttackerWatched`), THREE `StadiumEffects`
+    KEYS (`benchArrivalCounters`, `confusionSurvivesStageChange`, `playOnlyOverStadium`) AND `hpDelta.name`: CATALOG
+    ONLY, NEVER PERSISTED; NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD OR EVENT MEMBER.**
+    (Placed ABOVE the D641 block.) Every program is keyed by id, so no `cardPool` face is read differently. The 0.524
+    rollback readings, NAMED: ⑴ the six ids have no program at 0.524, so a Risky Ruins / Dizzying Valley / Ange Floette
+    already in the zone is inert there (`stadiumEffectsOf` undefined) and a Spiritomb / Wishiwashi pays nothing. ⑵ A
+    body that kept Confused through an evolution or a devolution under Dizzying Valley is persisted as an ordinary
+    Confused body (a shipped `SpecialConditions` value). ⑶ A Mega Floette ex carrying more than 250 damage under Ange
+    Floette is over its maximum at 0.524 and is Knocked Out at that reader's next §8.1 sweep — the Stadium's own
+    replacement reading, reached by a rollback instead. No wire shape moves; the deploy order is the usual one.
+
     🆕🆕🆕 **STAYS 47 AT D641 — W1 + Y1b ADD THREE `EffectOp` MEMBERS (`switchWithDeckChosen`, `revealDeckBottomCount`,
     `eachPlayerTakesPrize`) AND THREE OPTIONAL OP KEYS (`optional.askOpponent`, `attachFromHand.max` / `.whose`); NO
     PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY OR `InPlayPokemon` FIELD.** (Placed ABOVE the D640 block.) What can be

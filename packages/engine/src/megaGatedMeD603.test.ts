@@ -28,7 +28,7 @@ import {
 // the tree before this slice except Mega Signal `me01-121`, a Trainer face in
 // `megaEvolutionRuleD582.test.ts`. Dropped and named: Latios `me01-101` "Lustrous Assist" [🆕🆕🆕 D628 (D539): Lustrous Assist BUILT at D628 (A1)] (a gate on a
 // NAMED Active's Bench-to-Active move) and Wally's Compassion ×3 (an all-Energy-to-hand consequent on
-// the healed body). Excluded by the brief: Tremendous Bomb ×2, Ange Floette, Core Memory (§9).
+// the healed body). Excluded by the brief: Tremendous Bomb ×2, Ange Floette [🆕🆕🆕 D642 (D539): Ange Floette BUILT at D642 (Z1).], Core Memory (§9).
 // [🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory BUILT at D620 (WP26).]
 // [🆕🆕🆕 D625 (D539): Wally's Compassion ×3 BUILT at D625 (`healChosen.energyToHandFromHealed`).]
 
@@ -520,12 +520,12 @@ describe("D603 §8 — Jett: a card for each of your opponent's Mega Evolution P
 });
 
 describe("D603 §9 — the dropped and excluded texts stay unkeyed, and the version", () => {
-  it("~~Latios~~, ~~Wally's Compassion ×3~~ and Ange Floette carry no program (🆕🆕🆕 D628 (D539): Latios is keyed since D628; 🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory, excluded here, are keyed since D620; 🆕🆕🆕 D625 (D539): Wally's Compassion ×3 is keyed since D625)", () => {
+  it("~~Latios~~, ~~Wally's Compassion ×3~~ and ~~Ange Floette~~ carry no program (🆕🆕🆕 D628 (D539): Latios is keyed since D628; 🆕🆕🆕 D620 (D539): Tremendous Bomb ×2 and Core Memory, excluded here, are keyed since D620; 🆕🆕🆕 D625 (D539): Wally's Compassion ×3 is keyed since D625; 🆕🆕🆕 D642 (D539): Ange Floette is keyed since D642, the rung is inverted)", () => {
     for (const id of [
       // "me01-101", Latios "Lustrous Assist" — dropped [🆕🆕🆕 D628 (D539): keyed since D628, onBenchMoveMeD628.test.ts]
-      "me04-075", // Ange Floette — excluded
+      "me04-075", // Ange Floette — excluded [🆕🆕🆕 D642 (D539): keyed since D642, stadiumWatchedMeD642.test.ts]
     ])
-      expect(programFor(id), id).toBeUndefined();
+      expect(Object.keys(programFor(id) ?? {}), id).toEqual(["stadium"]);
     expect(programFor("me01-101")?.abilities?.[0]?.name).toBe("Lustrous Assist");
     // 🆕🆕🆕 D625 — Wally's Compassion ×3, dropped here, is built by T1 (`trainersMeD625.test.ts`).
     for (const id of ["me01-132", "me01-176", "me01-186"]) expect(programFor(id), id).toBeDefined();
@@ -533,7 +533,7 @@ describe("D603 §9 — the dropped and excluded texts stay unkeyed, and the vers
     for (const id of ["me05-082", "me05-113", "me03-070"]) expect(programFor(id), id).toBeDefined();
   });
 
-  it("is built at engine 0.524.0", () => {
-    expect(engineVersion).toBe("0.524.0");
+  it("is built at engine 0.525.0", () => {
+    expect(engineVersion).toBe("0.525.0");
   });
 });
