@@ -6250,7 +6250,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.522.0";',
+    find: 'export const engineVersion = "0.523.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -11469,8 +11469,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D630 — RE-ANCHORED off the bytes (D540) — D630 stepped the constant 43 → 44; the patch is still ONE step back.
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540) — D636 stepped the constant 44 → 45; the patch is still ONE step back.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540) — D637 stepped the constant 45 → 46; the patch is still ONE step back.
-    find: "export const MATCH_RECORD_VERSION = 46;",
-    replace: "export const MATCH_RECORD_VERSION = 45;",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540) — D640 stepped the constant 46 → 47; the patch is still ONE step back.
+    find: "export const MATCH_RECORD_VERSION = 47;",
+    replace: "export const MATCH_RECORD_VERSION = 46;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a
@@ -20159,8 +20160,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D431",
     what: "🛑🛑 THE DEFECT NO CENSUS CAN SEE, AND THE REASON THIS SLICE IS AN AUDIT. Every OTHER producer of a `takePrizes` stage is `flow.ts`'s `knockOut`, which is handed `otherSeat(koedSeat)` — so \"this stage's seat is the seat across the table from the subject\" has been true of every stage this engine ever queued, by accident rather than by rule. An author reading the shipped producers and generalising writes `otherSeat(ctx.seat)` here and hands the OPPONENT a prize on every board. The sentence still derives, the stage still resolves, the log still files `PRIZES_OWED` and `PRIZES_TAKEN`, `BUILT.attack` still reads 1,460 — and the game is being lost by the wrong player",
     file: "packages/engine/src/interpreter.ts",
-    find: '  const prize: PendingStage = { kind: "takePrizes", seat: ctx.seat, count: 1 };',
-    replace: '  const prize: PendingStage = { kind: "takePrizes", seat: otherSeat(ctx.seat), count: 1 };',
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the stage is `taken` with the passed `count` (Celebration's 2);
+    //    the patch still hands the Prize to the other seat.
+    find: '  const taken: PendingStage = { kind: "takePrizes", seat: ctx.seat, count };',
+    replace: '  const taken: PendingStage = { kind: "takePrizes", seat: otherSeat(ctx.seat), count };',
     expectKilledBy: ["packages/engine/src/takePrizeAttack.test.ts"],
   },
   {
@@ -20168,8 +20171,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D431",
     what: "The count is 2 rather than the printed `a`. It is the plausible transcription slip for this family — an `ex` Knock Out is worth two and `prizeValueOf` is the neighbouring producer's spelling — and it is invisible to every structural check: the stage shape is legal, the phase carries the count faithfully, both HUDs render \"Take 2 prize cards\", and `advance`'s clamp keeps it from ever throwing. Only counting the row before and after can see it, which is why §4 asserts the whole `PRIZES_TAKEN` payload rather than that a prize was taken",
     file: "packages/engine/src/interpreter.ts",
-    find: '  const prize: PendingStage = { kind: "takePrizes", seat: ctx.seat, count: 1 };',
-    replace: '  const prize: PendingStage = { kind: "takePrizes", seat: ctx.seat, count: 2 };',
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the count is now `op.count ?? 1` at the op's arm (Celebration
+    //    prints 2); the patch still makes the field-free sentence take two.
+    find: "      return { done: queueTakePrize(state, ctx, op.count ?? 1, op.thenShuffleHand === true) };",
+    replace: "      return { done: queueTakePrize(state, ctx, op.count ?? 2, op.thenShuffleHand === true) };",
     expectKilledBy: ["packages/engine/src/takePrizeAttack.test.ts"],
   },
   {
@@ -20177,8 +20182,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D431",
     what: "🛑 THE ORDERING DEFECT, AND THE BUILD AN AUTHOR WRITES FIRST. The stage is APPENDED to `state.pending` instead of spliced ahead of the attack's queued tail, so the prize is taken AFTER `attackEpilogue` — i.e. after the §8.1 Knock Out sweep, after `TURN_ENDED` and after the Checkup. On a quiet board the prize still arrives and only the queue order and the event order differ; on the board where the same attack Knocks the Defender Out, the §8.1 prize is now taken FIRST and the effect's second, which reverses the printed order; and on the last-prize board the game ends through the KO instead of through the effect, with a different event stream. `EffectOp` appliers returning a `GameState` can reach `pending` at all only because `reactToAttackDamage` proved it, and that function APPENDS on its `-1` branch — so the wrong half of the shipped precedent is right there to copy",
     file: "packages/engine/src/interpreter.ts",
-    find: "  return {\n    ...state,\n    pending:\n      tail === -1\n        ? [...state.pending, prize]\n        : [...state.pending.slice(0, tail), prize, ...state.pending.slice(tail)],\n  };",
-    replace: "  return { ...state, pending: [...state.pending, prize] };",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): `prize` is a list now (Celebration's shuffle stage rides behind
+    //    the Prize stage); the patch still appends it behind the tail.
+    find: "  return {\n    ...state,\n    pending:\n      tail === -1\n        ? [...state.pending, ...prize]\n        : [...state.pending.slice(0, tail), ...prize, ...state.pending.slice(tail)],\n  };",
+    replace: "  return { ...state, pending: [...state.pending, ...prize] };",
     expectKilledBy: ["packages/engine/src/takePrizeAttack.test.ts"],
   },
   {
@@ -29592,8 +29599,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D630 — RE-ANCHORED off the bytes (D540) — D630 stepped the constant 43 → 44; the patch is still ONE step back.
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540) — D636 stepped the constant 44 → 45; the patch is still ONE step back.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540) — D637 stepped the constant 45 → 46; the patch is still ONE step back.
-    find: "export const MATCH_RECORD_VERSION = 46;\n",
-    replace: "export const MATCH_RECORD_VERSION = 45;\n",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540) — D640 stepped the constant 46 → 47; the patch is still ONE step back.
+    find: "export const MATCH_RECORD_VERSION = 47;\n",
+    replace: "export const MATCH_RECORD_VERSION = 46;\n",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ────────────────────────────────────────────────────────────────────────────
@@ -34997,7 +35005,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D630 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 44 since D630; the replace and the claim are unchanged.
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 46;",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 47;",
     // 🆕🆕🆕 D549 - RE-ANCHORED AGAIN off the bytes (D540): D549's block now sits between
     //    D548's doc tail and the constant, so the anchor is D549's last two lines and the
     //    patch drops the constant THREE steps, to D547's pre-bump 30.
@@ -35204,7 +35213,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D630 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 44 since D630; the replace and the claim are unchanged.
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 46;",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 47;",
     // 🆕🆕🆕 D549 - RE-ANCHORED off the bytes onto D549's doc tail; the patch drops the
     //    constant TWO steps, to D548's pre-bump 31 (a different patch from
     //    `D549-record-version-not-bumped`, one step, same anchor).
@@ -35709,7 +35719,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D630 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 44 since D630; the replace and the claim are unchanged.
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 46;",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 47;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 32;",
     expectKilledBy: ["packages/engine/src/sideAttackLock.test.ts", "apps/api/src/lobby/match.test.ts"],
   },
@@ -36132,7 +36143,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D552",
     what: "C19 — **THE IDEMPOTENCE RETURN DROPPED**: a same-window re-install of the same type files a second row announcing a change that did not happen. Killed by §7 (constructed).",
     file: "packages/engine/src/interpreter.ts",
-    find: "  if (existing !== null && existing.turn === turn && existing.type === type) return state;\n",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the early return gained Overwriting Bolt's `asTimesTwo` term; the
+    //    patch still deletes the whole return.
+    find: "  if (\n    existing !== null &&\n    existing.turn === turn &&\n    existing.type === type &&\n    (existing.asTimesTwo === true) === asTimesTwo\n  )\n    return state;\n",
     replace: "",
     expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
   },
@@ -36141,8 +36154,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D552",
     what: "C20 — **THE MERGE KEEPS THE OLD TYPE** (the early return ignores `type`): a different type on the same window is silently dropped. Killed by §7's replace rung (constructed).",
     file: "packages/engine/src/interpreter.ts",
-    find: "  if (existing !== null && existing.turn === turn && existing.type === type) return state;",
-    replace: "  if (existing !== null && existing.turn === turn) return state;",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the early return gained Overwriting Bolt's `asTimesTwo` term; the
+    //    patch still drops the `type` term alone.
+    find: "    existing.turn === turn &&\n    existing.type === type &&\n    (existing.asTimesTwo === true) === asTimesTwo\n",
+    replace: "    existing.turn === turn &&\n    (existing.asTimesTwo === true) === asTimesTwo\n",
     expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
   },
   {
@@ -36172,8 +36187,10 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     // 🆕🆕🆕 D559 — RE-TRANSCRIBED off the bytes (D540): the Weakness call gained Fairy Zone's
     //    `rewrite` argument; find AND replace carry it, so the patch keeps exactly its mutation.
-    find: "        installedWeaknessRetypeOf(state, target.active),\n        seatWeaknessRewrite(state, opponent, target.card),",
-    replace: "        null,\n        seatWeaknessRewrite(state, opponent, target.card),",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the rewrite argument now reads Overwriting Bolt's installed
+    //    rewrite first; the patch still nulls the retype alone.
+    find: "        installedWeaknessRetypeOf(state, target.active),\n        // 🆕🆕🆕 D640 — Overwriting Bolt's installed rewrite first (R-OWB1).\n        installedWeaknessRewriteOf(state, target.active) ?? seatWeaknessRewrite(state, opponent, target.card),",
+    replace: "        null,\n        // 🆕🆕🆕 D640 — Overwriting Bolt's installed rewrite first (R-OWB1).\n        installedWeaknessRewriteOf(state, target.active) ?? seatWeaknessRewrite(state, opponent, target.card),",
     expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
   },
   {
@@ -36183,8 +36200,10 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     // 🆕🆕🆕 D559 — RE-TRANSCRIBED off the bytes (D540): the Weakness call gained Fairy Zone's
     //    `rewrite` argument; find AND replace carry it, so the patch keeps exactly its mutation.
-    find: "        installedWeaknessRetypeOf(state, target.active),\n        seatWeaknessRewrite(state, opponent, target.card),",
-    replace: "        installedWeaknessRetypeOf(state, attacker.active),\n        seatWeaknessRewrite(state, opponent, target.card),",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the line after the retype is now D640's comment; the patch still
+    //    reads the attacker's record.
+    find: "        installedWeaknessRetypeOf(state, target.active),\n        // 🆕🆕🆕 D640 — Overwriting Bolt's installed rewrite first (R-OWB1).\n",
+    replace: "        installedWeaknessRetypeOf(state, attacker.active),\n        // 🆕🆕🆕 D640 — Overwriting Bolt's installed rewrite first (R-OWB1).\n",
     expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
   },
   {
@@ -36275,8 +36294,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D552",
     what: "C34 — **THE ROW SAYS 'next turn' IN THE VICTIM's VOICE** — false in the direction that costs the retreat that sheds it (D421; DAMAGE_VULNERABILITY_APPLIED's reason). Killed by §2's rendered-row rung.",
     file: "packages/engine/src/log.ts",
-    find: "until the end of your opponent's next turn (the amount doesn't change)`,",
-    replace: "until the end of your next turn (the amount doesn't change)`,",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the reminder is now chosen per record (Overwriting Bolt's ×2); the
+    //    patch still drops "opponent's" from the window.
+    find: "until the end of your opponent's next turn (${",
+    replace: "until the end of your next turn (${",
     expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
   },
   {
@@ -36310,7 +36331,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D630 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 44 since D630; the replace and the claim are unchanged.
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 46;",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 47;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 33;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -37257,7 +37279,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D630 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 44 since D630; the replace and the claim are unchanged.
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 46;",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 47;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 34;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -37884,8 +37907,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D559",
     what: "R-FZ3 reversed: `suppressTargetEffects` (\"isn't affected by any effects on your opponent's Active Pokémon\") no longer drops the rewrite. Killed by §3's Shred rung.",
     file: "packages/engine/src/attack.ts",
-    find: "    const weaknessRewrite = suppressTargetEffects\n      ? null\n      : seatWeaknessRewrite(next, defenderSeat, defenderCard);",
-    replace: "    const weaknessRewrite = seatWeaknessRewrite(next, defenderSeat, defenderCard);",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the rewrite now reads Overwriting Bolt's installed rewrite first; the patch
+    //    still drops the suppression alone.
+    find: "    const weaknessRewrite = suppressTargetEffects\n      ? null\n      : (installedWeaknessRewriteOf(next, defender) ?? seatWeaknessRewrite(next, defenderSeat, defenderCard));",
+    replace: "    const weaknessRewrite = installedWeaknessRewriteOf(next, defender) ?? seatWeaknessRewrite(next, defenderSeat, defenderCard);",
     expectKilledBy: ["packages/engine/src/abilityBundleD559.test.ts"],
   },
   {
@@ -37893,8 +37918,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D559",
     what: "the main hit asks the scan about the ATTACKER's seat, so the sources are read off the DEFENDER's own board: a Clefairy beside the Dragon rewrites it, one across the table does nothing. Killed by §2.",
     file: "packages/engine/src/attack.ts",
-    find: "      : seatWeaknessRewrite(next, defenderSeat, defenderCard);",
-    replace: "      : seatWeaknessRewrite(next, action.seat, defenderCard);",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the seat rewrite now sits behind `??`; the patch still reads the wrong seat.
+    find: "seatWeaknessRewrite(next, defenderSeat, defenderCard));",
+    replace: "seatWeaknessRewrite(next, action.seat, defenderCard));",
     expectKilledBy: ["packages/engine/src/abilityBundleD559.test.ts"],
   },
   {
@@ -37902,8 +37928,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D559",
     what: "🛑 THE SNIPE SITE (`snipeActive`) never hands the rewrite to `weaknessOf` — D432's reason for driving it on its own board. Killed by §4.",
     file: "packages/engine/src/interpreter.ts",
-    find: "        installedWeaknessRetypeOf(state, target.active),\n        seatWeaknessRewrite(state, opponent, target.card),\n      );",
-    replace: "        installedWeaknessRetypeOf(state, target.active),\n      );",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the seat rewrite now sits behind Overwriting Bolt's installed rewrite; the
+    //    patch still drops the seat rewrite.
+    find: "        installedWeaknessRewriteOf(state, target.active) ?? seatWeaknessRewrite(state, opponent, target.card),\n      );",
+    replace: "        installedWeaknessRewriteOf(state, target.active),\n      );",
     expectKilledBy: ["packages/engine/src/abilityBundleD559.test.ts"],
   },
   {
@@ -37911,8 +37939,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D559",
     what: "the snipe asks the scan about the ATTACKER's seat: Fairy Zone is read off the target's own board. Killed by §4's defender-side rung and its positives.",
     file: "packages/engine/src/interpreter.ts",
-    find: "        seatWeaknessRewrite(state, opponent, target.card),\n      );",
-    replace: "        seatWeaknessRewrite(state, ctx.seat, target.card),\n      );",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the seat rewrite now sits behind `??`; the patch still reads the wrong seat.
+    find: " ?? seatWeaknessRewrite(state, opponent, target.card),\n      );",
+    replace: " ?? seatWeaknessRewrite(state, ctx.seat, target.card),\n      );",
     expectKilledBy: ["packages/engine/src/abilityBundleD559.test.ts"],
   },
   {
@@ -40626,7 +40655,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D630 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 44 since D630; the replace and the claim are unchanged.
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 46;",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 47;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 35;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -43491,7 +43521,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D630 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 44 since D630; the replace and the claim are unchanged.
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 46;",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 47;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 36;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -44936,7 +44967,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D630 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 44 since D630; the replace and the claim are unchanged.
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 46;",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 47;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 37;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -46392,7 +46424,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D630 — RE-ANCHORED off the bytes (D540): D630 stepped the constant 43 → 44; the patch still writes 40, the claim unchanged.
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 45 since D636; the replace and the claim are unchanged.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
-    find: "export const MATCH_RECORD_VERSION = 46;",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
+    find: "export const MATCH_RECORD_VERSION = 47;",
     replace: "export const MATCH_RECORD_VERSION = 40;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts", "packages/engine/src/koraidonD579.test.ts"],
   },
@@ -47076,7 +47109,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D630 — RE-POINTED off the bytes (D540): the version gate names v43 too since D630; the same mutation (no gate at all).
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the version test gained D636's v44 conjunct; the patch still deletes the whole test.
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the version test gained D637's v45 conjunct; the patch still deletes the whole test.
-    find: "  if (\n    version !== MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION\n  )\n    return null;\n",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the version test gained D640's v46 conjunct; the patch still deletes the whole test.
+    find: "  if (\n    version !== MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION\n  )\n    return null;\n",
     replace: "",
     expectKilledBy: ["apps/api/src/lobby/poolMigrationD583.test.ts"],
   },
@@ -55959,8 +55993,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D626",
     what: "the D552 retype is not read (the PRINTED Weakness type). Killed by koTriggerRestMeD626 §6 (the retype onto {C}).",
     file: "packages/engine/src/interpreter.ts",
-    find: "        weaknessOf(attacker, holder, installedWeaknessRetypeOf(state, mine), seatWeaknessRewrite(state, seat, holder)) !==",
-    replace: "        weaknessOf(attacker, holder, null, seatWeaknessRewrite(state, seat, holder)) !==",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the call is split over lines with Overwriting Bolt's rewrite; the patch still
+    //    nulls the retype alone.
+    find: "          holder,\n          installedWeaknessRetypeOf(state, mine),\n",
+    replace: "          holder,\n          null,\n",
     expectKilledBy: ["packages/engine/src/koTriggerRestMeD626.test.ts"],
   },
   {
@@ -58489,8 +58525,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D637",
     what: "a v45 record is not migratable: it is retired. Killed by fossilsMigrationD637.",
     file: "apps/api/src/lobby/match.ts",
-    find: "    version !== LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION\n",
-    replace: "    version !== LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION\n",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): D640's v46 conjunct follows the v45 one; the patch still drops the v45 conjunct alone.
+    find: "    version !== LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION &&\n",
+    replace: "    version !== LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n",
     expectKilledBy: ["apps/api/src/lobby/fossilsMigrationD637.test.ts"],
   },
   {
@@ -58498,8 +58535,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D637",
     what: "the v45 re-stamp is gone: D636's step runs on a v45 record and wipes a live lock. Killed by fossilsMigrationD637.",
     file: "apps/api/src/lobby/match.ts",
-    find: "  if (record.version === FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION) return { ...record, version: MATCH_RECORD_VERSION };\n",
-    replace: "",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the re-stamp takes v45 OR v46; the patch still drops v45 from it alone.
+    find: "  if (\n    record.version === FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION ||\n    record.version === PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION\n  )\n",
+    replace: "  if (record.version === PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION)\n",
     expectKilledBy: ["apps/api/src/lobby/fossilsMigrationD637.test.ts"],
   },
   {
@@ -58507,8 +58545,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D637",
     what: "the v45 re-stamp keeps the old version: the record is never readable. Killed by fossilsMigrationD637.",
     file: "apps/api/src/lobby/match.ts",
-    find: "  if (record.version === FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION) return { ...record, version: MATCH_RECORD_VERSION };",
-    replace: "  if (record.version === FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION) return { ...record, version: FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION };",
+    // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the re-stamp takes v45 OR v46; the patch still keeps a v45 record at 45.
+    find: "    record.version === PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION\n  )\n    return { ...record, version: MATCH_RECORD_VERSION };",
+    replace: "    record.version === PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION\n  )\n    return {\n      ...record,\n      version:\n        record.version === FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION ? FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION : MATCH_RECORD_VERSION,\n    };",
     expectKilledBy: ["apps/api/src/lobby/fossilsMigrationD637.test.ts"],
   },
   {
@@ -58897,5 +58936,232 @@ export const MUTANTS: Mutant[] = [
     find: "    (next, ref) => doomBodyAt(next, ref, koByEffectMarker(state.turn)),\n    state,\n  );",
     replace: "    (next, ref) => doomBodyAt(next, ref),\n    state,\n  );",
     expectKilledBy: ["packages/engine/src/koSweepMeD639.test.ts"],
+  },
+  // ── 🆕🆕🆕 D640 — Overwriting Bolt (effects / interpreter / continuous / attack / log), Celebration (effects /
+  //    interpreter / flow) and the v46 re-stamp (apps/api match.ts). ──
+  {
+    id: "D640-bolt-reads-colorless",
+    decision: "D640",
+    what: "Overwriting Bolt is derived at D552's {C}: the record names Colorless and a {L} attacker is not weak. Killed by prizeOverwriteMeD640 §2 / §3.",
+    file: "packages/engine/src/effects.ts",
+    find: "    return [{ op: \"retypeDefenderWeakness\", type: \"Lightning\", asTimesTwo: true }];",
+    replace: "    return [{ op: \"retypeDefenderWeakness\", type: \"Colorless\", asTimesTwo: true }];",
+    expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
+  },
+  {
+    id: "D640-bolt-keeps-the-amount",
+    decision: "D640",
+    what: "Overwriting Bolt is derived without `asTimesTwo`: D552's amount-keeping retype, so a body with no printed Weakness stays not weak. Killed by prizeOverwriteMeD640 §2 / §3.",
+    file: "packages/engine/src/effects.ts",
+    find: "    return [{ op: \"retypeDefenderWeakness\", type: \"Lightning\", asTimesTwo: true }];",
+    replace: "    return [{ op: \"retypeDefenderWeakness\", type: \"Lightning\" }];",
+    expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
+  },
+  {
+    id: "D640-celebration-hand-29",
+    decision: "D640",
+    what: "Celebration's gate reads 29 cards, not the printed 30. Killed by prizeOverwriteMeD640 §2 / §5.",
+    file: "packages/engine/src/effects.ts",
+    find: "        cond: { kind: \"yourHandExactly\", count: 30 },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: \"takePrize\", count: 2, thenShuffleHand: true }],",
+    replace: "        cond: { kind: \"yourHandExactly\", count: 29 },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: \"takePrize\", count: 2, thenShuffleHand: true }],",
+    expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
+  },
+  {
+    id: "D640-celebration-takes-one",
+    decision: "D640",
+    what: "Celebration takes 1 Prize card, not the printed 2. Killed by prizeOverwriteMeD640 §2 / §5.",
+    file: "packages/engine/src/effects.ts",
+    find: "        then: [{ op: \"takePrize\", count: 2, thenShuffleHand: true }],",
+    replace: "        then: [{ op: \"takePrize\", count: 1, thenShuffleHand: true }],",
+    expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
+  },
+  {
+    id: "D640-celebration-no-shuffle",
+    decision: "D640",
+    what: "Celebration drops \"If you do, shuffle your hand into your deck\": the hand stays. Killed by prizeOverwriteMeD640 §2 / §5.",
+    file: "packages/engine/src/effects.ts",
+    find: "        then: [{ op: \"takePrize\", count: 2, thenShuffleHand: true }],",
+    replace: "        then: [{ op: \"takePrize\", count: 2 }],",
+    expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
+  },
+  {
+    id: "D640-retype-arm-drops-the-flag",
+    decision: "D640",
+    what: "the op arm never passes `asTimesTwo`: Overwriting Bolt installs D552's plain retype. Killed by prizeOverwriteMeD640 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return { done: retypeDefenderWeakness(state, op.type, ctx, events, op.asTimesTwo === true) };",
+    replace: "      return { done: retypeDefenderWeakness(state, op.type, ctx, events, false) };",
+    expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
+  },
+  {
+    id: "D640-retype-record-without-the-key",
+    decision: "D640",
+    what: "the ×2 branch writes the record without `asTimesTwo`: the row says ×2, the board keeps the amount. Killed by prizeOverwriteMeD640 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    return withActive(state, seat, { ...active, weaknessRetype: { turn, type, asTimesTwo: true } });",
+    replace: "    return withActive(state, seat, { ...active, weaknessRetype: { turn, type } });",
+    expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
+  },
+  {
+    id: "D640-retype-row-without-the-key",
+    decision: "D640",
+    what: "the ×2 branch files D552's row: the log says the amount doesn't change. Killed by prizeOverwriteMeD640 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    events.push({ type: \"WEAKNESS_RETYPED\", seat, uid, weaknessType: type, asTimesTwo: true });",
+    replace: "    events.push({ type: \"WEAKNESS_RETYPED\", seat, uid, weaknessType: type });",
+    expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
+  },
+  {
+    id: "D640-idempotence-ignores-the-flag",
+    decision: "D640",
+    what: "the early return ignores `asTimesTwo`: a live D552 retype of the same type on the window is silently kept. Killed by prizeOverwriteMeD640 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    existing.type === type &&\n    (existing.asTimesTwo === true) === asTimesTwo\n  )\n    return state;",
+    replace: "    existing.type === type\n  )\n    return state;",
+    expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
+  },
+  {
+    id: "D640-shuffle-stage-not-queued",
+    decision: "D640",
+    what: "the take queues no shuffle stage: Celebration keeps the hand. Killed by prizeOverwriteMeD640 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const prize: PendingStage[] = thenShuffleHand ? [taken, { kind: \"shuffleHandIntoDeck\", seat: ctx.seat }] : [taken];",
+    replace: "  const prize: PendingStage[] = [taken];",
+    expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
+  },
+  {
+    id: "D640-shuffle-stage-ahead-of-the-prize",
+    decision: "D640",
+    what: "the shuffle stage is queued AHEAD of the Prize stage: the hand goes before the Prizes reach it. Killed by prizeOverwriteMeD640 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const prize: PendingStage[] = thenShuffleHand ? [taken, { kind: \"shuffleHandIntoDeck\", seat: ctx.seat }] : [taken];",
+    replace: "  const prize: PendingStage[] = thenShuffleHand ? [{ kind: \"shuffleHandIntoDeck\", seat: ctx.seat }, taken] : [taken];",
+    expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
+  },
+  {
+    id: "D640-shuffle-stage-wrong-seat",
+    decision: "D640",
+    what: "the shuffle stage names the opponent: their hand goes into their deck. Killed by prizeOverwriteMeD640 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "[taken, { kind: \"shuffleHandIntoDeck\", seat: ctx.seat }]",
+    replace: "[taken, { kind: \"shuffleHandIntoDeck\", seat: otherSeat(ctx.seat) }]",
+    expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
+  },
+  {
+    id: "D640-shuffle-stage-loses-the-hand",
+    decision: "D640",
+    what: "the stage empties the hand without adding it to the deck: 32 cards leave the game. Killed by prizeOverwriteMeD640 §5.",
+    file: "packages/engine/src/flow.ts",
+    find: "      const [deck, rngState] = shuffle([...side.deck, ...side.hand], state.rngState);",
+    replace: "      const [deck, rngState] = shuffle([...side.deck], state.rngState);",
+    expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
+  },
+  {
+    id: "D640-shuffle-stage-no-row",
+    decision: "D640",
+    what: "the stage files no HAND_SHUFFLED_INTO_DECK: the log never says the hand went. Killed by prizeOverwriteMeD640 §5.",
+    file: "packages/engine/src/flow.ts",
+    find: "      events.push({ type: \"HAND_SHUFFLED_INTO_DECK\", seat: stage.seat, count: side.hand.length });\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
+  },
+  {
+    id: "D640-shuffle-stage-unshuffled",
+    decision: "D640",
+    what: "the stage stacks the hand under the deck in order and never draws on the rng: Celebration's \"shuffle\" is a put. Killed by prizeOverwriteMeD640 §5.",
+    file: "packages/engine/src/flow.ts",
+    find: "      const [deck, rngState] = shuffle([...side.deck, ...side.hand], state.rngState);",
+    replace: "      const [deck, rngState] = [[...side.deck, ...side.hand], state.rngState] as const;",
+    expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
+  },
+  {
+    id: "D640-rewrite-reader-ignores-the-flag",
+    decision: "D640",
+    what: "the rewrite reader answers every live retype: D552's plain {C} record is read as {C}×2. Killed by prizeOverwriteMeD640 §4.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return installed === null || installed.turn !== state.turn || installed.asTimesTwo !== true ? null : installed.type;",
+    replace: "  return installed === null || installed.turn !== state.turn ? null : installed.type;",
+    expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
+  },
+  {
+    id: "D640-rewrite-reader-ignores-the-turn",
+    decision: "D640",
+    what: "the rewrite reader ignores the window: a stale Overwriting Bolt record still doubles. Killed by prizeOverwriteMeD640 §4.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return installed === null || installed.turn !== state.turn || installed.asTimesTwo !== true ? null : installed.type;",
+    replace: "  return installed === null || installed.asTimesTwo !== true ? null : installed.type;",
+    expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
+  },
+  {
+    id: "D640-main-hit-rewrite-not-read",
+    decision: "D640",
+    what: "the main hit never reads the installed rewrite: a no-Weakness body takes 50, not 100. Killed by prizeOverwriteMeD640 §3 / §4.",
+    file: "packages/engine/src/attack.ts",
+    find: "      : (installedWeaknessRewriteOf(next, defender) ?? seatWeaknessRewrite(next, defenderSeat, defenderCard));",
+    replace: "      : seatWeaknessRewrite(next, defenderSeat, defenderCard);",
+    expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
+  },
+  {
+    id: "D640-main-hit-rewrite-survives-suppression",
+    decision: "D640",
+    what: "R-FZ3 reversed for the INSTALLED rewrite only: \"isn't affected by any effects on your opponent's Active Pokémon\" still drops the seat Fairy Zone but no longer Overwriting Bolt's record, so a marked no-Weakness body takes 100. Killed by prizeOverwriteMeD640 §4.",
+    file: "packages/engine/src/attack.ts",
+    find: "    const weaknessRewrite = suppressTargetEffects\n      ? null\n      : (installedWeaknessRewriteOf(next, defender) ?? seatWeaknessRewrite(next, defenderSeat, defenderCard));",
+    replace: "    const weaknessRewrite =\n      installedWeaknessRewriteOf(next, defender) ??\n      (suppressTargetEffects ? null : seatWeaknessRewrite(next, defenderSeat, defenderCard));",
+    expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
+  },
+  {
+    id: "D640-snipe-rewrite-not-read",
+    decision: "D640",
+    what: "the snipe site never reads the installed rewrite (D432's one-sided build): a 30 onto the marked Active stays 30. Killed by prizeOverwriteMeD640 §4.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        installedWeaknessRewriteOf(state, target.active) ?? seatWeaknessRewrite(state, opponent, target.card),",
+    replace: "        seatWeaknessRewrite(state, opponent, target.card),",
+    expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
+  },
+  {
+    id: "D640-adversity-rewrite-not-read",
+    decision: "D640",
+    what: "Adversity Policy's Weakness condition never reads the installed rewrite: a marked Active is not weak to a {L} Active. Killed by prizeOverwriteMeD640 §4.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          installedWeaknessRewriteOf(state, mine) ?? seatWeaknessRewrite(state, seat, holder),",
+    replace: "          seatWeaknessRewrite(state, seat, holder),",
+    expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
+  },
+  {
+    id: "D640-log-row-keeps-the-d552-reminder",
+    decision: "D640",
+    what: "the row always prints D552's reminder: Overwriting Bolt's log says the amount doesn't change. Killed by prizeOverwriteMeD640 §3.",
+    file: "packages/engine/src/log.ts",
+    find: "            event.asTimesTwo === true ? \"apply Weakness as ×2\" : \"the amount doesn't change\"",
+    replace: "            \"the amount doesn't change\"",
+    expectKilledBy: ["packages/engine/src/prizeOverwriteMeD640.test.ts"],
+  },
+  {
+    id: "D640-migration-v46-refused",
+    decision: "D640",
+    what: "the migratable-version test drops v46: a v46 record is retired, not re-stamped. Killed by prizeStageMigrationD640.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "    version !== FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION\n",
+    replace: "    version !== FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION\n",
+    expectKilledBy: ["apps/api/src/lobby/prizeStageMigrationD640.test.ts"],
+  },
+  {
+    id: "D640-migration-reruns-the-steps-on-v46",
+    decision: "D640",
+    what: "the re-stamp drops v46: a v46 record takes D621's / D630's / D636's steps, nulling live keys. Killed by prizeStageMigrationD640.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "    record.version === FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION ||\n    record.version === PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION\n  )",
+    replace: "    record.version === FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION\n  )",
+    expectKilledBy: ["apps/api/src/lobby/prizeStageMigrationD640.test.ts"],
+  },
+  {
+    id: "D640-prize-stage-version-45",
+    decision: "D640",
+    what: "the re-stamped version is named 45: the constant collides with D637's and v46 is retired. Killed by prizeStageMigrationD640.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "export const PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION = 46;",
+    replace: "export const PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION = 45;",
+    expectKilledBy: ["apps/api/src/lobby/prizeStageMigrationD640.test.ts"],
   },
 ];

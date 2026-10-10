@@ -108,8 +108,8 @@ function p1Turn(start: GameState): GameState {
 }
 
 describe("D621 — the version and the gate", () => {
-  it("MATCH_RECORD_VERSION is 43 (🆕🆕🆕 44 since D630; 🆕🆕🆕 45 since D636; 🆕🆕🆕 46 since D637); v41 is pool-migrated, v42 side-key-migrated (🆕🆕🆕 D630: and v43 record-key-migrated, recordKeysMigrationD630.test.ts; 🆕🆕🆕 D636: and v44 lock-key-migrated, lockKeysMigrationD636.test.ts; 🆕🆕🆕 D637: and v45 re-stamped, fossilsMigrationD637.test.ts)", () => {
-    expect(MATCH_RECORD_VERSION).toBe(46);
+  it("MATCH_RECORD_VERSION is 43 (🆕🆕🆕 44 since D630; 🆕🆕🆕 45 since D636; 🆕🆕🆕 46 since D637; 🆕🆕🆕 47 since D640); v41 is pool-migrated, v42 side-key-migrated (🆕🆕🆕 D630: and v43 record-key-migrated, recordKeysMigrationD630.test.ts; 🆕🆕🆕 D636: and v44 lock-key-migrated, lockKeysMigrationD636.test.ts; 🆕🆕🆕 D637: and v45 re-stamped, fossilsMigrationD637.test.ts; 🆕🆕🆕 D640: and v46 re-stamped, prizeStageMigrationD640.test.ts)", () => {
+    expect(MATCH_RECORD_VERSION).toBe(47); // 🆕🆕🆕 D640 — 46 → 47
     expect(MIGRATABLE_MATCH_RECORD_VERSION).toBe(41);
     expect(SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION).toBe(42);
   });
@@ -121,9 +121,9 @@ describe("D621 — the version and the gate", () => {
     expect(migratablePoolIdsOf(oldRecord(41))?.sort()).toEqual([BODY, TRAINER].sort());
   });
 
-  it("v40 and v44 are neither read nor migrated; a v42 record missing its players is not migrated (🆕🆕🆕 D630 (D539): v40 and v45 — v44 is this build's own) (🆕🆕🆕 D636 (D539): v40 and v46 — v45 is this build's own) (🆕🆕🆕 D637 (D539): v40 and v47 — v46 is this build's own)", () => {
+  it("v40 and v44 are neither read nor migrated; a v42 record missing its players is not migrated (🆕🆕🆕 D630 (D539): v40 and v45 — v44 is this build's own) (🆕🆕🆕 D636 (D539): v40 and v46 — v45 is this build's own) (🆕🆕🆕 D637 (D539): v40 and v47 — v46 is this build's own) (🆕🆕🆕 D640 (D539): v40 and v48 — v47 is this build's own)", () => {
     const old = oldRecord(42);
-    for (const version of [40, 47]) {
+    for (const version of [40, 48]) { // 🆕🆕🆕 D640 — 47 is this build's own
       expect(readMatchRecord({ ...old, version })).toBeNull();
       expect(migratablePoolIdsOf({ ...old, version })).toBeNull();
       expect(migrateMatchRecord({ ...old, version }, {})).toBeNull();
@@ -138,7 +138,7 @@ describe("D621 — what the migration writes", () => {
     const old = oldRecord(42);
     const migrated = migrateMatchRecord(old, { [TRAINER]: FRESH_TRAINER });
     if (migrated === null) throw new Error("not migrated");
-    expect(migrated.version).toBe(46); // 🆕🆕🆕 D630 — 43 → 44 (D630's keys ride the same step; this fixture's sides are post-D630) 🆕🆕🆕 D636 — 44 → 45 (D636's keys too) 🆕🆕🆕 D637 — 45 → 46
+    expect(migrated.version).toBe(47); // 🆕🆕🆕 D630 — 43 → 44 (D630's keys ride the same step; this fixture's sides are post-D630) 🆕🆕🆕 D636 — 44 → 45 (D636's keys too) 🆕🆕🆕 D637 — 45 → 46 🆕🆕🆕 D640 — 46 → 47.
     expect(readMatchRecord(migrated)).not.toBeNull();
     for (const seat of ["p1", "p2"] as const) {
       expect(migrated.state.players[seat].chosenAttackShield).toBeNull();
@@ -155,7 +155,7 @@ describe("D621 — what the migration writes", () => {
   it("v41: the D583 Trainer refresh AND the two keys", () => {
     const migrated = migrateMatchRecord(oldRecord(41), { [TRAINER]: FRESH_TRAINER });
     if (migrated === null) throw new Error("not migrated");
-    expect(migrated.version).toBe(46); // 🆕🆕🆕 D630 — 43 → 44 🆕🆕🆕 D636 — 44 → 45 🆕🆕🆕 D637 — 45 → 46
+    expect(migrated.version).toBe(47); // 🆕🆕🆕 D630 — 43 → 44 🆕🆕🆕 D636 — 44 → 45 🆕🆕🆕 D637 — 45 → 46 🆕🆕🆕 D640 — 46 → 47.
     expect(migrated.state.cardPool[TRAINER]).toEqual(FRESH_TRAINER);
     expect(migrated.state.players.p1.sideRetreatLock).toBeNull();
     expect(migrated.state.players.p2.chosenAttackShield).toBeNull();
@@ -197,20 +197,20 @@ function fakeSlot(value: unknown) {
 }
 
 describe("D621 — the DO's read migrates a v42 record without asking D1", () => {
-  it("a v42 record: written once as v43 (🆕🆕🆕 v44 since D630; 🆕🆕🆕 v45 since D636; 🆕🆕🆕 v46 since D637), D1 never asked; the next read is plain", async () => {
+  it("a v42 record: written once as v43 (🆕🆕🆕 v44 since D630; 🆕🆕🆕 v45 since D636; 🆕🆕🆕 v46 since D637; 🆕🆕🆕 v47 since D640), D1 never asked; the next read is plain", async () => {
     const { slot, api } = fakeSlot(oldRecord(42));
     const never = async (): Promise<Record<string, Card>> => {
       throw new Error("D1 asked");
     };
     const load = await loadMatchRecord(api, never);
     if (load.kind !== "ok") throw new Error(`expected ok, got ${load.kind}`);
-    expect(load.record.version).toBe(46); // 🆕🆕🆕 D630 — 43 → 44 🆕🆕🆕 D636 — 44 → 45 🆕🆕🆕 D637 — 45 → 46
+    expect(load.record.version).toBe(47); // 🆕🆕🆕 D630 — 43 → 44 🆕🆕🆕 D636 — 44 → 45 🆕🆕🆕 D637 — 45 → 46 🆕🆕🆕 D640 — 46 → 47.
     expect(slot.puts).toEqual([load.record]);
     expect((await loadMatchRecord(api, never)).kind).toBe("ok");
     expect(slot.puts).toHaveLength(1);
   });
 
-  it("a v41 record still asks D1 for its pool, and lands at v43 (🆕🆕🆕 v44 since D630; 🆕🆕🆕 v45 since D636; 🆕🆕🆕 v46 since D637) with the keys", async () => {
+  it("a v41 record still asks D1 for its pool, and lands at v43 (🆕🆕🆕 v44 since D630; 🆕🆕🆕 v45 since D636; 🆕🆕🆕 v46 since D637; 🆕🆕🆕 v47 since D640) with the keys", async () => {
     const { slot, api } = fakeSlot(oldRecord(41));
     const asked: string[][] = [];
     const load = await loadMatchRecord(api, async (ids) => {

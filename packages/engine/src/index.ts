@@ -20271,13 +20271,21 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.522.0 → **0.523.0** (D640 — Y1a + MRV47, CUT TO OVERWRITING BOLT AND CELEBRATION: 2 TEXTS / 3
+    PRINTINGS (`30th`); `MATCH_RECORD_VERSION` 46 → 47 WITH A v46 MIGRATION, A RE-STAMP (apps/api match.ts "46 → 47 AT
+    D640")). effects.ts: Pikachu `30th-040` "Overwriting Bolt" on `retypeDefenderWeakness { type: "Lightning", asTimesTwo }`
+    — the record's NEW `WeaknessRetype.asTimesTwo`, read by continuous.ts' NEW `installedWeaknessRewriteOf` as `weaknessOf`'s
+    rewrite at the three Weakness sites, ahead of the seat rewrite (R-OWB1); Gholdengo `30th-108` / `-142` "Celebration" on
+    `conditionGate { yourHandExactly 30 }` over `takePrize { count: 2, thenShuffleHand }`, which queues the NEW
+    `PendingStage` `shuffleHandIntoDeck` behind its Prize stage (flow.ts `advance`, R-CEL1). Rotom ex ×3 "Multi Adapter"
+    (Y1a) named for 47 → 48. `prizeOverwriteMeD640.test.ts`.)
     🆕🆕🆕 engineVersion 0.521.0 → **0.522.0** (D639 — K3 + R1: KO-BY-THIS-ATTACK CONSEQUENTS AND THE KO SWEEP, 3 TEXTS /
     6 PRINTINGS (`me` + `30th`); `MATCH_RECORD_VERSION` STAYS 46 (apps/api match.ts "STAYS 46 AT D639")). effects.ts:
     Shadowy Side Kick (Marshadow `me01-080` / `-146`) = Critical Slash (Golisopod `me04-026`) as `conditionGate` on the NEW
     `BoardCondition` `opponentKnockedOutByDamage` over the shipped `preventDamage { effects }` (R-SSK1); Unown `30th-072`
     "Mysterious Signal" on the NEW `bountyThisAttack` (a THIS-turn `koBounty`, R-MSG1); Yveltal ex `me03-053` / `-105`
     "Soul Destroyer" on the NEW `knockOutEach { remainingHpAtMost }` (R-SDS1). Gholdengo `30th-108` / `-142` "Celebration"
-    dropped and named (a post-Prize stage). `koSweepMeD639.test.ts`.)
+    dropped and named (a post-Prize stage) [🆕🆕🆕 D640 (D539): BUILT at D640, 46 → 47]. `koSweepMeD639.test.ts`.)
     🆕🆕🆕 engineVersion 0.520.0 → **0.521.0** (D638 — X1: COPY / BORROWED EFFECTS, 3 TEXTS / 6 PRINTINGS (`me` + `30th`);
     `MATCH_RECORD_VERSION` STAYS 46 (apps/api match.ts "STAYS 46 AT D638")). registry.ts: `MEMORY_HELIX` (Mew ex
     `30th-066` / `-152` / `-158`) on the NEW `PassiveEffects.memoryHelix`, a fourth `attackMenuOf` section (continuous.ts:
@@ -20295,7 +20303,8 @@ import type { GameState, Seat } from "./types";
     `PROTECTIVE_ARMOR` (`seatDamageReductionAfterWR` 10 with the NEW source-zone rider `sourceActive`) and
     `SPINY_SKULL` (`damageAttacker` 30, Counterattack Quills' field). Fossil Quarry now offers all eight fossils;
     Relicanth "Fossil Beatdown" counts them. Named for a later bump: Rotom ex ×3 "Multi Adapter", Overwriting Bolt
-    `30th-040`. `antiqueFossilsMeD637.test.ts`.)
+    `30th-040` [🆕🆕🆕 D640 (D539): Overwriting Bolt BUILT at D640 (46 → 47); Multi Adapter owes 47 → 48].
+    `antiqueFossilsMeD637.test.ts`.)
     🆕🆕🆕 engineVersion 0.518.0 → **0.519.0** (D636 — L1 + CLAWITZER: THE NEXT-TURN OPPONENT LOCKS AND FALL BACK TO
     RELOAD, 6 TEXTS / 7 PRINTINGS (`me` + `30th`); `MATCH_RECORD_VERSION` 44 → 45 WITH A v44 MIGRATION (apps/api match.ts
     "44 → 45 AT D636")). effects.ts arm 19c-D636: Cursed Roots `me04-039` (the shipped `markHandAttach { barred }`),
@@ -20310,7 +20319,8 @@ import type { GameState, Seat } from "./types";
     (Clawitzer `me01-038` / `-141`) on the NEW per-body gate `AbilityProgram.benchedThisTurn` over the NEW
     `InPlayPokemon.benchedTurn` (written by `retreat` / `switchInto`, R-FBR1). Named for a later bump: Rotom ex ×3
     "Multi Adapter", Overwriting Bolt `30th-040`, the four `me` Antique Fossils [🆕🆕🆕 D637 (D539): the fossils BUILT at
-    D637; Multi Adapter and Overwriting Bolt now owe 46 → 47]. `nextTurnLocksD636.test.ts`.)
+    D637; Multi Adapter and Overwriting Bolt now owe 46 → 47] [🆕🆕🆕 D640 (D539): Overwriting Bolt BUILT at D640; Multi
+    Adapter owes 47 → 48]. `nextTurnLocksD636.test.ts`.)
     🆕🆕🆕 engineVersion 0.517.0 → **0.518.0** (D635 — F1: THE ANTIQUE ARCHETYPE, ITS UNPERSISTED HALF, 2 TEXTS / 2
     PRINTINGS; `MATCH_RECORD_VERSION` STAYS 44 (apps/api match.ts "STAYS 44 AT D635")). registry.ts: `FOSSIL_QUARRY`
     (`me05-076`, Stadium — up to 2 Antique Items from the deck onto the Bench, then the shuffle; Lumiose City's program
@@ -20339,7 +20349,7 @@ import type { GameState, Seat } from "./types";
     `applyStatus` (the D590 confirm); Elemental Blast (`30th-121`) as three count-1 typed discards on the NEW optional
     `discardEnergy.reserve` (interpreter.ts `reservedDiscards`: a multi-type Energy cannot fill one slot and dodge a
     later one). Overwriting Bolt `30th-040` dropped and named (it gives a Weakness; the persisted record needs a field,
-    an MRV bump). `attackOddsMeD633.test.ts`.)
+    an MRV bump) [🆕🆕🆕 D640 (D539): BUILT at D640, 46 → 47]. `attackOddsMeD633.test.ts`.)
     🆕🆕🆕 engineVersion 0.514.0 → **0.515.0** (D632 — D1: DAMP, 2 TEXTS / 5 `me` PRINTINGS; `MATCH_RECORD_VERSION`
     STAYS 44 (apps/api match.ts "STAYS 44 AT D632")). registry.ts: two NEW objects, one per printed wording
     (`DAMP_KNOCK_OUT_ITSELF` for `me02.5-039` / `-040` / `-226`, `DAMP_REQUIRE_KNOCKED_OUT` for `mep-007` / `-008`,
@@ -20676,7 +20686,7 @@ import type { GameState, Seat } from "./types";
     `yourActiveRemainingHpAtMost` (Weavile), `opponentActiveNoRetreatCost` (Carnivine, R-CW1),
     `yourDiscardHasNamed` (Serperior ×2), `yourBenchHasStage2OfType` (Sableye) and
     `yourBenchHasNamedEnergyAttached` (Zarude ×2). 7 texts / 12 printings; the `sv` reader output is
-    byte-identical. Gholdengo "Celebration" ×2 dropped (`takePrize` parks). Census: Standard pool
+    byte-identical. Gholdengo "Celebration" ×2 dropped (`takePrize` parks) [🆕🆕🆕 D640 (D539): BUILT at D640]. Census: Standard pool
     attacks 2,588 / 2,771; 886 `me` printings fully built. `handCountConditionsMeD600.test.ts`.)
     🆕🆕🆕 engineVersion 0.482.0 → **0.483.0** (D599 — WP24a: TWO WP24 SUPPORTERS;
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D599")). 4 Supporter keys / 2
@@ -21752,7 +21762,7 @@ import type { GameState, Seat } from "./types";
     `recordSlotOf` enrols the op (D206), the caption has a *"to this Pokémon"* branch. `:629` is claimed
     by `deriveAttackEffect` through `DEFENDER_WEAKNESS_RETYPED` (zero captures, two `['’]` slots) as ONE
     new op `retypeDefenderWeakness { type }` (`exposeDefender`'s holder, `state.turn + 2` stamp and §11
-    guard) on ONE new REQUIRED `InPlayPokemon.weaknessRetype: {turn, type} | null`, read through
+    guard) on ONE new REQUIRED `InPlayPokemon.weaknessRetype: {turn, type} | null` (🆕🆕🆕 D640 (D539): plus an optional `asTimesTwo`, read by a second reader `installedWeaknessRewriteOf`), read through
     `installedWeaknessRetypeOf` and handed to cards.ts `weaknessOf` (amount kept, type swapped) at BOTH
     Weakness sites AFTER their three null paths; `WEAKNESS_RETYPED` + its log row. Rulings R1–R5 (R2
     UNRULED) in `docs/decisions.md` D552. **`MATCH_RECORD_VERSION` 33 → 34 — THE SEVENTH POSITION**
@@ -25743,7 +25753,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.522.0";
+export const engineVersion = "0.523.0";
 
 export type {
   ApplyResult,

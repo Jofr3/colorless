@@ -28239,7 +28239,8 @@ the caption reads *"… from your hand to this Pokémon."*. ⚠️ Naming debt: 
 
 ### (b) `:629` — the rider
 `DEFENDER_WEAKNESS_RETYPED` → `retypeDefenderWeakness { type: "Colorless" }` (`exposeDefender`'s holder, T+2 stamp,
-§11 first) → REQUIRED `InPlayPokemon.weaknessRetype: {turn, type} | null`; `installedWeaknessRetypeOf` hands the type
+§11 first) → REQUIRED `InPlayPokemon.weaknessRetype: {turn, type} | null` (🆕🆕🆕 D640 (D539): + optional `asTimesTwo`, a
+second reader `installedWeaknessRewriteOf`); `installedWeaknessRetypeOf` hands the type
 to cards.ts `weaknessOf` (amount kept, type swapped) at BOTH Weakness sites AFTER the three null paths;
 `WEAKNESS_RETYPED` + log row.
 
@@ -30076,7 +30077,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Two Abilities on shipped fields.** Luxio "Fighting Roar": `evolveEarlyExempt` gains an optional `ifCondition`
   (`opponentActiveIsEx`). Chesnaught "Needly Armor": `damageAttacker { 30, perAttachedEnergy: "Grass" }`.
 - **Dropped (new vocabulary):** Weavile "Retaliatory Claw" (remaining HP), Carnivine "Chomp Whole" (no Retreat Cost),
-  Gholdengo ×2 "Celebration" (`takePrize` queues its stage, so the "if you do" shuffle would run first).
+  Gholdengo ×2 "Celebration" (`takePrize` queues its stage, so the "if you do" shuffle would run first). [🆕🆕🆕 D640 (D539): Celebration BUILT at D640 (MRV 46 → 47).]
 - **The `sv` reader output is byte-identical** (before/after dump; only the 4 `me` sentences differ).
 - **Reading R-LX1.** Luxio is a Stage 1, so a Shinx evolved into it this turn keeps the licence and may evolve again
   (Shinx → Luxio → Luxray in one turn, against an ex). turn.ts' older "the twice-in-one-turn half cannot be observed"
@@ -30207,7 +30208,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   `yourActiveRemainingHpAtMost` (Weavile), `opponentActiveNoRetreatCost` (Carnivine), `yourDiscardHasNamed`
   (Serperior ×2), `yourBenchHasStage2OfType` (Sableye) and `yourBenchHasNamedEnergyAttached` (Zarude ×2).
 - **No persisted member, prompt or event.** `damageActive` never parks. The `sv` reader output is byte-identical.
-- **Dropped and named:** Gholdengo "Celebration" ×2 (`takePrize` parks, so the "If you do" shuffle would run first).
+- **Dropped and named:** Gholdengo "Celebration" ×2 (`takePrize` parks, so the "If you do" shuffle would run first). [🆕🆕🆕 D640 (D539): Celebration BUILT at D640 (MRV 46 → 47).]
 - **Readings (UNRULED).** R-CW1 (`progress.md` NEXT).
 - **Suite.** `handCountConditionsMeD600.test.ts` (22) and a census D600 block (2). +28 mutant rows.
 - **Census.** Standard pool attacks **2588 / 2771**; 886 `me` printings fully built.
@@ -30247,10 +30248,29 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D640 — Y1a + MRV47, cut to Overwriting Bolt and Celebration (engine 0.523.0, `MATCH_RECORD_VERSION` 46 → 47)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D639 (`c275888b`), NOT committed. 2 texts / 3 printings (`30th`) — the D625
+re-rank's Y1a + MRV47 group less Multi Adapter (the brief's off-ramp).
+
+- **Overwriting Bolt** (Pikachu `30th-040`): D552's `retypeDefenderWeakness` at `{L}` with the NEW `asTimesTwo`, stored on
+  `WeaknessRetype.asTimesTwo` and read by the NEW continuous.ts `installedWeaknessRewriteOf` as `weaknessOf`'s rewrite (one {L}×2
+  entry, so a body with no Weakness gains one) at the main hit, `snipeActive` and Adversity Policy's condition. R-OWB1 ⚠️ UNRULED: it
+  wins over the attacker's seat Fairy Zone (not observable at HEAD: the retype re-points either rewrite to {L}).
+- **Celebration** (Gholdengo `30th-108` / `-142`): `conditionGate { yourHandExactly 30 }` over `takePrize { count: 2, thenShuffleHand }`;
+  the NEW `PendingStage` `shuffleHandIntoDeck` sits directly behind the Prize stage (flow.ts `advance`). R-CEL1 ⚠️ UNRULED: "If you do"
+  = the gate held and the Prize stage resolved; a take that ends the game never shuffles.
+- **MRV 46 → 47** (match.ts "46 → 47 AT D640"): a 0.522 rollback drops `asTimesTwo` and has no arm for the stage. A v46 record is
+  migrated by a re-stamp (`PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION = 46`). No wire shape moves.
+- **Named, not taken:** Rotom ex ×3 "Multi Adapter" (~59 `.tools` read sites, the §7.4 cap at every attach, Tool-discard picks, the
+  client's Tool display, a forced owner's discard wherever the Ability goes away) owes 47 → 48 on its own.
+- **Suite.** `prizeOverwriteMeD640.test.ts` (18), `prizeStageMigrationD640.test.ts` (10), census D640 block (2). +25 mutant rows, all
+  KILLED. Census: attacks **2,766 / 2,771**, 1236 `me` printings fully built. Sweep PENDING.
+
 ## D639 — K3 + R1: KO-by-this-attack consequents and the KO sweep (engine 0.522.0, `MATCH_RECORD_VERSION` stays 46)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D638 (`4b62beef`), NOT committed. 3 texts / 6 printings (`me` + `30th`) — the
-D625 re-rank's K3 and R1 groups, less Celebration.
+D625 re-rank's K3 and R1 groups, less Celebration. [🆕🆕🆕 D640 (D539): Celebration BUILT at D640 (MRV 46 → 47).]
 
 - **Shadowy Side Kick / Critical Slash** (Marshadow `me01-080` / `-146`, Golisopod `me04-026`): `conditionGate` on the NEW `BoardCondition`
   `opponentKnockedOutByDamage` over the shipped `preventDamage { effects }`. R-SSK1 ⚠️ UNRULED: the KO is read at the program's step (after
@@ -30259,7 +30279,7 @@ D625 re-rank's K3 and R1 groups, less Celebration.
   for THIS turn; flow.ts `koPrizeBonus` pays it at the sweep. R-MSG1 ⚠️ UNRULED: it adds to a live next-turn bounty; no §11 ask.
 - **Soul Destroyer** (Yveltal ex `me03-053` / `-105`): the NEW `knockOutEach { remainingHpAtMost }`. R-SDS1 ⚠️ UNRULED: the window is read
   over the whole opposing side first, a §11-shielded body is skipped (announced), each Knock Out is D414's effect doom.
-- **Dropped and named:** Gholdengo ×2 "Celebration" (`30th-108` / `-142`): `takePrize` queues its stage behind the program, so the "If you
+- **Dropped and named:** Gholdengo ×2 "Celebration" (`30th-108` / `-142`): `takePrize` queues its stage behind the program, so the "If you [🆕🆕🆕 D640 (D539): Celebration BUILT at D640 (MRV 46 → 47).]
   do" shuffle would run first; a post-Prize stage is persisted state.
 - **MRV stays 46** (match.ts "STAYS 46 AT D639"): no new member parks; the persisted bytes are the shipped `koBounty`, `attackBlock` and
   `koByEffect` marker.
@@ -30305,8 +30325,8 @@ D625 re-rank's X1 group, whole, on the shipped copy family.
 - **MRV 45 → 46** (match.ts "45 → 46 AT D637"): D576's twelfth position per new id (a 0.519 rollback reads an in-play `me` fossil as the
   catalog Item). A v45 record is migrated by its version alone (`FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION`; no D1 read, no key); it skips
   every earlier step. No wire shape moves.
-- **Named, not taken.** Rotom ex ×3 "Multi Adapter" (Y1a: every Tool reader, a §7.4 two-Tool cap and an owner's forced discard wherever
-  the Ability goes away — its own bump) and Overwriting Bolt `30th-040`: each owes 46 → 47.
+- **Named, not taken.** Rotom ex ×3 "Multi Adapter" (Y1a: every Tool reader, a §7.4 two-Tool cap and an owner's forced discard wherever [🆕🆕🆕 D640 (D539): Multi Adapter still unbuilt, owes 47 → 48.]
+  the Ability goes away — its own bump) and Overwriting Bolt `30th-040`: each owes 46 → 47. [🆕🆕🆕 D640 (D539): Overwriting Bolt BUILT at D640 (MRV 46 → 47).]
 - **Suite.** `antiqueFossilsMeD637.test.ts` (24), `fossilsMigrationD637.test.ts` (11), census D637 block (2). +17 mutant rows, all KILLED;
   14 re-pointed. No new reading. Census: trainers **439 / 447**, 1221 `me` printings fully built. Sweep PENDING.
 
@@ -30332,9 +30352,9 @@ D625 re-rank's X1 group, whole, on the shipped copy family.
   (R-FBR1 ⚠️ UNRULED — R-MR1's use-time reading).
 - **MRV 44 → 45** (match.ts "44 → 45 AT D636"): the four REQUIRED keys and the `Stadium` stamp; a v44 record is migrated with no D1 read
   (`withD636LockKeys`; D621's and D630's steps skipped for it). Cursed Roots needed no key, as D630 measured.
-- **Named, not taken.** Rotom ex ×3 "Multi Adapter" (Y1a: a §7.4 two-Tool cap and a forced Tool discard when the Ability goes away),
-  Overwriting Bolt `30th-040` and the four `me` Antique Fossils — each owes a later bump (45 → 46). [🆕🆕🆕 D637 (D539): the fossils BUILT at
-  D637; Multi Adapter and Overwriting Bolt now owe 46 → 47.]
+- **Named, not taken.** Rotom ex ×3 "Multi Adapter" (Y1a: a §7.4 two-Tool cap and a forced Tool discard when the Ability goes away), [🆕🆕🆕 D640 (D539): Multi Adapter still unbuilt, owes 47 → 48.]
+  Overwriting Bolt `30th-040` and the four `me` Antique Fossils — each owes a later bump (45 → 46). [🆕🆕🆕 D637 (D539): the fossils BUILT at [🆕🆕🆕 D640 (D539): Overwriting Bolt BUILT at D640 (MRV 46 → 47).]
+  D637; Multi Adapter and Overwriting Bolt now owe 46 → 47.] [🆕🆕🆕 D640 (D539): Overwriting Bolt BUILT at D640 (MRV 46 → 47); Multi Adapter still unbuilt, owes 47 → 48.]
 - **Suite.** `nextTurnLocksD636.test.ts` (45), `lockKeysMigrationD636.test.ts` (10), census D636 block (2), `coinFlips.test.ts` (1).
   +49 mutant rows, all KILLED; 26 re-pointed. Two review passes, fixed in the same tree (NEXT, "REVIEW FIXES"). Census: attacks **2,754 / 2,771**, abilities **593 / 610**, 1217 `me` printings fully built. Sweep PENDING.
 
@@ -30393,7 +30413,7 @@ reader rows (effects.ts arm 10e).
 - **Elemental Blast** (Lugia `30th-121`): three count-1 typed discards; the NEW optional `discardEnergy.reserve` names the types still owed,
   and interpreter.ts `reservedDiscards` keeps only the picks that leave the most of them fillable, so Legacy Energy cannot fill {R} and
   dodge {L} (R-EB1 ⚠️ UNRULED).
-- **Dropped.** Overwriting Bolt `30th-040`: *"(Apply Weakness as ×2.)"* gives a Weakness to a body that prints none, which D552's
+- **Dropped.** Overwriting Bolt `30th-040`: *"(Apply Weakness as ×2.)"* gives a Weakness to a body that prints none, which D552's [🆕🆕🆕 D640 (D539): Overwriting Bolt BUILT at D640 (MRV 46 → 47).]
   amount-keeping retype cannot carry; it needs a persisted field (an MRV bump, L1's). [🆕🆕🆕 D636 (D539): it did not ride L1's bump; now 45 → 46.] [🆕🆕🆕 D637 (D539): nor 45 → 46; now 46 → 47.]
 - **Suite.** `attackOddsMeD633.test.ts` (20) and a census D633 block (1). +21 mutant rows, all KILLED; `D552-recordslot-drops-the-hand-attach`
   re-pointed. Census: attacks **2,740 / 2,771**, 1200 `me` printings fully built. Sweep PENDING.

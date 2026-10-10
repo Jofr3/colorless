@@ -36,6 +36,8 @@ import { koByEffectMarker } from "./types";
 // DROPPED AND NAMED: Gholdengo `30th-108` / `-142` "Celebration" — `takePrize` queues a `takePrizes` stage behind the
 // program, so "If you do, shuffle your hand into your deck" would run before the Prizes reach the hand; ordering it
 // after the stage needs a new post-Prize `PendingStage` (persisted state), which this slice does not add.
+// [🆕🆕🆕 D640 (D539): BUILT at D640 — `takePrize { count: 2, thenShuffleHand }` and the NEW `shuffleHandIntoDeck`
+// stage on 46 → 47; the pin below is inverted.]
 
 const SIDE_KICK =
   "If your opponent's Pokémon is Knocked Out by damage from this attack, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.";
@@ -64,9 +66,9 @@ describe("D639 §1 — the texts", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(6);
   });
 
-  it("Celebration ×2 stays dropped: read by no reader", () => {
+  it("Celebration ×2 stays dropped: read by no reader (🆕🆕🆕 D640 (D539): read since D640, still no key)", () => {
     expect(meAttackCorpus().find(([, text]) => text === CELEBRATION)?.[0]).toBe(2);
-    expect(resolvedByAnyReader(CELEBRATION)).toBe(false);
+    expect(resolvedByAnyReader(CELEBRATION)).toBe(true); // 🆕🆕🆕 D640 — inverted: built
     for (const id of ["30th-108", "30th-142"]) expect(programFor(id), id).toBeUndefined();
   });
 });
@@ -400,7 +402,7 @@ describe("D639 §6 — Soul Destroyer: each opponent body at 50 HP or less remai
 });
 
 describe("D639 §7 — the version", () => {
-  it("is built at engine 0.522.0", () => {
-    expect(engineVersion).toBe("0.522.0");
+  it("is built at engine 0.523.0", () => {
+    expect(engineVersion).toBe("0.523.0");
   });
 });

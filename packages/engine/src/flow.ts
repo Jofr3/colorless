@@ -38,7 +38,7 @@ import {
 } from "./interpreter";
 import type { KoPrizeReduction } from "./registry";
 import { programFor } from "./registry";
-import { flipCoin } from "./rng";
+import { flipCoin, shuffle } from "./rng";
 import {
   damagedByAttackAbility,
   damagedToolTriggersOf,
@@ -3000,6 +3000,14 @@ export function advance(stateIn: GameState, events: GameEvent[]): ApplyResult {
         side.prizes.map((_, index) => index),
         events,
       );
+    }
+    case "shuffleHandIntoDeck": {
+      // 🆕🆕🆕 D640 — Celebration's "If you do, shuffle your hand into your deck.", behind its Prize stage (R-CEL1):
+      // the hand (the Prizes just taken with it) joins the deck and the whole pile is shuffled. Never parks.
+      const side = state.players[stage.seat];
+      const [deck, rngState] = shuffle([...side.deck, ...side.hand], state.rngState);
+      events.push({ type: "HAND_SHUFFLED_INTO_DECK", seat: stage.seat, count: side.hand.length });
+      return advance(popStage({ ...withSide(state, stage.seat, { ...side, hand: [], deck }), rngState }), events);
     }
     case "promote": {
       const side = state.players[stage.seat];

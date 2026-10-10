@@ -1040,7 +1040,10 @@ function weakResModifier(
     Zone": *"…is now {P}. (Apply Weakness as ×2.)"*; `null`/absent = none). Applied FIRST:
     the printed entries are REPLACED by ONE `{ type: rewrite, value: "×2" }` — so a
     defender that prints NO Weakness GAINS one (R-FZ4) — and the retype is applied on top
-    of THAT entry (R-FZ1 ⚠️ UNRULED: a Fairy-Zoned Dragon under the retype is {C}×2). */
+    of THAT entry (R-FZ1 ⚠️ UNRULED: a Fairy-Zoned Dragon under the retype is {C}×2).
+    🆕🆕🆕 D640 (D539): ~~`rewrite` is the seat rewrite (`seatWeaknessRewrite`)~~ — every caller
+    now passes `installedWeaknessRewriteOf(…) ?? seatWeaknessRewrite(…)` (continuous.ts):
+    Overwriting Bolt's installed {L}×2 rewrite first, the seat's Fairy Zone otherwise (R-OWB1). */
 export function weaknessOf(
   attacker: Card,
   defender: Card,

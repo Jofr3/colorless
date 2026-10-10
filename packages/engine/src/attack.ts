@@ -63,6 +63,7 @@ import {
   // 🆕🆕🆕 D547 — the next-turn vulnerability, added at the main hit's post-W/R step.
   installedVulnerabilityOf,
   installedWeaknessRetypeOf,
+  installedWeaknessRewriteOf,
   koSurvivalClamp,
   koSurvivalCoinFlip,
   lockedAttackIndexes,
@@ -3593,9 +3594,10 @@ export function attack(
     // entry (R-FZ1 ⚠️ UNRULED). An effect on the DEFENDER, so
     // `suppressTargetEffects` drops it and the printed Weakness applies (R-FZ3, D552 R4's
     // mirror). docs/decisions.md D559.
+    // 🆕🆕🆕 D640 — Overwriting Bolt's installed rewrite first (R-OWB1), on-target like the retype.
     const weaknessRewrite = suppressTargetEffects
       ? null
-      : seatWeaknessRewrite(next, defenderSeat, defenderCard);
+      : (installedWeaknessRewriteOf(next, defender) ?? seatWeaknessRewrite(next, defenderSeat, defenderCard));
     const weakness =
       damageSuppression?.weakness === true ||
       seatRemovesWeakness(next, defenderSeat) ||

@@ -647,8 +647,17 @@ export interface WeaknessRetype {
   /** The single turn number the retype is live on — the installing turn + 2. */
   turn: number;
   /** The Pokémon type the body's printed Weakness now names — the printed `{C}` is
-      `"Colorless"`, the only value any printing writes. */
+      `"Colorless"`, the only value any printing writes. 🆕🆕🆕 D640 (D539): ~~"the only value any
+      printing writes"~~ — Overwriting Bolt writes `"Lightning"` (with `asTimesTwo`). */
   type: string;
+  /** 🆕🆕🆕 §8.5 (D640) — Pikachu `30th-040` "Overwriting Bolt": *"The Defending Pokémon's Weakness is
+      now {L} until the end of your next turn. (Apply Weakness as ×2.)"* — the printed entries are
+      REPLACED by one `{ type, "×2" }` (cards.ts `weaknessOf`'s `rewrite`, read through continuous.ts
+      `installedWeaknessRewriteOf`), so a body that prints no Weakness GAINS one. Absent on every D552
+      record (the amount is kept), which is what a v46 writer meant. 🛑 A 0.522 ROLLBACK reads the key
+      as absent — the ×2 and the gained Weakness silently gone — so it rides `MATCH_RECORD_VERSION` 46 →
+      47 (apps/api match.ts "46 → 47 AT D640"). */
+  asTimesTwo?: true;
 }
 
 /** 🆕🆕🆕 §8.1/§11 (D549) — an attack-installed KNOCK OUT BOUNTY on one Pokémon:
@@ -1707,6 +1716,9 @@ export interface InPlayPokemon {
   /** 🆕🆕🆕 §8.5/§11 (D552) — the attack-installed WEAKNESS RETYPE on this Pokémon (see
       `WeaknessRetype` above), or `null` when none has been installed. Read through
       `installedWeaknessRetypeOf` (continuous.ts), never by touching this field.
+      🆕🆕🆕 D640 (D539): ~~"Read through `installedWeaknessRetypeOf` … never by touching this
+      field"~~ — and through D640's `installedWeaknessRewriteOf` (continuous.ts), the second
+      reader, for the `asTimesTwo` record; both carry the same turn comparison.
 
       🛑 REQUIRED, NOT OPTIONAL, AND IT RIDES `MATCH_RECORD_VERSION` 33 → 34 with
       `:569`'s parked `attachFromHand.recordAs` (THE SEVENTH POSITION at
@@ -1715,7 +1727,9 @@ export interface InPlayPokemon {
       fails D456's second clause: a ROLLBACK reading a v34 record drops a live effect —
       the Defending Pokémon is hit at its PRINTED Weakness type, so a Colorless attacker
       the printed card makes super-effective deals half. D434's case: `{turn, type}`
-      arrive together and neither can witness the other's loss.
+      arrive together and neither can witness the other's loss. 🆕🆕🆕 D640 (D539):
+      ~~"`{turn, type}`"~~ — the record may now carry a third key, the optional
+      `asTimesTwo` (Overwriting Bolt), which rides `MATCH_RECORD_VERSION` 46 → 47.
 
       The same five literals as `damageVulnerability` write it, with that field's §10
       story (docs/decisions.md D552 R5); only `makeInPlay` is compiler-forced. */
@@ -2592,6 +2606,13 @@ export type PendingStage =
       hold FACE-UP prizes (`PlayerSide.faceUpPrizes`), which are picked like any
       other — the clamp and the forced rule count the WHOLE row. */
   | { kind: "takePrizes"; seat: Seat; count: number }
+  /** 🆕🆕🆕 §8.1 (D640) — shuffle `seat`'s whole hand into their deck: Gholdengo `30th-108` / `-142`
+      "Celebration"'s *"If you do, shuffle your hand into your deck."*, queued by interpreter.ts
+      `queueTakePrize` DIRECTLY BEHIND its `takePrizes` stage, so the Prizes just taken go with the hand
+      (R-CEL1 ⚠️ UNRULED). Never parks; one `HAND_SHUFFLED_INTO_DECK`. A NEW union member and a persisted one
+      (a parked Prize pick leaves it in `pending`): a 0.522 `advance` has no arm for it, so it rides
+      `MATCH_RECORD_VERSION` 46 → 47 (apps/api match.ts "46 → 47 AT D640"). */
+  | { kind: "shuffleHandIntoDeck"; seat: Seat }
   /** §8.1 — the KO'd seat promotes from the bench; an empty bench at this
       point is the §14.2 loss. */
   | { kind: "promote"; seat: Seat }

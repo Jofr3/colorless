@@ -670,6 +670,9 @@ export function seatRemovesWeakness(state: GameState, seat: Seat): boolean {
     `disabledAbilityUids`; the source matches when `defenderCard.types` includes its
     `targetType`. Handed to cards.ts `weaknessOf` as its `rewrite` at BOTH Weakness sites
     (attack.ts main hit, interpreter.ts `snipeActive`), AFTER the three null paths.
+    🆕🆕🆕 D640 (D539): ~~this is `weaknessOf`'s `rewrite` alone~~ — every site now passes
+    `installedWeaknessRewriteOf(…) ?? seatWeaknessRewrite(…)` (Overwriting Bolt's installed
+    rewrite first, R-OWB1 ⚠️ UNRULED), so this answers only when the body carries none.
     `undefined` (an unreadable defender) is `null` — no rewrite, the conservative
     direction. The first matching source answers: every legal source prints the same
     `{P}`, so two Clefairy agree. Cheap on the common path: the lock scan runs only once a
@@ -2947,7 +2950,10 @@ export function installedVulnerabilityOf(state: GameState, pokemon: InPlayPokemo
     Handed to cards.ts `weaknessOf` at BOTH Weakness sites (`attack.ts`'s main hit,
     interpreter.ts `snipeActive`) AFTER their three null paths (D192's suppression, the
     Blooming Garden aura, D432's installed bar), so a nulled Weakness stays null whatever
-    this says (docs/decisions.md D552 R3). ⚠️ ON-TARGET, SO SUPPRESSIBLE: the main hit's
+    this says (docs/decisions.md D552 R3).
+    🆕🆕🆕 D640 (D539): ~~"The ONE read of `InPlayPokemon.weaknessRetype`"~~ — D640's
+    `installedWeaknessRewriteOf` below is a SECOND reader of the field (the `asTimesTwo`
+    record), so this is the ONE retype read, not the field's only one. ⚠️ ON-TARGET, SO SUPPRESSIBLE: the main hit's
     `suppressTargetEffects` ("not affected by any effects on your opponent's Active
     Pokémon") drops it and the PRINTED type applies (R4); the snipe's `ignoreWR` nulls
     Weakness outright. Kept out of `passivesOf` for `installedReductionOf`'s reasons. */
@@ -2956,6 +2962,19 @@ export function installedWeaknessRetypeOf(state: GameState, pokemon: InPlayPokem
   // is retired by MATCH_RECORD_VERSION 34 rather than read benignly here.
   const installed = pokemon.weaknessRetype;
   return installed === null || installed.turn !== state.turn ? null : installed.type;
+}
+
+/** 🆕🆕🆕 §8.5/§11 (D640) — the type an attack-installed Weakness REWRITE makes `pokemon`'s Weakness right now, or
+    `null`: Pikachu `30th-040` "Overwriting Bolt", *"The Defending Pokémon's Weakness is now {L} until the end of your
+    next turn. (Apply Weakness as ×2.)"* — the same record as the retype above (`InPlayPokemon.weaknessRetype`, with
+    `asTimesTwo`), on the same window. Handed to cards.ts `weaknessOf` as its `rewrite` at the three Weakness sites
+    (attack.ts's main hit, interpreter.ts `snipeActive` and `yourActiveWeakToOpponentActiveType`), AHEAD of the
+    opponent-side `seatWeaknessRewrite` (R-OWB1 ⚠️ UNRULED: the body's installed rewrite wins over a seat's Fairy
+    Zone). The retype above answers the same type for this record and re-points whichever rewrite applies (R-FZ1),
+    so the `??` order is not observable at HEAD: R-OWB1's answer is {L}×2 either way. */
+export function installedWeaknessRewriteOf(state: GameState, pokemon: InPlayPokemon): string | null {
+  const installed = pokemon.weaknessRetype;
+  return installed === null || installed.turn !== state.turn || installed.asTimesTwo !== true ? null : installed.type;
 }
 
 /** 🆕🆕 §8.5/§11 (D432) — does `pokemon` currently carry an attack-installed

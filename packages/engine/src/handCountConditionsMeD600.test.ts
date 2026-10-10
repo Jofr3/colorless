@@ -30,7 +30,7 @@ import {
 // (remaining HP), Carnivine (no Retreat Cost), Serperior ×2 (Rosa's Encouragement in your discard),
 // Sableye (Stage 2 {D} on your Bench), Zarude ×2 (Shadowy {D} Energy on your Bench). Every id and
 // text off the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-08, `legal_standard = 1`;
-// no id was referenced in the tree before this slice. Gholdengo "Celebration" ×2 stays dropped.
+// no id was referenced in the tree before this slice. Gholdengo "Celebration" ×2 stays dropped. [🆕🆕🆕 D640 (D539): BUILT at D640.]
 
 const POWERFUL_HAND = "Place 2 damage counters on your opponent's Active Pokémon for each card in your hand.";
 const TREASURE_RUSH = "This attack does 10 damage for each card in your hand.";
@@ -65,7 +65,7 @@ describe("D600 §1 — the texts: 7 attack sentences / 12 printings", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(12);
   });
 
-  it("the near misses stay unbuilt: every row is a literal, and Celebration stays dropped", () => {
+  it("the near misses stay unbuilt: every row is a literal, and Celebration stays dropped (🆕🆕🆕 D640 (D539): Celebration is built since D640)", () => {
     for (const near of [
       "This attack does 10 more damage for each card in your hand.",
       "Place 2 damage counters on 1 of your opponent's Pokémon for each card in your hand.",
@@ -74,10 +74,10 @@ describe("D600 §1 — the texts: 7 attack sentences / 12 printings", () => {
       "If Rosa's Encouragement is in your opponent's discard pile, this attack does 150 more damage.",
       "If you have any Stage 1 {D} Pokémon on your Bench, this attack does 70 more damage.",
       "If your Benched Pokémon have any Shadowy {P} Energy attached, this attack does 70 more damage.",
-      CELEBRATION,
     ]) {
       expect(resolvedByAnyReader(near), near).toBe(false);
     }
+    expect(resolvedByAnyReader(CELEBRATION)).toBe(true); // 🆕🆕🆕 D640 — inverted: built
     expect(meAttackCorpus().find(([, text]) => text === CELEBRATION)?.[0]).toBe(2);
   });
 });
@@ -446,7 +446,7 @@ describe("D600 §9 — Shadowy Whip: +70 with Shadowy {D} Energy on one of your 
 });
 
 describe("D600 §10 — the version", () => {
-  it("is built at engine 0.522.0", () => {
-    expect(engineVersion).toBe("0.522.0");
+  it("is built at engine 0.523.0", () => {
+    expect(engineVersion).toBe("0.523.0");
   });
 });

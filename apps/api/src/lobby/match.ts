@@ -1563,7 +1563,8 @@ export interface MatchRecord {
         `censusAttackCorpus.ts:629` (*"Until the end of your next turn, the Defending
         Pokémon's Weakness is now {C}. (The amount of Weakness doesn't change.)"*),
         `{turn, type}` on the opponent's Active, persisted on every save with no park in
-        front of it (D434's case: both keys arrive together).
+        front of it (D434's case: both keys arrive together). 🆕🆕🆕 D640 (D539): ~~"both keys"~~ —
+        the record may now carry a third, the optional `asTimesTwo` (Overwriting Bolt), at "46 → 47 AT D640".
 
     🛑 **THE D456 TEST AT THE PARK, DRIVEN — AND IT FAILS.** D456 holds a version only
     when the old reader's residue is INERT on the board. A v33 (rollback) deploy resuming a
@@ -2160,6 +2161,25 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **46 → 47 AT D640 — THE TWENTIETH POSITION, AND THE SIXTH MIGRATION: OVERWRITING BOLT AND CELEBRATION.**
+    (Placed ABOVE the D639 block.) The addresses, named first (D456's rule): ⑴ **`WeaknessRetype.asTimesTwo?: true`** on
+    `InPlayPokemon.weaknessRetype` — Pikachu `30th-040` "Overwriting Bolt" (*"…is now {L} until the end of your next turn.
+    (Apply Weakness as ×2.)"*), read as a Weakness REWRITE (the printed entries replaced by one {L}×2). A 0.522 ROLLBACK
+    reads the key as absent and applies D552's retype — the printed AMOUNT kept, a body with no printed Weakness not weak:
+    the ×2 and the gained Weakness silently gone. ⑵ **The `PendingStage` member `{ kind: "shuffleHandIntoDeck", seat }`**
+    — Gholdengo `30th-108` / `-142` "Celebration"'s *"If you do, shuffle your hand into your deck."*, queued directly
+    behind its `takePrizes` stage, so a parked Prize pick persists it; 0.522's `advance` has no arm for it (its switch
+    returns `undefined`). 🛑 **THE MIGRATION IS A RE-STAMP**: no v46 writer could write either (0.522 has no reader of the
+    sentence and no producer of the stage), and an absent `asTimesTwo` is what every v46 retype record meant.
+    `migrateMatchRecord` takes a v46 record by its version alone (`PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION = 46`), as
+    it takes a v45 one; a v44 record takes D636's step, a v43 two, a v42 three, a v41 all four. Driven in
+    `prizeStageMigrationD640.test.ts`. A rollback to any build at 46 (0.522) RETIRES every v47 record (D124). ⚠️ Also
+    moved, and none is a second reason: `EffectOp.retypeDefenderWeakness.asTimesTwo` and `takePrize.count` /
+    `.thenShuffleHand` (never parked), the event key `WEAKNESS_RETYPED.asTimesTwo` (not persisted, D141). No wire shape
+    moves; deploy order as usual. ⚠️ NOT in this bump, named: Rotom ex ×3 "Multi Adapter" (Y1a — ~59 `.tools` read
+    sites across 11 engine files, the §7.4 cap at both `attachTool` arms and every effect attach, Tool-discard picks, the
+    client's Tool display, and the owner's forced discard at every place the Ability can go away) owes 47 → 48 on its own.
+
     🆕🆕🆕 **STAYS 46 AT D639 — K3 + R1 ADD TWO `EffectOp` MEMBERS (`bountyThisAttack`, `knockOutEach`) AND ONE
     `BoardCondition` MEMBER (`opponentKnockedOutByDamage`); NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY OR `InPlayPokemon`
     FIELD.** (Placed ABOVE the D638 block.) Each new member is the WHOLE program of its sentence and none parks, so none can
@@ -2167,7 +2187,8 @@ export interface MatchRecord {
     `InPlayPokemon.koBounty` at `turn: state.turn` (a record a 0.521 reader pays the same way at the sweep, flow.ts
     `koPrizeBonus`, if a reactive stage parks between the stamp and the sweep); Shadowy Side Kick the EXISTING `attackBlock`;
     Soul Destroyer D414's EXISTING `koByEffect:<turn>` marker. Gholdengo "Celebration" ×2 is NOT built: its "If you do" after
-    the Prize needs a new post-Prize `PendingStage` (a persisted shape), named for a later bump.
+    the Prize needs a new post-Prize `PendingStage` (a persisted shape), named for a later bump. [🆕🆕🆕 D640 (D539): BUILT —
+    "46 → 47 AT D640".]
 
     🆕🆕🆕 **STAYS 46 AT D638 — X1 ADDS TWO `EffectOp` MEMBERS (`useInPlayAttackAs`, `useMilledSupporterEffect`), ONE
     OPTIONAL EVENT KEY (`SUPPORTER_EFFECT_USED.milled`, not persisted) AND ONE CATALOG-SIDE FIELD
@@ -2197,7 +2218,8 @@ export interface MatchRecord {
     it, and an old client meeting a new server offers nothing it cannot play — the usual deploy order. ⚠️ NOT in this
     bump, named: Rotom ex ×3 "Multi Adapter" (Y1a: a §7.4 two-Tool cap read off a Rotom holder and a live Ability, and an
     owner's forced Tool discard at every place the Ability can go away) and Pikachu `30th-040` "Overwriting Bolt" — each
-    owes a later bump (46 → 47).
+    owes a later bump (46 → 47). [🆕🆕🆕 D640 (D539): Overwriting Bolt PAID — "46 → 47 AT D640"; Multi Adapter did not
+    ride it (47 → 48).]
 
     🆕🆕🆕 **44 → 45 AT D636 — THE EIGHTEENTH POSITION, AND THE FOURTH MIGRATION: L1's NEXT-TURN LOCKS AND
     CLAWITZER's MOVED-TO-BENCH STAMP.** (Placed ABOVE the D635 block.) The addresses, named first (D456's rule):
@@ -2228,7 +2250,7 @@ export interface MatchRecord {
     Rotom ex ×3 "Multi Adapter" (Y1a: a §7.4 two-Tool cap, a forced Tool discard when the Ability goes away), Pikachu
     `30th-040` "Overwriting Bolt" and the four `me` Antique Fossils (`me03-068` / `-069`, `me05-072` / `-073`) — each
     owes a later bump (45 → 46). [🆕🆕🆕 D637 (D539): the four fossils PAID — "45 → 46 AT D637"; Multi Adapter and
-    Overwriting Bolt did not ride it (46 → 47).]
+    Overwriting Bolt did not ride it (46 → 47).] [🆕🆕🆕 D640 (D539): Overwriting Bolt PAID at D640; Multi Adapter 47 → 48.]
 
     🆕🆕🆕 **STAYS 44 AT D635 — F1 ADDS ONE `CardFilter` MEMBER (`itemNameContaining`), ONE `IN_PLAY_BODY_NOUNS` KEY AND
     ONE STADIUM PROGRAM (Fossil Quarry `me05-076`); NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY OR `InPlayPokemon`
@@ -2961,7 +2983,7 @@ export interface MatchRecord {
     the `trimBench` `EffectOp` (parked in `cont`, a D125 widening carried by (ii)), the events
     `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side
     `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */
-export const MATCH_RECORD_VERSION = 46;
+export const MATCH_RECORD_VERSION = 47;
 
 /** 🆕🆕🆕 D583 — the one version this deploy MIGRATES rather than retires ("41 → 42 AT D583" above).
     🆕🆕🆕 D621 (D539): ~~"the one version"~~ — the version whose POOL is refreshed from D1; v42 is
@@ -2985,11 +3007,15 @@ export const LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION = 44;
     v44 record takes D636's step, a v43 two steps, a v42 three, a v41 all four. */
 export const FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION = 45;
 
+/** 🆕🆕🆕 D640 — the version migrated by a re-stamp alone ("46 → 47 AT D640" above): no D1 read, no key written, as a
+    v45 record is. */
+export const PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION = 46;
+
 /** 🆕🆕🆕 D583 — the catalog ids a v41 record's pool holds (what `loadMatchRecord` re-reads from D1), or
     `null` for anything that is not a well-formed v41 record. PURE.
     🆕🆕🆕 D621 — `[]` for a well-formed v42 record: it is migrated, but its pool is not re-read.
     🆕🆕🆕 D630 — and `[]` for a well-formed v43 record, on the same terms. 🆕🆕🆕 D636 — and a v44 one. 🆕🆕🆕 D637 — and a
-    v45 one. */
+    v45 one. 🆕🆕🆕 D640 — and a v46 one. */
 export function migratablePoolIdsOf(raw: unknown): string[] | null {
   const record = readMigratableRecord(raw);
   if (record === null) return null;
@@ -3011,11 +3037,16 @@ export function migratablePoolIdsOf(raw: unknown): string[] | null {
     keys"~~ — every version below 44.)
     🆕🆕🆕 D637 — a v45 record is migrated too (`fresh` unread) by its version alone: it skips every step (it has every
     key, and D636's step would clobber a live lock). (D539: ~~"EVERY migrated version then takes D636's lock keys"~~ —
-    every version below 45.) */
+    every version below 45.)
+    🆕🆕🆕 D640 — and a v46 record the same way (a re-stamp alone). */
 export function migrateMatchRecord(raw: unknown, fresh: Record<string, Card>): MatchRecord | null {
   const record = readMigratableRecord(raw);
   if (record === null) return null;
-  if (record.version === FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION) return { ...record, version: MATCH_RECORD_VERSION };
+  if (
+    record.version === FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION ||
+    record.version === PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION
+  )
+    return { ...record, version: MATCH_RECORD_VERSION };
   const cardPool: Record<string, Card> = { ...record.state.cardPool };
   if (record.version === MIGRATABLE_MATCH_RECORD_VERSION) {
     for (const [id, card] of Object.entries(cardPool)) {
@@ -3112,7 +3143,8 @@ export interface MatchSlot {
     not called and no D1 failure can hold it back.
     🆕🆕🆕 D630 (D539): ~~"the record written back is v43"~~ — v44; a v43 record is migrated too, also with no
     pool to load. 🆕🆕🆕 D636 (D539): ~~"v44"~~ — v45; a v44 record is migrated too, with no pool to load.
-    🆕🆕🆕 D637 (D539): ~~"v45"~~ — v46; a v45 record is migrated too, with no pool to load. */
+    🆕🆕🆕 D637 (D539): ~~"v45"~~ — v46; a v45 record is migrated too, with no pool to load.
+    🆕🆕🆕 D640 (D539): ~~"v46"~~ — v47; a v46 record is migrated too, with no pool to load. */
 export async function loadMatchRecord(
   slot: MatchSlot,
   loadPool: (ids: readonly string[]) => Promise<Record<string, Card>>,
@@ -3124,7 +3156,7 @@ export async function loadMatchRecord(
   const ids = migratablePoolIdsOf(raw);
   if (ids === null) return { kind: "stale" };
   // 🆕🆕🆕 D621 — a v42 record has no pool to re-read (`[]`): D1 is not asked. 🆕🆕🆕 D630 — nor a v43 one. 🆕🆕🆕 D636 — nor a v44.
-  // 🆕🆕🆕 D637 — nor a v45.
+  // 🆕🆕🆕 D637 — nor a v45. 🆕🆕🆕 D640 — nor a v46.
   const fresh = ids.length === 0 ? {} : await loadPool(ids);
   const again = await slot.get();
   if (again === undefined) return { kind: "none" };
@@ -3136,7 +3168,7 @@ export async function loadMatchRecord(
   return { kind: "ok", record: migrated };
 }
 
-/** A v41 (🆕🆕🆕 D621: or v42; 🆕🆕🆕 D630: or v43; 🆕🆕🆕 D636: or v44; 🆕🆕🆕 D637: or v45) record passed through `readMatchRecord`'s own shape checks,
+/** A v41 (🆕🆕🆕 D621: or v42; 🆕🆕🆕 D630: or v43; 🆕🆕🆕 D636: or v44; 🆕🆕🆕 D637: or v45; 🆕🆕🆕 D640: or v46) record passed through `readMatchRecord`'s own shape checks,
     or `null`. The result keeps its OWN version (D621), which `migrateMatchRecord` branches on. */
 function readMigratableRecord(raw: unknown): MatchRecord | null {
   if (typeof raw !== "object" || raw === null) return null;
@@ -3146,7 +3178,8 @@ function readMigratableRecord(raw: unknown): MatchRecord | null {
     version !== SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&
     version !== RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&
     version !== LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&
-    version !== FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION
+    version !== FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION &&
+    version !== PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION
   )
     return null;
   const record = readMatchRecord({ ...raw, version: MATCH_RECORD_VERSION });

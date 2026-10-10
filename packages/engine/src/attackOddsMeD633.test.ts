@@ -35,6 +35,7 @@ import {
 // Weakness to a Pokémon that prints none (101 legal Dragon-type printings print none, LOCAL D1), which
 // D552's amount-keeping retype cannot carry; the persisted `weaknessRetype` record needs a new field, so it
 // rides an MRV bump (L1's). [🆕🆕🆕 D637 (D539): it rode neither L1's bump (D636) nor the fossils' (D637); owes 46 → 47.]
+// [🆕🆕🆕 D640 (D539): BUILT at D640 — `retypeDefenderWeakness { asTimesTwo }` on 46 → 47; the pin below is inverted.]
 
 const YEET = "You may discard any number of cards from your hand.";
 const ROCKET_FEATHERS =
@@ -69,10 +70,10 @@ describe("D633 §1 — the texts", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(7);
   });
 
-  it("Overwriting Bolt stays unbuilt, named: no reader, no key", () => {
+  it("Overwriting Bolt stays unbuilt, named: no reader, no key (🆕🆕🆕 D640 (D539): read since D640, still no key)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     expect(me.get(OVERWRITING_BOLT)).toBe(1);
-    expect(resolvedByAnyReader(OVERWRITING_BOLT)).toBe(false);
+    expect(resolvedByAnyReader(OVERWRITING_BOLT)).toBe(true); // 🆕🆕🆕 D640 — inverted: built
     expect(programFor("30th-040")).toBeUndefined();
   });
 
@@ -450,7 +451,7 @@ describe("D633 §6 — Elemental Blast on a board (the matched discard, R-EB1)",
 });
 
 describe("D633 §7 — the version", () => {
-  it("is built at engine 0.522.0", () => {
-    expect(engineVersion).toBe("0.522.0");
+  it("is built at engine 0.523.0", () => {
+    expect(engineVersion).toBe("0.523.0");
   });
 });

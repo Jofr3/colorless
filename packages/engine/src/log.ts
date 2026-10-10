@@ -878,7 +878,10 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       return row(event.seat, [
         strong(cardName(state, event.uid)),
         plain(
-          `'s Weakness is now ${event.weaknessType} until the end of your opponent's next turn (the amount doesn't change)`,
+          `'s Weakness is now ${event.weaknessType} until the end of your opponent's next turn (${
+            // 🆕🆕🆕 D640 — Overwriting Bolt's reminder, not D552's.
+            event.asTimesTwo === true ? "apply Weakness as ×2" : "the amount doesn't change"
+          })`,
         ),
       ]);
     // 🆕🆕🆕 §8.2/§11 — the attack-installed COST TAX (D549). VICTIM voice (`seat` owns
@@ -1803,7 +1806,8 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // The hand-refresh Supporter family (Youngster / Judge / Brassius / Katy).
       // Count only — the hand is hidden (module header), so this names no card
       // even when the op reaches the OPPONENT's hand (Judge). A separate
-      // CARDS_DRAWN row (count only too) follows for the draw.
+      // CARDS_DRAWN row (count only too) follows for the draw. 🆕🆕🆕 D640 — except
+      // Celebration's post-Prize `shuffleHandIntoDeck` stage, which draws nothing.
       const n = event.count;
       return row(event.seat, [
         plain(`shuffled their hand (${n} card${n === 1 ? "" : "s"}) into their deck`),

@@ -68,6 +68,7 @@ import {
   // at `spreadDamage`, `placeSnipe` and `snipeActive` (attack.ts is the fourth site).
   installedVulnerabilityOf,
   installedWeaknessRetypeOf,
+  installedWeaknessRewriteOf,
   koSurvivalClamp,
   koSurvivalCoinFlip,
   // 🆕🆕🆕 D575 — the hand-attach mark's one reader (Glimmora's bar, Hypno's turn end).
@@ -2571,7 +2572,7 @@ function stepOp(
       return { done: exposeSelf(state, op.amount, ctx, events) };
     // 🆕🆕🆕 D552 — the WEAKNESS RETYPE, `exposeDefender`'s holder and stamp.
     case "retypeDefenderWeakness":
-      return { done: retypeDefenderWeakness(state, op.type, ctx, events) };
+      return { done: retypeDefenderWeakness(state, op.type, ctx, events, op.asTimesTwo === true) };
     // 🆕🆕🆕 D549 — the COST TAX (nullary, `flipLockAttack`'s holder and window) and the
     // KNOCK OUT BOUNTY (`exposeDefender`'s holder and window, on the prize step).
     case "taxDefender":
@@ -5464,7 +5465,7 @@ function stepOp(
       // the decision and does nothing else — `advance` (flow.ts) owns the clamp, the
       // forced auto-resolve and the §14 win check. See `queueTakePrize` below for the
       // seat, the queue POSITION and the closed-world audit that position rests on.
-      return { done: queueTakePrize(state, ctx) };
+      return { done: queueTakePrize(state, ctx, op.count ?? 1, op.thenShuffleHand === true) };
     case "discardStadium":
       // 🆕🆕 D380 — the printed *"Discard a Stadium in play."* It is the THIRD op in
       // this file that can change a body's MAXIMUM without touching its damage (a
@@ -6367,8 +6368,13 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const attacker = inPlayCardOf(state, theirs);
       if (holder === undefined || attacker === undefined) return false;
       return (
-        weaknessOf(attacker, holder, installedWeaknessRetypeOf(state, mine), seatWeaknessRewrite(state, seat, holder)) !==
-        null
+        weaknessOf(
+          attacker,
+          holder,
+          installedWeaknessRetypeOf(state, mine),
+          // 🆕🆕🆕 D640 — Overwriting Bolt's installed rewrite first (R-OWB1).
+          installedWeaknessRewriteOf(state, mine) ?? seatWeaknessRewrite(state, seat, holder),
+        ) !== null
       );
     }
     case "yourBenchHasType":
@@ -10857,6 +10863,9 @@ function retypeDefenderWeakness(
   type: string,
   ctx: EffectContext,
   events: GameEvent[],
+  // 🆕🆕🆕 D640 — Overwriting Bolt's "(Apply Weakness as ×2.)": the record carries `asTimesTwo` (a rewrite,
+  // continuous.ts `installedWeaknessRewriteOf`); D552's sentence writes the record without the key.
+  asTimesTwo: boolean,
 ): GameState {
   const seat = otherSeat(ctx.seat);
   const active = state.players[seat].active;
@@ -10868,7 +10877,17 @@ function retypeDefenderWeakness(
   if (effectRefused(state, seat, ctx, events)) return state;
   const turn = state.turn + 2;
   const existing = active.weaknessRetype;
-  if (existing !== null && existing.turn === turn && existing.type === type) return state;
+  if (
+    existing !== null &&
+    existing.turn === turn &&
+    existing.type === type &&
+    (existing.asTimesTwo === true) === asTimesTwo
+  )
+    return state;
+  if (asTimesTwo) {
+    events.push({ type: "WEAKNESS_RETYPED", seat, uid, weaknessType: type, asTimesTwo: true });
+    return withActive(state, seat, { ...active, weaknessRetype: { turn, type, asTimesTwo: true } });
+  }
   events.push({ type: "WEAKNESS_RETYPED", seat, uid, weaknessType: type });
   return withActive(state, seat, { ...active, weaknessRetype: { turn, type } });
 }
@@ -12601,7 +12620,8 @@ function snipeActive(
         attacker.card,
         target.card,
         installedWeaknessRetypeOf(state, target.active),
-        seatWeaknessRewrite(state, opponent, target.card),
+        // 🆕🆕🆕 D640 — Overwriting Bolt's installed rewrite first (R-OWB1).
+        installedWeaknessRewriteOf(state, target.active) ?? seatWeaknessRewrite(state, opponent, target.card),
       );
   const resistance =
     ignoreWR || wrOnly || attacker === null ? null : resistanceOf(attacker.card, target.card);
@@ -17119,8 +17139,11 @@ function queueStadiumLeaveTrims(before: GameState, after: GameState): GameState 
     rather than parking on a row it cannot fill — its comment says so and
     `takePrizeAttack.test.ts` §6 pins it. Asking either question here would be a second
     answer to a question that already has exactly one. */
-function queueTakePrize(state: GameState, ctx: EffectContext): GameState {
-  const prize: PendingStage = { kind: "takePrizes", seat: ctx.seat, count: 1 };
+function queueTakePrize(state: GameState, ctx: EffectContext, count: number, thenShuffleHand: boolean): GameState {
+  const taken: PendingStage = { kind: "takePrizes", seat: ctx.seat, count };
+  // 🆕🆕🆕 D640 — Celebration's "If you do, shuffle your hand into your deck.": the NEW stage goes DIRECTLY BEHIND the
+  // Prize stage, so it drains once the Prizes are in the hand (R-CEL1); a take that ends the game never reaches it.
+  const prize: PendingStage[] = thenShuffleHand ? [taken, { kind: "shuffleHandIntoDeck", seat: ctx.seat }] : [taken];
   const tail = state.pending.findIndex(
     (queued) =>
       queued.kind === "damagedTrigger" ||
@@ -17131,8 +17154,8 @@ function queueTakePrize(state: GameState, ctx: EffectContext): GameState {
     ...state,
     pending:
       tail === -1
-        ? [...state.pending, prize]
-        : [...state.pending.slice(0, tail), prize, ...state.pending.slice(tail)],
+        ? [...state.pending, ...prize]
+        : [...state.pending.slice(0, tail), ...prize, ...state.pending.slice(tail)],
   };
 }
 

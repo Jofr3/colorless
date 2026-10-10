@@ -723,7 +723,9 @@ export type GameEvent =
       marked Pokémon (D136's finding 1). `weaknessType` is the type the printed Weakness now
       names (`"Colorless"`), named so rather than `type`, which is the event discriminator.
       Not persisted (D141). */
-  | { type: "WEAKNESS_RETYPED"; seat: Seat; uid: string; weaknessType: string }
+  /** 🆕🆕🆕 D640 — `asTimesTwo`: Overwriting Bolt's "(Apply Weakness as ×2.)" (the record's own key); absent
+      on D552's sentence, whose row says the amount doesn't change. */
+  | { type: "WEAKNESS_RETYPED"; seat: Seat; uid: string; weaknessType: string; asTimesTwo?: true }
   /** 🆕🆕🆕 §8.2/§11 (D549) — an attack TAXED the Defending Pokémon's costs for its
       controller's next turn ("During your opponent's next turn, attacks used by the
       Defending Pokémon cost {C} more, and its Retreat Cost is {C} more.",
@@ -1906,7 +1908,8 @@ export type GameEvent =
       (and, for Judge's both-player refresh, the controller about the opponent)
       learns only how many. The deck was reordered as part of this (no separate
       SHUFFLE event). `count` may be 0 (an empty hand still "shuffles" — the deck
-      is reshuffled either way). */
+      is reshuffled either way). 🆕🆕🆕 D640 — not always followed by a draw: Gholdengo's
+      "Celebration" files it from flow.ts' `shuffleHandIntoDeck` stage with no CARDS_DRAWN. */
   | { type: "HAND_SHUFFLED_INTO_DECK"; seat: Seat; count: number }
   /** `seat` shuffled its whole hand (`count` cards) and put it on the BOTTOM of
       its deck — the same hand-refresh family, other placement (Iono). Distinct

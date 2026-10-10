@@ -734,7 +734,7 @@ describe("§6 — the wire carries the prompt, scope included", () => {
 // §7 — PERSISTENCE, over the SERIALIZED bytes, both D450 directions.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("🛑 §7 — `MATCH_RECORD_VERSION` HOLDS AT 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570; 38 since D575; 39 since D576; 40 since D577; 41 since D579; 42 since D583; 43 since D621; 44 since D630; 45 since D636; 46 since D637), driven rather than argued", () => {
+describe("🛑 §7 — `MATCH_RECORD_VERSION` HOLDS AT 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570; 38 since D575; 39 since D576; 40 since D577; 41 since D579; 42 since D583; 43 since D621; 44 since D630; 45 since D636; 46 since D637; 47 since D640), driven rather than argued", () => {
   it("🛑 `\"cont\" in phase` IS TRUE — a record really holds the new inhabitant", () => {
     const parked = attack(ready(), STRIP).state;
     expect("cont" in parked.phase).toBe(true);
@@ -770,9 +770,9 @@ describe("🛑 §7 — `MATCH_RECORD_VERSION` HOLDS AT 30 (🆕🆕🆕 held at 
     expect(JSON.stringify(quiet)).not.toContain("discardTools");
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 46 (🆕🆕🆕 D637 stepped it 45 → 46; D636 stepped it 44 → 45; D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) — read off the RAW source, not retyped", () => {
+  it("🛑 `MATCH_RECORD_VERSION` is 47 (🆕🆕🆕 D640 stepped it 46 → 47; D637 stepped it 45 → 46; D636 stepped it 44 → 45; D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) — read off the RAW source, not retyped", () => {
     // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
-    expect(raw("/match.ts")).toContain("export const MATCH_RECORD_VERSION = 46;");
+    expect(raw("/match.ts")).toContain("export const MATCH_RECORD_VERSION = 47;");
   });
 
   it("the op is PURE — the parked board is not mutated by resolving it", () => {
@@ -823,7 +823,7 @@ describe("§8 — the population, the log row, and the version", () => {
   });
 
   it("engineVersion", () => {
-    expect(engineVersion).toBe("0.522.0");
+    expect(engineVersion).toBe("0.523.0");
   });
 
   it("the interpreter keeps the op OUT of `recordSlotOf`, and says so", () => {

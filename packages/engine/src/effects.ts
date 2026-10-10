@@ -4787,13 +4787,18 @@ export type EffectOp =
       record `{turn, type}` is read by `installedWeaknessRetypeOf` and handed to cards.ts
       `weaknessOf`, which keeps the printed AMOUNT and swaps the TYPE (docs/decisions.md
       D552 R1–R5). `type` is the printed `{C}` resolved to its Pokémon type
-      (`"Colorless"`), the only value any printing writes.
+      (`"Colorless"`), the only value any printing writes. 🆕🆕🆕 D640 (D539): ~~"the only value any
+      printing writes"~~ — Overwriting Bolt writes `"Lightning"` with `asTimesTwo` (a rewrite, read by
+      continuous.ts `installedWeaknessRewriteOf`, a second reader of the record).
 
       A NEW OP, NOT AN `installNoWeakness` RIDER: that op writes the ACTOR's own body for
       the opponent's turn and removes Weakness; this one writes the OPPONENT's body for the
       installer's turn and keeps it — D131's test fails on holder, window and effect. Never
       parks, consumes no rng; a same-window re-install of the same type is silent. */
-  | { op: "retypeDefenderWeakness"; type: string }
+  /** 🆕🆕🆕 D640 — `asTimesTwo`: Pikachu `30th-040` "Overwriting Bolt" (*"…is now {L} until the end of your
+      next turn. (Apply Weakness as ×2.)"*), written onto the record (`WeaknessRetype.asTimesTwo`) and read
+      as a Weakness REWRITE: the printed entries are replaced by one {L}×2. Absent on D552's sentence. */
+  | { op: "retypeDefenderWeakness"; type: string; asTimesTwo?: true }
   /** 🆕🆕🆕 §8.2/§11 (D549) — THE COST TAX on the DEFENDING Pokémon for the opponent's
       next turn: "During your opponent's next turn, attacks used by the Defending Pokémon
       cost {C} more, and its Retreat Cost is {C} more." (`censusAttackCorpus.ts:171`,
@@ -9799,7 +9804,13 @@ export type EffectOp =
       `{op:"takePrize"}`, and every byte string a v26 deploy DID write still means exactly
       what it meant. No `PendingStage` inhabitant is added either; `takePrizes` has ridden
       that union since M1. Driven in BOTH directions in `takePrizeAttack.test.ts` §3. */
-  | { op: "takePrize" }
+  /** 🆕🆕🆕 §8.1 (D640) — Gholdengo `30th-108` / `-142` "Celebration": *"If you have exactly 30 cards in
+      your hand, take 2 Prize cards. If you do, shuffle your hand into your deck."* `count` (absent = 1, the
+      widening the block above foresaw) is the stage's count; `thenShuffleHand` queues the NEW `PendingStage`
+      `shuffleHandIntoDeck` DIRECTLY BEHIND the `takePrizes` stage, so the shuffle runs after the Prizes reach
+      the hand. R-CEL1 ⚠️ UNRULED: "If you do" is read as "the gate held and the Prize stage resolved"; a
+      take that empties the row ends the game (§14.1) before the shuffle stage drains. */
+  | { op: "takePrize"; count?: number; thenShuffleHand?: true }
   /** 🆕🆕 **D433 — §10, THE FIRST DEVOLUTION IN THIS ENGINE.**
       *"Devolve each of your opponent's evolved Pokémon by shuffling the highest Stage
       Evolution card on it into your opponent's deck."* — **1 sentence / 3 legal
@@ -15235,6 +15246,18 @@ const DEFENDER_VULNERABLE_NEXT_TURN =
 // begins with it).
 const DEFENDER_WEAKNESS_RETYPED =
   /^Until the end of your next turn, the Defending Pokémon['’]s Weakness is now \{C\}\. \(The amount of Weakness doesn['’]t change\.\)$/;
+// 🆕🆕🆕 D640 — Pikachu `30th-040` "Overwriting Bolt" (LOCAL D1, 2026-10-10, `legal_standard = 1`; 1 printing, not
+// printed in legal `sv`): "The Defending Pokémon's Weakness is now {L} until the end of your next turn. (Apply
+// Weakness as ×2.)" — D552's holder, stamp and op with `asTimesTwo` (the printed entries REPLACED by one {L}×2, so a
+// body with no printed Weakness gains one). A literal (D121: one printing); the reminder is required, and it is what
+// tells this sentence from D552's ("The amount of Weakness doesn't change").
+// 🆕🆕🆕 D640 — Gholdengo `30th-108` / `-142` "Celebration" (LOCAL D1, 2026-10-10, `legal_standard = 1`; 2 printings,
+// not printed in legal `sv`): `conditionGate { yourHandExactly 30 }` over `takePrize { count: 2, thenShuffleHand }`.
+// A literal (D121: one sentence); the shuffle is behind the Prize stage, not after the program (R-CEL1).
+const HAND_EXACTLY_TAKE_PRIZES_THEN_SHUFFLE =
+  /^If you have exactly 30 cards in your hand, take 2 Prize cards\. If you do, shuffle your hand into your deck\.$/;
+const DEFENDER_WEAKNESS_OVERWRITTEN =
+  /^The Defending Pokémon['’]s Weakness is now \{L\} until the end of your next turn\. \(Apply Weakness as ×2\.\)$/;
 // ── 🆕🆕🆕 D549: the DEFENDER marked with a KNOCK OUT BOUNTY for the installer's next turn ──
 //
 // "During your next turn, if the Defending Pokémon is Knocked Out, take 2 more Prize
@@ -32826,6 +32849,21 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //      target string derived `null` at HEAD under every arm, and the anchor claims exactly
   //      one of the 640 rows, so the placement beside 19f' (the shared holder) is legibility.
   if (DEFENDER_WEAKNESS_RETYPED.test(effect)) return [{ op: "retypeDefenderWeakness", type: "Colorless" }];
+  // 🆕🆕🆕 D640 — Celebration: the Prize stage, then the shuffle behind it (R-CEL1).
+  if (HAND_EXACTLY_TAKE_PRIZES_THEN_SHUFFLE.test(effect)) {
+    return [
+      {
+        op: "conditionGate",
+        cond: { kind: "yourHandExactly", count: 30 },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "takePrize", count: 2, thenShuffleHand: true }],
+      },
+    ];
+  }
+  // 🆕🆕🆕 D640 — Overwriting Bolt: the same op, the printed `{L}`, applied as ×2.
+  if (DEFENDER_WEAKNESS_OVERWRITTEN.test(effect)) {
+    return [{ op: "retypeDefenderWeakness", type: "Lightning", asTimesTwo: true }];
+  }
   // 19f''. 🆕🆕🆕 D549 — "During your next turn, if the Defending Pokémon is Knocked
   //      Out, take {N} more Prize cards." — `censusAttackCorpus.ts:149`, 1 legal
   //      printing at 2 (no card id on this checkout, measured). 19f''s holder and
