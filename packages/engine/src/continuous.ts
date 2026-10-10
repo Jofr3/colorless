@@ -4826,6 +4826,48 @@ function holderSideLeadsOnPrizesRemaining(state: GameState, pokemon: InPlayPokem
   return false;
 }
 
+/** 🆕🆕🆕 §6.3 (D645) — the Basic Energy type a live `PassiveEffects.basicEnergyProvidesTwice` doubles on `pokemon`'s
+    board, or `undefined`: Meganium "Wild Growth" (*"Each Basic {G} Energy attached to all of your Pokémon provides
+    {G}{G} Energy. The effect of Wild Growth doesn't stack."*). The holder is any of the SAME side's in-play Pokémon
+    (Active or Bench, itself included) whose Ability `disabledAbilityUids` does not silence; the first live one
+    answers, so two Meganium double once (the printed "doesn't stack"). Read by `unitsOf` for a Basic Energy card,
+    so every provision reader moves together; a card COUNT does not (R-WGR1). The lock scan runs only once a holder
+    is found. */
+function doubledBasicEnergyType(state: GameState, pokemon: InPlayPokemon): BasicEnergyType | undefined {
+  const seat = seatOfPokemon(state, pokemon);
+  if (seat === undefined) return undefined;
+  const side = state.players[seat];
+  for (const holder of side.active === null ? side.bench : [side.active, ...side.bench]) {
+    const top = topCardOf(state, holder);
+    const doubled = top === undefined ? undefined : programFor(top.id)?.passive?.basicEnergyProvidesTwice;
+    if (doubled === undefined) continue;
+    const uid = topUid(holder);
+    if (uid !== undefined && disabledAbilityUids(state).has(uid)) continue; // §9
+    return doubled;
+  }
+  return undefined;
+}
+
+/** 🆕🆕🆕 §11 (D645) — the live Slimy Sliding that answers `seat`'s retreat, or `undefined`: Goodra "Slimy Sliding"
+    (*"When your opponent's Active Pokémon retreats, your opponent flips a coin. If tails, Energy for its Retreat
+    Cost is not discarded, and they don't switch Pokémon. The effect of Slimy Sliding doesn't stack."*). The holder
+    is any of the OTHER side's in-play Pokémon (Active or Bench) carrying `PassiveEffects.retreatFailsOnTails` whose
+    Ability `disabledAbilityUids` does not silence; the first live one answers (one coin however many, the printed
+    "doesn't stack"). `uid` names the holder and `ability` the printed name, for the `ABILITY_COIN_FLIP` row. Asked
+    by ONE caller, turn.ts `retreat`, after every retreat check has passed (R-SLD1). */
+export function retreatCoinFlipSource(state: GameState, seat: Seat): { uid: string; ability: string } | undefined {
+  const side = state.players[otherSeat(seat)];
+  for (const holder of side.active === null ? side.bench : [side.active, ...side.bench]) {
+    const top = topCardOf(state, holder);
+    const ability = top === undefined ? undefined : programFor(top.id)?.passive?.retreatFailsOnTails;
+    const uid = topUid(holder);
+    if (ability === undefined || uid === undefined) continue;
+    if (disabledAbilityUids(state).has(uid)) continue; // §9
+    return { uid, ability };
+  }
+  return undefined;
+}
+
 function unitsOf(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -4836,7 +4878,11 @@ function unitsOf(
   if (card === undefined) return ["Colorless"]; // unresolved uid — the conservative unit
   const program = programFor(card.id)?.energy;
   // Basic energy → its type; an unauthored special energy → Colorless.
-  if (program === undefined) return [energyProvidesOf(card)];
+  if (program === undefined) {
+    const provided = energyProvidesOf(card);
+    // 🆕🆕🆕 D645 — Meganium "Wild Growth": a Basic Energy of the doubled type provides two units (R-WGR1).
+    return provided !== "Colorless" && doubledBasicEnergyType(state, pokemon) === provided ? [provided, provided] : [provided];
+  }
   // 🆕🆕🆕 D578 — R-TRE1: a restricted card on a body it may not sit on provides NOTHING (it is
   // discarded at the next drain point, flow.ts `discardMisplacedEnergy`) [🆕🆕🆕 D578 landing
   // (R-TRE1, RULED: fixed): ~~the next drain point~~ the step that put it there].

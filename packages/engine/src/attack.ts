@@ -337,6 +337,23 @@ export function attackCostAt(
     (D159). ⚠️ A caller that hands the PRINTED cost here is a live defect on every
     board with a cost modifier in play and moves no other number; the mutant
     `D436-printed-cost-not-effective` is exactly that build. */
+/** 🆕🆕🆕 §8 (D645) — a program's top-level `conditionGate`s on `extraEnergyBeyondAttackCost` replaced by the branch
+    they take at DECLARATION (Deoxys "Psyspear": *"If this Pokémon has at least 2 extra Energy attached (in addition to
+    this attack's cost), …"*). `extraUnits` is the provision units attached minus the CHARGED cost — the
+    `extraEnergyUnitsBeyondCost` fold's own subtraction (D436, R-PSP1). Every other op passes through unchanged, so a
+    program without the gate is returned as built; the resolved program carries only shipped ops into `runProgram`
+    and any continuation it parks. */
+function resolveDeclarationGates(program: EffectOp[] | null, extraUnits: number): EffectOp[] | null {
+  if (program === null) return null;
+  return program.flatMap((op) =>
+    op.op === "conditionGate" && op.cond.kind === "extraEnergyBeyondAttackCost"
+      ? extraUnits >= op.cond.extra
+        ? op.then
+        : (op.otherwise ?? [])
+      : [op],
+  );
+}
+
 function scaledAttackDamage(
   attacker: InPlayPokemon,
   bonus: AttackDamageBonus,
@@ -2178,7 +2195,8 @@ export function attack(
   // came up on the member's printed `face` (D476) and APPENDED here, so the attack's
   // existing tail runs them with no new channel.
   // Nothing else in this function writes it.
-  let program = authored ?? derived;
+  // 🆕🆕🆕 D645 — Psyspear's extra-Energy gate answered HERE, at declaration, against the charged `cost` (R-PSP1).
+  let program = resolveDeclarationGates(authored ?? derived, provided.length - cost.length);
   // 🆕🆕 **D428 — THE PRE-DAMAGE READER, AND IT IS DELIBERATELY NOT `program`.**
   // *"Before doing damage, discard all Pokémon Tools from your opponent's Active
   // Pokémon."* (5 legal printings). Read off `effect` — the fully-split head, the

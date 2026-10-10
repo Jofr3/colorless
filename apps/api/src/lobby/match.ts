@@ -2161,6 +2161,16 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 48 AT D645 — THE LAST ONE-OFFS ADD TWO `PassiveEffects` KEYS (`basicEnergyProvidesTwice`,
+    `retreatFailsOnTails`) AND ONE `BoardCondition` MEMBER (`extraEnergyBeyondAttackCost`) THAT NEVER LEAVES attack.ts:
+    `resolveDeclarationGates` answers it before `runProgram`, so no continuation carries it. NO PHASE, PROMPT KIND,
+    STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR EVENT MEMBER.** (Placed ABOVE the D644 block.)
+    Every program is keyed by id, so no `cardPool` face is read differently. The 0.527 rollback readings, NAMED: ⑴ the
+    four Ability ids have no program at 0.527, so a Meganium or Goodra in play is inert there, and Psyspear's text is
+    unread (`ATTACK_EFFECT_SKIPPED`). ⑵ A Slimy Sliding tails leaves `allowances.retreated: true` with the Active
+    unmoved, which 0.527 reads as a turn that has retreated. ⑶ A Psyspear parked on its Bench pick resumes on 0.527's
+    own `damageChosen` arm. No wire shape moves; the deploy order is the usual one.
+
     🆕🆕🆕 **STAYS 48 AT D644 — Y1e ADDS TWO `CardProgram` KEYS (`setupActiveFromHand`, `opponentMillWhenMilled`) AND
     TWO `PassiveEffects` KEYS (`countersCantMove`, `weaknessTimesWithNamedInPlay`): CATALOG ONLY, NEVER PERSISTED; NO
     PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR EVENT MEMBER.** (Placed ABOVE

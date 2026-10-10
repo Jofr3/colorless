@@ -1300,6 +1300,21 @@ export interface PassiveEffects {
       `snipeActive`): a multiplicative Weakness that applies is applied as `amount`. R-SPH1 / R-SPH2 ⚠️ UNRULED.
       Catalog-only: never persisted. */
   weaknessTimesWithNamedInPlay?: { name: string; amount: number };
+  /** 🆕🆕🆕 §6.3 (D645) — THE DOUBLED BASIC ENERGY: Meganium `me01-010` / `mep-001` "Wild Growth" (*"Each Basic {G}
+      Energy attached to all of your Pokémon provides {G}{G} Energy. The effect of Wild Growth doesn't stack."*). The value
+      is the printed type. Read by ONE function, continuous.ts `doubledBasicEnergyType`: a live (§9-gated) holder on the
+      Energy's holder's OWN board; `unitsOf` then hands that type's Basic Energy two units, so every provision reader
+      (the §8.2 cost check, the HUD preview, the extra-Energy fold, the cost-removal fold) sees them. Card counts do not
+      move (R-WGR1). Several holders do not stack (one answer). Catalog-only: never persisted. */
+  basicEnergyProvidesTwice?: BasicEnergyType;
+  /** 🆕🆕🆕 §11 (D645) — THE RETREAT COIN: Goodra `me04-068` / `mep-077` "Slimy Sliding" (*"When your opponent's Active
+      Pokémon retreats, your opponent flips a coin. If tails, Energy for its Retreat Cost is not discarded, and they
+      don't switch Pokémon. The effect of Slimy Sliding doesn't stack."*). The value is the printed Ability name. Read by
+      ONE function, continuous.ts `retreatCoinFlipSource` (a live, §9-gated holder on the retreating seat's OPPONENT's
+      board, Active or Bench; the first answers), which turn.ts `retreat` asks after every retreat check has passed:
+      one coin, and tails keeps the Active and its Energy and still spends the retreat (R-SLD1 / R-SLD2 / R-SLD3 ⚠️
+      UNRULED). Catalog-only: never persisted. */
+  retreatFailsOnTails?: string;
   /** 🆕 §8.1 (D298) — the CAUSE-CONDITIONED PRIZE REDUCTION borne by an ATTACHED
       CARD. See `KoPrizeReduction` for the vocabulary; the two printings that reach
       this field are
@@ -11311,6 +11326,19 @@ const TRANSFORMATION_TOME: CardProgram = {
   ],
 };
 
+// ── 🆕🆕🆕 D645 — THE LAST ONE-OFFS. Two objects, 4 printings, texts off the LOCAL D1 (2026-10-10, `legal_standard = 1`).
+//    New pieces: `PassiveEffects.basicEnergyProvidesTwice` / `.retreatFailsOnTails`. The third text, Deoxys `me04-032`
+//    "Psyspear", is reader-built (effects.ts `CONDITIONAL_BENCH_SNIPE` over the NEW `extraEnergyBeyondAttackCost`).
+//    `lastOneOffsMeD645.test.ts`. ──
+
+/** 🆕🆕🆕 **D645 — Meganium `me01-010` / `mep-001` "Wild Growth"**: each Basic {G} Energy on its owner's Pokémon provides
+    {G}{G} (R-WGR1, R-WGR2). Its attack "Solar Beam" prints no effect. */
+const WILD_GROWTH: CardProgram = { passive: { basicEnergyProvidesTwice: "Grass" } };
+
+/** 🆕🆕🆕 **D645 — Goodra `me04-068` / `mep-077` "Slimy Sliding"**: the opponent's retreat flips a coin; tails keeps
+    the Active and its Energy (R-SLD1, R-SLD2, R-SLD3). Its attack "Dragon Pulse" keeps deriving. */
+const SLIMY_SLIDING: CardProgram = { passive: { retreatFailsOnTails: "Slimy Sliding" } };
+
 /** 🆕🆕🆕 **D578 — Technical Machine: Fluorite `sv08-188` (Tool, 1 legal printing)**: *"The Pokémon
     this card is attached to can use the attack on this card. (You still need the necessary
     Energy to use this attack.) If this card is attached to 1 of your Pokémon, discard it at the
@@ -20752,6 +20780,11 @@ const REGISTRY: Record<string, CardProgram> = {
   "30th-004": SUPEREFFECTIVE_PHEROMONES, // Illumise — with Volbeat in play, Weakness for both Actives is ×3
   "me04-063": STARTLING_DROP, // Ferrothorn — milled by the opponent on their turn: their top 8 discarded
   "me04-083": TRANSFORMATION_TOME, // Transformation Tome — play 2 at once; switch a Basic in play with one in the discard
+  // 🆕🆕🆕 D645 — the last one-offs: 4 keys / 2 objects, MID-MAP (`raw[last]` does not move).
+  "me01-010": WILD_GROWTH, // Meganium — each Basic {G} Energy on your Pokémon provides {G}{G}
+  "mep-001": WILD_GROWTH, // Meganium
+  "me04-068": SLIMY_SLIDING, // Goodra — the opponent's retreat flips a coin; tails, it doesn't happen
+  "mep-077": SLIMY_SLIDING, // Goodra
   // 🆕🆕🆕 D608 — WP30: 5 `30th` ATTACK-only keys / 2 objects, MID-MAP (`raw[last]` does not move).
   // 🆕🆕🆕 D612 — 3 now: Stealthy Slash ×2 RETIRED (the normalised text is `mep-099`'s, reader-built).
   "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex

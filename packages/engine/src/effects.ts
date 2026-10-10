@@ -4052,6 +4052,15 @@ export type BoardCondition =
       +80 for nothing — the cost row's gate is `allOf` this and `yourActiveEnergyAtLeast 1`.
       Evaluated at the gate before anything parks. Public. */
   | { kind: "yourInPlayToHandAllowed" }
+  /** 🆕🆕🆕 **D645 — "this Pokémon has at least N extra Energy attached (in addition to this attack's cost)"**,
+      as a GATE (Deoxys `me04-032` "Psyspear": *"If this Pokémon has at least 2 extra Energy attached (in addition
+      to this attack's cost), this attack also does 120 damage to 1 of your opponent's Benched Pokémon."*). The
+      answer needs the DECLARED attack's charged cost, which no board read has (D368, D436), so it is resolved by
+      attack.ts `resolveDeclarationGates` at declaration — `extraEnergyUnitsBeyondCost`'s UNITS reading, provision
+      units minus the charged cost (R-PSP1) — and never reaches `runProgram` or a persisted continuation.
+      `conditionHolds` answers FALSE anywhere else (no cost is in scope). Produced ONLY by the
+      `CONDITIONAL_BENCH_SNIPE` arm, never by the shared clause table. Public. */
+  | { kind: "extraEnergyBeyondAttackCost"; extra: number }
   /** D280 — every one of `conditions` holds for the reading seat. The
       vocabulary's FIRST COMBINATOR and its first RECURSIVE member, bought by
       Call Bell `sv08-165`'s *"You can use this card only if you go second, and
@@ -17976,6 +17985,14 @@ const ALSO_BENCHED_SNIPE = new RegExp(`^This ${ALSO_BENCHED_SNIPE_BODY}$`);
     one thing this anchor must not do quietly — a `.+` that always resolved would be
     D379's saturation trap with the trap sprung. */
 const CONDITIONAL_BENCH_SNIPE = new RegExp(`^If (.+), this ${ALSO_BENCHED_SNIPE_BODY}$`);
+/** 🆕🆕🆕 D645 — Deoxys `me04-032` "Psyspear"'s clause: *"this Pokémon has at least N extra Energy attached (in addition
+    to this attack's cost)"* → `extraEnergyBeyondAttackCost` (R-PSP1), or null. `CONDITIONAL_BENCH_SNIPE`'s fallback
+    only. */
+const EXTRA_ENERGY_GATE_CLAUSE = /^this Pokémon has at least (\d+) extra Energy attached \(in addition to this attack['’]s cost\)$/;
+function extraEnergyGateForClause(clause: string): BoardCondition | null {
+  const extra = Number(EXTRA_ENERGY_GATE_CLAUSE.exec(clause)?.[1] ?? 0);
+  return extra >= 1 ? { kind: "extraEnergyBeyondAttackCost", extra } : null;
+}
 // The ANY-target snipe: "This attack does N damage to 1 of your opponent's Pokémon."
 // — the WHOLE attack (no `damage` field), a chosen hit on the Active OR a Benched
 // Pokémon (Fezandipiti ex "Cruel Arrow", Rotom "Linear Attack", Paldean Tauros
@@ -31553,7 +31570,9 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     never enters `GameState.phase` and `MATCH_RECORD_VERSION` is untouched.
   match = CONDITIONAL_BENCH_SNIPE.exec(effect);
   if (match !== null) {
-    const cond = boardConditionForClause(match[1] ?? "");
+    // 🆕🆕🆕 D645 — Psyspear: the declaration-time extra-Energy clause, read HERE only (never in the shared table,
+    //     whose other readers have no cost in scope); attack.ts `resolveDeclarationGates` answers it.
+    const cond = boardConditionForClause(match[1] ?? "") ?? extraEnergyGateForClause(match[1] ?? "");
     const amount = Number(match[2]);
     const count = Number(match[3]);
     // 🆕🆕🆕 D447 — THE SHARED BODY'S **FOURTH** CAPTURE, READ HERE FOR THE REASON

@@ -299,7 +299,14 @@ describe("§1 — the handed candidate is a DECLARATION fact, settled from the C
     for (const { site, carrier, read } of PROBES) {
       // REFUSED — the table holds no row for the declaration clause, so the reader
       // falls through to null and the sentence stays LOUD.
-      expect(read(carrier(DECLARATION_CLAUSE)), site).toBeNull();
+      // [🆕🆕🆕 D645 (D539): WITHDRAWN for the CONDITIONAL_BENCH_SNIPE site only — Deoxys `me04-032` "Psyspear" prints
+      // that carrier, and the arm now falls back to `extraEnergyGateForClause` (NOT the table, which still holds no
+      // row: the two BONUS_CONSEQUENT sites still refuse), answered at declaration by attack.ts. Inverted below.]
+      if (site === "CONDITIONAL_BENCH_SNIPE") {
+        expect(JSON.stringify(read(carrier(DECLARATION_CLAUSE))), site).toContain('"extraEnergyBeyondAttackCost"');
+      } else {
+        expect(read(carrier(DECLARATION_CLAUSE)), site).toBeNull();
+      }
       // ADMITTED — D368's own row, the SAME carrier, the clause the only difference.
       // Quoted (D426), because a bare substring would pass on a neighbouring member.
       expect(JSON.stringify(read(carrier(ROW_CLAUSE))), site).toContain('"yourActiveUndamaged"');

@@ -445,7 +445,7 @@ describe("D604 §10 — Voltaic Lightning Energy: the {L} holder's attacks do 20
 });
 
 describe("D604 §11 — the version", () => {
-  it("is built at engine 0.527.0", () => {
-    expect(engineVersion).toBe("0.527.0");
+  it("is built at engine 0.528.0", () => {
+    expect(engineVersion).toBe("0.528.0");
   });
 });

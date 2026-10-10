@@ -334,6 +334,8 @@ const KEYED_AT_D642 = ["me01-087", "me01-148", "30th-022", "me01-127", "me02-088
 const KEYED_AT_D643 = ["me02-029", "me02-111", "me02-126"];
 /** 🆕🆕🆕 D644 — Cinderace, Patrat, Illumise, Ferrothorn and Transformation Tome (ruleHooksMeD644.test.ts). */
 const KEYED_AT_D644 = ["me01-028", "me04-070", "30th-004", "me04-063", "me04-083"];
+/** 🆕🆕🆕 D645 — the last one-offs' 4 Ability keys (Wild Growth ×2, Slimy Sliding ×2). */
+const KEYED_AT_D645 = ["me01-010", "mep-001", "me04-068", "mep-077"];
 
 /** 🆕🆕🆕 D621 — the `me` ids WP24c + WP23 key: Gladion's Final Battle ×3, Premium Power Pro ×3, Acerola's
     Mischief ×4, Roxie's Performance ×3, Dawn ×3 (sideStateMeD621.test.ts). */
@@ -560,6 +562,8 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
     expect(KEYED_AT_D643).toHaveLength(3);
     // 🆕🆕🆕 D644 — and the 5 Y1e keys (`KEYED_AT_D644`).
     expect(KEYED_AT_D644).toHaveLength(5);
+    // 🆕🆕🆕 D645 — and the 4 last one-off keys (`KEYED_AT_D645`).
+    expect(KEYED_AT_D645).toHaveLength(4);
     expect(me.sort()).toEqual(
       [
         ...ALIASES.map(([id]) => id),
@@ -605,6 +609,7 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
         ...KEYED_AT_D642,
         ...KEYED_AT_D643,
         ...KEYED_AT_D644,
+        ...KEYED_AT_D645,
       ]
         .filter((id) => !RETIRED_AT_D612.includes(id))
         .sort(),

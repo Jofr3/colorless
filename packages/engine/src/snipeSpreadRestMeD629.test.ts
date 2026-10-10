@@ -42,6 +42,8 @@ import {
 // Dropped and named: Deoxys `me04-032` "Psyspear" — its gate reads the declared attack's effective cost
 // (D436's `extraEnergyUnitsBeyondCost`), which no `BoardCondition` answers (D368) and `EffectContext` does
 // not carry.
+// [🆕🆕🆕 D645 (D539): BUILT at D645 — the NEW `BoardCondition` `extraEnergyBeyondAttackCost`, answered at
+// declaration by attack.ts `resolveDeclarationGates` (no ctx key); `lastOneOffsMeD645.test.ts`.]
 
 const CLARIFIER = " (Don't apply Weakness and Resistance for Benched Pokémon.)";
 const BUGS_CANNON = `This attack does 20 damage to 1 of your opponent's Pokémon for each {G} Energy attached to this Pokémon.${CLARIFIER}`;
@@ -80,10 +82,10 @@ describe("D629 §1 — the texts", () => {
     }
   });
 
-  it("Psyspear stays unbuilt, named: no reader, no composition, no key", () => {
+  it("Psyspear ~~stays unbuilt, named: no reader~~, no composition, no key (🆕🆕🆕 D645 (D539): WITHDRAWN — reader-built at D645, `lastOneOffsMeD645.test.ts`)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     expect(me.get(PSYSPEAR)).toBe(1);
-    expect(resolvedByAnyReader(PSYSPEAR)).toBe(false);
+    expect(resolvedByAnyReader(PSYSPEAR)).toBe(true);
     expect(splitAttackTrailingClause(PSYSPEAR)).toBeNull();
     expect(programFor("me04-032")).toBeUndefined();
   });
@@ -433,7 +435,7 @@ describe("D629 §7 — Assassin's Magic on a board", () => {
 });
 
 describe("D629 §8 — the version", () => {
-  it("is built at engine 0.527.0", () => {
-    expect(engineVersion).toBe("0.527.0");
+  it("is built at engine 0.528.0", () => {
+    expect(engineVersion).toBe("0.528.0");
   });
 });

@@ -958,6 +958,6 @@ describe("D630 §9 — the ids, and the version", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.527.0");
+    expect(engineVersion).toBe("0.528.0");
   });
 });

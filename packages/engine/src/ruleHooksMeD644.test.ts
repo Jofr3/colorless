@@ -314,8 +314,8 @@ describe("D644 §1 — the prints and the registry rows", () => {
     expect(programFor(BADGE)).toBeUndefined();
   });
 
-  it("is built at engine 0.527.0", () => {
-    expect(engineVersion).toBe("0.527.0");
+  it("is built at engine 0.528.0", () => {
+    expect(engineVersion).toBe("0.528.0");
   });
 });
 

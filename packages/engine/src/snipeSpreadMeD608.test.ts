@@ -82,7 +82,7 @@ const KEYED: readonly (readonly [string, readonly string[]])[] = [
 ];
 
 /** WP30's rest, named: each needs vocabulary beyond this slice (8 texts / 8 printings).
-    [🆕🆕🆕 D629 (D539): seven BUILT at D629 (S1); Psyspear `me04-032` stays unbuilt.] */
+    [🆕🆕🆕 D629 (D539): seven BUILT at D629 (S1); Psyspear `me04-032` stays unbuilt.] [🆕🆕🆕 D645 (D539): Psyspear BUILT at D645.] */
 const WP30_REST: readonly (readonly [string, string])[] = [
   // tcgdex markup (WP06) AND a typed self-discard in front of the any-target hit.
   // 🆕🆕🆕 D612 — the normalised text (WP06): the markup is gone; the typed self-discard stays unread.
@@ -119,7 +119,8 @@ const WP30_REST: readonly (readonly [string, string])[] = [
     "This attack does 50 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) This Pokémon also does 130 damage to itself.",
     "30th-104",
   ],
-  // an extra-Energy gate (a count source, not a `BoardCondition`) on a bench snipe.
+  // an extra-Energy gate (~~a count source, not a `BoardCondition`~~) on a bench snipe. [🆕🆕🆕 D645 (D539): WITHDRAWN —
+  // read at D645 as the NEW `BoardCondition` `extraEnergyBeyondAttackCost`, answered at declaration, never in the shared table.]
   [
     "If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
     "me04-032",
@@ -159,12 +160,13 @@ describe("D608 §1 — the texts", () => {
     }
   });
 
-  it("WP30's rest ~~stays unbuilt~~: 8 texts / 8 printings, named (🆕🆕🆕 D629 (D539): WITHDRAWN for seven — S1 builds all but Deoxys `me04-032` \"Psyspear\"; `snipeSpreadRestMeD629.test.ts`)", () => {
+  it("WP30's rest ~~stays unbuilt~~: 8 texts / 8 printings, named (🆕🆕🆕 D629 (D539): WITHDRAWN for seven — S1 builds all but Deoxys `me04-032` \"Psyspear\"; `snipeSpreadRestMeD629.test.ts`) (🆕🆕🆕 D645 (D539): and Psyspear is built at D645)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, id] of WP30_REST) {
       expect([id, me.get(text)]).toEqual([id, 1]);
-      // 🆕🆕🆕 D629 — seven are built (two by composition); Psyspear alone stays unread.
-      expect([id, resolvedByAnyReader(text) || splitAttackTrailingClause(text) !== null]).toEqual([id, id !== "me04-032"]);
+      // 🆕🆕🆕 D629 — seven are built (two by composition); ~~Psyspear alone stays unread~~ [🆕🆕🆕 D645 (D539):
+      // WITHDRAWN — Psyspear is reader-built at D645; all eight are built].
+      expect([id, resolvedByAnyReader(text) || splitAttackTrailingClause(text) !== null]).toEqual([id, true]);
       expect(programFor(id), id).toBeUndefined();
     }
   });
@@ -617,6 +619,6 @@ describe("D608 §7 — Stealthy Slash and Photon Bullets on a board", () => {
 
 describe("D608 §8 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.527.0");
+    expect(engineVersion).toBe("0.528.0");
   });
 });

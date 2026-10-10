@@ -7205,6 +7205,10 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // 🆕🆕🆕 D572 — the negation of the Milotic lock on the READING seat's own cards (Zarude
       // "Jungle Whip"'s cost gate, D385).
       return !inPlayToHandBlocked(state, seat);
+    case "extraEnergyBeyondAttackCost":
+      // 🆕🆕🆕 D645 — Psyspear's gate needs the DECLARED attack's charged cost, which no board read has: attack.ts
+      // `resolveDeclarationGates` answers it at declaration, so a run never reaches here with it. FALSE otherwise.
+      return false;
     case "yourPokemonKoedOnOpponentsLastTurn":
       // D271 — "any of your Pokémon were Knocked Out during your opponent's last
       // turn" (Unfair Stamp sv06-165, Hassel sv06-151/-205). The whole predicate
@@ -8396,6 +8400,9 @@ export function conditionNote(cond: BoardCondition): string {
     case "yourInPlayToHandAllowed":
       // 🆕🆕🆕 D572 — no printed clause (the gate is D385's, not the card's); named after the lock.
       return "your Pokémon in play and attached cards can be put into your hand";
+    case "extraEnergyBeyondAttackCost":
+      // 🆕🆕🆕 D645 — the printed clause (Psyspear), with the count.
+      return `this Pokémon has at least ${cond.extra} extra Energy attached (in addition to this attack's cost)`;
     case "yourPokemonKoedOnOpponentsLastTurn":
       // The printed clause verbatim — the family's THIRD full round-trip, and it
       // keeps the possessive "your opponent's last turn" that the predicate turns

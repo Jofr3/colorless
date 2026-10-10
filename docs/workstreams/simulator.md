@@ -30248,6 +30248,24 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D645 — the last one-offs (engine 0.528.0, `MATCH_RECORD_VERSION` stays 48)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D644 (`1b624a3b`), NOT committed. 3 texts / 5 printings (`me`) — after it every
+buildable legal `me` printing is built (Backtrack Badge, D644's drop, is the one `me` text left).
+
+- **Wild Growth** (Meganium `me01-010` / `mep-001`): the NEW `PassiveEffects.basicEnergyProvidesTwice`; continuous.ts
+  `doubledBasicEnergyType` (own board, §9 per holder, no stacking), read inside `unitsOf`, so a Basic {G} provides {G}{G} to every
+  provision reader. R-WGR1 / R-WGR2 ⚠️ UNRULED: card counts and Retreat Cost payment stay in cards.
+- **Slimy Sliding** (Goodra `me04-068` / `mep-077`): the NEW `PassiveEffects.retreatFailsOnTails`; continuous.ts `retreatCoinFlipSource`,
+  asked by turn.ts `retreat` after every check (one coin, `ABILITY_TRIGGERED` + `ABILITY_COIN_FLIP`); tails keeps the board and spends the
+  retreat. R-SLD1 / R-SLD2 / R-SLD3 ⚠️ UNRULED.
+- **Psyspear** (Deoxys `me04-032`, D629's drop): `CONDITIONAL_BENCH_SNIPE` over the NEW `BoardCondition` `extraEnergyBeyondAttackCost`
+  (`extraEnergyGateForClause`, not the shared table); attack.ts `resolveDeclarationGates` answers it at declaration against the charged
+  cost, so it never reaches a continuation. R-PSP1 ⚠️ UNRULED: provision units.
+- **MRV stays 48** (match.ts "STAYS 48 AT D645").
+- **Suite.** `lastOneOffsMeD645.test.ts` (20), census D645 block (2). +21 mutant rows, all KILLED. Census: attacks **2771 / 2771**,
+  abilities **610 / 610**, trainers **446 / 447**, 1262 `me` printings fully built. Sweep PENDING.
+
 ## D644 — Y1e: rule hooks, one printing each (engine 0.527.0, `MATCH_RECORD_VERSION` stays 48)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D643 (`0c50eeb2`), NOT committed. 5 texts / 5 printings (`me` + `30th`) —
@@ -30571,7 +30589,7 @@ registry objects.
   `splitAttackRequirementClause`, and a requirement row on `yourBasicEnergyInDiscardAtLeast` {F} 10 (a short pile is ATTACK_FAILED).
 - **Chilling Wings / Kaboom Needles** `30th-104`. `COMPOUND_CLAUSE_BREAK` also breaks after `.)`; the tail composes (D409).
 - **Assassin's Magic.** `CLAUSE_GATED_BENCH_COUNTERS`: the Benched placement behind `opponentActiveHasSpecialCondition`.
-- **Dropped and named.** Deoxys "Psyspear" (the gate reads the declared attack's cost; no `BoardCondition` or ctx carries it).
+- **Dropped and named.** Deoxys "Psyspear" (the gate reads the declared attack's cost; no `BoardCondition` or ctx carries it). [🆕🆕🆕 D645 (D539): BUILT at D645, resolved at declaration.]
 - **MRV stays 43.** One optional key on a parking op (match.ts "STAYS 43 AT D629"); a 0.511 rollback deals the flat amount (named).
 - **Suite.** `snipeSpreadRestMeD629.test.ts` (18), a census D629 block (1). +17 mutant rows, all KILLED; one D409 row re-pointed.
   Census: attacks **2,722 / 2,771**, 1166 `me` printings fully built. Sweep PENDING.
@@ -30992,7 +31010,7 @@ registry objects.
   objects for the `30th` `<em>` faces: `PHOTON_BULLETS` (the ex-only spread, no `ignoreWR`) and `STEALTHY_SLASH` [🆕🆕🆕 D612: RETIRED].
 - **7 texts / 13 `me` printings read, 5 keyed.** Mega Eelektross ex ×3 (Split Bomb, Disaster Shock), Ambipom ×2, Mega
   Skarmory ex ×2, Mandibuzz, Greninja ex ×3, Spectrier, Mewtwo ex ×3 — all 15 fully built. `sv` reader output byte-identical.
-- **WP30 rest, named.** Pikachu `30th-051`, Mismagius, Coalossal, Genesect, Seaking, Frosmoth, Ferrothorn `30th-104`, Deoxys. [🆕🆕🆕 D629 (D539): all but Deoxys BUILT at D629 (S1)]
+- **WP30 rest, named.** Pikachu `30th-051`, Mismagius, Coalossal, Genesect, Seaking, Frosmoth, Ferrothorn `30th-104`, Deoxys. [🆕🆕🆕 D629 (D539): all but Deoxys BUILT at D629 (S1)] [🆕🆕🆕 D645 (D539): Deoxys "Psyspear" BUILT at D645]
 - **Readings.** None new.
 - **Suite.** `snipeSpreadMeD608.test.ts` (23) and a census D608 block (3). +21 mutant rows; four rows re-pointed.
 - **Census.** Standard pool attacks **2,632 / 2,771**; 964 `me` printings fully built.

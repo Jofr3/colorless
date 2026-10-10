@@ -32,6 +32,7 @@ import {
   intoPlayOnlyViaOf,
   opposingRetreatBlocked,
   liveHandAttachMark,
+  retreatCoinFlipSource,
   pokemonPlayBarred,
   retreatLocked,
   // 🆕🆕🆕 D618 — Forest of Vitality's same-turn evolution, at the §10 ban.
@@ -61,6 +62,7 @@ import {
   switchInto,
 } from "./interpreter";
 import { programFor } from "./registry";
+import { flipCoin } from "./rng";
 import {
   runActiveBenchedTriggers,
   runBoardTrigger,
@@ -77,6 +79,7 @@ import {
   isImmobilized,
   makeInPlay,
   noConditions,
+  otherSeat,
   presentStatuses,
   withSide,
   without,
@@ -1092,6 +1095,25 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
     }
   }
 
+  // 🆕🆕🆕 §11 (D645) — Goodra "Slimy Sliding": a legal retreat flips ONE coin first, once every check above
+  // has passed (R-SLD1), under the holder's seat (`ABILITY_COIN_FLIP`'s contract). Tails: no Energy is
+  // discarded, nothing switches, and the retreat is still spent (R-SLD2). Heads: the retreat below, unchanged.
+  const slimy = retreatCoinFlipSource(state, action.seat);
+  const flips: GameEvent[] = [];
+  let rngState = state.rngState;
+  if (slimy !== undefined) {
+    const holderSeat = otherSeat(action.seat);
+    const [face, advanced] = flipCoin(rngState);
+    rngState = advanced;
+    flips.push(
+      { type: "ABILITY_TRIGGERED", seat: holderSeat, uid: slimy.uid, ability: slimy.ability },
+      { type: "ABILITY_COIN_FLIP", seat: holderSeat, uid: slimy.uid, ability: slimy.ability, result: face },
+    );
+    if (face === "tails") {
+      return ok({ ...state, rngState, allowances: { ...state.allowances, retreated: true } }, flips);
+    }
+  }
+
   // The cost payment is the shared "cards leave play for the discard" move
   // (types.ts) — the same primitive KO cleanup uses.
   const paid = discardFromStack(side, active, chosenSet);
@@ -1111,9 +1133,11 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
       active: { ...promoted, promotedTurn: state.turn },
       bench,
     }),
+    rngState,
     allowances: { ...state.allowances, retreated: true },
   };
   const events: GameEvent[] = [
+    ...flips,
     {
       type: "RETREATED",
       seat: action.seat,

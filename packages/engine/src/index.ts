@@ -20273,6 +20273,16 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.527.0 → **0.528.0** (D645 — THE LAST ONE-OFFS: 3 TEXTS / 5 PRINTINGS (`me`);
+    `MATCH_RECORD_VERSION` STAYS 48 (apps/api match.ts "STAYS 48 AT D645")). registry.ts: Meganium `me01-010` / `mep-001`
+    "Wild Growth" on the NEW `PassiveEffects.basicEnergyProvidesTwice` (continuous.ts `doubledBasicEnergyType`, read by
+    `unitsOf`, so every provision reader sees a Basic {G} as {G}{G}; card counts unchanged; R-WGR1, R-WGR2); Goodra
+    `me04-068` / `mep-077` "Slimy Sliding" on the NEW `PassiveEffects.retreatFailsOnTails` (continuous.ts
+    `retreatCoinFlipSource`, asked by turn.ts `retreat`: one coin, tails keeps the Active and its Energy and spends the
+    retreat; R-SLD1, R-SLD2, R-SLD3). effects.ts: Deoxys `me04-032` "Psyspear" through `CONDITIONAL_BENCH_SNIPE` over
+    the NEW `BoardCondition` `extraEnergyBeyondAttackCost`, answered at declaration by attack.ts
+    `resolveDeclarationGates` (R-PSP1). Dropped and named: none new; Backtrack Badge `me05-074` stays D644's.
+    `lastOneOffsMeD645.test.ts`.)
     🆕🆕🆕 engineVersion 0.526.0 → **0.527.0** (D644 — Y1e: RULE HOOKS, ONE PRINTING EACH, 5 TEXTS / 5 PRINTINGS (`me` +
     `30th`); `MATCH_RECORD_VERSION` STAYS 48 (apps/api match.ts "STAYS 48 AT D644")). registry.ts: Cinderace `me01-028`
     "Explosiveness" on the NEW `CardProgram.setupActiveFromHand` (setup.ts `explosivenessPlacement`, read by
@@ -20434,7 +20444,8 @@ import type { GameState, Seat } from "./types";
     `yourBasicEnergyInDiscardAtLeast`); `COMPOUND_CLAUSE_BREAK` breaks after `.)` too (Frosmoth "Chilling Wings",
     Ferrothorn `30th-104` "Kaboom Needles"); `CLAUSE_GATED_BENCH_COUNTERS` (Mismagius "Assassin's Magic"). The `sv`
     reader output is byte-identical (a before/after dump over both corpora: exactly the 7 sentences differ). Deoxys
-    `me04-032` "Psyspear" dropped and named (its gate reads the declared attack's cost). `snipeSpreadRestMeD629.test.ts`.)
+    `me04-032` "Psyspear" dropped and named (its gate reads the declared attack's cost) [🆕🆕🆕 D645 (D539): BUILT at D645 —
+    `extraEnergyBeyondAttackCost`, answered at declaration]. `snipeSpreadRestMeD629.test.ts`.)
     🆕🆕🆕 engineVersion 0.510.0 → **0.511.0** (D628 — A1: THE REST OF THE ON-BENCH / ON-MOVE ABILITIES, 3 TEXTS / 5
     `me` PRINTINGS, PLUS FINDING 0b (THE DECK BUILDER'S BASIC-ENERGY TEST); `MATCH_RECORD_VERSION` STAYS 43 (apps/api
     match.ts "STAYS 43 AT D628")). registry.ts: Meowth ex ×3 "Last-Ditch Catch" on D593's `TUCK_TAIL` (an
@@ -25796,7 +25807,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.527.0";
+export const engineVersion = "0.528.0";
 
 export type {
   ApplyResult,

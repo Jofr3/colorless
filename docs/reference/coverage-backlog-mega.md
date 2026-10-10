@@ -6,6 +6,24 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D645 update (engine 0.528.0) — the last one-offs (`MATCH_RECORD_VERSION` stays 48)
+
+3 texts / 5 printings (`lastOneOffsMeD645.test.ts`): Meganium "Wild Growth" `me01-010` / `mep-001` (the new
+`PassiveEffects.basicEnergyProvidesTwice` inside `unitsOf` — R-WGR1 / R-WGR2), Goodra "Slimy Sliding" `me04-068` / `mep-077` (the new
+`PassiveEffects.retreatFailsOnTails` at `retreat` — R-SLD1 … R-SLD3) and Deoxys "Psyspear" `me04-032` (the new `BoardCondition`
+`extraEnergyBeyondAttackCost`, resolved at declaration — R-PSP1). **Finished:** all 5. **Dropped:** none new. Every buildable legal `me`
+printing is now built; the one `me` text left is Backtrack Badge `me05-074` (D644's drop, persisted state), beside the 3 text-less `30th`
+Items.
+
+| Column | `me` built / units (D645) | Standard pool D645 |
+|---|---|---|
+| Attacks | 1,039 / 1,039 (+1) | **2,771 / 2,771** |
+| Abilities | 234 / 234 (+4) | **610 / 610** |
+| Trainers | 182 / 183 | **446 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+1262 `me` printings fully built (1257 + 5).
+
 ## 🆕 D644 update (engine 0.527.0) — Y1e, rule hooks, one printing each (`MATCH_RECORD_VERSION` stays 48)
 
 5 texts / 5 printings (`ruleHooksMeD644.test.ts`): Cinderace "Explosiveness" `me01-028` (the new `CardProgram.setupActiveFromHand` at
@@ -280,7 +298,7 @@ taken:** L1 (Cursed Roots `me04-039`, Electrified Incisors `me01-051`, Jet of In
 does-nothing requirement printed second, `ATTACK_DOES_NOTHING_SECOND`), Frosmoth "Chilling Wings" `me01-043` and Ferrothorn "Kaboom Needles"
 `30th-104` (the compound break after `.)`), Mismagius "Assassin's Magic" `me02.5-086` (a clause-gated Benched placement). **Finished:** all
 7. **Dropped and named:** Deoxys "Psyspear" `me04-032` (its gate reads the declared attack's cost, which no `BoardCondition` or the effect
-context carries).
+context carries). [🆕🆕🆕 D645 (D539): BUILT at D645 — `extraEnergyBeyondAttackCost`, resolved at declaration.]
 
 | Column | `me` built / units (D629) | Standard pool D629 |
 |---|---|---|
@@ -684,7 +702,7 @@ are literal cost-then-snipe compounds; Mandibuzz "Bone Sniper" uses the new `dam
 (the ex-only spread, no `ignoreWR`) and Greninja ex `30th-021` / `-148`. [🆕🆕🆕 D612: the `<em>` is normalised; Stealthy Slash ×2 is unkeyed and reader-built, Photon Bullets ×3 stays keyed] **Finished:** all 15 cards. **WP30 rest, named**
 (8 texts / 8 printings): Pikachu `30th-051` (markup + typed discard), Mismagius `me02.5-086` (gated counters), Coalossal
 `me02.5-120` (discard-pile gate behind a snipe), Genesect `me02-008` / Seaking `me05-014` (typed per-Energy snipe), Frosmoth
-`me01-043` / Ferrothorn `30th-104` (a clause after the parenthetical), Deoxys `me04-032` (extra-Energy gate on a bench snipe). [🆕🆕🆕 D629: all but Deoxys BUILT (S1); Deoxys dropped and named]
+`me01-043` / Ferrothorn `30th-104` (a clause after the parenthetical), Deoxys `me04-032` (extra-Energy gate on a bench snipe). [🆕🆕🆕 D629: all but Deoxys BUILT (S1); Deoxys dropped and named] [🆕🆕🆕 D645: Deoxys BUILT]
 
 | Column | `me` built / units (D608) | Standard pool D608 |
 |---|---|---|
@@ -1547,9 +1565,9 @@ group wins; the grouping is a reading aid, not a census figure).
 - 3× **Multi Adapter** — Each of your Pokémon that has "Rotom" in its name may have up to 2 Pokémon Tool cards attached. If this Ability goes away, discard Pokémon Tools from those Pokémon until only 1 remains on each. [🆕🆕🆕 D636: not taken — a two-Tool cap and a forced discard when the Ability goes away; owes its own bump (45 → 46)] [🆕🆕🆕 D637: not taken at the fossils' bump either; owes 46 → 47] [🆕🆕🆕 D640 (D539): Multi Adapter still unbuilt, owes 47 → 48.] [🆕🆕🆕 D643 (D539): Multi Adapter BUILT at D643 (47 → 48).]
 - 2× **Double Type** — As long as this Pokémon is in play, it is {F} and {P} type. [🆕🆕🆕 D586: BUILT]
 - 2× **Scale Up** — If this Pokémon has 6 or more Grass Energy attached, it gets +250 HP. [🆕🆕🆕 D610: BUILT]
-- 2× **Slimy Sliding** — When your opponent's Active Pokémon retreats, your opponent flips a coin. If tails, Energy for its Retreat Cost is not discarded, and they don't switch Pokémon. The effect of Slimy Sliding doesn't stack.
+- 2× **Slimy Sliding** — When your opponent's Active Pokémon retreats, your opponent flips a coin. If tails, Energy for its Retreat Cost is not discarded, and they don't switch Pokémon. The effect of Slimy Sliding doesn't stack. [🆕🆕🆕 D645: BUILT]
 - 2× **Tyrannically Gutsy** — If this Pokémon has any Special Energy attached, it gets +150 HP. [🆕🆕🆕 D610: BUILT]
-- 2× **Wild Growth** — Each Basic {G} Energy attached to all of your Pokémon provides {G}{G} Energy. The effect of Wild Growth doesn't stack. [🆕🆕🆕 D610 forward note: Scale Up's "6 or more {G} Energy" counts Energy CARDS (`countAttachedEnergy`, D128 / D391 / R-TRE2); with Wild Growth in play that choice decides whether three Basic {G} reach the threshold — settle it when this is built.]
+- 2× **Wild Growth** — Each Basic {G} Energy attached to all of your Pokémon provides {G}{G} Energy. The effect of Wild Growth doesn't stack. [🆕🆕🆕 D610 forward note: Scale Up's "6 or more {G} Energy" counts Energy CARDS (`countAttachedEnergy`, D128 / D391 / R-TRE2); with Wild Growth in play that choice decides whether three Basic {G} reach the threshold — settle it when this is built.] [🆕🆕🆕 D645: BUILT; R-WGR1 settles the note — card counts stay in cards]
 - 1× **Nighttime Byway** — As long as this Pokémon is on your Bench, your Active Pokémon's Retreat Cost is ColorlessColorless less. [🆕🆕🆕 D584: BUILT]
 - 1× **Scale Up** — If this Pokémon has 6 or more {G} Energy attached, it gets +250 HP. [🆕🆕🆕 D610: BUILT]
 
