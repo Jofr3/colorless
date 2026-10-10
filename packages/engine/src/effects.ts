@@ -6811,7 +6811,9 @@ export type EffectOp =
           prints typed variants; over all 640 corpus sentences the CHOSEN-target fold
           prints **zero** — a typed group here would resolve a sentence nobody prints
           (D190b), which is the same measured call `CHOSEN_ANY_TARGET`'s two-way vs
-          three-way tail already makes one anchor over.
+          three-way tail already makes one anchor over. [🆕🆕🆕 D629 (D539): true of the `sv` column
+          only — the `me` column prints two typed sentences (Bug's Cannon, Hydro Jet), read by their own
+          literal anchor into `perTypedEnergyOnSelf`; this rider and its anchor stay untyped.]
 
           🛑 **DOES THE `{per, count}` INTERFACE FIT HERE? NO, AND THE BLOCKER IS A NAME
           COLLISION RATHER THAN A SHAPE.** `AttackDamageBonus` is `{per: number; count:
@@ -7090,6 +7092,13 @@ export type EffectOp =
           the key can ride `phase.cont.pendingOp` — a widening read only where the candidates are built
           (`applyChoice` never re-derives them); `MATCH_RECORD_VERSION` holds at 42. */
       specialEnergyOnly?: true;
+      /** 🆕🆕🆕 **D629 — Genesect "Bug's Cannon" / Seaking "Hydro Jet"** (*"This attack does 20 damage
+          to 1 of your opponent's Pokémon for each {G} Energy attached to this Pokémon."*). The TYPED
+          twin of `perEnergyOnSelf`: `amount` × the attacker's attached Energy cards that provide the
+          type (continuous.ts `countAttachedEnergy`, by provision — D118). Folded in interpreter.ts
+          `snipeAmount` above the untyped line; 0 such Energy folds to 0, the silent no-op. Parks, so
+          the key can ride `phase.cont.pendingOp` — a widening; `MATCH_RECORD_VERSION` holds at 43. */
+      perTypedEnergyOnSelf?: BasicEnergyType;
     }
   /** Deal `per × N` ATTACK damage to the DEFENDER (the opponent's Active), where
       N is how many cards an earlier op filed under the `count` §9.2 slot —
@@ -18314,6 +18323,10 @@ const CLAUSE_GATED_OPPONENT_COUNTER_FOLD =
 // a literal: no other multiplier is printed on a chosen pick.
 const CLAUSE_GATED_CHOSEN_QUADRUPLE =
   /^If (.+), choose (\d+) of your opponent['’]s Pokémon and quadruple the number of damage counters on each of them\.$/;
+// 🆕🆕🆕 D629 — S1, Mismagius "Assassin's Magic" (`me02.5-086`, LOCAL D1): the shipped Benched counter
+// placement behind a clause-table gate (arm 6e-septies). "place" is read as "put" (`normaliseMeWording`).
+const CLAUSE_GATED_BENCH_COUNTERS =
+  /^If (.+), put (\d+) damage counters on 1 of your opponent['’]s Benched Pokémon\.$/;
 // 🆕🆕🆕 D624 — WP31c, five more literal `me` anchors (LOCAL D1, 2026-10-09), none printed in legal `sv`
 // (arm 6e-sexies). Dedenne "Tail Generator" ×2: `attachFromDiscard` at the count-scaled ceiling (NEW).
 const DISCARD_ATTACH_UP_TO_OPPONENT_ENERGY =
@@ -22724,6 +22737,14 @@ function boardConditionForClause(clause: string): BoardCondition | null {
 //     and the surviving half is the `^`, which is why the two anchors are now
 //     priced separately above rather than as one "fully anchored".
 const ATTACK_DOES_NOTHING = /^If (.+?), this attack does nothing\.(?: (.+))?$/;
+/** 🆕🆕🆕 D629 — the requirement printed SECOND (Coalossal "Tar Cannon", `me02.5-120`): *"This attack does
+    140 damage to 1 of your opponent's Pokémon. If you don't have 10 or more Basic {F} Energy cards in your
+    discard pile, this attack does nothing. (Don't apply …)"*. Group 1 is ONE *"This attack does …"* sentence
+    (no period inside — so a coin sentence like *"Flip a coin."* can never lead it), group 2 the clause, group 3
+    the optional Benched clarifier, which belongs to the snipe and goes back on the body. The same accounting
+    guard: an unmapped clause leaves the whole string loud. */
+const ATTACK_DOES_NOTHING_SECOND =
+  /^(This attack does [^.]+\.) If (.+?), this attack does nothing\.( \(Don['’]t apply Weakness and Resistance for Benched Pokémon\.\))?$/;
 /** The printed NEGATIVE clauses this family understands → the POSITIVE board
     fact the attack REQUIRES. Keyed char-for-char on the text between the leading
     "If " and the ", this attack does", and a Map for CONDITIONAL_DAMAGE_CLAUSES'
@@ -23029,6 +23050,13 @@ const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
   // D1): the Uxie / Azelf row at ONE name, the shipped `yourBenchHasNamed` (stack top, Bench only).
   // Its "…isn't affected by Weakness or Resistance." companion is Sawk's, split off as before.
   ["you don't have Lunatone on your Bench", { kind: "yourBenchHasNamed", name: "Lunatone" }],
+  // 🆕🆕🆕 D629 — Coalossal "Tar Cannon" (`me02.5-120`, {F}, 1 legal printing, LOCAL D1): Chandelure's
+  // `yourBasicEnergyInDiscardAtLeast` (D376, printed CARDS in the pile) under the cancel consequent. The
+  // sentence is the SECOND of the attack's text, so it is reached by `ATTACK_DOES_NOTHING_SECOND`.
+  [
+    "you don't have 10 or more Basic {F} Energy cards in your discard pile",
+    { kind: "yourBasicEnergyInDiscardAtLeast", energy: "Fighting", count: 10 },
+  ],
 ]);
 
 /** The board fact an attack REQUIRES in order to do anything, or null when the
@@ -23050,7 +23078,11 @@ const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
     the only placement that a future third consequent inherits for free. */
 export function deriveAttackRequirement(text: string): BoardCondition | null {
   const nothing = ATTACK_DOES_NOTHING.exec(text.trim());
-  if (nothing === null) return null;
+  // 🆕🆕🆕 D629 — the clause printed second (Tar Cannon), read off the same table.
+  if (nothing === null) {
+    const second = ATTACK_DOES_NOTHING_SECOND.exec(text.trim());
+    return second === null ? null : (literalClauseRow(ATTACK_REQUIREMENT_CLAUSES, second[2] ?? "") ?? null);
+  }
   return literalClauseRow(ATTACK_REQUIREMENT_CLAUSES, nothing[1] ?? "") ?? null;
 }
 
@@ -23096,7 +23128,13 @@ export function splitAttackRequirementClause(
 ): { clause: string; body: string } | null {
   const trimmed = text.trim();
   const nothing = ATTACK_DOES_NOTHING.exec(trimmed);
-  if (nothing === null) return null;
+  // 🆕🆕🆕 D629 — the clause printed SECOND: the body is the sentence before it plus the clarifier
+  // after it, under the same accounting guard.
+  if (nothing === null) {
+    const second = ATTACK_DOES_NOTHING_SECOND.exec(trimmed);
+    if (second === null || literalClauseRow(ATTACK_REQUIREMENT_CLAUSES, second[2] ?? "") === undefined) return null;
+    return { clause: `If ${second[2] ?? ""}, this attack does nothing.`, body: `${second[1] ?? ""}${second[3] ?? ""}` };
+  }
   const body = (nothing[2] ?? "").trim();
   // A leading sentence with nothing behind it is not a split — the whole string
   // already IS the clause and `deriveAttackRequirement` reads it unchanged. This
@@ -25416,6 +25454,18 @@ const TYPED_SELF_DISCARD = new RegExp(
 const SELF_DISCARD_THEN_BENCH_SNIPE = new RegExp(
   `^Discard (all|\\d+)(?: \\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\})?` +
     ` Energy from this Pokémon(?:\\. This|, and this) ${ALSO_BENCHED_SNIPE_BODY}$`,
+);
+// 🆕🆕🆕 D629 — S1, two literal `me` / `30th` snipe anchors (LOCAL D1, 2026-10-10), neither printed in
+// legal `sv`; map-built, so they sit below `ENERGY_TYPE_BY_CODE` (arm 9b″).
+//   Genesect "Bug's Cannon" `me02-008` / Seaking "Hydro Jet" `me05-014` — the any-target hit scaled by the
+//     attacker's Energy of ONE type (the NEW `damageChosen.perTypedEnergyOnSelf`).
+//   Pikachu "Lightning Crash" `30th-051` — D401's discard-all cost narrowed to one type (the D477
+//     `providesEnergy` filter), then the any-target hit.
+const CHOSEN_ANY_TARGET_PER_TYPED_ENERGY = new RegExp(
+  `^This attack does (\\d+) damage to 1 of your opponent['’]s Pokémon for each \\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} Energy attached to this Pokémon\\.(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
+const SELF_DISCARD_TYPED_ALL_THEN_ANY_TARGET = new RegExp(
+  `^Discard all \\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} Energy from this Pokémon, and this attack does (\\d+) damage to 1 of your opponent['’]s Pokémon\\.(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
 );
 
 // 🆕🆕 D402 — THE DISCARD-COUNT-SCALED ATTACK: THE §9.2 RECORD READ AS A DAMAGE
@@ -30328,6 +30378,22 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       ];
     }
   }
+  // 🆕🆕🆕 D629 — Assassin's Magic: the bare Benched placement's op (counters, not `deals`) behind the clause.
+  match = CLAUSE_GATED_BENCH_COUNTERS.exec(effect);
+  if (match !== null) {
+    const benchCounterGate = boardConditionForClause(match[1] ?? "");
+    const benchCounters = Number(match[2]);
+    if (benchCounterGate !== null && benchCounters >= 1) {
+      return [
+        {
+          op: "conditionGate",
+          cond: benchCounterGate,
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [{ op: "damageChosen", target: "opponentBench", amount: benchCounters * 10, count: 1, source: "attack" }],
+        },
+      ];
+    }
+  }
 
   // 6e-sexies. 🆕🆕🆕 D624 — WP31c's five sentences; the new pieces are `attachFromDiscard.max`
   //     `"opponentEnergyInPlay"`, `randomFromOpponentHand.untilHandSize` and the `pokemonWithResistance` filter.
@@ -31317,6 +31383,36 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
       { op: "damageChosen", target: "opponentAny", amount: Number(match[1]) * 10, count: 1, source: "attack" },
     ];
+  }
+
+  // 9b″. 🆕🆕🆕 D629 — S1's two typed snipe anchors (see the anchors). The class is built from the map's
+  //     keys, so the lookup cannot miss; the check satisfies `noUncheckedIndexedAccess`. A printed 0 stays loud.
+  match = CHOSEN_ANY_TARGET_PER_TYPED_ENERGY.exec(effect);
+  if (match !== null) {
+    const perType = ENERGY_TYPE_BY_CODE[match[2] ?? ""];
+    if (perType !== undefined && Number(match[1]) >= 1) {
+      return [
+        {
+          op: "damageChosen",
+          target: "opponentAny",
+          amount: Number(match[1]),
+          count: 1,
+          source: "attack",
+          deals: true,
+          perTypedEnergyOnSelf: perType,
+        },
+      ];
+    }
+  }
+  match = SELF_DISCARD_TYPED_ALL_THEN_ANY_TARGET.exec(effect);
+  if (match !== null) {
+    const shedType = ENERGY_TYPE_BY_CODE[match[1] ?? ""];
+    if (shedType !== undefined && Number(match[2]) >= 1) {
+      return [
+        { op: "discardEnergy", from: "yourActive", filter: { kind: "providesEnergy", energyType: shedType }, count: "all" },
+        { op: "damageChosen", target: "opponentAny", amount: Number(match[2]), count: 1, source: "attack", deals: true },
+      ];
+    }
   }
 
   // 9c. 🆕🆕🆕 D489 — "Discard up to N Energy cards from your hand. This attack does A
@@ -39910,8 +40006,11 @@ function claimedByAnyReader(text: string): boolean {
 /** The printed sentence break inside one attack's effect text: a period, then
     whitespace, then a capital or an opening parenthesis. The lookahead is what
     keeps `etc. have` and `sv08.5` from being breaks, and it is why this is a regex
-    rather than a scanner — see the parenthesis measurement on the splitter below. */
-const COMPOUND_CLAUSE_BREAK = /(?<=\.)\s+(?=[A-Z(])/;
+    rather than a scanner — see the parenthesis measurement on the splitter below.
+    🆕🆕🆕 D629 — a period CLOSING a parenthetical (`.)`) is a break too, so a sentence printed AFTER the
+    Benched clarifier is a tail (Frosmoth "Chilling Wings", Ferrothorn "Kaboom Needles"); the head keeps
+    the clarifier. Measured over both corpora: exactly those two sentences change. */
+const COMPOUND_CLAUSE_BREAK = /(?<=\.\)?)\s+(?=[A-Z(])/;
 
 /** The `. `-joined COMPOUND, split into a head and a TRAILING effect clause —
     `null` unless the whole string is refused by every reader, the tail is a
@@ -39962,7 +40061,9 @@ const COMPOUND_CLAUSE_BREAK = /(?<=\.)\s+(?=[A-Z(])/;
 
     ⚠️ **IT SPLITS AT THE LAST BOUNDARY, SO THE HEAD MAY ITSELF BE A COMPOUND — AND
     THEN IT IS REFUSED, BECAUSE NO READER CLAIMS A COMPOUND.** All five printed
-    members have exactly two clauses (asserted), so recursion would be scaffolding
+    members have exactly two clauses (asserted) [🆕🆕🆕 D629 (D539): the `sv` five; the two `me` compounds
+    D629 admits (Chilling Wings, Kaboom Needles) split into THREE parts — the head is the first two, a
+    sentence and its clarifier, which a reader claims whole], so recursion would be scaffolding
     for a family of zero — `splitAttackGateClause`'s own "build the narrow thing"
     verdict, at the other end of the sentence. A three-clause compound whose parts
     are all readable is the trigger to revisit that, and it stays LOUD until then.

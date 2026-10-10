@@ -343,19 +343,26 @@ describe("D530 §1 — file line 551 derives to EXACTLY the count-1 opponentBenc
     expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
   });
 
-  it("🛑 the anchor is WHOLE-SENTENCE at BOTH ends: a PREFIXED and a SUFFIXED print are null on every reader and every splitter (`D530-anchor-loses-the-head` / `-anchor-loses-the-tail`)", () => {
+  it("🛑 the anchor is WHOLE-SENTENCE at BOTH ends: a PREFIXED and a SUFFIXED print are null on every reader and every splitter (`D530-anchor-loses-the-head` / `-anchor-loses-the-tail`) (🆕🆕🆕 D629 (D539): WITHDRAWN for the trailing splitter on the SUFFIXED print — it composes since D629)", () => {
     const prefixed = `Draw a card. ${PRINTED}`;
     const suffixed = `${PRINTED} Draw a card.`;
     for (const s of [prefixed, suffixed]) {
       expect(legalAttackCorpus().some(([, t]) => t === s), s).toBe(false);
       for (const reader of READERS) expect(reader(s), `${reader.name} on ${s.slice(0, 12)}…`).toBeNull();
-      for (const splitter of SPLITTERS) expect(splitter(s), `${splitter.name} on ${s.slice(0, 12)}…`).toBeNull();
+      for (const splitter of SPLITTERS) {
+        // 🆕🆕🆕 D629 — the trailing splitter composes the suffixed print (see below); every other splitter is null.
+        if (s === suffixed && splitter === splitAttackTrailingClause) continue;
+        expect(splitter(s), `${splitter.name} on ${s.slice(0, 12)}…`).toBeNull();
+      }
       expect(resolvedByAnyReader(s), s).toBe(false);
     }
     // ⚠️ MEASURED, not assumed: unlike D528's row, the trailing splitter does NOT compose on the
     // suffixed print here (its own guard refuses this head), so the suffixed sentence is null
     // everywhere rather than `{head, tail}` — pinned as read.
-    expect(splitAttackTrailingClause(suffixed)).toBeNull();
+    // [🆕🆕🆕 D629 (D539): WITHDRAWN — `COMPOUND_CLAUSE_BREAK` breaks after `.)` since D629, so the
+    // head is the whole printed sentence (clarifier kept) and the tail "Draw a card." is claimed: the
+    // suffixed print COMPOSES. The readers' `$` is still pinned by the loop above.]
+    expect(splitAttackTrailingClause(suffixed)).toEqual({ head: PRINTED, tail: "Draw a card." });
   });
 
   it("🛑 the single-axis near-misses: `2 of`, `Pokémon` without `Benched`, and `on this Pokémon` are null on EVERY reader — none is a printed sentence (🆕🆕🆕 D608 (D539): ~~`Pokémon` without `Benched`~~ — WITHDRAWN: the `me` serie prints it (Greninja ex \"Stealthy Slash\", 30 per counter) and it reads at `opponentAny` since D608; the other two still hold, and none of the three is printed in `sv`)", () => {
@@ -761,7 +768,7 @@ const RAW: Record<string, string> = (
 describe("D530 §6 — the version steps and the bytes this suite drove are the bytes that shipped", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.511.0");
+    expect(engineVersion).toBe("0.512.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

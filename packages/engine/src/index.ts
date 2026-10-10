@@ -20271,6 +20271,17 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.511.0 → **0.512.0** (D629 — S1: THE REST OF THE SNIPE / SPREAD WORDING, 7 TEXTS / 7
+    PRINTINGS (`me` + `30th`); `MATCH_RECORD_VERSION` STAYS 43 (apps/api match.ts "STAYS 43 AT D629")). effects.ts:
+    the NEW `damageChosen.perTypedEnergyOnSelf` (Genesect "Bug's Cannon", Seaking "Hydro Jet"; folded in
+    interpreter.ts `snipeAmount` above the untyped line) on the literal `CHOSEN_ANY_TARGET_PER_TYPED_ENERGY`;
+    `SELF_DISCARD_TYPED_ALL_THEN_ANY_TARGET` (Pikachu `30th-051` "Lightning Crash", D477's `providesEnergy` filter);
+    `ATTACK_DOES_NOTHING_SECOND`, the requirement printed second, read by `deriveAttackRequirement` and
+    `splitAttackRequirementClause` (Coalossal "Tar Cannon", a NEW `ATTACK_REQUIREMENT_CLAUSES` row on the shipped
+    `yourBasicEnergyInDiscardAtLeast`); `COMPOUND_CLAUSE_BREAK` breaks after `.)` too (Frosmoth "Chilling Wings",
+    Ferrothorn `30th-104` "Kaboom Needles"); `CLAUSE_GATED_BENCH_COUNTERS` (Mismagius "Assassin's Magic"). The `sv`
+    reader output is byte-identical (a before/after dump over both corpora: exactly the 7 sentences differ). Deoxys
+    `me04-032` "Psyspear" dropped and named (its gate reads the declared attack's cost). `snipeSpreadRestMeD629.test.ts`.)
     🆕🆕🆕 engineVersion 0.510.0 → **0.511.0** (D628 — A1: THE REST OF THE ON-BENCH / ON-MOVE ABILITIES, 3 TEXTS / 5
     `me` PRINTINGS, PLUS FINDING 0b (THE DECK BUILDER'S BASIC-ENERGY TEST); `MATCH_RECORD_VERSION` STAYS 43 (apps/api
     match.ts "STAYS 43 AT D628")). registry.ts: Meowth ex ×3 "Last-Ditch Catch" on D593's `TUCK_TAIL` (an
@@ -25629,7 +25640,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.511.0";
+export const engineVersion = "0.512.0";
 
 export type {
   ApplyResult,

@@ -606,11 +606,9 @@ describe("§2 — `deriveAttackEffect` reads the count clause as one op rider", 
       ["a printed 0 arity", SCALED_20.replace("to 1 of", "to 0 of"), SCALED_20],
       // the TYPED spelling is deliberately NOT admitted: zero legal printings carry it,
       // so a `(?:(.+) )?` group here would resolve a sentence nobody prints (D190b).
-      [
-        "a typed Energy clause",
-        SCALED_20.replace("for each Energy", "for each {L} Energy"),
-        SCALED_20,
-      ],
+      // [🆕🆕🆕 D629 (D539): WITHDRAWN — the `me` column prints it twice (Bug's Cannon, Hydro Jet), and
+      // the literal `CHOSEN_ANY_TARGET_PER_TYPED_ENERGY` reads it with the NEW `perTypedEnergyOnSelf`
+      // (this anchor still refuses it); the pair is asserted read below the loop.]
       // the count clause must name THIS Pokémon; the board-wide zone is the DEFENDER
       // fold's spelling and has no printing on a chosen-target hit at all
       [
@@ -634,6 +632,10 @@ describe("§2 — `deriveAttackEffect` reads the count clause as one op rider", 
       expect(deriveAttackEffect(refused), `REFUSED: ${why}`).toBeNull();
       expect(deriveAttackEffect(admitted), `ADMITTED beside ${why}`).not.toBeNull();
     }
+    // 🆕🆕🆕 D629 — the typed spelling is read, by its own anchor, as the typed rider.
+    expect(deriveAttackEffect(SCALED_20.replace("for each Energy", "for each {L} Energy"))?.[0]).toMatchObject({
+      perTypedEnergyOnSelf: "Lightning",
+    });
   });
 });
 
@@ -698,7 +700,7 @@ describe("§3 — a new optional rider on a PERSISTED op, and the record version
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.511.0");
+    expect(engineVersion).toBe("0.512.0");
   });
 });
 

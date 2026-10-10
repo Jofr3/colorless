@@ -30247,6 +30247,22 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D629 — S1: the rest of the snipe / spread wording (engine 0.512.0, `MATCH_RECORD_VERSION` stays 43)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D628 (`23b660d6`), NOT committed. 7 texts / 7 printings.
+
+- **Bug's Cannon / Hydro Jet.** The literal `CHOSEN_ANY_TARGET_PER_TYPED_ENERGY` and the NEW `damageChosen.perTypedEnergyOnSelf`
+  (the attacker's Energy cards providing the type; `snipeAmount`).
+- **Lightning Crash** `30th-051`. `SELF_DISCARD_TYPED_ALL_THEN_ANY_TARGET`: discard every {L}-providing Energy, then the any-target hit.
+- **Tar Cannon.** `ATTACK_DOES_NOTHING_SECOND` (the requirement printed after the snipe sentence) in `deriveAttackRequirement` /
+  `splitAttackRequirementClause`, and a requirement row on `yourBasicEnergyInDiscardAtLeast` {F} 10 (a short pile is ATTACK_FAILED).
+- **Chilling Wings / Kaboom Needles** `30th-104`. `COMPOUND_CLAUSE_BREAK` also breaks after `.)`; the tail composes (D409).
+- **Assassin's Magic.** `CLAUSE_GATED_BENCH_COUNTERS`: the Benched placement behind `opponentActiveHasSpecialCondition`.
+- **Dropped and named.** Deoxys "Psyspear" (the gate reads the declared attack's cost; no `BoardCondition` or ctx carries it).
+- **MRV stays 43.** One optional key on a parking op (match.ts "STAYS 43 AT D629"); a 0.511 rollback deals the flat amount (named).
+- **Suite.** `snipeSpreadRestMeD629.test.ts` (18), a census D629 block (1). +17 mutant rows, all KILLED; one D409 row re-pointed.
+  Census: attacks **2,722 / 2,771**, 1166 `me` printings fully built. Sweep PENDING.
+
 ## D628 — A1: the rest of the on-bench / on-move Abilities, plus finding 0b (engine 0.511.0, `MATCH_RECORD_VERSION` stays 43)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D627 (`ccdebcc8`), NOT committed. 3 texts / 5 `me` printings.
@@ -30662,7 +30678,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   objects for the `30th` `<em>` faces: `PHOTON_BULLETS` (the ex-only spread, no `ignoreWR`) and `STEALTHY_SLASH` [🆕🆕🆕 D612: RETIRED].
 - **7 texts / 13 `me` printings read, 5 keyed.** Mega Eelektross ex ×3 (Split Bomb, Disaster Shock), Ambipom ×2, Mega
   Skarmory ex ×2, Mandibuzz, Greninja ex ×3, Spectrier, Mewtwo ex ×3 — all 15 fully built. `sv` reader output byte-identical.
-- **WP30 rest, named.** Pikachu `30th-051`, Mismagius, Coalossal, Genesect, Seaking, Frosmoth, Ferrothorn `30th-104`, Deoxys.
+- **WP30 rest, named.** Pikachu `30th-051`, Mismagius, Coalossal, Genesect, Seaking, Frosmoth, Ferrothorn `30th-104`, Deoxys. [🆕🆕🆕 D629 (D539): all but Deoxys BUILT at D629 (S1)]
 - **Readings.** None new.
 - **Suite.** `snipeSpreadMeD608.test.ts` (23) and a census D608 block (3). +21 mutant rows; four rows re-pointed.
 - **Census.** Standard pool attacks **2,632 / 2,771**; 964 `me` printings fully built.

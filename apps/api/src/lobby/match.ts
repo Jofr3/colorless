@@ -2159,6 +2159,14 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 43 AT D629 — S1 ADDS ONE OPTIONAL `damageChosen` KEY (`perTypedEnergyOnSelf`), READER ANCHORS, ONE
+    REQUIREMENT ROW AND A WIDER COMPOUND BREAK; NO PROMPT, PHASE, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD OR EVENT.**
+    (Placed ABOVE the D628 block.) Every program is derived from the printed text at the attack, so the 7 faces in a v43
+    `cardPool` (no face changes) read the new programs mid-match. What can be persisted is shipped shape: the snipes park
+    the shipped `choosePokemonMulti`, and the typed op rides `phase.cont.pendingOp`. Rollback reading, NAMED: a 0.511
+    reader resumes a parked Bug's Cannon / Hydro Jet op without the key and deals the flat `amount` (20 / 30), not the
+    per-Energy product. The requirement and the gate are read before any park.
+
     🆕🆕🆕 **STAYS 43 AT D628 — A1 ADDS TWO REGISTRY OBJECTS, A TRIGGER ROW ON `TUCK_TAIL`, ONE `BoardCondition` MEMBER,
     ONE `AttachTargetRiders` MEMBER AND THREE OPTIONAL `attachFromHand` KEYS; NO PROMPT, PHASE, STAGE SHAPE, SIDE KEY,
     `InPlayPokemon` FIELD OR EVENT.** (Placed ABOVE the D627 block.) Every program is keyed by ID, so the 5 `me` faces in

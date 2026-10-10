@@ -75,11 +75,12 @@ describe("D586 §1 — the texts: 8 attack sentences / 17 printings, plus Carbin
     for (const [text] of SENTENCES) expect(resolvedByAnyReader(text), text).toBe(true);
   });
 
-  it("the near miss stays unbuilt: Abyss Eye's clause with a damage-counter consequent is not claimed", () => {
+  it("the near miss ~~stays unbuilt~~: Abyss Eye's clause with a damage-counter consequent ~~is not claimed~~ (🆕🆕🆕 D629 (D539): WITHDRAWN — Mismagius \"Assassin's Magic\" is built at D629, `CLAUSE_GATED_BENCH_COUNTERS`)", () => {
     const near =
       "If your opponent's Active Pokémon is affected by a Special Condition, place 6 damage counters on 1 of your opponent's Benched Pokémon.";
     expect(meAttackCorpus().some(([, text]) => text === near)).toBe(true);
-    expect(resolvedByAnyReader(near)).toBe(false);
+    // 🆕🆕🆕 D629 — claimed now: the clause table's row gates the shipped Benched placement.
+    expect(resolvedByAnyReader(near)).toBe(true);
   });
 });
 
@@ -461,7 +462,7 @@ describe("D586 §8 — Infernal Slash: discard 4 Basic {R} from hand, or the att
 });
 
 describe("D586 §9 — the version", () => {
-  it("is built at engine 0.511.0", () => {
-    expect(engineVersion).toBe("0.511.0");
+  it("is built at engine 0.512.0", () => {
+    expect(engineVersion).toBe("0.512.0");
   });
 });

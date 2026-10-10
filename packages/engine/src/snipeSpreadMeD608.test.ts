@@ -3,7 +3,12 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
 import { normalizeCardText } from "./cardText";
-import { deriveAttackEffect, deriveAttackOptionalCostBoost, optionalCostBoostProgram } from "./effects";
+import {
+  deriveAttackEffect,
+  deriveAttackOptionalCostBoost,
+  optionalCostBoostProgram,
+  splitAttackTrailingClause,
+} from "./effects";
 import type { GameAction, GameEvent, GameState, PokemonRef, Seat } from "./index";
 import { applyAction, createGame, engineVersion } from "./index";
 import { programFor } from "./registry";
@@ -76,7 +81,8 @@ const KEYED: readonly (readonly [string, readonly string[]])[] = [
   [STEALTHY_SLASH_EM, ["30th-021", "30th-148"]],
 ];
 
-/** WP30's rest, named: each needs vocabulary beyond this slice (8 texts / 8 printings). */
+/** WP30's rest, named: each needs vocabulary beyond this slice (8 texts / 8 printings).
+    [🆕🆕🆕 D629 (D539): seven BUILT at D629 (S1); Psyspear `me04-032` stays unbuilt.] */
 const WP30_REST: readonly (readonly [string, string])[] = [
   // tcgdex markup (WP06) AND a typed self-discard in front of the any-target hit.
   // 🆕🆕🆕 D612 — the normalised text (WP06): the markup is gone; the typed self-discard stays unread.
@@ -104,6 +110,7 @@ const WP30_REST: readonly (readonly [string, string])[] = [
     "me05-014",
   ],
   // a clause AFTER the parenthetical (the trailing splitter cuts at the first period).
+  // [🆕🆕🆕 D629 (D539): WITHDRAWN — `COMPOUND_CLAUSE_BREAK` breaks after `.)` too; both compose since D629.]
   [
     "This attack does 20 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) Your opponent's Active Pokémon is now Asleep.",
     "me01-043",
@@ -152,11 +159,12 @@ describe("D608 §1 — the texts", () => {
     }
   });
 
-  it("WP30's rest stays unbuilt: 8 texts / 8 printings, named", () => {
+  it("WP30's rest ~~stays unbuilt~~: 8 texts / 8 printings, named (🆕🆕🆕 D629 (D539): WITHDRAWN for seven — S1 builds all but Deoxys `me04-032` \"Psyspear\"; `snipeSpreadRestMeD629.test.ts`)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, id] of WP30_REST) {
       expect([id, me.get(text)]).toEqual([id, 1]);
-      expect(resolvedByAnyReader(text), id).toBe(false);
+      // 🆕🆕🆕 D629 — seven are built (two by composition); Psyspear alone stays unread.
+      expect([id, resolvedByAnyReader(text) || splitAttackTrailingClause(text) !== null]).toEqual([id, id !== "me04-032"]);
       expect(programFor(id), id).toBeUndefined();
     }
   });
@@ -609,6 +617,6 @@ describe("D608 §7 — Stealthy Slash and Photon Bullets on a board", () => {
 
 describe("D608 §8 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.511.0");
+    expect(engineVersion).toBe("0.512.0");
   });
 });

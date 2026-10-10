@@ -1,4 +1,4 @@
-import type { Attack, Card } from "@luminous/schema";
+import type { Attack, BasicEnergyType, Card } from "@luminous/schema";
 import {
   activeTop,
   applyDamageModifier,
@@ -12861,6 +12861,7 @@ function snipeAmount(
     perRecorded?: EffectSlot;
     perDamageCounterOnTarget?: true;
     perDiscardPileCard?: CardFilter;
+    perTypedEnergyOnSelf?: BasicEnergyType;
   },
   state: GameState,
   ctx: EffectContext,
@@ -12886,6 +12887,12 @@ function snipeAmount(
   // are three of them (🆕🆕🆕 D567 NOTE (D539): five now — turnedPrize/revealed; 🆕🆕🆕 D579 (D539): SIX now — `"placed"`, one entry per damage counter placed; the address argument only strengthens), so the rider names the one it reads (see effects.ts).
   if (op.perRecorded !== undefined)
     return op.amount * recorded(record, op.perRecorded).length;
+  // 🆕🆕🆕 D629 — the TYPED twin of the `perEnergyOnSelf` line (Bug's Cannon, Hydro Jet): the attacker's Energy cards
+  // that provide the printed type. Placed ABOVE that line, which returns for every other op.
+  if (op.perTypedEnergyOnSelf !== undefined) {
+    const typedHolder = activeTop(state, ctx.seat);
+    return typedHolder === null ? 0 : op.amount * countAttachedEnergy(state, typedHolder.active, op.perTypedEnergyOnSelf);
+  }
   // 🆕🆕🆕 **D538 — THE FIFTH RIDER, AND IT IS FOUR LINES BECAUSE THE READER ALREADY
   // LIVES IN THIS FILE.** `countCardsInDiscardPile` is an `export function` here (the
   // registry's Energy-Retrieval reader), so the printed *"for each <noun> in your

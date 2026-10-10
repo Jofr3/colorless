@@ -807,7 +807,7 @@ describe("D590 §10b — Aqua Return over an evolution stack", () => {
 });
 
 describe("D590 §11 — the version", () => {
-  it("is built at engine 0.511.0", () => {
-    expect(engineVersion).toBe("0.511.0");
+  it("is built at engine 0.512.0", () => {
+    expect(engineVersion).toBe("0.512.0");
   });
 });

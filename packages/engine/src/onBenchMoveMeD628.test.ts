@@ -441,7 +441,7 @@ describe("D628 §4 — Lethargic Charge: from the Bench, the chosen Energy card 
 });
 
 describe("D628 §5 — the version", () => {
-  it("is built at engine 0.511.0", () => {
-    expect(engineVersion).toBe("0.511.0");
+  it("is built at engine 0.512.0", () => {
+    expect(engineVersion).toBe("0.512.0");
   });
 });

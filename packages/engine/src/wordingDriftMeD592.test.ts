@@ -203,7 +203,13 @@ describe("D592 §2 — the table cannot reach an `sv` sentence", () => {
       expect(unbuilt).toContain(text);
       expect(deriveAttackEffect(text), text).not.toBeNull();
     }
-    const built = [powerfulHand, barrage, sneaky, furtive, matcha];
+    // 🆕🆕🆕 D629 (D539): and one more — Mismagius "Assassin's Magic" (`CLAUSE_GATED_BENCH_COUNTERS`, read
+    // after this table rewrote its lower-case "place") is built by S1.
+    const assassin =
+      "If your opponent's Active Pokémon is affected by a Special Condition, place 6 damage counters on 1 of your opponent's Benched Pokémon.";
+    expect(unbuilt).toContain(assassin);
+    expect(deriveAttackEffect(assassin)).not.toBeNull();
+    const built = [powerfulHand, barrage, sneaky, furtive, matcha, assassin];
     for (const text of unbuilt.filter((t) => !built.includes(t))) {
       expect(deriveAttackEffect(text), text).toBeNull();
     }
@@ -492,7 +498,7 @@ describe("D592 §6 — Claw of Darkness and Thunder on a board", () => {
 });
 
 describe("D592 §7 — the version", () => {
-  it("is built at engine 0.511.0", () => {
-    expect(engineVersion).toBe("0.511.0");
+  it("is built at engine 0.512.0", () => {
+    expect(engineVersion).toBe("0.512.0");
   });
 });

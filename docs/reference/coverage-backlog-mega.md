@@ -6,6 +6,24 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D629 update (engine 0.512.0) — S1, the rest of the snipe / spread wording (`MATCH_RECORD_VERSION` stays 43)
+
+7 texts / 7 printings (`snipeSpreadRestMeD629.test.ts`): Genesect "Bug's Cannon" `me02-008` and Seaking "Hydro Jet" `me05-014` (the NEW
+`damageChosen.perTypedEnergyOnSelf`), Pikachu "Lightning Crash" `30th-051` (a typed discard-all), Coalossal "Tar Cannon" `me02.5-120` (a
+does-nothing requirement printed second, `ATTACK_DOES_NOTHING_SECOND`), Frosmoth "Chilling Wings" `me01-043` and Ferrothorn "Kaboom Needles"
+`30th-104` (the compound break after `.)`), Mismagius "Assassin's Magic" `me02.5-086` (a clause-gated Benched placement). **Finished:** all
+7. **Dropped and named:** Deoxys "Psyspear" `me04-032` (its gate reads the declared attack's cost, which no `BoardCondition` or the effect
+context carries).
+
+| Column | `me` built / units (D629) | Standard pool D629 |
+|---|---|---|
+| Attacks | 990 / 1,039 (+7) | **2,722 / 2,771** |
+| Abilities | 201 / 234 | **577 / 610** |
+| Trainers | 168 / 183 | **432 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1166** (1159 + 7).
+
 ## 🆕 D628 update (engine 0.511.0) — A1, the rest of the on-bench / on-move Abilities (`MATCH_RECORD_VERSION` stays 43)
 
 3 texts / 5 `me` printings (`onBenchMoveMeD628.test.ts`): Meowth ex "Last-Ditch Catch" ×3 `me03-062` / `-107` / `-121` (an
@@ -313,8 +331,8 @@ cardText.ts `normalizeCardText` at ingest (map.ts) and at read (cards.ts `cardOf
 `swsh10.5` re-ingested, the `me` corpus regenerated (451 → 442 sentences). The 18 "markup only" texts / 21 `30th` printings below
 are BUILT on shipped readers (`cardTextD612.test.ts`, census D612 block). `INFERNO_X` and `STEALTHY_SLASH` retired (their clean text
 is reader-built; R-IX1 resolved); Photon Bullets ×3 stays keyed. Still unbuilt, now as clean text in their packages: Elemental Blast
-`30th-121`, Lightning Crash `30th-051` (WP30), Charge-Up Dash `30th-042` (WP13), Overwriting Bolt `30th-040`, Pika Chain `30th-034`
-(WP28b) [🆕🆕🆕 D623: BUILT], Kaboom Needles `30th-104` (WP30). The data gap below ("43 `me` rows carry tcgdex HTML") is closed on the LOCAL D1; the
+`30th-121`, Lightning Crash `30th-051` (WP30) [🆕🆕🆕 D629: BUILT], Charge-Up Dash `30th-042` (WP13), Overwriting Bolt `30th-040`, Pika Chain `30th-034`
+(WP28b) [🆕🆕🆕 D623: BUILT], Kaboom Needles `30th-104` (WP30) [🆕🆕🆕 D629: BUILT]. The data gap below ("43 `me` rows carry tcgdex HTML") is closed on the LOCAL D1; the
 remote D1 still needs the re-ingest, run with the D612 ingest code.
 
 | Column | `me` built / units (D612) | Standard pool D612 |
@@ -398,7 +416,7 @@ are literal cost-then-snipe compounds; Mandibuzz "Bone Sniper" uses the new `dam
 (the ex-only spread, no `ignoreWR`) and Greninja ex `30th-021` / `-148`. [🆕🆕🆕 D612: the `<em>` is normalised; Stealthy Slash ×2 is unkeyed and reader-built, Photon Bullets ×3 stays keyed] **Finished:** all 15 cards. **WP30 rest, named**
 (8 texts / 8 printings): Pikachu `30th-051` (markup + typed discard), Mismagius `me02.5-086` (gated counters), Coalossal
 `me02.5-120` (discard-pile gate behind a snipe), Genesect `me02-008` / Seaking `me05-014` (typed per-Energy snipe), Frosmoth
-`me01-043` / Ferrothorn `30th-104` (a clause after the parenthetical), Deoxys `me04-032` (extra-Energy gate on a bench snipe).
+`me01-043` / Ferrothorn `30th-104` (a clause after the parenthetical), Deoxys `me04-032` (extra-Energy gate on a bench snipe). [🆕🆕🆕 D629: all but Deoxys BUILT (S1); Deoxys dropped and named]
 
 | Column | `me` built / units (D608) | Standard pool D608 |
 |---|---|---|
@@ -991,7 +1009,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× If this Pokémon has any damage counters on it, this attack can be used for {D}. [🆕🆕🆕 D593: BUILT]
 - 1× If you have 13 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, choose 2 of your opponent's Pokémon and quadruple the number of damage counters on each of them. [🆕🆕🆕 D627: BUILT]
 - 1× If you have 6 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, place 4 damage counters on each of your opponent's Pokémon. [🆕🆕🆕 D627: BUILT]
-- 1× If your opponent's Active Pokémon is affected by a Special Condition, place 6 damage counters on 1 of your opponent's Benched Pokémon. [🆕🆕🆕 D608: WP30 rest]
+- 1× If your opponent's Active Pokémon is affected by a Special Condition, place 6 damage counters on 1 of your opponent's Benched Pokémon. [🆕🆕🆕 D608: WP30 rest] [🆕🆕🆕 D629: BUILT]
 - 1× Place 1 damage counter on 1 of your opponent's Pokémon. [🆕🆕🆕 D609: BUILT]
 - 1× Place 1 damage counter on your opponent's Active Pokémon. [🆕🆕🆕 D627: BUILT]
 - 1× Place 3 damage counters on your opponent's Active Pokémon. [🆕🆕🆕 D592: BUILT]
@@ -1094,14 +1112,14 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× Discard 2 Energy from this Pokémon, and this attack does 60 damage to each of 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: BUILT]
 - 2× If you have no cards in your hand, choose an attack from 1 of your opponent's Pokémon in play and use it as this attack.
 - 2× Shuffle all Energy attached to this Pokémon into your deck, and this attack does 220 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: BUILT]
-- 1× Discard all &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy from this Pokémon, and this attack does 90 damage to 1 of your opponent's Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em> [🆕🆕🆕 D608: WP30 rest] [🆕🆕🆕 D612: the markup is normalised (WP06); the clean text still needs a reader]
-- 1× If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: WP30 rest]
+- 1× Discard all &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy from this Pokémon, and this attack does 90 damage to 1 of your opponent's Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em> [🆕🆕🆕 D608: WP30 rest] [🆕🆕🆕 D612: the markup is normalised (WP06); the clean text still needs a reader] [🆕🆕🆕 D629: BUILT]
+- 1× If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: WP30 rest] [🆕🆕🆕 D629: dropped and named (S1) — the gate reads the declared attack's cost]
 - 1× Move a {W} Energy from this Pokémon to 1 of your Benched Pokémon. [🆕🆕🆕 D615: BUILT — declinable, D443's recorded `moveFloor` approximation]
-- 1× This attack does 140 damage to 1 of your opponent's Pokémon. If you don't have 10 or more Basic {F} Energy cards in your discard pile, this attack does nothing. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: WP30 rest]
-- 1× This attack does 20 damage to 1 of your opponent's Pokémon for each {G} Energy attached to this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: WP30 rest]
-- 1× This attack does 20 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) Your opponent's Active Pokémon is now Asleep. [🆕🆕🆕 D608: WP30 rest]
-- 1× This attack does 30 damage to 1 of your opponent's Pokémon for each {W} Energy attached to this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: WP30 rest]
-- 1× This attack does 50 damage to each of your opponent's Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.) &lt;/em>This Pokémon also does 130 damage to itself. [🆕🆕🆕 D608: WP30 rest]
+- 1× This attack does 140 damage to 1 of your opponent's Pokémon. If you don't have 10 or more Basic {F} Energy cards in your discard pile, this attack does nothing. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: WP30 rest] [🆕🆕🆕 D629: BUILT]
+- 1× This attack does 20 damage to 1 of your opponent's Pokémon for each {G} Energy attached to this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: WP30 rest] [🆕🆕🆕 D629: BUILT]
+- 1× This attack does 20 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) Your opponent's Active Pokémon is now Asleep. [🆕🆕🆕 D608: WP30 rest] [🆕🆕🆕 D629: BUILT]
+- 1× This attack does 30 damage to 1 of your opponent's Pokémon for each {W} Energy attached to this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: WP30 rest] [🆕🆕🆕 D629: BUILT]
+- 1× This attack does 50 damage to each of your opponent's Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.) &lt;/em>This Pokémon also does 130 damage to itself. [🆕🆕🆕 D608: WP30 rest] [🆕🆕🆕 D629: BUILT]
 - 1× This attack does 70 damage to 1 of your opponent's Pokémon that has any Special Energy attached. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: BUILT]
 
 ### Energy: attach / accelerate — 6 text(s) / 9 printing(s)
