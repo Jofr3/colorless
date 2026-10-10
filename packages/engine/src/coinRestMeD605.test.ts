@@ -30,7 +30,8 @@ import {
 // 2026-10-08, `legal_standard = 1`; no id was referenced in the engine before this slice. Dropped and
 // named: Watchog `me04-071` / `-097` (a revealed-hand pick shuffled into the deck — a new
 // `bottomFromOpponentHand.dest`) and Ditto `mep-106` / `30th-115` (a deck Pokémon swapped in for the
-// attacker) — §2 keeps them unbuilt.
+// attacker) — §2 keeps them unbuilt. [🆕🆕🆕 D634 (D539): Watchog is BUILT at D634 (C1, the new
+// `bottomFromOpponentHand.dest: "deck"`); only Ditto stays unbuilt.]
 
 const T = {
   together:
@@ -189,6 +190,8 @@ describe("D605 §2 — near misses and the dropped texts stay unbuilt", () => {
   });
 
   it("arm 46b with the sixth row: 3 heads × 6 consequents = 18 crossings build, exactly 6 are printed", () => {
+    // 🆕🆕🆕 D634 (D539): these are D605's six rows; the table has EIGHT now (Challenging Delivery,
+    // Reversing Gust) — `coinRestMeD634.test.ts` §2 pins the 24 crossings and 8 printed.
     const heads = ["Flip a coin. If heads, ", "Flip 2 coins. If both of them are heads, ", "Flip 3 coins. If all of them are heads, "];
     const printedGates = [
       "Flip 2 coins. If both of them are heads, heal all damage from 1 of your Pokémon.",
@@ -206,10 +209,11 @@ describe("D605 §2 — near misses and the dropped texts stay unbuilt", () => {
     expect(crossings.filter((text) => printed.has(text)).sort()).toEqual([...printedGates].sort());
   });
 
-  it("Watchog and Ditto are unbuilt", () => {
+  it("Watchog and Ditto are unbuilt (🆕🆕🆕 D634: Watchog is built at D634; Ditto stays unbuilt)", () => {
     const me = new Set(meAttackCorpus().map(([, text]) => text));
     for (const [why, text] of Object.entries(DROPPED)) {
-      expect(resolvedByAnyReader(text), why).toBe(false);
+      // 🆕🆕🆕 D634 (D539): Watchog is reader-built at D634 (C1).
+      expect(resolvedByAnyReader(text), why).toBe(why.startsWith("Watchog"));
       expect(me.has(text), why).toBe(true);
     }
   });
@@ -560,7 +564,7 @@ describe("D605 §7 — Miraculous Paint on a board: heads asks for a Special Con
 });
 
 describe("D605 §8 — the version", () => {
-  it("is built at engine 0.516.0", () => {
-    expect(engineVersion).toBe("0.516.0");
+  it("is built at engine 0.517.0", () => {
+    expect(engineVersion).toBe("0.517.0");
   });
 });

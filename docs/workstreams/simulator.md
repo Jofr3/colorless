@@ -30093,7 +30093,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D594 (`8ded76b4`), NOT committed.
 
 - **8 texts / 11 `me` printings.** `deriveAttackEffect` arm 46b: `COIN_GATE_HEAD` (one coin / "2 coins … both" /
-  "3 coins … all") sets `coinFlipGate.coins` (D355) over a closed five-row (🆕🆕🆕 D605 (D539): SIX rows now — Grafaiai's Miraculous Paint; 18 crossings, 6 printed) `COIN_GATED_CONSEQUENTS` table — Miltank
+  "3 coins … all") sets `coinFlipGate.coins` (D355) over a closed five-row (🆕🆕🆕 D605 (D539): SIX rows now — Grafaiai's Miraculous Paint; 18 crossings, 6 printed; 🆕🆕🆕 D634 (D539): EIGHT rows now — Challenging Delivery, Reversing Gust; 24 crossings, 8 printed, `coinRestMeD634.test.ts` §2) `COIN_GATED_CONSEQUENTS` table — Miltank
   "Bellyful of Milk" (`healChosen` all), Team Rocket's Exeggutor "Tri Kinesis" (`knockOutChosen` opponentAny), Murkrow
   "Clumsily Clutch" (`preventRetreat`), Gimmighoul "Strolls So Much" (any-card search + shuffle), Drifloon "Pull" (`gust`).
   `deriveAttackCoinFlip`: three `programPerHeads` arms — Smeargle "Energizing Sketch" (untyped discard-to-Bench attach),
@@ -30104,11 +30104,11 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Dropped (beyond WP13's brief):** Bombirdier (the bench search reads "a Pokémon" as `byName "Pokémon"`; only a Basic
   may go onto the Bench, so it needs a Basic bench-search arm outside the coin reader), Bewear (a threshold bonus needs a new coin member), Gholdengo / Snorlax / Pikachu (a deck source
   capped at the heads count; Pikachu's row is also markup), Shiftry (`returnBenched` cannot take the Active), Octillery (a
-  two-coin flip lock).
+  two-coin flip lock). [🆕🆕🆕 D634 (D539): all but Octillery BUILT at D634 (C1).]
 - **D539.** D452's "the until-tails singular mill is printed by nothing" and D491's "all six GATE-present points refuse"
   are withdrawn in place for the `me` prints (effects.ts, index.ts, four suites, and the D495 rows in decisions.md and
   progress.md).
-- **Crossings.** Arm 46b is head × consequent: all 15 crossings derive, 5 are printed (🆕🆕🆕 D605 (D539): SIX rows now — Grafaiai's Miraculous Paint; 18 crossings, 6 printed) (D131; in tension with D451's
+- **Crossings.** Arm 46b is head × consequent: all 15 crossings derive, 5 are printed (🆕🆕🆕 D605 (D539): SIX rows now — Grafaiai's Miraculous Paint; 18 crossings, 6 printed; 🆕🆕🆕 D634 (D539): EIGHT rows now — Challenging Delivery, Reversing Gust; 24 crossings, 8 printed, `coinRestMeD634.test.ts` §2) (D131; in tension with D451's
   co-variance rule). Pinned in §2.
 - **Known limitation (inherited).** Smeargle's untyped `attachEnergyFrom` takes the first Basic Energy in pile order; only
   the target parks, so the player cannot pick which Energy. The five shipped `sv` discard-attach sentences behave the same.
@@ -30246,6 +30246,27 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Suite.** `activatedMeD602.test.ts` (22) and a census D602 block (3). +21 mutant rows.
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D634 — C1: the coin rest (engine 0.517.0, `MATCH_RECORD_VERSION` stays 44)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D633 (`6157c1c8`), NOT committed. 7 texts / 8 printings (`me` + `30th`), all
+reader rows; the texts D595 and D605 dropped, less Octillery and Ditto.
+
+- **Hyper Lariat** (Bewear `me01-112`): the NEW `AttackCoinFlip` member `bonusOnAllHeads` — the printed 100 plus 100 only when both coins
+  are heads. Catalog Magikarp `sv02-042` and its `sv02-203` / `30th-c-030` reprints ("Expert Splasher", +20), plus Dondozo `svp-012` ("Dangerous Wave", +100) — four non-legal printings, no legal or census effect — read the same way now; three refusal controls were inverted in place.
+- **All-You-Can-Grab** (Gholdengo `me01-099`), **Gormandizer** (Snorlax `me03-063`), **Charge-Up Dash** (Pikachu `30th-042`): the NEW
+  member `deckUpToHeads` — attack.ts appends `searchDeck { dest: "hand", max: heads }` or `attachFromDeck { toSelf, max: heads }`, then
+  `shuffleDeck`. 0 heads appends nothing (no search, no shuffle; R-UTH1 ⚠️ UNRULED).
+- **Challenging Delivery** (Bombirdier `me05-071`) and **Reversing Gust** (Shiftry `me01-015`): two NEW `COIN_GATED_CONSEQUENTS` rows.
+  The first searches `anyPokemon` onto the Bench (D613's `benchMatches`: Basic only). The second is `returnBenched { opponent, deck,
+  includeActive }`: interpreter.ts now offers the opponent's Active with the Bench (§11-filtered) and the writer takes it; its owner
+  promotes (§8.1).
+- **Snap Inspection** (Watchog ×2): `programPerHeads` over `bottomFromOpponentHand` at the NEW `dest: "deck"` — per heads, the hand is
+  revealed, one card is picked and shuffled into its owner's deck (the NEW `HAND_CARD_SHUFFLED_INTO_DECK` event and log row, then
+  `SHUFFLE`). 0 heads reveals nothing. The park uses the existing `chooseCards.dest: "deck"`, so the wire does not change.
+- **Suite.** `coinRestMeD634.test.ts` (22) and a census D634 block (1). +22 mutant rows, all KILLED; `D561-scoop-active-pick-does-nothing`
+  re-pointed. `flipGatedOp.test.ts`'s near-miss slot 0 re-pointed to Ditto. Census: attacks **2,748 / 2,771**, 1208 `me` printings
+  fully built. Sweep PENDING.
 
 ## D633 — O1: attack odds and ends (engine 0.516.0, `MATCH_RECORD_VERSION` stays 44)
 
@@ -30813,10 +30834,11 @@ registry objects.
   `programPerHeads` over `pokemonInPlay` + `byName`), Kaleidowaltz ×2 (Mega Audino ex; `programPerHeads` over the bare
   search-and-attach). The Miraculous Paint row also builds Vivillon `sv01-010` (not Standard-legal).
 - **Dropped and named.** Watchog ×2 "Snap Inspection" (a revealed-hand pick shuffled into the deck) and Ditto ×2
-  "Surprisingly Transform" (a deck Pokémon switched in for the attacker).
+  "Surprisingly Transform" (a deck Pokémon switched in for the attacker). [🆕🆕🆕 D634 (D539): Watchog ×2 BUILT at D634.]
 - **Readings.** R-NZ1, R-MP1, R-KW1, UNRULED (`progress.md` NEXT).
 - **Suite.** `coinRestMeD605.test.ts` (24) and a census D605 block (2). +35 mutant rows. D595's "five-row" table claims
-  annotated in place; `flipGatedOp.test.ts`'s near-miss witness re-pointed to Shiftry `me01-015`.
+  annotated in place; `flipGatedOp.test.ts`'s near-miss witness re-pointed to Shiftry `me01-015` [🆕🆕🆕 D634 (D539): and
+  again, to Ditto].
 - **Census.** Standard pool attacks **2,600 / 2,771**; 926 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 

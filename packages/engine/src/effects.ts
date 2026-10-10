@@ -9081,8 +9081,12 @@ export type EffectOp =
           does not refuse itself on that board (reversal: a ruling that a player may not
           play a card whose only legal resolution loses them the game). Spelled for the
           `"self"` side only; no printing reaches the opponent's Active through this op
-          (`discardDefender`'s sentence is the one that does). `MATCH_RECORD_VERSION`
-          holds at 35; the 0.444 ROLLBACK reading is NAMED: a 0.444 reader's
+          (`discardDefender`'s sentence is the one that does) [🆕🆕🆕 D634 (D539): WITHDRAWN —
+          Shiftry `me01-015` "Reversing Gust" (*"choose 1 of your opponent's Pokémon. Shuffle that
+          Pokémon …"*) sets it on the `"opponent"` side: the candidates are the opponent's Active and
+          Bench, §11-filtered, and the emptied Active is promoted by its owner (§8.1). A 0.516
+          rollback's writer refuses an opponent Active ref, so a parked pick of it resumes as a no-op].
+          `MATCH_RECORD_VERSION` holds at 35; the 0.444 ROLLBACK reading is NAMED: a 0.444 reader's
           `returnBenched` refuses a non-bench ref, so a parked Scoop Up Cyclone answered
           with the Active resumes as a silent no-op on a rolled-back deploy. */
       includeActive?: true;
@@ -9228,7 +9232,7 @@ export type EffectOp =
       🛑 **AND IT REACHES THE ACTIVE SPOT, WHICH `returnBenched` REFUSES BY REF
       GUARD.** (🆕🆕🆕 D561 CORRECTION (D539): no longer unconditionally — under the new
       `includeActive` rider (Scoop Up Cyclone) `returnBenched` takes the controller's
-      ACTIVE too, and leans on this very §8.1 seam for the promotion; absent the rider
+      ACTIVE too [🆕🆕🆕 D634 (D539): and, on the `"opponent"` side, the opponent's (Reversing Gust)], and leans on this very §8.1 seam for the promotion; absent the rider
       the guard still refuses.) That refusal was never about the zone — it was about the §8.1
       PROMOTION the board owes once the Active spot goes empty, and the block above
       recorded it as *"missing CODE"*. **D311 supplies the code, and it is a
@@ -13291,8 +13295,12 @@ export type EffectOp =
           old byte string means in this deploy exactly what it meant in the last
           one. **A WIDENING is free; a RENAME is not** — nothing here is renamed.
           `MATCH_RECORD_VERSION` stays **29**, and D445 drives the round trip in
-          both directions rather than asserting it. */
-      dest?: "bench" | "discard";
+          both directions rather than asserting it.
+          🆕🆕🆕 D634 — `"deck"` is the fourth destination: Watchog `me04-071` / `-097` "Snap
+          Inspection" (*"choose a card you find there and shuffle it into your opponent's deck"*). The
+          card is shuffled into its owner's deck (`HAND_CARD_SHUFFLED_INTO_DECK`, then `SHUFFLE`). A
+          0.516 rollback reads it as the absent value: the card goes under the deck, unshuffled. */
+      dest?: "bench" | "discard" | "deck";
       /** 🆕 **D297 — THE PRINTED "UP TO N", AND THE FIRST TIME THIS OP'S PICK IS
           NEITHER EXACTLY-ONE NOR MANDATORY.** Absent = the M5 shape every earlier
           printing spells: *"you choose **a** card"* / *"you put **a** Basic
@@ -24343,6 +24351,23 @@ const ATTACK_COIN_MILL_PER_NAMED_IN_PLAY =
   /^Flip a coin for each ([A-Z][a-z]+) you have in play\. For each heads, discard the top (\d+) cards of your opponent['’]s deck\.$/;
 const ATTACK_COIN_DECK_ATTACH_PER_HEADS =
   /^Flip (\d+) coins\. For each heads, search your deck for up to (\d+) Basic Energy cards and attach them to your Pokémon in any way you like\. Then, shuffle your deck\.$/;
+/** 🆕🆕🆕 D634 — C1: four more `me` coin sentences.
+    • `ATTACK_COIN_BOTH_HEADS_BONUS` — Bewear `me01-112` "Hyper Lariat": the NEW `bonusOnAllHeads`
+      member (the printed "+" paid only when every coin is heads). Pinned at 2 coins ("both").
+    • `ATTACK_COIN_UNTIL_TAILS_DECK_TO_HAND` / `ATTACK_COIN_UNTIL_TAILS_DECK_ATTACH_SELF` — Gholdengo
+      `me01-099` "All-You-Can-Grab", Snorlax `me03-063` "Gormandizer" and Pikachu `30th-042` "Charge-Up
+      Dash": the NEW `deckUpToHeads` member (the heads count is the search's `max`, then the shuffle;
+      0 heads searches nothing and does not shuffle, R-UTH1). The optional `{X}` is the Energy type.
+    • `ATTACK_COIN_REVEALED_HAND_TO_DECK` — Watchog `me04-071` / `-097` "Snap Inspection":
+      `programPerHeads` over `bottomFromOpponentHand` at the NEW `dest: "deck"`; 0 heads reveals nothing.
+    No /i, `^…$`; the possessive carries `['’]` (D136/D137). */
+const ATTACK_COIN_BOTH_HEADS_BONUS = /^Flip 2 coins\. If both of them are heads, this attack does (\d+) more damage\.$/;
+const ATTACK_COIN_UNTIL_TAILS_DECK_TO_HAND =
+  /^Flip a coin until you get tails\. Search your deck for a number of cards up to the number of heads and put them into your hand\. Then, shuffle your deck\.$/;
+const ATTACK_COIN_UNTIL_TAILS_DECK_ATTACH_SELF =
+  /^Flip a coin until you get tails\. Search your deck for an amount of Basic (?:\{([A-Z])\} )?Energy up to the number of heads and attach it to this Pokémon\. Then, shuffle your deck\.$/;
+const ATTACK_COIN_REVEALED_HAND_TO_DECK =
+  /^Flip (\d+) coins\. If any of them are heads, your opponent reveals their hand\. For each heads, choose a card you find there and shuffle it into your opponent['’]s deck\.$/;
 
 // 🆕🆕🆕 D526 — THE THREE-TIER HEADS LADDER, corpus FILE LINE 218 (1 legal printing):
 // "Flip 3 coins. If 1 of them is heads, this attack does 20 more damage. If 2 of them
@@ -24767,6 +24792,15 @@ export type AttackCoinFlip =
   // fold — so `MATCH_RECORD_VERSION` holds (a byte-equal JSON round-trip in
   // `opponentBenchTailsSnipe.test.ts`).
   | { kind: "opponentPerTails"; flips: AttackFlipCount; per: number }
+  // 🆕🆕🆕 D634 — Bewear "Hyper Lariat": `bonus` more damage only when EVERY flipped coin is heads
+  // (the printed base kept). Not `bonusLadder` (a fixed three-coin table) nor `perHeadsThenThreshold`
+  // (its ops cannot carry damage). Spent into a number at the fold, never serialized.
+  | { kind: "bonusOnAllHeads"; flips: AttackFlipCount; bonus: number }
+  // 🆕🆕🆕 D634 — the heads count read as a DECK search's `max` (Gholdengo, Snorlax, Pikachu
+  // `30th-042`): `to: "hand"` builds `searchDeck { filter, dest: "hand", max: heads }`, `to: "self"`
+  // builds `attachFromDeck { filter, max: heads, toSelf }`, each followed by `shuffleDeck`. 0 heads
+  // appends nothing (R-UTH1). D525's `retrievalUpToHeads` is the discard-pile twin.
+  | { kind: "deckUpToHeads"; flips: AttackFlipCount; filter: CardFilter; to: "hand" | "self" }
   | {
       kind: "perHeadsThenThreshold";
       flips: AttackFlipCount;
@@ -25272,6 +25306,41 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
       kind: "programPerHeads",
       flips: { kind: "printed", count: waltzCoins },
       ops: [{ op: "attachFromDeck", filter: { kind: "basicEnergy" }, max: waltzMax }, { op: "shuffleDeck" }],
+      face: "heads",
+    };
+  }
+  // 🆕🆕🆕 D634 — C1's four anchors; see `ATTACK_COIN_BOTH_HEADS_BONUS`.
+  const lariat = ATTACK_COIN_BOTH_HEADS_BONUS.exec(effect);
+  if (lariat !== null) {
+    const lariatBonus = Number(lariat[1]);
+    return lariatBonus >= 1 ? { kind: "bonusOnAllHeads", flips: { kind: "printed", count: 2 }, bonus: lariatBonus } : null;
+  }
+  if (ATTACK_COIN_UNTIL_TAILS_DECK_TO_HAND.test(effect)) {
+    return { kind: "deckUpToHeads", flips: { kind: "untilTails" }, filter: { kind: "anyCard" }, to: "hand" };
+  }
+  const gormandize = ATTACK_COIN_UNTIL_TAILS_DECK_ATTACH_SELF.exec(effect);
+  if (gormandize !== null) {
+    const gormandizeCode = gormandize[1];
+    if (gormandizeCode === undefined) {
+      return { kind: "deckUpToHeads", flips: { kind: "untilTails" }, filter: { kind: "basicEnergy" }, to: "self" };
+    }
+    const gormandizeType = ENERGY_TYPE_BY_CODE[gormandizeCode];
+    if (gormandizeType === undefined) return null;
+    return {
+      kind: "deckUpToHeads",
+      flips: { kind: "untilTails" },
+      filter: { kind: "basicEnergy", energyType: gormandizeType },
+      to: "self",
+    };
+  }
+  const snapInspection = ATTACK_COIN_REVEALED_HAND_TO_DECK.exec(effect);
+  if (snapInspection !== null) {
+    const snapCoins = Number(snapInspection[1]);
+    if (snapCoins < 2 || snapCoins > MAX_PRINTED_FLIPS) return null;
+    return {
+      kind: "programPerHeads",
+      flips: { kind: "printed", count: snapCoins },
+      ops: [{ op: "bottomFromOpponentHand", dest: "deck" }],
       face: "heads",
     };
   }
@@ -25982,7 +26051,8 @@ const ATTACK_DISCARD_ALL_TOOLS_AND_SPECIAL =
     exactly — and in tension with D451's co-variance rule (an unprinted crossing authors a card).
     `coinGateMeD595.test.ts` §2 pins all 15 building and exactly 5 printed in either corpus.
     🆕🆕🆕 D605 (D539): "five" / "3 × 5 = 15" / "only 5" are D595's figures — the table has SIX rows
-    now (Grafaiai's Miraculous Paint), 18 crossings, 6 printed; `coinRestMeD605.test.ts` §2 pins those. */
+    now (Grafaiai's Miraculous Paint), 18 crossings, 6 printed; `coinRestMeD605.test.ts` §2 pins those.
+    🆕🆕🆕 D634 (D539): EIGHT rows now — Bombirdier's Challenging Delivery and Shiftry's Reversing Gust joined; 24 crossings, 8 printed; `coinRestMeD634.test.ts` §2 pins those (the five / six / 15 / 18 figures above are D595's and D605's). */
 const COIN_GATE_HEAD =
   /^(Flip a coin\. If heads|Flip 2 coins\. If both of them are heads|Flip 3 coins\. If all of them are heads), (.+)$/;
 const COIN_GATE_COINS: Readonly<Record<string, number | undefined>> = {
@@ -26011,6 +26081,18 @@ const COIN_GATED_CONSEQUENTS: ReadonlyMap<string, readonly EffectOp[]> = new Map
   [
     "choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition.",
     chooseSpecialConditionProgram(),
+  ],
+  // 🆕🆕🆕 D634 — Bombirdier `me05-071` "Challenging Delivery" (2 coins): "a Pokémon" is the class noun
+  // (`anyPokemon`), so D613's `benchMatches` admits Basic Pokémon only.
+  [
+    "search your deck for a Pokémon and put it onto your Bench. Then, shuffle your deck.",
+    [{ op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "bench", max: 1 }, { op: "shuffleDeck" }],
+  ],
+  // 🆕🆕🆕 D634 — Shiftry `me01-015` "Reversing Gust": "1 of your opponent's Pokémon" includes the
+  // Active (`returnBenched.includeActive` on the opponent side; the emptied spot is promoted, §8.1).
+  [
+    "choose 1 of your opponent's Pokémon. Shuffle that Pokémon and all attached cards into their deck.",
+    [{ op: "returnBenched", whose: "opponent", dest: "deck", includeActive: true }],
   ],
 ]);
 /** 🆕🆕🆕 D605 — "choose a Special Condition" as a chain of labelled `optional` confirms: `yes` applies

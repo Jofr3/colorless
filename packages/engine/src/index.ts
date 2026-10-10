@@ -20271,6 +20271,16 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.516.0 → **0.517.0** (D634 — C1: THE COIN REST, 7 TEXTS / 8 PRINTINGS (`me` + `30th`);
+    `MATCH_RECORD_VERSION` STAYS 44 (apps/api match.ts "STAYS 44 AT D634")). effects.ts: two NEW `AttackCoinFlip`
+    members — `bonusOnAllHeads` (Hyper Lariat `me01-112`: the bonus only on all heads) and `deckUpToHeads`
+    (All-You-Can-Grab `me01-099`, Gormandizer `me03-063`, Charge-Up Dash `30th-042`: the heads count is a deck
+    search's `max`, then the shuffle; 0 heads does nothing, R-UTH1); two NEW `COIN_GATED_CONSEQUENTS` rows —
+    Challenging Delivery `me05-071` (`searchDeck` `anyPokemon` onto the Bench, Basic only under D613) and Reversing
+    Gust `me01-015` (`returnBenched.includeActive` on the opponent side, the Active a candidate); Snap Inspection
+    `me04-071` / `-097` as `programPerHeads` over `bottomFromOpponentHand` at the NEW `dest: "deck"` and the NEW
+    `HAND_CARD_SHUFFLED_INTO_DECK` event and log row. Catalog Magikarp `sv02-042` and its `sv02-203` / `30th-c-030` reprints ("Expert Splasher", +20), plus Dondozo `svp-012` ("Dangerous Wave", +100) — four non-legal printings, no legal or census effect — now read as
+    `bonusOnAllHeads` too. `coinRestMeD634.test.ts`.)
     🆕🆕🆕 engineVersion 0.515.0 → **0.516.0** (D633 — O1: ATTACK ODDS AND ENDS, 5 TEXTS / 7 PRINTINGS (`me` + `30th`);
     `MATCH_RECORD_VERSION` STAYS 44 (apps/api match.ts "STAYS 44 AT D633")). effects.ts arm 10e: All-You-Can-Yeet
     (`me05-029`) and Rocket Feathers (`me02.5-127`) on D617's uncapped declinable `payFromHand` (the second on
@@ -20574,7 +20584,7 @@ import type { GameState, Seat } from "./types";
     arms 46c / 46d; a sixth `COIN_GATED_CONSEQUENTS` row (Grafaiai "Miraculous Paint": "choose a
     Special Condition" as four labelled `optional` confirms; R-MP1); and two `deriveAttackCoinFlip`
     `programPerHeads` arms (Maushold "Gnaw Together": `pokemonInPlay` over `byName`; Mega Audino ex
-    "Kaleidowaltz": the bare search-and-attach per heads; R-KW1). Dropped: Watchog, Ditto.
+    "Kaleidowaltz": the bare search-and-attach per heads; R-KW1). Dropped: Watchog, Ditto [🆕🆕🆕 D634 (D539): Watchog BUILT at D634].
     `coinRestMeD605.test.ts`.)
     🆕🆕🆕 engineVersion 0.486.0 → **0.487.0** (D604 — WP18: THE MEGA EVOLUTION TYPED SPECIAL ENERGIES;
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D604")). registry.ts: eight NEW `energy`
@@ -20665,12 +20675,12 @@ import type { GameState, Seat } from "./types";
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D595")). effects.ts
     `deriveAttackEffect` arm 46b reads *"Flip a coin. If heads, X"* / *"Flip 2 coins. If both of them
     are heads, X"* / *"Flip 3 coins. If all of them are heads, X"* as `coinFlipGate` (D355's `coins`)
-    over a CLOSED five-row consequent table [🆕🆕🆕 D605 (D539): six rows now — Miraculous Paint] (`COIN_GATED_CONSEQUENTS`: `healChosen` all,
+    over a CLOSED five-row consequent table [🆕🆕🆕 D605 (D539): six rows now — Miraculous Paint] [🆕🆕🆕 D634 (D539): eight rows now — Challenging Delivery, Reversing Gust; 24 crossings, 8 printed, `coinRestMeD634.test.ts` §2] (`COIN_GATED_CONSEQUENTS`: `healChosen` all,
     `knockOutChosen` opponentAny, `preventRetreat`, the any-card search, `gust`); `deriveAttackCoinFlip`
     gains three `programPerHeads` arms (Smeargle's untyped discard attach, the until-tails singular mill,
     the until-tails random hand-to-deck). 8 texts / 11 printings; no op, member or field; the `sv`
     reader output is byte-identical. Dropped and named: Bombirdier, Bewear, Gholdengo, Pikachu, Snorlax,
-    Shiftry, Octillery. Census: Standard pool attacks 2,544 / 2,771; 835 `me` printings fully built.
+    Shiftry, Octillery [🆕🆕🆕 D634 (D539): all but Octillery BUILT at D634]. Census: Standard pool attacks 2,544 / 2,771; 835 `me` printings fully built.
     `coinGateMeD595.test.ts`.)
     🆕🆕🆕 engineVersion 0.477.0 → **0.478.0** (D594 — WP33a: BONUS / REQUIREMENT ROWS ON SHIPPED
     CONDITION MEMBERS; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D594")).
@@ -25684,7 +25694,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.516.0";
+export const engineVersion = "0.517.0";
 
 export type {
   ApplyResult,

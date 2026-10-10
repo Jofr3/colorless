@@ -1125,6 +1125,9 @@ function printedFlips(coinFlip: AttackCoinFlip): AttackFlipCount {
     // 🆕🆕🆕 D525 — the "up to" ceiling carries its printed count like the four
     // above; the switch is what made the member a MISSING CASE (TS2366) until this
     // line was written, which is the loudness the block above was rewritten for.
+    // 🆕🆕🆕 D634 — the all-heads bonus and the deck "up to" ceiling carry their count too.
+    case "bonusOnAllHeads":
+    case "deckUpToHeads":
     case "retrievalUpToHeads":
     case "perHeadsThenThreshold":
       return coinFlip.flips;
@@ -2694,6 +2697,7 @@ export function attack(
     coinFlip !== null &&
     coinFlip.kind !== "cancelOnTails" &&
     coinFlip.kind !== "cancelOnTailsElseProgram" &&
+    coinFlip.kind !== "deckUpToHeads" &&
     coinFlip.kind !== "programPerHeads" &&
     coinFlip.kind !== "retrievalUpToHeads";
   // 🆕🆕 D383 adds NO term and NARROWS one, which is D130's rule applied to a
@@ -2991,6 +2995,18 @@ export function attack(
           { op: "discardPileRetrieval", filter: coinFlip.filter, dest: coinFlip.dest, max: heads },
         ];
       }
+    } else if (coinFlip.kind === "deckUpToHeads") {
+      // 🆕🆕🆕 D634 — the heads count is the search's `max`; 0 heads searches and shuffles nothing (R-UTH1).
+      if (heads > 0) {
+        const upToHeadsTake: EffectOp =
+          coinFlip.to === "hand"
+            ? { op: "searchDeck", filter: coinFlip.filter, dest: "hand", max: heads }
+            : { op: "attachFromDeck", filter: coinFlip.filter, max: heads, toSelf: true };
+        program = [...(program ?? []), upToHeadsTake, { op: "shuffleDeck" }];
+      }
+    } else if (coinFlip.kind === "bonusOnAllHeads") {
+      // 🆕🆕🆕 D634 — Hyper Lariat: the bonus only when every flipped coin is heads.
+      coinBonus = heads === faces.length ? coinFlip.bonus : 0;
     } else if (coinFlip.kind === "bonusLadder") {
       // 🆕🆕🆕 D526 — THE THREE-TIER HEADS LADDER: a TABLE lookup, not `per × heads`. The
       // tiers are EXCLUSIVE by heads count — `ladder[0]` on exactly one head, `ladder[1]`

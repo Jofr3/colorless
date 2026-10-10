@@ -1843,6 +1843,14 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(cardName(state, event.uid)),
         plain(` on the bottom of ${names[event.seat]}'s deck`),
       ]);
+    case "HAND_CARD_SHUFFLED_INTO_DECK":
+      // 🆕🆕🆕 D634 — Watchog "Snap Inspection": the arm above's move with a shuffle, so the card is
+      // named (it was picked face up) and filed under the ACTOR, the owner named outright.
+      return row(event.actor, [
+        plain("shuffled "),
+        strong(cardName(state, event.uid)),
+        plain(` into ${names[event.seat]}'s deck`),
+      ]);
     case "CARD_DISCARDED_FROM_HAND":
       // 🆕🆕 D445 — the CHOSEN pick out of the opponent's revealed hand, discarded.
       // NAMED, for the arm above's reason and by both of its routes at once: the hand

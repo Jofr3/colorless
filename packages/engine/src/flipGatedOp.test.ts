@@ -117,7 +117,11 @@ const REAL_NEAR_MISSES = [
   // is Shiftry `me01-015`'s *"…choose 1 of your opponent's Pokémon. Shuffle that Pokémon …"*
   // (D595 dropped it; `returnBenched` reads the Bench only), the same lowercase "choose" behind
   // the shared prefix, refused by the consequent.
-  "Flip a coin. If heads, choose 1 of your opponent's Pokémon. Shuffle that Pokémon and all attached cards into their deck.",
+  // 🆕🆕🆕 **RE-POINTED AT D634, A FOURTH TIME.** D634 builds Reversing Gust (arm 46b's
+  // `returnBenched.includeActive` row). Its replacement is Ditto `mep-106` / `30th-115`'s *"…search
+  // your deck for a Pokémon and switch it with this Pokémon. …"* (D605 dropped it), measured as the
+  // only unresolved "Flip a coin. If heads, …" sentence left in either legal corpus.
+  "Flip a coin. If heads, search your deck for a Pokémon and switch it with this Pokémon. Any attached cards, damage counters, Special Conditions, turns in play, and any other effects remain on the new Pokémon. If you switched a Pokémon in this way, put this card into your deck. Then, shuffle your deck.",
   // 🆕 **RE-POINTED AT D299, THE STANDING INSTRUCTION BEING FOLLOWED FOR THE
   // SECOND TIME.** This slot held Sylveon `svp-172`/`sv06.5-022`'s *"…choose 1 of
   // your opponent's Benched Pokémon. Shuffle that Pokémon and all attached cards

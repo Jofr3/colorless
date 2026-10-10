@@ -633,7 +633,9 @@ describe("the rest of the flip family — what stays LOUD, and the one shape D12
     // anchoring, because a reader that matched the opening and got sloppy about the
     // tail would claim it and pay 20 per head on a card that pays 20 only for two.
     const magikarp = "Flip 2 coins. If both of them are heads, this attack does 20 more damage.";
-    expect(deriveAttackCoinFlip(magikarp)).toBe(null);
+    // 🆕🆕🆕 D634 (D539): no longer null — D634's `bonusOnAllHeads` reads it (20 on two heads only), and
+    // never as this slice's per-heads fold.
+    expect(deriveAttackCoinFlip(magikarp)).toEqual({ kind: "bonusOnAllHeads", flips: { kind: "printed", count: 2 }, bonus: 20 });
     // Its OPENING is Tandemaus's, word for word — so this is the consequent being
     // refused, not the count.
     expect(magikarp.startsWith("Flip 2 coins. ")).toBe(true);

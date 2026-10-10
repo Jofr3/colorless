@@ -6,6 +6,24 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D634 update (engine 0.517.0) — C1, the coin rest (`MATCH_RECORD_VERSION` stays 44)
+
+7 texts / 8 printings (`coinRestMeD634.test.ts`): Bewear "Hyper Lariat" `me01-112` (the new `bonusOnAllHeads`), Bombirdier
+"Challenging Delivery" `me05-071` (an arm 46b row; "a Pokémon" benches a Basic only, D613), Gholdengo "All-You-Can-Grab" `me01-099`,
+Snorlax "Gormandizer" `me03-063` and Pikachu "Charge-Up Dash" `30th-042` (the new `deckUpToHeads`: heads as the search's max; 0 heads
+does nothing, R-UTH1 UNRULED), Shiftry "Reversing Gust" `me01-015` (an arm 46b row on `returnBenched.includeActive`, opponent side)
+and Watchog "Snap Inspection" ×2 `me04-071` / `-097` (per heads, `bottomFromOpponentHand` at the new `dest: "deck"`). **Finished:**
+all 8. **Dropped:** none. Octillery "Jet of Ink" `me04-017` (D595's seventh drop) was not in C1 and stays unbuilt.
+
+| Column | `me` built / units (D634) | Standard pool D634 |
+|---|---|---|
+| Attacks | 1,016 / 1,039 (+8) | **2,748 / 2,771** |
+| Abilities | 215 / 234 | **591 / 610** |
+| Trainers | 170 / 183 | **434 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1208** (1200 + 8).
+
 ## 🆕 D633 update (engine 0.516.0) — O1, attack odds and ends (`MATCH_RECORD_VERSION` stays 44)
 
 5 texts / 7 printings (`attackOddsMeD633.test.ts`): Slowpoke "All-You-Can-Yeet" `me05-029` and Team Rocket's Honchkrow "Rocket
@@ -404,7 +422,7 @@ cardText.ts `normalizeCardText` at ingest (map.ts) and at read (cards.ts `cardOf
 `swsh10.5` re-ingested, the `me` corpus regenerated (451 → 442 sentences). The 18 "markup only" texts / 21 `30th` printings below
 are BUILT on shipped readers (`cardTextD612.test.ts`, census D612 block). `INFERNO_X` and `STEALTHY_SLASH` retired (their clean text
 is reader-built; R-IX1 resolved); Photon Bullets ×3 stays keyed. Still unbuilt, now as clean text in their packages: Elemental Blast
-`30th-121` [🆕🆕🆕 D633: BUILT], Lightning Crash `30th-051` (WP30) [🆕🆕🆕 D629: BUILT], Charge-Up Dash `30th-042` (WP13), Overwriting Bolt `30th-040` [🆕🆕🆕 D633: still unbuilt — it gives a Weakness, an MRV bump (L1)], Pika Chain `30th-034`
+`30th-121` [🆕🆕🆕 D633: BUILT], Lightning Crash `30th-051` (WP30) [🆕🆕🆕 D629: BUILT], Charge-Up Dash `30th-042` (WP13) [🆕🆕🆕 D634: BUILT], Overwriting Bolt `30th-040` [🆕🆕🆕 D633: still unbuilt — it gives a Weakness, an MRV bump (L1)], Pika Chain `30th-034`
 (WP28b) [🆕🆕🆕 D623: BUILT], Kaboom Needles `30th-104` (WP30) [🆕🆕🆕 D629: BUILT]. The data gap below ("43 `me` rows carry tcgdex HTML") is closed on the LOCAL D1; the
 remote D1 still needs the re-ingest, run with the D612 ingest code.
 
@@ -551,7 +569,7 @@ R-NZ1), "choose a Special Condition" as four labelled `optional` confirms behind
 R-MP1), and a flip count by name in play (`pokemonInPlay` over `byName`, Maushold ×2 "Gnaw Together"). Mega Audino ex ×2
 "Kaleidowaltz" repeats the bare search-and-attach per heads (R-KW1). **Finished:** Mega Zygarde ex ×5, Mega Audino ex ×2,
 Tauros ×2, Maushold ×2, Grafaiai. **Dropped and named:** Watchog ×2 "Snap Inspection" (a revealed-hand pick shuffled into
-the deck: `bottomFromOpponentHand.dest` has no shuffle member) and Ditto ×2 "Surprisingly Transform" (a deck Pokémon swapped
+the deck: `bottomFromOpponentHand.dest` has no shuffle member) [🆕🆕🆕 D634 (D539): BUILT at D634 (C1), `dest: "deck"`] and Ditto ×2 "Surprisingly Transform" (a deck Pokémon swapped
 in for the attacker: no op).
 
 | Column | `me` built / units (D605) | Standard pool D605 |
@@ -721,7 +739,8 @@ Energizing Sketch (any Basic Energy from the discard to the Bench, one per heads
 Smeargle (Tyrantrum ×2 still wait on Tyrannically Gutsy [🆕🆕🆕 D610 (D539): no longer — built at D610]). **Dropped:** Challenging Delivery (the bench search reads
 "a Pokémon" as a card name; only a Basic may go onto the Bench, so it needs a Basic bench-search arm), Hyper Lariat (a threshold bonus needs a new coin
 member), All-You-Can-Grab, Gormandizer and Charge-Up Dash (a deck source capped at the heads count; Charge-Up Dash also
-needs WP06 [🆕🆕🆕 D612: done]), Reversing Gust (the shuffled body may be the Active) and Jet of Ink (a two-coin flip lock).
+needs WP06 [🆕🆕🆕 D612: done]), Reversing Gust (the shuffled body may be the Active) and Jet of Ink (a two-coin flip lock). [🆕🆕🆕 D634 (D539): all but
+Jet of Ink BUILT at D634 (C1).]
 
 | Column | `me` built / units (D595) | Standard pool D595 |
 |---|---|---|
@@ -1098,18 +1117,18 @@ group wins; the grouping is a reading aid, not a census figure).
 - 3× Flip a coin until you get tails. For each heads, discard the top card of your opponent's deck. [🆕🆕🆕 D595: BUILT]
 - 2× Choose 1 of your opponent's Pokémon and flip a coin for each of your Pokémon in play that has "Tauros" in its name. This attack does 50 damage to the chosen Pokémon for each heads. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D605: BUILT]
 - 2× Flip 3 coins. For each heads, search your deck for up to 2 Basic Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck. [🆕🆕🆕 D605: BUILT]
-- 2× Flip 3 coins. If any of them are heads, your opponent reveals their hand. For each heads, choose a card you find there and shuffle it into your opponent's deck. [🆕🆕🆕 D605: dropped from WP34 — the revealed-hand pick goes into the deck; `bottomFromOpponentHand.dest` has no shuffle member]
+- 2× Flip 3 coins. If any of them are heads, your opponent reveals their hand. For each heads, choose a card you find there and shuffle it into your opponent's deck. [🆕🆕🆕 D605: dropped from WP34 — the revealed-hand pick goes into the deck; `bottomFromOpponentHand.dest` has no shuffle member] [🆕🆕🆕 D634: BUILT (C1)]
 - 2× Flip a coin for each Maushold you have in play. For each heads, discard the top 2 cards of your opponent's deck. [🆕🆕🆕 D605: BUILT]
 - 2× Flip a coin until you get tails. For each heads, choose a random card from your opponent's hand. Your opponent reveals those cards and shuffles them into their deck. [🆕🆕🆕 D595: BUILT]
 - 1× During your opponent's next turn, whenever they try to use a Trainer card from their hand, they flip a coin. If tails, your opponent discards that Trainer card instead of using it.
 - 1× Flip 2 coins. If both of them are heads, heal all damage from 1 of your Pokémon. [🆕🆕🆕 D595: BUILT]
-- 1× Flip 2 coins. If both of them are heads, search your deck for a Pokémon and put it onto your Bench. Then, shuffle your deck. [🆕🆕🆕 D595: dropped from WP13 — the bench search reads "a Pokémon" as a card name; only a Basic may go onto the Bench, so it needs a Basic bench-search arm]
-- 1× Flip 2 coins. If both of them are heads, this attack does 100 more damage. [🆕🆕🆕 D595: dropped from WP13 — a bonus behind a coin threshold needs a new `AttackCoinFlip` member]
+- 1× Flip 2 coins. If both of them are heads, search your deck for a Pokémon and put it onto your Bench. Then, shuffle your deck. [🆕🆕🆕 D595: dropped from WP13 — the bench search reads "a Pokémon" as a card name; only a Basic may go onto the Bench, so it needs a Basic bench-search arm] [🆕🆕🆕 D634: BUILT (C1)]
+- 1× Flip 2 coins. If both of them are heads, this attack does 100 more damage. [🆕🆕🆕 D595: dropped from WP13 — a bonus behind a coin threshold needs a new `AttackCoinFlip` member] [🆕🆕🆕 D634: BUILT (C1)]
 - 1× Flip 3 coins. Attach an amount of Basic Energy up to the number of heads from your discard pile to your Benched Pokémon in any way you like. [🆕🆕🆕 D595: BUILT]
-- 1× Flip a coin until you get tails. Search your deck for a number of cards up to the number of heads and put them into your hand. Then, shuffle your deck. [🆕🆕🆕 D595: dropped from WP13 — a deck source capped at the heads count]
-- 1× Flip a coin until you get tails. Search your deck for an amount of Basic &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy up to the number of heads and attach it to this Pokémon. Then, shuffle your deck. [🆕🆕🆕 D595: dropped from WP13 — a deck source capped at the heads count, and WP06's markup] [🆕🆕🆕 D612: the markup is normalised (WP06); the clean text still needs a reader]
-- 1× Flip a coin until you get tails. Search your deck for an amount of Basic Energy up to the number of heads and attach it to this Pokémon. Then, shuffle your deck. [🆕🆕🆕 D595: dropped from WP13 — a deck source capped at the heads count]
-- 1× Flip a coin. If heads, choose 1 of your opponent's Pokémon. Shuffle that Pokémon and all attached cards into their deck. [🆕🆕🆕 D595: dropped from WP13 — `returnBenched` cannot take the Active]
+- 1× Flip a coin until you get tails. Search your deck for a number of cards up to the number of heads and put them into your hand. Then, shuffle your deck. [🆕🆕🆕 D595: dropped from WP13 — a deck source capped at the heads count] [🆕🆕🆕 D634: BUILT (C1)]
+- 1× Flip a coin until you get tails. Search your deck for an amount of Basic &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy up to the number of heads and attach it to this Pokémon. Then, shuffle your deck. [🆕🆕🆕 D595: dropped from WP13 — a deck source capped at the heads count, and WP06's markup] [🆕🆕🆕 D612: the markup is normalised (WP06); the clean text still needs a reader] [🆕🆕🆕 D634: BUILT (C1)]
+- 1× Flip a coin until you get tails. Search your deck for an amount of Basic Energy up to the number of heads and attach it to this Pokémon. Then, shuffle your deck. [🆕🆕🆕 D595: dropped from WP13 — a deck source capped at the heads count] [🆕🆕🆕 D634: BUILT (C1)]
+- 1× Flip a coin. If heads, choose 1 of your opponent's Pokémon. Shuffle that Pokémon and all attached cards into their deck. [🆕🆕🆕 D595: dropped from WP13 — `returnBenched` cannot take the Active] [🆕🆕🆕 D634: BUILT (C1)]
 - 1× Flip a coin. If heads, choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition. [🆕🆕🆕 D605: BUILT]
 - 1× Flip a coin. If heads, during your opponent's next turn, the Defending Pokémon can't retreat. [🆕🆕🆕 D595: BUILT]
 - 1× Flip a coin. If heads, search your deck for a card and put it into your hand. Then, shuffle your deck. [🆕🆕🆕 D595: BUILT]

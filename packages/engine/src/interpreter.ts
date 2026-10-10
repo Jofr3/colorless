@@ -5220,6 +5220,16 @@ function stepOp(
           returnBenchedNote(op),
         );
       }
+      // 🆕🆕🆕 D634 — Reversing Gust's *"1 of your opponent's Pokémon"*: the opponent's Active and
+      // Bench, §11-filtered like the Bench-only arm below.
+      if (op.includeActive === true) {
+        return parkOrForce(
+          state,
+          unshieldedRefs(state, oppAnyRefs(state, ctx.seat), ctx, events),
+          (ref) => returnBenched(state, ref, op, ctx, events),
+          returnBenchedNote(op),
+        );
+      }
       // 🆕 D299 — the third `parkOrForce` on a BENCH in this switch, and the
       // first whose candidate board is chosen by a printed possessive rather
       // than fixed by the op. `unshieldedRefs` wraps the OPPONENT arm only, on
@@ -15422,7 +15432,7 @@ function bottomFromOpponentHandApply(
   uids: readonly string[],
   ctx: EffectContext,
   events: GameEvent[],
-  dest?: "bench" | "discard",
+  dest?: "bench" | "discard" | "deck",
 ): { state: GameState; moved: string[] } {
   const owner = otherSeat(ctx.seat);
   const side = state.players[owner];
@@ -15483,6 +15493,21 @@ function bottomFromOpponentHandApply(
         hand: side.hand.filter((uid) => !kept.has(uid)),
         discard: [...side.discard, ...landing],
       }),
+      moved: landing,
+    };
+  }
+  // 🆕🆕🆕 D634 — Snap Inspection: the picked card is SHUFFLED into its owner's deck (one shuffle).
+  if (dest === "deck") {
+    for (const uid of landing) {
+      events.push({ type: "HAND_CARD_SHUFFLED_INTO_DECK", seat: owner, uid, actor: ctx.seat });
+    }
+    const [shuffledDeck, rngState] = shuffle([...side.deck, ...landing], state.rngState);
+    events.push({ type: "SHUFFLE", seat: owner });
+    return {
+      state: {
+        ...withSide(state, owner, { ...side, hand: side.hand.filter((uid) => !kept.has(uid)), deck: shuffledDeck }),
+        rngState,
+      },
       moved: landing,
     };
   }
@@ -15647,7 +15672,10 @@ function returnBenched(
   // Cyclone) and only on the controller's own board. The spot is left EMPTY: the §8.1
   // promotion (or, with no Bench, the §14.2 loss) is the mid-turn sweep's, never this
   // function's (R-SC).
-  if (ref.spot.spot === "active" && op.includeActive === true && ref.seat === ctx.seat) {
+  // 🆕🆕🆕 D634 — on the `"opponent"` side (Reversing Gust) the Active is the OPPONENT's: the seat
+  // the op names, never the other one.
+  const activeOwner = op.whose === "self" ? ctx.seat : otherSeat(ctx.seat);
+  if (ref.spot.spot === "active" && op.includeActive === true && ref.seat === activeOwner) {
     return returnOwnActive(state, ref.seat, op, ctx, events);
   }
   // Not a bench ref — unreachable from either candidate set (both are built by
@@ -17157,6 +17185,10 @@ function swapTurnedPrizeWithRevealed(
     guessed one). The DESTINATION picks the verb because the printings do:
     nothing in this pool "shuffles" into a hand or "puts" into a deck. */
 function returnBenchedNote(op: Extract<EffectOp, { op: "returnBenched" }>): string {
+  // 🆕🆕🆕 D634 — Reversing Gust's printed clause, Active included.
+  if (op.whose === "opponent" && op.includeActive === true) {
+    return "Shuffle which of your opponent's Pokémon and all attached cards into their deck?";
+  }
   if (op.whose === "opponent") {
     return "Shuffle which of your opponent's Benched Pokémon into their deck?";
   }
@@ -17257,6 +17289,10 @@ function bottomFromOpponentHandNote(
   }
   if (op.dest === "discard") {
     return "Your opponent reveals their hand. Discard a card you find there.";
+  }
+  // 🆕🆕🆕 D634 — Watchog "Snap Inspection"'s per-heads clause.
+  if (op.dest === "deck") {
+    return "Your opponent reveals their hand. Choose a card you find there and shuffle it into your opponent's deck.";
   }
   if (op.filter?.kind === "supporter") {
     return "Your opponent reveals their hand. Choose a Supporter card you find there and put it on the bottom of their deck.";

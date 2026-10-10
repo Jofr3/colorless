@@ -727,10 +727,10 @@ describe("§7 — purity and the structural answers", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — the version", () => {
-  it("engineVersion is 0.516.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.517.0 and the bump is owed for BEHAVIOUR", () => {
     // 🆕🆕 D464 — 0.362.0 → **0.363.0**. A printed sentence that derived to `null` now
     // derives to a program, on two legal printings: an OBSERVABLE change to what the engine
     // does with real catalog rows, which is the bump's whole trigger.
-    expect(engineVersion).toBe("0.516.0");
+    expect(engineVersion).toBe("0.517.0");
   });
 });

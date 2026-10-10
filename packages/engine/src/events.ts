@@ -2039,6 +2039,10 @@ export type GameEvent =
       table. Contrast HAND_COST_PAID `to: "deckBottom"` (Dendra), where the
       payer's hidden card goes hidden → hidden and only the payer ever knew it. */
   | { type: "CARD_TO_BOTTOM_OF_DECK"; seat: Seat; uid: string; actor: Seat }
+  /** 🆕🆕🆕 D634 — ONE card went from `seat`'s revealed hand INTO `seat`'s deck, chosen by `actor` (the
+      other player; Watchog "Snap Inspection"). Named, `CARD_TO_BOTTOM_OF_DECK`'s reason: the pick was
+      made in the open. A real `SHUFFLE` row follows. */
+  | { type: "HAND_CARD_SHUFFLED_INTO_DECK"; seat: Seat; uid: string; actor: Seat }
   /** ⚠️⚠️ D232 — ONE card left `seat`'s hand AT RANDOM, taken by `actor` (the
       other player) and put either in `seat`'s own discard pile ("Discard a random
       card from your opponent's hand.") or back into their deck, which is then

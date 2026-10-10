@@ -2159,6 +2159,19 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 44 AT D634 — C1 ADDS TWO `AttackCoinFlip` MEMBERS (`bonusOnAllHeads`, `deckUpToHeads`), ONE
+    `bottomFromOpponentHand.dest` VALUE (`"deck"`), THE `returnBenched.includeActive` RIDER ON THE `"opponent"` SIDE AND
+    ONE EVENT (`HAND_CARD_SHUFFLED_INTO_DECK`); NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY OR `InPlayPokemon` FIELD.**
+    (Placed ABOVE the D633 block.) Every program is derived from the printed text at the attack, so the 8 faces in a
+    v44 `cardPool` (no face changes) read the new programs mid-match. The coin members are never serialized (spent at
+    the flip site into a number or into shipped `searchDeck` / `attachFromDeck` / `shuffleDeck` ops). What can be
+    persisted: a parked `bottomFromOpponentHand` with `dest: "deck"` (its prompt a `chooseCards` with the existing
+    `dest: "deck"`; more copies in `cont.rest`) and a parked `returnBenched` with `includeActive` on the opponent side.
+    Rollback readings, NAMED: a 0.516 reader applies `dest: "deck"` as the absent value (the card goes under the deck,
+    unshuffled, logged as a bottom-of-deck move); a 0.516 writer refuses an opponent Active ref, so a parked Reversing
+    Gust answered with the Active resumes as a no-op. No wire enum changes (`"deck"` is already a `chooseCards.dest`);
+    the event is not persisted (D141).
+
     🆕🆕🆕 **STAYS 44 AT D633 — O1 ADDS ONE `EffectOp` (`revealFromHand`), ONE OPTIONAL `discardEnergy` KEY
     (`reserve`), ONE `chooseCards.dest` VALUE (`"reveal"`) AND ONE EVENT (`HAND_CARDS_REVEALED`); NO PHASE, STAGE
     SHAPE, SIDE KEY OR `InPlayPokemon` FIELD.** (Placed ABOVE the D632 block.) Every program is derived from the printed

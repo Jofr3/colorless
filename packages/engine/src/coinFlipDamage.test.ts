@@ -528,7 +528,9 @@ describe("the rest of the coin family stays LOUD", () => {
     }
     // Magikarp sv02-042 (+ its sv02-203 reprint) — TWO coins gating D126's own consequent, and the
     // closest live near-miss this slice has: STILL null on this reader (the control).
-    expect(deriveAttackCoinFlip(magikarp)).toBeNull();
+    // 🆕🆕🆕 D634 (D539): WITHDRAWN — the all-heads gate is BUILT (Bewear `me01-112` "Hyper Lariat",
+    // `bonusOnAllHeads`), so Magikarp reads as that member, never as a one-flip `bonusOnHeads`.
+    expect(deriveAttackCoinFlip(magikarp)).toEqual({ kind: "bonusOnAllHeads", flips: { kind: "printed", count: 2 }, bonus: 20 });
     // Bisharp: the POSITIVE reading — pinned by value, not by a null (a null goes green the day the
     // whole family stops resolving; `ladder: [20, 60, 120]` does not).
     expect(deriveAttackCoinFlip(bisharp)).toEqual({

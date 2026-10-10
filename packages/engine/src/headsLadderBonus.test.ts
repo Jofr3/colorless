@@ -98,7 +98,8 @@ const zeroTier = (i: 1 | 2 | 3): string => {
   return PRINTED.replace(`does ${amounts[i - 1]} more damage`, "does 0 more damage");
 };
 /** Magikarp sv02-042 — TWO coins gating D126's consequent; the family's closest live near-miss and the
-    control that STAYS null. */
+    control that STAYS null. 🆕🆕🆕 D634 (D539): WITHDRAWN — `deriveAttackCoinFlip` reads it as D634's
+    `bonusOnAllHeads`; every other reader stays null. */
 const MAGIKARP = "Flip 2 coins. If both of them are heads, this attack does 20 more damage.";
 /** `coinThreshold.test.ts`'s `perHeadsThenThreshold` print and `multiCoinFlip.test.ts`'s `perHeads` print —
     the two members whose programs must stay UNEQUAL to the ladder. */
@@ -440,9 +441,12 @@ describe("D526 §1 — the printed row derives to EXACTLY the eighth member: pri
     }
   });
 
-  it("🛑 (g) THE CONTROLS stay where they are: Magikarp's two-coin gate is null on every reader; the `perHeadsThenThreshold` and `perHeads` prints still derive their OWN members, UNEQUAL to the ladder", () => {
-    for (const reader of READERS) expect(reader(MAGIKARP), reader.name).toBeNull();
-    expect(resolvedByAnyReader(MAGIKARP)).toBe(false);
+  it("🛑 (g) THE CONTROLS stay where they are: Magikarp's two-coin gate is null on every reader (🆕🆕🆕 D634: but the coin reader, which reads it as `bonusOnAllHeads`); the `perHeadsThenThreshold` and `perHeads` prints still derive their OWN members, UNEQUAL to the ladder", () => {
+    for (const reader of READERS) {
+      if (reader !== deriveAttackCoinFlip) expect(reader(MAGIKARP), reader.name).toBeNull();
+    }
+    expect(deriveAttackCoinFlip(MAGIKARP)).toEqual({ kind: "bonusOnAllHeads", flips: { kind: "printed", count: 2 }, bonus: 20 });
+    expect(resolvedByAnyReader(MAGIKARP)).toBe(true);
     const threshold = deriveAttackCoinFlip(THRESHOLD);
     expect(threshold?.kind).toBe("perHeadsThenThreshold");
     expect(threshold).toHaveProperty("per", 90);
@@ -741,7 +745,7 @@ const RAW: Record<string, string> = (
 describe("D526 §4 — the version steps, the heading is written, the prose is corrected, and what stands still", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.516.0");
+    expect(engineVersion).toBe("0.517.0");
     expect(manifest.version).toBe(engineVersion);
   });
 
