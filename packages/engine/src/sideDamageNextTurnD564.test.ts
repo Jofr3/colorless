@@ -222,10 +222,11 @@ describe("§2 — the install: a record on the PLAYER's side, stamped for the op
   it("🛑 the stamp is `state.turn + 1` (the opponent form's `+ 1`), on the INSTALLER's side only", () => {
     const board = table();
     expect(board.turn).toBe(2);
-    expect(board.players.p1.sideDamageReduction).toBeNull();
+    // 🆕🆕🆕 D630 (D539): the record is a SUMMED LIST since D630 — `null` reads `[]`, a record `[record]`.
+    expect(board.players.p1.sideDamageReduction).toEqual([]);
     const { state, events } = gaze(board);
-    expect(state.players.p1.sideDamageReduction).toEqual({ turn: 3, amount: REDUCTION });
-    expect(state.players.p2.sideDamageReduction).toBeNull();
+    expect(state.players.p1.sideDamageReduction).toEqual([{ turn: 3, amount: REDUCTION }]);
+    expect(state.players.p2.sideDamageReduction).toEqual([]);
     expect(find(events, "SIDE_DAMAGE_REDUCTION_INSTALLED")).toEqual({
       type: "SIDE_DAMAGE_REDUCTION_INSTALLED",
       seat: "p1",
@@ -234,15 +235,18 @@ describe("§2 — the install: a record on the PLAYER's side, stamped for the op
   });
 
   it("every printing installs the same record", () => {
-    for (const id of JASMINE) expect(gaze(table(), id).state.players.p1.sideDamageReduction).toEqual({ turn: 3, amount: 30 });
+    for (const id of JASMINE) expect(gaze(table(), id).state.players.p1.sideDamageReduction).toEqual([{ turn: 3, amount: 30 }]);
   });
 
-  it("🛑 OVERWRITE, not sum: a second install replaces the record (one Supporter per turn — named at the type)", () => {
+  it("🛑 OVERWRITE, not sum: a second install replaces the record (one Supporter per turn — named at the type) (🆕🆕🆕 D630 (D539): WITHDRAWN — a second install APPENDS and the two SUM; Iron Defender is an Item)", () => {
     const { state } = gaze(table());
     const events: GameEvent[] = [];
     const again = runProgram(state, [{ op: "installSideDamageReductionNextTurn", amount: 50 }], { seat: "p1" }, events);
     if (again.kind !== "done") throw new Error("expected done");
-    expect(again.state.players.p1.sideDamageReduction).toEqual({ turn: 3, amount: 50 });
+    expect(again.state.players.p1.sideDamageReduction).toEqual([
+      { turn: 3, amount: 30 },
+      { turn: 3, amount: 50 },
+    ]);
   });
 
   it("the log row reads under the installer and says whose turn", () => {
@@ -275,7 +279,7 @@ describe("§3 — the window is the OPPONENT's NEXT turn, and it expires on arit
     const turn5 = run(turn4, { type: "endTurn", seat: "p1" }).state;
     expect(turn5.turn).toBe(5);
     // The record is still on the side — it is not cleared, it EXPIRED.
-    expect(turn5.players.p1.sideDamageReduction).toEqual({ turn: 3, amount: REDUCTION });
+    expect(turn5.players.p1.sideDamageReduction).toEqual([{ turn: 3, amount: REDUCTION }]); // 🆕🆕🆕 D630 — a list
     expect(dealt(turn5)).toBe(STRIKE);
   });
 });
@@ -371,7 +375,7 @@ describe("§8 — R-JG1: Feint Attack's `\"othersOnly\"` DROPS it (an effect on 
 describe("§9 — the bytes, and THE NINTH POSITION (`MATCH_RECORD_VERSION` 35 → 36)", () => {
   it("🛑 the side record round-trips through JSON and still pays", () => {
     const turn3 = window();
-    expect(JSON.stringify(turn3.players.p1.sideDamageReduction)).toBe('{"turn":3,"amount":30}');
+    expect(JSON.stringify(turn3.players.p1.sideDamageReduction)).toBe('[{"turn":3,"amount":30}]'); // 🆕🆕🆕 D630 — a list
     expect(dealt(JSON.parse(JSON.stringify(turn3)) as GameState)).toBe(STRIKE - REDUCTION);
   });
 
@@ -379,7 +383,8 @@ describe("§9 — the bytes, and THE NINTH POSITION (`MATCH_RECORD_VERSION` 35 �
     const v36 = JSON.parse(JSON.stringify(window())) as GameState;
     const asRollbackReadsIt: GameState = {
       ...v36,
-      players: { ...v36.players, p1: { ...v36.players.p1, sideDamageReduction: null } },
+      // 🆕🆕🆕 D630 — `[]` is what a rollback without the record reads now (the field is a list).
+      players: { ...v36.players, p1: { ...v36.players.p1, sideDamageReduction: [] } },
     };
     expect(dealt(asRollbackReadsIt)).toBe(STRIKE);
     expect(dealt(v36)).toBe(STRIKE - REDUCTION);
@@ -392,7 +397,7 @@ describe("§9 — the bytes, and THE NINTH POSITION (`MATCH_RECORD_VERSION` 35 �
     expect(() => applyAction(v35, { type: "attack", seat: "p2", index: 0 })).toThrow(TypeError);
   });
 
-  it("the engine is 0.512.0", () => {
-    expect(engineVersion).toBe("0.512.0");
+  it("the engine is 0.513.0", () => {
+    expect(engineVersion).toBe("0.513.0");
   });
 });

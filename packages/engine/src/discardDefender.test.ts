@@ -847,14 +847,14 @@ describe("D536 §10 — the PERSISTED bytes, both directions", () => {
     expect(op).toEqual({ op: "discardDefender" });
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 43 (🆕🆕🆕 D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) — read off the raw source, not retyped", () => {
+  it("🛑 `MATCH_RECORD_VERSION` is 44 (🆕🆕🆕 D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) — read off the raw source, not retyped", () => {
     // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
-    expect(raw("/match.ts")).toContain("MATCH_RECORD_VERSION = 43");
+    expect(raw("/match.ts")).toContain("MATCH_RECORD_VERSION = 44");
   });
 
-  it("🛑 the engine version stepped to 0.512.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.512.0");
-    expect(manifest.version).toBe("0.512.0");
+  it("🛑 the engine version stepped to 0.513.0 in BOTH places", () => {
+    expect(engineVersion).toBe("0.513.0");
+    expect(manifest.version).toBe("0.513.0");
   });
 
   it("🛑 the op ITSELF never parks — no new `PendingStage` inhabitant, no new `EffectPrompt` value, and on a NON-PARKING board nothing new reaches `phase.cont`", () => {

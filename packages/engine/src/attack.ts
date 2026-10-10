@@ -157,12 +157,16 @@ import { damagedByAttackAbility, damagedToolTriggersOf, koToolTriggersOf } from 
 import { isBenchIndex, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PendingStage, Phase, PokemonTarget, Seat } from "./types";
 import {
+  // 🆕🆕🆕 D630 — Juggernaut Horn's record and Settle the Score's.
+  attackDamageTakenLastTurn,
   isImmobilized,
   makeInPlay,
   otherSeat,
   presentStatuses,
+  prizesTakenOnLastTurn,
   takenPrizes,
   withActive,
+  withAttackDamageTaken,
   withSide,
 } from "./types";
 
@@ -347,6 +351,13 @@ function scaledAttackDamage(
     case "yourPrizesTaken":
       // 🆕🆕🆕 D620 — the arm above on the ATTACKING seat ("…Prize card you have taken"), read at declaration.
       return takenPrizes(state, attackerSeat) * bonus.per;
+    case "opponentPrizesTakenLastTurn":
+      // 🆕🆕🆕 D630 — Settle the Score: the Prizes the DEFENDING seat took during the turn before this one.
+      return prizesTakenOnLastTurn(state, defenderSeat) * bonus.per;
+    case "attackDamageTakenLastTurnOnSelf":
+      // 🆕🆕🆕 D630 — Juggernaut Horn / Counter: the damage attacks dealt the attacking body during the
+      // opponent's last turn, in HP (`per` 1), read at declaration.
+      return attackDamageTakenLastTurn(state, attacker) * bonus.per;
     case "opponentActiveRetreatCost": {
       // The {C} in the DEFENDING Pokémon's Retreat Cost — the EFFECTIVE one, not
       // the printed number: `effectiveRetreatCost` already folds every modifier in
@@ -3626,7 +3637,7 @@ export function attack(
         defenderPassives.damageReductionAfterWR +
         // 🆕🆕🆕 D619 — the attacker-gated reduction (Sacred Charm, Thick Scale, Thick Fat), on-target.
         attackerGatedReductionOf(next, defender, defenderPassives.damageReductionsFromAttacker, attacker, action.seat) +
-        installedReductionOf(next, defender) +
+        installedReductionOf(next, defender, attacker, attackerBody) + // 🆕🆕🆕 D630 — Metal Block's class
         seatDamageReduction(next, defender, "all", action.seat);
     // §8.5 Mimikyu "Safeguard": prevent ALL damage from an opponent's Pokémon
     // ex/V. A full null (not a flat reduction), gated on the ATTACKER's rule-box
@@ -3784,7 +3795,7 @@ export function attack(
           // comparator would be a field with no writer on one side and no reader
           // on the other.
           preventedByDamageThreshold(defenderPassives.preventDamageAtOrAbove, wouldDeal) ||
-          attackBlockOf(next, defender, attacker, wouldDeal) !== null)) ||
+          attackBlockOf(next, defender, attacker, wouldDeal, attackerBody) !== null)) ||
       // D254 — the scan's signature gains `scope` and this site passes "all",
       // which costs nothing because the site is DEAD for both of the scan's
       // sentences and always has been: `defender` is the defending ACTIVE (§8) and
@@ -3842,7 +3853,12 @@ export function attack(
     const [coinSaved, survivalRng] =
       clamped === null ? koSurvivalCoinFlip(next, defender, defenderSeat, dealt, events) : [null, next.rngState];
     next = { ...next, rngState: survivalRng };
-    defended = { ...defender, damage: clamped?.damage ?? coinSaved ?? defender.damage + dealt };
+    // 🆕🆕🆕 D630 — and the damage the attack dealt is recorded on the body (Juggernaut Horn, R-JH1).
+    defended = withAttackDamageTaken(
+      { ...defender, damage: clamped?.damage ?? coinSaved ?? defender.damage + dealt },
+      next.turn,
+      dealt,
+    );
     next = withSide(next, defenderSeat, { ...next.players[defenderSeat], active: defended });
     events.push({
       type: "DAMAGE_DEALT",

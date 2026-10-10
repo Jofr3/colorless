@@ -5,6 +5,7 @@ import type {
   CardFilter,
   HandPlayClass,
   PokemonPlayAct,
+  PokemonType,
   StampedPlayLockKey,
 } from "./effects";
 import type { DrawReason, GameEvent, StatusName } from "./events";
@@ -340,6 +341,43 @@ export interface DamageReduction {
       a number is closed by its type (D120's precondition met, unlike the open
       consequent vocabularies that get one anchor each). */
   amount: number;
+  /** 🆕🆕🆕 §8.5 (D630) — the printed ATTACKER CLASS: present exactly when the sentence narrows
+      the reduction to attacks *"from {class} Pokémon"* (Bronzong `me05-064` "Metal Block", *"…takes
+      100 less damage from attacks from Evolution Pokémon (after applying Weakness and Resistance)"*),
+      ABSENT when it reduces every attack (`AttackBlock.fromClass`'s absent-key rule). Resolved at the
+      read site by continuous.ts `installedReductionOf` through `attackBlockOf`'s own class predicate;
+      an unreadable attacker gets no reduction (protects LESS). A key ADDED, so a v43 record is an
+      inhabitant with it absent — but a 0.512 ROLLBACK ignores it and reduces EVERY attacker, which
+      is one reason the persisted shape moved (`MATCH_RECORD_VERSION` 43 → 44, apps/api match.ts). */
+  fromClass?: AttackerClass;
+}
+
+/** 🆕🆕🆕 §8.5 (D630) — what attacks did to one Pokémon on ONE turn: the turn and the damage
+    they dealt it (the `dealt` of every `DAMAGE_DEALT` row on the body that turn, summed). Read
+    by Mega Heracross ex `me02-004` / `-108` "Juggernaut Horn" and Lycanroc `30th-085` / `-138`
+    "Counter" (*"If this Pokémon was damaged by an attack during your opponent's last turn, this
+    attack does that much more damage."*) as `turn === state.turn - 1` (`lastKoTurn`'s
+    arithmetic). Written at the four §8.5 damage sites (attack.ts's main hit, interpreter.ts
+    `spreadDamage`, `placeSnipe`'s `deals` arm, `snipeActive`) by `withAttackDamageTaken`. */
+export interface AttackDamageTaken {
+  /** The turn the damage was dealt on. */
+  turn: number;
+  /** The damage attacks dealt this Pokémon on that turn: post-W/R, post-reduction, the `DAMAGE_DEALT`
+      row's `dealt` — NOT lowered when a survival clamp or coin leaves fewer counters on the body
+      (R-JH1: the attack did that much damage). */
+  amount: number;
+}
+
+/** 🆕🆕🆕 §8.1 (D630) — the Prize cards one seat TOOK on one turn: Okidogi `me02.5-122` "Settle the
+    Score" (*"This attack does 60 more damage for each Prize card your opponent took during their
+    last turn."*). Written by flow.ts `resolveTakePrizes` (the one funnel every take passes
+    through) for a take on the TAKER's own turn only, read as `turn === state.turn - 1` by
+    `prizesTakenOnLastTurn`. */
+export interface PrizesTakenOnTurn {
+  /** The turn the Prizes were taken on. */
+  turn: number;
+  /** How many Prize cards the seat took on that turn. */
+  count: number;
 }
 
 /** 🆕🆕 §13 (D434, GENERALISED AT D435) — a DELAYED EFFECT scheduled onto one
@@ -684,12 +722,16 @@ export interface SideAttackLock {
     ⚠️ OVERWRITE, NOT SUM: a second install replaces the first. Only one Supporter may be
     played per turn (§7.2) and each install's window is the single turn after its owner's
     turn, so two live windows on one side can never overlap on a legal board — the
-    overwrite is named rather than hedged with an array. */
+    overwrite is named rather than hedged with an array. [🆕🆕🆕 D630 (D539): WITHDRAWN — the record is a summed LIST since D630: Iron Defender is an Item, so two plays in one turn overlap; a second install APPENDS and the live entries SUM (`PlayerSide.sideDamageReduction`).] */
 export interface SideDamageReduction {
   /** The single turn this reduction is live on — the installer's opponent's next turn. */
   turn: number;
   /** HP subtracted after Weakness and Resistance (the printed 30). */
   amount: number;
+  /** 🆕🆕🆕 D630 — the printed holder TYPE (Iron Defender `me01-118` / `me05-110`, *"all of your
+      {M} Pokémon"*), matched on the damaged body's in-play card (`typedPokemon`, Full Metal Lab's
+      reading). ABSENT = every Pokémon of the side (Jasmine's Gaze). */
+  pokemonType?: PokemonType;
 }
 
 /** 🆕🆕🆕 §11 (D575) — a SIDE-WIDE, class-filtered next-turn damage block: Miraidon `sv08-069`
@@ -2013,6 +2055,36 @@ export interface InPlayPokemon {
       site (`makeInPlay`) and a REQUIRED `GameState` record costs 1 file / 1 site
       (`setup.ts`). The printed subject decides it, not the arithmetic. */
   usedAttack: UsedAttack | null;
+  /** 🆕🆕🆕 §8.5 (D630) — the damage attacks dealt this Pokémon on the most recent turn they dealt
+      any (see `AttackDamageTaken` above), or `null`. A FACT ABOUT THE BODY, NOT AN EFFECT OF AN
+      ATTACK, so no §10 site clears it: it survives switching, evolving and devolving and dies with
+      the body (R-JH1 ⚠️ UNRULED). REQUIRED: `MATCH_RECORD_VERSION` 43 → 44, a v43 body MIGRATED
+      with `null`. Only `makeInPlay` is compiler-forced; every other literal spreads a body. */
+  attackDamageTaken: AttackDamageTaken | null;
+}
+
+/** 🆕🆕🆕 §8.5 (D630) — `pokemon` with `dealt` attack damage recorded for `turn`: summed onto a
+    record of the same turn, replacing an older one. `dealt <= 0` records nothing (a prevented or
+    fully reduced hit is not "damaged"). PURE. */
+export function withAttackDamageTaken(pokemon: InPlayPokemon, turn: number, dealt: number): InPlayPokemon {
+  if (dealt <= 0) return pokemon;
+  const record = pokemon.attackDamageTaken;
+  const amount = record !== null && record.turn === turn ? record.amount + dealt : dealt;
+  return { ...pokemon, attackDamageTaken: { turn, amount } };
+}
+
+/** 🆕🆕🆕 §8.5 (D630) — the damage attacks dealt `pokemon` during the turn before this one (its
+    controller's OPPONENT's last turn, `koedDuringOpponentsLastTurn`'s arithmetic), or 0. */
+export function attackDamageTakenLastTurn(state: GameState, pokemon: InPlayPokemon): number {
+  const record = pokemon.attackDamageTaken;
+  return record !== null && record.turn === state.turn - 1 ? record.amount : 0;
+}
+
+/** 🆕🆕🆕 §8.1 (D630) — the Prize cards `seat` took during the turn before this one, or 0. Asked
+    for the attacker's OPPONENT, whose last turn the turn before this one is. */
+export function prizesTakenOnLastTurn(state: GameState, seat: Seat): number {
+  const record = state.players[seat].prizesTakenOnTurn;
+  return record !== null && record.turn === state.turn - 1 ? record.count : 0;
 }
 
 /** 🆕🆕 §13 (D434, GENERALISED AT D435) — the delayed effect a body owes RIGHT NOW,
@@ -2129,6 +2201,8 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // …and it has not attacked either: a card entering play has never been the
     // Attacking Pokémon, and `finishAttack` (flow.ts) is the one writer (D394).
     usedAttack: null,
+    // 🆕🆕🆕 …and no attack has damaged it either (D630). The compiler forces this line.
+    attackDamageTaken: null,
   };
 }
 
@@ -2214,8 +2288,22 @@ export interface PlayerSide {
       not show it (a carried display debt, `sideAttackLock`'s precedent, decisions.md D564).
 
       REQUIRED (not `?`): `MATCH_RECORD_VERSION` 35 → 36 (the NINTH position at match.ts) —
-      a v35 rollback would silently drop a played Jasmine's Gaze window. */
-  sideDamageReduction: SideDamageReduction | null;
+      a v35 rollback would silently drop a played Jasmine's Gaze window.
+
+      🆕🆕🆕 **D630 — A SUMMED LIST, NOT ONE RECORD** (D539: *"or `null` when none has been
+      installed"* is WITHDRAWN — an empty list). Iron Defender is an Item, so two plays in one
+      turn STACK; the D564 record was OVERWRITTEN by a second install. Every live entry is summed
+      (`seatDamageReduction`); `installSideDamageReductionNextTurn` appends and prunes the expired.
+      A v43 record is MIGRATED (`null` → `[]`, a record → `[record]`; `MATCH_RECORD_VERSION` 43 →
+      44). */
+  sideDamageReduction: readonly SideDamageReduction[];
+  /** 🆕🆕🆕 §8.1 (D630) — the Prize cards this seat took on the most recent OF ITS OWN turns it took
+      any (see `PrizesTakenOnTurn` above), or `null` while it has taken none. A take on the
+      opponent's turn (a Cursed Blast self-Knock Out) is not recorded and leaves the record alone. Written by flow.ts
+      `resolveTakePrizes`, read by `prizesTakenOnLastTurn`. PUBLIC (both players watched the take).
+      REQUIRED: `MATCH_RECORD_VERSION` 43 → 44, a v43 record MIGRATED with `null` (no v43 writer
+      recorded a take, and `null` reads as "none last turn", which an old record cannot disprove). */
+  prizesTakenOnTurn: PrizesTakenOnTurn | null;
   /** 🆕🆕🆕 §11 (D575) — the SIDE-WIDE, class-filtered next-turn damage block on this seat's
       Future Pokémon (Miraidon "C.O.D.E.: Protect", see `SideAttackBlock` above), or `null`.
       Written by `installSideAttackBlock`, read by continuous.ts `attackBlockOf`'s side arm,

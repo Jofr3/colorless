@@ -714,6 +714,6 @@ describe("D616 §11 — Fetch and Hide: an Item from the opponent's hand to the 
 
 describe("D616 §12 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.512.0");
+    expect(engineVersion).toBe("0.513.0");
   });
 });

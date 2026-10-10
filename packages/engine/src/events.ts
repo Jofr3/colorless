@@ -1,6 +1,6 @@
 import type { DamageModifier } from "./cards";
 import type { Banner } from "./banners";
-import type { AttackerClass, CardFilter, StampedPlayLockKey } from "./effects";
+import type { AttackerClass, CardFilter, PokemonType, StampedPlayLockKey } from "./effects";
 import type { CoinFace } from "./rng";
 import type { GameOutcome, PokemonTarget, ScheduledEffect, Seat } from "./types";
 
@@ -637,7 +637,14 @@ export type GameEvent =
       identical whichever source supplied it. Announcing WHICH would owe the row a
       member to say something the install row above already put in the reader's
       hands (D142's argument for `prevented`, on the number instead of the flag). */
-  | { type: "DAMAGE_REDUCTION_APPLIED"; seat: Seat; uid: string; amount: number }
+  | {
+      type: "DAMAGE_REDUCTION_APPLIED";
+      seat: Seat;
+      uid: string;
+      amount: number;
+      /** 🆕🆕🆕 D630 — the printed attacker class (Metal Block), a fresh copy; absent = every attacker. */
+      fromClass?: AttackerClass;
+    }
   /** 🆕🆕 §8.5/§11 (D432) — an attack INSTALLED a durated NO-WEAKNESS bar on
       the CONTROLLER's own Active ("During your opponent's next turn, this Pokémon
       has no Weakness."). ACTOR-voiced by construction, exactly as
@@ -755,7 +762,13 @@ export type GameEvent =
       Weakness and Resistance)."*). `seat` is the INSTALLER, which is also the SHIELDED side.
       NO `uid`, `SIDE_ATTACKS_LOCKED`'s reason: the record is on the SIDE, and a Pokémon
       that comes into play afterwards is covered too. Not persisted (D141). */
-  | { type: "SIDE_DAMAGE_REDUCTION_INSTALLED"; seat: Seat; amount: number }
+  | {
+      type: "SIDE_DAMAGE_REDUCTION_INSTALLED";
+      seat: Seat;
+      amount: number;
+      /** 🆕🆕🆕 D630 — Iron Defender's printed holder type; absent = every Pokémon (Jasmine's Gaze). */
+      pokemonType?: PokemonType;
+    }
   /** 🆕🆕🆕 §11 (D621) — Acerola's Mischief shielded `seat`'s chosen body `uid` (its TOP card at the
       install) from the damage and effects of attacks by `fromClass` for the opponent's next turn.
       `fromClass` is a fresh copy. Not persisted (D141). */

@@ -99,7 +99,18 @@ function attackerClassPhrase(cls: AttackerClass): string {
     "Pokémon ex"), because the ex class prints its word AFTER "Pokémon" and the row can no
     longer append " Pokémon" to the phrase. Every pre-D575 row renders byte-identically. */
 function attackerClassNoun(cls: AttackerClass): string {
+  // 🆕🆕🆕 D630 — "Pokémon that have an Ability" also prints its class AFTER "Pokémon": the printed
+  // words verbatim (Psy Protection `me04-033`).
+  if (cls.stage === "hasAbility") return "Pokémon that have an Ability";
   return cls.stage === "ex" ? "Pokémon ex" : `${attackerClassPhrase(cls)} Pokémon`;
+}
+
+/** 🆕🆕🆕 D630 — "{class}'s attacks", except for the one class whose noun ends in a clause, which
+    takes the printed order instead ("attacks from Pokémon that have an Ability"). Every pre-D630
+    row renders byte-identically. */
+function attackerClassAttacks(cls: AttackerClass): string {
+  const noun = attackerClassNoun(cls);
+  return cls.stage === "hasAbility" ? `attacks from ${noun}` : `${noun}'s attacks`;
 }
 
 /** The stage word's printed CASING, and a `switch` for `attackerMatchesStage`'s
@@ -115,6 +126,15 @@ function stageWord(stage: AttackerClass["stage"]): string {
       return "Ancient";
     case "ex":
       return "ex";
+    // 🆕🆕🆕 D630 — Lava Wall, Flashing Barrier / Metal Block, Psy Protection.
+    case "burned":
+      return "Burned";
+    case "evolution":
+      return "Evolution";
+    case "hasAbility":
+      // The printed words, which FOLLOW "Pokémon" — `attackerClassNoun` places them and never asks
+      // this switch for this member; the arm exists for exhaustiveness.
+      return "that have an Ability";
   }
 }
 
@@ -674,7 +694,7 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(cardName(state, event.uid)),
         plain(
           (event.fromClass !== undefined
-            ? ` is protected from damage from ${attackerClassNoun(event.fromClass)}'s attacks during your opponent's next turn`
+            ? ` is protected from damage from ${attackerClassAttacks(event.fromClass)} during your opponent's next turn`
             : event.effects
               ? " is protected from damage and effects of attacks during your opponent's next turn"
               : " is protected from damage from attacks during your opponent's next turn") +
@@ -781,7 +801,10 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     case "DAMAGE_REDUCTION_APPLIED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
-        plain(` takes ${event.amount} less damage from attacks during your opponent's next turn`),
+        // 🆕🆕🆕 D630 — Metal Block's class; an unfiltered row renders byte-identically.
+        plain(
+          ` takes ${event.amount} less damage from attacks${event.fromClass === undefined ? "" : ` from ${attackerClassNoun(event.fromClass)}`} during your opponent's next turn`,
+        ),
       ]);
     // 🆕🆕 §8.5/§11 — the attack-installed NO-WEAKNESS bar (D432). ACTOR voice
     // by construction (the op has no defender arm), so it keeps the row above's
@@ -918,7 +941,7 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     // the printed terminator named so the opponent knows a gust ends it.
     case "SIDE_ATTACK_BLOCK_APPLIED":
       return row(event.seat, [
-        plain(`${event.banner} Pokémon are protected from damage from ${attackerClassNoun(event.fromClass)}'s attacks during the opponent's next turn, while `),
+        plain(`${event.banner} Pokémon are protected from damage from ${attackerClassAttacks(event.fromClass)} during the opponent's next turn, while `),
         strong(cardName(state, event.uid)),
         plain(" stays in the Active Spot"),
       ]);
@@ -962,7 +985,8 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     case "SIDE_DAMAGE_REDUCTION_INSTALLED":
       return row(event.seat, [
         plain(
-          `Pokémon take ${event.amount} less damage from attacks during the opponent's next turn (after Weakness and Resistance), including Pokémon that come into play`,
+          // 🆕🆕🆕 D630 — Iron Defender's holder type leads the row; Jasmine's Gaze renders byte-identically.
+          `${event.pokemonType === undefined ? "" : `${event.pokemonType} `}Pokémon take ${event.amount} less damage from attacks during the opponent's next turn (after Weakness and Resistance), including Pokémon that come into play`,
         ),
       ]);
     // 🆕🆕🆕 §5.3 — Amarys's scheduled end-of-turn discard (D564). The threshold is printed,

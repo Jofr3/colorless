@@ -604,6 +604,7 @@ describe("§6 — persistence, purity, and the property the export did not cost"
     expect(Object.keys(refused.state.players.p2.active ?? {}).sort()).toEqual([
       "attackBlock",
       "attackDamageDebuff",
+      "attackDamageTaken", // 🆕🆕🆕 D630 (43 -> 44) — Juggernaut Horn's record; the pin is on the HEAD's key set
       // 🆕🆕🆕 D547 — the FLIP-TO-ATTACK lock's stamp and the NEXT-TURN VULNERABILITY
       // record JOIN THE LIST (MATCH_RECORD_VERSION 30 -> 31). The pin is on the HEAD's
       // key set, so it moves whenever anybody adds a key; what it asserts is that THIS
@@ -698,6 +699,6 @@ describe("§7 — the version", () => {
     // `manifest.version`) plus `package.json`, the declaration and the mutant `find`.
     // The increment is this line — the pin being AUTHORED, which is the one D427 named
     // as the thing every note forgets.
-    expect(engineVersion).toBe("0.512.0");
+    expect(engineVersion).toBe("0.513.0");
   });
 });

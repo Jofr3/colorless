@@ -157,7 +157,9 @@ function emptySide(deck: string[]): PlayerSide {
     // 🆕🆕🆕 D549 — no attack has locked a side that has not been dealt yet.
     sideAttackLock: null,
     // 🆕🆕🆕 D564 — no Supporter has shielded a side that has not been dealt yet.
-    sideDamageReduction: null,
+    sideDamageReduction: [],
+    // 🆕🆕🆕 D630 — a side not yet dealt has taken no Prize card.
+    prizesTakenOnTurn: null,
     // 🆕🆕🆕 D575 — no attack has blocked damage to a side that has not been dealt yet.
     sideAttackBlock: null,
     // 🆕🆕🆕 D621 — no Supporter has shielded a body or locked a retreat on a side not yet dealt.

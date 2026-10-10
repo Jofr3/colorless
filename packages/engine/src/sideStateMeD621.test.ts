@@ -26,7 +26,8 @@ import {
 // Performance (`lockSideRetreat` → `PlayerSide.sideRetreatLock`, R-RP1) and Dawn (Larry's Skill's
 // `also` search). Texts measured on the LOCAL D1, 2026-10-09, `legal_standard = 1` on every row;
 // driven on the real ids in a LOCAL `cardPool` (D275). Iron Defender `me01-118` / `me05-110` is
-// dropped (an Item whose two plays stack on a persisted record D564 overwrites).
+// dropped (an Item whose two plays stack on a persisted record D564 overwrites) [🆕🆕🆕 D630 (D539): BUILT at
+// D630 on the summed list, `persistedRecordsMeD630.test.ts`].
 
 const GLADION = "me05-077";
 const PPP = "me01-124";
@@ -84,8 +85,8 @@ describe("D621 §1 — the faces: 16 `me` printings / 5 texts, one object per te
     expect(objects.size).toBe(5);
   });
 
-  it("Iron Defender (dropped) stays unkeyed", () => {
-    for (const id of ["me01-118", "me05-110"]) expect(programFor(id), id).toBeUndefined();
+  it("Iron Defender (dropped) stays unkeyed (🆕🆕🆕 D630 (D539): WITHDRAWN — keyed at D630 on the summed list, `persistedRecordsMeD630.test.ts`)", () => {
+    for (const id of ["me01-118", "me05-110"]) expect(Object.keys(programFor(id) ?? {}), id).toEqual(["trainer"]);
   });
 });
 
@@ -747,6 +748,6 @@ describe("D621 §8 — the ids and the version", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.512.0");
+    expect(engineVersion).toBe("0.513.0");
   });
 });

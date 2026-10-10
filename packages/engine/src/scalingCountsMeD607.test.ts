@@ -57,7 +57,7 @@ const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [ENERGY_STRAW, ["me02.5-013", "me02.5-219"]],
 ];
 
-/** WP28's other half (WP28b), named: each needs vocabulary beyond this slice. [🆕🆕🆕 D623 (D539): five are built at D623 — Kyogre, Igglybuff, Pikachu, Armarouge ×2, Gourgeist ex ×2; Doublade ×3 and Okidogi are dropped and named there.] */
+/** WP28's other half (WP28b), named: each needs vocabulary beyond this slice. [🆕🆕🆕 D623 (D539): five are built at D623 — Kyogre, Igglybuff, Pikachu, Armarouge ×2, Gourgeist ex ×2; Doublade ×3 and Okidogi are dropped and named there.] [🆕🆕🆕 D630 (D539): Okidogi BUILT at D630.] */
 const WP28B: readonly (readonly [string, number])[] = [
   [
     "Reveal any number of Honedge, Doublade, and Aegislash from your hand, and this attack does 60 damage for each card you revealed in this way.",
@@ -84,10 +84,11 @@ describe("D607 §1 — the texts: 8 attack sentences / 14 printings", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(14);
   });
 
-  it("WP28b stays unbuilt: 7 texts / 11 printings, named (🆕🆕🆕 D623 (D539): WITHDRAWN — five are built at D623; Doublade ×3 and Okidogi stay unbuilt)", () => {
+  it("WP28b stays unbuilt: 7 texts / 11 printings, named (🆕🆕🆕 D623 (D539): WITHDRAWN — five are built at D623; Doublade ×3 and Okidogi stay unbuilt) (🆕🆕🆕 D630 (D539): Okidogi built at D630; only Doublade ×3 stays)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     // 🆕🆕🆕 D623 — the two texts still unread; the other five are `scalingCountsMeD623.test.ts`'s.
-    const stillUnbuilt = new Set([WP28B[0]?.[0], WP28B[6]?.[0]]);
+    // 🆕🆕🆕 D630 (D539) — one now: Okidogi (`WP28B[6]`) is reader-built at D630 (M1); Doublade stays.
+    const stillUnbuilt = new Set([WP28B[0]?.[0]]);
     for (const [text, n] of WP28B) {
       expect([text, me.get(text)]).toEqual([text, n]);
       expect(resolvedByAnyReader(text), text).toBe(!stillUnbuilt.has(text));
@@ -479,6 +480,6 @@ describe("D607 §4 — the four texts on shipped members, on a board", () => {
 
 describe("D607 §5 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.512.0");
+    expect(engineVersion).toBe("0.513.0");
   });
 });

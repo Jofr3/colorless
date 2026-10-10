@@ -1132,8 +1132,17 @@ export interface AttackerClass {
       The key keeps its NAME (a rename would be a second shape change for nothing) and stays
       REQUIRED (never optional — D569 (e)); `attackerMatchesStage` (continuous.ts) stays an
       exhaustive `switch` that is its whole body. A PERSISTED widening: `MATCH_RECORD_VERSION`
-      37 → 38 (the ELEVENTH position, apps/api match.ts). */
-  readonly stage: "basic" | "ancient" | "ex";
+      37 → 38 (the ELEVENTH position, apps/api match.ts).
+      🆕🆕🆕 **D630 — SIX MEMBERS** (D539: *"THREE MEMBERS"* is WITHDRAWN): `"burned"` — Heatran
+      `me05-007` "Lava Wall", *"…by attacks from Burned Pokémon"*, read on the ATTACKING BODY's
+      conditions at damage time (R-LVW1 ⚠️ UNRULED); `"evolution"` — Manectric `me05-024` / `-089`
+      "Flashing Barrier" and Bronzong `me05-064` "Metal Block", *"…from Evolution Pokémon"*, cards.ts
+      `isEvolutionPokemon` on the attacker's in-play card; `"hasAbility"` — Deoxys `me04-033` "Psy
+      Protection", *"…by attacks from Pokémon that have an Ability"*, cards.ts `hasPrintedAbility`
+      (a §9-locked Ability is still had — R-PSY1 ⚠️ UNRULED). A PERSISTED widening again:
+      `MATCH_RECORD_VERSION` 43 → 44 (a 0.512 `attackerMatchesStage` falls out of its switch on a
+      new member and the block refuses nothing). */
+  readonly stage: "basic" | "ancient" | "ex" | "burned" | "evolution" | "hasAbility";
   /** The printed *"non-{X}"* exclusion, resolved through `POKEMON_TYPE_BY_CODE`.
       ABSENT = the sentence excluded nothing. */
   readonly excludingType?: PokemonType;
@@ -4587,7 +4596,13 @@ export type EffectOp =
       nothing about it needs to precede the §8.5 pipeline. Never parks, consumes
       no rng, and is idempotent (installing twice in one turn keeps the larger
       number — see the interpreter for why MAX and not a sum). */
-  | { op: "reduceDamage"; amount: number }
+  | {
+      op: "reduceDamage";
+      amount: number;
+      /** 🆕🆕🆕 D630 — the printed attacker class (Bronzong "Metal Block", *"…from attacks from
+          Evolution Pokémon"*), stored on `DamageReduction.fromClass`. ABSENT = every attacker. */
+      fromClass?: AttackerClass;
+    }
   /** 🆕🆕 §8.5/§11 (D432) — INSTALL a durated NO-WEAKNESS bar on the
       CONTROLLER's own Active:
 
@@ -4706,6 +4721,13 @@ export type EffectOp =
       refuses it (`weakenDefenderAttacks`' check verbatim). Never parks, consumes
       no rng; idempotent by `Math.max` on one window. */
   | { op: "exposeDefender"; amount: number }
+  /** 🆕🆕🆕 §8.5 (D630) — THE SELF VULNERABILITY: Mabosstiff `me05-058` "Plunging Headbutt", *"During
+      your opponent's next turn, this Pokémon takes 100 more damage from attacks (after applying
+      Weakness and Resistance)."* — `exposeDefender`'s record (`InPlayPokemon.damageVulnerability`,
+      no new key) written on the CONTROLLER's own Active with the opponent form's `state.turn + 1`.
+      SUMMED with a live record of the same window (R-PH1 ⚠️ UNRULED: an opponent's exposure lands on
+      that window too, and the two are separate effects). Never parks; no §11 check (a self effect). */
+  | { op: "exposeSelf"; amount: number }
   /** 🆕🆕🆕 §8.5/§11 (D552) — THE WEAKNESS RETYPE on the DEFENDING Pokémon: "Until the end
       of your next turn, the Defending Pokémon's Weakness is now {C}. (The amount of
       Weakness doesn't change.)" (`censusAttackCorpus.ts:629`, leading count column 1 — 1
@@ -7607,9 +7629,15 @@ export type EffectOp =
       your opponent's Pokémon (after applying Weakness and Resistance)."* — stamps the
       CONTROLLER's side with `sideDamageReduction { turn: state.turn + 1, amount }` (types.ts
       `SideDamageReduction`: the opponent form's `+ 1`, a record on the SIDE so new Pokémon
-      are covered, overwrite semantics named there). Never parks. Emits
+      are covered, overwrite semantics named there [🆕🆕🆕 D630 (D539): WITHDRAWN — the record is a summed LIST since D630: Iron Defender is an Item, so two plays in one turn overlap; a second install APPENDS and the live entries SUM — the op APPENDS an entry to the list]). Never parks. Emits
       `SIDE_DAMAGE_REDUCTION_INSTALLED` (not persisted, D141). */
-  | { op: "installSideDamageReductionNextTurn"; amount: number }
+  | {
+      op: "installSideDamageReductionNextTurn";
+      amount: number;
+      /** 🆕🆕🆕 D630 — Iron Defender's printed *"all of your {M} Pokémon"* (`SideDamageReduction
+          .pokemonType`). ABSENT = every Pokémon of the side (Jasmine's Gaze). */
+      pokemonType?: PokemonType;
+    }
   /** 🆕🆕🆕 **D621 — Acerola's Mischief `me01-113`/`-165`/`-183`, `me02.5-180` (Supporter)**:
       *"Choose 1 of your Pokémon in play. During your opponent's next turn, prevent all damage from
       and effects of attacks done to that Pokémon by your opponent's Pokémon ex."* — PARKS a
@@ -14786,6 +14814,28 @@ const LOOK_AT_OPPONENT_PRIZE = /^Look at 1 of your opponent['’]s face-down Pri
 //     `yourPrizesRemaining { counts: [1] }` around the NEW `winGame` (R-VS1).
 const WIN_AT_ONE_PRIZE =
   /^If you use this attack when you have exactly 1 Prize card remaining, you win this game\.$/;
+// 🆕🆕🆕 D630 — M1's FOUR attacker-class texts (LOCAL D1, `legal_standard = 1`, 2026-10-10), each a
+// whole-sentence anchor on the class noun as printed, read onto the three NEW `AttackerClass.stage`
+// members (MRV 43 → 44):
+//   • Heatran `me05-007` "Lava Wall" (index 1) and Manectric `me05-024` / `-089` "Flashing Barrier"
+//     (index 0) and Deoxys `me04-033` "Psy Protection" (index 0) — arm 19c's op with the new member;
+const PREVENT_DAMAGE_FROM_CLASS_D630 =
+  /^During your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks from (Burned Pokémon|Evolution Pokémon|Pokémon that have an Ability)\.$/;
+//   • Bronzong `me05-064` "Metal Block" (index 1) — arm 19d's `reduceDamage` with the NEW optional
+//     `fromClass` (`DamageReduction.fromClass`); the class noun is a closed capture of one member.
+const SELF_DAMAGE_REDUCTION_FROM_EVOLUTION =
+  /^During your opponent['’]s next turn, this Pokémon takes (\d+) less damage from attacks from Evolution Pokémon \(after applying Weakness and Resistance\)\.$/;
+//   • Mabosstiff `me05-058` "Plunging Headbutt" (index 1) — `SELF_DAMAGE_REDUCTION`'s skeleton with
+//     "more" for "less": the NEW `exposeSelf` (D547's record on the attacker's own Active, `+ 1`).
+const SELF_VULNERABLE_NEXT_TURN =
+  /^During your opponent['’]s next turn, this Pokémon takes (\d+) more damage from attacks \(after applying Weakness and Resistance\)\.$/;
+/** 🆕🆕🆕 D630 — the printed class noun → the `AttackerClass` it names. Closed by the anchor's
+    alternation; a noun the map lacks falls through (loud). */
+const ATTACKER_CLASS_BY_NOUN_D630: Readonly<Record<string, AttackerClass>> = {
+  "Burned Pokémon": { stage: "burned" },
+  "Evolution Pokémon": { stage: "evolution" },
+  "Pokémon that have an Ability": { stage: "hasAbility" },
+};
 // The DAMAGE CAP (D240) — backlog row 17, and a row that exists only because row
 // 15's PROSE claimed these three printings while row 15's own GLOB could not see
 // them (they never contain "by attacks from"). Re-derived at HEAD before the
@@ -18508,6 +18558,15 @@ const SELF_COUNTER_MULTIPLY =
   /^This attack does (\d+) damage for each damage counter on this Pokémon\.$/;
 const OPPONENT_PRIZES_SCALE =
   /^This attack does (\d+) more damage for each Prize card your opponent has taken\.$/;
+// 🆕🆕🆕 D630 — the LAST-TURN twin (Okidogi `me02.5-122` "Settle the Score", 60): the Prizes the opponent
+// TOOK during their last turn, read off the persisted `PlayerSide.prizesTakenOnTurn`.
+const OPPONENT_PRIZES_LAST_TURN_SCALE =
+  /^This attack does (\d+) more damage for each Prize card your opponent took during their last turn\.$/;
+// 🆕🆕🆕 D630 — "that much more": Mega Heracross ex `me02-004` / `-108` "Juggernaut Horn" (100+) and
+// Lycanroc `30th-085` / `-138` "Counter" (10+). No capture — the bonus is the recorded damage itself
+// (`per: 1`, the count in HP), read off the persisted `InPlayPokemon.attackDamageTaken`.
+const DAMAGED_LAST_TURN_THAT_MUCH_MORE =
+  /^If this Pokémon was damaged by an attack during your opponent['’]s last turn, this attack does that much more damage\.$/;
 // The "×"/multiply twin of OPPONENT_PRIZES_SCALE — the SAME Prize-count source, no
 // "more": the whole damage is `per × count`, the printed base dropped (attack.ts).
 // Refuses Wo-Chien ex's benched-target print ("… to 1 of your opponent's Benched
@@ -32210,6 +32269,22 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     ];
   }
   if (HAND_ATTACH_ENDS_TURN.test(effect)) return [{ op: "markHandAttach", endsTurn: true }];
+  // 🆕🆕🆕 19c-D630. M1's attacker-class texts (anchors at `PREVENT_DAMAGE_FROM_CLASS_D630`).
+  match = PREVENT_DAMAGE_FROM_CLASS_D630.exec(effect);
+  if (match !== null) {
+    const cls = ATTACKER_CLASS_BY_NOUN_D630[match[1] ?? ""];
+    if (cls !== undefined) return [{ op: "preventDamage", fromClass: { ...cls } }];
+  }
+  match = SELF_DAMAGE_REDUCTION_FROM_EVOLUTION.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    if (amount >= 1) return [{ op: "reduceDamage", amount, fromClass: { stage: "evolution" } }];
+  }
+  match = SELF_VULNERABLE_NEXT_TURN.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    if (amount >= 1) return [{ op: "exposeSelf", amount }];
+  }
   if (LOOK_AT_OPPONENT_PRIZE.test(effect)) return [{ op: "lookAtPrize", side: "opponent" }];
   if (WIN_AT_ONE_PRIZE.test(effect)) {
     // The shipped member at `[1]` (D517's own gate value), bound once so this arm's bytes stay
@@ -36290,6 +36365,16 @@ export type DamageCountSource =
       ex `me01-094` / `-162` "Gobble Down" (80). The seat lives in the member NAME (D168), the sibling of
       `opponentPrizesTaken`. The `×` fold only — no legal print spells the additive twin. */
   | { kind: "yourPrizesTaken" }
+  /** 🆕🆕🆕 **D630 — the Prizes the attacker's OPPONENT took during their last turn** (types.ts
+      `prizesTakenOnLastTurn`, the persisted `PlayerSide.prizesTakenOnTurn`): Okidogi `me02.5-122`
+      "Settle the Score", *"This attack does 60 more damage for each Prize card your opponent took
+      during their last turn."* The additive fold only. */
+  | { kind: "opponentPrizesTakenLastTurn" }
+  /** 🆕🆕🆕 **D630 — the damage attacks dealt the ATTACKER during its opponent's last turn**
+      (types.ts `attackDamageTakenLastTurn`, the persisted `InPlayPokemon.attackDamageTaken`), in
+      HP: Mega Heracross ex "Juggernaut Horn" / Lycanroc "Counter", *"…this attack does that much
+      more damage."* — `per: 1`, the additive fold only. */
+  | { kind: "attackDamageTakenLastTurnOnSelf" }
   | { kind: "opponentActiveRetreatCost" }
   | { kind: "boardCondition"; cond: BoardCondition }
   | { kind: "damageCountersOnOpponentActive" }
@@ -36657,6 +36742,13 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
     const per = Number(opponentPrizes[1]);
     if (per >= 1) return { per, count: { kind: "opponentPrizesTaken" } };
   }
+  // 🆕🆕🆕 D630 — the last-turn twin, then "that much more" (anchors above `deriveAttackDamageBonus`).
+  const lastTurnPrizes = OPPONENT_PRIZES_LAST_TURN_SCALE.exec(effect);
+  if (lastTurnPrizes !== null) {
+    const per = Number(lastTurnPrizes[1]);
+    if (per >= 1) return { per, count: { kind: "opponentPrizesTakenLastTurn" } };
+  }
+  if (DAMAGED_LAST_TURN_THAT_MUCH_MORE.test(effect)) return { per: 1, count: { kind: "attackDamageTakenLastTurnOnSelf" } };
   const retreatCost = RETREAT_COST_SCALE.exec(effect);
   if (retreatCost !== null) {
     const per = Number(retreatCost[1]);

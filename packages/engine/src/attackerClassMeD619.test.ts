@@ -34,7 +34,7 @@ import {
 // Generator". Every id and text off the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-09,
 // `legal_standard = 1`; none was referenced in the tree before this slice except Heliolisk's D611 pin.
 // WP12's four ATTACK texts are dropped and named (a persisted attacker class — apps/api match.ts "STAYS
-// 42 AT D619"). Driven on a LOCAL `cardPool` (D275) in the suite's OWN 60-card deck (D270).
+// 42 AT D619") [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44); §1's rung reads them now]. Driven on a LOCAL `cardPool` (D275) in the suite's OWN 60-card deck (D270).
 
 const SACRED_TEXT =
   "The Pokémon this card is attached to takes 30 less damage from attacks from your opponent's Pokémon that have an Ability (after applying Weakness and Resistance).";
@@ -49,7 +49,7 @@ const WICKED =
 const BUDDY = "If you played Emma from your hand during this turn, this attack does 60 more damage.";
 const TWISTER = "If you played Tarragon from your hand during this turn, discard the top 3 cards of your opponent's deck.";
 
-/** WP12's four dropped ATTACK texts (a persisted attacker class), with their printing counts. */
+/** WP12's four dropped ATTACK texts (a persisted attacker class), with their printing counts. [🆕🆕🆕 D630 (D539): BUILT at D630.] */
 const DROPPED: readonly (readonly [string, number])[] = [
   ["During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Burned Pokémon.", 1],
   ["During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Evolution Pokémon.", 2],
@@ -528,11 +528,11 @@ describe("D619 §1 — the prints, the registry rows and the readings", () => {
     }
   });
 
-  it("WP12's four ATTACK texts are dropped: corpus rows, still unread", () => {
+  it("WP12's four ATTACK texts are dropped: corpus rows, still unread (🆕🆕🆕 D630 (D539): WITHDRAWN — all four read at D630, MRV 43 → 44, `persistedRecordsMeD630.test.ts`)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, n] of DROPPED) {
       expect([text, me.get(text)]).toEqual([text, n]);
-      expect(resolvedByAnyReader(text), text).toBe(false);
+      expect(resolvedByAnyReader(text), text).toBe(true); // 🆕🆕🆕 D630 — reader-built
     }
     for (const id of ["me05-007", "me05-024", "me05-089", "me04-033", "me05-064"]) expect(programFor(id), id).toBeUndefined();
   });
@@ -718,7 +718,7 @@ describe("D619 §7 — Heliolisk \"Frilled Generator\": after Canari, up to 2 Ba
 });
 
 describe("D619 §8 — the version", () => {
-  it("is built at engine 0.512.0", () => {
-    expect(engineVersion).toBe("0.512.0");
+  it("is built at engine 0.513.0", () => {
+    expect(engineVersion).toBe("0.513.0");
   });
 });

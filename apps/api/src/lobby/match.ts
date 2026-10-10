@@ -2159,6 +2159,36 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **43 → 44 AT D630 — THE SEVENTEENTH POSITION, AND THE THIRD MIGRATION: M1's PERSISTED RECORDS.** (Placed
+    ABOVE the D629 block.) The addresses, named first (D456's rule):
+    ⑴ **`InPlayPokemon.attackDamageTaken: { turn, amount } | null`** — REQUIRED (Juggernaut Horn / Counter, R-JH1).
+    Written at the four §8.5 damage sites; a v43 body lacks it and this build's `withAttackDamageTaken` reads
+    `.turn` of `undefined`: the first damaging hit THROWS (D326's class).
+    ⑵ **`PlayerSide.prizesTakenOnTurn: { turn, count } | null`** — REQUIRED (Settle the Score, R-STS1). Written by
+    engine flow.ts `resolveTakePrizes`; a v43 side throws on its first Prize take.
+    ⑶ **`PlayerSide.sideDamageReduction`** — RETYPED from `{ turn, amount } | null` to a summed LIST of `{ turn,
+    amount, pokemonType? }` (Iron Defender's two plays stack). A v43 value (`null` or one record) is not a list: the
+    first damaging hit's `for … of` THROWS on `null`.
+    ⑷ **`AttackerClass.stage` WIDENED** by `burned` / `evolution` / `hasAbility` (Lava Wall, Flashing Barrier, Psy
+    Protection) on the persisted `attackBlock.fromClass`, and the OPTIONAL **`DamageReduction.fromClass`** (Metal
+    Block). Forward both are widenings (no v43 record holds them). Backward neither is: a 0.512 ROLLBACK reading a v44
+    record inside the window falls out of its exhaustive `attackerMatchesStage` switch (the block refuses nothing)
+    and ignores the reduction's class (it reduces every attacker) — D619's finding, which is why these four texts
+    waited for this bump. Plunging Headbutt rides D547's shipped `damageVulnerability` (no key; the NEW op
+    `exposeSelf` never parks).
+    🛑 **THE MIGRATION, NOT A RETIREMENT.** `migrateMatchRecord` takes a v43 record (no D1 read) and writes, on each
+    seat, `prizesTakenOnTurn: null`, `sideDamageReduction` as a list (`null` → `[]`, a record → `[record]`), and on
+    every in-play body `attackDamageTaken: null` — no v43 writer could have recorded any of them, so `null` / the
+    wrapped record is what each v43 side already meant. ⚠️ Read on the migrated record, a hit dealt on the turn the
+    v43 record was saved is not recorded (it was never written) — a Juggernaut Horn on the migrated board's next turn
+    gets no bonus for it, and a Prize taken that turn is not counted by Settle the Score: the stated cost, bounded to
+    the one turn around the deploy. A v42 record takes D621's two keys AND these; a v41 record takes all three
+    steps. Driven in `recordKeysMigrationD630.test.ts`. A rollback to any build at 43 (0.504 … 0.512) RETIRES every v44
+    record (D124): the stated cost. No wire shape moves (no prompt, no event the client parses as a required key),
+    so the deploy order is the usual one, server and client in either order. ⚠️ L1's five next-turn locks (Cursed
+    Roots, Electrified Incisors, Jet of Ink, Quaking Fist, Scorching Earth) did NOT ride this bump; the four that
+    put new state on the board owe the next one (44 → 45).
+
     🆕🆕🆕 **STAYS 43 AT D629 — S1 ADDS ONE OPTIONAL `damageChosen` KEY (`perTypedEnergyOnSelf`), READER ANCHORS, ONE
     REQUIREMENT ROW AND A WIDER COMPOUND BREAK; NO PROMPT, PHASE, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD OR EVENT.**
     (Placed ABOVE the D628 block.) Every program is derived from the printed text at the attack, so the 7 faces in a v43
@@ -2265,7 +2295,7 @@ export interface MatchRecord {
     prompt; the lock is read by the existing retreat offer), so the deploy order is the usual one, server and
     client in either order. ⚠️ D619's four WP12 attack texts (new `AttackerClass` members on the persisted
     `attackBlock.fromClass`, a class on `DamageReduction`) did NOT ride this bump: they are still unbuilt, and
-    would owe their own (MRV 43 → 44).
+    would owe their own (MRV 43 → 44). [🆕🆕🆕 D630 (D539): built at D630, which paid 43 → 44.]
 
     🆕🆕🆕 **STAYS 42 AT D620 — ONE COUNT MEMBER, ONE READING FIELD, THREE CATALOG KEYS.** (Placed ABOVE
     the D619 block.) `DamageCountSource.yourPrizesTaken` and `AttackBonusConsequent.baseOverride` are READINGS
@@ -2296,7 +2326,8 @@ export interface MatchRecord {
     silently changed — D575's finding on this very field, which paid 37 → 38 for it. So those four texts owe
     `MATCH_RECORD_VERSION` 42 → 43 (with D583's migration story re-decided for v42), which is beyond this slice
     and is best paid once with WP24c / WP23. [🆕🆕🆕 D621 (D539): 42 → 43 was paid by WP24c / WP23 alone; these
-    four texts did not ride it and still owe a bump — "42 → 43 AT D621" above.]
+    four texts did not ride it and still owe a bump — "42 → 43 AT D621" above.] [🆕🆕🆕 D630 (D539): PAID — the four
+    rode 43 → 44 ("43 → 44 AT D630").]
 
     🆕🆕🆕 **STAYS 42 AT D618 —THREE STADIUM OBJECTS, TWO `StadiumEffects` FIELDS AND ONE OPTIONAL OP KEY.**
     (Placed ABOVE the D617 block.) `benchCounterShield` and `sameTurnEvolution` are catalog fields read off
@@ -2808,7 +2839,7 @@ export interface MatchRecord {
     the `trimBench` `EffectOp` (parked in `cont`, a D125 widening carried by (ii)), the events
     `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side
     `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */
-export const MATCH_RECORD_VERSION = 43;
+export const MATCH_RECORD_VERSION = 44;
 
 /** 🆕🆕🆕 D583 — the one version this deploy MIGRATES rather than retires ("41 → 42 AT D583" above).
     🆕🆕🆕 D621 (D539): ~~"the one version"~~ — the version whose POOL is refreshed from D1; v42 is
@@ -2816,12 +2847,18 @@ export const MATCH_RECORD_VERSION = 43;
 export const MIGRATABLE_MATCH_RECORD_VERSION = 41;
 
 /** 🆕🆕🆕 D621 — the version migrated by adding the two D621 `PlayerSide` keys alone ("42 → 43 AT
-    D621" above). A v41 record takes both steps (the D583 refresh, then these keys). */
+    D621" above). A v41 record takes both steps (the D583 refresh, then these keys).
+    🆕🆕🆕 D630 (D539): ~~"alone"~~ / ~~"both steps"~~ — a v42 record takes D630's keys too, a v41 all three steps. */
 export const SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION = 42;
+
+/** 🆕🆕🆕 D630 — the version migrated by adding M1's record keys alone ("43 → 44 AT D630" above): no D1
+    read, `prizesTakenOnTurn` / `attackDamageTaken` as `null`, `sideDamageReduction` as a list. */
+export const RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION = 43;
 
 /** 🆕🆕🆕 D583 — the catalog ids a v41 record's pool holds (what `loadMatchRecord` re-reads from D1), or
     `null` for anything that is not a well-formed v41 record. PURE.
-    🆕🆕🆕 D621 — `[]` for a well-formed v42 record: it is migrated, but its pool is not re-read. */
+    🆕🆕🆕 D621 — `[]` for a well-formed v42 record: it is migrated, but its pool is not re-read.
+    🆕🆕🆕 D630 — and `[]` for a well-formed v43 record, on the same terms. */
 export function migratablePoolIdsOf(raw: unknown): string[] | null {
   const record = readMigratableRecord(raw);
   if (record === null) return null;
@@ -2834,7 +2871,9 @@ export function migratablePoolIdsOf(raw: unknown): string[] | null {
     from D1 and persists the result.
     🆕🆕🆕 D621 — a v42 record is migrated too (`fresh` unread), and BOTH versions gain the two D621
     `PlayerSide` keys as `null` on each seat (`withD621SideKeys`): no v41 / v42 writer could have
-    installed either record, so `null` is what each side already meant. */
+    installed either record, so `null` is what each side already meant.
+    🆕🆕🆕 D630 — a v43 record is migrated too (`fresh` unread); EVERY migrated version then takes D630's
+    record keys (`withD630RecordKeys`), and a v43 one skips D621's step (it already has those keys). */
 export function migrateMatchRecord(raw: unknown, fresh: Record<string, Card>): MatchRecord | null {
   const record = readMigratableRecord(raw);
   if (record === null) return null;
@@ -2845,8 +2884,35 @@ export function migrateMatchRecord(raw: unknown, fresh: Record<string, Card>): M
       if (card.category === "Trainer" && row?.category === "Trainer") cardPool[id] = row;
     }
   }
-  const state = withD621SideKeys({ ...record.state, cardPool });
+  const withPool = { ...record.state, cardPool };
+  const sided = record.version === RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION ? withPool : withD621SideKeys(withPool);
+  const state = withD630RecordKeys(sided);
   return { ...record, version: MATCH_RECORD_VERSION, state };
+}
+
+/** 🆕🆕🆕 D630 — each seat with `prizesTakenOnTurn: null` and `sideDamageReduction` as a list (`null` / absent →
+    `[]`, one v43 record → `[record]`, a list kept), and every in-play body with `attackDamageTaken: null` (types.ts;
+    a v43 record has none of the three as this build reads them). PURE. */
+function withD630RecordKeys(state: GameState): GameState {
+  const players = { ...state.players };
+  for (const seat of ["p1", "p2"] as const) {
+    const side = players[seat];
+    const old = (side as { sideDamageReduction?: unknown }).sideDamageReduction;
+    const sideDamageReduction = Array.isArray(old)
+      ? (old as GameState["players"][Seat]["sideDamageReduction"])
+      : old === null || old === undefined
+        ? []
+        : [old as GameState["players"][Seat]["sideDamageReduction"][number]];
+    const body = <T extends object>(pokemon: T): T => ({ ...pokemon, attackDamageTaken: null });
+    players[seat] = {
+      ...side,
+      prizesTakenOnTurn: null,
+      sideDamageReduction,
+      active: side.active === null ? null : body(side.active),
+      bench: side.bench.map(body),
+    };
+  }
+  return { ...state, players };
 }
 
 /** 🆕🆕🆕 D621 — each seat's `PlayerSide` with `chosenAttackShield` and `sideRetreatLock` written as
@@ -2876,7 +2942,9 @@ export interface MatchSlot {
     this build cannot trust a v41 pool.
     🆕🆕🆕 D621 (D539): ~~"the v42 record"~~ / ~~"only a record still at v41"~~ — the record written back is
     v43, and a v41 OR v42 record is migrated; a v42 one has no pool to load (`[]`), so `loadPool` is
-    not called and no D1 failure can hold it back. */
+    not called and no D1 failure can hold it back.
+    🆕🆕🆕 D630 (D539): ~~"the record written back is v43"~~ — v44; a v43 record is migrated too, also with no
+    pool to load. */
 export async function loadMatchRecord(
   slot: MatchSlot,
   loadPool: (ids: readonly string[]) => Promise<Record<string, Card>>,
@@ -2887,7 +2955,7 @@ export async function loadMatchRecord(
   if (record !== null) return { kind: "ok", record };
   const ids = migratablePoolIdsOf(raw);
   if (ids === null) return { kind: "stale" };
-  // 🆕🆕🆕 D621 — a v42 record has no pool to re-read (`[]`): D1 is not asked.
+  // 🆕🆕🆕 D621 — a v42 record has no pool to re-read (`[]`): D1 is not asked. 🆕🆕🆕 D630 — nor a v43 one.
   const fresh = ids.length === 0 ? {} : await loadPool(ids);
   const again = await slot.get();
   if (again === undefined) return { kind: "none" };
@@ -2899,12 +2967,17 @@ export async function loadMatchRecord(
   return { kind: "ok", record: migrated };
 }
 
-/** A v41 (🆕🆕🆕 D621: or v42) record passed through `readMatchRecord`'s own shape checks, or `null`.
-    The result keeps its OWN version (D621), which `migrateMatchRecord` branches on. */
+/** A v41 (🆕🆕🆕 D621: or v42; 🆕🆕🆕 D630: or v43) record passed through `readMatchRecord`'s own shape checks,
+    or `null`. The result keeps its OWN version (D621), which `migrateMatchRecord` branches on. */
 function readMigratableRecord(raw: unknown): MatchRecord | null {
   if (typeof raw !== "object" || raw === null) return null;
   const version = (raw as { version?: unknown }).version;
-  if (version !== MIGRATABLE_MATCH_RECORD_VERSION && version !== SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION) return null;
+  if (
+    version !== MIGRATABLE_MATCH_RECORD_VERSION &&
+    version !== SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&
+    version !== RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION
+  )
+    return null;
   const record = readMatchRecord({ ...raw, version: MATCH_RECORD_VERSION });
   if (record === null) return null;
   const pool = (record.state as { cardPool?: unknown }).cardPool;

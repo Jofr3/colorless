@@ -842,6 +842,7 @@ describe("the structural answers", () => {
       [
         "attackBlock",
         "attackDamageDebuff",
+        "attackDamageTaken", // 🆕🆕🆕 D630 (43 -> 44) — Juggernaut Horn's record; the pin is on the HEAD's key set
         // 🆕🆕🆕 D547 — the FLIP-TO-ATTACK lock's stamp and the NEXT-TURN VULNERABILITY
         // record JOIN THE LIST (MATCH_RECORD_VERSION 30 -> 31). The pin is on the HEAD's
         // key set, so it moves whenever anybody adds a key; what it asserts is that THIS

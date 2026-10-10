@@ -28817,7 +28817,7 @@ D563 commit `ecbd2c4f` while D562's whole-corpus sweep ran in the main checkout;
 ### (b) The mechanism
 Three REQUIRED persisted keys: `TurnAllowances.supporterPlayedUid` (written by `playTrainer` alone, beside `supporterPlayed`),
 `TurnAllowances.endOfTurnHandDiscard` (the printed threshold) and `PlayerSide.sideDamageReduction { turn, amount }` (stamped
-`state.turn + 1`, overwrite semantics). continuous.ts `seatDamageReduction` pays the damaged side's record AFTER the own-side return,
+`state.turn + 1`, overwrite semantics [🆕🆕🆕 D630 (D539): WITHDRAWN — a summed list since D630; a second install appends]). continuous.ts `seatDamageReduction` pays the damaged side's record AFTER the own-side return,
 under `"all"` only. flow.ts's `endTurn` stage discards the turn owner's hand at `>=` the threshold, before `TURN_ENDED`, through the
 exported interpreter.ts `discardHand`. `youPlayedSupporterNamedThisTurn` copies `youPlayedSupporterThisTurn`'s `phaseViewOf` seat
 guard and resolves the played uid's NAME in any zone. `StadiumAbility.playableIf` is read by `useStadiumAbility`
@@ -30247,6 +30247,24 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D630 — M1: the persisted-record bundle (engine 0.513.0, `MATCH_RECORD_VERSION` 43 → 44)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D629 (`d011987a`), NOT committed. 8 texts / 13 `me` printings.
+
+- **Juggernaut Horn ×2 / Counter ×2.** The NEW REQUIRED `InPlayPokemon.attackDamageTaken { turn, amount }`, written at the four §8.5
+  sites (`withAttackDamageTaken`, summed per turn), read as `DamageCountSource.attackDamageTakenLastTurnOnSelf` (`per: 1`, R-JH1).
+- **Lava Wall, Flashing Barrier ×2, Psy Protection.** `AttackerClass.stage` + `burned` (the attacking body's Burn, R-LVW1), `evolution`,
+  `hasAbility` (R-PSY1); `attackBlockOf` / `attackDamageBlocked` take the attacking body.
+- **Metal Block.** The optional `DamageReduction.fromClass`, read by `installedReductionOf` (after W/R).
+- **Iron Defender ×2.** `PlayerSide.sideDamageReduction` is a summed list with an optional `pokemonType` (R-ID1); two plays stack.
+- **Settle the Score.** The NEW REQUIRED `PlayerSide.prizesTakenOnTurn { turn, count }` (flow.ts `resolveTakePrizes`, recorded only on the
+  taker's own turn, by turn-number parity, so a Cursed Blast take on the other turn never displaces it), read as `opponentPrizesTakenLastTurn` (R-STS1).
+- **Plunging Headbutt.** The NEW op `exposeSelf` on D547's `damageVulnerability` (`turn + 1`; summed on one window, R-PH1).
+- **MRV 43 → 44.** A v43 record is migrated with no D1 read (null keys, the reduction wrapped into a list); v42 / v41 take their earlier
+  steps too (match.ts "43 → 44 AT D630", `recordKeysMigrationD630.test.ts`). L1 owes the next bump (44 → 45).
+- **Suite.** `persistedRecordsMeD630.test.ts` (44), `recordKeysMigrationD630.test.ts` (12), a census D630 block (2). +39 mutant rows and 36
+  re-pointed, all KILLED. Census: attacks **2,733 / 2,771**, trainers **434 / 447**, 1179 `me` printings fully built. Sweep PENDING.
+
 ## D629 — S1: the rest of the snipe / spread wording (engine 0.512.0, `MATCH_RECORD_VERSION` stays 43)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D628 (`23b660d6`), NOT committed. 7 texts / 7 printings.
@@ -30368,7 +30386,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Pika Chain.** The body-map key "Pikachu and Pikachu ex" on the shipped `pokemonInPlay` fold (14 keys / 36 nouns).
 - **Riptide.** One anchor, two readers over one filter: the `cardsInDiscardPile` fold and D538's `discardPileRetrieval` +
   `shuffleDeck` tail. The count is taken before the shuffle.
-- **Dropped and named.** Doublade ×3 (own-hand partial reveal) and Okidogi (Prizes taken last turn, an MRV bump).
+- **Dropped and named.** Doublade ×3 (own-hand partial reveal) and Okidogi (Prizes taken last turn, an MRV bump). [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
 - **MRV stays 43.** Fold-only members, a non-parking tail, no `cardPool` face change (match.ts "STAYS 43 AT D623").
 - **Suite.** `scalingCountsMeD623.test.ts` (12) and a census D623 block (2). +19 mutant rows. Sweep PENDING.
 
@@ -30412,7 +30430,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   `moveCountersFromBench`'s Benched destination now call `effectRefused` on that body (Phantom Dive into a shielded Benched body:
   60 before, 0 now). D142's reading; it also closes D450's put-counter PICK asymmetry for the bench effects auras.
 - **Dropped.** Iron Defender ×2: two plays stack on D564's overwritten `sideDamageReduction` (a persisted retype). WP12's four
-  attack texts did not ride the bump.
+  attack texts did not ride the bump. [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
 - **Suite.** `sideStateMeD621.test.ts` (39), `sideStateMigrationD621.test.ts` (9) and a census D621 block (2). +33 mutant rows.
 - **Census.** Standard pool trainers **418 / 447** (attacks and abilities unchanged); 1111 `me` printings fully built (all 16 finished).
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
@@ -30448,7 +30466,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **The named-Supporter texts.** Heliolisk ×2 "Frilled Generator" (Sunrise's program behind `youPlayedSupporterNamedThisTurn` Canari);
   three `CONDITIONAL_DAMAGE_CLAUSES` rows (Wicked Impact, Buddy Attack, Twister Spewing's clause) and arm 6e-quinquies (the clause-gated
   opponent mill).
-- **Dropped.** WP12's four attack texts (Lava Wall, Flashing Barrier ×2, Psy Protection, Metal Block): a new attacker class on persisted
+- **Dropped.** WP12's four attack texts (Lava Wall, Flashing Barrier ×2, Psy Protection, Metal Block): a new attacker class on persisted [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
   state owes an MRV bump (match.ts "STAYS 42 AT D619").
 - **Suite.** `attackerClassMeD619.test.ts` (26) and a census D619 block (2). +25 mutant rows.
 - **Census.** Standard pool attacks **2,688 / 2,771**, abilities **561 / 610**, trainers **395 / 447**; 1083 `me` printings fully built (all 10 finished).

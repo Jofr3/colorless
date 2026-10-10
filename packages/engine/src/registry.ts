@@ -18153,7 +18153,8 @@ const FOREST_OF_VITALITY: CardProgram = {
 //    (effects.ts). Texts off the LOCAL D1 (2026-10-09). Dropped and named: WP12's four ATTACK texts
 //    (Heatran "Lava Wall", Manectric ×2 "Flashing Barrier", Deoxys "Psy Protection", Bronzong "Metal
 //    Block") — each installs a PERSISTED next-turn block / reduction filtered by a new attacker class,
-//    which owes `MATCH_RECORD_VERSION` (apps/api match.ts "STAYS 42 AT D619"). `attackerClassMeD619.test.ts`. ──
+//    which owes `MATCH_RECORD_VERSION` (apps/api match.ts "STAYS 42 AT D619"). `attackerClassMeD619.test.ts`.
+//    [🆕🆕🆕 D630 (D539): the four are BUILT at D630 (M1, reader rows; MRV 43 → 44).] ──
 
 /** 🆕🆕🆕 **D619 — Sacred Charm `me02-093` / `-122` (Tool)**: *"The Pokémon this card is attached to takes
     30 less damage from attacks from your opponent's Pokémon that have an Ability (after applying Weakness
@@ -18300,7 +18301,8 @@ const TREMENDOUS_BOMB: CardProgram = {
 //    (2026-10-09); `sideStateMeD621.test.ts` plays each. Dropped and named: Iron Defender `me01-118` /
 //    `me05-110` — an Item, so two plays STACK, and `PlayerSide.sideDamageReduction` is one OVERWRITTEN
 //    record (D564); a typed filter alone would pay 30 for two plays. It needs that record made a summed
-//    list (a retype of a persisted field), beyond this brief. ──
+//    list (a retype of a persisted field), beyond this brief. [🆕🆕🆕 D630 (D539): BUILT at D630 — the list
+//    is summed and `IRON_DEFENDER` is keyed below.] ──
 
 /** 🆕🆕🆕 **D621 — Gladion's Final Battle `me05-077` / `-108` / `-118` (Supporter)**: *"You can use this
     card only when it is the last card in your hand. / During this turn, attacks used by your Pokémon that
@@ -18674,6 +18676,21 @@ const LETHARGIC_CHARGE: CardProgram = {
       ],
     },
   ],
+};
+
+// ── 🆕🆕🆕 D630 — M1, THE PERSISTED-RECORD BUNDLE: one NEW Trainer object on 2 `me` printings (the 7 attack
+//    texts / 11 printings are reader-built, effects.ts D630). `PlayerSide.sideDamageReduction` is now a
+//    SUMMED list — `MATCH_RECORD_VERSION` 43 → 44 with a v43 migration (apps/api match.ts). Text off the
+//    LOCAL D1 (2026-10-10, `legal_standard = 1`). `persistedRecordsMeD630.test.ts` plays each. ──
+
+/** 🆕🆕🆕 **D630 — Iron Defender `me01-118` / `me05-110` (Item)**: *"During your opponent's next turn, all of
+    your {M} Pokémon take 30 less damage from attacks from your opponent's Pokémon (after applying Weakness
+    and Resistance). (This includes new Pokémon that come into play.)"* Jasmine's Gaze's op with the NEW
+    `pokemonType` (the in-play type at the hit, Full Metal Lab's `typedPokemon` reading — R-ID1 ⚠️ UNRULED:
+    a body that is {M} when hit is covered, whatever it was at the play). An Item, so two plays STACK on
+    the summed list (60 off). Always playable. */
+const IRON_DEFENDER: CardProgram = {
+  trainer: [{ op: "installSideDamageReductionNextTurn", amount: 30, pokemonType: "Metal" }],
 };
 
 // ── 🆕🆕🆕 D608 — WP30: TWO `30th` ATTACK OBJECTS, KEYED BY ID. Text off the LOCAL D1; both printed
@@ -20259,6 +20276,9 @@ const REGISTRY: Record<string, CardProgram> = {
   // not move). Meowth ex ×3 "Last-Ditch Catch" rides `TUCK_TAIL`'s existing keys.
   "me01-101": LUSTROUS_ASSIST, // Latios — after your Mega Latias ex moved up this turn: Bench Energy to the Active
   "me02.5-175": LETHARGIC_CHARGE, // Larry's Komala — from the Bench: an Energy card from hand to your Active Larry's Pokémon
+  // 🆕🆕🆕 D630 — M1, the persisted-record bundle: 2 keys / 1 object, MID-MAP (`raw[last]` does not move).
+  "me01-118": IRON_DEFENDER, // Iron Defender — opponent's next turn: your {M} Pokémon take 30 less (after W/R); stacks
+  "me05-110": IRON_DEFENDER, // Iron Defender
   // 🆕🆕🆕 D608 — WP30: 5 `30th` ATTACK-only keys / 2 objects, MID-MAP (`raw[last]` does not move).
   // 🆕🆕🆕 D612 — 3 now: Stealthy Slash ×2 RETIRED (the normalised text is `mep-099`'s, reader-built).
   "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex

@@ -486,6 +486,9 @@ describe("placement", () => {
       // `=== null` and then dereferences `.turn`, so a body reaching this line with the
       // key ABSENT would THROW at the next hit — why it is `… | null` and required.
       damageVulnerability: null,
+      // 🆕🆕🆕 …and no attack has DAMAGED it (D630): `attackDamageTakenLastTurn` asks `!== null` and then
+      // dereferences `.turn`, so a body with the key ABSENT would THROW at a Juggernaut Horn (MRV 43 -> 44).
+      attackDamageTaken: null,
       // 🆕🆕🆕 …and no COST TAX and no KNOCK OUT BOUNTY (D549). `koPrizeBonus` asks
       // `!== null` and then dereferences `.turn`, so a body reaching an Active Knock Out
       // with `koBounty` ABSENT would THROW; `installedCostTaxOf` would silently read 0.

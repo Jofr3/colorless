@@ -6,6 +6,8 @@ import {
   constrainedEnergyTypes,
   costMet,
   energyProvidesOf,
+  // 🆕🆕🆕 D630 — Psy Protection's "Pokémon that have an Ability" (`AttackerClass.stage` "hasAbility").
+  hasPrintedAbility,
   hasRuleBox,
   hpOf,
   isBasicPokemon,
@@ -2639,6 +2641,9 @@ export function attackBlockOf(
   pokemon: InPlayPokemon,
   attacker: Card | undefined,
   damage: number | undefined,
+  // 🆕🆕🆕 D630 — the ATTACKING BODY, for the one class read off the board rather than the card
+  // (`"burned"`, Lava Wall). Absent (the effects funnel) answers that class false: protects LESS.
+  attackerBody?: InPlayPokemon,
 ): AttackBlock | null {
   // No defensive `=== undefined` arm: the field is REQUIRED, and a record
   // written before it existed is retired by MATCH_RECORD_VERSION rather than
@@ -2647,28 +2652,28 @@ export function attackBlockOf(
   // 🆕🆕🆕 D621 — Acerola's Mischief's chosen-body shield (types.ts `ChosenAttackShield`) is asked
   // FIRST: it refuses damage AND effects with no cap, so for an attacker of its class no other block
   // refuses more, and returning it first keeps the `?.effects` callers right.
-  const chosen = chosenAttackShieldOf(state, pokemon, attacker);
+  const chosen = chosenAttackShieldOf(state, pokemon, attacker, attackerBody);
   if (chosen !== null) return chosen;
   const block = pokemon.attackBlock;
   // 🆕🆕🆕 D575 — the SIDE-WIDE block (Miraidon "C.O.D.E.: Protect") is the second answer, asked
   // whenever the body's own block does not apply: two independent installations, either of
   // which refuses the attack, so this function returns the body's when it applies and the
   // side's otherwise. The three callers are unchanged.
-  if (block === null || block.turn !== state.turn) return sideAttackBlockOf(state, pokemon, attacker);
+  if (block === null || block.turn !== state.turn) return sideAttackBlockOf(state, pokemon, attacker, attackerBody);
   // D240 — the CAP, checked before the class for no reason but reading order:
   // the two narrowings are independent conjuncts and no printing carries both.
   // `<=` is the printed "or less", inclusive: a 40-cap refuses a 40 and lets a 41
   // through. An ABSENT key is no cap at all, which is what every record persisted
   // before this field existed already meant.
   if (block.maxDamage !== undefined && !(damage !== undefined && damage <= block.maxDamage)) {
-    return sideAttackBlockOf(state, pokemon, attacker);
+    return sideAttackBlockOf(state, pokemon, attacker, attackerBody);
   }
   // The unfiltered reading — every printing D142 mapped, and the ABSENT key that
   // makes an older persisted block read back as exactly what it used to mean.
   if (block.fromClass === undefined) return block;
-  return attacker !== undefined && attackerMatchesClass(attacker, block.fromClass)
+  return attacker !== undefined && attackerMatchesClass(attacker, block.fromClass, attackerBody)
     ? block
-    : sideAttackBlockOf(state, pokemon, attacker);
+    : sideAttackBlockOf(state, pokemon, attacker, attackerBody);
 }
 
 /** 🆕🆕🆕 §11 (D575) — the side arm of `attackBlockOf`: the damaged body's SIDE carries a live
@@ -2683,6 +2688,7 @@ function sideAttackBlockOf(
   state: GameState,
   pokemon: InPlayPokemon,
   attacker: Card | undefined,
+  attackerBody: InPlayPokemon | undefined,
 ): AttackBlock | null {
   const uid = topUid(pokemon);
   if (uid === undefined || attacker === undefined) return null;
@@ -2694,7 +2700,7 @@ function sideAttackBlockOf(
     const onSide = side.active.stack.includes(uid) || side.bench.some((b) => b.stack.includes(uid));
     if (!onSide) continue;
     if (bannerOf(topCardOf(state, pokemon)) !== record.banner) return null;
-    return attackerMatchesClass(attacker, record.fromClass)
+    return attackerMatchesClass(attacker, record.fromClass, attackerBody)
       ? { turn: record.turn, effects: false, fromClass: record.fromClass }
       : null;
   }
@@ -2724,13 +2730,14 @@ function chosenAttackShieldOf(
   state: GameState,
   pokemon: InPlayPokemon,
   attacker: Card | undefined,
+  attackerBody: InPlayPokemon | undefined,
 ): AttackBlock | null {
   const base = pokemon.stack[0];
   if (base === undefined || attacker === undefined) return null;
   for (const seat of SEATS) {
     const record = state.players[seat].chosenAttackShield;
     if (record === null || record.turn !== state.turn || record.uid !== base) continue;
-    return attackerMatchesClass(attacker, record.fromClass)
+    return attackerMatchesClass(attacker, record.fromClass, attackerBody)
       ? { turn: record.turn, effects: true, fromClass: record.fromClass }
       : null;
   }
@@ -2772,8 +2779,12 @@ function chosenAttackShieldOf(
     through), where every other conservative default in this family protects LESS.
     That is why an unresolvable code refuses to derive at all rather than dropping
     the key (effects.ts arm 19c). */
-function attackerMatchesClass(attacker: Card, cls: NonNullable<AttackBlock["fromClass"]>): boolean {
-  if (!attackerMatchesStage(attacker, cls.stage)) return false;
+function attackerMatchesClass(
+  attacker: Card,
+  cls: NonNullable<AttackBlock["fromClass"]>,
+  attackerBody?: InPlayPokemon, // 🆕🆕🆕 D630 — read by `"burned"` alone
+): boolean {
+  if (!attackerMatchesStage(attacker, cls.stage, attackerBody)) return false;
   return cls.excludingType === undefined || !(attacker.types ?? []).includes(cls.excludingType);
 }
 
@@ -2782,7 +2793,11 @@ function attackerMatchesClass(attacker: Card, cls: NonNullable<AttackBlock["from
     `stage` member leaves the function with a code path returning `undefined`).
     Folded inline it would merely fall out of the switch and answer `true`, which
     is the silent-widening failure this family must not have. */
-function attackerMatchesStage(attacker: Card, stage: AttackerClass["stage"]): boolean {
+function attackerMatchesStage(
+  attacker: Card,
+  stage: AttackerClass["stage"],
+  attackerBody: InPlayPokemon | undefined,
+): boolean {
   switch (stage) {
     case "basic":
       return isBasicPokemon(attacker);
@@ -2794,6 +2809,17 @@ function attackerMatchesStage(attacker: Card, stage: AttackerClass["stage"]): bo
     // suffix, never `isExOrV` (a V is not an ex) nor `hasRuleBox` (the judge's (d)).
     case "ex":
       return pokemonSuffixOf(attacker) === "ex";
+    // 🆕🆕🆕 D630 — "attacks from Burned Pokémon" (Lava Wall): the attacking BODY's Special Condition at
+    // damage time (R-LVW1 ⚠️ UNRULED). No body in hand (the effects funnel) → false: protects LESS.
+    case "burned":
+      return attackerBody?.conditions.burned === true;
+    // 🆕🆕🆕 D630 — "attacks from Evolution Pokémon" (Flashing Barrier, Metal Block): the in-play card.
+    case "evolution":
+      return isEvolutionPokemon(attacker);
+    // 🆕🆕🆕 D630 — "attacks from Pokémon that have an Ability" (Psy Protection): the printed Ability on
+    // the in-play card; an Ability under a §9 lock is still had (R-PSY1 ⚠️ UNRULED).
+    case "hasAbility":
+      return hasPrintedAbility(attacker);
   }
 }
 
@@ -2850,12 +2876,23 @@ export function liveHandAttachMark(state: GameState, pokemon: InPlayPokemon): Ha
     `deals` arm have no Ability producer — every registry `damageChosen` is
     `opponentBench` without `deals`, and `damageActive` places flat counters that
     no reduction touches at all.) */
-export function installedReductionOf(state: GameState, pokemon: InPlayPokemon): number {
+export function installedReductionOf(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  // 🆕🆕🆕 D630 — the attacking card and body, for a CLASS-filtered reduction (Metal Block's
+  // `fromClass`, `attackBlockOf`'s predicate). An unreadable attacker gets no filtered reduction.
+  attacker?: Card,
+  attackerBody?: InPlayPokemon,
+): number {
   // No defensive `=== undefined` arm, for `attackBlockOf`'s reason above: the
   // field is REQUIRED and a record written before it existed is retired by
   // MATCH_RECORD_VERSION rather than read benignly here (D124's rule).
   const installed = pokemon.damageReduction;
-  return installed === null || installed.turn !== state.turn ? 0 : installed.amount;
+  if (installed === null || installed.turn !== state.turn) return 0;
+  if (installed.fromClass === undefined) return installed.amount;
+  return attacker !== undefined && attackerMatchesClass(attacker, installed.fromClass, attackerBody)
+    ? installed.amount
+    : 0;
 }
 
 /** 🆕🆕🆕 §8.5/§11 (D547) — the attack-installed NEXT-TURN VULNERABILITY live on
@@ -5631,7 +5668,7 @@ export function seatDamageReduction(
     // Stadium's inverse (R-JG1): a Supporter's *"all of your Pokémon take 30 less"* IS an
     // effect on the damaged Pokémon, so Feint Attack's `"othersOnly"` drops it with the
     // catalog half, where the Stadium is no effect on a Pokémon and stays.
-    if (scope === "all") taken += sideDamageReductionOf(state, side);
+    if (scope === "all") taken += sideDamageReductionOf(state, side, damagedCard);
     return taken + stadiumDamageReduction(state, damagedCard); // this is the Pokémon's own side — no other side can shield it
   }
   return 0;
@@ -5639,10 +5676,19 @@ export function seatDamageReduction(
 
 /** 🆕🆕🆕 §8.5 (D564) — `side`'s live next-turn reduction (Jasmine's Gaze): the record's
     `amount` when its stamp IS the current turn, else 0. Expires by arithmetic — the stamp
-    is the installer's opponent's next turn, `state.turn + 1` at install. */
-function sideDamageReductionOf(state: GameState, side: PlayerSide): number {
-  const record = side.sideDamageReduction;
-  return record !== null && record.turn === state.turn ? record.amount : 0;
+    is the installer's opponent's next turn, `state.turn + 1` at install.
+    🆕🆕🆕 D630 — a SUMMED list (Iron Defender's two plays stack; D539: *"the record's `amount`"* is
+    WITHDRAWN): every live entry whose printed holder type (`pokemonType`, absent = every Pokémon)
+    the damaged body's in-play card has. */
+function sideDamageReductionOf(state: GameState, side: PlayerSide, damagedCard: Card | undefined): number {
+  let amount = 0;
+  for (const record of side.sideDamageReduction) {
+    if (record.turn !== state.turn) continue;
+    if (record.pokemonType !== undefined && !matchesFilter(damagedCard, { kind: "typedPokemon", pokemonType: record.pokemonType }))
+      continue;
+    amount += record.amount;
+  }
+  return amount;
 }
 
 /** 🆕🆕🆕 §8.5 (D558) — the in-play Stadium's post-W/R `damageReductionAfterWR` for a

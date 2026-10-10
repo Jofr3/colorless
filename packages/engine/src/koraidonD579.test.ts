@@ -332,7 +332,7 @@ describe("D579 Koraidon §4 — BOTH CARDS, end to end: Walking Wake Knocks ITSE
 });
 
 describe("D579 Koraidon §5 — `MATCH_RECORD_VERSION` 40 → 41: a v40 record THROWS on this deploy (D326)", () => {
-  it("🛑 the constant is ~~41~~ ~~42~~ 43 (🆕🆕🆕 D621 stepped it 42 → 43; D583 stepped it 41 → 42), read off the raw source", () => {
+  it("🛑 the constant is ~~41~~ ~~42~~ ~~43~~ 44 (🆕🆕🆕 D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42), read off the raw source", () => {
     const RAW: Record<string, string> = (
       import.meta as unknown as {
         glob(
@@ -342,7 +342,7 @@ describe("D579 Koraidon §5 — `MATCH_RECORD_VERSION` 40 → 41: a v40 record T
       }
     ).glob("../../../apps/api/src/lobby/match.ts", { query: "?raw", import: "default", eager: true });
     const match = Object.values(RAW)[0] ?? "";
-    expect(match).toContain("export const MATCH_RECORD_VERSION = 43;");
+    expect(match).toContain("export const MATCH_RECORD_VERSION = 44;");
   });
 
   it("🛑 a v40-shaped state (no `recentAttackers`) throws at the first attack's end — retired, never read", () => {

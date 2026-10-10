@@ -2766,7 +2766,27 @@ function resolveTakePrizes(
     indices: [...indices],
     remaining: prizes.length,
   });
-  return withSide(state, seat, { ...side, prizes, faceUpPrizes, hand: [...side.hand, ...uids] });
+  // 🆕🆕🆕 D630 — the take is RECORDED for its turn (Okidogi "Settle the Score", types.ts
+  // `PrizesTakenOnTurn`): summed onto a record of the same turn, replacing an older one. Every take
+  // passes through here (a Knock Out's and D431's attack-queued Prize), so this is the one writer.
+  // A Checkup Knock Out's take is stamped with the ending turn (`lastKoTurn`'s reading, R-STS1).
+  // 🛑 ONLY A TAKE ON THE TAKER'S OWN TURN IS RECORDED. The record is ONE turn wide, and the only
+  // turn ever read is the opponent's last one (`turn === state.turn - 1`, a turn the taker owned), so
+  // an OFF-turn take (Cursed Blast / Overvolt Discharge Knocking out the user's own Pokémon on the
+  // user's turn) would REPLACE the record Settle the Score is about to read. Ownership is the turn
+  // NUMBER's parity (types.ts `GameState.turn`: odd turns belong to `firstPlayer`), not
+  // `phaseViewOf`, which owns no turn at a Checkup park — and at the Checkup `state.turn` is still the
+  // ended turn, so the ending player's Checkup take counts.
+  const ownTurn = (state.turn % 2 === 1) === (seat === state.firstPlayer);
+  const recorded = side.prizesTakenOnTurn;
+  const prizesTakenOnTurn =
+    uids.length === 0 || !ownTurn
+      ? recorded
+      : {
+          turn: state.turn,
+          count: recorded !== null && recorded.turn === state.turn ? recorded.count + uids.length : uids.length,
+        };
+  return withSide(state, seat, { ...side, prizes, faceUpPrizes, prizesTakenOnTurn, hand: [...side.hand, ...uids] });
 }
 
 /** Promote bench[index] into the empty Active spot (§8.1). The bench stays

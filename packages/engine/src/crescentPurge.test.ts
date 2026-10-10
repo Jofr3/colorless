@@ -546,7 +546,7 @@ describe("§10 — the log row names the turned card (it is public)", () => {
 // §11 — THE BUMP'S MEASUREMENT: a reconstructed v31 state THROWS.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("§11 — MATCH_RECORD_VERSION 31 → 32: a v31 state without the key throws (🆕🆕🆕 this slice's bump; the record is v33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570; 38 since D575; 39 since D576; 40 since D577; 41 since D579; 42 since D583; 43 since D621 and still carries the field)", () => {
+describe("§11 — MATCH_RECORD_VERSION 31 → 32: a v31 state without the key throws (🆕🆕🆕 this slice's bump; the record is v33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570; 38 since D575; 39 since D576; 40 since D577; 41 since D579; 42 since D583; 43 since D621; 44 since D630 and still carries the field)", () => {
   const v31 = (state: GameState): GameState => {
     const strip = (seat: Seat) => {
       const { faceUpPrizes: _dropped, ...rest } = state.players[seat];
@@ -569,10 +569,10 @@ describe("§11 — MATCH_RECORD_VERSION 31 → 32: a v31 state without the key t
     );
   });
 
-  it("the constant is 43 (🆕🆕🆕 D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; this slice's own bump was 31 → 32) and the engine is 0.512.0", () => {
-    expect(raw("/match.ts")).toContain("export const MATCH_RECORD_VERSION = 43;");
-    expect(engineVersion).toBe("0.512.0");
-    expect(manifest.version).toBe("0.512.0");
+  it("the constant is 44 (🆕🆕🆕 D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; this slice's own bump was 31 → 32) and the engine is 0.513.0", () => {
+    expect(raw("/match.ts")).toContain("export const MATCH_RECORD_VERSION = 44;");
+    expect(engineVersion).toBe("0.513.0");
+    expect(manifest.version).toBe("0.513.0");
   });
 });
 

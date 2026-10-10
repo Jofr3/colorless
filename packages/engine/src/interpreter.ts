@@ -121,6 +121,7 @@ import { POKEMON_TYPES, STATUS_WORD_OF, foldApostrophes } from "./effects";
 import type { AttackTimingGate } from "./registry";
 import type {
   AttachTargetRiders,
+  AttackerClass,
   BoardCondition,
   CardFilter,
   EffectOp,
@@ -159,6 +160,7 @@ import type {
   PokemonTarget,
   ScheduledEffect,
   Seat,
+  SideDamageReduction,
 } from "./types";
 import {
   BENCH_CEILING,
@@ -180,6 +182,7 @@ import {
   takenPrizes,
   usedAttackOnYourLastTurn,
   withActive,
+  withAttackDamageTaken,
   withSide,
   without,
   koByEffectMarker,
@@ -2538,7 +2541,7 @@ function stepOp(
     case "preventChosenAttack":
       return preventChosenAttack(state, ctx, events);
     case "reduceDamage":
-      return { done: reduceDamage(state, op.amount, ctx, events) };
+      return { done: reduceDamage(state, op.amount, op.fromClass, ctx, events) };
     // 🆕🆕 D432 — no `op.` read at all, which is the shape of a field-free op.
     case "installNoWeakness":
       return { done: installNoWeakness(state, ctx, events) };
@@ -2547,6 +2550,9 @@ function stepOp(
     // 🆕🆕🆕 D547 — the next-turn vulnerability, `weakenDefenderAttacks`' holder.
     case "exposeDefender":
       return { done: exposeDefender(state, op.amount, ctx, events) };
+    // 🆕🆕🆕 D630 — Plunging Headbutt: the same record on the attacker's own Active, `+ 1`.
+    case "exposeSelf":
+      return { done: exposeSelf(state, op.amount, ctx, events) };
     // 🆕🆕🆕 D552 — the WEAKNESS RETYPE, `exposeDefender`'s holder and stamp.
     case "retypeDefenderWeakness":
       return { done: retypeDefenderWeakness(state, op.type, ctx, events) };
@@ -9661,7 +9667,7 @@ function boostSideAttacksThisTurn(
     `{ turn: state.turn + 1, amount }` (types.ts `SideDamageReduction` — `lockSideAttacks`'
     opponent-form `+ 1`: the Supporter is played on its owner's turn, and the next turn is
     the opponent's). OVERWRITES any standing record (named at the type: one Supporter per
-    turn, and two windows on one side cannot overlap). Read by continuous.ts
+    turn, and two windows on one side cannot overlap) [🆕🆕🆕 D630 (D539): WITHDRAWN — the record is a summed LIST since D630: Iron Defender is an Item, so two plays in one turn overlap; a second install APPENDS and the live entries SUM — APPENDS, pruning the expired]. Read by continuous.ts
     `seatDamageReduction`. The ONE writer of the key. */
 function installSideDamageReductionNextTurn(
   state: GameState,
@@ -9670,11 +9676,22 @@ function installSideDamageReductionNextTurn(
   events: GameEvent[],
 ): GameState {
   const side = state.players[ctx.seat];
-  events.push({ type: "SIDE_DAMAGE_REDUCTION_INSTALLED", seat: ctx.seat, amount: op.amount });
-  return withSide(state, ctx.seat, {
-    ...side,
-    sideDamageReduction: { turn: state.turn + 1, amount: op.amount },
+  const pokemonType = op.pokemonType;
+  events.push({
+    type: "SIDE_DAMAGE_REDUCTION_INSTALLED",
+    seat: ctx.seat,
+    amount: op.amount,
+    ...(pokemonType === undefined ? {} : { pokemonType }),
   });
+  // 🆕🆕🆕 D630 — APPENDED (Iron Defender's two plays stack), with every entry whose window has passed
+  // pruned so the list never grows past the live ones. D539: *"OVERWRITES any standing record"* above
+  // is WITHDRAWN.
+  const live = side.sideDamageReduction.filter((record) => record.turn > state.turn);
+  const record: SideDamageReduction =
+    pokemonType === undefined
+      ? { turn: state.turn + 1, amount: op.amount }
+      : { turn: state.turn + 1, amount: op.amount, pokemonType };
+  return withSide(state, ctx.seat, { ...side, sideDamageReduction: [...live, record] });
 }
 
 /** 🆕🆕🆕 §11 (D621) — INSTALL Acerola's Mischief on the picked body: write the controller's
@@ -9702,10 +9719,15 @@ function installChosenAttackShield(
 /** 🆕🆕🆕 D621 — Acerola's Mischief's dialog caption: the printed sentence, the class spelled as
     printed ("Pokémon ex"; the other two members for totality). */
 function chosenAttackShieldNote(op: Extract<EffectOp, { op: "installChosenAttackShield" }>): string {
-  const noun =
-    op.fromClass.stage === "ex"
-      ? "Pokémon ex"
-      : `${op.fromClass.stage === "basic" ? "Basic" : "Ancient"} Pokémon`;
+  // 🆕🆕🆕 D630 — the three new members spelled for totality (only "ex" is printed on this op).
+  const noun = {
+    ex: "Pokémon ex",
+    basic: "Basic Pokémon",
+    ancient: "Ancient Pokémon",
+    burned: "Burned Pokémon",
+    evolution: "Evolution Pokémon",
+    hasAbility: "Pokémon that have an Ability",
+  }[op.fromClass.stage];
   return `Choose 1 of your Pokémon in play. During your opponent's next turn, prevent all damage from and effects of attacks done to that Pokémon by your opponent's ${noun}.`;
 }
 
@@ -10493,6 +10515,8 @@ function lockDefenderAttack(
 function reduceDamage(
   state: GameState,
   amount: number,
+  // 🆕🆕🆕 D630 — Metal Block's printed class (`DamageReduction.fromClass`); absent = every attacker.
+  fromClass: AttackerClass | undefined,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -10504,9 +10528,25 @@ function reduceDamage(
   const existing = active.damageReduction;
   const stacking = existing !== null && existing.turn === turn;
   const merged = stacking ? Math.max(existing.amount, amount) : amount;
-  if (stacking && merged === existing.amount) return state;
-  events.push({ type: "DAMAGE_REDUCTION_APPLIED", seat: ctx.seat, uid, amount: merged });
-  return withActive(state, ctx.seat, { ...active, damageReduction: { turn, amount: merged } });
+  // 🆕🆕🆕 D630 — `preventDamage`'s class rule: agreement keeps the filter, anything else widens to
+  // every attacker (a re-install never leaves less protection than one of them printed). ⚠️ It
+  // OVER-protects: the widened record carries the LARGER amount for every attacker, so a 100-from-
+  // Evolution install plus a 30-from-all one would take 100 off a Basic attacker's hit (the exact
+  // answer is per-class amounts, a list). Unreachable off any printing (only attacks install this,
+  // one per turn), constructed and pinned; the day it is reachable the field becomes a list.
+  const mergedClass = stacking ? (sameAttackerClass(existing.fromClass, fromClass) ? fromClass : undefined) : fromClass;
+  if (stacking && merged === existing.amount && sameAttackerClass(mergedClass, existing.fromClass)) return state;
+  events.push({
+    type: "DAMAGE_REDUCTION_APPLIED",
+    seat: ctx.seat,
+    uid,
+    amount: merged,
+    ...(mergedClass === undefined ? {} : { fromClass: { ...mergedClass } }),
+  });
+  return withActive(state, ctx.seat, {
+    ...active,
+    damageReduction: mergedClass === undefined ? { turn, amount: merged } : { turn, amount: merged, fromClass: { ...mergedClass } },
+  });
 }
 
 /** 🆕🆕 §8.5/§11 (D432) — INSTALL the printed NO-WEAKNESS bar on the CONTROLLER's
@@ -10659,6 +10699,26 @@ function exposeDefender(
   if (exposedAlready && worst === existing.amount) return state;
   events.push({ type: "DAMAGE_VULNERABILITY_APPLIED", seat, uid, amount: worst });
   return withActive(state, seat, { ...active, damageVulnerability: { turn, amount: worst } });
+}
+
+/** 🆕🆕🆕 §8.5 (D630) — INSTALL the printed SELF VULNERABILITY on the CONTROLLER's own Active:
+    Mabosstiff `me05-058` "Plunging Headbutt", *"During your opponent's next turn, this Pokémon takes
+    100 more damage from attacks (after applying Weakness and Resistance)."* `exposeDefender`'s record
+    and reader (`installedVulnerabilityOf` at the four §8.5 sites), with `reduceDamage`'s holder and
+    stamp (`state.turn + 1`, the opponent's next turn). ⚠️ SUMMED, NOT `Math.max`, onto a live record
+    of the SAME window (R-PH1 ⚠️ UNRULED): the opponent's `exposeDefender` on their previous turn
+    stamps the same turn on this body, and the two printed effects are separate, so both land. No
+    §11 check: a self effect, like `reduceDamage`. Never parks. */
+function exposeSelf(state: GameState, amount: number, ctx: EffectContext, events: GameEvent[]): GameState {
+  const active = state.players[ctx.seat].active;
+  if (active === null) return state;
+  const uid = topUid(active);
+  if (uid === undefined) return state;
+  const turn = state.turn + 1;
+  const existing = active.damageVulnerability;
+  const total = existing !== null && existing.turn === turn ? existing.amount + amount : amount;
+  events.push({ type: "DAMAGE_VULNERABILITY_APPLIED", seat: ctx.seat, uid, amount: total });
+  return withActive(state, ctx.seat, { ...active, damageVulnerability: { turn, amount: total } });
 }
 
 /** 🆕🆕🆕 §8.5/§11 (D552) — INSTALL the printed WEAKNESS RETYPE on the DEFENDING Pokémon:
@@ -11110,8 +11170,10 @@ function attackDamageBlocked(
   attacker: Card | undefined,
   damage: number,
   ctx: EffectContext,
+  // 🆕🆕🆕 D630 — the attacking body (Lava Wall's `"burned"` class reads its conditions).
+  attackerBody: InPlayPokemon | undefined,
 ): boolean {
-  return ctx.invokedBy === "attack" && attackBlockOf(state, pokemon, attacker, damage) !== null;
+  return ctx.invokedBy === "attack" && attackBlockOf(state, pokemon, attacker, damage, attackerBody) !== null;
 }
 
 /** 🆕 D259 — THE PURE HALF OF THE FUNNEL, SPLIT OUT SO A PER-CANDIDATE READER CAN
@@ -11598,7 +11660,7 @@ function spreadDamage(
       passives.damageReductionAfterWR +
       // 🆕🆕🆕 D619 — the attacker-gated reduction (Sacred Charm, Thick Scale, Thick Fat).
       attackerGatedReductionOf(state, pokemon, passives.damageReductionsFromAttacker, attackerCard, ctx.seat) +
-      installedReductionOf(state, pokemon) +
+      installedReductionOf(state, pokemon, attackerCard, attackerTop?.active) +
       seatDamageReduction(state, pokemon, "all", ctx.seat);
     // 🆕🆕🆕 D547 — …and the installed NEXT-TURN VULNERABILITY, ADDED at the same
     // post-W/R step (attack.ts's main hit says why, and that it is ON-TARGET). 0 on
@@ -11657,7 +11719,7 @@ function spreadDamage(
       // PRINTED damage, or against the Active's number, would shield it — and would
       // pass every single-target board in the suite.
       preventedByDamageThreshold(passives.preventDamageAtOrAbove, wouldDeal) ||
-      attackDamageBlocked(state, pokemon, attackerCard, wouldDeal, ctx) ||
+      attackDamageBlocked(state, pokemon, attackerCard, wouldDeal, ctx, attackerTop?.active) ||
       // D254 — "all", and the reason is that a SPREAD carries no `ignoreWR`: Feint
       // Attack is a single-target attack, and nothing in the pool spreads while
       // ignoring effects on the damaged body. So every source on this side counts,
@@ -11721,7 +11783,8 @@ function spreadDamage(
     // only when the clamp answered with it).
     const spent = consumedTools(prevented ? [] : berry.toolUids, clamped);
     consumed.push(...spent);
-    bench.push({ ...consumeTools(pokemon, spent, victim, events), damage });
+    // 🆕🆕🆕 D630 — the splash is attack damage: recorded on the body (Juggernaut Horn, R-JH1).
+    bench.push(withAttackDamageTaken({ ...consumeTools(pokemon, spent, victim, events), damage }, state.turn, dealt));
   }
   return withSide({ ...state, rngState: rng }, victim, {
     ...side,
@@ -12023,7 +12086,7 @@ function placeSnipe(
         targetPassives.damageReductionAfterWR +
         // 🆕🆕🆕 D619 — the attacker-gated reduction, on-target (`ignoreWR` nulls it).
         attackerGatedReductionOf(next, pokemon, targetPassives.damageReductionsFromAttacker, attackerCard, ctx.seat) +
-        installedReductionOf(next, pokemon) +
+        installedReductionOf(next, pokemon, attackerCard, attackerTop?.active) +
         seatDamageReduction(next, pokemon, "all", ctx.seat);
     // D149 — and the DEBUFF is NOT nulled by `ignoreWR`, unlike the reduction one
     // line up: it is an effect on the ATTACKER, and Feint Attack's clause scopes
@@ -12093,7 +12156,7 @@ function placeSnipe(
           // the same printed sentence. That is D240's ruling being load-bearing
           // rather than decorative, and it is asserted rather than assumed.
           preventedByDamageThreshold(targetPassives.preventDamageAtOrAbove, wouldDeal) ||
-          attackDamageBlocked(next, pokemon, attackerCard, wouldDeal, ctx))) ||
+          attackDamageBlocked(next, pokemon, attackerCard, wouldDeal, ctx, attackerTop?.active))) ||
       // 🛑 D254 — THE ONE SITE OF THE FIVE WHERE `scope` IS OBSERVABLE, and the
       // reason the parameter exists at all. This scan stays OUTSIDE the `ignoreWR`
       // guard, because Thundurus's shield really is an effect on a DIFFERENT body
@@ -12167,7 +12230,8 @@ function placeSnipe(
     // 🆕🆕🆕 D562 — `spreadDamage`'s consumption, verbatim (R-BE, R-BR).
     const spent = consumedTools(prevented ? [] : berry.toolUids, clamped);
     consumed.push(...spent);
-    bench.push({ ...consumeTools(pokemon, spent, benchVictim, events), damage });
+    // 🆕🆕🆕 D630 — `spreadDamage`'s record, verbatim (the `deals` arm is attack damage).
+    bench.push(withAttackDamageTaken({ ...consumeTools(pokemon, spent, benchVictim, events), damage }, next.turn, dealt));
   }
   return withSide({ ...next, rngState: rng }, benchVictim, {
     ...side,
@@ -12407,7 +12471,7 @@ function snipeActive(
       targetPassives.damageReductionAfterWR +
       // 🆕🆕🆕 D619 — the attacker-gated reduction, on-target (`ignoreWR` nulls it).
       attackerGatedReductionOf(state, target.active, targetPassives.damageReductionsFromAttacker, attacker?.card, ctx.seat) +
-      installedReductionOf(state, target.active) +
+      installedReductionOf(state, target.active, attacker?.card, attacker?.active) +
       seatDamageReduction(state, target.active, "all", ctx.seat);
   // ⚠️ D240 — the damage CAP is read against the number that would actually be
   // placed, so `prevented` moved BELOW the reduction it now depends on. This is
@@ -12466,7 +12530,7 @@ function snipeActive(
         // REASON READ OFF THE PRINT: "done to this Pokémon" names no zone, so
         // neither the Active arms nor the Bench arms can be dead by construction.
         preventedByDamageThreshold(targetPassives.preventDamageAtOrAbove, wouldDeal) ||
-        attackDamageBlocked(state, target.active, attacker?.card, wouldDeal, ctx))) ||
+        attackDamageBlocked(state, target.active, attacker?.card, wouldDeal, ctx, attacker?.active))) ||
     // D254 — "all", and DEAD for both sentences for `attack.ts`'s reason verbatim:
     // `snipeActive` damages `target.active` and the shared TARGET clause reads
     // "your BENCHED Pokémon". Total, not case-covering; no mutant, because none
@@ -12516,10 +12580,12 @@ function snipeActive(
   // 🆕🆕🆕 D562 — the consumed Tools leave the sniped Active for its owner's pile, after
   // the row (`spreadDamage`'s consumption, verbatim).
   const spent = consumedTools(prevented ? [] : berry.toolUids, clamped);
-  const struck = withActive({ ...state, rngState: survivalRng }, opponent, {
-    ...consumeTools(target.active, spent, opponent, events),
-    damage,
-  });
+  // 🆕🆕🆕 D630 — recorded on the sniped Active (Juggernaut Horn, R-JH1).
+  const struck = withActive(
+    { ...state, rngState: survivalRng },
+    opponent,
+    withAttackDamageTaken({ ...consumeTools(target.active, spent, opponent, events), damage }, state.turn, dealt),
+  );
   const hit = discardToPile(struck, opponent, spent);
   // 🆕 §9 — THE TWO REACTIONS THE DAMAGED ACTIVE OWES, SEEDED AT THE DAMAGE AND
   // NOT AT ONE CODE PATH. `attack.ts` seeds the `damageAttacker` recoil (Rocky

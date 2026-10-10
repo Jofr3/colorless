@@ -489,7 +489,7 @@ describe("D534 §3 — the degenerate boards and the constructed ops", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("D534 §4 — the record: an optional widening, `MATCH_RECORD_VERSION` HELD at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570; 38 since D575; 39 since D576; 40 since D577; 41 since D579; 42 since D583; 43 since D621)", () => {
+describe("D534 §4 — the record: an optional widening, `MATCH_RECORD_VERSION` HELD at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570; 38 since D575; 39 since D576; 40 since D577; 41 since D579; 42 since D583; 43 since D621; 44 since D630)", () => {
   it("🛑 the parked state round-trips through JSON BYTE-EQUAL, keeps `whose` in `cont.pendingOp.otherwise`, and resumes from its bytes to the same result", () => {
     const { state: parked } = attack(board(59));
     const bytes = JSON.stringify(parked);
@@ -521,9 +521,9 @@ describe("D534 §4 — the record: an optional widening, `MATCH_RECORD_VERSION` 
     expect(run.state.players.p1.deck).not.toEqual(state.players.p1.deck);
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 43 (🆕🆕🆕 D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) in `apps/api` — a widening, not a new shape", () => {
+  it("🛑 `MATCH_RECORD_VERSION` is 44 (🆕🆕🆕 D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) in `apps/api` — a widening, not a new shape", () => {
     // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
-    expect(raw("/lobby/match.ts")).toContain("export const MATCH_RECORD_VERSION = 43;");
+    expect(raw("/lobby/match.ts")).toContain("export const MATCH_RECORD_VERSION = 44;");
   });
 });
 
@@ -542,7 +542,7 @@ describe("D534 §5 — §11 and the describer: a deck is not a body, and no bran
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D534 §6 — the version steps and the bytes this suite drove are the bytes that shipped", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
-    expect(engineVersion).toBe("0.512.0");
+    expect(engineVersion).toBe("0.513.0");
     expect(manifest.version).toBe(engineVersion);
     expect(raw("/index.ts")).toContain("engineVersion 0.418.0 → **0.419.0** (D534");
   });

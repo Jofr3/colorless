@@ -30,7 +30,7 @@ import {
 // `30th-034`) and Kyogre "Riptide", one anchor read by the multiplier (the count) and by
 // `deriveAttackEffect` (the shipped retrieval + shuffle tail). Every id and text off the LOCAL D1,
 // 2026-10-09, `legal_standard = 1`; no id was referenced in the tree outside docs before this slice.
-// Dropped and named: Doublade ×3 and Okidogi (§1).
+// Dropped and named: Doublade ×3 and Okidogi (§1) [🆕🆕🆕 D630 (D539): Okidogi BUILT at D630 (M1)].
 
 const RONDO = "This attack does 50 more damage for each of your Benched Pokémon that has any damage counters on it.";
 const FLAME_LEGION = "This attack does 40 more damage for each of your Benched Pokémon that has any {R} Energy attached.";
@@ -55,7 +55,8 @@ const DROPPED: readonly (readonly [string, number])[] = [
     "Reveal any number of Honedge, Doublade, and Aegislash from your hand, and this attack does 60 damage for each card you revealed in this way.",
     3,
   ],
-  // The Prizes taken during the opponent's last turn: no state records them (an MRV bump).
+  // The Prizes taken during the opponent's last turn: no state records them (an MRV bump). [🆕🆕🆕 D630 (D539):
+  // WITHDRAWN — `PlayerSide.prizesTakenOnTurn` records them since D630 (MRV 43 → 44).]
   ["This attack does 60 more damage for each Prize card your opponent took during their last turn.", 1],
 ];
 
@@ -71,11 +72,12 @@ describe("D623 §1 — the texts: 5 attack sentences / 7 printings", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(7);
   });
 
-  it("Doublade ×3 and Okidogi stay unbuilt: 2 texts / 4 printings, named", () => {
+  it("Doublade ×3 and Okidogi stay unbuilt: 2 texts / 4 printings, named (🆕🆕🆕 D630 (D539): WITHDRAWN for Okidogi — built at D630, `persistedRecordsMeD630.test.ts`)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, n] of DROPPED) {
       expect([text, me.get(text)]).toEqual([text, n]);
-      expect(resolvedByAnyReader(text), text).toBe(false);
+      // 🆕🆕🆕 D630 — Settle the Score reads now (the persisted `PlayerSide.prizesTakenOnTurn`, MRV 43 → 44).
+      expect(resolvedByAnyReader(text), text).toBe(text.startsWith("This attack does 60 more damage"));
     }
     expect(DROPPED.reduce((sum, [, n]) => sum + n, 0)).toBe(4);
   });
@@ -371,6 +373,6 @@ describe("D623 §4 — the two texts on shipped members, on a board", () => {
 
 describe("D623 §5 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.512.0");
+    expect(engineVersion).toBe("0.513.0");
   });
 });

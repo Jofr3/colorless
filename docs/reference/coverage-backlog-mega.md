@@ -6,6 +6,26 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D630 update (engine 0.513.0) — M1, the persisted-record bundle (`MATCH_RECORD_VERSION` 43 → 44)
+
+8 texts / 13 `me` printings (`persistedRecordsMeD630.test.ts`): Mega Heracross ex ×2 "Juggernaut Horn" `me02-004` / `-108` and Lycanroc ×2
+"Counter" `30th-085` / `-138` (the NEW `InPlayPokemon.attackDamageTaken`, R-JH1), Heatran "Lava Wall" `me05-007`, Manectric ×2 "Flashing
+Barrier" `me05-024` / `-089` and Deoxys "Psy Protection" `me04-033` (the NEW `AttackerClass` members `burned` / `evolution` / `hasAbility`,
+R-LVW1, R-PSY1), Bronzong "Metal Block" `me05-064` (`DamageReduction.fromClass`), Iron Defender ×2 `me01-118` / `me05-110` (the summed
+`sideDamageReduction` list, R-ID1), Okidogi "Settle the Score" `me02.5-122` (the NEW `PlayerSide.prizesTakenOnTurn`, R-STS1) and Mabosstiff
+"Plunging Headbutt" `me05-058` (the NEW op `exposeSelf`, R-PH1). A v43 match record is MIGRATED (no D1 read). **Finished:** all 13. **Not
+taken:** L1 (Cursed Roots `me04-039`, Electrified Incisors `me01-051`, Jet of Ink `me04-017`, Quaking Fist `30th-084`, Scorching Earth
+`me01-031`) — the next MRV step (44 → 45).
+
+| Column | `me` built / units (D630) | Standard pool D630 |
+|---|---|---|
+| Attacks | 1,001 / 1,039 (+11) | **2,733 / 2,771** |
+| Abilities | 201 / 234 | **577 / 610** |
+| Trainers | 170 / 183 (+2) | **434 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1179** (1166 + 13).
+
 ## 🆕 D629 update (engine 0.512.0) — S1, the rest of the snipe / spread wording (`MATCH_RECORD_VERSION` stays 43)
 
 7 texts / 7 printings (`snipeSpreadRestMeD629.test.ts`): Genesect "Bug's Cannon" `me02-008` and Seaking "Hydro Jet" `me05-014` (the NEW
@@ -125,7 +145,7 @@ Bench: Gourgeist ex `me04-041` / `-102` "Horrifying Rondo" (`damagedBenchedPokem
 (`benchedPokemonWithEnergy`) and Igglybuff `30th-120` "Bouncy Circle" (`benchedPokemonWithMaxHp`, R-BOC1 UNRULED). Pikachu `30th-034`
 "Pika Chain" on the body-map key "Pikachu and Pikachu ex"; Kyogre `me01-034` "Riptide" on two readers (the discard count and the
 retrieval + shuffle tail). **Finished:** all 7. **Dropped and named:** Doublade ×3 `mep-067`, `me03-057` / `-098` (an own-hand
-partial reveal) and Okidogi `me02.5-122` (Prizes taken last turn; an MRV bump).
+partial reveal) and Okidogi `me02.5-122` (Prizes taken last turn; an MRV bump). [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
 
 | Column | `me` built / units (D623) | Standard pool D623 |
 |---|---|---|
@@ -154,7 +174,7 @@ Pro ×3 `me01-124` / `-174`, `me02.5-199` (+30 for {F} attackers, read on the in
 `lockSideRetreat`): Roxie's Performance ×3 `me04-081` / `-112` / `-121` (R-RP1 UNRULED: read live). Dawn ×3 `me02-087` / `-118` /
 `-129` is Larry's Skill's `also` search by stage. A v42 match record is MIGRATED (two `null` side keys, no D1 read). **Finished:** all
 16. **Dropped and named:** Iron Defender ×2 `me01-118` / `me05-110` — an Item whose two plays stack on `sideDamageReduction`, a
-record D564 overwrites; it needs that persisted record made a summed list. WP12's four attack texts (D619) did not ride the bump.
+record D564 overwrites; it needs that persisted record made a summed list. WP12's four attack texts (D619) did not ride the bump. [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
 Review fix: the shield is honoured against PLACED counters on a Benched body too (`placeSnipe`'s put-counter Bench arm and a
 counter move's Benched destination now ask §11 of that body), so Dragapult ex "Phantom Dive" cannot put counters on it.
 Second review fix: the shield ends when its body leaves play (R-AM1 made true). Known gap, R-AM2 UNRULED: an `ignoreWR` snipe or
@@ -200,7 +220,7 @@ Generator" `me02.5-064` / `-229` and three clause-table rows on D564's `youPlaye
 ex "Wicked Impact" `me02.5-162`, Espurr "Buddy Attack" `me04-036`, Hippowdon "Twister Spewing" `me03-040` (a gated mill).
 **Finished:** all 10. **Dropped and named:** WP12's four attack texts / 5 printings — Heatran "Lava Wall" `me05-007`, Manectric
 "Flashing Barrier" `me05-024` / `-089`, Deoxys "Psy Protection" `me04-033`, Bronzong "Metal Block" `me05-064`: a new attacker class
-(Burned / Evolution / has an Ability) on persisted next-turn state owes `MATCH_RECORD_VERSION` 42 → 43 (pay it with WP24c / WP23). [🆕🆕🆕 D621 (D539): D621 paid 42 → 43 for WP24c / WP23 only; these four still owe a bump.]
+(Burned / Evolution / has an Ability) on persisted next-turn state owes `MATCH_RECORD_VERSION` 42 → 43 (pay it with WP24c / WP23). [🆕🆕🆕 D621 (D539): D621 paid 42 → 43 for WP24c / WP23 only; these four still owe a bump.] [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
 
 | Column | `me` built / units (D619) | Standard pool D619 |
 |---|---|---|
@@ -436,7 +456,7 @@ and Paldean Tauros "Raging Charge" (`pokemonInPlay`, new body-map keys), Raticat
 (`damageCountersOnYourBench` + a "Rattata" key), Tinkaton "Windup Swing" (the penalty fold over `energyOnOpponent`) and
 Beautifly ×2 "Energy Straw" (the comma-joined reveal, "Energy card" in the opponent's hand). **Finished:** all 14. **Left for
 WP28b** (7 texts / 11 printings) [🆕🆕🆕 D623 (D539): five are BUILT at D623 — Kyogre, Igglybuff, Pikachu `30th-034`, Armarouge ×2, Gourgeist ex ×2; Doublade ×3 and Okidogi are dropped and named there]: Doublade ×3, Kyogre `me01-034`, Igglybuff `30th-120`, Pikachu `30th-034` (WP06 markup), [🆕🆕🆕 D612: the markup is normalised; the sentence is still unread]
-Armarouge ×2, Gourgeist ex ×2, Okidogi `me02.5-122` — each tagged below.
+Armarouge ×2, Gourgeist ex ×2, Okidogi `me02.5-122` — each tagged below. [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
 
 | Column | `me` built / units (D607) | Standard pool D607 |
 |---|---|---|
@@ -666,7 +686,7 @@ Envy (2 or more damage counters, Weakness ignored), Cosmic Beam ×2 (needs a Ben
 while the opponent's Active is a Pokémon ex; a new `ifCondition` on `evolveEarlyExempt`; a Luxio evolved from Shinx this turn may evolve again) and Needly Armor (3 counters per
 {G} Energy). **Finished:** Chi-Yu, Solrock ×2, Steelix ×2, Slowbro ×3, Luxio, Chesnaught. **Dropped:** Retaliatory Claw
 (remaining HP), Chomp Whole (no Retreat Cost) and Celebration ×2 (the take-then-shuffle order). WP33b keeps Solar
-Coiling ×2, Juggernaut Horn / Counter ×4, Cocky Claw and Shadowy Whip ×2. [🆕🆕🆕 D600: built — except Juggernaut Horn / Counter ×4, excluded.]
+Coiling ×2, Juggernaut Horn / Counter ×4, Cocky Claw and Shadowy Whip ×2. [🆕🆕🆕 D600: built — except Juggernaut Horn / Counter ×4, excluded.] [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
 
 | Column | `me` built / units (D594) | Standard pool D594 |
 |---|---|---|
@@ -806,7 +826,7 @@ rider). [🆕🆕🆕 D617: BUILT, `healChosen.recoverHealed`.] Dawn ×3 stays W
 Firebreather ×2 (Shivery Chill's search at {R} / 7), Fighting Gong ×3 (Ethan's Adventure's `anyOf` at 1), Tarragon ×2
 (Lana's Aid's `anyOf` retrieval at {F} / 4), Poké Pad ×3 (Master Ball with `noRuleBox`), Energy Swatter (Ortega's
 first op, `anyEnergy`) and Repel (`opponentSwitchOut`). Two engine lines: Energy Swatter's caption arm and Repel's
-empty-Bench play gate. Nothing dropped from the brief; Premium Power Pro and Iron Defender stay out (WP23). [🆕🆕🆕 D621: Premium Power Pro BUILT; Iron Defender dropped.]
+empty-Bench play gate. Nothing dropped from the brief; Premium Power Pro and Iron Defender stay out (WP23). [🆕🆕🆕 D621: Premium Power Pro BUILT; Iron Defender dropped.] [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
 
 | Column | `me` built / units (D587) | Standard pool D587 |
 |---|---|---|
@@ -989,7 +1009,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), place 12 damage counters on the Attacking Pokémon. [🆕🆕🆕 D592: BUILT]
 - 1× Flip 3 coins. If all of them are heads, Knock Out 1 of your opponent's Pokémon.
 - 1× If your opponent's Pokémon is Knocked Out by damage from this attack, take 1 more Prize card. [🆕🆕🆕 D609: WP36 rest]
-- 1× This attack does 60 more damage for each Prize card your opponent took during their last turn. [🆕🆕🆕 D607: WP28b] [🆕🆕🆕 D623: dropped from WP28b — no state records the Prizes taken during the last turn; a persisted record is an MRV bump]
+- 1× This attack does 60 more damage for each Prize card your opponent took during their last turn. [🆕🆕🆕 D607: WP28b] [🆕🆕🆕 D623: dropped from WP28b — no state records the Prizes taken during the last turn; a persisted record is an MRV bump] [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
 
 ### Damage-counter placement and manipulation — 24 text(s) / 34 printing(s)
 
@@ -1073,15 +1093,15 @@ group wins; the grouping is a reading aid, not a census figure).
 ### Conditional damage bonus / base change — 22 text(s) / 37 printing(s)
 
 - 5× You may put a {W} Energy attached to this Pokémon into your hand and have this attack do 80 more damage. [🆕🆕🆕 D589: BUILT]
-- 4× If this Pokémon was damaged by an attack during your opponent's last turn, this attack does that much more damage.
+- 4× If this Pokémon was damaged by an attack during your opponent's last turn, this attack does that much more damage. [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
 - 3× If you have 4 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, this attack does 140 more damage. [🆕🆕🆕 D627: BUILT]
 - 3× If you have no cards in your hand, this attack does 160 more damage. [🆕🆕🆕 D594: BUILT]
 - 2× If Rosa's Encouragement is in your discard pile, this attack does 150 more damage. [🆕🆕🆕 D600: BUILT]
 - 2× If this Pokémon is Burned or Poisoned, this attack does 100 more damage. [🆕🆕🆕 D593: BUILT]
 - 2× If your Benched Pokémon have any Shadowy {D} Energy attached, this attack does 70 more damage. [🆕🆕🆕 D600: BUILT]
 - 2× You may discard all Energy from this Pokémon and have this attack do 130 more damage. [🆕🆕🆕 D589: BUILT]
-- 1× During your opponent's next turn, this Pokémon takes 100 less damage from attacks from Evolution Pokémon (after applying Weakness and Resistance). [🆕🆕🆕 D619: dropped — a new attacker class on persisted state owes an MRV bump]
-- 1× During your opponent's next turn, this Pokémon takes 100 more damage from attacks (after applying Weakness and Resistance).
+- 1× During your opponent's next turn, this Pokémon takes 100 less damage from attacks from Evolution Pokémon (after applying Weakness and Resistance). [🆕🆕🆕 D619: dropped — a new attacker class on persisted state owes an MRV bump] [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
+- 1× During your opponent's next turn, this Pokémon takes 100 more damage from attacks (after applying Weakness and Resistance). [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
 - 1× If this Pokémon evolved from Magneton during this turn, this attack does 120 more damage. [🆕🆕🆕 D593: BUILT]
 - 1× If this Pokémon used Spiky Rolling during your last turn, this attack does 80 more damage. [🆕🆕🆕 D593: BUILT]
 - 1× If this Pokémon's remaining HP is 50 or less, this attack does 170 more damage. [🆕🆕🆕 D594: dropped from WP33a — needs a remaining-HP member] [🆕🆕🆕 D600: BUILT]
@@ -1097,11 +1117,11 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### Next-turn effects on either Active (protection, vulnerability, locks) — 6 text(s) / 7 printing(s)
 
-- 2× During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Evolution Pokémon. [🆕🆕🆕 D619: dropped — a new attacker class on persisted state owes an MRV bump]
+- 2× During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Evolution Pokémon. [🆕🆕🆕 D619: dropped — a new attacker class on persisted state owes an MRV bump] [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
 - 1× During your opponent's next turn, Energy can't be attached from your opponent's hand to the Defending Pokémon.
 - 1× During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips 2 coins. If either of them is tails, that attack doesn't happen. [🆕🆕🆕 D595: dropped from WP13 — `flipLockAttack` is one coin and field-free]
-- 1× During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Burned Pokémon. [🆕🆕🆕 D619: dropped — a new attacker class on persisted state owes an MRV bump]
-- 1× During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Pokémon that have an Ability. [🆕🆕🆕 D619: dropped — a new attacker class on persisted state owes an MRV bump]
+- 1× During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Burned Pokémon. [🆕🆕🆕 D619: dropped — a new attacker class on persisted state owes an MRV bump] [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
+- 1× During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Pokémon that have an Ability. [🆕🆕🆕 D619: dropped — a new attacker class on persisted state owes an MRV bump] [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
 - 1× The Defending Pokémon's Weakness is now &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> until the end of your next turn. &lt;em>(Apply Weakness as ×2.)&lt;/em> [🆕🆕🆕 D612: the markup is normalised (WP06); the clean text still needs a reader]
 
 ### Spread / snipe damage — 15 text(s) / 27 printing(s)
@@ -1323,7 +1343,7 @@ Discard a Pokémon Tool or Special Energy card from 1 of your opponent's Pokémo
 • Shuffle up to 3 {W} Pokémon from your discard pile into your deck.
 • Shuffle up to 3 Basic {W} Energy cards from your discard pile into your deck.
 - 1× **Hole-Digging Shovel** — Discard the top 2 cards of your deck. [🆕🆕🆕 D588: BUILT]
-- 2× **Iron Defender** — During your opponent's next turn, all of your {M} Pokémon take 30 less damage from attacks from your opponent's Pokémon (after applying Weakness and Resistance). (This includes new Pokémon that come into play.) [🆕🆕🆕 D621: dropped — two plays stack on D564's overwritten `sideDamageReduction`]
+- 2× **Iron Defender** — During your opponent's next turn, all of your {M} Pokémon take 30 less damage from attacks from your opponent's Pokémon (after applying Weakness and Resistance). (This includes new Pokémon that come into play.) [🆕🆕🆕 D621: dropped — two plays stack on D564's overwritten `sideDamageReduction`] [🆕🆕🆕 D630 (D539): BUILT at D630 (M1, MRV 43 → 44).]
 - 2× **Jumbo Ice Cream** — Heal 80 damage from your Active Pokémon that has 3 or more Energy attached. [🆕🆕🆕 D625: BUILT]
 - 1× **Lumiose Galette** — Heal 20 damage and remove a Special Condition from your Active Pokémon. [🆕🆕🆕 D588: BUILT]
 - 3× **Poké Pad** — Search your deck for a Pokémon that doesn't have a Rule Box, reveal it, and put it into your hand. Then, shuffle your deck. (Pokémon ex, Pokémon V, etc. have Rule Boxes.) [🆕🆕🆕 D587: BUILT]

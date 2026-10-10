@@ -20271,6 +20271,19 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.512.0 → **0.513.0** (D630 — M1: THE PERSISTED-RECORD BUNDLE, 8 TEXTS / 13 `me` PRINTINGS;
+    `MATCH_RECORD_VERSION` 43 → 44 WITH A v43 MIGRATION (apps/api match.ts "43 → 44 AT D630")). types.ts: the NEW
+    REQUIRED `InPlayPokemon.attackDamageTaken` (written at the four §8.5 sites by `withAttackDamageTaken`, read by
+    the NEW `DamageCountSource.attackDamageTakenLastTurnOnSelf` — Mega Heracross ex ×2 "Juggernaut Horn", Lycanroc
+    ×2 "Counter", R-JH1) and `PlayerSide.prizesTakenOnTurn` (flow.ts `resolveTakePrizes`, a take on the taker's own
+    turn only, read by the NEW
+    `opponentPrizesTakenLastTurn` — Okidogi "Settle the Score", R-STS1); `PlayerSide.sideDamageReduction` RETYPED
+    to a summed list with an optional `pokemonType` (Iron Defender ×2, R-ID1); the optional
+    `DamageReduction.fromClass` (Bronzong "Metal Block"). effects.ts: `AttackerClass.stage` widened by `burned`,
+    `evolution`, `hasAbility` (Heatran "Lava Wall" R-LVW1, Manectric ×2 "Flashing Barrier", Deoxys "Psy
+    Protection" R-PSY1); the NEW op `exposeSelf` on D547's record (Mabosstiff "Plunging Headbutt", R-PH1).
+    continuous.ts `attackBlockOf` / `installedReductionOf` take the attacking body. L1's five texts owe the next
+    bump (44 → 45). `persistedRecordsMeD630.test.ts`.)
     🆕🆕🆕 engineVersion 0.511.0 → **0.512.0** (D629 — S1: THE REST OF THE SNIPE / SPREAD WORDING, 7 TEXTS / 7
     PRINTINGS (`me` + `30th`); `MATCH_RECORD_VERSION` STAYS 43 (apps/api match.ts "STAYS 43 AT D629")). effects.ts:
     the NEW `damageChosen.perTypedEnergyOnSelf` (Genesect "Bug's Cannon", Seaking "Hydro Jet"; folded in
@@ -20341,8 +20354,8 @@ import type { GameState, Seat } from "./types";
     `benchedPokemonWithMaxHp` (Igglybuff "Bouncy Circle", `effectiveMaxHp`, R-BOC1 UNRULED); the body-map key
     "Pikachu and Pikachu ex" (Pikachu `30th-034` "Pika Chain"); Kyogre "Riptide" read by two readers on one
     anchor — the `cardsInDiscardPile` fold and the shipped `discardPileRetrieval` + `shuffleDeck` tail. Dropped and
-    named: Doublade ×3 (an own-hand partial reveal) and Okidogi (a per-turn Prize record, an MRV bump).
-    `scalingCountsMeD623.test.ts`.)
+    named: Doublade ×3 (an own-hand partial reveal) and Okidogi (a per-turn Prize record, an MRV bump) [🆕🆕🆕
+    D630 (D539): Okidogi BUILT at D630]. `scalingCountsMeD623.test.ts`.)
     🆕🆕🆕 engineVersion 0.504.0 → **0.505.0** (D622 — FIX-UP: R-AM2 RETIRED, THE BARE W/R TAIL IS W/R ONLY;
     `MATCH_RECORD_VERSION` STAYS 43 (apps/api match.ts "STAYS 43 AT D622")). effects.ts: the NEW optional
     `damageChosen.wrOnly`, set beside `ignoreWR` by the three bare-tail readers (`CHOSEN_ANY_TARGET` without the
@@ -20360,7 +20373,8 @@ import type { GameState, Seat } from "./types";
     its body leaves play) and `sideRetreatLock` (the NEW op `lockSideRetreat`, read by `retreatLocked` —
     Roxie's Performance ×3, R-RP1 UNRULED); events `CHOSEN_ATTACK_SHIELD_INSTALLED`, `SIDE_RETREAT_LOCKED`.
     registry.ts: Dawn ×3 is Larry's Skill's `also` search by stage. Dropped and named: Iron Defender ×2 (an Item
-    whose two plays stack on D564's overwritten `sideDamageReduction`). `sideStateMeD621.test.ts`.)
+    whose two plays stack on D564's overwritten `sideDamageReduction`) [🆕🆕🆕 D630 (D539): BUILT at D630].
+    `sideStateMeD621.test.ts`.)
     🆕🆕🆕 engineVersion 0.502.0 → **0.503.0** (D620 — WP10 + WP26: PRIZES YOU HAVE TAKEN, MEGA MAWILE ex AND THE
     `me` TOOLS, 8 TEXTS / 14 `me` UNITS ON 12 PRINTINGS; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT
     D620")). effects.ts: the NEW `DamageCountSource.yourPrizesTaken` (`YOUR_PRIZES_MULTIPLY`; attack.ts
@@ -20382,7 +20396,7 @@ import type { GameState, Seat } from "./types";
     behind `youPlayedSupporterNamedThisTurn` "Canari"). effects.ts: three `CONDITIONAL_DAMAGE_CLAUSES` rows on
     that member (Wicked Impact, Buddy Attack, and Twister Spewing's clause) and arm 6e-quinquies (the
     clause-gated opponent mill). Dropped and named: WP12's four attack texts (a persisted attacker class, an
-    MRV bump). `attackerClassMeD619.test.ts`.)
+    MRV bump) [🆕🆕🆕 D630 (D539): BUILT at D630]. `attackerClassMeD619.test.ts`.)
     🆕🆕🆕 engineVersion 0.500.0 → **0.501.0** (D618 — WP25b: THE REST OF THE `me` STADIUMS D606 DROPPED,
     3 TEXTS / 8 PRINTINGS; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D618")).
     registry.ts, three NEW `stadium` objects: Battle Cage ×2 (the NEW `StadiumEffects.benchCounterShield`,
@@ -21208,7 +21222,8 @@ import type { GameState, Seat } from "./types";
     inserted MID-MAP after `sv08.5-151` (D395/D396, so `raw[last]` stays `sv09-107`); no row authors an
     `attack` key. **Jasmine's Gaze** `sv08-178`/`-233`/`-245` on the NEW `installSideDamageReductionNextTurn
     { amount: 30 }`, which stamps the NEW REQUIRED `PlayerSide.sideDamageReduction { turn: state.turn + 1,
-    amount }` (the opponent form's `+ 1`, overwrite semantics named), paid by continuous.ts
+    amount }` (the opponent form's `+ 1`, overwrite semantics named [🆕🆕🆕 D630 (D539): WITHDRAWN — a summed list
+    since D630; a second install appends]), paid by continuous.ts
     `seatDamageReduction` for the damaged side AFTER the own-side return (R-JG2) and under `"all"` only
     (R-JG1: Feint Attack's `"othersOnly"` drops it); a side record, so new Pokémon are covered and §10
     sheds nothing (R-JG3). **Amarys** `sv08.5-093`/`-132`/`-170` — `drawCards 4` then the NEW
@@ -25640,7 +25655,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.512.0";
+export const engineVersion = "0.513.0";
 
 export type {
   ApplyResult,

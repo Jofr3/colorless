@@ -393,8 +393,8 @@ function render(events: GameEvent[], state: GameState): string[] {
 }
 
 describe("D580 Look-Alike Show §0 — the version, the registry row, the census claim", () => {
-  it("is built at engine 0.512.0", () => {
-    expect(engineVersion).toBe("0.512.0");
+  it("is built at engine 0.513.0", () => {
+    expect(engineVersion).toBe("0.513.0");
   });
 
   it("sv05-063 authors index 0 only: the reveal, then the NEW op; Eerie Wave (index 1) keeps deriving", () => {
@@ -728,7 +728,8 @@ describe("D580 Look-Alike Show §6 — THE POPULATION LOOP: all 51 Supporter nam
     expect(amarys.events).toContainEqual(expect.objectContaining({ type: "HAND_DISCARDED", seat: "p1" }));
     expect(amarys.state.players.p1.hand).toEqual([]);
     // Jasmine's Gaze: the attacker's side takes 30 less during the opponent's next turn.
-    expect(through("Jasmine's Gaze").state.players.p1.sideDamageReduction).not.toBeNull();
+    // 🆕🆕🆕 D630 (D539): `not.toBeNull()` is vacuous on the D630 LIST — asked as one live entry instead.
+    expect(through("Jasmine's Gaze").state.players.p1.sideDamageReduction).toHaveLength(1);
   });
 });
 

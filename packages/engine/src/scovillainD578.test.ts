@@ -214,8 +214,8 @@ function damageRow(events: readonly GameEvent[]): Extract<GameEvent, { type: "DA
 const SCOV_SPOT: Spot = { id: SCOVILLAIN, under: [CAPSAKID] };
 
 describe("D578 Scovillain §0 — the version", () => {
-  it("is built at engine 0.512.0", () => {
-    expect(engineVersion).toBe("0.512.0");
+  it("is built at engine 0.513.0", () => {
+    expect(engineVersion).toBe("0.513.0");
   });
 });
 
@@ -490,6 +490,8 @@ const ALLOWLIST: Record<string, string> = {
   "filter · continuous.ts · seatPreWRDamageBonus · attackerCard · aura.beneficiary": `${E} — \`attackerPreWRBonus\` passes \`inPlayCardOf\``,
   "filter · continuous.ts · seatPreWRDamageBonus · defenderCard · aura.target": `${E} — the §8.5 callers pass the in-play defender`,
   "filter · continuous.ts · sideAttackBonusThisTurn · defenderCard · bonus.target": `${E} — the §8.5 callers pass the in-play defender`,
+  // 🆕🆕🆕 D630 — Iron Defender's "your {M} Pokémon": `seatDamageReduction` passes `inPlayCardOf` (R-ID1).
+  "filter · continuous.ts · sideDamageReductionOf · damagedCard · { kind: \"typedPokemon\", pokemonType: record.pokemonType }": `${E} — \`seatDamageReduction\`'s \`inPlayCardOf\``,
   "filter · continuous.ts · stadiumDamageReduction · damagedCard · reduction.beneficiary": E,
   "filter · continuous.ts · stadiumFreesRetreat · top · retreat.filter": `${E} — \`effectiveRetreatCost\`'s \`inPlayCardOf\``,
   "filter · continuous.ts · stadiumPreWRBonus · attackerCard · bonus.attacker": `${E} — via \`seatPreWRDamageBonus\``,

@@ -876,7 +876,9 @@ export class LobbyDO {
       is MIGRATED rather than retired — its pool's Trainer faces re-read from D1 and the v42 record
       PERSISTED before any caller acts on it (match.ts "41 → 42 AT D583").
       🆕🆕🆕 D621 — and a v42 record is migrated too, with no D1 read (two `null` side keys; match.ts
-      "42 → 43 AT D621"); a v41 record takes both steps. */
+      "42 → 43 AT D621"); a v41 record takes both steps.
+      🆕🆕🆕 D630 — and a v43 record too, with no D1 read (M1's record keys; match.ts "43 → 44 AT D630"); a
+      v42 record takes D621's step and D630's, a v41 record all three. */
   private async peekMatch(): Promise<MatchLoad> {
     // 🆕🆕🆕 D583 — the read, the migration's D1 load, the re-read and the write are match.ts
     // `loadMatchRecord` (driven with a fake slot in poolMigrationD583.test.ts); the D1 read is
