@@ -22,7 +22,7 @@ local popup=Settings.new(p,{
 popup:layout(1280,800)
 assert(popup:hit(0,0)==0)
 popup:keypressed('right'); assert(popup.tab==2 and popup.focus==2)
-popup:keypressed('tab'); popup:keypressed('tab')
+popup:keypressed('tab'); popup:keypressed('tab'); popup:keypressed('tab')
 assert(popup.items[popup.focus].key=='crt')
 popup:keypressed('home'); assert(p.crt==0)
 popup:keypressed('right'); assert(p.crt==5)
@@ -43,7 +43,7 @@ popup:mousereleased(cycle.x+cycle.w-10,cycle.y+15)
 assert(p.bloom==1)
 assert(popup:hit(cycle.x+cycle.w/2,cycle.y+15)==0,'Center is a display, not a button')
 popup:activate(3); assert(popup.tab==3)
-local slider=popup.items[4]
+local slider=popup.items[5]
 popup:mousepressed(slider.x+slider.w/2,slider.y+15)
 popup:mousereleased(slider.x+slider.w*2,slider.y+100)
 assert(p.volume==100 and popup.drag==nil)

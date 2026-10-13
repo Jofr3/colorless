@@ -62,6 +62,7 @@ export default defineConfig(({ mode }) => {
               return;
             }
             if (path === "/lua/") req.url = `/lua/index.html${search}`;
+            if (path === "/lua/account.js") req.url = "/src/features/lua/accountBridge.ts";
             next();
           });
         },
@@ -90,7 +91,10 @@ export default defineConfig(({ mode }) => {
       // a //# sourceMappingURL that exposes source in end-users' devtools.
       sourcemap: "hidden",
       rollupOptions: {
+        input: { main: "index.html", "lua-account": "src/features/lua/accountBridge.ts" },
         output: {
+          entryFileNames: (chunk) =>
+            chunk.name === "lua-account" ? "lua/account.js" : "assets/[name]-[hash].js",
           // Split the large, rarely-changing vendor libs into their own chunks so
           // an app-code edit doesn't bust the Pixi/GSAP/React cache entries.
           manualChunks(id: string) {

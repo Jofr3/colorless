@@ -4,12 +4,14 @@ local Room = require('ui.room')
 local Screen = require('ui.screen')
 local Preferences = require('ui.preferences')
 local Settings = require('ui.settings')
+local Account = require('ui.account')
 local g = love.graphics
 -- Game:main_menu starts REAL at 12 when skipping the introductory splash.
 local state = {time=12,focused=0,hovered=0,muted=false,reduced=false,poll=0,ready=false}
 local shaders, sounds, controls = {}, {}, {}
 local menuTray,room,screen,popup
 local preferences=Preferences.new()
+local account=Account.new()
 local openSettings,closeSettings,applyPreferences
 local scene, width, height, layoutScale, offsetX, offsetY, virtualWidth, virtualHeight
 local menu = {
@@ -46,7 +48,7 @@ local function layout(w,h)
   end
   menuTray={x=menuX-padding,y=menuY-padding,w=menuWidth+2*padding,h=menuHeight+2*padding}
   controls={
-    {label='Account',route='/settings',x=virtualWidth/2-144,y=virtualHeight-104,w=120,h=48,fontSize=24,colour=T.profile},
+    {label='Account',action='account',x=virtualWidth/2-144,y=virtualHeight-104,w=120,h=48,fontSize=24,colour=T.profile},
     {label='Settings',action='settings',x=virtualWidth/2+24,y=virtualHeight-104,w=120,h=48,fontSize=24,colour=T.profile},
   }
   if scene then scene:release() end
@@ -68,7 +70,7 @@ local function browserState()
   -- A tiny host-to-Lua mailbox. All rendering and interaction remain in Lua.
   if not love.filesystem.getInfo('__viewport.txt') then return end
   local raw=love.filesystem.read('__viewport.txt')
-  local w,h,reduced,_,request=raw:match('^(%d+) (%d+) (%d) (%d)%s*(%d*)')
+  local w,h,reduced,_,request,tab=raw:match('^(%d+) (%d+) (%d) (%d)%s*(%d*)%s*(%d*)')
   w,h=tonumber(w),tonumber(h)
   if w and h and (width~=w or height~=h) then love.window.setMode(w,h,{resizable=true,vsync=1}); layout(w,h) end
   state.systemReduced=reduced=='1'
@@ -78,7 +80,7 @@ local function browserState()
   end
   applyPreferences()
   request=tonumber(request) or 0
-  if request>(state.settingsRequest or 0) then state.settingsRequest=request; openSettings(true) end
+  if request>(state.settingsRequest or 0) then state.settingsRequest=request; openSettings(true,tonumber(tab)) end
 end
 applyPreferences=function()
   state.reduced=preferences:reduced(state.systemReduced)
@@ -95,12 +97,14 @@ local function savePreferences()
   print('LUMINOUS:preferences:'..preferences:serialize())
 end
 closeSettings=function()
+  print('LUMINOUS:auth:close')
+  print('LUMINOUS:account:finish-edit')
   popup=nil; state.pressed=nil; state.focused=#menu+2; state.hovered=0
   savePreferences()
   print('LUMINOUS:settings:closed')
   announce('Settings closed')
 end
-openSettings=function(keyboard)
+openSettings=function(keyboard,tab)
   if popup then return end
   keyboard=keyboard or state.focused>0
   state.pressed=nil; state.focused=0; state.hovered=0
@@ -109,10 +113,15 @@ openSettings=function(keyboard)
     changed=savePreferences,close=closeSettings,announce=announce,
     reduced=function() return state.reduced end,
     feedback=function() sound('button'); room.jiggle=room.jiggle+0.5 end,
-  },state.reduced,keyboard)
+    account=function(command) print('LUMINOUS:account:'..command) end,
+    auth=function(command) print('LUMINOUS:auth:'..command) end,
+  },state.reduced,keyboard,account)
+  popup.tab=tab or 1
+  if keyboard then popup.focus=popup.tab end
   popup:layout(virtualWidth,virtualHeight)
+  print('LUMINOUS:account:refresh')
   print('LUMINOUS:settings:open')
-  announce('Settings. Game tab. Tab moves between controls; left and right adjust sliders. Escape closes.')
+  announce('Settings. '..(popup.tab==4 and 'Account' or 'Game')..' tab. Tab moves between controls. Escape closes.')
 end
 local function activate(index)
   if index==0 or state.leaving then return end
@@ -121,6 +130,7 @@ local function activate(index)
   state.lastClicked={index=index,at=state.time}
   local item=index<=#menu and menu[index] or controls[index-#menu]
   if item.action=='settings' then openSettings(); return end
+  if item.action=='account' then openSettings(false,4); return end
   state.leaving={route=item.route,at=state.time,index=index}
   announce('Opening '..item.label)
 end
@@ -138,6 +148,7 @@ function love.load()
 end
 function love.resize(w,h) if scene then layout(w,h) end end
 function love.update(dt)
+  account:update(dt)
   state.smoothedDt=math.min(0.8*(state.smoothedDt or 1/100)+0.2*dt,0.1)
   dt=state.smoothedDt
   state.poll=state.poll+dt
@@ -149,6 +160,15 @@ function love.update(dt)
   screen:update(state.time,offsetX+room.cursorX*layoutScale,offsetY+room.cursorY*layoutScale,state.reduced,preferences)
   local mx,my=pointer(love.mouse.getPosition())
   if popup then
+    if love.filesystem.getInfo('__account.txt') then
+      local previousMessage=account.message
+      if account:sync(love.filesystem.read('__account.txt')) then
+        popup:accountChanged()
+        if popup.tab==4 and account.message~='' and account.message~=previousMessage then announce(account.message) end
+      end
+    end
+    if love.filesystem.getInfo('__account_input.txt') then account:input(love.filesystem.read('__account_input.txt')) end
+    if love.filesystem.getInfo('__auth_input.txt') then popup:authInput(love.filesystem.read('__auth_input.txt')) end
     popup:update(dt,state.time,mx,my,state.reduced)
     love.mouse.setCursor(popup.hover>0 and state.handCursor or state.arrowCursor)
     return

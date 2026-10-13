@@ -13,6 +13,7 @@ import { resolve, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import { build } from "vite";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../..");
@@ -27,7 +28,9 @@ const output = join(root, "public/lua");
 const assets = [
   "fonts/m6x11plus.ttf",
   ...["splash", "CRT", "dissolve", "foil", "holo", "polychrome"].map((n) => `shaders/${n}.fs`),
-  ...["button", "card1", "cardSlide1", "highlight1", "paper1", "music1"].map((n) => `sounds/${n}.ogg`),
+  ...["button", "card1", "cardSlide1", "highlight1", "paper1", "music1"].map(
+    (n) => `sounds/${n}.ogg`,
+  ),
 ];
 try {
   for (const name of ["conf.lua", "main.lua", "ui"])
@@ -48,6 +51,22 @@ try {
   );
   for (const name of ["index.html", "host.js", "host.css"])
     copyFileSync(join(here, "web", name), join(output, name));
+  // Also make the standalone WASM output usable outside the Vite dev server.
+  // The main app build emits this entry again with its own VITE_API_ORIGIN.
+  await build({
+    configFile: false,
+    root,
+    publicDir: false,
+    build: {
+      outDir: output,
+      emptyOutDir: false,
+      lib: {
+        entry: join(root, "src/features/lua/accountBridge.ts"),
+        formats: ["es"],
+        fileName: () => "account.js",
+      },
+    },
+  });
   writeFileSync(join(output, "asset-manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   console.log("Luminous Lua home built → public/lua/");
 } finally {

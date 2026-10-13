@@ -28,7 +28,7 @@ The build defaults to the sibling `../balatro-source` directory, including its i
 ## This milestone
 
 - Three equally sized menu buttons: Sandbox (blue) → `/simulator`, Online (red) → `/lobby`, Decks (pale green) → `/decks`.
-- Account opens the existing React settings page for profile/sign-in controls. Settings opens a Lua popup with Game, Graphics and Audio tabs, matching Balatro's overlay, border, sliders, toggles and Back button.
+- Account opens the Account tab in the Lua settings popup. Game, Graphics, Audio and Account share Balatro's overlay, border, controls and Back button. The Account tab shows your email in a disabled input, edits your display name, saves to the shared API, and signs out. Sign-in and registration open a Lua modal with email/password fields and Google sign-in, then return to the Account tab. The modal uses the same border, buttons, motion and screen effects as Settings.
 - Settings apply immediately: screenshake (0–100), reduced motion, CRT strength (0–100), bloom, master/music/game-sound volume, and mute. They persist in browser storage across reloads. Reduced motion follows the device preference until explicitly changed. These settings currently apply to the Lua frontend.
 - Account and Settings use separate compact panels matching Balatro's grey Profile button and original projected shadow, without extra headings. The Sound button is removed; the M keyboard shortcut remains available.
 - Balatro-style buttons with the original four-step corner profile and projected shadows (no coloured button extrusion). The wrapper has the source's 0.1-tile embossed edge, without a drop shadow. Main buttons share the same dimensions and uppercase text size in a centered group.
@@ -40,9 +40,9 @@ The build defaults to the sibling `../balatro-source` directory, including its i
 
 Click a button to navigate; releasing outside the pressed button cancels the action. Use arrow keys and Enter/Space while the canvas is focused; Tab also reaches native links. M toggles sound. Audio starts after the first gesture and pauses when the window loses focus.
 
-The other pages still open the current React application. Their home/back links still return to the React home. Sandbox preserves the current `/simulator` redirect to `/play`. This milestone does not port the match engine, authentication, deck storage, or API client into Lua.
+The other pages still open the current React application. Their home/back links still return to the React home. Sandbox preserves the current `/simulator` redirect to `/play`. The account adapter reuses the existing API client and cookie session; passwords and session cookies never cross into Lua or local storage. The match engine and deck library pages remain in React; the existing React sign-in forms are still available as a fallback.
 
-Inside Settings, Tab/Shift+Tab or up/down move between controls. Left/right switch tabs or adjust a focused slider by 5; Home/End set its minimum/maximum. Enter/Space activates toggles and buttons. Drag sliders with a mouse or touch. Escape or Back closes the popup and returns focus to Settings. The background menu cannot receive input while the popup is open. Native accessible navigation opens the same popup when WASM is running, with live control announcements; its fallback links to React settings if WASM fails.
+Inside Settings, Tab/Shift+Tab or up/down move between controls. Left/right switch tabs, cycle CRT Bloom, or adjust a focused slider by 5; Home/End set its minimum/maximum. Enter/Space activates toggles and buttons. Drag sliders with a mouse or touch. Select Display name to edit it; the canvas field uses a native input proxy for IME, selection, paste and mobile keyboards. Enter finishes editing and Escape cancels the edit. Profile changes require Save; the success message disappears after three seconds. In the authentication modal, Enter advances through the fields and submits from the last field, Tab/Shift+Tab moves between controls, and Back returns to Account settings. Passwords are masked in Lua and kept only in the native inputs/API request, then cleared on success or dismissal. Google redirects through the existing provider configuration and returns to `/lua/?account`. Escape or Back closes the popup and returns focus to Settings. The background menu cannot receive input while the popup is open. Native accessible navigation opens the same popup when WASM is running, with live control announcements; its fallback links to React settings if WASM fails.
 
 ## Visual source and new work
 
@@ -57,6 +57,9 @@ The palette follows Balatro's `globals.lua`: red `#FE5F55`, blue `#009DFF`, gree
 - `ui/room.lua`: original screen-motion equations and inverse transform for pointer input.
 - `ui/screen.lua`: original CRT uniforms, screen compositing, and perspective/lens mapping for pointer input.
 - `ui/settings.lua`: responsive settings overlay, tab/slider/toggle rendering, modal pointer and keyboard input.
+- `ui/account.lua`: account snapshot, draft, text-input state and transient save confirmation.
+- `ui/auth.lua`: authentication form display state; `ui/text_input.lua` shares field, selection and caret rendering.
+- `src/features/lua/`: browser adapter sharing the React API client, including session, profile, sign-in, registration and Google authentication errors. Vite serves/bundles it as `/lua/account.js`, using the same `VITE_API_ORIGIN`.
 - `ui/preferences.lua`: defaults, bounds validation, reduced-motion policy, and persistence serialization.
 - `ui/card.lua`: generated card faces, original hover hit buffer, pointer/ambient tilt and edition/shadow passes.
 - `ui/motion.lua`: tile-space target/visible transforms and original movement equations.
@@ -76,6 +79,8 @@ luajit frontend/lua/tests/card_render.lua
 luajit frontend/lua/tests/room.lua
 luajit frontend/lua/tests/screen.lua
 luajit frontend/lua/tests/settings.lua
+luajit frontend/lua/tests/account.lua
+luajit frontend/lua/tests/auth.lua
 ```
 
 The motion check executes the local Balatro `engine/moveable.lua` as the reference and compares 9,602 values across hover, juice, dragging, return-to-slot and 30/60/120/144 FPS plus long frames. `BALATRO_SOURCE` selects a different reference source directory. The render check covers centre/corner cursor positions at four screen scales, matching base/edition geometry, un-tilted shadows, hover hysteresis, and reduced motion.
