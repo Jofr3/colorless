@@ -3,6 +3,9 @@ local function hex(s)
   return {tonumber(s:sub(1,2),16)/255, tonumber(s:sub(3,4),16)/255, tonumber(s:sub(5,6),16)/255, 1}
 end
 T.red, T.blue, T.green, T.gold = hex('FE5F55'), hex('009DFF'), hex('4BC292'), hex('F5B244')
+T.orange, T.paleGreen, T.tray = hex('FDA200'), hex('56A887'), hex('4F6367')
+-- Profile button: mix_colours(WHITE, GREY, 0.2).
+T.profile = {0.2+0.8*95/255,0.2+0.8*115/255,0.2+0.8*119/255,1}
 T.ink, T.panel, T.white, T.paper = hex('1E2B2D'), hex('374244'), hex('FFFFFF'), hex('F0EAD6')
 T.fonts = {}
 function T.font(size)

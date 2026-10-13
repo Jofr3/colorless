@@ -27,25 +27,37 @@ The build defaults to the sibling `../balatro-source` directory, including its i
 
 ## This milestone
 
-- Four menu cards: Play → `/play`, Sandbox → `/simulator`, Online → `/lobby`, Decks → `/decks`.
-- Account and Settings open the existing settings page, which includes the profile/sign-in controls. Authentication and sign-out remain managed by React.
-- Card hover, pointer-tracked shader deformation, spring-like settling, original juice timing, drag and snap-back, and click feedback.
-- Foil, holographic and polychrome card editions, animated title-screen vortex, CRT/scanline/bloom pass, original UI sounds and music.
-- Portrait two-column layout, viewport resizing, keyboard navigation, native accessible navigation, system reduced-motion preference, and persisted sound toggle.
+- Three equally sized menu buttons: Sandbox (blue) → `/simulator`, Online (red) → `/lobby`, Decks (pale green) → `/decks`.
+- Account opens the existing React settings page for profile/sign-in controls. Settings opens a Lua popup with Game, Graphics and Audio tabs, matching Balatro's overlay, border, sliders, toggles and Back button.
+- Settings apply immediately: screenshake (0–100), reduced motion, CRT strength (0–100), bloom, master/music/game-sound volume, and mute. They persist in browser storage across reloads. Reduced motion follows the device preference until explicitly changed. These settings currently apply to the Lua frontend.
+- Account and Settings use separate compact panels matching Balatro's grey Profile button and original projected shadow, without extra headings. The Sound button is removed; the M keyboard shortcut remains available.
+- Balatro-style buttons with the original four-step corner profile and projected shadows (no coloured button extrusion). The wrapper has the source's 0.1-tile embossed edge, without a drop shadow. Main buttons share the same dimensions and uppercase text size in a centered group.
+- Shared room sway, eased cursor movement, and click jiggle ported from `update_canvas_juice`. Input coordinates follow the moving UI; reduced-motion mode disables room motion.
+- Animated title-screen vortex, CRT/scanline/bloom pass, original UI sounds and music. The card renderer and edition effects remain available for future Lua pages.
+- The unmodified CRT shader uses Balatro's default CRT strength of 70: barrel lens distortion, feathered screen edges, RGB fringing, phosphor scanlines, noise, contrast correction and eased screen tilt. Canvas filtering and the native LÖVE canvas draw match the original. Tilt uses the original 22 × 12.9-tile viewport scale, independent of the responsive menu layout. Bloom and glitching are disabled by the original default settings. Pointer input is mapped through the screen distortion before hit testing.
+- Effects share Balatro's menu clock starting at 12 seconds, with room motion updated before advancing the shader clock. Reduced motion uses the original frozen background time of 300; this frontend additionally freezes CRT noise and disables screen tilt for the system accessibility preference.
+- Horizontal desktop menu and stacked portrait buttons, viewport resizing, keyboard navigation, native accessible navigation, system reduced-motion preference, and persisted sound toggle.
 
-Click a card to navigate. Dragging a card does not navigate; it returns to its slot when released. Use arrow keys and Enter/Space while the canvas is focused; Tab also reaches native links. M toggles sound. Audio starts after the first gesture and pauses when the window loses focus.
+Click a button to navigate; releasing outside the pressed button cancels the action. Use arrow keys and Enter/Space while the canvas is focused; Tab also reaches native links. M toggles sound. Audio starts after the first gesture and pauses when the window loses focus.
 
 The other pages still open the current React application. Their home/back links still return to the React home. Sandbox preserves the current `/simulator` redirect to `/play`. This milestone does not port the match engine, authentication, deck storage, or API client into Lua.
+
+Inside Settings, Tab/Shift+Tab or up/down move between controls. Left/right switch tabs or adjust a focused slider by 5; Home/End set its minimum/maximum. Enter/Space activates toggles and buttons. Drag sliders with a mouse or touch. Escape or Back closes the popup and returns focus to Settings. The background menu cannot receive input while the popup is open. Native accessible navigation opens the same popup when WASM is running, with live control announcements; its fallback links to React settings if WASM fails.
 
 ## Visual source and new work
 
 The build copies **unmodified** `splash.fs`, `CRT.fs`, `dissolve.fs`, `foil.fs`, `holo.fs`, `polychrome.fs`, `m6x11plus.ttf`, and six audio files from the local Balatro resources. Generated `asset-manifest.json` records their SHA-256 hashes. These resources are not vendored into this repository.
 
-The palette follows Balatro's `globals.lua`: red `#FE5F55`, blue `#009DFF`, green `#4BC292`, panel `#374244`, with gold `#F5B244` and card stock `#F0EAD6`. The title and four new pixel card faces are drawn in Lua. `ui/motion.lua` ports Balatro's separate target/visible transforms, position/rotation/scale velocities, and juice equations. `ui/card.lua` follows `Card:draw` and `Sprite:draw_shader` for ambient and pointer tilt, screen-space uniforms, shadow parallax, and edition passes; it does not import Balatro's entire game/UI object system. The composition, card emblems, controls and responsive layout are new Luminous UI, so this is a first visual milestone, not a claim of complete behavioral parity.
+The palette follows Balatro's `globals.lua`: red `#FE5F55`, blue `#009DFF`, green `#4BC292`, panel `#374244`, with gold `#F5B244` and card stock `#F0EAD6`. The title and buttons are drawn in Lua. The reusable card system and its four pixel card faces are retained, but are not loaded by the home scene. `ui/motion.lua` ports Balatro's separate target/visible transforms, position/rotation/scale velocities, and juice equations. `ui/card.lua` follows `Card:draw` and `Sprite:draw_shader` for ambient and pointer tilt, screen-space uniforms, shadow parallax, and edition passes; it does not import Balatro's entire game/UI object system. The composition, card emblems, controls and responsive layout are new Luminous UI, so this is a first visual milestone, not a claim of complete behavioral parity.
 
 ## Files
 
 - `main.lua`: home scene, routing intents, responsive layout, input/audio lifecycle.
+- `ui/button.lua`: shared main-menu and utility button rendering, press states and hit bounds.
+- `ui/room.lua`: original screen-motion equations and inverse transform for pointer input.
+- `ui/screen.lua`: original CRT uniforms, screen compositing, and perspective/lens mapping for pointer input.
+- `ui/settings.lua`: responsive settings overlay, tab/slider/toggle rendering, modal pointer and keyboard input.
+- `ui/preferences.lua`: defaults, bounds validation, reduced-motion policy, and persistence serialization.
 - `ui/card.lua`: generated card faces, original hover hit buffer, pointer/ambient tilt and edition/shadow passes.
 - `ui/motion.lua`: tile-space target/visible transforms and original movement equations.
 - `ui/theme.lua`: palette, font cache, text and stepped pixel panels.
@@ -61,8 +73,15 @@ With LuaJIT installed, run from the repository root:
 ```sh
 luajit frontend/lua/tests/motion.lua
 luajit frontend/lua/tests/card_render.lua
+luajit frontend/lua/tests/room.lua
+luajit frontend/lua/tests/screen.lua
+luajit frontend/lua/tests/settings.lua
 ```
 
 The motion check executes the local Balatro `engine/moveable.lua` as the reference and compares 9,602 values across hover, juice, dragging, return-to-slot and 30/60/120/144 FPS plus long frames. `BALATRO_SOURCE` selects a different reference source directory. The render check covers centre/corner cursor positions at four screen scales, matching base/edition geometry, un-tilted shadows, hover hysteresis, and reduced motion.
+
+The room check executes Balatro's `update_canvas_juice` directly and compares 11,520 values across desktop/portrait sizes, frame rates, click impulses and reduced motion, including the inverse pointer transform. Button rendering follows `UIBox_button`, `UIElement:draw_self`, and `draw_pixellated_rect`: a 0.98-scale black shadow at 30% opacity, position-dependent parallax, a 0.985 press scale, and a 0.1-second clicked state. The wrapper follows `create_UIBox_main_menu_buttons` (`emboss=0.1`, no `shadow` flag). Button hover is silent, as in the original menu.
+
+The screen check executes the original `love.resize` and CRT uniform block from `Game:draw`, and checks perspective/lens input mapping. For actual GPU comparison, run `node frontend/lua/tests/build-effects.mjs`, then serve the printed temporary directory (for example, `python3 -m http.server 8799 --bind 127.0.0.1 --directory <printed-directory>`). Open that server in a WebGL browser and inspect the console for `GPU PASS`. It compares every output pixel against the original CRT block and canvas draw across three viewport sizes and three cursor positions, using the same love.js compiler/runtime. No Balatro resources or generated test builds are committed.
 
 The shader mouse position and tile size are transformed into actual framebuffer coordinates. Hover uses Balatro's 0.02 scale/0.012 rotation impulse and +0.05 scale, with +0.1 drag zoom. Desktop dragging suspends hover and uses the ambient tilt, just as the original controller does (touch can combine both states). There is no added hover lift or whole-card idle rotation: idle motion comes from Balatro's synthetic cursor orbit. Shader `time` is the per-card seed, while the edition's second input is elapsed time, as in the source. Shadows are un-tilted and grow farther from the card when dragged.
