@@ -26,7 +26,9 @@
     "check": "bun scripts/typecheck-coverage.ts && tsc -b && bun scripts/lint-coverage.ts && biome lint . --error-on-warnings && vitest run",
     "mutants": "bun scripts/mutation/run.ts",
     "api:dev": "bun run --cwd apps/api dev",
-    "api:deploy": "bun run --cwd apps/api deploy"
+    "api:deploy": "bun run --cwd apps/api deploy",
+    "build:lua": "node frontend/lua/build.mjs",
+    "dev:lua": "bun run build:lua && vite --host 127.0.0.1 --port 5175 --strictPort --open /lua/"
   },
   "dependencies": {
     "@luminous/engine": "workspace:*",

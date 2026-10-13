@@ -49,7 +49,27 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd());
   const apiOrigin = (env.VITE_API_ORIGIN ?? "http://localhost:8787").replace(/\/+$/, "");
   return {
-    plugins: [react(), tailwindcss(), cspPlugin(buildCsp(apiOrigin))],
+    plugins: [
+      {
+        name: "lua-home",
+        configureServer(server) {
+          server.middlewares.use((req, res, next) => {
+            const [path, query] = (req.url ?? "").split("?");
+            const search = query ? `?${query}` : "";
+            if (path === "/lua") {
+              res.writeHead(302, { Location: `/lua/${search}` });
+              res.end();
+              return;
+            }
+            if (path === "/lua/") req.url = `/lua/index.html${search}`;
+            next();
+          });
+        },
+      },
+      react(),
+      tailwindcss(),
+      cspPlugin(buildCsp(apiOrigin)),
+    ],
     test: {
       // Default to the fast Node environment for the pure-logic suites (reducers,
       // deck/z-index math, parsing). Component/DOM tests opt into jsdom per file

@@ -7,7 +7,7 @@
   },
   "files": {
     "maxSize": 4194304,
-    "include": ["src/**", "apps/**", "packages/**", "scripts/**", "vite.config.ts"],
+    "include": ["src/**", "apps/**", "packages/**", "scripts/**", "vite.config.ts", "frontend/**"],
     "ignore": [
       "node_modules",
       "**/node_modules",
