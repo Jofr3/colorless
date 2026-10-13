@@ -1,7 +1,26 @@
 import { LuaAccount } from "./account";
+import { LuaLibrary } from "./library";
+import { setSessionRecoveryHandler } from "../../lib/api";
+
+const library = new LuaLibrary(
+  (snapshot) => {
+    document.dispatchEvent(new CustomEvent("luminous:library-state", { detail: snapshot }));
+  },
+  (id) => location.assign(`/decks/${encodeURIComponent(id)}/edit?from=lua`),
+);
+document.addEventListener("luminous:library-command", (event) => {
+  if (!(event instanceof CustomEvent) || typeof event.detail !== "string") return;
+  void library.command(event.detail);
+});
 
 const account = new LuaAccount((snapshot) => {
   document.dispatchEvent(new CustomEvent("luminous:account-state", { detail: snapshot }));
+  const fields = snapshot.split("\t").map(decodeURIComponent);
+  library.session(fields[1] ?? "loading", fields[4] ?? "");
+});
+setSessionRecoveryHandler(async () => {
+  await account.refresh();
+  return account.status === "authenticated";
 });
 document.addEventListener("luminous:account-command", (event) => {
   if (event instanceof CustomEvent && typeof event.detail === "string")

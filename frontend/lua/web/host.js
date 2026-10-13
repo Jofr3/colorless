@@ -9,6 +9,7 @@ let settingsRequest = 0;
 let settingsTab = 1;
 let settingsOpen = false;
 let accountReady = false;
+const pendingLibraryCommands = [];
 let accountRefreshPending = false;
 let accountSnapshot = "";
 const mailboxFiles = new Set();
@@ -26,6 +27,7 @@ document.addEventListener("luminous:account-state", (event) => {
 });
 document.addEventListener("luminous:account-ready", () => {
   accountReady = true;
+  for (const command of pendingLibraryCommands.splice(0)) libraryCommand(command);
   if (accountRefreshPending) accountCommand("refresh");
 });
 function accountCommand(command) {
@@ -308,8 +310,12 @@ globalThis.Module = {
     if (message === "LUMINOUS:ready") {
       ready = true;
       document.getElementById("loading").style.display = "none";
-      document.title = "Luminous — Home";
+      document.title = `Luminous — ${libraryPage ? "Decks" : "Home"}`;
       canvas.focus({ preventScroll: true });
+    } else if (message.startsWith("LUMINOUS:page:")) {
+      setPage(message.slice("LUMINOUS:page:".length));
+    } else if (message.startsWith("LUMINOUS:library:")) {
+      libraryCommand(message.slice("LUMINOUS:library:".length));
     } else if (message.startsWith("LUMINOUS:auth:")) {
       authCommand(message.slice("LUMINOUS:auth:".length));
     } else if (message.startsWith("LUMINOUS:account:")) {
@@ -350,9 +356,10 @@ globalThis.Module = {
         finishName();
         clearAuthInputs();
       }
-      document.querySelector(".accessible-menu").inert = settingsOpen;
+      document.querySelector(".accessible-menu").inert = settingsOpen || libraryPage;
       document.getElementById("settings-link").setAttribute("aria-expanded", String(settingsOpen));
       if (settingsOpen) {
+        finishLibraryInput();
         canvas.setAttribute("role", "dialog");
         canvas.setAttribute("aria-modal", "true");
         canvas.setAttribute(
@@ -360,11 +367,10 @@ globalThis.Module = {
           "Settings. Tab between controls. Arrow keys adjust values. Escape closes.",
         );
       } else {
-        canvas.removeAttribute("role");
-        canvas.removeAttribute("aria-modal");
+        syncModalAccessibility();
         canvas.setAttribute(
           "aria-label",
-          "Luminous main menu. Use Tab or arrow keys to choose; Enter to open. M toggles sound.",
+          libraryPage ? "Deck library. Tab or arrows choose controls and cards. Enter opens." : "Luminous main menu. Use Tab or arrow keys to choose; Enter to open. M toggles sound.",
         );
       }
       canvas.focus({ preventScroll: true });
@@ -388,6 +394,7 @@ globalThis.startLuminous = () => {
   Love(Module)
     .then((module) => {
       runtime = module;
+      syncPage();
       if (accountSnapshot) writeMailbox("__account.txt", accountSnapshot);
       if (new URLSearchParams(location.search).has("account")) {
         settingsRequest++;
@@ -424,7 +431,7 @@ canvas.addEventListener("webglcontextlost", (event) => {
 canvas.addEventListener("keydown", (event) => {
   if (
     ["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code) ||
-    (settingsOpen && ["Tab", "Home", "End", "Escape"].includes(event.code))
+    ((settingsOpen || libraryPage) && ["Tab", "Home", "End", "Escape", "PageUp", "PageDown"].includes(event.code))
   )
     event.preventDefault();
 });
@@ -449,3 +456,89 @@ addEventListener("error", (event) => {
   if (event.target instanceof HTMLScriptElement)
     fail("Could not download the menu. Reload to try again.");
 });
+
+// Library transport: Lua owns the page; the browser supplies text input and API I/O.
+let libraryPage = new URLSearchParams(location.search).get("page") === "decks";
+let pageRevision = 0;
+function syncModalAccessibility() {
+  document.querySelector(".accessible-menu").inert = settingsOpen || libraryPage;
+  if (settingsOpen || libraryPage) {
+    canvas.setAttribute("role", "dialog");
+    canvas.setAttribute("aria-modal", "true");
+  } else {
+    canvas.removeAttribute("role");
+    canvas.removeAttribute("aria-modal");
+  }
+}
+function syncPage() {
+  syncModalAccessibility();
+  writeMailbox("__page.txt", `${++pageRevision}\t${libraryPage ? "decks" : "home"}`);
+  document.title = `Luminous — ${libraryPage ? "Decks" : "Home"}`;
+  canvas.setAttribute("aria-label", libraryPage
+    ? "Deck library. Tab or arrows choose controls and cards. Enter opens. Escape returns home."
+    : "Luminous main menu. Use Tab or arrow keys to choose; Enter to open.");
+}
+function setPage(page, push = true) {
+  finishLibraryInput();
+  libraryPage = page === "decks";
+  const url = new URL(location.href);
+  if (libraryPage) url.searchParams.set("page", "decks");
+  else url.searchParams.delete("page");
+  url.searchParams.delete("account");
+  if (push) history.pushState(null, "", url);
+  syncPage();
+}
+addEventListener("popstate", () => setPage(new URLSearchParams(location.search).get("page"), false));
+document.getElementById("decks-link").addEventListener("click", event => {
+  if (!ready) return;
+  event.preventDefault(); setPage("decks"); canvas.focus({preventScroll:true});
+});
+document.addEventListener("luminous:library-state", event => writeMailbox("__library.txt", event.detail));
+function libraryCommand(command) {
+  if (!accountReady) { pendingLibraryCommands.push(command); return; }
+  const [action, field, value] = command.split("\t").map(decodeURIComponent);
+  if (action === "input") {
+    finishLibraryInput();
+    libraryField = field;
+    libraryInput.value = value || "";
+    libraryOriginal = libraryInput.value;
+    libraryInput.setAttribute("aria-label", field === "search" ? "Search decks" : "Deck name");
+    libraryInput.hidden = false;
+    libraryInput.focus({preventScroll:true}); libraryInput.select(); publishLibraryInput();
+  } else if (action === "finish-input") finishLibraryInput();
+  else document.dispatchEvent(new CustomEvent("luminous:library-command", {detail:command}));
+}
+const libraryInput = document.createElement("input");
+libraryInput.className = "sr-only";
+libraryInput.maxLength = 100;
+libraryInput.autocomplete = "off";
+libraryInput.style.fontSize = "16px";
+libraryInput.hidden = true;
+document.querySelector("main").append(libraryInput);
+let libraryField = "";
+let libraryOriginal = "";
+let libraryInputRevision = 0;
+function publishLibraryInput(action = "input", field = libraryField) {
+  writeMailbox("__library_input.txt", [++libraryInputRevision, field, libraryInput.value,
+    libraryInput.selectionStart || 0, libraryInput.selectionEnd || 0, action].map(encodeURIComponent).join("\t"));
+}
+function finishLibraryInput(action = "done", cancel = false) {
+  if (!libraryField) return;
+  const field = libraryField;
+  if (cancel) libraryInput.value = libraryOriginal;
+  libraryField = "";
+  libraryInput.hidden = true;
+  publishLibraryInput(action, field);
+  canvas.focus({preventScroll:true});
+}
+libraryInput.addEventListener("input", () => publishLibraryInput());
+libraryInput.addEventListener("select", () => { if (libraryField) publishLibraryInput(); });
+libraryInput.addEventListener("blur", () => finishLibraryInput());
+for (const type of ["keydown", "keyup", "keypress"]) window.addEventListener(type, event => {
+  if (event.target !== libraryInput) return;
+  event.stopImmediatePropagation();
+  if (type === "keyup" && libraryField) publishLibraryInput();
+  if (type === "keydown" && !event.isComposing && ["Enter", "Escape", "Tab"].includes(event.key)) {
+    event.preventDefault(); finishLibraryInput(event.key === "Enter" ? "enter" : "done", event.key === "Escape");
+  }
+}, true);

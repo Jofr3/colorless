@@ -9,7 +9,7 @@ love={graphics={
   setColor=function() end,
   draw=function(_,x,y,r,sx,sy)
     local uniforms={}
-    for key,value in pairs(activeShader.values) do uniforms[key]=value end
+    for key,value in pairs(activeShader and activeShader.values or {}) do uniforms[key]=value end
     draws[#draws+1]={x=x,y=y,r=r,sx=sx,sy=sy,uniforms=uniforms}
   end,
 }}

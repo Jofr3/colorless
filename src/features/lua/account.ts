@@ -177,7 +177,14 @@ export class LuaAccount {
     this.busy = true;
     this.message = "";
     this.emit();
-    const result = await startOAuth("google", undefined, "/lua/?account");
+    const result = await startOAuth(
+      "google",
+      undefined,
+      typeof location !== "undefined" &&
+        new URLSearchParams(location.search).get("page") === "decks"
+        ? "/lua/?page=decks&account"
+        : "/lua/?account",
+    );
     if (op !== this.operation || result === "redirected") return;
     this.busy = false;
     this.message =

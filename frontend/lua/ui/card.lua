@@ -47,6 +47,9 @@ function Card:rebuild()
   if self.texture then self.texture:release() end
   self.texture = g.newCanvas(W,H)
   g.setCanvas(self.texture); g.clear()
+  if item.drawFace then
+    item.drawFace(W,H)
+  else
   T.box(0,0,W,H,T.ink,5)
   T.box(2,2,W-4,H-4,T.paper,4)
   T.box(7,7,W-14,H-14,item.colour,3)
@@ -60,6 +63,7 @@ function Card:rebuild()
   emblem(index,item.colour)
   T.box(18,153,106,26,item.colour,3)
   T.text(item.label,24,18,152,106)
+  end
   g.setCanvas()
   self.texture:setFilter('nearest','nearest')
 end
@@ -156,6 +160,7 @@ function Card:draw(shaders,time,mx,my,reduced,roomWidth)
 
   values.shadow=false; values.hovering=reduced and 0 or 1
   send(dissolve,values)
+  g.setShader(dissolve); g.setColor(1,1,1,1)
   g.draw(self.texture,self.x,self.y,self.angle,sx,sy,W/2,H/2)
   -- Balatro draws every edition ON TOP of the ordinary card, with identical
   -- geometry; foil's partially transparent pass must never have its own tilt.

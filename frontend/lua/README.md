@@ -40,7 +40,7 @@ The build defaults to the sibling `../balatro-source` directory, including its i
 
 Click a button to navigate; releasing outside the pressed button cancels the action. Use arrow keys and Enter/Space while the canvas is focused; Tab also reaches native links. M toggles sound. Audio starts after the first gesture and pauses when the window loses focus.
 
-The other pages still open the current React application. Their home/back links still return to the React home. Sandbox preserves the current `/simulator` redirect to `/play`. The account adapter reuses the existing API client and cookie session; passwords and session cookies never cross into Lua or local storage. The match engine and deck library pages remain in React; the existing React sign-in forms are still available as a fallback.
+The other pages still open the current React application. Their home/back links still return to the React home. Sandbox preserves the current `/simulator` redirect to `/play`. The account adapter reuses the existing API client and cookie session; passwords and session cookies never cross into Lua or local storage. The match engine and deck editor remain in React; the existing React sign-in forms are still available as a fallback.
 
 Inside Settings, Tab/Shift+Tab or up/down move between controls. Left/right switch tabs, cycle CRT Bloom, or adjust a focused slider by 5; Home/End set its minimum/maximum. Enter/Space activates toggles and buttons. Drag sliders with a mouse or touch. Select Display name to edit it; the canvas field uses a native input proxy for IME, selection, paste and mobile keyboards. Enter finishes editing and Escape cancels the edit. Profile changes require Save; the success message disappears after three seconds. In the authentication modal, Enter advances through the fields and submits from the last field, Tab/Shift+Tab moves between controls, and Back returns to Account settings. Passwords are masked in Lua and kept only in the native inputs/API request, then cleared on success or dismissal. Google redirects through the existing provider configuration and returns to `/lua/?account`. Escape or Back closes the popup and returns focus to Settings. The background menu cannot receive input while the popup is open. Native accessible navigation opens the same popup when WASM is running, with live control announcements; its fallback links to React settings if WASM fails.
 
@@ -90,3 +90,35 @@ The room check executes Balatro's `update_canvas_juice` directly and compares 11
 The screen check executes the original `love.resize` and CRT uniform block from `Game:draw`, and checks perspective/lens input mapping. For actual GPU comparison, run `node frontend/lua/tests/build-effects.mjs`, then serve the printed temporary directory (for example, `python3 -m http.server 8799 --bind 127.0.0.1 --directory <printed-directory>`). Open that server in a WebGL browser and inspect the console for `GPU PASS`. It compares every output pixel against the original CRT block and canvas draw across three viewport sizes and three cursor positions, using the same love.js compiler/runtime. No Balatro resources or generated test builds are committed.
 
 The shader mouse position and tile size are transformed into actual framebuffer coordinates. Hover uses Balatro's 0.02 scale/0.012 rotation impulse and +0.05 scale, with +0.1 drag zoom. Desktop dragging suspends hover and uses the ambient tilt, just as the original controller does (touch can combine both states). There is no added hover lift or whole-card idle rotation: idle motion comes from Balatro's synthetic cursor orbit. Shader `time` is the per-card seed, while the edition's second input is elapsed time, as in the source. Shadows are un-tilted and grow farther from the card when dragged.
+
+The Decks menu opens the Lua library as a modal over Home (`/lua/?page=decks`),
+using Settings’ entrance animation and full-screen backdrop. Back or Escape
+closes it, and background controls remain inactive while it is open. It shares the
+existing account/session and decks API. Search includes all decks, including those
+assigned to folders in the React app. Folder controls are absent; existing folder
+records and memberships are preserved. Sort cycles through manual, name and card
+count ordering. Desktop pages hold eight decks; portrait pages hold four. Red
+Page X/Y arrows, Page Up/Down and the mouse wheel wrap through pages. A full-width
+orange Back button sits at the bottom, without a title header or item count.
+
+Click a deck to open the current editor, whose Decks link returns to Lua. Compact deck rows show a right-aligned count (e.g. 60/60) beneath each pile,
+then its name. Drag a deck's top card onto another deck to reorder. Failed writes reconcile with the server.
+New decks are created without a folder.
+
+Deck piles follow the in-game `G.deck` implementation in `cardarea.lua` and
+`card.lua`: count-dependent 0.15/52-tile offsets, room-relative parallax,
+every-ninth-card rendering, original rank shading and separate Moveable physics
+per visible rank. Only the top card hovers or drags; lower cards stay in place.
+Backs use plain sprite draws, with no resting shadow or dissolve tilt. Dragging
+adds the original raised shadow and keeps the cursor's initial grab offset.
+Hover uses the source impulse and paper sound. Empty decks show one selectable
+back. The library does not download or display Pokémon cover art.
+
+Text editing stays in native browser proxies for IME, selection, paste and mobile
+keyboards; rendering stays in Lua.
+
+Library checks: `bunx vitest run src/features/lua/library.test.ts`,
+`luajit frontend/lua/tests/library.lua` and
+`luajit frontend/lua/tests/deck_pile.lua`. The pile check executes the original
+CardArea alignment function. Browser QA uses isolated in-memory API fixtures
+with populated, empty and formerly folder-assigned decks and multiple pages.

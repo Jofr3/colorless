@@ -5,11 +5,13 @@ local Screen = require('ui.screen')
 local Preferences = require('ui.preferences')
 local Settings = require('ui.settings')
 local Account = require('ui.account')
+local Library = require('ui.library')
+local Modal = require('ui.modal')
 local g = love.graphics
 -- Game:main_menu starts REAL at 12 when skipping the introductory splash.
 local state = {time=12,focused=0,hovered=0,muted=false,reduced=false,poll=0,ready=false}
 local shaders, sounds, controls = {}, {}, {}
-local menuTray,room,screen,popup
+local menuTray,room,screen,popup,library
 local preferences=Preferences.new()
 local account=Account.new()
 local openSettings,closeSettings,applyPreferences
@@ -22,7 +24,7 @@ local menu = {
 local function sound(name,pitch)
   if state.muted then return end
   local s=sounds[name]
-  s:stop(); s:setPitch(pitch or 1); s:setVolume(0.6*preferences.volume/100*preferences.effectsVolume/100); s:play()
+  s:stop(); s:setPitch(pitch or 1); s:setVolume((name=='paper1' and 0.35 or 0.6)*preferences.volume/100*preferences.effectsVolume/100); s:play()
 end
 local function announce(text) print('LUMINOUS:announce:'..text) end
 local function layout(w,h)
@@ -56,10 +58,22 @@ local function layout(w,h)
   scene:setFilter('linear','linear') -- love.resize uses linear canvas filtering.
   screen=Screen.new(shaders.CRT,w,h,Screen.unit(w,h))
   if popup then popup:layout(virtualWidth,virtualHeight) end
+  if library then library:layout(virtualWidth,virtualHeight) end
+  love.window.setTitle('Luminous - '..(state.page=='decks' and 'Decks' or 'Home'))
 end
 local function pointer(x,y)
   x,y=screen:unproject(x,y)
   return room:unproject((x-offsetX)/layoutScale,(y-offsetY)/layoutScale)
+end
+-- Leave a visible border of the dimmed home behind the collection on desktop.
+local function libraryPoint(x,y)
+  local scale=virtualWidth<600 and 1 or 0.9
+  return (x-virtualWidth/2)/scale+virtualWidth/2,(y-virtualHeight/2)/scale+virtualHeight/2
+end
+local function libraryTransform()
+  local scale=virtualWidth<600 and 1 or 0.9
+  g.translate(virtualWidth/2,virtualHeight/2); g.scale(scale)
+  g.translate(-virtualWidth/2,-virtualHeight/2+library:offset())
 end
 local function hit(x,y)
   for i,b in ipairs(menu) do if Button.hit(b,x,y) then return i end end
@@ -79,6 +93,21 @@ local function browserState()
     state.preferencesLoaded=true
   end
   applyPreferences()
+  if love.filesystem.getInfo('__page.txt') then
+    local pageRaw=love.filesystem.read('__page.txt')
+    if pageRaw~=state.pageRaw then
+      state.pageRaw=pageRaw
+      local page=Account.fields(pageRaw)[2]
+      if page~=state.page then
+        if popup then closeSettings() end
+        state.page=page; state.leaving=nil; state.pressed=nil; state.focused=0
+        love.window.setTitle('Luminous - '..(page=='decks' and 'Decks' or 'Home'))
+        if page=='decks' then
+          library:open(state.reduced); print('LUMINOUS:account:refresh')
+        else library:closeModal(); library:command('close') end
+      end
+    end
+  end
   request=tonumber(request) or 0
   if request>(state.settingsRequest or 0) then state.settingsRequest=request; openSettings(true,tonumber(tab)) end
 end
@@ -129,6 +158,7 @@ local function activate(index)
   room.jiggle=room.jiggle+0.5
   state.lastClicked={index=index,at=state.time}
   local item=index<=#menu and menu[index] or controls[index-#menu]
+  if item.route=='/decks' then print('LUMINOUS:page:decks'); return end
   if item.action=='settings' then openSettings(); return end
   if item.action=='account' then openSettings(false,4); return end
   state.leaving={route=item.route,at=state.time,index=index}
@@ -138,9 +168,18 @@ function love.load()
   g.setDefaultFilter('nearest','nearest')
   state.handCursor=love.mouse.getSystemCursor('hand')
   state.arrowCursor=love.mouse.getSystemCursor('arrow')
-  for _,name in ipairs({'splash','CRT'}) do shaders[name]=g.newShader('assets/shaders/'..name..'.fs') end
-  for _,name in ipairs({'button','music1'}) do sounds[name]=love.audio.newSource('assets/sounds/'..name..'.ogg',name=='music1' and 'stream' or 'static') end
+  for _,name in ipairs({'splash','CRT','dissolve'}) do shaders[name]=g.newShader('assets/shaders/'..name..'.fs') end
+  for _,name in ipairs({'button','music1','cardSlide1','highlight1','paper1'}) do sounds[name]=love.audio.newSource('assets/sounds/'..name..'.ogg',name=='music1' and 'stream' or 'static') end
   sounds.music1:setLooping(true); sounds.music1:setVolume(0.16)
+  library=Library.new({
+    command=function(command) print('LUMINOUS:library:'..command) end,
+    feedback=function(name,pitch) sound(name,pitch) end,
+    announce=announce,
+    refresh=function() print('LUMINOUS:account:refresh') end,
+    home=function() print('LUMINOUS:page:home') end,
+    settings=function() openSettings() end,
+    signin=function() openSettings(false,4); popup:openAuth('login') end,
+  })
   layout(g.getDimensions())
   browserState()
   state.ready=true
@@ -159,6 +198,10 @@ function love.update(dt)
   state.time=state.time+dt
   screen:update(state.time,offsetX+room.cursorX*layoutScale,offsetY+room.cursorY*layoutScale,state.reduced,preferences)
   local mx,my=pointer(love.mouse.getPosition())
+  if state.page=='decks' then
+    local lx,ly=libraryPoint(mx,my)
+    library:update(dt,state.time,popup and -1000 or lx,popup and -1000 or ly,state.reduced)
+  end
   if popup then
     if love.filesystem.getInfo('__account.txt') then
       local previousMessage=account.message
@@ -171,6 +214,10 @@ function love.update(dt)
     if love.filesystem.getInfo('__auth_input.txt') then popup:authInput(love.filesystem.read('__auth_input.txt')) end
     popup:update(dt,state.time,mx,my,state.reduced)
     love.mouse.setCursor(popup.hover>0 and state.handCursor or state.arrowCursor)
+    return
+  end
+  if state.page=='decks' then
+    love.mouse.setCursor(library.hover>0 and state.handCursor or state.arrowCursor)
     return
   end
   local hovered=hit(mx,my)
@@ -220,8 +267,20 @@ function love.draw()
   T.text('Luminous',19,24,virtualHeight-33,160,T.paper,'left')
   T.text('Home',19,virtualWidth-130,virtualHeight-33,106,T.paper,'right')
   g.pop()
+  if state.page=='decks' then
+    Modal.backdrop(width,height)
+    g.push(); g.translate(offsetX,offsetY); g.scale(layoutScale); room:apply()
+    libraryTransform(); library:draw(shaders)
+    g.pop()
+    if library.modal then
+      Modal.backdrop(width,height)
+      g.push(); g.translate(offsetX,offsetY); g.scale(layoutScale); room:apply()
+      libraryTransform(); library:drawModal()
+      g.pop()
+    end
+  end
   if popup then
-    g.setColor(95/255,115/255,119/255,0.7); g.rectangle('fill',0,0,width,height)
+    Modal.backdrop(width,height)
     g.push(); g.translate(offsetX,offsetY); g.scale(layoutScale); room:apply()
     popup:draw()
     g.pop()
@@ -238,18 +297,21 @@ function love.mousepressed(x,y,button)
   unlockAudio(); state.focused=0
   x,y=pointer(x,y)
   if popup then popup:mousepressed(x,y); return end
+  if state.page=='decks' then library:mousepressed(libraryPoint(x,y)); return end
   state.pressed=hit(x,y)
 end
 function love.mousereleased(x,y,button)
   if button~=1 then return end
   x,y=pointer(x,y)
   if popup then popup:mousereleased(x,y); return end
+  if state.page=='decks' then library:mousereleased(libraryPoint(x,y)); return end
   if state.pressed and state.pressed==hit(x,y) then activate(state.pressed) end
   state.pressed=nil
 end
 function love.keypressed(key)
   unlockAudio()
   if popup then popup:keypressed(key); return end
+  if state.page=='decks' then library:keypressed(key); return end
   if key=='tab' or key=='right' or key=='down' or key=='left' or key=='up' then
     local backward=key=='left' or key=='up' or (key=='tab' and love.keyboard.isDown('lshift','rshift'))
     local count=#menu+#controls
@@ -272,7 +334,15 @@ function love.focus(focused)
     sounds.music1:pause()
     state.pressed=nil
     if popup then popup.drag=nil; popup.pressed=nil end
+    if library then
+      library.drag=nil; library.pressed=nil
+      for _,card in ipairs(library.cards) do card.dragging=false end
+    end
   elseif state.audioUnlocked and not state.muted then
     sounds.music1:play()
   end
+end
+
+function love.wheelmoved(x,y)
+  if state.page=='decks' and not popup then library:wheelmoved(y) end
 end

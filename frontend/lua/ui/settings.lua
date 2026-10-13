@@ -2,7 +2,7 @@
 -- create_slider and create_toggle. Only settings supported by this home appear.
 local T=require('ui.theme')
 local Button=require('ui.button')
-local Motion=require('ui.motion')
+local Modal=require('ui.modal')
 local Account=require('ui.account')
 local Auth=require('ui.auth')
 local Input=require('ui.text_input')
@@ -23,8 +23,7 @@ local rows={
 function Settings.new(preferences,callbacks,reduced,keyboard,account)
   local self=setmetatable({preferences=preferences,callbacks=callbacks,tab=1,focus=keyboard==false and 0 or 1,hover=0,
     account=account or Account.new()},Settings)
-  self.motion=Motion.new(0,reduced and 0 or 10)
-  self.motion.T.y=0
+  self.motion=Modal.motion(reduced)
   return self
 end
 function Settings:layout(w,h)

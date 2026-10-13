@@ -10,10 +10,10 @@
   <main>
     <canvas id="canvas" width="1280" height="800" tabindex="0" aria-label="Luminous main menu. Use Tab or arrow keys to choose; Enter to open. M toggles sound." aria-describedby="instructions"></canvas>
     <div id="loading" role="status"><strong>LUMINOUS</strong><span id="status">Loading the menu…</span></div>
-    <p id="instructions" class="sr-only">Click a button, or use arrow keys and Enter. Settings opens a popup: Tab moves between controls, left and right adjust sliders, and Escape closes. Account opens your profile in the settings popup. Sandbox, Online and Decks open the existing app during the gradual port.</p>
+    <p id="instructions" class="sr-only">Click a button, or use arrow keys and Enter. Settings opens a popup: Tab moves between controls, left and right adjust sliders, and Escape closes. Account opens your profile in the settings popup. Decks opens the Lua library. Sandbox, Online and the deck editor open the existing app during the gradual port.</p>
     <div id="announcement" role="status" class="sr-only"></div>
     <nav class="accessible-menu" aria-label="Main menu links">
-      <a href="/simulator">Sandbox</a><a href="/lobby">Online</a><a href="/decks">Decks</a><a id="account-link" href="/settings" aria-haspopup="dialog">Account</a><a id="settings-link" href="/settings" aria-haspopup="dialog" aria-expanded="false">Settings</a><a href="/">Original home</a>
+      <a href="/simulator">Sandbox</a><a href="/lobby">Online</a><a id="decks-link" href="/lua/?page=decks">Decks</a><a id="account-link" href="/settings" aria-haspopup="dialog">Account</a><a id="settings-link" href="/settings" aria-haspopup="dialog" aria-expanded="false">Settings</a><a href="/">Original home</a>
     </nav>
   </main>
   <script src="host.js"></script>
