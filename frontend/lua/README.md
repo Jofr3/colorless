@@ -96,22 +96,32 @@ using Settings’ entrance animation and full-screen backdrop. Back or Escape
 closes it, and background controls remain inactive while it is open. It shares the
 existing account/session and decks API. Search includes all decks, including those
 assigned to folders in the React app. Folder controls are absent; existing folder
-records and memberships are preserved. Sort cycles through manual, name and card
-count ordering. Desktop pages hold eight decks; portrait pages hold four. Red
+records and memberships are preserved. Sort cycles through Name A–Z (the default), Name Z–A and card
+count ordering. Desktop pages hold twelve decks in two rows of six; portrait pages hold four. Red
 Page X/Y arrows, Page Up/Down and the mouse wheel wrap through pages. A full-width
 orange Back button sits at the bottom, without a title header or item count.
+The grid uses the Joker collection's G.C.BLACK inset panel and 0.05-tile emboss.
+On page changes, piles spread from each row's center using the collection Card
+constructor position and the shared Moveable physics. The paginator uses the
+original DynaText character pop-in (rate 8) and ongoing bump motion; it stays
+silent and respects Reduced Motion.
 
-Click a deck to open the current editor, whose Decks link returns to Lua. Compact deck rows show a right-aligned count (e.g. 60/60) beneath each pile,
-then its name. Drag a deck's top card onto another deck to reorder. Failed writes reconcile with the server.
+Click a deck to open the current editor, whose Decks link returns to Lua. Compact deck rows show the name above each pile and a right-aligned count
+(e.g. 60/60) beneath it. Dragging a top card returns it to its pile without changing the sort order. Failed writes reconcile with the server.
 New decks are created without a folder.
 
 Deck piles follow the in-game `G.deck` implementation in `cardarea.lua` and
-`card.lua`: count-dependent 0.15/52-tile offsets, room-relative parallax,
+`card.lua`: count-dependent 0.15/52-tile offsets, the in-game deck's right-side parallax,
 every-ninth-card rendering, original rank shading and separate Moveable physics
 per visible rank. Only the top card hovers or drags; lower cards stay in place.
 Backs use plain sprite draws, with no resting shadow or dissolve tilt. Dragging
 adds the original raised shadow and keeps the cursor's initial grab offset.
-Hover uses the source impulse and paper sound. Empty decks show one selectable
+Hover uses the source impulse and paper sound. A translucent two-line View/Deck
+badge follows the top card's position and rotation, without inheriting its zoom.
+The counter follows `area_uibox`: three unshadowed text nodes at scale 0.3,
+0.03-tile padding, 0.1-tile end spacers and the source 200px font atlas, height
+correction and text offsets. It stays attached to the deck area while dragging.
+Empty decks show one selectable
 back. The library does not download or display Pokémon cover art.
 
 Text editing stays in native browser proxies for IME, selection, paste and mobile
@@ -119,6 +129,9 @@ keyboards; rendering stays in Lua.
 
 Library checks: `bunx vitest run src/features/lua/library.test.ts`,
 `luajit frontend/lua/tests/library.lua` and
-`luajit frontend/lua/tests/deck_pile.lua`. The pile check executes the original
-CardArea alignment function. Browser QA uses isolated in-memory API fixtures
+`luajit frontend/lua/tests/deck_pile.lua` and
+`luajit frontend/lua/tests/deck_labels.lua` and
+`luajit frontend/lua/tests/page_text.lua`. These checks execute the original
+CardArea alignment, collection page callback, UIBox counter/badge layout and
+DynaText letter-animation functions. Browser QA uses isolated in-memory API fixtures
 with populated, empty and formerly folder-assigned decks and multiple pages.

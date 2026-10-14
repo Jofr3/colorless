@@ -53,7 +53,7 @@ describe("Lua deck library", () => {
   it("loads the shared API, searches across folders and escapes mailbox delimiters", async () => {
     stubFetch(reads);
     const { library, publish, open } = await setup();
-    expect(library.visible().decks.map((d) => d.id)).toEqual(["a", "b", "c"]);
+    expect(library.visible().decks.map((d) => d.id)).toEqual(["c", "b", "a"]);
     await library.command(encodeFields(["search", "ÁRBOL"]));
     expect(library.visible().decks.map((d) => d.id)).toEqual(["b"]);
     const row = String(publish.mock.lastCall?.[0])
@@ -126,21 +126,15 @@ describe("Lua deck library", () => {
     expect(library.result).toBe("error");
     expect(library.message).toContain("Could not save");
   });
-  it("reorders across former folders and switches to manual", async () => {
-    const { impl } = stubFetch({
-      ...reads,
-      "POST /decks/reorder": () => new Response(null, { status: 204 }),
-    });
+  it("falls back from saved Manual and ignores stale manual sort/reorder commands", async () => {
+    localStorage.setItem("decks.sortKey", "manual");
+    const { calls } = stubFetch(reads);
     const { library } = await setup();
+    expect(library.sort).toBe("name-asc");
+    await library.command("sort\tmanual");
     await library.command("order\tdeck\tc\tearlier");
-    const call = impl.mock.calls.find(([, i]) => i?.method === "POST");
-    expect(JSON.parse(String(call?.[1]?.body))).toEqual({
-      positions: [
-        { id: "c", position: 1 },
-        { id: "b", position: 2 },
-      ],
-    });
-    expect(library.sort).toBe("manual");
+    expect(library.sort).toBe("name-asc");
+    expect(calls).toEqual(["GET /decks"]);
   });
   it("discards a late load after sign-out", async () => {
     let settle!: (r: Response) => void;

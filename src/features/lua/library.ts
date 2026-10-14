@@ -1,9 +1,8 @@
 import * as api from "../../lib/api";
 import type { Deck } from "../decks/data";
-import { applyReorder, previewOrder } from "../decks/reorder";
 import { encodeFields } from "./account";
 
-const sorts: [string, ...string[]] = ["manual", "name-asc", "name-desc", "cards-desc"];
+const sorts: [string, ...string[]] = ["name-asc", "name-desc", "cards-desc"];
 const stored = (key: string, allowed: [string, ...string[]]) => {
   try {
     const value = localStorage.getItem(key);
@@ -19,7 +18,7 @@ export class LuaLibrary {
   query = "";
   sort = stored("decks.sortKey", sorts);
   page = 1;
-  size = 8;
+  size = 12;
   phase = "loading";
   busy = false;
   message = "";
@@ -51,13 +50,8 @@ export class LuaLibrary {
     const q = this.query.trim().toLocaleLowerCase();
     // Include decks from every existing folder without modifying their ownership.
     const decks = this.decks.filter((d) => !q || d.name.toLocaleLowerCase().includes(q));
-    const compare = (
-      a: { name: string; position: number },
-      b: { name: string; position: number },
-    ) =>
-      this.sort === "manual"
-        ? a.position - b.position
-        : a.name.localeCompare(b.name) * (this.sort === "name-desc" ? -1 : 1);
+    const compare = (a: { name: string }, b: { name: string }) =>
+      a.name.localeCompare(b.name) * (this.sort === "name-desc" ? -1 : 1);
     decks.sort(
       this.sort === "cards-desc"
         ? (a, b) => b.cardCount - a.cardCount || a.name.localeCompare(b.name)
@@ -173,7 +167,7 @@ export class LuaLibrary {
       return;
     }
     if (action === "size") {
-      this.size = a === "4" ? 4 : 8;
+      this.size = a === "4" ? 4 : 12;
       this.emit();
       return;
     }
@@ -234,25 +228,6 @@ export class LuaLibrary {
     if (action === "delete" && item) {
       await this.mutate(() => api.deleteDeck(b));
       return;
-    }
-    if (action === "order" && item && !this.query.trim()) {
-      const visible = this.visible().decks;
-      const ids = visible.map((i) => i.id);
-      const index = ids.indexOf(b);
-      const target = c === "earlier" ? index - 1 : c === "later" ? index + 1 : ids.indexOf(c);
-      if (index >= 0 && target >= 0 && target < ids.length && index !== target) {
-        const order = previewOrder(ids, b, target);
-        const changes = applyReorder(
-          [...this.decks].sort((x, y) => x.position - y.position),
-          () => true,
-          order,
-        ).changes;
-        await this.mutate(async () => {
-          await api.reorderDecks(changes);
-          this.sort = "manual";
-        });
-        return;
-      }
     }
     this.emit();
   }

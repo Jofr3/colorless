@@ -6,8 +6,8 @@ local Library=require('ui.library')
 local Codec=require('ui.account')
 local commands={}
 local library=Library.new({command=function(raw) commands[#commands+1]=Codec.fields(raw) end,announce=function() end,feedback=function() end})
-local function snapshot(revision,count,result)
-  local lines={table.concat({revision,'ready','0','','','','decks','manual','1','2',count,'','0',result or ''},'\t')}
+local function snapshot(revision,count,result,page)
+  local lines={table.concat({revision,'ready','0','','','','decks','name-asc',page or '1','2',count,'','0',result or ''},'\t')}
   for i=1,count do lines[#lines+1]='D\tdeck'..i..'\tDeck '..i..'\t\t60\t0\t' end
   return table.concat(lines,'\n')
 end
@@ -15,7 +15,7 @@ local function activate(action)
   for i,b in ipairs(library.controls) do if b.action==action then library:activate(i); return end end
   error('Missing control '..action)
 end
-for _,view in ipairs({{1280,800,8},{480,850,4}}) do
+for _,view in ipairs({{1280,800,12},{480,850,4}}) do
   library:layout(view[1],view[2]); library:sync(snapshot(view[1],view[3]))
   library:layout(view[1],view[2]) -- settles the entrance animation for geometry assertions
   for _,b in ipairs(library.controls) do
@@ -36,21 +36,22 @@ for _,view in ipairs({{1280,800,8},{480,850,4}}) do
   library:sync(snapshot(view[1]+2,view[3],'ok')); assert(not library.modal,'Successful save closes the dialog')
   library.inputRaw=nil
 end
-library:layout(1280,800); library:sync(snapshot(2000,8)); library:layout(1280,800)
+library:layout(1280,800); library:sync(snapshot(2000,12)); library:layout(1280,800)
 local card=library.cards[1]
 library:mousepressed(card.x,card.y)
 library.drag.active=true; card.dragging=true
 local target=library.cards[2]
+local beforeDrop=#commands
 library:mousereleased(target.x,target.y)
-assert(commands[#commands][1]=='order' and commands[#commands][4]=='deck2')
+assert(#commands==beforeDrop,'Dragging must not reorder automatically sorted decks')
 assert(not card.dragging and not library.drag)
 local T=require('ui.theme')
 for _,b in ipairs(library.controls) do
   assert(b.action~='show' and b.action~='new-folder' and b.action~='settings')
   if b.action=='previous' or b.action=='next' then assert(b.colour==T.red and not b.disabled) end
-  if b.action=='home' then assert(b.y==library.height-66 and b.w==library.width-96) end
+  if b.action=='home' then assert(b.y==library.height-66 and b.w==1000 and b.x==(library.width-1000)/2) end
 end
-print('PASS: decks-only controls, red pagination, bottom Back, mailbox, save/error, responsive bounds and drag reorder')
+print('PASS: decks-only controls, red pagination, bottom Back, mailbox, save/error, responsive bounds and drag release')
 local Settings=require('ui.settings')
 local Preferences=require('ui.preferences')
 local Modal=require('ui.modal')
@@ -78,3 +79,15 @@ love.graphics.rectangle=function(...) rect={...} end
 Modal.backdrop(390,844)
 assert(colour[4]==0.7 and rect[2]==0 and rect[3]==0 and rect[4]==390 and rect[5]==844,'Backdrop covers the full framebuffer')
 print('PASS: settings-equivalent modal motion, animated hit testing, Escape, reduced motion and full-screen backdrop')
+
+library.reduced=false
+library:sync(snapshot(3001,12,nil,2))
+for _,card in ipairs(library.cards) do
+  assert(math.abs(card.x-(library.width/2+71*card.baseScale))<1e-9,'New page must start at the collection row origin')
+end
+library.reduced=true
+library:sync(snapshot(3002,12,nil,1))
+for _,card in ipairs(library.cards) do
+  assert(card.motion.VT.x==card.motion.T.x and card.motion.VT.y==card.motion.T.y,'Reduced motion must place the new page immediately')
+end
+print('PASS: page replacement triggers collection entrance; reduced motion skips it')
