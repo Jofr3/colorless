@@ -1,6 +1,7 @@
 import { LuaAccount } from "./account";
 import { LuaBuilder } from "./builder";
 import { LuaLibrary } from "./library";
+import { LuaSimulator } from "./simulator";
 import { LuaSandbox } from "./sandbox";
 import { launchSandbox } from "./sandboxLaunch";
 import { setSessionRecoveryHandler } from "../../lib/api";
@@ -45,11 +46,25 @@ document.addEventListener("luminous:library-command", (event) => {
 const sandbox = new LuaSandbox(
   (snapshot) =>
     document.dispatchEvent(new CustomEvent("luminous:sandbox-state", { detail: snapshot })),
-  (setup) => launchSandbox(setup, () => location.assign("/simulator")),
+  (setup) =>
+    launchSandbox(setup, () =>
+      document.dispatchEvent(new CustomEvent("luminous:route", { detail: { page: "simulator" } })),
+    ),
 );
 document.addEventListener("luminous:sandbox-command", (event) => {
   if (event instanceof CustomEvent && typeof event.detail === "string")
     void sandbox.command(event.detail);
+});
+
+const simulator = new LuaSimulator(
+  (snapshot) =>
+    document.dispatchEvent(new CustomEvent("luminous:simulator-state", { detail: snapshot })),
+  (page) => document.dispatchEvent(new CustomEvent("luminous:route", { detail: { page } })),
+  (cards) => document.dispatchEvent(new CustomEvent("luminous:builder-images", { detail: cards })),
+);
+document.addEventListener("luminous:simulator-command", (event) => {
+  if (event instanceof CustomEvent && typeof event.detail === "string")
+    simulator.command(event.detail);
 });
 
 const account = new LuaAccount((snapshot) => {

@@ -28,7 +28,7 @@ const output = join(root, "public/lua");
 const assets = [
   "fonts/m6x11plus.ttf",
   "textures/2x/Enhancers.png",
-  ...["splash", "CRT", "dissolve", "foil", "holo", "polychrome"].map((n) => `shaders/${n}.fs`),
+  ...["splash", "background", "CRT", "dissolve", "foil", "holo", "polychrome"].map((n) => `shaders/${n}.fs`),
   ...["button", "card1", "cardSlide1", "highlight1", "paper1", "music1"].map(
     (n) => `sounds/${n}.ogg`,
   ),

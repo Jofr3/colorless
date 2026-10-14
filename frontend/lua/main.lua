@@ -8,12 +8,13 @@ local Account = require('ui.account')
 local Library = require('ui.library')
 local Builder = require('ui.builder')
 local Sandbox = require('ui.sandbox')
+local Simulator = require('ui.simulator')
 local Modal = require('ui.modal')
 local g = love.graphics
 -- Game:main_menu starts REAL at 12 when skipping the introductory splash.
 local state = {time=12,focused=0,hovered=0,muted=false,reduced=false,poll=0,ready=false}
 local shaders, sounds, controls = {}, {}, {}
-local menuTray,room,screen,popup,library,builder,sandbox
+local menuTray,room,screen,popup,library,builder,sandbox,simulator
 local function collection() return state.page=='sandbox' and sandbox or state.page=='builder' and builder or library end
 local preferences=Preferences.new()
 local account=Account.new()
@@ -64,7 +65,8 @@ local function layout(w,h)
   if library then library:layout(virtualWidth,virtualHeight) end
   if builder then builder:layout(virtualWidth,virtualHeight) end
   if sandbox then sandbox:layout(virtualWidth,virtualHeight) end
-  love.window.setTitle('Luminous - '..(state.page=='sandbox' and 'Sandbox' or state.page=='builder' and 'Deck builder' or state.page=='decks' and 'Decks' or 'Home'))
+  if simulator then simulator:layout(virtualWidth,virtualHeight) end
+  love.window.setTitle('Luminous - '..(state.page=='simulator' and 'Simulator' or state.page=='sandbox' and 'Sandbox' or state.page=='builder' and 'Deck builder' or state.page=='decks' and 'Decks' or 'Home'))
 end
 local function pointer(x,y)
   x,y=screen:unproject(x,y)
@@ -107,11 +109,14 @@ local function browserState()
       if page~=state.page or (page=='builder' and fields[3]~=state.deckId) then
         if state.page=='builder' then builder:command('close') end
         if state.page=='sandbox' then sandbox:command('close') end
+        if state.page=='simulator' then simulator:command('close') end
         state.deckId=fields[3]
         if popup then closeSettings() end
         state.page=page; state.leaving=nil; state.pressed=nil; state.focused=0
-        love.window.setTitle('Luminous - '..(page=='sandbox' and 'Sandbox' or page=='builder' and 'Deck builder' or page=='decks' and 'Decks' or 'Home'))
-        if page=='builder' then
+        love.window.setTitle('Luminous - '..(page=='simulator' and 'Simulator' or page=='sandbox' and 'Sandbox' or page=='builder' and 'Deck builder' or page=='decks' and 'Decks' or 'Home'))
+        if page=='simulator' then
+          library:command('close');simulator:open(state.reduced)
+        elseif page=='builder' then
           library:command('close'); builder:open(state.reduced,fields[3]); print('LUMINOUS:account:refresh')
         elseif page=='sandbox' then
           library:command('close'); sandbox:open(state.reduced); print('LUMINOUS:account:refresh')
@@ -171,7 +176,7 @@ local function activate(index)
   room.jiggle=room.jiggle+0.5
   state.lastClicked={index=index,at=state.time}
   local item=index<=#menu and menu[index] or controls[index-#menu]
-  if item.route=='/simulator' then print('LUMINOUS:page:sandbox'); return end
+  if item.route=='/simulator' then print('LUMINOUS:simulator:resume'); return end
   if item.route=='/decks' then print('LUMINOUS:page:decks'); return end
   if item.action=='settings' then openSettings(); return end
   if item.action=='account' then openSettings(false,4); return end
@@ -182,7 +187,7 @@ function love.load()
   g.setDefaultFilter('nearest','nearest')
   state.handCursor=love.mouse.getSystemCursor('hand')
   state.arrowCursor=love.mouse.getSystemCursor('arrow')
-  for _,name in ipairs({'splash','CRT','dissolve'}) do shaders[name]=g.newShader('assets/shaders/'..name..'.fs') end
+  for _,name in ipairs({'splash','background','CRT','dissolve'}) do shaders[name]=g.newShader('assets/shaders/'..name..'.fs') end
   for _,name in ipairs({'button','music1','cardSlide1','highlight1','paper1'}) do sounds[name]=love.audio.newSource('assets/sounds/'..name..'.ogg',name=='music1' and 'stream' or 'static') end
   sounds.music1:setLooping(true); sounds.music1:setVolume(0.16)
   library=Library.new({
@@ -209,6 +214,7 @@ function love.load()
     decks=function() print('LUMINOUS:page:decks') end,
     signin=function() openSettings(false,4); popup:openAuth('login') end,
   })
+  simulator=Simulator.new({command=function(command) print('LUMINOUS:simulator:'..command) end, feedback=function(name,pitch) sound(name,pitch) end, announce=announce, settings=function() openSettings() end})
   layout(g.getDimensions())
   browserState()
   state.ready=true
@@ -227,6 +233,7 @@ function love.update(dt)
   state.time=state.time+dt
   screen:update(state.time,offsetX+room.cursorX*layoutScale,offsetY+room.cursorY*layoutScale,state.reduced,preferences)
   local mx,my=pointer(love.mouse.getPosition())
+  if state.page=='simulator' then simulator:update(dt,state.time,popup and -1000 or mx,popup and -1000 or my,state.reduced) end
   if state.page=='decks' or state.page=='builder' or state.page=='sandbox' then
     local lx,ly=libraryPoint(mx,my)
     collection():update(dt,state.time,popup and -1000 or lx,popup and -1000 or ly,state.reduced)
@@ -249,6 +256,7 @@ function love.update(dt)
     love.mouse.setCursor(collection().hover>0 and state.handCursor or state.arrowCursor)
     return
   end
+  if state.page=='simulator' then love.mouse.setCursor((simulator.hover>0 or simulator:cardHit(simulator.mx,simulator.my)) and state.handCursor or state.arrowCursor);return end
   local hovered=hit(mx,my)
   if hovered~=state.hovered then
     state.hovered=hovered
@@ -269,11 +277,20 @@ function love.draw()
   if not scene then return end
   local t=state.reduced and 300 or state.time
   g.setCanvas(scene); g.clear(T.ink)
-  local bg=shaders.splash
+  local bg=state.page=='simulator' and shaders.background or shaders.splash
+  if state.page=='simulator' then
+    -- Small/Big blind table palette: ease_background_colour with contrast=1.
+    bg:send('time',t);bg:send('spin_time',0);bg:send('spin_amount',0)
+    bg:send('colour_1',{0.9*80/255,0.9*132/255,0.9*110/255,1})
+    bg:send('colour_2',{1.3*80/255,1.3*132/255,1.3*110/255,1})
+    bg:send('colour_3',{0.7*80/255,0.7*132/255,0.7*110/255,1});bg:send('contrast',1)
+  else
   bg:send('time',t); bg:send('vort_speed',0.4); bg:send('colour_1',T.red); bg:send('colour_2',T.blue); bg:send('mid_flash',0); bg:send('vort_offset',0)
+  end
   g.setShader(bg); g.setColor(1,1,1); g.rectangle('fill',0,0,width,height); g.setShader()
   g.push(); g.translate(offsetX,offsetY); g.scale(layoutScale)
   room:apply()
+  if state.page=='simulator' then simulator:draw(shaders) else
   local portrait=virtualWidth<600
   local titleY=portrait and 55 or 145
   local titleSize=portrait and 78 or 136
@@ -295,6 +312,7 @@ function love.draw()
   end
   T.text('Luminous',19,24,virtualHeight-33,160,T.paper,'left')
   T.text('Home',19,virtualWidth-130,virtualHeight-33,106,T.paper,'right')
+  end
   g.pop()
   if state.page=='decks' or state.page=='builder' or state.page=='sandbox' then
     Modal.backdrop(width,height)
@@ -326,6 +344,7 @@ function love.mousepressed(x,y,button)
   unlockAudio(); state.focused=0
   x,y=pointer(x,y)
   if popup then popup:mousepressed(x,y); return end
+  if state.page=='simulator' then simulator:mousepressed(x,y);return end
   if state.page=='decks' or state.page=='builder' or state.page=='sandbox' then collection():mousepressed(libraryPoint(x,y)); return end
   state.pressed=hit(x,y)
 end
@@ -333,6 +352,7 @@ function love.mousereleased(x,y,button)
   if button~=1 then return end
   x,y=pointer(x,y)
   if popup then popup:mousereleased(x,y); return end
+  if state.page=='simulator' then simulator:mousereleased(x,y);return end
   if state.page=='decks' or state.page=='builder' or state.page=='sandbox' then collection():mousereleased(libraryPoint(x,y)); return end
   if state.pressed and state.pressed==hit(x,y) then activate(state.pressed) end
   state.pressed=nil
@@ -340,6 +360,7 @@ end
 function love.keypressed(key)
   unlockAudio()
   if popup then popup:keypressed(key); return end
+  if state.page=='simulator' then simulator:keypressed(key);return end
   if state.page=='decks' or state.page=='builder' or state.page=='sandbox' then collection():keypressed(key); return end
   if key=='tab' or key=='right' or key=='down' or key=='left' or key=='up' then
     local backward=key=='left' or key=='up' or (key=='tab' and love.keyboard.isDown('lshift','rshift'))
@@ -368,6 +389,10 @@ function love.focus(focused)
       if builder.dragCard then builder.dragCard.texture:release();builder.dragCard=nil end
       for _,card in ipairs(builder.cards) do card.dragging=false end
     end
+    if simulator then
+      if simulator.drag then simulator.drag.card.dragging=false end
+      simulator.drag=nil;simulator.clicked=nil;simulator.pressed=nil
+    end
     if sandbox then sandbox.pressed=nil end
     if library then
       library.drag=nil; library.pressed=nil
@@ -379,5 +404,6 @@ function love.focus(focused)
 end
 
 function love.wheelmoved(x,y)
+  if state.page=='simulator' and not popup then simulator:wheelmoved(y);return end
   if (state.page=='decks' or state.page=='builder' or state.page=='sandbox') and not popup then collection():wheelmoved(y) end
 end

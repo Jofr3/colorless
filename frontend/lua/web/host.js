@@ -12,6 +12,7 @@ let accountReady = false;
 const pendingLibraryCommands = [];
 const pendingBuilderCommands = [];
 const pendingSandboxCommands = [];
+const pendingSimulatorCommands = [];
 let accountRefreshPending = false;
 let accountSnapshot = "";
 const mailboxFiles = new Set();
@@ -32,6 +33,7 @@ document.addEventListener("luminous:account-ready", () => {
   for (const command of pendingLibraryCommands.splice(0)) libraryCommand(command);
   for (const command of pendingBuilderCommands.splice(0)) builderCommand(command);
   for (const command of pendingSandboxCommands.splice(0)) sandboxCommand(command);
+  for (const command of pendingSimulatorCommands.splice(0)) simulatorCommand(command);
   if (accountRefreshPending) accountCommand("refresh");
 });
 function accountCommand(command) {
@@ -315,12 +317,14 @@ globalThis.Module = {
     if (message === "LUMINOUS:ready") {
       ready = true;
       document.getElementById("loading").style.display = "none";
-      document.title = `Luminous — ${currentPage === "sandbox" ? "Sandbox" : currentPage === "builder" ? "Deck builder" : libraryPage ? "Decks" : "Home"}`;
+      document.title = `Luminous — ${currentPage === "simulator" ? "Simulator" : currentPage === "sandbox" ? "Sandbox" : currentPage === "builder" ? "Deck builder" : libraryPage ? "Decks" : "Home"}`;
       canvas.focus({ preventScroll: true });
     } else if (message.startsWith("LUMINOUS:page:")) {
       setPage(message.slice("LUMINOUS:page:".length));
     } else if (message.startsWith("LUMINOUS:builder:")) {
       builderCommand(message.slice("LUMINOUS:builder:".length));
+    } else if (message.startsWith("LUMINOUS:simulator:")) {
+      simulatorCommand(message.slice("LUMINOUS:simulator:".length));
     } else if (message.startsWith("LUMINOUS:sandbox:")) {
       sandboxCommand(message.slice("LUMINOUS:sandbox:".length));
     } else if (message.startsWith("LUMINOUS:library:")) {
@@ -469,11 +473,11 @@ addEventListener("error", (event) => {
 // Library transport: Lua owns the page; the browser supplies text input and API I/O.
 let currentPage = new URLSearchParams(location.search).get("page") || "home";
 let builderId = new URLSearchParams(location.search).get("deck") || "";
-let libraryPage = ["decks","builder","sandbox"].includes(currentPage);
+let libraryPage = ["decks","builder","sandbox","simulator"].includes(currentPage);
 let pageRevision = 0;
 function syncModalAccessibility() {
   document.querySelector(".accessible-menu").inert = settingsOpen || libraryPage;
-  if (settingsOpen || libraryPage) {
+  if (settingsOpen || (libraryPage && currentPage !== "simulator")) {
     canvas.setAttribute("role", "dialog");
     canvas.setAttribute("aria-modal", "true");
   } else {
@@ -484,8 +488,8 @@ function syncModalAccessibility() {
 function syncPage() {
   syncModalAccessibility();
   writeMailbox("__page.txt", [ ++pageRevision, currentPage, builderId ].map(encodeURIComponent).join("\t"));
-  document.title = `Luminous — ${currentPage === "sandbox" ? "Sandbox" : currentPage === "builder" ? "Deck builder" : libraryPage ? "Decks" : "Home"}`;
-  canvas.setAttribute("aria-label", currentPage === "sandbox" ? "Sandbox deck selection. Tab or arrows choose controls. Enter selects a deck or activates a button. Escape returns home." : libraryPage
+  document.title = `Luminous — ${currentPage === "simulator" ? "Simulator" : currentPage === "sandbox" ? "Sandbox" : currentPage === "builder" ? "Deck builder" : libraryPage ? "Decks" : "Home"}`;
+  canvas.setAttribute("aria-label", currentPage === "simulator" ? "Sandbox game table. Drag cards to play. Tab selects controls and cards; Enter activates. Escape opens options." : currentPage === "sandbox" ? "Sandbox deck selection. Tab or arrows choose controls. Enter selects a deck or activates a button. Escape returns home." : libraryPage
     ? "Deck library. Tab or arrows choose controls and cards. Enter opens. Escape returns home."
     : "Luminous main menu. Use Tab or arrow keys to choose; Enter to open.");
 }
@@ -497,7 +501,7 @@ function setPage(page, push = true, id = "", saved = false) {
     document.dispatchEvent(new CustomEvent("luminous:builder-leave",{detail:()=>setPage(page,push,id,true)}));return;
   }
   finishLibraryInput(); finishBuilderInput();
-  currentPage = ["decks","builder","sandbox"].includes(page) ? page : "home";
+  currentPage = ["decks","builder","sandbox","simulator"].includes(page) ? page : "home";
   builderId = currentPage === "builder" ? id : "";
   libraryPage = currentPage !== "home";
   const url = new URL(location.href);
@@ -655,5 +659,12 @@ function sandboxCommand(command) {
 }
 document.getElementById("sandbox-link").addEventListener("click", event => {
   if (!ready) return;
-  event.preventDefault(); setPage("sandbox"); canvas.focus({preventScroll:true});
+  event.preventDefault(); simulatorCommand("resume"); canvas.focus({preventScroll:true});
 });
+
+// Full Lua game page; it shares the existing image cache and local engine host.
+document.addEventListener("luminous:simulator-state", event => writeMailbox("__simulator.txt", event.detail));
+function simulatorCommand(command) {
+  if (!accountReady) { pendingSimulatorCommands.push(command); return; }
+  document.dispatchEvent(new CustomEvent("luminous:simulator-command", {detail: command}));
+}

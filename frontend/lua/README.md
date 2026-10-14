@@ -1,4 +1,4 @@
-# Luminous Lua frontend — home milestone
+# Luminous Lua frontend
 
 A separate LÖVE 11.4 application, packaged with love.js for WebAssembly. The React frontend remains at `/`; the new home is at `/lua/`. All visible menu content, layout, input handling, animation, audio, and rendering run in Lua. The small HTML/JS host boots LÖVE, passes viewport/preferences through a file mailbox, exposes native accessible links, and navigates to existing routes.
 
@@ -49,7 +49,7 @@ The build defaults to the sibling `../balatro-source` directory, including its i
 
 Click a button to navigate; releasing outside the pressed button cancels the action. Use arrow keys and Enter/Space while the canvas is focused; Tab also reaches native links. M toggles sound. Audio starts after the first gesture and pauses when the window loses focus.
 
-The other pages still open the current React application. Their home/back links still return to the React home. The Lua sandbox chooser hands off a prepared game through the existing simulator save format and opens `/simulator` (redirected to `/play`). The account adapter reuses the existing API client and cookie session; passwords and session cookies never cross into Lua or local storage. Gameplay remains in React; the existing React sign-in forms are still available as a fallback.
+The Lua sandbox chooser opens the full gameplay page at `/lua/?page=simulator`. Online play still opens the React application. The account adapter reuses the existing API client and cookie session; passwords and session cookies never cross into Lua or local storage. The existing React pages remain available.
 
 Inside Settings, Tab/Shift+Tab or up/down move between controls. Left/right switch tabs, cycle CRT Bloom, or adjust a focused slider by 5; Home/End set its minimum/maximum. Enter/Space activates toggles and buttons. Drag sliders with a mouse or touch. Select Display name to edit it; the canvas field uses a native input proxy for IME, selection, paste and mobile keyboards. Enter finishes editing and Escape cancels the edit. Profile changes require Save; the success message disappears after three seconds. In the authentication modal, Enter advances through the fields and submits from the last field, Tab/Shift+Tab moves between controls, and Back returns to Account settings. Passwords are masked in Lua and kept only in the native inputs/API request, then cleared on success or dismissal. Google redirects through the existing provider configuration and returns to `/lua/?account`. Escape or Back closes the popup and returns focus to Settings. The background menu cannot receive input while the popup is open. Native accessible navigation opens the same popup when WASM is running, with live control announcements; its fallback links to React settings if WASM fails.
 
@@ -191,7 +191,7 @@ return animation and texture cleanup, and decklist editing/confirmation.
 
 ## Sandbox deck selection
 
-Sandbox opens `/lua/?page=sandbox`. Player 1 / Player 2 tabs select the active
+Sandbox resumes a saved Lua game when available; otherwise it opens `/lua/?page=sandbox`. Player 1 / Player 2 tabs select the active
 seat. The search field and deck grid use the library's input, embossed collection
 tray, generic back piles, title/count styling and animated red paginator. Desktop
 pages hold ten decks in two rows of five; portrait pages hold four. Clicking a
@@ -212,3 +212,35 @@ Checks: `bun run test:run src/features/lua/sandbox.test.ts` and
 `luajit frontend/lua/tests/sandbox.lua`. These cover independent selection,
 search, pagination, responsive bounds, disabled/busy controls, and modal hit testing.
 The shared pile's original CardArea comparison lives in `tests/deck_pile.lua`.
+
+
+## Sandbox gameplay
+
+`/lua/?page=simulator` is a full page, with no home screen or outer modal underneath.
+The original `background.fs` runs with the Small/Big blind palette from
+`globals.lua` and `ease_background_colour`. The HUD uses the existing pixel panel,
+button, font, shadow and CRT implementations. Table wells use CardArea's black
+10% fill; hand rotation, breathing and arc follow `CardArea:align_cards`. Cards
+retain the shared Moveable hover, drag and return physics. Portrait moves the HUD
+to the top and game controls below the hand.
+
+`LuaSimulator` reuses `hostReducer`, `redactGame`, `moveToAction`, and the existing
+simulator saves. Lua receives only the current viewer's projection, never hidden
+opponent identities or deck order. Play includes first-player selection, setup,
+hand/bench dragging, attachments, evolution, attacks, abilities, retreat, Trainer
+choices, prizes and promotion. Click a visible card to inspect its scan, rules and
+available actions. Coin results come from the engine and appear in a result dialog;
+they are not rerolled by the renderer. The game log, previous/next turn history,
+Save & Back, and refresh all use the shared saved-game format. New game asks before
+replacing that save and returning to the deck chooser.
+
+`simulatorChoices.ts` exhaustively adapts the existing effect prompt union; action
+availability and submitted choices are checked by the engine. Action tokens carry
+a snapshot revision, so stale clicks cannot apply a different action. Artwork uses
+the builder's existing browser cache. The React simulator remains available and
+reads the same save format.
+
+Checks: `bun run test:run src/features/lua/simulator.test.ts` and
+`luajit frontend/lua/tests/simulator.lua`. These exercise real setup/handoffs,
+redaction, stale actions, attachment drops, search choices, attacks, history,
+persistence, drag return, modal input blocking and viewport bounds.
