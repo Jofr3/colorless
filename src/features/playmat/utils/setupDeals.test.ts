@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { BoardState, PlayerBoard } from "../types";
 import {
   pendingMulliganDrawCounts,
+  prizeTakesBetween,
   setupDealsBetween,
   turnDrawsBetween,
   type SetupDealSnapshot,
@@ -188,5 +189,48 @@ describe("mulligan dice during queued draws", () => {
       ]),
     ).toEqual({ blue: 0, red: 1 });
     expect(pendingMulliganDrawCounts([])).toEqual({ blue: 0, red: 0 });
+  });
+});
+
+describe("Prize collection animations", () => {
+  it("flies multiple awarded cards from the vacated bottom slots into their hand positions", () => {
+    const before = snapshot(side(4, 6), side(5, 6), { turn: 2 });
+    const next = snapshot(side(6, 4), side(5, 6), { turn: 2 });
+    expect(prizeTakesBetween(before, next)).toEqual([
+      { tone: "blue", kind: "prize-take", index: 4, prizeSlot: 4 },
+      { tone: "blue", kind: "prize-take", index: 5, prizeSlot: 5 },
+    ]);
+  });
+
+  it("tracks the physical recipient across a local viewer handoff", () => {
+    const before = snapshot(side(4, 5), side(5, 6), { turn: 2 });
+    const next = snapshot(side(5, 6), side(6, 3), { turn: 2, blueBackPlayer: "opponent" });
+    expect(prizeTakesBetween(before, next)).toEqual([
+      { tone: "blue", kind: "prize-take", index: 4, prizeSlot: 1 },
+      { tone: "blue", kind: "prize-take", index: 5, prizeSlot: 2 },
+    ]);
+  });
+
+  it("keeps a Prize award separate from a following turn draw for the same player", () => {
+    const before = snapshot(side(4, 6), side(5, 6), { turn: 2, activePlayer: "opponent" });
+    const next = snapshot(side(6, 5), side(5, 6), { turn: 3 });
+    expect(prizeTakesBetween(before, next)).toEqual([
+      { tone: "blue", kind: "prize-take", index: 4, prizeSlot: 5 },
+    ]);
+    expect(turnDrawsBetween(before, next)).toEqual([
+      { tone: "blue", kind: "turn-draw", index: 5 },
+    ]);
+  });
+
+  it("animates the final Prize and ignores mounts, unchanged counts and rewinds", () => {
+    const before = snapshot(side(4, 1), side(5, 6), { turn: 2 });
+    const next = snapshot(side(5, 0), side(5, 6), { turn: 2 });
+    expect(prizeTakesBetween(before, next)).toEqual([
+      { tone: "blue", kind: "prize-take", index: 4, prizeSlot: 0 },
+    ]);
+    expect(prizeTakesBetween(null, next)).toEqual([]);
+    expect(prizeTakesBetween(next, next)).toEqual([]);
+    expect(prizeTakesBetween(before, { ...next, turn: 1 })).toEqual([]);
+    expect(prizeTakesBetween(next, before)).toEqual([]);
   });
 });

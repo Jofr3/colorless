@@ -26,6 +26,9 @@ vi.mock("../pixi/CardView", () => ({
     setTarget = vi.fn((target: CardViewTarget) => {
       this.target = target;
     });
+    setRenderParent = (parent: Container) => {
+      if (this.container.parent !== parent) parent.addChild(this.container);
+    };
     getTargetSnapshot = () => this.target;
     getPosition = () => ({ x: this.target?.x ?? 0, y: this.target?.y ?? 0 });
     slingTo = vi.fn();
@@ -154,12 +157,13 @@ beforeEach(() => {
       toJSON: () => ({}),
     };
   });
-  mocks.createApplication.mockResolvedValue({
+  mocks.createApplication.mockImplementation(async () => ({
     stage: new Container(),
     ticker,
     canvas: document.createElement("canvas"),
     destroy: vi.fn(),
-  });
+    render: vi.fn(),
+  }));
 });
 afterEach(() => {
   cleanup();

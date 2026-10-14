@@ -7,9 +7,11 @@ import { DialogScrollArea } from "../../components/DialogScrollArea";
 // always for the person holding the device; the gate stays anyway. GameHud
 // enforces it ONCE, at its phase switch — the panels never re-check it.
 
+import { AutoTakePrizes } from "./AutoTakePrizes";
 import { AutoMulliganDraw } from "./AutoMulliganDraw";
 import { CardChoice, cardChoiceDialogClass, cardChoiceGridClass } from "./CardChoice";
 import { ConfirmCardChoices } from "./ConfirmCardChoices";
+import { DiscardEnergyChoices, energyDiscardHosts } from "./DiscardEnergyChoices";
 import { PokemonChoices } from "./PokemonChoice";
 import { benchLimitFor } from "../playmat/constants";
 import type { CardModel } from "../playmat/types";
@@ -1314,8 +1316,7 @@ function RetreatDialog({
   );
 }
 
-/** 🆕🆕🆕 D548 — ONE prize tile, shared by both prize pickers in this HUD (the ko:takePrizes
-    grid and Crescent Purge's `choosePrize`). A FACE-DOWN tile is the card back
+/** 🆕🆕🆕 D548 — A prize tile for Crescent Purge's `choosePrize` cost. A FACE-DOWN tile is the card back
     (`PRIZE_CARD_BASE`); a FACE-UP one lays the card's name over it (`PRIZE_CARD_FACE_UP`)
     and says so in its accessible name. `faceUp` is the card NAME or null — the tile never
     sees a uid. */
@@ -1342,74 +1343,6 @@ function PrizeTile({
     >
       {faceUp === null ? null : <span className={PRIZE_CARD_FACE_UP}>{faceUp}</span>}
     </button>
-  );
-}
-
-/** ko:takePrizes — pick exactly `count` of the REMAINING face-down slots.
-    Legal indices are 0..prizes.length-1 (the engine's row compacts as prizes
-    leave, takePrizes validation), so the grid is built from the live count.
-    Mounted only while the decision is parked on the viewer (the phase
-    switch), so the useState initializer is the fresh-picks-per-decision
-    reset. (🆕🆕🆕 D548: *"face-down"* is partly false now — a slot Crescent Purge
-    turned face up is painted with its card and is JUST AS PICKABLE: a face-up prize is
-    still a prize. The caption says so.) */
-function PrizeDialog({ game, projection, viewerSeat, dispatch }: GameHudProps) {
-  const [picked, setPicked] = useState<number[]>([]);
-  const pending = projection.pendingDecision;
-  // Narrowing only — the phase switch mounts this exactly when the viewer's
-  // takePrizes decision is parked.
-  if (pending?.kind !== "takePrizes") return null;
-  const count = pending.count;
-  const side = game.players[viewerSeat];
-  const remaining = side.prizes.length;
-  const faceUpName = (index: number): string | null => {
-    const uid = side.prizes[index];
-    return uid !== undefined && side.faceUpPrizes.includes(uid)
-      ? (cardOfUid(game, uid)?.name ?? uid)
-      : null;
-  };
-
-  const toggle = (index: number) => {
-    setPicked((prev) =>
-      prev.includes(index)
-        ? prev.filter((i) => i !== index)
-        : prev.length < count
-          ? [...prev, index]
-          : prev,
-    );
-  };
-
-  return (
-    <HudDialog label="Take prizes">
-      <h2 className="text-lg font-semibold text-white">
-        Take {count} prize card{count === 1 ? "" : "s"}
-      </h2>
-      <p className="mt-1.5 text-sm text-white/55">
-        Pick {count} of your prize card{count === 1 ? "" : "s"} to add to your hand
-        {side.faceUpPrizes.length > 0 ? " — face-up ones included" : ""}.
-      </p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        {Array.from({ length: remaining }, (_, index) => (
-          <PrizeTile
-            key={index}
-            index={index}
-            faceUp={faceUpName(index)}
-            selected={picked.includes(index)}
-            onPick={() => toggle(index)}
-          />
-        ))}
-      </div>
-      <div className="mt-5 flex justify-end">
-        <button
-          type="button"
-          className={ACCENT_BUTTON_CLASS}
-          disabled={picked.length !== count}
-          onClick={() => dispatch({ type: "takePrizes", seat: viewerSeat, prizeIndices: picked })}
-        >
-          Take {picked.length}/{count}
-        </button>
-      </div>
-    </HudDialog>
   );
 }
 
@@ -1527,7 +1460,7 @@ function EffectChooseDialog(props: GameHudProps): ReactElement | null {
 /** 🆕🆕🆕 D548 — Crescent Purge's cost: pick ONE of your own face-down prizes to turn face
     up. (🆕🆕🆕 D567: or one of the OPPONENT's — Team Rocket's Bother-Bot parks the same prompt over
     their row; the tiles are drawn by index, so nothing here moves, and the heading is the note.) Offers ONLY the face-down slots the prompt names (a face-up one is not a legal
-    answer — `validateChoice` refuses it), on the same `PrizeTile` the take picker uses.
+    answer — `validateChoice` refuses it), on a `PrizeTile`.
     `ChooseAttackDialog`'s shape: no local state and no Confirm, because picking IS the
     whole decision (the engine never parks this below two face-down prizes, and the
     decline was the confirm in front of it). Escape is swallowed: the program is parked on
@@ -2924,7 +2857,7 @@ function MoveEnergySpreadDialog({
     group, and Confirm stays disabled until every group has its pick. Mounted
     only while parked on the viewer, so the useState is the per-decision reset. */
 function DiscardEnergyDialog({
-  game,
+  projection,
   viewerSeat,
   dispatch,
   prompt,
@@ -2985,9 +2918,10 @@ function DiscardEnergyDialog({
   const required =
     scope.kind === "total" ? scope.count : scope.kind === "upTo" ? scope.max : groups.length;
   const ready = scope.kind === "upTo" || picked.length === required;
+  const hosts = energyDiscardHosts(projection.board, viewerSeat, prompt.discardable);
 
   return (
-    <HudDialog label="Discard Energy">
+    <HudDialog label="Discard Energy" cardCount={hosts.length}>
       <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
       {/* <output> — an implicit polite LIVE REGION (the house pattern), because
           the running total is otherwise unannounceable:
@@ -3006,73 +2940,7 @@ function DiscardEnergyDialog({
               ? `Pick ${required} Energy to discard (${picked.length}/${required}).`
               : "Pick the Energy to discard."}
       </output>
-      <DialogScrollArea as="div" className="mt-3 max-h-64" contentClassName="flex flex-col gap-3">
-        {/* fieldset/legend, not a bare heading + list: this is the only HUD
-            dialog whose candidate rows are GROUPED, and every row reads
-            "Basic Energy" or the like, so without the host being part of the
-            group's accessible name a screen reader never says WHICH Pokémon
-            the Energy would come off. The flat-list siblings need nothing. */}
-        {groups.map((group) => (
-          <fieldset key={group.key} className="min-w-0">
-            {/* The SPOT rides the legend — unlike the flat sibling dialogs, which
-                name the Pokémon alone — because for a Crushing Hammer WHICH host
-                loses the Energy is the entire decision, and two Pokémon sharing a
-                name would otherwise give two identical legends. (Interchangeable
-                copies of one Energy print on ONE Pokémon collapse in the engine to
-                as many rows as the pick could want — so a one-Energy discard shows
-                a single row, and only an exact-N discard can show repeats, where
-                identical rows are genuinely interchangeable answers.)
-                The SIDE rides it too, the same `opponent` marker
-                ChoosePokemonDialog puts on its rows: this dialog now serves both
-                boards — the opponent's for the hammer family and the viewer's OWN
-                Active for a self-discard attack cost — and the legend is the only
-                context a screen reader gets for the rows under it. */}
-            <legend className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
-              {refName(game, group.ref)} ·{" "}
-              {group.ref.spot.spot === "active" ? "Active" : `Bench ${group.ref.spot.index + 1}`}
-              {group.ref.seat !== viewerSeat && " · opponent"}
-            </legend>
-            <ul className="mt-1.5 flex flex-col gap-1.5">
-              {group.uids.map((uid) => {
-                const selected = picked.includes(uid);
-                // A row the cap has closed off says so, rather than just doing
-                // nothing when clicked: `pick` REFUSES at `count` (above 1), and
-                // a silently inert row is the one thing the <output> above cannot
-                // announce — nothing changes, so nothing is spoken. Marked
-                // aria-disabled and NOT `disabled`, so it stays focusable: the
-                // rows are how you read the offer, and dropping them out of the
-                // tab order at the cap would hide half the board from a keyboard
-                // user mid-decision.
-                // `scope.count > 1` matters: at count 1 a click REPLACES the pick,
-                // so no row is ever refused there — mirroring `pick` exactly.
-                const refused =
-                  !selected &&
-                  ((scope.kind === "total" && scope.count > 1 && picked.length >= scope.count) ||
-                    (scope.kind === "upTo" && picked.length >= scope.max));
-                return (
-                  <li key={uid}>
-                    <button
-                      type="button"
-                      aria-pressed={selected}
-                      aria-disabled={refused || undefined}
-                      onClick={() => pick(group.uids, uid)}
-                      className={`${ROW_BUTTON_BASE} ${
-                        selected
-                          ? "bg-white/[0.12] text-white ring-white/40"
-                          : refused
-                            ? ROW_BUTTON_DISABLED
-                            : ROW_BUTTON_ENABLED
-                      }`}
-                    >
-                      <span className="truncate">{cardOfUid(game, uid)?.name ?? uid}</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </fieldset>
-        ))}
-      </DialogScrollArea>
+      <DiscardEnergyChoices hosts={hosts} scope={scope} picked={picked} onPick={pick} />
       <div className="mt-5 flex justify-end">
         <button
           type="button"
@@ -3652,7 +3520,7 @@ export function GameHud(props: GameHudProps) {
   // no actor — waitingOn is null — so the outcome overlay sits OUTSIDE the
   // acting gate.
   const acting = projection.waitingOn === "you";
-  // Keys tie panel-local state (retreat picks, prize picks) to
+  // Keys tie panel-local state (retreat picks) to
   // the seat and turn they were opened for — a hot-seat flip must never
   // inherit them. The switch mounts at most ONE panel, so the keys only
   // govern remount-on-seat/turn; there is no sibling list to keep unique.
@@ -3680,7 +3548,15 @@ export function GameHud(props: GameHudProps) {
     case "turn:action":
       return acting ? <TurnPanel key={`turn:${seatKey}`} {...props} /> : null;
     case "ko:takePrizes":
-      return acting ? <PrizeDialog key={`prizes:${seatKey}`} {...props} /> : null;
+      return acting ? (
+        <AutoTakePrizes
+          key={`prizes:${seatKey}`}
+          seat={props.viewerSeat}
+          count={game.phase.count}
+          remaining={game.players[props.viewerSeat].prizes.length}
+          onAction={props.dispatch}
+        />
+      ) : null;
     case "ko:promote":
       return acting ? <PromoteDialog {...props} /> : null;
     case "effect:choose":

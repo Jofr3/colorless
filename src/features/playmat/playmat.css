@@ -76,6 +76,98 @@
 
 /* Cards ------------------------------------------------------------------ */
 
+.damage-dice {
+  --damage-die-size: clamp(12px, calc(var(--card-w) * 0.23), 28px);
+  position: absolute;
+  z-index: 61;
+  top: calc(var(--card-h) * 0.49);
+  left: calc(var(--card-w) * 0.06);
+  pointer-events: none;
+}
+
+/* Keep the tilt inside the badge: rotating its drag translation causes drift. */
+.damage-dice__stack {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(3, var(--damage-die-size));
+  grid-auto-columns: var(--damage-die-size);
+  gap: clamp(2px, calc(var(--card-w) * 0.035), 4px);
+  rotate: var(--damage-stack-tilt, -6deg);
+  transform-origin: top left;
+}
+
+.damage-dice .damage-die {
+  --die-size: var(--damage-die-size);
+  transform: rotate(var(--damage-die-tilt, -9deg));
+}
+
+.damage-die .tabletop-die-shadow {
+  animation: none;
+}
+
+.used-trainers {
+  position: absolute;
+  /* Keep the gallery above board frames and below the card canvas (z=60). */
+  z-index: 59;
+  left: calc(100% + var(--side-gap) * 0.7);
+  top: 0;
+  width: calc(var(--card-w) * 1.8);
+  height: calc(var(--card-h) + 12px);
+  padding: 6px 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: white;
+  cursor: pointer;
+}
+
+.used-trainers:focus-visible {
+  outline: 2px solid #fcd34d;
+  outline-offset: 4px;
+}
+
+.used-trainers__cards {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: var(--card-h);
+}
+
+.used-trainers__card {
+  position: absolute;
+  top: 0;
+  width: var(--card-w);
+  height: var(--card-h);
+  border-radius: max(3px, calc(var(--card-w) * 0.06));
+  transition: left 240ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.used-trainers__card:active {
+  z-index: 1;
+}
+
+.used-trainers__juice,
+.used-trainers__surface {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.used-trainers__surface {
+  box-shadow: -3px 2px 8px #0007, 0 0 0 1px #ffffff26;
+}
+
+.used-trainers__card:hover .used-trainers__surface {
+  box-shadow: -3px 2px 8px #0007, 0 0 0 1px #fcd34d88;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .used-trainers__card {
+    transition: none;
+  }
+}
+
 .energy-choice-area {
   width: calc(var(--card-w) * 2 + 16px);
   left: min(
@@ -231,6 +323,14 @@
   inset: 0;
 }
 
+.pixi-cards-layer--lifted {
+  z-index: 62;
+}
+
+[data-card-badge-lifted] {
+  z-index: 63;
+}
+
 .playmat-wrapper.is-card-dragging {
   cursor: grabbing;
 }
@@ -256,7 +356,7 @@
   left: 0;
   top: 0;
   pointer-events: none;
-  z-index: 62;
+  z-index: 64;
   transform: translate(-50%, -50%);
   will-change: transform, opacity;
   color: rgb(134 239 172 / 85%);
@@ -345,5 +445,47 @@
   .leave-dialog[open],
   .leave-dialog[open]::backdrop {
     animation: none;
+  }
+}
+.adrena-brain-target {
+  position: absolute;
+  z-index: 70;
+  transform: translate(-50%, -50%);
+  border-radius: 6px;
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+}
+
+.adrena-brain-target:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+  box-shadow: 0 0 11px rgba(255, 255, 255, 0.4);
+}
+
+/* Selection remains visible if the renderer falls back to static card faces. */
+.playmat-wrapper:not(.has-pixi-cards) [data-adrena-selected="true"] > .static-card {
+  border-radius: 6px;
+  transform: scale(1.1);
+  box-shadow: 0 0 13px rgba(255, 255, 255, 0.6);
+}
+
+.playmat-wrapper:not(.has-pixi-cards) [data-adrena-ability-glow="blue"] > .static-card {
+  border-radius: 6px;
+  box-shadow: 0 0 13px rgba(38, 149, 255, 0.6);
+}
+
+.playmat-wrapper:not(.has-pixi-cards) [data-adrena-ability-glow="red"] > .static-card {
+  border-radius: 6px;
+  box-shadow: 0 0 13px rgba(255, 52, 86, 0.6);
+}
+
+@media (max-width: 800px) and (min-height: 600px) {
+  /* Portrait boards leave their centre clear; the narrow hand tray does not
+     have room for instructions without covering a benched target. */
+  .adrena-brain-controls {
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
   }
 }

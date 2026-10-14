@@ -2161,6 +2161,20 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 49 AT D647 — THE MERGE OF `main`: ONE NEW `GameAction`, ONE OPTIONAL LOG KEY, WIRE-ONLY PROMPT AND
+    CARD KEYS, AND THIRTEEN ROTATED REGISTRY KEYS. NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD,
+    `EffectOp` MEMBER OR EVENT MEMBER.** (Placed ABOVE the D646 block.) The addresses, named first (D456's rule):
+    ⑴ **`reorderBench`** is an action, never persisted; it permutes the shipped `PlayerSide.bench` array and is refused
+    outside `setup:place` (before ready) and the actor's own `turn:action`, so no parked choice holding a Bench index can
+    be live when it runs. ⑵ **`SeatLogEntry.playedTrainer?`** on the persisted `log` is a WIDENING (3c-ii's rule): a v49
+    log written before it lacks the key and reads as before (that turn's used-Trainers pile is just empty), and a 0.529
+    rollback ignores it. ⑶ `RedactedCard.stage?` / `evolutionTargetIds?` and `choosePokemon.counterTransfer?` are
+    computed per frame by redact.ts, never stored. ⑷ Counter Catcher, Arven and Tandem Unit are id-keyed catalog rows on
+    shipped ops (`gust`, `searchDeck` + `also`, `shuffleDeck`, `trainerPlayableIf`), so a parked one resumes on a 0.529
+    rollback's own arms; there each id has no program and the card is inert, and a spent Tandem Unit is an inert string
+    on `allowances.abilitiesUsed`. Old clients strip the optional wire keys (zod strips an unknown KEY), so the deploy
+    order is the usual one, and a 0.529 server refuses a `reorderBench` frame as an unknown action.
+
     🆕🆕🆕 **48 → 49 AT D646 — THE TWENTY-SECOND POSITION, AND THE EIGHTH MIGRATION: BACKTRACK BADGE.** (Placed ABOVE the
     D645 block.) Backtrack Badge `me05-074` (*"Once during your turn, after you flip any coins for an attack of the {C}
     Pokémon this card is attached to, you may ignore all results of those coin flips and begin flipping those coins
@@ -3394,6 +3408,7 @@ export const MATCH_ACTION_DISPOSITION = {
   setupPlaceActive: "supported",
   setupPlaceBench: "supported",
   setupReady: "supported",
+  reorderBench: "supported",
   attachEnergy: "supported",
   playBasicToBench: "supported",
   evolve: "supported",

@@ -25,6 +25,16 @@ export interface CardMoveRequest {
   to: CardPlacement;
 }
 
+/** Board-based targeting and the presentation of a damage-counter transfer. */
+export interface CardSelection {
+  candidates: readonly CardModel[];
+  selectedIds: readonly string[];
+  abilityCardId?: string;
+  phase: "choose" | "hold" | "shake" | "submitted";
+  count: number;
+  onSelect: (cardId: string) => void;
+}
+
 export type CardType = "pokemon" | "trainer" | "tool" | "energy" | "stadium";
 
 export interface AttachedCards {
@@ -37,6 +47,10 @@ export interface CardModel {
   name: string;
   cardId: string;
   type: CardType;
+  /** Printed Pokémon stage; absent on hidden cards and older sandbox models. */
+  stage?: string | null;
+  /** Current legal evolution hosts, computed by the engine for own hand cards. */
+  evolutionTargetIds?: readonly string[];
   imageUrl?: string;
   attached?: AttachedCards;
   /** Battle numbers + conditions for an in-play Pokémon top card; absent on
@@ -159,6 +173,8 @@ export type LogEntry =
       who: LogSource;
       elapsed: string;
       segments: LogSegment[];
+      /** Public card identity captured when a Trainer is played, independent of its current zone. */
+      playedTrainer?: { id: string; cardId: string; name: string };
     }
   | {
       kind: "turn";

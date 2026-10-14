@@ -71,6 +71,19 @@ function initialEntries(deck: ApiDeck): Map<string, number> {
   );
 }
 
+function DeckLibraryLink({ children, className }: { children: ReactNode; className: string }) {
+  const fromLua = new URLSearchParams(useLocation().search).get("from") === "lua";
+  return (
+    <Link
+      to={fromLua ? "/lua/?page=decks" : "/decks"}
+      reloadDocument={fromLua}
+      className={className}
+    >
+      {children}
+    </Link>
+  );
+}
+
 // Back-to-decks pill, mirroring the fixed home button in the opposite corner.
 const BACK_PILL_CLASS = `group fixed left-3 top-3 z-50 inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium ${GLASS_GHOST_BUTTON}`;
 
@@ -82,10 +95,10 @@ function BuilderScreen({ children }: { children: ReactNode }) {
   return (
     <AppBackdrop>
       <HomeButton />
-      <Link to="/decks" className={BACK_PILL_CLASS}>
+      <DeckLibraryLink className={BACK_PILL_CLASS}>
         <ArrowLeftIcon className={BACK_ARROW_ICON} />
         Decks
-      </Link>
+      </DeckLibraryLink>
       <main className="mx-auto flex min-h-svh w-full max-w-md flex-col justify-center px-6 py-16">
         {children}
       </main>
@@ -174,11 +187,7 @@ export function DeckBuilder() {
           icon={<DecksIcon className="h-7 w-7 text-white/25" />}
           title="Deck not found"
           description="It may have been deleted, or the link isn't yours."
-          action={
-            <Link to="/decks" className={STATUS_BUTTON_CLASS}>
-              Back to decks
-            </Link>
-          }
+          action={<DeckLibraryLink className={STATUS_BUTTON_CLASS}>Back to decks</DeckLibraryLink>}
         />
       </BuilderScreen>
     );
@@ -473,10 +482,10 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
       <HomeButton />
       {/* Back-to-decks pill, mirroring the fixed home button in the opposite
           corner. pt-16 below clears both. */}
-      <Link to="/decks" className={BACK_PILL_CLASS}>
+      <DeckLibraryLink className={BACK_PILL_CLASS}>
         <ArrowLeftIcon className={BACK_ARROW_ICON} />
         Decks
-      </Link>
+      </DeckLibraryLink>
 
       {/* The card gallery is the centred max-w-4xl column — same width as the
           decks page. The filter rail and deck panel are lifted out of flow,

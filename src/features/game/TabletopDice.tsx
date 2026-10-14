@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { DieCube, DIE_ORIENTATIONS } from "./DieCube";
 import type { CoinFlipBatch } from "./coinFlips";
 import "./tabletopDice.css";
 
@@ -99,25 +100,7 @@ export function TabletopDice({
                 <div className="tabletop-die-travel" aria-hidden="true">
                   <div className="tabletop-die-shadow" />
                   <div className="tabletop-die-hop">
-                    <div className="tabletop-die-view">
-                      <div className="tabletop-die-cube">
-                        {DIE_FACES.map(({ value: faceValue, side, pips }) => (
-                          <div
-                            className={`tabletop-die-face tabletop-die-face-${side}`}
-                            key={side}
-                            data-face={faceValue}
-                          >
-                            {pips.map((position) => (
-                              <span
-                                className="tabletop-die-pip"
-                                key={position}
-                                style={{ gridArea: position }}
-                              />
-                            ))}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <DieCube value={value} rolling />
                   </div>
                 </div>
                 <output className="tabletop-die-label" aria-live="polite" aria-atomic="true">
@@ -131,21 +114,3 @@ export function TabletopDice({
     </div>
   );
 }
-
-// Opposite sides total seven. Rotations put the chosen numbered face on TOP.
-const DIE_ORIENTATIONS = [
-  { x: 0, z: 0 },
-  { x: 90, z: 0 },
-  { x: 0, z: -90 },
-  { x: 0, z: 90 },
-  { x: -90, z: 0 },
-  { x: 180, z: 0 },
-];
-const DIE_FACES = [
-  { value: 1, side: "top", pips: ["2 / 2"] },
-  { value: 2, side: "front", pips: ["1 / 1", "3 / 3"] },
-  { value: 3, side: "right", pips: ["1 / 1", "2 / 2", "3 / 3"] },
-  { value: 4, side: "left", pips: ["1 / 1", "1 / 3", "3 / 1", "3 / 3"] },
-  { value: 5, side: "back", pips: ["1 / 1", "1 / 3", "2 / 2", "3 / 1", "3 / 3"] },
-  { value: 6, side: "bottom", pips: ["1 / 1", "1 / 3", "2 / 1", "2 / 3", "3 / 1", "3 / 3"] },
-];

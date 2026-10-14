@@ -12,7 +12,7 @@
 // would translate them to null (nothing to dispatch, e.g. a hand reorder),
 // or the routed action is structurally impossible from this board (attaching
 // to an empty slot, a second setup Active, a sixth bench slot). Fine-grained
-// legality — Basic-ness, the once-per-turn energy allowance, evolution
+// legality — the once-per-turn energy allowance, evolution
 // timing (§4/§10), the name match and — 🆕 D292/D293 — the IMPOSED ACE SPEC
 // hand-play bar (Genesect `sv06.5-040`, which refuses an ACE SPEC Energy or
 // Tool attach outright) — stays with applyAction, whose
@@ -65,6 +65,19 @@ export function gamePlacementPredicate(game: GameState, viewerSeat: Seat): Place
 export function placementPredicateFor(ctx: PlacementContext): PlacementPredicate {
   return (board, source, target, sourceType) => {
     if (source.owner === "you" && source.zone === "bench") {
+      if (target.owner === "you" && target.zone === "bench") {
+        return (
+          ((ctx.phaseKind === "setup:place" && !ctx.isReady) ||
+            (ctx.phaseKind === "turn:action" && ctx.isViewerTurn)) &&
+          sourceType === "pokemon" &&
+          source.index !== undefined &&
+          board.you.bench[source.index]?.type === "pokemon" &&
+          (target.index === undefined ||
+            (Number.isInteger(target.index) &&
+              target.index >= 0 &&
+              target.index < board.you.bench.length))
+        );
+      }
       return (
         ctx.phaseKind === "turn:action" &&
         ctx.isViewerTurn &&
@@ -100,10 +113,10 @@ export function placementPredicateFor(ctx: PlacementContext): PlacementPredicate
         )
       );
     }
-    // Every translatable move starts in the viewer's own hand and lands on
+    // The remaining translatable moves start in the viewer's own hand and land on
     // their own board — moveToAction's first gate, mirrored here so a drag
     // that would translate to null never shows a legal-drop affordance.
-    // (Bench-to-Active retreat is handled above.) The
+    // (Bench reordering and bench-to-Active retreat are handled above.) The
     // one shared exception, also mirrored: a Stadium aimed at the global
     // stadium slot (§7.3).
     if (source.owner !== "you" || source.zone !== "hand") return false;
@@ -115,6 +128,9 @@ export function placementPredicateFor(ctx: PlacementContext): PlacementPredicate
     // so previewing one would be a lie the projection immediately snaps back.
     if (target.zone === "hand") return false;
 
+    const sourceCard = source.index === undefined ? undefined : board.you.hand[source.index];
+    const isKnownNonBasic = sourceCard?.stage != null && sourceCard.stage !== "Basic";
+
     switch (ctx.phaseKind) {
       case "setup:place": {
         // A seat that declared ready has locked its placements — nothing it
@@ -124,12 +140,8 @@ export function placementPredicateFor(ctx: PlacementContext): PlacementPredicate
           const card = source.index === undefined ? undefined : board.you.hand[source.index];
           if (card === undefined || !ctx.bonusCards.includes(card.id)) return false;
         }
-        // §3.6–§3.7 place Pokémon. Basic-ness is the engine's call
-        // (NOT_A_BASIC_POKEMON — a rule a Pokémon drop gestures at), but a
-        // non-Pokémon can never be a Basic, so energies/trainers get no
-        // placement affordance at all: canPlace's attach branch accepting a
-        // setup energy → own occupied Pokémon was the confirmed bug here.
-        if (sourceType !== "pokemon") return false;
+        // §3.6–§3.7 only Basics can create setup occupants.
+        if (sourceType !== "pokemon" || isKnownNonBasic) return false;
         if (target.zone === "active") return board.you.active === null;
         if (target.zone === "bench") return board.you.bench.length < benchLimitFor(board, "you");
         return false;
@@ -164,18 +176,18 @@ export function placementPredicateFor(ctx: PlacementContext): PlacementPredicate
           return false;
         }
         if (sourceType === "pokemon") {
-          // A Pokémon dropped ONTO an own occupant is an evolve gesture (§10):
-          // the Active always hosts one, and a bench drop hosts one when the
-          // indexed slot is occupied. Whether the card actually evolves from
-          // that target (name match, timing) stays the engine's — the pill
-          // then names a rule the drop gestured at. A bench drop on a free
-          // slot is playBasicToBench (dense append; the index is cosmetic).
+          // Basics insert into the Bench, including over an occupied slot.
+          // Evolution cards need an existing host; the engine checks the
+          // evolution match and timing. The Active always targets its occupant.
           if (target.zone === "active") return board.you.active?.type === "pokemon";
           if (target.zone !== "bench") return false;
+          if (sourceCard?.stage === "Basic") {
+            return board.you.bench.length < benchLimitFor(board, "you");
+          }
           if (target.index !== undefined && board.you.bench[target.index]?.type === "pokemon") {
             return true; // evolve the benched Pokémon at this slot
           }
-          return board.you.bench.length < benchLimitFor(board, "you"); // play a Basic
+          return !isKnownNonBasic && board.you.bench.length < benchLimitFor(board, "you");
         }
         if (sourceType === "tool") {
           // attachTool needs an existing own Pokémon host — the energy-attach

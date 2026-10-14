@@ -62,6 +62,33 @@ function turnOneState(): GameState {
   });
 }
 
+it("carries legal evolution hosts identically on local and online own-hand cards", () => {
+  let state = turnOneState();
+  state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
+  state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+  state = handFromDeck(state, "p1", "fix-stage1", 1);
+  const uid = handUid(state, "p1", "fix-stage1");
+  const local = projectGameState(state, "p1").board;
+  const wire = redactGame(state, "p1");
+  const online = projectionFromRedacted(wire).board;
+  expect(local.you.hand.find((card) => card.id === uid)?.evolutionTargetIds).toEqual([
+    local.you.active?.id,
+  ]);
+  expect(online).toEqual(local);
+  expect(wire.board.opponent.hand.every((card) => card.evolutionTargetIds === undefined)).toBe(
+    true,
+  );
+  expect(
+    redactGame(state, "p1", true).board.you.hand.every(
+      (card) => card.evolutionTargetIds === undefined,
+    ),
+  ).toBe(true);
+  const opponentView = projectGameState(state, "p2").board;
+  expect(opponentView.you.hand.every((card) => (card.evolutionTargetIds?.length ?? 0) === 0)).toBe(
+    true,
+  );
+});
+
 /** setup:place with p1 fully placed (active + one bench) AND ready, p2 not
     yet placed — exactly the hot-seat handoff moment the setup redaction
     protects: the board is about to flip to p2 with p1's placements still

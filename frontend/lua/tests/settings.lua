@@ -1,0 +1,63 @@
+package.path='frontend/lua/?.lua;'..package.path
+love={graphics={},keyboard={isDown=function() return false end}}
+local Preferences=require('ui.preferences')
+local Settings=require('ui.settings')
+local p=Preferences.new()
+assert(p.volume==50 and p.crt==70 and p.reducedMotion==-1)
+assert(p:reduced(true) and not p:reduced(false))
+assert(not p:set('volume',0/0) and not p:set('volume',math.huge))
+assert(not p:set('unknown',1) and not p:set('volume','100'))
+p:set('volume',200); assert(p.volume==100)
+p:set('volume',-1); assert(p.volume==0)
+local restored=Preferences.new(p:serialize())
+assert(restored:serialize()==p:serialize())
+assert(Preferences.new('broken'):serialize()==Preferences.new():serialize())
+local changes,closed,announcements=0,0,{}
+local popup=Settings.new(p,{
+  changed=function() changes=changes+1 end,
+  close=function() closed=closed+1 end,
+  announce=function(text) announcements[#announcements+1]=text end,
+  feedback=function() end,reduced=function() return p:reduced(false) end,
+},true)
+popup:layout(1280,800)
+assert(popup:hit(0,0)==0)
+popup:keypressed('right'); assert(popup.tab==2 and popup.focus==2)
+popup:keypressed('tab'); popup:keypressed('tab'); popup:keypressed('tab')
+assert(popup.items[popup.focus].key=='crt')
+popup:keypressed('home'); assert(p.crt==0)
+popup:keypressed('right'); assert(p.crt==5)
+popup:keypressed('end'); assert(p.crt==100)
+popup:keypressed('tab'); popup:keypressed('space'); assert(p.bloom==1)
+popup:keypressed('right'); assert(p.bloom==0)
+popup:keypressed('left'); assert(p.bloom==1)
+local cycle=popup.items[popup.focus]
+assert(cycle.kind=='cycle')
+popup:mousepressed(cycle.x+10,cycle.y+15)
+popup:mousereleased(cycle.x+cycle.w-10,cycle.y+15)
+assert(p.bloom==1,'Releasing on the other arrow must cancel')
+popup:mousepressed(cycle.x+10,cycle.y+15)
+popup:mousereleased(cycle.x+10,cycle.y+15)
+assert(p.bloom==0)
+popup:mousepressed(cycle.x+cycle.w-10,cycle.y+15)
+popup:mousereleased(cycle.x+cycle.w-10,cycle.y+15)
+assert(p.bloom==1)
+assert(popup:hit(cycle.x+cycle.w/2,cycle.y+15)==0,'Center is a display, not a button')
+popup:activate(3); assert(popup.tab==3)
+local slider=popup.items[5]
+popup:mousepressed(slider.x+slider.w/2,slider.y+15)
+popup:mousereleased(slider.x+slider.w*2,slider.y+100)
+assert(p.volume==100 and popup.drag==nil)
+popup:mousepressed(slider.x+slider.w/2,slider.y+15)
+popup:mousereleased(slider.x-100,slider.y)
+assert(p.volume==0)
+local back=popup.items[#popup.items]
+popup:mousepressed(back.x+10,back.y+10); popup:mousereleased(0,0)
+assert(closed==0,'Releasing outside must cancel')
+popup:layout(480,850)
+for _,item in ipairs(popup.items) do
+  assert(item.x>=popup.x and item.y>=popup.y)
+  assert(item.x+item.w<=popup.x+popup.w and item.y+item.h<=popup.y+popup.h)
+end
+popup:keypressed('escape'); assert(closed==1)
+assert(changes>=6 and #announcements>0)
+print('PASS: settings validation, persistence format, tabs, sliders, toggles, cycles, keyboard, cancel and portrait bounds')

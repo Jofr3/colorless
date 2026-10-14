@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { HomeButton } from "../../components/HomeButton";
@@ -89,16 +89,22 @@ function AuthPage({ mode }: { mode: Mode }) {
   // Where a successful sign-in lands. Only in-app paths are honoured — a
   // leading "//" is a scheme-relative URL, i.e. an off-site redirect.
   const state = location.state as { from?: unknown } | null;
-  const from =
-    typeof state?.from === "string" && state.from.startsWith("/") && !state.from.startsWith("//")
+  const returnToLua = new URLSearchParams(location.search).get("returnTo") === "lua";
+  const from = returnToLua
+    ? "/lua/?account"
+    : typeof state?.from === "string" && state.from.startsWith("/") && !state.from.startsWith("//")
       ? state.from
       : "/decks";
+  useEffect(() => {
+    // Lua is a separate document, outside the React router.
+    if (returnToLua && status === "authenticated") window.location.replace("/lua/?account");
+  }, [returnToLua, status]);
 
   // Already signed in — these pages have nothing to offer. Same target as the
   // submit handler below: the context flips to "authenticated" during the
   // await, so this render-time redirect can outrun `navigate(from)` — they
   // must agree on the destination.
-  if (status === "authenticated") return <Navigate to={from} replace />;
+  if (status === "authenticated") return returnToLua ? null : <Navigate to={from} replace />;
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -133,7 +139,7 @@ function AuthPage({ mode }: { mode: Mode }) {
         });
       }
       // No setBusy(false) on success — the navigation unmounts this page.
-      navigate(from, { replace: true });
+      if (!returnToLua) navigate(from, { replace: true });
     } catch (submitError) {
       setError(messageForError(submitError));
       setBusy(false);
@@ -282,7 +288,7 @@ function AuthPage({ mode }: { mode: Mode }) {
           {/* Carry `state.from` across so switching forms doesn't lose the
               return destination. */}
           <Link
-            to={mode === "login" ? "/register" : "/login"}
+            to={`${mode === "login" ? "/register" : "/login"}${returnToLua ? "?returnTo=lua" : ""}`}
             state={location.state}
             className="rounded font-medium text-white/80 underline-offset-4 transition-colors motion-reduce:transition-none hover:text-white hover:underline focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
           >

@@ -718,7 +718,7 @@ describe("D619 §7 — Heliolisk \"Frilled Generator\": after Canari, up to 2 Ba
 });
 
 describe("D619 §8 — the version", () => {
-  it("is built at engine 0.529.0", () => {
-    expect(engineVersion).toBe("0.529.0");
+  it("is built at engine 0.530.0", () => {
+    expect(engineVersion).toBe("0.530.0");
   });
 });

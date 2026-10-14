@@ -1,6 +1,7 @@
 import { formatElapsed, logFromEvents, otherSeat, type Seat } from "@luminous/engine";
 import { type Card, type LobbySnapshot, redactedPhaseSchema } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
+import { ALL_BASIC_DECK, driveSetup } from "../../../../packages/engine/src/testFixtures";
 import {
   applyMatchAction,
   MATCH_RECORD_VERSION,
@@ -144,12 +145,42 @@ function freshRecord(seed = 1): { record: MatchRecord; winner: "p1" | "p2" } {
     Stadium's §7.3 activation, and — 🆕🆕🆕 since D576 — `discardable`, the
     Antique Fossils' discard-from-play offer (the biconditional rung below). */
 function turnActionWireShape(): Record<string, unknown> {
-  const arm = redactedPhaseSchema.options.find((option) => option.shape.kind.value === "turn:action");
+  const arm = redactedPhaseSchema.options.find(
+    (option) => option.shape.kind.value === "turn:action",
+  );
   if (arm === undefined) throw new Error("the wire phase union has no turn:action arm");
   return arm.shape;
 }
 
 describe("applyMatchAction — the seat-bound apply loop", () => {
+  it("persists bench reordering and refuses a forged opponent move", () => {
+    const { record: fresh } = freshRecord(3);
+    const state = driveSetup(
+      3,
+      { p1: ALL_BASIC_DECK, p2: ALL_BASIC_DECK },
+      {
+        first: "p1",
+        bench: { p1: Array(5).fill("fix-basic-1") },
+      },
+    );
+    const record = { ...fresh, state };
+    const uid = state.players.p1.bench[0]?.stack.at(-1);
+    if (uid === undefined) throw new Error("Expected a benched Pokémon");
+    const action = { type: "reorderBench", seat: "p1", uid, index: 4 };
+    const result = applyMatchAction(record, "p1", action, STARTED_AT);
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.reason);
+    expect(result.record.state.players.p1.bench).toEqual([
+      ...state.players.p1.bench.slice(1),
+      state.players.p1.bench[0],
+    ]);
+    expect(result.record.log).toEqual(record.log);
+    expect(readMatchRecord(result.record)?.state.players.p1.bench).toEqual(
+      result.record.state.players.p1.bench,
+    );
+    expect(applyMatchAction(record, "p2", action, STARTED_AT).ok).toBe(false);
+    expect(applyMatchAction(record, "p1", { type: "reorderBench" }, STARTED_AT).ok).toBe(false);
+  });
   it("applies a legal action and carries the seed over", () => {
     const { record, winner } = freshRecord();
     const next = applyMatchAction(
@@ -369,7 +400,9 @@ describe("applyMatchAction — the seat-bound apply loop", () => {
   // control in the online client — is `OnlineHud.discardFromPlay.dom.test.tsx`.
   it("supports `discardFromPlay` EXACTLY while the wire offers the fossils' discard rows", () => {
     const shape = turnActionWireShape();
-    expect(Object.keys(shape)).toEqual(expect.arrayContaining(["attacks", "abilities", "trainers"]));
+    expect(Object.keys(shape)).toEqual(
+      expect.arrayContaining(["attacks", "abilities", "trainers"]),
+    );
     expect(SUPPORTED_MATCH_ACTIONS.has("discardFromPlay")).toBe("discardable" in shape);
     expect(SUPPORTED_MATCH_ACTIONS.has("discardFromPlay")).toBe(true);
   });

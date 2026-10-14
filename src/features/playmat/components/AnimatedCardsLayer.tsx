@@ -7,6 +7,7 @@ import type {
   CardModel,
   CardBackTone,
   CardMoveRequest,
+  CardSelection,
   CardOwner,
   CardPlacement,
   CardType,
@@ -34,6 +35,7 @@ import {
   SETUP_DEAL_STAGGER,
   ownerForTone,
   setupDealsBetween,
+  prizeTakesBetween,
   turnDrawsBetween,
   pendingMulliganDrawCounts,
   type SetupAnimationStage,
@@ -80,6 +82,7 @@ interface AnimatedCardsLayerProps {
       drop the page's engine cannot express. */
   placementPredicate?: PlacementPredicate;
   usableTrainerIds?: ReadonlySet<string>;
+  cardSelection?: CardSelection;
 }
 
 interface DropZoneSnapshot {
@@ -127,6 +130,7 @@ interface DragState {
   // so we can snap the previously previewed zone back to canonical layout
   // when the cursor moves to a different zone.
   previewZone: { owner: PlayerId; zone: "hand" | "bench" } | null;
+  evolutionTargetId: string | null;
 }
 
 interface PressRevealState {
@@ -141,6 +145,13 @@ interface SlotAnchor {
   width: number;
   height: number;
   index: number;
+}
+
+interface CardBadgeAnchor {
+  element: HTMLElement;
+  cardId: string;
+  x: number;
+  y: number;
 }
 
 interface SetupFlight {
@@ -477,8 +488,19 @@ function isPointerOverZone(point: { x: number; y: number }, zone: DropZoneSnapsh
   );
 }
 
-function shouldIgnorePointer(event: PointerEvent) {
-  return event.target instanceof Element && Boolean(event.target.closest(INTERACTIVE_SELECTOR));
+function shouldIgnorePointer(event: PointerEvent, drag?: DragState) {
+  if (!(event.target instanceof Element)) return false;
+  const control = event.target.closest<HTMLElement>(INTERACTIVE_SELECTOR);
+  if (!control) return false;
+  // The used-card gallery is also a play target. Only a Trainer dragged
+  // from this player's hand may bypass its normal button interaction.
+  return !(
+    drag?.moved &&
+    drag.cardType === "trainer" &&
+    drag.from.zone === "hand" &&
+    control.dataset.usedTrainersDropZone === "true" &&
+    control.dataset.cardOwner === drag.from.owner
+  );
 }
 
 export function AnimatedCardsLayer({
@@ -497,6 +519,7 @@ export function AnimatedCardsLayer({
   onMoveCard,
   placementPredicate,
   usableTrainerIds,
+  cardSelection,
 }: AnimatedCardsLayerProps) {
   const previousTurnRef = useRef(turnNumber);
   const previousSetupRef = useRef<SetupDealSnapshot | null>(null);
@@ -513,10 +536,12 @@ export function AnimatedCardsLayer({
   onSetupAnimationChangeRef.current = onSetupAnimationChange;
   onPendingMulliganDrawsChangeRef.current = onPendingMulliganDrawsChange;
   const mountRef = useRef<HTMLDivElement>(null);
+  const liftedMountRef = useRef<HTMLDivElement>(null);
   const trainerUseLabelRef = useRef<HTMLOutputElement>(null);
   const trainerUseCardIdRef = useRef<string | null>(null);
   const appRef = useRef<Application | null>(null);
   const sceneRef = useRef<Container | null>(null);
+  const liftedSceneRef = useRef<Container | null>(null);
   const viewsRef = useRef(new Map<string, CardView>());
   const descriptorsRef = useRef(new Map<string, CardDescriptor>());
   const dropZonesRef = useRef<DropZoneSnapshot[]>([]);
@@ -525,6 +550,7 @@ export function AnimatedCardsLayer({
   const hoveredCardIdRef = useRef<string | null>(null);
   const hoveredCardIdsRef = useRef(new Set<string>());
   const rafRef = useRef<number | null>(null);
+  const cardBadgesRef = useRef<CardBadgeAnchor[]>([]);
   const reducedMotionRef = useRef(false);
   const onMoveCardRef = useRef(onMoveCard);
   const boardRef = useRef(board);
@@ -532,6 +558,14 @@ export function AnimatedCardsLayer({
   // once (to the playmat node) and would otherwise capture a stale predicate.
   const placementPredicateRef = useRef(placementPredicate ?? canPlace);
   const usableTrainerIdsRef = useRef(usableTrainerIds);
+  const cardSelectionRef = useRef(cardSelection);
+  cardSelectionRef.current = cardSelection;
+  const blueBackPlayerRef = useRef(blueBackPlayer);
+  blueBackPlayerRef.current = blueBackPlayer;
+  const abilityCardIdRef = useRef<string | undefined>(undefined);
+  const selectedIdsRef = useRef(new Set<string>());
+  const selectionPhaseRef = useRef<CardSelection["phase"] | undefined>(undefined);
+  const selectionButtonsRef = useRef(new Map<string, HTMLButtonElement>());
 
   const descriptors = useMemo(
     () =>
@@ -772,6 +806,7 @@ export function AnimatedCardsLayer({
     const rootRect = root.getBoundingClientRect();
     const descriptorsById = descriptorsRef.current;
     const measuredCardIds = new Set<string>();
+    const cardCenters = new Map<string, { x: number; y: number }>();
 
     for (const element of root.querySelectorAll<HTMLElement>('[data-card-anchor="true"]')) {
       const cardId = element.dataset.cardId;
@@ -792,11 +827,16 @@ export function AnimatedCardsLayer({
       // resizes even for hovered cards.
       view.setPlaymatSize(rootRect.width, rootRect.height);
 
+      const rect = element.getBoundingClientRect();
+      cardCenters.set(cardId, {
+        x: rect.left - rootRect.left + rect.width / 2,
+        y: rect.top - rootRect.top + rect.height / 2,
+      });
+
       if (view.isDragging) {
         continue;
       }
 
-      const rect = element.getBoundingClientRect();
       const rotation = Number(element.dataset.cardRotation ?? "0") || 0;
       const target: CardViewTarget = {
         x: rect.left - rootRect.left + rect.width / 2,
@@ -816,6 +856,14 @@ export function AnimatedCardsLayer({
         view.hide();
       }
     }
+
+    clearCardBadges();
+    for (const element of root.querySelectorAll<HTMLElement>("[data-card-badge-for]")) {
+      const cardId = element.dataset.cardBadgeFor;
+      const center = cardId ? cardCenters.get(cardId) : undefined;
+      if (cardId && center) cardBadgesRef.current.push({ element, cardId, ...center });
+    }
+    positionCardBadges();
 
     dropZonesRef.current = [...root.querySelectorAll<HTMLElement>('[data-card-drop-zone="true"]')]
       .map((element) => {
@@ -838,6 +886,125 @@ export function AnimatedCardsLayer({
     positionTrainerUseLabel();
     measureSetupFlights();
     measureDiscardFlights();
+  }
+
+  function positionCardBadges() {
+    // Follow the rendered spring position rather than the pointer or slot,
+    // so badges stay with their card during drags, reorders, and release.
+    for (const badge of cardBadgesRef.current) {
+      const view = viewsRef.current.get(badge.cardId);
+      const center = view?.getCardCenter();
+      if (center) {
+        badge.element.style.transform = `translate3d(${center.x - badge.x}px, ${center.y - badge.y}px, 0)`;
+      }
+      badge.element.toggleAttribute(
+        "data-card-badge-lifted",
+        Boolean(liftedSceneRef.current && view?.container.parent === liftedSceneRef.current),
+      );
+    }
+    positionSelectionButtons();
+  }
+
+  function positionSelectionButtons() {
+    const root = playmatRef.current;
+    if (!root || selectionButtonsRef.current.size === 0) return;
+    for (const [id, button] of selectionButtonsRef.current) {
+      const view = viewsRef.current.get(id);
+      const target = view?.getTargetSnapshot();
+      const rect = target
+        ? undefined
+        : root
+            .querySelector<HTMLElement>(`[data-card-anchor="true"][data-card-id="${id}"]`)
+            ?.getBoundingClientRect();
+      const rootRect = rect ? root.getBoundingClientRect() : null;
+      const center =
+        view?.getCardCenter() ??
+        (rect &&
+          rootRect && {
+            x: rect.left - rootRect.left + rect.width / 2,
+            y: rect.top - rootRect.top + rect.height / 2,
+          });
+      if (!center) continue;
+      button.style.left = `${center.x}px`;
+      button.style.top = `${center.y}px`;
+      button.style.width = `${target?.width ?? rect?.width ?? 0}px`;
+      button.style.height = `${target?.height ?? rect?.height ?? 0}px`;
+    }
+  }
+
+  function finishingCardSelection(id: string) {
+    const selection = cardSelectionRef.current;
+    return (
+      (selection?.phase === "submitted" || selection?.phase === "shake") &&
+      selection.selectedIds.includes(id)
+    );
+  }
+
+  function syncCardSelection() {
+    const selection = cardSelectionRef.current;
+    const selected = new Set(selection?.selectedIds ?? []);
+    const glowing = new Set([...selectedIdsRef.current, ...selected]);
+    if (abilityCardIdRef.current) glowing.add(abilityCardIdRef.current);
+    if (selection?.abilityCardId) glowing.add(selection.abilityCardId);
+    for (const id of glowing) {
+      viewsRef.current.get(id)?.setSelected(selected.has(id));
+      const abilityTone =
+        id === selection?.abilityCardId
+          ? descriptorsRef.current.get(id)?.placement.owner === blueBackPlayerRef.current
+            ? "blue"
+            : "red"
+          : undefined;
+      viewsRef.current
+        .get(id)
+        ?.setAbilityGlow(
+          abilityTone === "blue" ? 0x2695ff : abilityTone === "red" ? 0xff3456 : null,
+        );
+      const anchor = playmatRef.current?.querySelector<HTMLElement>(
+        `[data-card-anchor="true"][data-card-id="${id}"]`,
+      );
+      if (anchor) {
+        if (selected.has(id)) anchor.dataset.adrenaSelected = "true";
+        else delete anchor.dataset.adrenaSelected;
+        if (abilityTone) anchor.dataset.adrenaAbilityGlow = abilityTone;
+        else delete anchor.dataset.adrenaAbilityGlow;
+      }
+    }
+    selectedIdsRef.current = selected;
+    abilityCardIdRef.current = selection?.abilityCardId;
+    if (selection?.phase === "shake" && selectionPhaseRef.current !== "shake") {
+      for (const id of selected) viewsRef.current.get(id)?.shake();
+    }
+    selectionPhaseRef.current = selection?.phase;
+    for (const [id, view] of viewsRef.current) {
+      if (!descriptorsRef.current.has(id) && !finishingCardSelection(id)) {
+        view.destroy();
+        viewsRef.current.delete(id);
+      }
+    }
+    positionSelectionButtons();
+  }
+
+  function clearCardBadges() {
+    for (const badge of cardBadgesRef.current) {
+      badge.element.style.removeProperty("transform");
+      badge.element.removeAttribute("data-card-badge-lifted");
+    }
+    cardBadgesRef.current = [];
+  }
+
+  function positionLiftedCards() {
+    const scene = sceneRef.current;
+    const liftedScene = liftedSceneRef.current;
+    if (!scene || !liftedScene) return;
+    // DOM badges sit above the board canvas. Lift dragged cards (and their
+    // attachments/flights) into a second canvas to preserve that depth order.
+    const positionView = (view: CardView) => {
+      const parent = view.zIndex >= 9_998 ? liftedScene : scene;
+      view.setRenderParent(parent);
+    };
+    for (const view of viewsRef.current.values()) positionView(view);
+    for (const flight of setupFlightsRef.current) positionView(flight.view);
+    for (const flight of discardFlightsRef.current) positionView(flight.view);
   }
 
   function discardTarget(owner: PlayerId): CardViewTarget | null {
@@ -976,7 +1143,7 @@ export function AnimatedCardsLayer({
       performance.now() / 1000,
       ...setupFlightsRef.current.map((flight) => flight.endsAt),
     );
-    for (const kind of ["prizes", "draw", "turn-draw"] as const) {
+    for (const kind of ["prizes", "draw", "prize-take", "turn-draw"] as const) {
       const batch = deals.filter((deal) => deal.kind === kind);
       if (!batch.length) continue;
       const duration = kind === "prizes" ? PRIZE_FLIP_DURATION : BONUS_DEAL_DURATION;
@@ -989,7 +1156,9 @@ export function AnimatedCardsLayer({
               ? "Face-down Prize card"
               : kind === "draw"
                 ? "Mulligan bonus card"
-                : "Start-of-turn card",
+                : kind === "prize-take"
+                  ? "Prize card"
+                  : "Start-of-turn card",
           textureUrl: cardBackImageUrl(currentSetupRef.current.backDesign, deal.tone),
           seed: index / batch.length,
           reducedMotion: false,
@@ -1024,13 +1193,16 @@ export function AnimatedCardsLayer({
     for (const flight of setupFlightsRef.current) {
       const owner = ownerForTone(flight.deal.tone, currentSetupRef.current.blueBackPlayer);
       let source = viewsRef.current.get(deckBackId(owner))?.getTargetSnapshot();
-      // The final draw removes the deck's back anchor. Its empty slot still
-      // gives the flight a source, including after a hot-seat handoff.
-      const emptyDeck = root.querySelector<HTMLElement>(
-        `[data-card-pile="deck"][data-card-owner="${owner}"] [data-deck-draw-source="true"]`,
+      // Empty Prize slots and an exhausted deck retain a measurable source,
+      // including after a hot-seat handoff.
+      const sourceSlot = root.querySelector<HTMLElement>(
+        flight.deal.kind === "prize-take"
+          ? `[data-prize-source="${flight.deal.prizeSlot}"][data-card-owner="${owner}"]`
+          : `[data-card-pile="deck"][data-card-owner="${owner}"] [data-deck-draw-source="true"]`,
       );
-      if (emptyDeck) {
-        const rect = emptyDeck.getBoundingClientRect();
+      if (flight.deal.kind === "prize-take") source = undefined;
+      if (sourceSlot) {
+        const rect = sourceSlot.getBoundingClientRect();
         const rootRect = root.getBoundingClientRect();
         source = {
           x: rect.left + rect.width / 2 - rootRect.left,
@@ -1180,7 +1352,7 @@ export function AnimatedCardsLayer({
       drag.moved &&
       drag.cardType === "trainer" &&
       drag.from.zone === "hand" &&
-      !shouldIgnorePointer(event) &&
+      !shouldIgnorePointer(event, drag) &&
       playmatZone !== undefined;
     const canUse =
       isTrainerPlay &&
@@ -1243,7 +1415,7 @@ export function AnimatedCardsLayer({
     }
 
     for (const [cardId, view] of viewsRef.current) {
-      if (!nextDescriptorMap.has(cardId)) {
+      if (!nextDescriptorMap.has(cardId) && !finishingCardSelection(cardId)) {
         view.destroy();
         viewsRef.current.delete(cardId);
       }
@@ -1277,7 +1449,11 @@ export function AnimatedCardsLayer({
   }
 
   function updateHover(point: { x: number; y: number }, event: PointerEvent) {
-    if (dragRef.current || shouldIgnorePointer(event)) {
+    // Selection buttons cover the card faces, so their pointer movement still
+    // drives card hover. Other controls continue to suppress card interaction.
+    const selectingCard =
+      event.target instanceof Element && event.target.closest(".adrena-brain-target") !== null;
+    if (dragRef.current || (shouldIgnorePointer(event) && !selectingCard)) {
       clearHover();
       return;
     }
@@ -1295,7 +1471,13 @@ export function AnimatedCardsLayer({
     if (view) {
       view.updateHoverPoint(point);
       const descriptor = descriptorsRef.current.get(view.id);
-      setCursor(descriptor?.draggable ? "grab" : "");
+      setCursor(
+        selectingCard
+          ? "pointer"
+          : descriptor?.draggable && !cardSelectionRef.current
+            ? "grab"
+            : "",
+      );
       return;
     }
 
@@ -1417,7 +1599,7 @@ export function AnimatedCardsLayer({
   }
 
   function handlePointerDown(event: PointerEvent) {
-    if (setupFlightsRef.current.length > 0) return;
+    if (setupFlightsRef.current.length > 0 || cardSelectionRef.current !== undefined) return;
     const root = playmatRef.current;
     if (!root || event.button !== 0 || shouldIgnorePointer(event)) {
       return;
@@ -1478,6 +1660,7 @@ export function AnimatedCardsLayer({
       attachedCards,
       reorderIndex: null,
       previewZone: null,
+      evolutionTargetId: null,
     };
     dragRef.current = dragState;
 
@@ -1486,6 +1669,8 @@ export function AnimatedCardsLayer({
     view.startPress();
     view.startDrag();
     startAttachedCardsDrag(dragState, viewPosition.x, viewPosition.y);
+    positionLiftedCards();
+    positionCardBadges();
     startPressedReveal(revealHostCardId ?? view.id, event.pointerId);
   }
 
@@ -1535,6 +1720,7 @@ export function AnimatedCardsLayer({
     view.dragTo(draggedX, draggedY);
     moveAttachedCardsWithHost(drag, draggedX, draggedY);
     updateTrainerPlayPreview(drag, point, event);
+    updateEvolutionPreview(drag, point, event);
 
     const nextPreviewZone = detectPreviewZone(drag, point);
 
@@ -1573,7 +1759,7 @@ export function AnimatedCardsLayer({
     // fewer card while the player is staging a play onto the bench. Whether
     // sliding into a NEW slot is even possible is the predicate's call: the
     // mock's canPlace allows hand/bench reorders, while /play's phase-aware
-    // gate rejects them (the engine owns zone order) — and previewing a
+    // gate allows bench reorders during setup and the viewer's turn. Previewing a
     // reorder that can never dispatch would be a lie, so an illegal source
     // reorder previews as "compact" too and the drop springs back.
     if (
@@ -1605,6 +1791,32 @@ export function AnimatedCardsLayer({
     drag.previewZone = nextPreviewZone;
   }
 
+  function updateEvolutionPreview(
+    drag: DragState,
+    point: { x: number; y: number },
+    event: PointerEvent,
+  ) {
+    let targetId: string | null = null;
+    if (drag.cardType === "pokemon" && drag.from.zone === "hand" && !shouldIgnorePointer(event)) {
+      const board = boardRef.current;
+      const card = board[drag.from.owner].hand.find((candidate) => candidate.id === drag.cardId);
+      const placement = findDropZone(point, drag.from, drag.cardType)?.placement;
+      if (placement?.owner === drag.from.owner) {
+        const target =
+          placement.zone === "active"
+            ? board[placement.owner].active
+            : placement.zone === "bench" && placement.index !== undefined
+              ? board[placement.owner].bench[placement.index]
+              : undefined;
+        if (target && card?.evolutionTargetIds?.includes(target.id)) targetId = target.id;
+      }
+    }
+    if (targetId !== null && targetId !== drag.evolutionTargetId) {
+      viewsRef.current.get(targetId)?.shake();
+    }
+    drag.evolutionTargetId = targetId;
+  }
+
   function detectPreviewZone(
     drag: DragState,
     point: { x: number; y: number },
@@ -1633,9 +1845,14 @@ export function AnimatedCardsLayer({
       // previews as a reorder or a compacted gap is the pointermove handler's
       // predicate call). External insertion requires the drop to be legal.
       const isSourceZone = drag.from.owner === owner && drag.from.zone === zone;
+      // An occupied bench slot can accept an evolution without adding a
+      // sibling. Only preview insertion when the whole zone accepts a new
+      // occupant, preserving the original slot index for evolution drops.
+      const previewTarget: CardPlacement =
+        zone === "bench" && !isSourceZone ? { owner, zone } : dz.placement;
       if (
         !isSourceZone &&
-        !placementPredicateRef.current(board, drag.from, dz.placement, drag.cardType)
+        !placementPredicateRef.current(board, drag.from, previewTarget, drag.cardType)
       ) {
         continue;
       }
@@ -2038,7 +2255,7 @@ export function AnimatedCardsLayer({
     clearTrainerPlayPreview();
     const view = viewsRef.current.get(drag.cardId);
     const dropZone =
-      drag.moved && !shouldIgnorePointer(event)
+      drag.moved && !shouldIgnorePointer(event, drag)
         ? findDropZone(point, drag.from, drag.cardType)
         : undefined;
     let toPlacement: CardPlacement | undefined = dropZone?.placement;
@@ -2128,6 +2345,7 @@ export function AnimatedCardsLayer({
       previousSetupRef.current.blueBackPlayer !== blueBackPlayer;
     const deals = [
       ...setupDealsBetween(previousSetupRef.current, snapshot),
+      ...prizeTakesBetween(previousSetupRef.current, snapshot, perspectivePlayer),
       ...turnDrawsBetween(previousSetupRef.current, snapshot),
     ];
     previousSetupRef.current = snapshot;
@@ -2148,18 +2366,29 @@ export function AnimatedCardsLayer({
     piles,
   ]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: selection synchronisation reads the current Pixi views through refs.
+  useLayoutEffect(() => {
+    syncCardSelection();
+  }, [cardSelection, descriptors]);
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: Pixi app lifecycle is tied to the mount node, not React render callbacks.
   useEffect(() => {
     const mountElement = mountRef.current;
-    if (!mountElement) {
+    const liftedMountElement = liftedMountRef.current;
+    if (!mountElement || !liftedMountElement) {
       return undefined;
     }
     const mount = mountElement;
+    const liftedMount = liftedMountElement;
 
     let disposed = false;
     let app: Application | null = null;
+    let liftedApp: Application | null = null;
     const scene = new Container();
     scene.sortableChildren = true;
+    const liftedScene = new Container();
+    liftedScene.sortableChildren = true;
+    let liftedWasVisible = false;
 
     ensureGsapPixi();
 
@@ -2170,13 +2399,22 @@ export function AnimatedCardsLayer({
       }
       advanceSetupFlights(time, ticker.deltaMS / 1000);
       advanceDiscardFlights(time, ticker.deltaMS / 1000);
+      positionLiftedCards();
+      positionCardBadges();
       positionTrainerUseLabel();
+      const liftedVisible = liftedScene.children.length > 0;
+      if (liftedVisible || liftedWasVisible) liftedApp?.render();
+      liftedWasVisible = liftedVisible;
     };
 
     async function start() {
-      let created: Application;
+      let created: Application | null = null;
+      let createdLifted: Application | null = null;
       try {
         created = await createPixiApplication(mount);
+        if (!disposed) {
+          createdLifted = await createPixiApplication(liftedMount, { autoStart: false });
+        }
       } catch (error) {
         // WebGL is unavailable/blocked or the context failed to create. Drop the
         // class that hides the static DOM card faces so the playmat degrades to
@@ -2187,22 +2425,32 @@ export function AnimatedCardsLayer({
         );
         playmatRef.current?.classList.remove("has-pixi-cards");
         clearSetupFlights();
+        created?.destroy({ removeView: true }, { children: true });
+        createdLifted?.destroy({ removeView: true }, { children: true });
+        return;
+      }
+
+      if (disposed) {
+        created.destroy({ removeView: true }, { children: true });
+        createdLifted?.destroy({ removeView: true }, { children: true });
         return;
       }
       app = created;
-
-      if (disposed) {
-        app.destroy({ removeView: true }, { children: true });
-        return;
-      }
+      liftedApp = createdLifted;
 
       app.stage.sortableChildren = true;
       app.stage.addChild(scene);
+      if (liftedApp) {
+        liftedApp.stage.addChild(liftedScene);
+        liftedMount.appendChild(liftedApp.canvas);
+      }
       app.ticker.add(tick);
       mount.appendChild(app.canvas);
       appRef.current = app;
       sceneRef.current = scene;
+      liftedSceneRef.current = liftedScene;
       syncViews(descriptorsRef.current.size ? [...descriptorsRef.current.values()] : descriptors);
+      syncCardSelection();
       scheduleMeasure();
     }
 
@@ -2215,6 +2463,7 @@ export function AnimatedCardsLayer({
         rafRef.current = null;
       }
       app?.ticker.remove(tick);
+      clearCardBadges();
       clearSetupFlights(false);
       clearDiscardFlights();
       for (const view of viewsRef.current.values()) {
@@ -2222,9 +2471,12 @@ export function AnimatedCardsLayer({
       }
       viewsRef.current.clear();
       scene.destroy({ children: true });
+      liftedScene.destroy({ children: true });
       app?.destroy({ removeView: true }, { children: true });
+      liftedApp?.destroy({ removeView: true }, { children: true });
       appRef.current = null;
       sceneRef.current = null;
+      liftedSceneRef.current = null;
     };
   }, []);
 
@@ -2303,6 +2555,24 @@ export function AnimatedCardsLayer({
   return (
     <>
       <div ref={mountRef} className="pixi-cards-layer" aria-hidden="true" />
+      <div
+        ref={liftedMountRef}
+        className="pixi-cards-layer pixi-cards-layer--lifted"
+        aria-hidden="true"
+      />
+      {cardSelection?.candidates.map((card) => (
+        <button
+          key={card.id}
+          ref={(element) => {
+            if (element) selectionButtonsRef.current.set(card.id, element);
+            else selectionButtonsRef.current.delete(card.id);
+          }}
+          type="button"
+          aria-label={`Select ${card.name} for Adrena-Brain`}
+          className="adrena-brain-target"
+          onClick={() => cardSelection.onSelect(card.id)}
+        />
+      ))}
       <output
         ref={trainerUseLabelRef}
         className="trainer-use-label"

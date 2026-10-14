@@ -21,6 +21,7 @@
 import type { ApplyResult, GameAction } from "./actions";
 import { err, ok } from "./actions";
 import { attack, promote, takePrizes } from "./attack";
+import { reorderBench } from "./bench";
 import {
   attachTool,
   playTrainer,
@@ -20273,6 +20274,20 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.529.0 → **0.530.0** (D647 — THE MERGE OF `main` INTO `mega-ingest`: SIX ENGINE / API COMMITS
+    THAT NEVER BUMPED THE ENGINE (main stayed at 0.464.0); `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49
+    AT D647")). bench.ts: the NEW `GameAction` member `reorderBench { seat, uid, index }` (drag-reorder during
+    `setup:place` before ready and on the actor's `turn:action`; locked during interrupts; spends no allowance;
+    `MATCH_ACTION_DISPOSITION` "supported"). turn.ts: `evolve`'s checks split into `checkEvolution`, and the NEW export
+    `evolutionTargetUids` (the legal hand-evolution hosts, read by redact.ts for the wire's `evolutionTargetIds`).
+    redact.ts: own-hand Pokémon carry `stage` / `evolutionTargetIds`; an Adrena-Brain `choosePokemon` prompt carries
+    `counterTransfer { upTo, abilitySourceUid?, from? }`. log.ts: a `TRAINER_PLAYED` / `TOOL_ATTACHED` row carries the
+    optional `playedTrainer { id, cardId, name }` (the used-Trainers pile). registry.ts: Counter Catcher `sv04-160` /
+    `sv04-264` (`trainerPlayableIf: morePrizesThanOpponent` + `gust`), Arven ×5 (`searchDeck` with `also`, an Item and a
+    Tool, revealed) and Miraidon ex ×6 "Tandem Unit" (once per turn from either spot, up to 2 Basic {L} onto the Bench)
+    — 13 ROTATED keys, user-requested, recorded in the census's `CENSUS_NOT_LEGAL`; no id or text collides with a
+    mega-ingest row. Prize automation, the dice and the Lua client are web-only. `arvenMiraidon.test.ts`, `bench.test.ts`,
+    `counterCatcher.test.ts`.)
     🆕🆕🆕 engineVersion 0.528.0 → **0.529.0** (D646 — BACKTRACK BADGE, THE LAST UNBUILT LEGAL `me` PRINTING: 1 TEXT /
     1 PRINTING; `MATCH_RECORD_VERSION` 48 → 49 WITH A v48 MIGRATION, A RE-STAMP (apps/api match.ts "48 → 49 AT D646")).
     registry.ts: Backtrack Badge `me05-074` (Tool) on the NEW `PassiveEffects.reflipAttackCoins` (continuous.ts
@@ -25816,7 +25831,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.529.0";
+export const engineVersion = "0.530.0";
 
 export type {
   ApplyResult,
@@ -25834,6 +25849,7 @@ export type {
   PlayTrainerAction,
   PromoteAction,
   RareCandyAction,
+  ReorderBenchAction,
   ResolveEffectAction,
   RetreatAction,
   SetupDrawExtraAction,
@@ -26092,7 +26108,7 @@ export type {
 } from "./types";
 /** Exported for effect handlers: the shared turn gate every in-turn action
     runs first, and the M2 cost matcher. */
-export { turnGate } from "./turn";
+export { turnGate, evolutionTargetUids } from "./turn";
 /** 🆕🆕🆕 D576 — the actor's own spots whose top card (an Antique Fossil) may be discarded from
     play right now: the ONE offer funnel GameHud's buttons and the wire's `discardable` share. */
 export { discardableTargets } from "./turn";
@@ -26165,6 +26181,8 @@ function dispatchAction(state: GameState, action: GameAction): ApplyResult {
       return setupPlaceBench(state, action);
     case "setupReady":
       return setupReady(state, action);
+    case "reorderBench":
+      return reorderBench(state, action);
     case "attachEnergy":
       return attachEnergy(state, action);
     case "playBasicToBench":

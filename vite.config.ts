@@ -49,7 +49,28 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd());
   const apiOrigin = (env.VITE_API_ORIGIN ?? "http://localhost:8787").replace(/\/+$/, "");
   return {
-    plugins: [react(), tailwindcss(), cspPlugin(buildCsp(apiOrigin))],
+    plugins: [
+      {
+        name: "lua-home",
+        configureServer(server) {
+          server.middlewares.use((req, res, next) => {
+            const [path, query] = (req.url ?? "").split("?");
+            const search = query ? `?${query}` : "";
+            if (path === "/lua") {
+              res.writeHead(302, { Location: `/lua/${search}` });
+              res.end();
+              return;
+            }
+            if (path === "/lua/") req.url = `/lua/index.html${search}`;
+            if (path === "/lua/account.js") req.url = "/src/features/lua/accountBridge.ts";
+            next();
+          });
+        },
+      },
+      react(),
+      tailwindcss(),
+      cspPlugin(buildCsp(apiOrigin)),
+    ],
     test: {
       // Default to the fast Node environment for the pure-logic suites (reducers,
       // deck/z-index math, parsing). Component/DOM tests opt into jsdom per file
@@ -70,7 +91,10 @@ export default defineConfig(({ mode }) => {
       // a //# sourceMappingURL that exposes source in end-users' devtools.
       sourcemap: "hidden",
       rollupOptions: {
+        input: { main: "index.html", "lua-account": "src/features/lua/accountBridge.ts" },
         output: {
+          entryFileNames: (chunk) =>
+            chunk.name === "lua-account" ? "lua/account.js" : "assets/[name]-[hash].js",
           // Split the large, rarely-changing vendor libs into their own chunks so
           // an app-code edit doesn't bust the Pixi/GSAP/React cache entries.
           manualChunks(id: string) {

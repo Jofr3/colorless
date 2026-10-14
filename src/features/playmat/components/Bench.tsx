@@ -5,9 +5,9 @@ import {
   DEFAULT_ATTACHED_VISIBLE_STICK,
   FRAME_CLASS,
 } from "../constants";
-import type { CardModel, PlayerId, SidePosition } from "../types";
+import type { CardBackTone, CardModel, PlayerId, SidePosition } from "../types";
 import { shouldCollapseBenchAttachments } from "../utils/benchLayout";
-import { DamageChip, PlaymatCard, StatusChips } from "./Card";
+import { DamageDice, PlaymatCard, StatusChips } from "./Card";
 
 // Mirrors the visible-strip math in playmat.css `.playmat-card__attached`
 // (card-h * scale * stick). Kept here so we can reserve that space in
@@ -20,11 +20,13 @@ export function Bench({
   owner,
   side,
   benchLimit,
+  tone,
 }: {
   cards: CardModel[];
   owner: PlayerId;
   side: SidePosition;
   benchLimit: number;
+  tone: CardBackTone;
 }) {
   const shouldCollapseAttachments = shouldCollapseBenchAttachments(cards, benchLimit);
   const collapsedBenchOverlap = `calc(var(--card-h) * ${ATTACHED_CARD_SCALE} * -${CROWDED_BENCH_ATTACHED_ENERGY_STICK})`;
@@ -63,10 +65,10 @@ export function Bench({
           const battle = card.battle;
           return (
             // Outer wrapper carries the slot's layout (width + attachment
-            // margins) but NO z-index, so the damage chip's z-[61] resolves
+            // margins) but NO z-index, so the damage dice's z-[61] resolves
             // in the playmat section's stacking context, above the Pixi
-            // canvas (z-60). The chip must stay a sibling of the z-indexed
-            // drop wrapper below — inside it, the slot z would cap the chip.
+            // canvas (z-60). The dice must stay a sibling of the z-indexed
+            // drop wrapper below — inside it, the slot z would cap the dice.
             <div
               key={card.id}
               className="relative"
@@ -104,10 +106,14 @@ export function Bench({
                 />
               </div>
               {battle !== undefined && (
-                <DamageChip battle={battle} className="-right-1.5 -top-1.5" />
+                <DamageDice battle={battle} cardId={card.id} tone={tone} />
               )}
               {battle?.conditions !== undefined && (
-                <StatusChips conditions={battle.conditions} className="-left-1.5 -top-1.5" />
+                <StatusChips
+                  conditions={battle.conditions}
+                  cardId={card.id}
+                  className="-left-1.5 -top-1.5"
+                />
               )}
             </div>
           );

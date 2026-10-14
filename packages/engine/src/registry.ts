@@ -4383,6 +4383,13 @@ const NEST_BALL: CardProgram = {
     (Supporter — the gust archetype) */
 const BOSSS_ORDERS: CardProgram = { trainer: [{ op: "gust" }] };
 
+/** Counter Catcher — play only while you have more Prize cards remaining than
+    your opponent, then switch in one of their Benched Pokémon. */
+const COUNTER_CATCHER: CardProgram = {
+  trainerPlayableIf: { kind: "morePrizesThanOpponent" },
+  trainer: [{ op: "gust" }],
+};
+
 /** "Switch your Active Pokémon with 1 of your Benched Pokémon." (Item)
 
     ⚠️ D206 — ALL THREE PRINTINGS OF THIS SENTENCE ARE `legal_standard = 0`
@@ -6491,6 +6498,22 @@ const LARRYS_SKILL: CardProgram = {
         { filter: { kind: "supporter" }, max: 1 },
         { filter: { kind: "basicEnergy" }, max: 1 },
       ],
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** Arven's rotated printings remain usable in existing decks. One search with
+    separate caps lets the player take an Item, a Tool, either one, or neither. */
+const ARVEN: CardProgram = {
+  trainer: [
+    {
+      op: "searchDeck",
+      filter: { kind: "item" },
+      dest: "hand",
+      max: 1,
+      reveal: true,
+      also: [{ filter: { kind: "toolCard" }, max: 1 }],
     },
     { op: "shuffleDeck" },
   ],
@@ -11641,6 +11664,28 @@ const LILLIES_PEARL: CardProgram = {
 //    ENERGY predicate. `ownerPrefix.test.ts` names each with its missing piece
 //    and asserts the id still unbuilt. This is D186's shape repeating: a gate
 //    priced at 78 whose true yield was 12.
+
+/** Miraidon ex — Tandem Unit. Each copy may search once per turn from either
+    spot; the shared search interpreter clamps the take to available Bench space.
+    Photon Blaster's printed damage and next-turn lock already derive from text. */
+const TANDEM_UNIT: CardProgram = {
+  abilities: [
+    {
+      name: "Tandem Unit",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "searchDeck",
+          filter: { kind: "typedPokemon", pokemonType: "Lightning", stage: "basic" },
+          dest: "bench",
+          max: 2,
+        },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
 
 /** Cynthia's Gabite sv10-103 — "Champion's Call": "Once during your turn, you
     may search your deck for a Cynthia's Pokémon, reveal it, and put it into your
@@ -19538,6 +19583,9 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-172": BOSSS_ORDERS,
   "sv02-248": BOSSS_ORDERS,
   "sv02-265": BOSSS_ORDERS,
+  // Counter Catcher (Paradox Rift, regular and gold printings)
+  "sv04-160": COUNTER_CATCHER,
+  "sv04-264": COUNTER_CATCHER,
   // Switch — ⚠️ rotated OUT of Standard (see the program's doc).
   "sv01-194": SWITCH,
   // D206 — the "Switch … . If you do, …" seam. Surfer (Supporter, 2 legal) and
@@ -19900,6 +19948,18 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08.5-115": LARRYS_SKILL, // Larry's Skill — discard hand, search a Pokémon + a Supporter + a Basic Energy → hand
   "sv08.5-139": LARRYS_SKILL, // Larry's Skill (reprint)
   "sv06-163": SECRET_BOX, // Secret Box — discard 3 other cards, search an Item + a Tool + a Supporter + a Stadium → hand
+  // Explicitly support these rotated cards in existing decks as well as Standard cards.
+  "sv01-166": ARVEN,
+  "sv01-235": ARVEN,
+  "sv01-249": ARVEN,
+  "sv03-186": ARVEN,
+  "sv04.5-235": ARVEN,
+  "sv01-081": TANDEM_UNIT,
+  "sv01-227": TANDEM_UNIT,
+  "sv01-244": TANDEM_UNIT,
+  "sv01-253": TANDEM_UNIT,
+  "sv04.5-243": TANDEM_UNIT,
+  "svp-028": TANDEM_UNIT,
   // — 🆕 D337 op-slice: the OTHER multi-noun grammar, and it is D336's inverse —
   //   ONE FLAT cap over a UNION (`anyOf`) where `also` is one cap PER NOUN. 3 legal
   //   printings on 1 card, and `anyOf`'s FIRST consumer on this op (Lana's Aid reads

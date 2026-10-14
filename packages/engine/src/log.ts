@@ -56,7 +56,15 @@ export function logFromEvents(events: readonly GameEvent[], ctx: LogContext): Se
   const entries: SeatLogEntry[] = [];
   for (const event of events) {
     const formatted = formatEvent(event, ctx);
-    if (formatted !== null) entries.push(...formatted);
+    if (formatted === null) continue;
+    if (event.type === "TRAINER_PLAYED" || event.type === "TOOL_ATTACHED") {
+      const card = cardOfUid(ctx.state, event.uid);
+      const first = formatted[0];
+      if (card && first?.kind === "action") {
+        first.playedTrainer = { id: event.uid, cardId: card.id, name: card.name };
+      }
+    }
+    entries.push(...formatted);
   }
   return entries;
 }

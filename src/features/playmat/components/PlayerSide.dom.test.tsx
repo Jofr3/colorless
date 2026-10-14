@@ -2,7 +2,14 @@
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { NO_CONDITIONS } from "../types";
-import type { BattleConditions, BattleState, CardModel, PlayerBoard } from "../types";
+import type {
+  BattleConditions,
+  BattleState,
+  CardBackTone,
+  CardModel,
+  PlayerBoard,
+  PlayerId,
+} from "../types";
 import { PlayerSide } from "./PlayerSide";
 
 afterEach(cleanup);
@@ -40,7 +47,7 @@ const renderSide = (board: PlayerBoard) =>
   render(<PlayerSide owner="you" side="bottom" player={board} benchLimit={5} />).container;
 
 const chipsOf = (container: HTMLElement) =>
-  Array.from(container.querySelectorAll<HTMLElement>("[data-damage-chip]"));
+  Array.from(container.querySelectorAll<HTMLElement>("[data-damage-dice]"));
 
 const statusStacksOf = (container: HTMLElement) =>
   Array.from(container.querySelectorAll<HTMLElement>("[data-status-chips]"));
@@ -62,10 +69,65 @@ function expectNoStackingContextAncestors(container: HTMLElement, element: HTMLE
   }
 }
 
-describe("damage chips", () => {
-  it("renders one chip per damaged in-play Pokémon, none at zero damage", () => {
+describe("damage dice", () => {
+  it.each<[PlayerId, PlayerId, CardBackTone]>([
+    ["you", "you", "blue"],
+    ["opponent", "you", "red"],
+    ["you", "opponent", "red"],
+    ["opponent", "opponent", "blue"],
+  ])("colors %s's Active and Bench dice with %s as Player 1", (owner, blueBackPlayer, tone) => {
+    const { container, rerender } = render(
+      <PlayerSide
+        owner={owner}
+        blueBackPlayer={blueBackPlayer}
+        side="bottom"
+        player={player}
+        benchLimit={5}
+      />,
+    );
+    const expectTone = () => {
+      const dice = [...container.querySelectorAll<HTMLElement>(".damage-die")];
+      expect(dice.map((die) => die.dataset.tone)).toEqual([tone, tone]);
+    };
+    expectTone();
+    rerender(
+      <PlayerSide
+        owner={owner}
+        blueBackPlayer={blueBackPlayer}
+        side="top"
+        player={player}
+        benchLimit={5}
+      />,
+    );
+    expectTone();
+  });
+
+  it("renders dice on each damaged in-play Pokémon, none at zero damage", () => {
     const chips = chipsOf(renderSide(player));
-    expect(chips.map((chip) => chip.textContent)).toEqual(["30/120", "50"]);
+    expect(chips.map((chip) => chip.querySelector<HTMLElement>(".damage-die")?.dataset.value)).toEqual(["3", "5"]);
+    expect(chips.map((chip) => chip.dataset.damageTotal)).toEqual(["30", "50"]);
+  });
+
+  it.each<[number, number[]]>([
+    [10, [1]],
+    [60, [6]],
+    [80, [6, 2]],
+    [130, [6, 6, 1]],
+    [250, [6, 6, 6, 6, 1]],
+  ])("represents %i damage with dice showing %j", (damage, values) => {
+    const container = renderSide({
+      ...player,
+      active: card("active-1", { damage, hp: 1000, conditions: NO_CONDITIONS }),
+      bench: [],
+    });
+    const dice = [...container.querySelectorAll<HTMLElement>(".damage-die")];
+    expect(dice.map((die) => Number(die.dataset.value))).toEqual(values);
+    expect(dice.reduce((sum, die) => sum + Number(die.dataset.damageValue), 0)).toBe(damage);
+    for (const die of dice) {
+      const face = die.querySelector(`[data-face="${die.dataset.value}"]`);
+      expect(face?.querySelectorAll(".tabletop-die-pip")).toHaveLength(Number(die.dataset.value));
+      expect(die.querySelector(".tabletop-die-cube")?.getAttribute("style")).toContain("animation: none");
+    }
   });
 
   it("renders no chips when battle is absent (mock board)", () => {
@@ -92,7 +154,7 @@ describe("damage chips", () => {
       );
       expect(slots.map((slot) => slot.style.zIndex)).toEqual(["2", "1"]);
       for (const slot of slots) {
-        expect(slot.querySelector("[data-damage-chip]")).toBeNull();
+        expect(slot.querySelector("[data-damage-dice]")).toBeNull();
         expect(slot.querySelector("[data-status-chips]")).toBeNull();
       }
       cleanup();

@@ -179,6 +179,17 @@ export function canPlace(
 
   const player = board[source.owner];
 
+  // Playing from the hand creates a new bench occupant, never an evolution.
+  const sourceCard = cardAt(board, source);
+  if (
+    source.zone === "hand" &&
+    target.zone === "bench" &&
+    sourceType === "pokemon" &&
+    sourceCard?.stage != null &&
+    sourceCard.stage !== "Basic"
+  )
+    return false;
+
   // Bench occupancy — only matters when adding a new card to the bench.
   if (target.zone === "bench" && source.zone !== "bench") {
     if (player.bench.length >= benchLimitFor(board, source.owner)) return false;

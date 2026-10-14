@@ -41,6 +41,20 @@ afterEach(() => {
 });
 
 describe("Login page", () => {
+  it("keeps the Lua return destination through registration and Google login", async () => {
+    const { impl } = stubFetch({
+      ...ANONYMOUS_ME,
+      "GET /auth/oauth/google": () => json({ error: "provider not configured" }, 503),
+    });
+    renderLogin("/login?returnTo=lua");
+    expect(screen.getByRole("link", { name: "Create one" }).getAttribute("href")).toBe(
+      "/register?returnTo=lua",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Google" }));
+    await screen.findByText("Google sign-in isn't set up yet.");
+    const request = impl.mock.calls.find(([url]) => String(url).includes("/auth/oauth/google"));
+    expect(new URL(String(request?.[0])).searchParams.get("redirect")).toBe("/lua/?account");
+  });
   it("renders the form fields, OAuth buttons, and the register link", async () => {
     stubFetch(ANONYMOUS_ME);
     renderLogin();

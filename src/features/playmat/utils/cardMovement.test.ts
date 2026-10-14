@@ -72,6 +72,20 @@ const stadiumSlot = (): CardPlacement => ({ owner: "global", zone: "stadium" });
 const fullBench = () => [poke("b1"), poke("b2"), poke("b3"), poke("b4"), poke("b5")];
 const ids = (cards: CardModel[]) => cards.map((c) => c.id);
 
+it.each(["Stage1", "Stage2", "VMAX", "VSTAR"])(
+  "rejects inserting a %s from hand onto the sandbox Bench",
+  (stage) => {
+    const board = makeBoard({
+      you: { hand: [{ ...poke("evolution"), stage }], bench: [poke("b1")] },
+    });
+    for (const to of [bench(), bench(0), bench(1)]) {
+      expect(canPlace(board, hand(0), to, "pokemon")).toBe(false);
+      expect(moveCardOnBoard(board, { cardId: "evolution", from: hand(0), to })).toBe(board);
+    }
+    expect(canPlace(board, hand(0), hand(1), "pokemon")).toBe(true);
+  },
+);
+
 describe("moveCardOnBoard — hand → active", () => {
   it("places a Pokémon into an empty active slot", () => {
     const board = makeBoard({ you: { hand: [poke("p1")] } });

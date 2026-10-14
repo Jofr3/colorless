@@ -1990,10 +1990,10 @@ describe("effect:choose — the discard-energy dialog (discardEnergy, M5)", () =
     expect(screen.getByRole("dialog", { name: "Discard Energy" })).toBeTruthy();
     // The card's own printed sentence, about the viewer's OWN Pokémon.
     expect(screen.getByText("Discard an Energy from this Pokémon.")).toBeTruthy();
-    // Two attached prints → two candidates, not the three cards on the board —
-    // asserted through the group, which pins the host legend at the same time.
+    // Show all three physical cards. The two identical Fire copies resolve to
+    // one engine candidate, but either remains clickable in the visual picker.
     const group = screen.getByRole("group", { name: "Paldean Tauros · Active" });
-    expect(group.querySelectorAll("button")).toHaveLength(2);
+    expect(group.querySelectorAll("button")).toHaveLength(3);
     // No `opponent` marker: this host is the viewer's own Active.
     expect(screen.queryByRole("group", { name: /opponent/ })).toBeNull();
 

@@ -609,6 +609,58 @@ export function playBasicToBench(state: GameState, action: PlayBasicToBenchActio
     (each Pokémon may evolve once — enforced by turnPlayed, below), and it
     consumes NONE of the energy/retreat allowances. */
 export function evolve(state: GameState, action: EvolveAction): ApplyResult {
+  const placement = checkEvolution(state, action);
+  if ("ok" in placement) return placement;
+  const { side, target, benchIndex, targetTopUid } = placement;
+  // §10 — the evolution card leaves hand; the shared placement (below) puts it
+  // on the stack, carries over damage/energy/tools, clears conditions/markers,
+  // resets turnPlayed, and runs the evolve-below-HP KO check + the on-evolve
+  // trigger. Rare Candy (§7.1, cardplay.ts) reuses the SAME placement to skip
+  // the Stage 1 — the two card plays differ only in what they validate first.
+  const stateAfterHand = withSide(state, action.seat, {
+    ...side,
+    hand: without(side.hand, action.uid),
+  });
+  return placeEvolution(
+    stateAfterHand,
+    action.seat,
+    action.target,
+    benchIndex,
+    target,
+    targetTopUid,
+    action.uid,
+    [],
+  );
+}
+
+/** Legal hand-evolution hosts, using the action's checks without running its
+    placement, triggers or effects. Only the acting player's hand is queried. */
+export function evolutionTargetUids(state: GameState, seat: Seat, uid: string): string[] {
+  if (state.phase.kind !== "turn:action" || state.phase.seat !== seat) return [];
+  const card = cardOfUid(state, uid);
+  if (card === undefined || evolveFromOf(card) === null) return [];
+  const side = state.players[seat];
+  const targets: PokemonTarget[] = [
+    ...(side.active === null ? [] : [{ spot: "active" } as const]),
+    ...side.bench.map((_, index) => ({ spot: "bench" as const, index })),
+  ];
+  return targets.flatMap((target) => {
+    const checked = checkEvolution(state, { type: "evolve", seat, uid, target });
+    return "ok" in checked ? [] : [checked.targetTopUid];
+  });
+}
+
+function checkEvolution(
+  state: GameState,
+  action: EvolveAction,
+):
+  | ApplyResult
+  | {
+      side: PlayerSide;
+      target: InPlayPokemon;
+      benchIndex: number;
+      targetTopUid: string;
+    } {
   const rejected = turnGate(state, action);
   if (rejected !== null) return rejected;
 
@@ -762,25 +814,7 @@ export function evolve(state: GameState, action: EvolveAction): ApplyResult {
     );
   }
 
-  // §10 — the evolution card leaves hand; the shared placement (below) puts it
-  // on the stack, carries over damage/energy/tools, clears conditions/markers,
-  // resets turnPlayed, and runs the evolve-below-HP KO check + the on-evolve
-  // trigger. Rare Candy (§7.1, cardplay.ts) reuses the SAME placement to skip
-  // the Stage 1 — the two card plays differ only in what they validate first.
-  const stateAfterHand = withSide(state, action.seat, {
-    ...side,
-    hand: without(side.hand, action.uid),
-  });
-  return placeEvolution(
-    stateAfterHand,
-    action.seat,
-    action.target,
-    benchIndex,
-    target,
-    targetTopUid,
-    action.uid,
-    [],
-  );
+  return { side, target, benchIndex, targetTopUid };
 }
 
 /** §10/§7.1 — the shared evolution PLACEMENT, used by both `evolve` (adjacent

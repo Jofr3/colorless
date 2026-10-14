@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 // 🆕🆕🆕 D548 — CRESCENT PURGE ON THE **ONLINE** SURFACE: the `choosePrize` dialog (the
-// TWELFTH wire prompt kind) and the face-up tile in the ko:takePrizes picker.
+// TWELFTH wire prompt kind) and automatic collection of face-up prizes.
 //
 // ⚠️ THE COVERAGE PIN IS ELSEWHERE: `OnlineHud.chooseAttack.dom.test.tsx` reads
 // `redactedEffectPromptSchema.options` live and renders every kind; this file asserts
-// what THESE two dialogs do. The wire payloads are the shapes `crescentPurge.test.ts` §8
+// what these two decisions do. The wire payloads are the shapes `crescentPurge.test.ts` §8
 // drives out of the real engine (indices only; `{index, card}` per face-up prize).
 
 import type { RedactedGame } from "@luminous/schema";
@@ -80,36 +80,21 @@ describe("🛑 OnlineHud choosePrize — the twelfth wire prompt kind", () => {
   });
 });
 
-describe("🛑 OnlineHud ko:takePrizes paints a FACE-UP prize and keeps it pickable", () => {
-  it("🛑 slot 3 shows its card, is a legal pick, and dispatches index 2", () => {
+describe("online automatic prize collection", () => {
+  it("includes a face-up prize without opening a picker", () => {
     const onAction = vi.fn();
     render(
       <OnlineHud
-        game={wireGame({ kind: "ko:takePrizes", count: 1 }, { prizesRemaining: 4, faceUpPrizes: [SHOWN] })}
+        game={wireGame({ kind: "ko:takePrizes", count: 2 }, { prizesRemaining: 4, faceUpPrizes: [SHOWN] })}
         waitingOn="you"
         activePlaced={false}
         onAction={onAction}
       />,
     );
-    expect(screen.getByText(/face-up ones included/)).toBeTruthy();
-    expect(screen.getAllByRole("button", { name: /^Prize \d$/ })).toHaveLength(3);
-    const faceUp = screen.getByRole("button", { name: "Prize 3 — Ultra Ball (face up)" });
-    expect(faceUp.textContent).toBe("Ultra Ball");
-    fireEvent.click(faceUp);
-    fireEvent.click(screen.getByRole("button", { name: /Take 1\/1/ }));
-    expect(onAction).toHaveBeenCalledWith({ type: "takePrizes", seat: "p1", prizeIndices: [2] });
-    // The caption's face-up clause is CONDITIONAL: the same picker over a row with NO
-    // face-up slot (every normal game) says nothing about face-up prizes.
-    cleanup();
-    render(
-      <OnlineHud
-        game={wireGame({ kind: "ko:takePrizes", count: 1 }, { prizesRemaining: 4 })}
-        waitingOn="you"
-        activePlaced={false}
-        onAction={vi.fn()}
-      />,
-    );
-    expect(screen.getByText(/to add to your hand\.$/)).toBeTruthy();
-    expect(screen.queryByText(/face-up/)).toBeNull();
+    expect(screen.queryByRole("dialog", { name: "Take prizes" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Prize / })).toBeNull();
+    expect(onAction).toHaveBeenCalledExactlyOnceWith({
+      type: "takePrizes", seat: "p1", prizeIndices: [2, 3],
+    });
   });
 });

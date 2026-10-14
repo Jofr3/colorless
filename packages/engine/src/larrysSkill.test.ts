@@ -51,11 +51,9 @@ import {
 //       TOTAL 8 printings / 3 legal.  5 + 2 + 1 = 8 ✅   0 + 2 + 1 = 3 ✅
 //
 //       **THE ARITY AXIS STARTS AT TWO AND ITS TWO IS ENTIRELY OUT OF
-//       STANDARD.** Arven is measured and deliberately NOT built — D187's rule
-//       that an arm transfers across sets and a registry ROW does not, legality
-//       being a hard filter on a row keyed by card id. It is recorded because it
-//       is the evidence that decided the field's SHAPE, not because it is
-//       buildable.
+//       STANDARD.** Arven was left unbuilt at D336 under D187's Standard-only
+//       scope. User-requested support on 2026-10-09 now adds those five rotated
+//       printings; arvenMiraidon.test.ts drives the same two-group search shape.
 //
 //   (c) THE WORD ORDER AND THE ARTICLE, probed rather than assumed:
 //       `', and an '` returns **0 rows over all three columns**, so no printing

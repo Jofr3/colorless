@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyAction } from "./index";
+import { applyAction, evolutionTargetUids } from "./index";
 import type { EvolveAction, GameState, Seat } from "./index";
 import {
   EVOLVE_DECK,
@@ -63,6 +63,54 @@ function withStage1InHand(state: GameState, seat: Seat): [GameState, string] {
 function evolveActive(seat: Seat, uid: string): EvolveAction {
   return { type: "evolve", seat, uid, target: { spot: "active" } };
 }
+
+describe("evolution preview targets", () => {
+  it("lists matching Active and Bench hosts without changing the game", () => {
+    const [state, uid] = withStage1InHand(evolveBoard(SEED, { benchP1: 2 }), "p1");
+    const before = JSON.stringify(state);
+    deepFreeze(state);
+    expect(evolutionTargetUids(state, "p1", uid)).toEqual([
+      activeUid(state, "p1"),
+      benchTopUid(state, "p1", 0),
+      benchTopUid(state, "p1", 1),
+    ]);
+    expect(JSON.stringify(state)).toBe(before);
+    expect(evolutionTargetUids(state, "p2", uid)).toEqual([]);
+    expect(evolutionTargetUids(state, "p1", "missing")).toEqual([]);
+  });
+
+  it("excludes first-turn hosts and Pokémon played or evolved this turn", () => {
+    const [firstTurn, earlyUid] = withStage1InHand(evolveBoard(SEED, { turn: 1 }), "p1");
+    expect(evolutionTargetUids(firstTurn, "p1", earlyUid)).toEqual([]);
+    const [state, uid] = withStage1InHand(evolveBoard(SEED), "p1");
+    const active = state.players.p1.active;
+    if (!active) throw new Error("Missing Active");
+    const fresh = {
+      ...state,
+      players: {
+        ...state.players,
+        p1: { ...state.players.p1, active: { ...active, turnPlayed: state.turn } },
+      },
+    };
+    expect(evolutionTargetUids(fresh, "p1", uid)).toEqual([]);
+    let evolved = mustApply(state, evolveActive("p1", uid)).state;
+    evolved = handFromDeck(evolved, "p1", "fix-stage2", 1);
+    const stage2Uid = handUid(evolved, "p1", "fix-stage2");
+    expect(evolutionTargetUids(evolved, "p1", stage2Uid)).toEqual([]);
+    evolved = mustApply(evolved, { type: "endTurn", seat: "p1" }).state;
+    evolved = mustApply(evolved, { type: "endTurn", seat: "p2" }).state;
+    expect(evolutionTargetUids(evolved, "p1", stage2Uid)).toEqual([uid]);
+    expect(evolutionTargetUids(evolved, "p1", earlyUid)).toEqual([]);
+  });
+
+  it("does not offer Basics as evolutions or skip directly to Stage 2", () => {
+    let state = evolveBoard(SEED);
+    state = handFromDeck(state, "p1", "fix-stage2", 1);
+    state = handFromDeck(state, "p1", "fix-basic-1", 1);
+    expect(evolutionTargetUids(state, "p1", handUid(state, "p1", "fix-stage2"))).toEqual([]);
+    expect(evolutionTargetUids(state, "p1", handUid(state, "p1", "fix-basic-1"))).toEqual([]);
+  });
+});
 
 describe("evolution: the happy path (§10)", () => {
   it("evolves the Active: new top card, stack grows, card leaves hand", () => {

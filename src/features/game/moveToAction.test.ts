@@ -10,6 +10,7 @@ import {
   driveSetup,
   handUid,
   must,
+  mustApply,
   mustCreate,
 } from "../../../packages/engine/src/testFixtures";
 import type { CardMoveRequest, CardPlacement } from "../playmat/types";
@@ -168,20 +169,23 @@ describe("moveToAction — turn:action", () => {
     expect(action).toEqual({ type: "evolve", seat: "p1", uid, target: { spot: "active" } });
   });
 
-  it("routes hand Pokémon → an OCCUPIED bench slot (an evolve gesture, §10)", () => {
+  it("plays a Basic over an occupied Bench slot without replacing or evolving it", () => {
     const state = turnState();
     const uid = handUid(state, "p1", "fix-basic-1");
-    // bench[0] holds fix-basic-0 — dropping onto it aims the evolution there.
+    const occupant = state.players.p1.bench[0];
     const action = moveToAction(
       request(uid, fromHand(0), { owner: "you", zone: "bench", index: 0 }),
       contextOf(state, "p1"),
     );
-    expect(action).toEqual({
-      type: "evolve",
-      seat: "p1",
-      uid,
-      target: { spot: "bench", index: 0 },
-    });
+    expect(action).toEqual({ type: "playBasicToBench", seat: "p1", uid });
+    if (action === null) throw new Error("Expected Bench play");
+    const result = mustApply(state, action);
+    expect(result.state.players.p1.bench[0]).toEqual(occupant);
+    expect(result.state.players.p1.bench).toHaveLength(2);
+    expect(projectGameState(result.state, "p1").board.you.bench[1]?.id).toBe(uid);
+    expect(
+      projectGameState(result.state, "p1").board.you.hand.map((card) => card.id),
+    ).not.toContain(uid);
   });
 
   it("returns null when the phase belongs to the other seat", () => {

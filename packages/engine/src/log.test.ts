@@ -591,8 +591,13 @@ describe("logFromEvents — the persistent zones (M4 slice 3)", () => {
       uid: band,
       target: { spot: "active" },
     });
-    const rows = texts(logFromEvents(events, ctx(next)));
-    expect(rows).toContain(`attached sv01-197 → ${hostName}`);
+    const entries = logFromEvents(events, ctx(next));
+    expect(texts(entries)).toContain(`attached sv01-197 → ${hostName}`);
+    expect(entries[0]?.kind === "action" && entries[0].playedTrainer).toEqual({
+      id: band,
+      cardId: "sv01-197",
+      name: "sv01-197",
+    });
   });
 
   it("logs a Stadium replacement: the play row, then the system replaced row", () => {
@@ -613,6 +618,12 @@ describe("logFromEvents — the persistent zones (M4 slice 3)", () => {
       "Beach Court left play — replaced",
     ]);
     expect(rows[1]?.kind === "action" && rows[1].who).toBe("system");
+    expect(rows[0]?.kind === "action" && rows[0].playedTrainer).toEqual({
+      id: leagueHq,
+      cardId: "sv03-192",
+      name: "Pokémon League Headquarters",
+    });
+    expect(rows[1]?.kind === "action" && rows[1].playedTrainer).toBeUndefined();
   });
 
   it("shows the Vitality Band boost in the damage math", () => {

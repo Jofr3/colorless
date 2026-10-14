@@ -201,8 +201,11 @@ describe("OnlineHud rows honour prefers-reduced-motion (D214)", () => {
     expect(unguarded()).toEqual([]);
   });
 
-  it("guards the ko:takePrizes prize tiles", () => {
-    renderOnline(wireGame({ kind: "ko:takePrizes", count: 1 }, { prizesRemaining: 4 }));
+  it("guards the choosePrize cost tiles", () => {
+    renderOnline(wireGame({
+      kind: "effect:choose",
+      prompt: { kind: "choosePrize", indices: [0, 1, 2, 3], note: "Choose a prize to turn face up." },
+    }, { prizesRemaining: 4 }));
     // ANTI-VACUITY: four face-down tiles, one per remaining prize. RED if the
     // picker renders none — then `unguarded()` would be trivially empty.
     const tiles = screen.getAllByRole("button", { name: /^Prize \d$/ });

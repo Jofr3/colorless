@@ -25,7 +25,7 @@
 //   - engine/moveable.lua:424  hover adds +0.05 scale, drag +0.10 → 1.05/1.10.
 //   - game.lua:2618-2624  exp_times constants (50/60/190) driving move_xy,
 //     move_scale, move_r damping respectively.
-import { Container, Graphics, ImageSource, PerspectiveMesh, Texture } from "pixi.js";
+import { BlurFilter, Container, Graphics, ImageSource, PerspectiveMesh, Texture } from "pixi.js";
 import { gsap } from "../../../lib/animation/gsapPixi";
 import {
   evaluateJuice as evaluateJuiceEnvelope,
@@ -220,6 +220,14 @@ export class CardView {
 
   private readonly placeholder = new Graphics();
 
+  private readonly selectionGlow = new Graphics();
+
+  private selectionGlowFilter: BlurFilter | null = null;
+
+  private selected = false;
+
+  private abilityGlowColor: number | null = null;
+
   private readonly clipMask = new Graphics();
 
   private readonly cardMesh: PerspectiveMesh;
@@ -318,7 +326,8 @@ export class CardView {
     this.pressSquash.addChild(this.juice);
     this.juice.addChild(this.flip);
     this.flip.addChild(this.cardLayer);
-    this.cardLayer.addChild(this.placeholder, this.cardMesh, this.clipMask);
+    this.selectionGlow.visible = false;
+    this.cardLayer.addChild(this.selectionGlow, this.placeholder, this.cardMesh, this.clipMask);
 
     this.setTextureUrl(options.textureUrl, options.animateTexture);
     this.redrawCard(options.name, 100, targetAspectHeight(100));
@@ -518,6 +527,17 @@ export class CardView {
     this.container.visible = false;
   }
 
+  /** Move between canvases, rebuilding Graphics batches for the new renderer. */
+  setRenderParent(parent: Container) {
+    if (this.container.parent === parent) return;
+    parent.addChild(this.container);
+    // Pixi's Graphics batches belong to each renderer. An unchanged clipping
+    // mask otherwise arrives with no batches and hides the attached card.
+    this.lastDrawWidth = -1;
+    const width = this.target?.width ?? 100;
+    this.redrawCard(this.cardLayer.label, width, this.target?.height ?? targetAspectHeight(width));
+  }
+
   setPlaymatSize(width: number, height: number) {
     this.playmatSize = { width, height };
   }
@@ -670,6 +690,44 @@ export class CardView {
     }
   }
 
+  setSelected(selected: boolean) {
+    if (this.selected === selected) return;
+    this.selected = selected;
+    this.applyEmphasisTween();
+    this.redrawSelectionGlow();
+    if (selected) {
+      this.clickPunch();
+    }
+  }
+
+  setAbilityGlow(color: number | null) {
+    if (this.abilityGlowColor === color) return;
+    this.abilityGlowColor = color;
+    this.redrawSelectionGlow();
+  }
+
+  private redrawSelectionGlow() {
+    this.selectionGlow.visible = this.selected || this.abilityGlowColor !== null;
+    if (!this.target || !this.selectionGlow.visible) return;
+    if (this.selectionGlowFilter === null) {
+      this.selectionGlowFilter = new BlurFilter({ strength: 3, quality: 3 });
+      this.selectionGlow.filters = this.selectionGlowFilter;
+    }
+    const { width, height } = this.target;
+    const radius = Math.max(3, width * 0.055);
+    this.selectionGlow
+      .clear()
+      .roundRect(-width / 2 - 2, -height / 2 - 2, width + 4, height + 4, radius)
+      .stroke({ color: this.abilityGlowColor ?? 0xffffff, alpha: 0.65, width: 7 });
+  }
+
+  /** Brief wobble when a dragged evolution enters this Pokémon's slot. */
+  shake() {
+    if (!this.reducedMotion && !this.isDragging) {
+      this.juiceUp(0.025, (this.seed > 0.5 ? 1 : -1) * 0.12);
+    }
+  }
+
   private applyReleaseMotion(velocity: ReleaseVelocity, accepted: boolean) {
     if (accepted) {
       // Accepted drop: tiny velocity nudge gives a little overshoot before
@@ -794,6 +852,7 @@ export class CardView {
     ])) {
       tween.kill();
     }
+    this.selectionGlowFilter?.destroy();
     this.container.destroy({ children: true });
   }
 
@@ -928,7 +987,7 @@ export class CardView {
     const dragLift = this.computeDragLiftOffset();
     const liftX = isPickedUp ? dragLift.x : this.hovered ? offset.x : 0;
     const liftY = isPickedUp ? dragLift.y : this.hovered ? offset.y : 0;
-    const scale = isPickedUp ? 1.1 : this.hovered ? 1.03 : 1;
+    const scale = isPickedUp || this.selected ? 1.1 : this.hovered ? 1.03 : 1;
     gsap.to(this.lift, {
       duration: this.reducedMotion ? 0 : 0.16,
       ease: "power3.out",
@@ -1054,6 +1113,8 @@ export class CardView {
     this.lastDrawWidth = width;
     this.lastDrawHeight = height;
     this.lastDrawLoaded = this.loaded;
+
+    this.redrawSelectionGlow();
 
     const radius = Math.max(3, width * 0.055);
 

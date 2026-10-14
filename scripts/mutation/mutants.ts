@@ -587,8 +587,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D212",
     what: "`scripts/**` falls back out of Biome's include set — the exact hole D212 found, where `biome lint scripts` exits 0 on zero files processed",
     file: "biome.json",
-    find: '    "include": ["src/**", "apps/**", "packages/**", "scripts/**", "vite.config.ts"],',
-    replace: '    "include": ["src/**", "apps/**", "packages/**", "vite.config.ts"],',
+    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: main's `frontend/**` joins the include set; the patch still drops `scripts/**`.
+    find: "    \"include\": [\"src/**\", \"apps/**\", \"packages/**\", \"scripts/**\", \"vite.config.ts\", \"frontend/**\"],",
+    replace: "    \"include\": [\"src/**\", \"apps/**\", \"packages/**\", \"vite.config.ts\", \"frontend/**\"],",
     expectKilledBy: [],
     killedByCommand: ["bun", "scripts/lint-coverage.ts"],
   },
@@ -597,8 +598,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D212",
     what: "the repo-root `vite.config.ts` falls back out — the one-file version of the same hole, which is what makes the guard's arithmetic and not just its existence load-bearing",
     file: "biome.json",
-    find: '    "include": ["src/**", "apps/**", "packages/**", "scripts/**", "vite.config.ts"],',
-    replace: '    "include": ["src/**", "apps/**", "packages/**", "scripts/**"],',
+    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: main's `frontend/**` joins the include set; the patch still drops `vite.config.ts`.
+    find: "    \"include\": [\"src/**\", \"apps/**\", \"packages/**\", \"scripts/**\", \"vite.config.ts\", \"frontend/**\"],",
+    replace: "    \"include\": [\"src/**\", \"apps/**\", \"packages/**\", \"scripts/**\", \"frontend/**\"],",
     expectKilledBy: [],
     killedByCommand: ["bun", "scripts/lint-coverage.ts"],
   },
@@ -5084,9 +5086,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D272",
     what: "🛑 THE WIRE HUD STOPS AGREEING WITH THE ENGINE: `redactedAbilitiesOf` rebuilds `${uid}:${ability.name}` instead of calling the shared funnel, so after one copy is used the OTHER copy's row stays LIT — and in fact so does the used one, since neither uid is in the bag. A live afford-then-reject: the client offers the button, the DO answers ABILITY_ALREADY_USED. The engine is entirely correct, so every non-HUD assertion in the slice is green",
     file: "packages/engine/src/redact.ts",
-    find: "        (ability.oncePerTurn && state.allowances.abilitiesUsed.includes(abilityUsedKey(uid, ability))) ||",
-    replace:
-      "        (ability.oncePerTurn && state.allowances.abilitiesUsed.includes(`${uid}:${ability.name}`)) ||",
+    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the condition wraps over two lines; the patch is unchanged.
+    find: "        (ability.oncePerTurn &&\n          state.allowances.abilitiesUsed.includes(abilityUsedKey(uid, ability))) ||",
+    replace: "        (ability.oncePerTurn &&\n          state.allowances.abilitiesUsed.includes(`${uid}:${ability.name}`)) ||",
     expectKilledBy: ["packages/engine/src/flipTheScript.test.ts"],
   },
   {
@@ -6250,7 +6252,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.529.0";',
+    find: 'export const engineVersion = "0.530.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -12481,8 +12483,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D336",
     what: 'the printed "reveal them" rider is dropped, so `DECK_SEARCHED` stays a COUNT and the opponent is told a number instead of four named cards. D225\'s whole finding, on the newest row of the op it was built for: a search that ends in the hand is NOT public by construction, and this is the destination the entire debt lived on',
     file: "packages/engine/src/registry.ts",
-    find: '      filter: { kind: "item" },\n      dest: "hand",\n      max: 1,\n      reveal: true,',
-    replace: '      filter: { kind: "item" },\n      dest: "hand",\n      max: 1,',
+    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: main's `ARVEN` spells the same four lines, so the find now carries Secret Box's multi-line `also` to stay unique; the patch still drops the reveal.
+    find: "      filter: { kind: \"item\" },\n      dest: \"hand\",\n      max: 1,\n      reveal: true,\n      also: [\n        { filter: { kind: \"toolCard\" }, max: 1 },\n        { filter: { kind: \"supporter\" }, max: 1 },",
+    replace: "      filter: { kind: \"item\" },\n      dest: \"hand\",\n      max: 1,\n      also: [\n        { filter: { kind: \"toolCard\" }, max: 1 },\n        { filter: { kind: \"supporter\" }, max: 1 },",
     expectKilledBy: [
       "packages/engine/src/larrysSkill.test.ts",
       "packages/engine/src/revealClause.test.ts",
@@ -14567,8 +14570,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D359",
     what: "🛑🛑 THE PROMPT ASKS AND THE APPLY DOES NOT LISTEN: every park still carries the ceiling, every dialog still offers the middle rows, the validator still accepts them — and every answer lands the FULL printed batch. The exact defect D359 exists to repair, wearing this slice's own capability as a disguise, and the ONLY thing that reaches it is a board that answers a middle quantity and counts what actually moved",
     file: "packages/engine/src/interpreter.ts",
-    find: "    take === undefined ? printed : Math.min(take, printed),",
-    replace: "    printed,",
+    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the quantity now sits inside the `chosenUid` ternary; the patch is unchanged.
+    find: "      ? take === undefined ? printed : Math.min(take, printed)\n",
+    replace: "      ? printed\n",
     expectKilledBy: ["packages/engine/src/attachQuantity.test.ts"],
   },
   {
@@ -14576,8 +14580,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D359",
     what: "🛑 THE BELT BEHIND THE VALIDATOR IS CUT: a `take` above the printed count is applied as given, so a frame that got past `validateChoice` empties as much of the zone as it names. Unreachable through `applyAction` by construction (the validator refuses it first), which is exactly why §3 drives `applyChoice` DIRECTLY — a guard only the barrier can reach is a guard nothing tests",
     file: "packages/engine/src/interpreter.ts",
-    find: "    take === undefined ? printed : Math.min(take, printed),",
-    replace: "    take === undefined ? printed : take,",
+    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the quantity now sits inside the `chosenUid` ternary; the patch is unchanged.
+    find: "      ? take === undefined ? printed : Math.min(take, printed)\n",
+    replace: "      ? take === undefined ? printed : take\n",
     expectKilledBy: ["packages/engine/src/attachQuantity.test.ts"],
   },
   {
@@ -18535,9 +18540,10 @@ export const MUTANTS: Mutant[] = [
     id: "D412-hud-reads-the-imposed-field-by-hand",
     decision: "D412",
     what: "🛑 C8 — **THE DEFECT THAT WAS ACTUALLY LIVE, AND IT WAS FOUND BY GREP RATHER THAN BY A RED TEST.** The local hot-seat HUD goes back to spelling `!active.retreatBlocked` by hand — the line it really carried until D412 — so a body locked by its OWN attack is offered a Retreat button that `retreat` then rejects with `RETREAT_PREVENTED`. **AN AFFORD-THEN-REJECT ON THE ONE BOARD WHERE THE PLAYER HAS THE CARD IN FRONT OF THEM SAYING IT SHOULD NOT BE THERE.** ⚠️ THIS IS THE THIRD READ SITE OF A TWO-FIELD FACT, and the engine gate and the wire projection were BOTH already routed through `retreatLocked` when this one was still wrong — so D213's rule is what this row pins: *the server-side twin passing proves nothing about the local panel.* The imposed half keeps working under the mutant, which is why the guard needs the STAMP board and not just a retreat-is-greyed board",
-    file: "src/features/game/GameHud.tsx",
-    find: "    !retreatLocked(game, active) &&",
-    replace: "    !active.retreatBlocked &&",
+    file: "src/features/game/retreat.ts",
+    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the HUD's retreat test moved to `retreat.ts` `retreatOptionForGame` (GameHud reads it); the patch is unchanged.
+    find: "      !retreatLocked(game, active) &&",
+    replace: "      !active.retreatBlocked &&",
     expectKilledBy: ["src/features/game/GameHud.dom.test.tsx"],
   },
 
@@ -23467,8 +23473,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D455",
     what: "⚠ **THE CONTROLLER'S \"you may\" IS HANDED TO THE OPPONENT** — the arm's last line says in so many words *\"NO `decider`: the printed 'you' is the controller, unlike `opponentMayDraw` above\"*, and `opponentMayDraw` sits EIGHT LINES UP with `decider: drawer` on the very next line of its own park. Copying that neighbour's real code here is the mistake an author makes; `settleProgram` files the field as `phase.answerer` and `redact.ts` gates the prompt on it, so the opponent is asked whether YOU take your own printed option — and answers no. This is `D453-may-draw-is-answered-by-the-controller` in the mirror, on the op that parks on every board it reaches. **8 attack-corpus sentences / 23 legal printings, plus 7 registry cards** — measured this slice",
     file: "packages/engine/src/interpreter.ts",
-    find: "          ...(op.labels === undefined ? {} : { labels: { yes: op.labels.yes, no: op.labels.no } }),\n        },\n      };",
-    replace: "          ...(op.labels === undefined ? {} : { labels: { yes: op.labels.yes, no: op.labels.no } }),\n        },\n        decider: otherSeat(ctx.seat),\n      };",
+    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: D641 spread a `decider` behind `askOpponent`; the patch makes it unconditional, the same experiment.
+    find: "        ...(op.askOpponent === true ? { decider: otherSeat(ctx.seat) } : {}),",
+    replace: "        decider: otherSeat(ctx.seat),",
     expectKilledBy: [
       "packages/engine/src/optionalConfirm.test.ts",
       "packages/engine/src/optionalDraw.test.ts",
@@ -34102,6 +34109,21 @@ export const MUTANTS: Mutant[] = [
     find: "      if (scope.kind === \"upTo\") return prev.length < scope.max ? [...prev, uid] : prev;",
     replace: "      if (scope.kind === \"upTo\") return [...prev, uid];",
     expectKilledBy: ["src/features/online/components/OnlineHud.discardUpTo.dom.test.tsx"],
+    // 🆕🆕🆕 D647 — DECLARED A SURVIVOR at the merge of `main` (found by the merge's `--only` run: SURVIVED, undeclared).
+    survives: {
+      kind: "equivalent",
+      reason:
+        "main's dd3092ee (merged at D647) replaced the dialog's Energy rows with `DiscardEnergyChoices`, which computes the SAME `upTo` refusal and never calls `onPick` on a refused row (`if (!refused) onSelect()`), so `pick` is never asked for the (max+1)th uid and this cap is an unreachable belt. The refusal now lives one component down and is `D647-discard-choices-upto-cap-dropped`'s subject. If this is ever KILLED, a path that calls `pick` past the component's refusal has arrived and this reason needs re-reading.",
+    },
+  },
+  {
+    id: "D647-discard-choices-upto-cap-dropped",
+    decision: "D647",
+    what: "⚠️ **THE `upTo` CAP LEAVES THE SHARED ENERGY-DISCARD CHOICES** (main's `DiscardEnergyChoices`, merged at D647): past `max` a row is neither marked `aria-disabled` nor refused, so the (max+1)th pick reaches the dialog. D543-online-cap-not-enforced's guard, re-homed where both HUDs now read it. Killed by `OnlineHud.discardUpTo.dom.test.tsx`.",
+    file: "src/features/game/DiscardEnergyChoices.tsx",
+    find: "                    (scope.kind === \"upTo\" && picked.length >= scope.max));",
+    replace: "                    false);",
+    expectKilledBy: ["src/features/online/components/OnlineHud.discardUpTo.dom.test.tsx"],
   },
   {
     id: "D543-online-preanswers-a-declinable-park",
@@ -35176,24 +35198,11 @@ export const MUTANTS: Mutant[] = [
     replace: "        plain(\"turned \"),\n        strong(\"a Prize card\"),",
     expectKilledBy: ["packages/engine/src/crescentPurge.test.ts"],
   },
-  {
-    id: "D548-online-take-tile-face-down",
-    decision: "D548",
-    what: "⚠️ **THE ONLINE TAKE PICKER PAINTS EVERY TILE FACE DOWN** — the wire carries the face-up card and the HUD drops it. Killed by `OnlineHud.crescentPurge.dom.test.tsx`.",
-    file: "src/features/online/components/OnlineHud.tsx",
-    find: "            faceUp={faceUpPrizes.find((prize) => prize.index === index)?.card.name ?? null}",
-    replace: "            faceUp={null}",
-    expectKilledBy: ["src/features/online/components/OnlineHud.crescentPurge.dom.test.tsx"],
-  },
-  {
-    id: "D548-local-take-tile-face-down",
-    decision: "D548",
-    what: "⚠️ **THE LOCAL TAKE PICKER PAINTS EVERY TILE FACE DOWN** — the D412 third read site. Killed by `GameHud.crescentPurge.dom.test.tsx`.",
-    file: "src/features/game/GameHud.tsx",
-    find: "            faceUp={faceUpName(index)}",
-    replace: "            faceUp={null}",
-    expectKilledBy: ["src/features/game/GameHud.crescentPurge.dom.test.tsx"],
-  },
+  // 🆕🆕🆕 D647 — RETIRED: `D548-online-take-tile-face-down` and `D548-local-take-tile-face-down` mutated the
+  //    `ko:takePrizes` take pickers' `faceUp={…}` tiles in OnlineHud.tsx / GameHud.tsx. main's 891eb707 ("Automate
+  //    prize collection") deleted both pickers for `AutoTakePrizes` (the end of the live row, once per decision),
+  //    merged in at D647. The premise is gone, not the code moved; the Crescent Purge `choosePrize` tiles and
+  //    D551's projection row still cover the face-up prize on both surfaces.
   {
     id: "D548-record-version-not-bumped",
     decision: "D548",
@@ -35950,7 +35959,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D551",
     what: "the WIRE projection drops the face-up prizes — `playerBoardFromRedacted` emits `faceUpPrizes: []` although `RedactedSide.faceUpPrizes` carries them, so the online board and a spectator paint a back where the public card is. Killed by the round-trip and spectator rungs and the DOM suite's OnlineMatch rungs.",
     file: "src/features/game/projection.ts",
-    find: "    faceUpPrizes: side.faceUpPrizes.map((p) => ({ index: p.index, card: cardModelFromRedacted(p.card) })),",
+    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the map wraps over four lines; the patch is unchanged.
+    find: "    faceUpPrizes: side.faceUpPrizes.map((p) => ({\n      index: p.index,\n      card: cardModelFromRedacted(p.card),\n    })),",
     replace: "    faceUpPrizes: [],",
     expectKilledBy: ["src/features/game/projection.test.ts", "src/features/playmat/PrizeGrid.faceUp.dom.test.tsx"],
   },
@@ -38914,8 +38924,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D561",
     what: "⚠️ R-CR1 reversed in one direction: with ONE card the decline is labelled as a second type that does not exist. Killed by §3's R-CR1 rung.",
     file: "packages/engine/src/interpreter.ts",
-    find: "        no: second === undefined ? \"Keep it in your hand\" : `Attach ${second} Energy`,",
-    replace: "        no: `Attach ${second} Energy`,",
+    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the choice is now `{ uid, type }`; the patch still drops the lone-card caption.
+    find: "        no: second === undefined ? \"Keep it in your hand\" : `Attach ${second.type} Energy`,",
+    replace: "        no: `Attach ${second?.type} Energy`,",
     expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
   },
   {
@@ -38923,7 +38934,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D561",
     what: "🛑 R-CR2 half-lost: the \"Attach B\" answer attaches nothing. Killed by §3's R-CR2 no-rung.",
     file: "packages/engine/src/interpreter.ts",
-    find: "      ...(second === undefined ? {} : { otherwise: attach(second) }),\n",
+    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the choice is now `{ uid, type }`; the patch still drops `otherwise`.
+    find: "      ...(second === undefined ? {} : { otherwise: attach(second.type) }),\n",
     replace: "",
     expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
   },
@@ -40294,8 +40306,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D564",
     what: "The gated early return says `disabled: false`: the row is greyed in words and lit in fact. Killed by §8's toEqual and the pressable-equals-accepted rung.",
     file: "packages/engine/src/redact.ts",
-    find: "    return { label: ability.label, disabled: true, reason: `Only if ${conditionNote(ability.playableIf)}` };",
-    replace: "    return { label: ability.label, disabled: false, reason: `Only if ${conditionNote(ability.playableIf)}` };",
+    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the return wraps over five lines; the patch is unchanged.
+    find: "    return {\n      label: ability.label,\n      disabled: true,\n      reason: `Only if ${conditionNote(ability.playableIf)}`,\n    };",
+    replace: "    return {\n      label: ability.label,\n      disabled: false,\n      reason: `Only if ${conditionNote(ability.playableIf)}`,\n    };",
     expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
   },
   {
@@ -40303,8 +40316,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D564",
     what: "The gated row greys with NO reason: the printed clause never reaches the online tooltip. Killed by §8's toEqual.",
     file: "packages/engine/src/redact.ts",
-    find: "    return { label: ability.label, disabled: true, reason: `Only if ${conditionNote(ability.playableIf)}` };",
-    replace: "    return { label: ability.label, disabled: true, reason: null };",
+    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the return wraps over five lines; the patch is unchanged.
+    find: "    return {\n      label: ability.label,\n      disabled: true,\n      reason: `Only if ${conditionNote(ability.playableIf)}`,\n    };",
+    replace: "    return {\n      label: ability.label,\n      disabled: true,\n      reason: null,\n    };",
     expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
   },
   {
@@ -40321,8 +40335,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D564",
     what: "The local gated early return says `disabled: false`: a click the engine refuses is dispatched. Killed by the D564 DOM block.",
     file: "src/features/game/GameHud.tsx",
-    find: "    return { label: ability.label, disabled: true, reason: `Only if ${conditionNote(ability.playableIf)}` };",
-    replace: "    return { label: ability.label, disabled: false, reason: `Only if ${conditionNote(ability.playableIf)}` };",
+    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the return wraps over five lines; the patch is unchanged.
+    find: "    return {\n      label: ability.label,\n      disabled: true,\n      reason: `Only if ${conditionNote(ability.playableIf)}`,\n    };",
+    replace: "    return {\n      label: ability.label,\n      disabled: false,\n      reason: `Only if ${conditionNote(ability.playableIf)}`,\n    };",
     expectKilledBy: ["src/features/game/GameHud.stadiumAbility.dom.test.tsx"],
   },
   {
@@ -41576,7 +41591,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D566",
     what: "the redactor drops `capsAnyOf` — the online client never learns the disjunction. Killed by §2's wire rung and the HUD suite's projection rung.",
     file: "packages/engine/src/redact.ts",
-    find: "        ...(prompt.capsAnyOf === undefined\n          ? {}\n          : {\n              capsAnyOf: prompt.capsAnyOf.map((entry) => ({ uids: [...entry.uids], max: entry.max })),\n            }),\n",
+    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the map wraps; the patch still drops the whole spread.
+    find: "        ...(prompt.capsAnyOf === undefined\n          ? {}\n          : {\n              capsAnyOf: prompt.capsAnyOf.map((entry) => ({\n                uids: [...entry.uids],\n                max: entry.max,\n              })),\n            }),\n",
     replace: "",
     expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts", "src/features/game/GameHud.capsAnyOf.dom.test.tsx"],
   },
@@ -41585,8 +41601,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D566",
     what: "the wire's `uids` ALIAS the engine's own arrays (the purity contract). Killed by §2's `not.toBe` rung.",
     file: "packages/engine/src/redact.ts",
-    find: "              capsAnyOf: prompt.capsAnyOf.map((entry) => ({ uids: [...entry.uids], max: entry.max })),",
-    replace: "              capsAnyOf: prompt.capsAnyOf.map((entry) => ({ uids: entry.uids as string[], max: entry.max })),",
+    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the map wraps; the patch is unchanged.
+    find: "                uids: [...entry.uids],\n",
+    replace: "                uids: entry.uids as string[],\n",
     expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts"],
   },
   {
@@ -41605,8 +41622,9 @@ export const MUTANTS: Mutant[] = [
     file: "packages/schema/src/match/redacted.ts",
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — the enum gained `"name"` (Tyme); the patch still drops `"swap"`.
     // 🆕🆕🆕 D580 — RE-ANCHORED off the bytes (D540) — the enum gained `"use"` (Look-Alike Show); the patch still drops `"swap"`.
-    find: "    dest: z.enum([\"bench\", \"hand\", \"deck\", \"deckBottom\", \"deckTop\", \"discard\", \"evolve\", \"attach\", \"swap\", \"name\", \"use\"]),",
-    replace: "    dest: z.enum([\"bench\", \"hand\", \"deck\", \"deckBottom\", \"deckTop\", \"discard\", \"evolve\", \"attach\", \"name\", \"use\"]),",
+    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the enum is one member per line (and gained `"reveal"` at D633); the patch still drops `"swap"`.
+    find: "      \"attach\",\n      \"swap\",\n      \"name\",\n",
+    replace: "      \"attach\",\n      \"name\",\n",
     expectKilledBy: ["src/features/online/components/OnlineHud.capsAnyOf.dom.test.tsx"],
   },
   {
@@ -42811,8 +42829,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D568",
     what: "Glass Trumpet's \"Benched {C}\" riders dropped: the Active and a {W} body are offered. Killed by §5's targets rung.",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const targets = attachEnergyTargets(state, seat, op);\n",
-    replace: "  const targets = attachEnergyTargets(state, seat, {});\n",
+    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: D561's Crispin spells the same line, so the find carries `attachFromDiscardOffer`'s signature tail; the patch is unchanged.
+    find: "): { candidates: string[]; targets: PokemonRef[]; max: number } {\n  const targets = attachEnergyTargets(state, seat, op);\n",
+    replace: "): { candidates: string[]; targets: PokemonRef[]; max: number } {\n  const targets = attachEnergyTargets(state, seat, {});\n",
     expectKilledBy: ["packages/engine/src/teraBannerD568.test.ts"],
   },
   {
@@ -43481,9 +43500,10 @@ export const MUTANTS: Mutant[] = [
     id: "D570-hud-retreat-in-the-window",
     decision: "D570",
     what: "GameHud offers Retreat inside the window (the redact twin's `mainPhase` not mirrored). Killed by the HUD suite (b).",
-    file: "src/features/game/GameHud.tsx",
-    find: "    !game.allowances.retreated &&\n    !attackAgainWindow &&\n",
-    replace: "    !game.allowances.retreated &&\n",
+    file: "src/features/game/retreat.ts",
+    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the HUD's retreat test moved to `retreat.ts` and reads `attackAgainUid` directly; the patch still drops the window.
+    find: "      !game.allowances.retreated &&\n      game.allowances.attackAgainUid === null &&\n",
+    replace: "      !game.allowances.retreated &&\n",
     expectKilledBy: ["src/features/game/GameHud.festivalLead.dom.test.tsx"],
   },
   {
@@ -45296,8 +45316,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D576",
     what: "the wire's fossil row stays lit on a full Bench — afford-then-reject, the playTrainer refusal arriving as a toast. Killed by §1's full-Bench wire rung.",
     file: "packages/engine/src/redact.ts",
-    find: "      (isFossil ? !fossilPlayable(state, viewerSeat) : !programPlayable(state, program.trainer ?? [], viewerSeat));",
-    replace: "      (isFossil ? false : !programPlayable(state, program.trainer ?? [], viewerSeat));",
+    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the ternary wraps and its other arm is `trainerProgramPlayable`; the patch is unchanged.
+    find: "      (isFossil\n        ? !fossilPlayable(state, viewerSeat)\n        : !trainerProgramPlayable(state, program.trainer ?? [], viewerSeat));",
+    replace: "      (isFossil\n        ? false\n        : !trainerProgramPlayable(state, program.trainer ?? [], viewerSeat));",
     expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
   },
   {
@@ -45953,7 +45974,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D578",
     what: "the local HUD drops the PRINTED-row conjunct and compares a bar against every row's SOURCE index: a bar on printed 0 greys the borrowed Low Strike (source index 0) too. Killed by the web suite's bar rung.",
     file: "src/features/game/GameHud.tsx",
-    find: "              (menu[index]?.origin === \"printed\" && barredAttackIndexes.includes(menu[index].sourceIndex)) ||",
+    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the conjunction wraps over two lines; the patch is unchanged.
+    find: "              (menu[index]?.origin === \"printed\" &&\n                barredAttackIndexes.includes(menu[index].sourceIndex)) ||",
     replace: "              barredAttackIndexes.includes(menu[index]?.sourceIndex ?? -1) ||",
     expectKilledBy: ["src/features/game/GameHud.memoryDiveD578.dom.test.tsx"],
   },
@@ -46757,8 +46779,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D580",
     what: "the wire enum lacks `\"use\"`: every Look-Alike park fails `redactedEffectPromptSchema` (a 0.463 client's view). Killed by §7's wire rung.",
     file: "packages/schema/src/match/redacted.ts",
-    find: "\"evolve\", \"attach\", \"swap\", \"name\", \"use\"]),",
-    replace: "\"evolve\", \"attach\", \"swap\", \"name\"]),",
+    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the enum is one member per line and gained `"reveal"` at D633; the patch still drops `"use"`.
+    find: "      \"name\",\n      \"use\",\n      \"reveal\",\n",
+    replace: "      \"name\",\n      \"reveal\",\n",
     expectKilledBy: ["packages/engine/src/lookAlikeShowD580.test.ts"],
   },
   {

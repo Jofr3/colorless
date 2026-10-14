@@ -85,9 +85,12 @@ export async function deleteFolderLiftingChildren(args: {
   childDeckIds: string[];
 }): Promise<void> {
   const { folderId, parentId, childFolderIds, childDeckIds } = args;
-  await Promise.all([
+  const lifted = await Promise.allSettled([
     ...childFolderIds.map((id) => patchFolder(id, { parentId })),
     ...childDeckIds.map((id) => patchDeck(id, { folderId: parentId })),
   ]);
+  // Wait for every child before the caller reloads a partially failed move.
+  const failed = lifted.find((result) => result.status === "rejected");
+  if (failed?.status === "rejected") throw failed.reason;
   await deleteFolder(folderId);
 }

@@ -53,6 +53,7 @@ import {
   benchLimitOf,
   cardOfUid,
   effectiveMaxHp,
+  evolutionTargetUids,
   inSetup,
   otherSeat,
   phaseViewOf,
@@ -217,7 +218,12 @@ function playerBoardOf(state: GameState, seat: Seat, visibility: SideVisibility)
   const side = state.players[seat];
   return {
     hand: visibility.faceUpHand
-      ? side.hand.map((uid) => cardModelOf(state, uid))
+      ? side.hand.map((uid) => {
+          const card = cardModelOf(state, uid);
+          return card.type === "pokemon"
+            ? { ...card, evolutionTargetIds: evolutionTargetUids(state, seat, uid) }
+            : card;
+        })
       : hiddenHand(side.hand.length),
     active:
       side.active === null
@@ -288,6 +294,7 @@ function cardModelOf(state: GameState, uid: string): CardModel {
     cardId: card.id,
     name: card.name,
     type: cardTypeOf(card),
+    ...(card.category === "Pokemon" ? { stage: card.stage } : {}),
     // `card.image` is the asset base path or null (no scan) — the URL itself
     // comes from the one existing helper so the scheme lives in one place.
     imageUrl: card.image === null ? undefined : cardImageUrl(card.id, "high"),
@@ -519,6 +526,10 @@ export function cardModelFromRedacted(card: RedactedInPlay): CardModel {
     cardId: card.cardId,
     name: card.name,
     type: cardTypeOf(card),
+    ...(card.stage !== undefined ? { stage: card.stage } : {}),
+    ...(card.evolutionTargetIds !== undefined
+      ? { evolutionTargetIds: [...card.evolutionTargetIds] }
+      : {}),
   };
   if (card.hasImage) model.imageUrl = cardImageUrl(card.cardId, "high");
   if (card.attached !== undefined) {

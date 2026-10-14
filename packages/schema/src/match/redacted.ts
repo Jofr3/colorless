@@ -111,6 +111,10 @@ export const redactedCardSchema = z.object({
   category: cardCategorySchema,
   /** Trainer subtype (drives the Tool/Stadium/Item distinction); null off-Trainer. */
   trainerType: z.string().nullable(),
+  /** Printed Pokémon stage for placement previews; omitted on hidden cards. */
+  stage: z.string().nullable().optional(),
+  /** Legal evolution hosts for an own hand card; absent on hidden cards. */
+  evolutionTargetIds: z.array(z.string()).optional(),
   hasImage: z.boolean(),
 });
 export type RedactedCard = z.infer<typeof redactedCardSchema>;
@@ -621,6 +625,14 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     candidates: z.array(redactedPokemonRefSchema),
     upTo: z.number().int().positive().optional(),
     takeVerb: z.enum(["move", "put"]).optional(),
+    /** Public Adrena-Brain targeting context; absent on other Pokémon choices. */
+    counterTransfer: z
+      .object({
+        upTo: z.number().int().positive(),
+        abilitySourceUid: z.string().optional(),
+        from: redactedPokemonRefSchema.optional(),
+      })
+      .optional(),
     note: z.string(),
   }),
   /** Pick `min`..`max` in-play Pokémon — the multi-target snipe. `declinable`

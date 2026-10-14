@@ -31,6 +31,21 @@ export function moveToAction(
   ctx: MoveTranslationContext,
 ): GameAction | null {
   const { from, to, cardId } = request;
+  if (from.owner === "you" && from.zone === "bench" && to.owner === "you" && to.zone === "bench") {
+    if (ctx.phaseKind !== "setup:place" && !(ctx.phaseKind === "turn:action" && ctx.isViewerTurn))
+      return null;
+    const fromIndex = ctx.board.you.bench.findIndex((card) => card.id === cardId);
+    const index = to.index ?? ctx.board.you.bench.length - 1;
+    if (
+      fromIndex < 0 ||
+      from.index !== fromIndex ||
+      !Number.isInteger(index) ||
+      index < 0 ||
+      index >= ctx.board.you.bench.length
+    )
+      return null;
+    return { type: "reorderBench", seat: ctx.viewerSeat, uid: cardId, index };
+  }
   if (ctx.phaseKind === "effect:choose" && ctx.board.energyChoice !== undefined) {
     const choice = ctx.board.energyChoice;
     if (from.owner !== "you" || from.zone !== "choice" || to.owner !== "you") return null;
@@ -65,8 +80,8 @@ export function moveToAction(
       choice: { kind: "confirm", yes: index === 0, target: { seat: ctx.viewerSeat, spot } },
     };
   }
-  // Every translatable move starts in the viewer's own hand: setup places,
-  // attachments, bench plays and Trainer plays all come from hand. Board-to-board drags
+  // The remaining translatable moves start in the viewer's own hand: setup places,
+  // attachments, bench plays and Trainer plays all come from hand. Bench-to-Active drags
   // are handled separately: useRetreatDrag pays the retreat cost or opens
   // its energy choice before dispatching the swap.
   if (from.owner !== "you" || from.zone !== "hand") return null;
@@ -114,18 +129,19 @@ export function moveToAction(
         return null;
       }
       if (model.type === "pokemon") {
-        // A Pokémon dropped ONTO an existing own Pokémon is an evolve attempt
-        // (§10) — the engine decides whether the card actually evolves from
-        // that target (EVOLVE_MISMATCH / NOT_AN_EVOLUTION / timing). A Pokémon
-        // dropped on the Active always aims at the occupant; on the bench it
-        // aims at an occupied indexed slot, and otherwise means "play a Basic
-        // to a new bench slot" (the dense bench appends, so the index is
-        // cosmetic there).
+        // Basics open a new Bench slot even over an existing occupant.
+        // Other Pokémon aimed at an occupied slot attempt evolution; the
+        // engine checks the evolution match and timing. The Active always
+        // aims at its occupant. New Bench plays append, so their index is cosmetic.
         if (to.zone === "active") {
           return { type: "evolve", seat, uid: cardId, target: { spot: "active" } };
         }
         if (to.zone === "bench") {
-          if (to.index !== undefined && ctx.board.you.bench[to.index]?.type === "pokemon") {
+          if (
+            model.stage !== "Basic" &&
+            to.index !== undefined &&
+            ctx.board.you.bench[to.index]?.type === "pokemon"
+          ) {
             return {
               type: "evolve",
               seat,

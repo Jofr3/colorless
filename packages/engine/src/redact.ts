@@ -95,7 +95,7 @@ import {
   handCostUnmet,
 } from "./interpreter";
 import { inSetup, phaseViewOf } from "./phaseView";
-import { discardableTargets } from "./turn";
+import { discardableTargets, evolutionTargetUids } from "./turn";
 import { programFor } from "./registry";
 import type {
   GameOutcome,
@@ -258,7 +258,25 @@ function redactedPromptOf(
 ): RedactedEffectPrompt | null {
   const answerer = phase.answerer ?? phase.seat;
   if (answerer !== viewerSeat) return null;
-  return redactPrompt(state, phase.prompt);
+  const prompt = redactPrompt(state, phase.prompt);
+  const op = phase.cont.pendingOp;
+  // Public presentation metadata lets online clients target Adrena-Brain on the
+  // board and recover the chosen source after reconnecting mid-ability.
+  if (prompt.kind === "choosePokemon" && op.op === "moveCountersToOpponentChosen") {
+    return {
+      ...prompt,
+      counterTransfer: {
+        upTo: op.upTo,
+        abilitySourceUid: phase.cont.ctx.sourceUid,
+        ...(op.from === undefined
+          ? {}
+          : {
+              from: redactedRefOf({ seat: phase.seat, spot: op.from }),
+            }),
+      },
+    };
+  }
+  return prompt;
 }
 
 /** Map the engine's full `EffectPrompt` to the neutral wire shape — the answerer
@@ -1234,7 +1252,12 @@ function redactedSideOf(state: GameState, seat: Seat, visibility: SideVisibility
   const side = state.players[seat];
   return {
     hand: visibility.faceUpHand
-      ? side.hand.map((uid) => redactedCardOf(state, uid))
+      ? side.hand.map((uid) => {
+          const card = redactedCardOf(state, uid);
+          return card.category === "Pokemon"
+            ? { ...card, evolutionTargetIds: evolutionTargetUids(state, seat, uid) }
+            : card;
+        })
       : hiddenHand(side.hand.length),
     active:
       side.active === null
@@ -1321,6 +1344,7 @@ function redactedCardOf(state: GameState, uid: string): RedactedCard {
     name: card.name,
     category: card.category,
     trainerType: card.trainerType,
+    ...(card.category === "Pokemon" ? { stage: card.stage } : {}),
     hasImage: card.image !== null,
   };
 }

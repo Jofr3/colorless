@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { SetupAnimationStage } from "./utils/setupDeals";
 import "./playmat.css";
 import { benchLimitFor, CENTER_LINE_TOP, PLAYMAT_WRAPPER_CLASS } from "./constants";
@@ -15,6 +15,7 @@ import type {
   BoardState,
   CardBackTone,
   CardMoveRequest,
+  CardSelection,
   LogEntry,
   PileState,
   PlayerId,
@@ -22,11 +23,13 @@ import type {
 } from "./types";
 import type { PlacementPredicate } from "./utils/cardMovement";
 import { opponentOf } from "./utils/players";
+import { pilesWithoutUsedTrainers, usedTrainersForTurn } from "./utils/usedTrainers";
 
 export interface PlaymatViewProps {
   board: BoardState;
   /** Suspend board input while a tabletop effect resolves. */
   interactionDisabled?: boolean;
+  cardSelection?: CardSelection;
   turn: TurnInfo;
   /** Which board side renders at the bottom (hand shown, cards draggable).
       The mock passes the active player; the game page always passes "you"
@@ -36,6 +39,8 @@ export interface PlaymatViewProps {
       Defaults to `perspective`; the game page overrides it per seat so the
       glow still rotates in hot-seat play, where `perspective` is fixed. */
   glowPerspective?: PlayerId;
+  /** Physical blue seat, independent of the background glow in online matches. */
+  blueBackPlayer?: PlayerId;
   onMoveCard: (request: CardMoveRequest) => void;
   /** Right-edge pass control, with optional local turn-history navigation. */
   onPassTurn?: () => void;
@@ -70,9 +75,11 @@ export interface PlaymatViewProps {
 export function PlaymatView({
   board,
   interactionDisabled = false,
+  cardSelection,
   turn,
   perspective,
   glowPerspective,
+  blueBackPlayer: fixedBlueBackPlayer,
   onMoveCard,
   onPassTurn,
   passDisabled = false,
@@ -90,13 +97,24 @@ export function PlaymatView({
   children,
 }: PlaymatViewProps) {
   const playmatRef = useRef<HTMLElement>(null);
+  const usedTrainers = useMemo(
+    () => usedTrainersForTurn(logEntries, turn.turn),
+    [logEntries, turn.turn],
+  );
+  const visiblePiles = useMemo(
+    () => pilesWithoutUsedTrainers(usedTrainers, piles),
+    [usedTrainers, piles],
+  );
+  function trainersFor(owner: PlayerId) {
+    return { turn: turn.turn, cards: owner === turn.activePlayer ? usedTrainers : [] };
+  }
   const [setupAnimation, setSetupAnimation] = useState<SetupAnimationStage | null>(null);
   const [pendingMulliganDraws, setPendingMulliganDraws] = useState<Record<CardBackTone, number>>({
     blue: 0,
     red: 0,
   });
   const cardsAnimating = setupAnimation !== null;
-  const setupAnimating = cardsAnimating && setupAnimation !== "turn-draw";
+  const setupAnimating = setupAnimation === "prizes" || setupAnimation === "draw";
   const displayedTurn = setupAnimating && turn.turn > 0 ? { ...turn, turn: 0 } : turn;
 
   const bottomPlayer = perspective;
@@ -110,9 +128,9 @@ export function PlaymatView({
   // (index.css) rotates blue/red around the board on the opponent's turn.
   const bodyPerspective = glowPerspective ?? perspective;
   // Keep card backs tied to the physical seats when the hot-seat projection re-bases.
-  const blueBackPlayer = bodyPerspective === "you" ? bottomPlayer : topPlayer;
+  const blueBackPlayer = fixedBlueBackPlayer ?? (bodyPerspective === "you" ? bottomPlayer : topPlayer);
   function displayedPile(owner: PlayerId): PileState | undefined {
-    const pile = piles?.[owner];
+    const pile = visiblePiles?.[owner];
     if (!pile) return undefined;
     const tone = owner === blueBackPlayer ? "blue" : "red";
     return {
@@ -145,7 +163,7 @@ export function PlaymatView({
           data-card-zone="playmat"
         />
         {/* Screen-reader-only mirror of the board (the canvas is aria-hidden). */}
-        <BoardSummary board={board} perspectivePlayer={bottomPlayer} piles={piles} />
+        <BoardSummary board={board} perspectivePlayer={bottomPlayer} piles={visiblePiles} />
         <PlayerSide
           owner={topPlayer}
           blueBackPlayer={blueBackPlayer}
@@ -154,6 +172,7 @@ export function PlaymatView({
           activeTurn={turn.activePlayer === topPlayer}
           benchLimit={topBenchLimit}
           pile={displayedPile(topPlayer)}
+          usedTrainers={trainersFor(topPlayer)}
         />
         <PlayerSide
           owner={bottomPlayer}
@@ -163,6 +182,7 @@ export function PlaymatView({
           activeTurn={turn.activePlayer === bottomPlayer}
           benchLimit={bottomBenchLimit}
           pile={displayedPile(bottomPlayer)}
+          usedTrainers={trainersFor(bottomPlayer)}
         />
         <Hand cards={board[bottomPlayer].hand} owner={bottomPlayer} />
         <EnergyChoiceArea board={board} onMoveCard={onMoveCard} />
@@ -196,8 +216,13 @@ export function PlaymatView({
           blueBackPlayer={blueBackPlayer}
           turnNumber={turn.turn}
           activePlayer={turn.activePlayer}
-          deckCounts={piles && { you: piles.you.deckCount, opponent: piles.opponent.deckCount }}
-          piles={piles}
+          deckCounts={
+            visiblePiles && {
+              you: visiblePiles.you.deckCount,
+              opponent: visiblePiles.opponent.deckCount,
+            }
+          }
+          piles={visiblePiles}
           holdSetupReveal={setupAnimating && turn.turn > 0}
           onSetupAnimationChange={setSetupAnimation}
           onPendingMulliganDrawsChange={setPendingMulliganDraws}
@@ -205,6 +230,7 @@ export function PlaymatView({
           onMoveCard={onMoveCard}
           placementPredicate={placementPredicate}
           usableTrainerIds={usableTrainerIds}
+          cardSelection={cardSelection}
         />
       </div>
       <div className="contents" inert={cardsAnimating || undefined}>
@@ -216,7 +242,9 @@ export function PlaymatView({
             ? "Setting Prize cards."
             : setupAnimation === "draw"
               ? "Drawing mulligan bonus cards."
-              : "Drawing a card for the turn."}
+              : setupAnimation === "prize-take"
+                ? "Adding Prize cards to the player's hand."
+                : "Drawing a card for the turn."}
         </output>
       )}
     </section>

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // Regression: one "Turn actions" panel leaked per turn. TurnPanel and
-// PrizeDialog sat in GameHud's fragment as siblings sharing key={seatKey};
+// the former PrizeDialog sat in GameHud's fragment as siblings sharing key={seatKey};
 // React's keyed reconciliation maps the leftover old children BY KEY, so the
 // duplicate collapsed to one map entry and the shadowed TurnPanel fiber was
 // never deleted when seatKey changed — an orphaned-but-mounted tree with
@@ -12,6 +12,8 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   driveSetup,
+  deckOf,
+  attachFromDeck,
   finishOpeningSetup,
   ALL_BASIC_DECK,
   mustCreate,
@@ -67,20 +69,80 @@ function renderMatch() {
 }
 
 describe("LocalMatch HUD across turns", () => {
-  it("keeps the current turn and revealed board during a turn draw, then restores the actions", () => {
+  it("reorders the bench by drag and saves the complete Pokémon in the new order", () => {
+    const state = driveSetup(
+      3,
+      { p1: ALL_BASIC_DECK, p2: ALL_BASIC_DECK },
+      {
+        first: "p1",
+        bench: { p1: Array(5).fill("fix-basic-1") },
+      },
+    );
+    const onSave = vi.fn();
+    render(
+      <MemoryRouter>
+        <LocalMatch
+          setup={{ state, events: [], names: { p1: "One", p2: "Two" }, startedAt: 0 }}
+          onPlayAgain={() => {}}
+          onSave={onSave}
+        />
+      </MemoryRouter>,
+    );
+    const props = cardsLayer.mock.calls.at(-1)?.[0] as PlaymatViewProps;
+    const first = props.board.you.bench[0];
+    if (first === undefined) throw new Error("Expected a benched Pokémon");
+    const from = { owner: "you", zone: "bench", index: 0 } as const;
+    const to = { owner: "you", zone: "bench", index: 4 } as const;
+    expect(props.placementPredicate?.(props.board, from, to, "pokemon")).toBe(true);
+    act(() => props.onMoveCard({ cardId: first.id, from, to }));
+    const current = cardsLayer.mock.calls.at(-1)?.[0] as PlaymatViewProps;
+    expect(current.board.you.bench).toEqual([...props.board.you.bench.slice(1), first]);
+    expect(onSave.mock.calls.at(-1)?.[0].state.players.p1.bench).toEqual([
+      ...state.players.p1.bench.slice(1),
+      state.players.p1.bench[0],
+    ]);
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+  it.each([
+    ["turn-draw", "Drawing a card for the turn."],
+    ["prize-take", "Adding Prize cards to the player's hand."],
+  ] as const)("keeps the current turn and revealed board during %s, then restores the actions", (stage, announcement) => {
     renderMatch();
-    act(() => cardsLayer.mock.calls.at(-1)?.[0].onSetupAnimationChange("turn-draw"));
+    act(() => cardsLayer.mock.calls.at(-1)?.[0].onSetupAnimationChange(stage));
     const playmat = screen.getByRole("region", { name: "Trading card game playmat" });
-    expect(playmat.getAttribute("data-setup-animation")).toBe("turn-draw");
+    expect(playmat.getAttribute("data-setup-animation")).toBe(stage);
     expect(screen.getByText(/^Turn 1\./)).toBeTruthy();
     expect(cardsLayer.mock.calls.at(-1)?.[0].holdSetupReveal).toBe(false);
-    expect(screen.getByText("Drawing a card for the turn.")).toBeTruthy();
+    expect(screen.getByText(announcement)).toBeTruthy();
     expect(screen.queryByRole("region", { name: "Turn actions" })).toBeNull();
     expect(screen.getByRole("button", { name: "Pass turn" }).closest("[inert]")).not.toBeNull();
     act(() => cardsLayer.mock.calls.at(-1)?.[0].onSetupAnimationChange(null));
     expect(playmat.hasAttribute("data-setup-animation")).toBe(false);
     expect(screen.getByRole("region", { name: "Turn actions" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Pass turn" }).closest("[inert]")).toBeNull();
+  });
+
+  it("collects a knockout prize automatically into the saved hand under StrictMode", () => {
+    let state = driveSetup(11, {
+      p1: deckOf({ "fix-attacker": 30, "fix-fire-energy": 20, "fix-water-energy": 10 }),
+      p2: deckOf({ "fix-weak": 40, "fix-water-energy": 20 }),
+    }, { first: "p1", active: { p1: "fix-attacker", p2: "fix-weak" }, bench: { p2: ["fix-weak"] } });
+    state = attachFromDeck(state, "p1", "fix-fire-energy", 1);
+    state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
+    state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+    const onSave = vi.fn();
+    render(
+      <StrictMode><MemoryRouter>
+        <LocalMatch setup={{ state, events: [], names: { p1: "One", p2: "Two" }, startedAt: 0 }} onSave={onSave} onPlayAgain={() => {}} />
+      </MemoryRouter></StrictMode>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Bite/ }));
+    const saved = onSave.mock.calls.at(-1)?.[0];
+    expect(saved.state.players.p1.prizes).toHaveLength(5);
+    expect(saved.state.players.p1.hand).toEqual([...state.players.p1.hand, state.players.p1.prizes[5]]);
+    expect(saved.state.phase.kind).not.toBe("ko:takePrizes");
+    expect(screen.queryByRole("dialog", { name: "Take prizes" })).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 
   it("passes from the restored control and enables history only for recorded turns", () => {
