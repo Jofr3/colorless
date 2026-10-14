@@ -10,6 +10,15 @@ From the repository root:
 bun run dev:lua
 ```
 
+To build and run the Lua frontend and API over Tailscale HTTPS:
+
+```sh
+bun run dev:lua:tailnet
+```
+
+Open the printed frontend URL ending in `/lua/`. Tailscale must be connected;
+the command selects free ports. Ctrl+C stops both servers and its Tailnet proxies.
+
 If Vite is already running on port 5175, just build and visit <http://127.0.0.1:5175/lua/>:
 
 ```sh
@@ -106,7 +115,7 @@ constructor position and the shared Moveable physics. The paginator uses the
 original DynaText character pop-in (rate 8) and ongoing bump motion; it stays
 silent and respects Reduced Motion.
 
-Click a deck to open the current editor, whose Decks link returns to Lua. Compact deck rows show the name above each pile and a right-aligned count
+Click a deck to open its Lua builder (`/lua/?page=builder&deck=<id>`). The React editor remains available at `/decks/<id>/edit`. Compact deck rows show the name above each pile and a right-aligned count
 (e.g. 60/60) beneath it. Dragging a top card returns it to its pile without changing the sort order. Failed writes reconcile with the server.
 New decks are created without a folder.
 
@@ -135,3 +144,47 @@ Library checks: `bunx vitest run src/features/lua/library.test.ts`,
 CardArea alignment, collection page callback, UIBox counter/badge layout and
 DynaText letter-animation functions. Browser QA uses isolated in-memory API fixtures
 with populated, empty and formerly folder-assigned decks and multiple pages.
+
+The Lua builder uses a four-by-two card catalog on desktop and two-by-two on
+portrait screens. It shares card search, live facet vocabularies, copy limits,
+format validation, decklist import/export, and the serialized autosaver with the
+React builder. Click a card to inspect it, use its Add button, or drag it into the
+deck tray. Drag a deck row out of the tray to remove one copy. Portrait mode has
+Browse/Deck tabs and a bottom drop target. Card art is decoded by the browser into
+a bounded PNG cache; Lua renders it at double atlas resolution with the original
+card motion, hover shader, drag shadow, and room/CRT transform.
+The deck tray has a compact paginator and an icon toggle between rows and a
+three-by-two card grid with quantities. Both views share the category tabs; card
+previews support inspection and dragging out to remove a copy.
+List rows adapt Balatro's `create_UIBox_current_hand_row`, with quantity badges,
+grey embossed backgrounds and inset quantity controls. Dragged deck previews
+remain visible until the original Moveable motion returns them to their origin.
+Deck information follows `create_UIBox_high_scores_row` and `create_progress_box`
+from Balatro: darkened JOKER_GREY labels, BLACK values, solid 0.05-tile emboss,
+clipped half-alpha blue fills, and the original static/DynaText shadow and float
+formulas. `luajit frontend/lua/tests/deck_stats.lua` compares its palette and fill
+geometry directly with the sibling game's source.
+
+The name, format, cards and cover choice autosave together. Back waits for an
+acknowledged save; failed saves retain the draft and offer Retry. A browser unload
+warns when edits are pending. Imports replace the deck only after every parsed
+card resolves. The decklist modal opens with the current list, a floating Copy
+button and a Confirm action enabled only for nonempty changes. Unavailable
+catalog entries remain visible and removable. Filters use three fixed-size tabs,
+two-column option cycles, and HP sliders; the cycle centers have hover feedback
+without opening another modal. Card details, filters, validation, import/export and Clear
+use the same modal motion and backdrop as Settings. Native text proxies supply
+IME, clipboard, selection and mobile keyboards; even the multiline decklist is
+rendered in Lua.
+The host matches Lua's scene dimensions to the full browser viewport without a
+device-pixel-ratio multiplier, keeping the CRT pass and pointer mapping aligned.
+
+Builder checks: `bunx vitest run src/features/lua/builder.test.ts` and
+`luajit frontend/lua/tests/builder.lua`. They cover shared copy limits, delayed and
+failed saves, navigation, stale searches and sessions, atomic imports, modal
+geometry and drag targets. Browser QA uses mocked deck writes with the live
+read-only catalog, including desktop/portrait layouts, artwork, drag add/remove,
+imports, and save-failure recovery.
+Additional checks: `deck_row.lua`, `input_hover.lua`, `drag_return.lua`, and
+`transfer.lua` in `frontend/lua/tests/` cover source palettes and hover layering,
+return animation and texture cleanup, and decklist editing/confirmation.

@@ -4,6 +4,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
+const frontendPath = process.argv.includes("--lua") ? "/lua/" : "";
 const children: ChildProcess[] = [];
 let stopping = false;
 
@@ -126,7 +127,7 @@ async function main() {
   process.on("SIGINT", () => stop(130));
   process.on("SIGTERM", () => stop(143));
 
-  console.log(`\nFrontend: ${webOrigin} (local port ${webPort})`);
+  console.log(`\nFrontend: ${webOrigin}${frontendPath} (local port ${webPort})`);
   console.log(`API:      ${apiOrigin} (local port ${apiPort})`);
   console.log(`Google authorized redirect URI: ${apiOrigin}/auth/oauth/google/callback`);
   console.log("Ctrl+C stops both servers and this session's Tailnet proxies.\n");

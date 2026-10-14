@@ -11,10 +11,11 @@ local function metric(text,scale)
   return font:getWidth(text)*scale*0.1/20,font:getHeight()*scale*0.1/20*0.83
 end
 Labels.metric=metric
-function Labels.counter(count)
+function Labels.counter(count,limit)
   local nodes={}
-  local width=0.2+6*0.03 -- two 0.1-tile spacers and padding around five nodes
-  for _,text in ipairs({tostring(count),'/',tostring(count)}) do
+  local values={tostring(count),'/',tostring(limit or count)}
+  local width=0.2+(#values+3)*0.03 -- two 0.1-tile spacers and node padding
+  for _,text in ipairs(values) do
     local w,h=metric(text,0.3)
     nodes[#nodes+1]={text=text,w=w,h=h,scale=0.3}
     width=width+w
@@ -57,13 +58,19 @@ local function text(node,unit,shadow,parallax)
   g.setColor(T.white)
   g.print(node.text,x+10*factor,y-20*factor,0,factor,factor)
 end
-function Labels.drawCounter(card)
-  local nodes,bottom=Labels.counter(card.item.count)
+local function drawCounter(card,count,limit)
+  local nodes,bottom=Labels.counter(count,limit)
   local gap=0.08*card.unit -- extra clearance below the pile in the library
   g.push(); g.translate(card.homeX,card.homeY+gap)
   for _,node in ipairs(nodes) do text(node,card.unit,false) end
   g.pop()
   return card.homeY+gap+bottom*card.unit
+end
+function Labels.drawCounter(card)
+  return drawCounter(card,card.item.count)
+end
+function Labels.drawQuantity(card)
+  return drawCounter(card,card.item.quantity,card.item.copyLimit or 4)
 end
 function Labels.drawHover(card)
   if not card.hovered or card.dragging then return end

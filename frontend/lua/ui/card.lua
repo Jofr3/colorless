@@ -45,8 +45,9 @@ end
 function Card:rebuild()
   local item,index=self.item,self.index
   if self.texture then self.texture:release() end
-  self.texture = g.newCanvas(W,H)
-  g.setCanvas(self.texture); g.clear()
+  local resolution=item.resolution or 1
+  self.texture = g.newCanvas(W*resolution,H*resolution)
+  g.setCanvas(self.texture); g.clear(); g.push(); g.scale(resolution)
   if item.drawFace then
     item.drawFace(W,H)
   else
@@ -64,7 +65,7 @@ function Card:rebuild()
   T.box(18,153,106,26,item.colour,3)
   T.text(item.label,24,18,152,106)
   end
-  g.setCanvas()
+  g.pop(); g.setCanvas()
   self.texture:setFilter('nearest','nearest')
 end
 -- Match the source card dimensions in tile units, independent of viewport/DPI.
@@ -129,7 +130,7 @@ function Card:shaderValues(time,mx,my,reduced)
   local phase=math.min(self.angle*3,1)+time/28+(j and j.r*20 or 0)+tiltAmount
   return {
     dissolve=0, time=(123.33412*(self.index/1.14212))%3000,
-    texture_details={0,0,W,H},image_details={W,H},shadow=false,
+    texture_details={0,0,W*(self.item.resolution or 1),H*(self.item.resolution or 1)},image_details={W*(self.item.resolution or 1),H*(self.item.resolution or 1)},shadow=false,
     burn_colour_1={1,1,1,0},burn_colour_2={1,1,1,0},
     mouse_screen_pos={px,py},hovering=reduced and 0 or 1,
     screen_scale=math.sqrt((ux-ox)^2+(uy-oy)^2),
@@ -145,7 +146,8 @@ end
 function Card:draw(shaders,time,mx,my,reduced,roomWidth)
   local values,edition=self:shaderValues(time,mx,my,reduced)
   local scale=self.motion.VT.scale
-  local sx,sy=CARD_W*self.unit/W*scale,CARD_H*self.unit/H*scale
+  local resolution=self.item.resolution or 1
+  local sx,sy=CARD_W*self.unit/W*scale/resolution,CARD_H*self.unit/H*scale/resolution
   local dissolve=shaders.dissolve
   -- Sprite:draw_shader's shadow pass is un-tilted, scaled down, and projected
   -- away from the room centre. Dragging raises it from 0.1 to 0.35 tile units.
@@ -156,19 +158,19 @@ function Card:draw(shaders,time,mx,my,reduced,roomWidth)
   g.setShader(dissolve); g.setColor(1,1,1,1)
   g.draw(self.texture,self.x-parallax*shadowHeight*self.unit,
     self.y+1.5*shadowHeight*self.unit,self.angle,
-    sx*(1-0.2*shadowHeight),sy*(1-0.2*shadowHeight),W/2,H/2)
+    sx*(1-0.2*shadowHeight),sy*(1-0.2*shadowHeight),W*resolution/2,H*resolution/2)
 
   values.shadow=false; values.hovering=reduced and 0 or 1
   send(dissolve,values)
   g.setShader(dissolve); g.setColor(1,1,1,1)
-  g.draw(self.texture,self.x,self.y,self.angle,sx,sy,W/2,H/2)
+  g.draw(self.texture,self.x,self.y,self.angle,sx,sy,W*resolution/2,H*resolution/2)
   -- Balatro draws every edition ON TOP of the ordinary card, with identical
   -- geometry; foil's partially transparent pass must never have its own tilt.
   if self.item.edition~='dissolve' then
     local shader=shaders[self.item.edition]
     values[self.item.edition]=edition
     send(shader,values); g.setShader(shader)
-    g.draw(self.texture,self.x,self.y,self.angle,sx,sy,W/2,H/2)
+    g.draw(self.texture,self.x,self.y,self.angle,sx,sy,W*resolution/2,H*resolution/2)
   end
   g.setShader()
 end

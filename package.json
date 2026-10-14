@@ -28,7 +28,8 @@
     "api:dev": "bun run --cwd apps/api dev",
     "api:deploy": "bun run --cwd apps/api deploy",
     "build:lua": "node frontend/lua/build.mjs",
-    "dev:lua": "bun run build:lua && vite --host 127.0.0.1 --port 5175 --strictPort --open /lua/"
+    "dev:lua": "bun run build:lua && vite --host 127.0.0.1 --port 5175 --strictPort --open /lua/",
+    "dev:lua:tailnet": "bun run build:lua && bun scripts/dev-tailnet.ts --lua"
   },
   "dependencies": {
     "@luminous/engine": "workspace:*",

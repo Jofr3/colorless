@@ -166,7 +166,7 @@ function Settings:describe(item)
   if item.kind=='email' then return 'Email: '..self.account.email..'. Disabled.' end
   return item.label..': '..((item.kind=='toggle' or item.kind=='cycle') and (self:value(item)==1 and 'on' or 'off') or self:value(item))
 end
-function Settings:hit(x,y)
+function Settings:hit(x,y,hoverOnly)
   y=y-self.motion.VT.y*60
   for i,item in ipairs(self.items) do
     local w=item.kind=='slider' and item.w+56 or item.kind=='toggle' and item.w+56 or item.w
@@ -174,6 +174,11 @@ function Settings:hit(x,y)
       if item.kind=='cycle' then
         if x<=item.x+28.8 then return i,'left' end
         if x>=item.x+item.w-28.8 then return i,'right' end
+        if hoverOnly then return i,'center' end
+      elseif hoverOnly and item.kind=='slider' then
+        if x<=item.x+item.w and y>=item.y+7 and y<=item.y+31 then return i end
+      elseif hoverOnly and item.kind=='toggle' then
+        if x>=item.x+item.w+12 and x<=item.x+item.w+48 and y<=item.y+36 then return i end
       else return i end
     end
   end
@@ -188,7 +193,7 @@ end
 function Settings:update(dt,time,mx,my,reduced)
   self.markerTime=reduced and 12 or time
   self.motion:update(dt,time,false,false,reduced)
-  self.hover,self.hoverPart=self:hit(mx,my)
+  self.hover,self.hoverPart=self:hit(mx,my,true)
   if self.drag then self:slide(self.items[self.drag],mx) end
 end
 function Settings:activate(index)
@@ -296,26 +301,22 @@ function Settings:draw()
       end
     elseif item.kind=='auth-field' then
       local a=self.auth
-      Input.draw(item,a[item.field],a.editing==item.field,a.selectionStart,a.selectionEnd,self.markerTime,self.account.busy)
+      Input.draw(item,a[item.field],a.editing==item.field,a.selectionStart,a.selectionEnd,self.markerTime,self.account.busy,self.hover==i)
     elseif item.kind=='slider' then
+      local highlighted=self.hover==i
       local value=self:value(item)
       T.text(item.label,30,item.x-28,item.y-34,item.w+112)
-      panel(item.x,item.y+10,item.w,24,{0.08,0.12,0.13,1})
-      panel(item.x,item.y+7,item.w,24,T.ink)
-      if value>0 then
-        local fill=item.w*value/100
-        panel(item.x,item.y+7,fill,24,T.red,math.min(1.8,fill/8))
-      end
-      local number={label=tostring(value),x=item.x+item.w+8,y=item.y+7,w=48,h=24,fontSize=21,colour=T.red}
-      Button.draw(number,false,false,false,self.width)
+      Button.slider(item.x,item.y+7,item.w,value/100,tostring(value),highlighted)
     elseif item.kind=='cycle' then
       local x,y=item.x+36,item.y
       local centreWidth=item.w-72
       T.text(item.label,24,item.x,item.y-32,item.w)
       -- The center is embossed, while only the arrows cast button shadows.
       local colour=self:disabled(item) and T.panel or T.red
-      panel(x,y+6,centreWidth,38.4,{colour[1]*0.7,colour[2]*0.7,colour[3]*0.7,1})
-      panel(x,y,centreWidth,38.4,colour)
+      local highlighted=not self:disabled(item) and self.hover==i and self.hoverPart=='center'
+      local depth=highlighted and 0.5 or 0.7
+      panel(x,y+6,centreWidth,38.4,{colour[1]*depth,colour[2]*depth,colour[3]*depth,1})
+      panel(x,y,centreWidth,38.4,Button.hoverColour(colour,highlighted))
       local label=self:value(item)==1 and 'On' or 'Off'
       local size=24
       while size>12 and T.font(size):getWidth(label)>centreWidth-12 do size=size-1 end
@@ -337,13 +338,17 @@ function Settings:draw()
       local disabled=item.kind=='email'
       local editing=not disabled and self.account.editing
       Input.draw(item,disabled and self.account.email or self.account.draftName,editing,
-        self.account.selectionStart,self.account.selectionEnd,self.markerTime,disabled)
+        self.account.selectionStart,self.account.selectionEnd,self.markerTime,disabled,self.hover==i)
     else
       local x=item.x+item.w+12
       T.text(item.label,27,item.x-12,item.y+5,item.w+12,T.white,'right')
-      panel(x-2,item.y+1,38,38,{0,0,0,0.3})
+      -- create_toggle: hover tints the fill; the white outline is drawn
+      -- afterwards, unchanged. Only its line_emboss darkens (.3 -> .5).
+      local hovered=self.hover==i
+      local depth=hovered and 0.5 or 0.7
+      panel(x,item.y+1.5,36,36,{depth,depth,depth,1})
       panel(x,item.y,36,36,T.white)
-      panel(x+3,item.y+3,30,30,self:value(item)==1 and T.red or T.ink,1.5)
+      panel(x+3,item.y+3,30,30,Button.hoverColour(self:value(item)==1 and T.red or T.panel,hovered),1.5)
       if self:value(item)==1 then
         g.setColor(T.white); g.setLineWidth(4); g.setLineStyle('rough')
         g.line(x+8,item.y+18,x+15,item.y+25,x+28,item.y+10)

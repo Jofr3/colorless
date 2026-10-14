@@ -6,12 +6,14 @@ local Preferences = require('ui.preferences')
 local Settings = require('ui.settings')
 local Account = require('ui.account')
 local Library = require('ui.library')
+local Builder = require('ui.builder')
 local Modal = require('ui.modal')
 local g = love.graphics
 -- Game:main_menu starts REAL at 12 when skipping the introductory splash.
 local state = {time=12,focused=0,hovered=0,muted=false,reduced=false,poll=0,ready=false}
 local shaders, sounds, controls = {}, {}, {}
-local menuTray,room,screen,popup,library
+local menuTray,room,screen,popup,library,builder
+local function collection() return state.page=='builder' and builder or library end
 local preferences=Preferences.new()
 local account=Account.new()
 local openSettings,closeSettings,applyPreferences
@@ -59,7 +61,8 @@ local function layout(w,h)
   screen=Screen.new(shaders.CRT,w,h,Screen.unit(w,h))
   if popup then popup:layout(virtualWidth,virtualHeight) end
   if library then library:layout(virtualWidth,virtualHeight) end
-  love.window.setTitle('Luminous - '..(state.page=='decks' and 'Decks' or 'Home'))
+  if builder then builder:layout(virtualWidth,virtualHeight) end
+  love.window.setTitle('Luminous - '..(state.page=='builder' and 'Deck builder' or state.page=='decks' and 'Decks' or 'Home'))
 end
 local function pointer(x,y)
   x,y=screen:unproject(x,y)
@@ -73,7 +76,7 @@ end
 local function libraryTransform()
   local scale=virtualWidth<600 and 1 or 0.9
   g.translate(virtualWidth/2,virtualHeight/2); g.scale(scale)
-  g.translate(-virtualWidth/2,-virtualHeight/2+library:offset())
+  g.translate(-virtualWidth/2,-virtualHeight/2+collection():offset())
 end
 local function hit(x,y)
   for i,b in ipairs(menu) do if Button.hit(b,x,y) then return i end end
@@ -97,12 +100,17 @@ local function browserState()
     local pageRaw=love.filesystem.read('__page.txt')
     if pageRaw~=state.pageRaw then
       state.pageRaw=pageRaw
-      local page=Account.fields(pageRaw)[2]
-      if page~=state.page then
+      local fields=Account.fields(pageRaw)
+      local page=fields[2]
+      if page~=state.page or (page=='builder' and fields[3]~=state.deckId) then
+        if state.page=='builder' then builder:command('close') end
+        state.deckId=fields[3]
         if popup then closeSettings() end
         state.page=page; state.leaving=nil; state.pressed=nil; state.focused=0
-        love.window.setTitle('Luminous - '..(page=='decks' and 'Decks' or 'Home'))
-        if page=='decks' then
+        love.window.setTitle('Luminous - '..(page=='builder' and 'Deck builder' or page=='decks' and 'Decks' or 'Home'))
+        if page=='builder' then
+          library:command('close'); builder:open(state.reduced,fields[3]); print('LUMINOUS:account:refresh')
+        elseif page=='decks' then
           library:open(state.reduced); print('LUMINOUS:account:refresh')
         else library:closeModal(); library:command('close') end
       end
@@ -180,6 +188,12 @@ function love.load()
     settings=function() openSettings() end,
     signin=function() openSettings(false,4); popup:openAuth('login') end,
   })
+  builder=Builder.new({
+    command=function(command) print('LUMINOUS:builder:'..command) end,
+    feedback=function(name,pitch) sound(name,pitch) end,
+    announce=announce,
+    signin=function() openSettings(false,4); popup:openAuth('login') end,
+  })
   layout(g.getDimensions())
   browserState()
   state.ready=true
@@ -198,9 +212,9 @@ function love.update(dt)
   state.time=state.time+dt
   screen:update(state.time,offsetX+room.cursorX*layoutScale,offsetY+room.cursorY*layoutScale,state.reduced,preferences)
   local mx,my=pointer(love.mouse.getPosition())
-  if state.page=='decks' then
+  if state.page=='decks' or state.page=='builder' then
     local lx,ly=libraryPoint(mx,my)
-    library:update(dt,state.time,popup and -1000 or lx,popup and -1000 or ly,state.reduced)
+    collection():update(dt,state.time,popup and -1000 or lx,popup and -1000 or ly,state.reduced)
   end
   if popup then
     if love.filesystem.getInfo('__account.txt') then
@@ -216,8 +230,8 @@ function love.update(dt)
     love.mouse.setCursor(popup.hover>0 and state.handCursor or state.arrowCursor)
     return
   end
-  if state.page=='decks' then
-    love.mouse.setCursor(library.hover>0 and state.handCursor or state.arrowCursor)
+  if state.page=='decks' or state.page=='builder' then
+    love.mouse.setCursor(collection().hover>0 and state.handCursor or state.arrowCursor)
     return
   end
   local hovered=hit(mx,my)
@@ -267,15 +281,15 @@ function love.draw()
   T.text('Luminous',19,24,virtualHeight-33,160,T.paper,'left')
   T.text('Home',19,virtualWidth-130,virtualHeight-33,106,T.paper,'right')
   g.pop()
-  if state.page=='decks' then
+  if state.page=='decks' or state.page=='builder' then
     Modal.backdrop(width,height)
     g.push(); g.translate(offsetX,offsetY); g.scale(layoutScale); room:apply()
-    libraryTransform(); library:draw(shaders)
+    libraryTransform(); collection():draw(shaders)
     g.pop()
-    if library.modal then
+    if collection().modal then
       Modal.backdrop(width,height)
       g.push(); g.translate(offsetX,offsetY); g.scale(layoutScale); room:apply()
-      libraryTransform(); library:drawModal()
+      libraryTransform(); collection():drawModal(shaders)
       g.pop()
     end
   end
@@ -297,21 +311,21 @@ function love.mousepressed(x,y,button)
   unlockAudio(); state.focused=0
   x,y=pointer(x,y)
   if popup then popup:mousepressed(x,y); return end
-  if state.page=='decks' then library:mousepressed(libraryPoint(x,y)); return end
+  if state.page=='decks' or state.page=='builder' then collection():mousepressed(libraryPoint(x,y)); return end
   state.pressed=hit(x,y)
 end
 function love.mousereleased(x,y,button)
   if button~=1 then return end
   x,y=pointer(x,y)
   if popup then popup:mousereleased(x,y); return end
-  if state.page=='decks' then library:mousereleased(libraryPoint(x,y)); return end
+  if state.page=='decks' or state.page=='builder' then collection():mousereleased(libraryPoint(x,y)); return end
   if state.pressed and state.pressed==hit(x,y) then activate(state.pressed) end
   state.pressed=nil
 end
 function love.keypressed(key)
   unlockAudio()
   if popup then popup:keypressed(key); return end
-  if state.page=='decks' then library:keypressed(key); return end
+  if state.page=='decks' or state.page=='builder' then collection():keypressed(key); return end
   if key=='tab' or key=='right' or key=='down' or key=='left' or key=='up' then
     local backward=key=='left' or key=='up' or (key=='tab' and love.keyboard.isDown('lshift','rshift'))
     local count=#menu+#controls
@@ -334,6 +348,11 @@ function love.focus(focused)
     sounds.music1:pause()
     state.pressed=nil
     if popup then popup.drag=nil; popup.pressed=nil end
+    if builder then
+      builder.drag=nil;builder.hpDrag=nil;builder.pressed=nil
+      if builder.dragCard then builder.dragCard.texture:release();builder.dragCard=nil end
+      for _,card in ipairs(builder.cards) do card.dragging=false end
+    end
     if library then
       library.drag=nil; library.pressed=nil
       for _,card in ipairs(library.cards) do card.dragging=false end
@@ -344,5 +363,5 @@ function love.focus(focused)
 end
 
 function love.wheelmoved(x,y)
-  if state.page=='decks' and not popup then library:wheelmoved(y) end
+  if (state.page=='decks' or state.page=='builder') and not popup then collection():wheelmoved(y) end
 end
