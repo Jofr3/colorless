@@ -5,6 +5,12 @@ local Motion=require('ui.motion')
 local Pile=setmetatable({}, {__index=Card})
 Pile.__index=Pile
 local g=love.graphics
+-- Preserve G.deck's right-side perspective when displaying a grid of decks.
+-- game.lua: deck_W = 1.1 * CARD_W; set_screen_positions: x = TILE_W-w-0.5.
+Pile.referenceX=20-0.5-1.1*(2.4*35/41)/2
+function Pile.parallax(offset)
+  return (Pile.referenceX+(offset or 0)-10)/10*1.5
+end
 function Pile.new(item,index)
   return setmetatable(Card.new(item,index),Pile)
 end
@@ -19,7 +25,7 @@ function Pile.grey(count,rank)
   return rank>3 and 0.5+((count-rank)%7)/50 or 1
 end
 function Pile:target(rank,roomWidth,cardParallax)
-  local areaParallax=(self.homeX-roomWidth/2)/(roomWidth/2)*1.5
+  local areaParallax=Pile.parallax()
   local depth=0.15/52*(self.count-rank)*self.unit
   return self.homeX+areaParallax*depth+cardParallax*self.unit/30,self.homeY-1.5*depth
 end
@@ -28,7 +34,7 @@ function Pile:place(x,y,scale,entering,roomWidth)
   self.count=math.max(1,self.item.count)
   self.layers={}
   roomWidth=roomWidth or 1280
-  local parallax=(x-roomWidth/2)/(roomWidth/2)*1.5
+  local parallax=Pile.parallax()
   for _,rank in ipairs(Pile.ranks(self.count)) do
     local tx,ty=self:target(rank,roomWidth,parallax)
     local motion=Motion.new(tx/self.unit,ty/self.unit,0)
@@ -36,6 +42,16 @@ function Pile:place(x,y,scale,entering,roomWidth)
     if rank==1 then self.motion=motion end
   end
   self.x,self.y,self.angle=self.motion.VT.x*self.unit,self.motion.VT.y*self.unit,0
+end
+-- The collection page callback constructs every card at its row's centre
+-- (top-left x = area.x + area.w/2, y = area.y), then emplaces it.
+function Pile:enterCollection(rowCentre)
+  for _,layer in ipairs(self.layers) do
+    layer.motion.VT.x=(rowCentre+71*self.baseScale)/self.unit
+    layer.motion.VT.y=(self.homeY+0.025*(2.4*47/41)*self.unit)/self.unit
+    layer.motion.VT.r=0
+  end
+  self.x,self.y=self.motion.VT.x*self.unit,self.motion.VT.y*self.unit
 end
 function Pile:juiceUp(time,scale,rotation,reduced)
   -- Card:hover calls juice_up(0.05, 0.03), converted by Card:juice_up.
@@ -47,7 +63,7 @@ function Pile:update(dt,time,active,reduced,roomWidth)
   for _,layer in ipairs(self.layers) do
     local m=layer.motion
     local top=layer.rank==1
-    local px=(m.T.x*self.unit-roomWidth/2)/(roomWidth/2)*1.5
+    local px=Pile.parallax(m.T.x-self.homeX/self.unit)
     local tx,ty=self:target(layer.rank,roomWidth,px)
     m.T.x=(top and self.dragging and self.targetX or tx)/self.unit
     m.T.y=(top and self.dragging and self.targetY or ty)/self.unit

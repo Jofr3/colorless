@@ -1,14 +1,16 @@
 local T=require('ui.theme')
 local Button=require('ui.button')
 local Pile=require('ui.deck_pile')
+local DeckLabels=require('ui.deck_labels')
+local PageText=require('ui.page_text')
 local Modal=require('ui.modal')
 local Codec=require('ui.account')
 local Input=require('ui.text_input')
 local g=love.graphics
 local Library={}
 Library.__index=Library
-local sorts={'manual','name-asc','name-desc','cards-desc'}
-local sortLabels={manual='Manual',['name-asc']='Name A-Z',['name-desc']='Name Z-A',['cards-desc']='Card count'}
+local sorts={'name-asc','name-desc','cards-desc'}
+local sortLabels={['name-asc']='Name A-Z',['name-desc']='Name Z-A',['cards-desc']='Card count'}
 local function nextValue(values,current)
   for i,v in ipairs(values) do if v==current then return values[i%#values+1] end end
   return values[1]
@@ -30,7 +32,7 @@ local function caption(text,size,x,y,w,colour)
   text,size=fit(text,size,w); T.text(text,size,x,y,w,colour)
 end
 function Library.new(callbacks)
-  return setmetatable({callbacks=callbacks,phase='loading',busy=false,message='',query='',sort='manual',page=1,pages=1,total=0,items={},cards={},controls={},focus=0,hover=0,time=0,draft='',search='',editing=''},Library)
+  return setmetatable({callbacks=callbacks,pageText=PageText.new(),phase='loading',busy=false,message='',query='',sort='name-asc',page=1,pages=1,total=0,items={},cards={},controls={},focus=0,hover=0,time=0,draft='',search='',editing=''},Library)
 end
 function Library:open(reduced)
   self.motion=Modal.motion(reduced)
@@ -54,7 +56,7 @@ end
 function Library:layout(w,h)
   self.drag=nil; self.pressed=nil
   self.width,self.height=w,h; self.portrait=w<600
-  self:command('size',self.portrait and 4 or 8)
+  self:command('size',self.portrait and 4 or 12)
   self:makeCards(false)
   self:build()
 end
@@ -69,15 +71,16 @@ end
 function Library:makeCards(entering)
   if not self.width then return end
   self:release()
-  local cols=self.portrait and 2 or 4
-  local span=self.portrait and 380 or 800
+  local cols=self.portrait and 2 or 6
+  local span=self.portrait and 380 or 1000
   local left=(self.width-span)/2
   for i,item in ipairs(self.items) do
     item.colour=T.blue; item.edition='dissolve'
     item.drawFace=function(w,h) self:face(item,w,h) end
     local card=Pile.new(item,i)
-    card:place(left+span/cols*((i-1)%cols+0.5),(self.portrait and 265 or 220)+math.floor((i-1)/cols)*(self.portrait and 220 or 250),self.portrait and 0.68 or 0.82,false,self.width)
+    card:place(left+span/cols*((i-1)%cols+0.5),(self.portrait and 280 or 240)+math.floor((i-1)/cols)*(self.portrait and 220 or 250),self.portrait and 0.68 or 0.82,false,self.width)
 
+    if entering and not self.reduced then card:enterCollection(self.width/2) end
     self.cards[#self.cards+1]=card
   end
 end
@@ -89,6 +92,7 @@ function Library:sync(raw)
   self.phase,self.busy,self.message=f[2],f[3]=='1',f[4]
   self.query,self.sort=f[6],f[8]
   self.page,self.pages,self.total=tonumber(f[9]),tonumber(f[10]),tonumber(f[11])
+  self.pageText:set('Page '..self.page..'/'..self.pages,self.time)
   if self.editing~='search' then self.search=self.query end
   local items={}; local signature={self.query,tostring(self.page)}
   for i=2,#lines do
@@ -121,15 +125,13 @@ function Library:build()
   if self.modal then
     local m=self.modal
     self.modal=nil; self:build(); self.baseControls=self.controls; self.modal=m; self.controls={}
-    m.w=p and 420 or 600; m.h=m.mode=='manage' and 392 or m.mode=='delete' and 340 or 330
+    m.w=p and 420 or 600; m.h=m.mode=='manage' and 336 or m.mode=='delete' and 340 or 330
     m.x,m.y=(w-m.w)/2,(h-m.h)/2
     local x,y,bw=m.x+28,m.y+80,m.w-56
     if m.mode=='manage' then
       self:add('Edit deck',x,y,bw,42,'open-item',T.blue)
       self:add('Rename',x,y+56,bw,42,'rename',T.red)
-      self:add('Earlier',x,y+112,(bw-12)/2,42,'earlier',T.profile,{disabled=self.query~=''})
-      self:add('Later',x+(bw+12)/2,y+112,(bw-12)/2,42,'later',T.profile,{disabled=self.query~=''})
-      self:add('Delete '..m.item.kind,x,y+168,bw,42,'confirm-delete',T.red)
+      self:add('Delete '..m.item.kind,x,y+112,bw,42,'confirm-delete',T.red)
     elseif m.mode=='delete' then
       self:add('Delete '..m.item.kind,x,m.y+m.h-130,bw,42,'submit',T.red)
     else
@@ -139,11 +141,12 @@ function Library:build()
     self:add('Back',x,m.y+m.h-62,bw,40,'close',T.orange)
     return
   end
-  self:add('Back',p and 24 or 48,h-66,w-(p and 48 or 96),40,'home',T.orange)
+  local contentX=p and 24 or (w-1000)/2
+  self:add('Back',contentX,h-66,p and w-48 or 1000,40,'home',T.orange)
   if self.phase=='ready' then
-    self:add('',p and 24 or 48,48,p and 432 or 600,42,'input-search',T.ink,{input=true,placeholder='Search decks'})
-    self:add('Sort: '..(sortLabels[self.sort] or 'Manual'),p and 24 or 662,p and 102 or 48,p and 208 or 300,42,'sort',T.profile)
-    self:add('New deck',p and 248 or 976,p and 102 or 48,p and 208 or 256,42,'new-deck',T.blue)
+    self:add('',contentX,48,p and 432 or 476,42,'input-search',T.ink,{input=true,placeholder='Search decks'})
+    self:add('Sort: '..(sortLabels[self.sort] or 'Name A-Z'),p and 24 or contentX+490,p and 102 or 48,p and 208 or 260,42,'sort',T.profile)
+    self:add('New deck',p and 248 or contentX+764,p and 102 or 48,p and 208 or 236,42,'new-deck',T.blue)
     for i,card in ipairs(self.cards) do
       self.controls[#self.controls+1]={label=card.item.name,x=card.homeX-71*card.baseScale,y=card.homeY-95*card.baseScale,w=142*card.baseScale,h=190*card.baseScale,action='card',card=i}
     end
@@ -212,8 +215,7 @@ function Library:activate(i)
     local item=self.modal.item
     if a=='rename' then self:openModal('rename',item)
     elseif a=='confirm-delete' then self:openModal('delete',item)
-    elseif a=='open-item' then self:closeModal(); self:command('edit',item.id)
-    elseif a=='earlier' or a=='later' then self:command('order',item.kind,item.id,a); self:closeModal() end
+    elseif a=='open-item' then self:closeModal(); self:command('edit',item.id) end
   else self:command(a) end
 end
 function Library:hit(x,y,localCoords)
@@ -264,10 +266,6 @@ function Library:mousereleased(x,y)
     local source=self.cards[drag.index]
     if source then
       source.dragging=false
-      local item=source.item
-      local target
-      for i,card in ipairs(self.cards) do if i~=drag.index and card:hit(x,y-self:offset()) then target=card.item; break end end
-      if target and self.query=='' then self:command('order','deck',item.id,target.id) end
       source:juiceUp(self.time,nil,nil,self.reduced)
     end
   elseif self.pressed and self.pressed==self:hit(x,y) then self:activate(self.pressed) end
@@ -292,17 +290,25 @@ function Library:wheelmoved(y)
 end
 function Library:draw(shaders)
   local w,h,p=self.width,self.height,self.portrait
-  Button.panel(16,26,w-32,h-34,{0.525,0.546,0.585,1},2.4)
-  Button.panel(16,20,w-32,h-34,{191/255,199/255,213/255,1},2.4)
-  Button.panel(20,24,w-40,h-42,T.tray,2.4)
+  local frameW=p and w-32 or 1032
+  local frameX=(w-frameW)/2
+  Button.panel(frameX,26,frameW,h-34,{0.525,0.546,0.585,1},2.4)
+  Button.panel(frameX,20,frameW,h-34,{191/255,199/255,213/255,1},2.4)
+  Button.panel(frameX+4,24,frameW-8,h-42,T.tray,2.4)
   if self.phase=='ready' then
+    -- Joker collection row: G.C.BLACK, r=0.1, emboss=0.05; no drop shadow.
+    local trayWidth=p and 380 or 1000
+    local trayX,trayY=(w-trayWidth)/2,p and 154 or 104
+    local trayH=p and 452 or 510
+    Button.panel(trayX,trayY+3,trayWidth,trayH,{T.panel[1]*0.7,T.panel[2]*0.7,T.panel[3]*0.7,1})
+    Button.panel(trayX,trayY,trayWidth,trayH,T.panel)
     for i,card in ipairs(self.cards) do
       card:draw()
-      local cw=142*card.baseScale
-      local cy=card.homeY+95*card.baseScale+8
-      T.text(card.item.count..'/'..card.item.count,20,card.homeX-cw/2,cy,cw,T.white,'right')
-      local labelWidth=p and 174 or 184
-      caption(card.item.name,26,card.homeX-labelWidth/2,cy+28,labelWidth)
+      DeckLabels.drawCounter(card)
+      DeckLabels.drawHover(card)
+      local labelWidth=142*card.baseScale+12
+      local pileX,pileY=card:target(1,w,Pile.parallax())
+      caption(card.item.name,22,pileX-labelWidth/2,pileY-95*card.baseScale-40,labelWidth)
     end
     if #self.cards==0 then
       T.text(self.query~='' and 'No matches' or 'Nothing here yet',p and 34 or 44,24,h/2-30,w-48)
@@ -313,7 +319,7 @@ function Library:draw(shaders)
       local x,y=w/2-135,h-144
       Button.panel(x,y+6,270,48,{T.red[1]*0.7,T.red[2]*0.7,T.red[3]*0.7,1})
       Button.panel(x,y,270,48,T.red)
-      T.text('Page '..self.page..'/'..self.pages,30,x,y+5,270)
+      self.pageText:draw(self.time,self.reduced,x,y,270,48,w)
     end
 
   else
