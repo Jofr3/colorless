@@ -11,6 +11,7 @@ let settingsOpen = false;
 let accountReady = false;
 const pendingLibraryCommands = [];
 const pendingBuilderCommands = [];
+const pendingSandboxCommands = [];
 let accountRefreshPending = false;
 let accountSnapshot = "";
 const mailboxFiles = new Set();
@@ -30,6 +31,7 @@ document.addEventListener("luminous:account-ready", () => {
   accountReady = true;
   for (const command of pendingLibraryCommands.splice(0)) libraryCommand(command);
   for (const command of pendingBuilderCommands.splice(0)) builderCommand(command);
+  for (const command of pendingSandboxCommands.splice(0)) sandboxCommand(command);
   if (accountRefreshPending) accountCommand("refresh");
 });
 function accountCommand(command) {
@@ -313,12 +315,14 @@ globalThis.Module = {
     if (message === "LUMINOUS:ready") {
       ready = true;
       document.getElementById("loading").style.display = "none";
-      document.title = `Luminous — ${currentPage === "builder" ? "Deck builder" : libraryPage ? "Decks" : "Home"}`;
+      document.title = `Luminous — ${currentPage === "sandbox" ? "Sandbox" : currentPage === "builder" ? "Deck builder" : libraryPage ? "Decks" : "Home"}`;
       canvas.focus({ preventScroll: true });
     } else if (message.startsWith("LUMINOUS:page:")) {
       setPage(message.slice("LUMINOUS:page:".length));
     } else if (message.startsWith("LUMINOUS:builder:")) {
       builderCommand(message.slice("LUMINOUS:builder:".length));
+    } else if (message.startsWith("LUMINOUS:sandbox:")) {
+      sandboxCommand(message.slice("LUMINOUS:sandbox:".length));
     } else if (message.startsWith("LUMINOUS:library:")) {
       libraryCommand(message.slice("LUMINOUS:library:".length));
     } else if (message.startsWith("LUMINOUS:auth:")) {
@@ -465,7 +469,7 @@ addEventListener("error", (event) => {
 // Library transport: Lua owns the page; the browser supplies text input and API I/O.
 let currentPage = new URLSearchParams(location.search).get("page") || "home";
 let builderId = new URLSearchParams(location.search).get("deck") || "";
-let libraryPage = ["decks","builder"].includes(currentPage);
+let libraryPage = ["decks","builder","sandbox"].includes(currentPage);
 let pageRevision = 0;
 function syncModalAccessibility() {
   document.querySelector(".accessible-menu").inert = settingsOpen || libraryPage;
@@ -480,8 +484,8 @@ function syncModalAccessibility() {
 function syncPage() {
   syncModalAccessibility();
   writeMailbox("__page.txt", [ ++pageRevision, currentPage, builderId ].map(encodeURIComponent).join("\t"));
-  document.title = `Luminous — ${currentPage === "builder" ? "Deck builder" : libraryPage ? "Decks" : "Home"}`;
-  canvas.setAttribute("aria-label", libraryPage
+  document.title = `Luminous — ${currentPage === "sandbox" ? "Sandbox" : currentPage === "builder" ? "Deck builder" : libraryPage ? "Decks" : "Home"}`;
+  canvas.setAttribute("aria-label", currentPage === "sandbox" ? "Sandbox deck selection. Tab or arrows choose controls. Enter selects a deck or activates a button. Escape returns home." : libraryPage
     ? "Deck library. Tab or arrows choose controls and cards. Enter opens. Escape returns home."
     : "Luminous main menu. Use Tab or arrow keys to choose; Enter to open.");
 }
@@ -493,7 +497,7 @@ function setPage(page, push = true, id = "", saved = false) {
     document.dispatchEvent(new CustomEvent("luminous:builder-leave",{detail:()=>setPage(page,push,id,true)}));return;
   }
   finishLibraryInput(); finishBuilderInput();
-  currentPage = ["decks","builder"].includes(page) ? page : "home";
+  currentPage = ["decks","builder","sandbox"].includes(page) ? page : "home";
   builderId = currentPage === "builder" ? id : "";
   libraryPage = currentPage !== "home";
   const url = new URL(location.href);
@@ -510,11 +514,12 @@ document.getElementById("decks-link").addEventListener("click", event => {
   event.preventDefault(); setPage("decks"); canvas.focus({preventScroll:true});
 });
 document.addEventListener("luminous:library-state", event => writeMailbox("__library.txt", event.detail));
-function libraryCommand(command) {
+function libraryCommand(command, owner = "library") {
   if (!accountReady) { pendingLibraryCommands.push(command); return; }
   const [action, field, value] = command.split("\t").map(decodeURIComponent);
   if (action === "input") {
     finishLibraryInput();
+    libraryInputOwner = owner;
     libraryField = field;
     libraryInput.value = value || "";
     libraryOriginal = libraryInput.value;
@@ -531,11 +536,12 @@ libraryInput.autocomplete = "off";
 libraryInput.style.fontSize = "16px";
 libraryInput.hidden = true;
 document.querySelector("main").append(libraryInput);
+let libraryInputOwner = "library";
 let libraryField = "";
 let libraryOriginal = "";
 let libraryInputRevision = 0;
 function publishLibraryInput(action = "input", field = libraryField) {
-  writeMailbox("__library_input.txt", [++libraryInputRevision, field, libraryInput.value,
+  writeMailbox(`__${libraryInputOwner}_input.txt`, [++libraryInputRevision, field, libraryInput.value,
     libraryInput.selectionStart || 0, libraryInput.selectionEnd || 0, action].map(encodeURIComponent).join("\t"));
 }
 function finishLibraryInput(action = "done", cancel = false) {
@@ -638,3 +644,16 @@ function pumpArt(){
   }
 }
 document.addEventListener("luminous:builder-images",e=>{wantedArt=e.detail;for(const c of wantedArt){if(artCache.has(c.id)){const path=artCache.get(c.id);artCache.delete(c.id);artCache.set(c.id,path);}}pumpArt();});
+
+// Sandbox API transport. The chooser and its controls are rendered in Lua.
+document.addEventListener("luminous:sandbox-state", event => writeMailbox("__sandbox.txt", event.detail));
+function sandboxCommand(command) {
+  if (!accountReady) { pendingSandboxCommands.push(command); return; }
+  const action = command.split("\t")[0];
+  if (action === "input" || action === "finish-input") { libraryCommand(command, "sandbox"); return; }
+  document.dispatchEvent(new CustomEvent("luminous:sandbox-command", {detail: command}));
+}
+document.getElementById("sandbox-link").addEventListener("click", event => {
+  if (!ready) return;
+  event.preventDefault(); setPage("sandbox"); canvas.focus({preventScroll:true});
+});

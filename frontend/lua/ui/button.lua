@@ -20,7 +20,9 @@ local function panel(x,y,w,h,colour,r,progress,mode)
     local edge=w*math.max(0,math.min(1,progress))
     for i=1,#vertices,2 do vertices[i]=math.min(vertices[i],edge)end
   end
-  if mode=='line' then table.remove(vertices,1);table.remove(vertices,1)end
+  -- Original line vertices skip the fan centre AND the duplicated first
+  -- perimeter point (k > 4), avoiding a zero-length closing edge in LÖVE.
+  if mode=='line' then for _=1,4 do table.remove(vertices,1) end end
   g.polygon(mode or 'fill',vertices)
   g.pop()
 end

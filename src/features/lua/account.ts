@@ -181,7 +181,9 @@ export class LuaAccount {
       "google",
       undefined,
       typeof location !== "undefined" &&
-        ["decks", "builder"].includes(new URLSearchParams(location.search).get("page") ?? "")
+        ["decks", "builder", "sandbox"].includes(
+          new URLSearchParams(location.search).get("page") ?? "",
+        )
         ? `/lua/${location.search}${location.search ? "&" : "?"}account`
         : "/lua/?account",
     );

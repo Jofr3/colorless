@@ -36,7 +36,7 @@ The build defaults to the sibling `../balatro-source` directory, including its i
 
 ## This milestone
 
-- Three equally sized menu buttons: Sandbox (blue) → `/simulator`, Online (red) → `/lobby`, Decks (pale green) → `/decks`.
+- Three equally sized menu buttons: Sandbox (blue) → `/lua/?page=sandbox`, Online (red) → `/lobby`, Decks (pale green) → `/decks`.
 - Account opens the Account tab in the Lua settings popup. Game, Graphics, Audio and Account share Balatro's overlay, border, controls and Back button. The Account tab shows your email in a disabled input, edits your display name, saves to the shared API, and signs out. Sign-in and registration open a Lua modal with email/password fields and Google sign-in, then return to the Account tab. The modal uses the same border, buttons, motion and screen effects as Settings.
 - Settings apply immediately: screenshake (0–100), reduced motion, CRT strength (0–100), bloom, master/music/game-sound volume, and mute. They persist in browser storage across reloads. Reduced motion follows the device preference until explicitly changed. These settings currently apply to the Lua frontend.
 - Account and Settings use separate compact panels matching Balatro's grey Profile button and original projected shadow, without extra headings. The Sound button is removed; the M keyboard shortcut remains available.
@@ -49,7 +49,7 @@ The build defaults to the sibling `../balatro-source` directory, including its i
 
 Click a button to navigate; releasing outside the pressed button cancels the action. Use arrow keys and Enter/Space while the canvas is focused; Tab also reaches native links. M toggles sound. Audio starts after the first gesture and pauses when the window loses focus.
 
-The other pages still open the current React application. Their home/back links still return to the React home. Sandbox preserves the current `/simulator` redirect to `/play`. The account adapter reuses the existing API client and cookie session; passwords and session cookies never cross into Lua or local storage. The match engine and deck editor remain in React; the existing React sign-in forms are still available as a fallback.
+The other pages still open the current React application. Their home/back links still return to the React home. The Lua sandbox chooser hands off a prepared game through the existing simulator save format and opens `/simulator` (redirected to `/play`). The account adapter reuses the existing API client and cookie session; passwords and session cookies never cross into Lua or local storage. Gameplay remains in React; the existing React sign-in forms are still available as a fallback.
 
 Inside Settings, Tab/Shift+Tab or up/down move between controls. Left/right switch tabs, cycle CRT Bloom, or adjust a focused slider by 5; Home/End set its minimum/maximum. Enter/Space activates toggles and buttons. Drag sliders with a mouse or touch. Select Display name to edit it; the canvas field uses a native input proxy for IME, selection, paste and mobile keyboards. Enter finishes editing and Escape cancels the edit. Profile changes require Save; the success message disappears after three seconds. In the authentication modal, Enter advances through the fields and submits from the last field, Tab/Shift+Tab moves between controls, and Back returns to Account settings. Passwords are masked in Lua and kept only in the native inputs/API request, then cleared on success or dismissal. Google redirects through the existing provider configuration and returns to `/lua/?account`. Escape or Back closes the popup and returns focus to Settings. The background menu cannot receive input while the popup is open. Native accessible navigation opens the same popup when WASM is running, with live control announcements; its fallback links to React settings if WASM fails.
 
@@ -188,3 +188,27 @@ imports, and save-failure recovery.
 Additional checks: `deck_row.lua`, `input_hover.lua`, `drag_return.lua`, and
 `transfer.lua` in `frontend/lua/tests/` cover source palettes and hover layering,
 return animation and texture cleanup, and decklist editing/confirmation.
+
+## Sandbox deck selection
+
+Sandbox opens `/lua/?page=sandbox`. Player 1 / Player 2 tabs select the active
+seat. The search field and deck grid use the library's input, embossed collection
+tray, generic back piles, title/count styling and animated red paginator. Desktop
+pages hold ten decks in two rows of five; portrait pages hold four. Clicking a
+pile selects it for the current player; a thin white outline encloses the selected title, pile and card count. Search and
+pagination leave both players' selections intact, including decks in folders.
+
+Both seats can use the same deck. The chooser automatically hides decks that fail
+the builder validation (size, Basic Pokémon, copy limits, special-card limits,
+missing catalog cards, and legality in the saved format). Deck and catalog requests
+are bounded; transient failures show a retry state instead of hiding decks.
+Play refetches and revalidates both decks before starting.
+`prepareSandbox.ts` is shared by the Lua and React setup screens. The host saves
+the validated game and initial log in the existing simulator format before
+navigation; unavailable storage keeps the chooser open with an error. Leaving
+or changing accounts cancels pending loads and prevents late game launches.
+
+Checks: `bun run test:run src/features/lua/sandbox.test.ts` and
+`luajit frontend/lua/tests/sandbox.lua`. These cover independent selection,
+search, pagination, responsive bounds, disabled/busy controls, and modal hit testing.
+The shared pile's original CardArea comparison lives in `tests/deck_pile.lua`.

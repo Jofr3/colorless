@@ -1,8 +1,7 @@
+import { prepareSandbox, SandboxSetupError } from "./prepareSandbox";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { createGame, DECK_SIZE, isBasicPokemon } from "@luminous/engine";
 import type { LocalGameSetup } from "../game/useLocalGame";
-import { getDeck } from "../../lib/api";
 import {
   ERROR_TEXT,
   FOCUS_RING_INSET,
@@ -11,8 +10,6 @@ import {
 } from "../../lib/glass";
 import { useAuth } from "../auth/AuthProvider";
 import { CardBackStack } from "../decks/CardBackStack";
-import { fetchCardPool } from "../game/cardPool";
-import { expandDeck } from "../game/demoDecks";
 import { DeckPickerDialog } from "../online/components/DeckPickerDialog";
 import type { DeckChoice } from "../online/net/useLobby";
 import { SIDE_STYLES } from "../online/theme";
@@ -42,51 +39,13 @@ export function SandboxSetup({ onStart }: { onStart: (setup: LocalGameSetup) => 
     setStarting(true);
     setError(null);
     try {
-      const saved = await Promise.all([getDeck(decks.you.id), getDeck(decks.opponent.id)]);
-      for (const [index, deck] of saved.entries()) {
-        const count = deck.cards.reduce((sum, card) => sum + card.count, 0);
-        if (count !== DECK_SIZE) {
-          setError(
-            `Player ${index + 1} — “${deck.name}” has ${count} cards; a deck needs exactly ${DECK_SIZE}.`,
-          );
-          return;
-        }
-      }
-      const ids = [expandDeck(saved[0].cards), expandDeck(saved[1].cards)] as const;
-      const { pool, missing } = await fetchCardPool(ids.flat());
-      if (missing.length > 0) {
-        setError(`These cards aren't in the catalog: ${missing.join(", ")}`);
-        return;
-      }
-      for (const [index, cardIds] of ids.entries()) {
-        if (
-          !cardIds.some((id) => {
-            const card = pool[id];
-            return card !== undefined && isBasicPokemon(card);
-          })
-        ) {
-          setError(`Player ${index + 1} has no Basic Pokémon, so it can't start a game.`);
-          return;
-        }
-      }
-      const startedAt = Date.now();
-      const created = createGame({
-        seed: startedAt,
-        decks: { p1: ids[0], p2: ids[1] },
-        cardPool: pool,
-      });
-      if (!created.ok) {
-        setError(`Couldn't start the game: ${created.error.message}`);
-        return;
-      }
-      onStart({
-        state: created.state,
-        events: created.events,
-        names: { p1: "Player 1", p2: "Player 2" },
-        startedAt,
-      });
-    } catch {
-      setError("Couldn't load the decks from the server — try again.");
+      onStart(await prepareSandbox([decks.you.id, decks.opponent.id]));
+    } catch (error) {
+      setError(
+        error instanceof SandboxSetupError
+          ? error.message
+          : "Couldn't load the decks from the server — try again.",
+      );
     } finally {
       setStarting(false);
     }
