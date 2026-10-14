@@ -4,22 +4,31 @@ local g = love.graphics
 
 -- The same four-step corner profile as UIElement:draw_pixellated_rect.
 -- A single polygon avoids seams between corner strips when the room rotates.
-local function panel(x,y,w,h,colour,r)
+local function panel(x,y,w,h,colour,r,progress,mode)
   r=r or 1.8 -- source res=0.6, at TILESCALE=3 (60 pixels per tile)
   g.setColor(colour)
   local sw,sh=w-4*r,h-4*r
   g.push(); g.translate(x,y)
-  g.polygon('fill',{
+  local vertices={
     sw/2,sh/2,0,4*r,r,4*r,r,2*r,2*r,2*r,2*r,r,4*r,r,4*r,0,
     sw,0,sw,r,sw+2*r,r,sw+2*r,2*r,sw+3*r,2*r,sw+3*r,4*r,w,4*r,
     w,sh,sw+3*r,sh,sw+3*r,sh+2*r,sw+2*r,sh+2*r,sw+2*r,sh+3*r,
     sw,sh+3*r,sw,h,4*r,h,4*r,sh+3*r,2*r,sh+3*r,2*r,sh+2*r,
     r,sh+2*r,r,sh,0,sh,0,4*r,
-  })
+  }
+  if progress then
+    local edge=w*math.max(0,math.min(1,progress))
+    for i=1,#vertices,2 do vertices[i]=math.min(vertices[i],edge)end
+  end
+  if mode=='line' then table.remove(vertices,1);table.remove(vertices,1)end
+  g.polygon(mode or 'fill',vertices)
   g.pop()
 end
 
 Button.panel=panel
+function Button.outline(x,y,w,h,colour,r)
+  panel(x,y,w,h,colour,r,nil,'line')
+end
 
 function Button.chosen(b,time,pressed,roomWidth)
   -- UIElement:draw_self + get_chosen_triangle_from_rect, in screen pixels
@@ -54,6 +63,41 @@ function Button.hit(b,x,y)
   return x>=b.x and x<=b.x+b.w and y>=b.y and y<=b.y+b.h
 end
 
+function Button.hoverColour(colour,active)
+  -- engine/ui.lua draws G.C.UI.HOVER (00000055) over the face only.
+  -- For opaque faces this is exactly a 2/3 RGB multiplier. Text, children,
+  -- outlines and shadows are drawn separately and must not be tinted.
+  return active and {colour[1]*2/3,colour[2]*2/3,colour[3]*2/3,colour[4]} or colour
+end
+
+function Button.cycleFace(x,y,w,h,hovered,emboss)
+  -- create_option_cycle's non-clickable center: hover overlay on the face,
+  -- emboss darken=.5 on hover (.3 otherwise), with no button drop shadow.
+  local depth=hovered and 0.5 or 0.7
+  Button.panel(x,y+(emboss or 6),w,h,{T.red[1]*depth,T.red[2]*depth,T.red[3]*depth,1})
+  Button.panel(x,y,w,h,Button.hoverColour(T.red,hovered))
+end
+
+function Button.slider(x,y,w,fraction,label,hovered)
+  -- create_slider: BLACK track, emboss=.05 tile; only the track has hover.
+  -- The red fill is a child drawn AFTER the track's hover overlay. The value
+  -- is a separate shadowed, non-interactive container (not a button).
+  local c=T.panel -- G.C.BLACK
+  local depth=hovered and 0.5 or 0.7
+  Button.panel(x,y+3,w,24,{c[1]*depth,c[2]*depth,c[3]*depth,1})
+  Button.panel(x,y,w,24,Button.hoverColour(c,hovered))
+  if fraction>0 then
+    local fill=w*math.min(1,fraction)
+    Button.panel(x,y,fill,24,T.red,math.min(1.8,fill/8))
+  end
+  g.push();g.translate(x+w+8,y);g.scale(0.98)
+  Button.panel(0,6.75,48,24,{0,0,0,0.3})
+  g.pop()
+  Button.panel(x+w+8,y,48,24,T.red)
+  g.setFont(T.font(21));g.setColor(T.white)
+  g.printf(label,x+w+8,y+(24-T.font(21):getHeight())/2,48,'center')
+end
+
 function Button.draw(b,active,pressed,focused,roomWidth)
   local colour=b.colour
   -- UIBox_button sets shadow=true, NOT emboss. UIElement:draw_self projects
@@ -71,7 +115,7 @@ function Button.draw(b,active,pressed,focused,roomWidth)
   g.pop()
   g.push()
   g.scale(pressed and 0.985 or 1)
-  local face=(active or pressed) and {colour[1]*2/3,colour[2]*2/3,colour[3]*2/3,1} or colour
+  local face=Button.hoverColour(colour,active or pressed)
   panel(0,0,b.w,b.h,face)
   g.pop()
   local fontSize=b.fontSize or 27

@@ -10,6 +10,7 @@ let settingsTab = 1;
 let settingsOpen = false;
 let accountReady = false;
 const pendingLibraryCommands = [];
+const pendingBuilderCommands = [];
 let accountRefreshPending = false;
 let accountSnapshot = "";
 const mailboxFiles = new Set();
@@ -28,6 +29,7 @@ document.addEventListener("luminous:account-state", (event) => {
 document.addEventListener("luminous:account-ready", () => {
   accountReady = true;
   for (const command of pendingLibraryCommands.splice(0)) libraryCommand(command);
+  for (const command of pendingBuilderCommands.splice(0)) builderCommand(command);
   if (accountRefreshPending) accountCommand("refresh");
 });
 function accountCommand(command) {
@@ -281,9 +283,10 @@ function fail(message) {
 }
 function syncViewport(module) {
   if (!module || !module.FS_createDataFile) return;
-  // Cap the backing resolution; no high-DPI multiplication for the pixel-art renderer.
-  const scale = Math.min(1, 1600 / innerWidth, 1200 / innerHeight);
-  const text = `${Math.max(1, Math.round(innerWidth * scale))} ${Math.max(1, Math.round(innerHeight * scale))} ${motion.matches ? "1" : "0"} ${preferences.muted} ${settingsRequest} ${settingsTab}`;
+  // SDL sizes the drawable to the browser viewport. Lua's scene and CRT pass
+  // must use that same size; a capped scene leaves the rest of it black.
+  // Keep CSS-pixel dimensions (no devicePixelRatio multiplier).
+  const text = `${Math.max(1, Math.round(innerWidth))} ${Math.max(1, Math.round(innerHeight))} ${motion.matches ? "1" : "0"} ${preferences.muted} ${settingsRequest} ${settingsTab}`;
   if (mailboxCreated) module.FS_unlink("/__viewport.txt");
   module.FS_createDataFile("/", "__viewport.txt", text, true, true);
   mailboxCreated = true;
@@ -310,10 +313,12 @@ globalThis.Module = {
     if (message === "LUMINOUS:ready") {
       ready = true;
       document.getElementById("loading").style.display = "none";
-      document.title = `Luminous — ${libraryPage ? "Decks" : "Home"}`;
+      document.title = `Luminous — ${currentPage === "builder" ? "Deck builder" : libraryPage ? "Decks" : "Home"}`;
       canvas.focus({ preventScroll: true });
     } else if (message.startsWith("LUMINOUS:page:")) {
       setPage(message.slice("LUMINOUS:page:".length));
+    } else if (message.startsWith("LUMINOUS:builder:")) {
+      builderCommand(message.slice("LUMINOUS:builder:".length));
     } else if (message.startsWith("LUMINOUS:library:")) {
       libraryCommand(message.slice("LUMINOUS:library:".length));
     } else if (message.startsWith("LUMINOUS:auth:")) {
@@ -458,7 +463,9 @@ addEventListener("error", (event) => {
 });
 
 // Library transport: Lua owns the page; the browser supplies text input and API I/O.
-let libraryPage = new URLSearchParams(location.search).get("page") === "decks";
+let currentPage = new URLSearchParams(location.search).get("page") || "home";
+let builderId = new URLSearchParams(location.search).get("deck") || "";
+let libraryPage = ["decks","builder"].includes(currentPage);
 let pageRevision = 0;
 function syncModalAccessibility() {
   document.querySelector(".accessible-menu").inert = settingsOpen || libraryPage;
@@ -472,23 +479,32 @@ function syncModalAccessibility() {
 }
 function syncPage() {
   syncModalAccessibility();
-  writeMailbox("__page.txt", `${++pageRevision}\t${libraryPage ? "decks" : "home"}`);
-  document.title = `Luminous — ${libraryPage ? "Decks" : "Home"}`;
+  writeMailbox("__page.txt", [ ++pageRevision, currentPage, builderId ].map(encodeURIComponent).join("\t"));
+  document.title = `Luminous — ${currentPage === "builder" ? "Deck builder" : libraryPage ? "Decks" : "Home"}`;
   canvas.setAttribute("aria-label", libraryPage
     ? "Deck library. Tab or arrows choose controls and cards. Enter opens. Escape returns home."
     : "Luminous main menu. Use Tab or arrow keys to choose; Enter to open.");
 }
-function setPage(page, push = true) {
-  finishLibraryInput();
-  libraryPage = page === "decks";
+function setPage(page, push = true, id = "", saved = false) {
+  if(currentPage === "builder" && !saved && (page !== currentPage || id !== builderId)) {
+    finishBuilderInput();
+    const previous=new URL(location.href);previous.searchParams.set("page","builder");previous.searchParams.set("deck",builderId);
+    history.replaceState(null,"",previous);
+    document.dispatchEvent(new CustomEvent("luminous:builder-leave",{detail:()=>setPage(page,push,id,true)}));return;
+  }
+  finishLibraryInput(); finishBuilderInput();
+  currentPage = ["decks","builder"].includes(page) ? page : "home";
+  builderId = currentPage === "builder" ? id : "";
+  libraryPage = currentPage !== "home";
   const url = new URL(location.href);
-  if (libraryPage) url.searchParams.set("page", "decks");
+  if (libraryPage) url.searchParams.set("page", currentPage);
   else url.searchParams.delete("page");
+  if (builderId) url.searchParams.set("deck",builderId); else url.searchParams.delete("deck");
   url.searchParams.delete("account");
-  if (push) history.pushState(null, "", url);
+  if (push) history.pushState(null, "", url); else history.replaceState(null, "", url);
   syncPage();
 }
-addEventListener("popstate", () => setPage(new URLSearchParams(location.search).get("page"), false));
+addEventListener("popstate", () => setPage(new URLSearchParams(location.search).get("page"), false, new URLSearchParams(location.search).get("deck") || ""));
 document.getElementById("decks-link").addEventListener("click", event => {
   if (!ready) return;
   event.preventDefault(); setPage("decks"); canvas.focus({preventScroll:true});
@@ -542,3 +558,83 @@ for (const type of ["keydown", "keyup", "keypress"]) window.addEventListener(typ
     event.preventDefault(); finishLibraryInput(event.key === "Enter" ? "enter" : "done", event.key === "Escape");
   }
 }, true);
+
+// Deck builder: browser-native text/clipboard and artwork transport only.
+document.addEventListener("luminous:route", e => setPage(e.detail.page, true, e.detail.id || ""));
+document.addEventListener("luminous:builder-state", e => {
+  writeMailbox("__builder.txt", e.detail);
+  if(currentPage === "builder") {
+    const f=e.detail.split("\n")[0].split("\t").map(decodeURIComponent);
+    document.title=`Luminous — ${f[2] || "Deck builder"}`;
+    canvas.setAttribute("aria-label", `Deck builder. ${f[2]}. ${f[10]} cards. Tab selects controls. Enter inspects a card. Drag a card into your deck or use Add in its dialog.`);
+  }
+});
+const builderInput = document.createElement("textarea");
+builderInput.className="sr-only"; builderInput.hidden=true; builderInput.style.fontSize="16px";
+document.querySelector("main").append(builderInput);
+let builderField="", builderOriginal="", builderInputRevision=0;
+function publishBuilderInput(action="input",field=builderField) {
+  writeMailbox("__builder_input.txt",[++builderInputRevision,field,builderInput.value,builderInput.selectionStart,builderInput.selectionEnd,action].map(encodeURIComponent).join("\t"));
+  if(field!=="transfer")builderInput.value=builderInput.value.replace(/[\r\n]/g," ");
+  if(field==="name") dispatchBuilder("name",builderInput.value);
+  else if(field==="optionQuery") dispatchBuilder("option-query",builderInput.value);
+  else if(field!=="transfer") dispatchBuilder("filter",field,builderInput.value);
+}
+function dispatchBuilder(...args) {document.dispatchEvent(new CustomEvent("luminous:builder-command",{detail:args.map(encodeURIComponent).join("\t")}));}
+function finishBuilderInput(cancel=false) {
+  if(!builderField)return;
+  const field=builderField;builderField="";
+  if(cancel)builderInput.value=builderOriginal;
+  publishBuilderInput("done",field);builderInput.hidden=true;canvas.focus({preventScroll:true});
+}
+function builderCommand(command) {
+  if(!accountReady){pendingBuilderCommands.push(command);return;}
+  const [action,field,value]=command.split("\t").map(decodeURIComponent);
+  if(action==="input") {
+    finishBuilderInput();builderField=field;builderInput.value=value||"";builderOriginal=builderInput.value;
+    builderInput.maxLength=field==="transfer"?30000:field==="name"?100:300;
+    builderInput.setAttribute("aria-label",field==="transfer"?"Decklist. Paste your list here.":field);
+    builderInput.hidden=false;builderInput.focus({preventScroll:true});builderInput.select();publishBuilderInput();
+  } else if(action==="finish-input")finishBuilderInput();
+  else if(action==="copy") {
+    navigator.clipboard.writeText(field).then(()=>writeMailbox("__builder_clipboard.txt",`${Date.now()}\tCopied decklist.`),()=>writeMailbox("__builder_clipboard.txt",`${Date.now()}\tCopy failed. Select the decklist and use your copy shortcut.`));
+  } else document.dispatchEvent(new CustomEvent("luminous:builder-command",{detail:command}));
+}
+builderInput.addEventListener("input",()=>publishBuilderInput());
+builderInput.addEventListener("select",()=>{if(builderField)publishBuilderInput();});
+builderInput.addEventListener("blur",()=>finishBuilderInput());
+for(const type of ["keydown","keyup","keypress"])window.addEventListener(type,event=>{
+  if(event.target!==builderInput)return;
+  event.stopImmediatePropagation();
+  if(type==="keyup"&&builderField)publishBuilderInput();
+  if(type==="keydown"&&!event.isComposing&&(event.key==="Escape"||event.key==="Tab"||(event.key==="Enter"&&builderField!=="transfer"))) {
+    event.preventDefault();finishBuilderInput(event.key==="Escape");
+  }
+},true);
+const artCache=new Map(), artPending=new Set(), artFailed=new Map();
+let artRevision=0, artSerial=0, artActive=0, wantedArt=[];
+function publishArt(){writeMailbox("__builder_art.txt",[++artRevision,...[...artCache].map(([id,path])=>[id,path].map(encodeURIComponent).join("\t"))].join("\n"));}
+async function loadArt(card) {
+  artActive++;artPending.add(card.id);
+  try {
+    const response=await fetch(card.url);if(!response.ok)throw Error("art");
+    const bitmap=await createImageBitmap(await response.blob());
+    const c=document.createElement("canvas");c.width=284;c.height=380;
+    c.getContext("2d").drawImage(bitmap,0,0,284,380);bitmap.close();
+    const blob=await new Promise(resolve=>c.toBlob(resolve,"image/png"));
+    if(!runtime||!blob)throw Error("art");
+    const path=`__card_art_${++artSerial}.png`;
+    runtime.FS_createDataFile("/",path,new Uint8Array(await blob.arrayBuffer()),true,true);
+    artCache.set(card.id,path);
+    while(artCache.size>64){const [id,old]=artCache.entries().next().value;runtime.FS_unlink(`/${old}`);artCache.delete(id);}
+    publishArt();
+  } catch {artFailed.set(card.id,Date.now());}
+  finally {artPending.delete(card.id);artActive--;pumpArt();}
+}
+function pumpArt(){
+  for(const card of wantedArt){
+    if(artActive>=4)break;
+    if(!artCache.has(card.id)&&!artPending.has(card.id)&&Date.now()-(artFailed.get(card.id)||0)>30000)void loadArt(card);
+  }
+}
+document.addEventListener("luminous:builder-images",e=>{wantedArt=e.detail;for(const c of wantedArt){if(artCache.has(c.id)){const path=artCache.get(c.id);artCache.delete(c.id);artCache.set(c.id,path);}}pumpArt();});

@@ -1,12 +1,39 @@
 import { LuaAccount } from "./account";
+import { LuaBuilder } from "./builder";
 import { LuaLibrary } from "./library";
 import { setSessionRecoveryHandler } from "../../lib/api";
 
+const builder = new LuaBuilder(
+  (snapshot) =>
+    document.dispatchEvent(new CustomEvent("luminous:builder-state", { detail: snapshot })),
+  () => document.dispatchEvent(new CustomEvent("luminous:route", { detail: { page: "decks" } })),
+  (cards) => document.dispatchEvent(new CustomEvent("luminous:builder-images", { detail: cards })),
+);
+document.addEventListener("luminous:builder-leave", (event) => {
+  if (event instanceof CustomEvent && typeof event.detail === "function")
+    builder.navigate(event.detail);
+});
+document.addEventListener("luminous:builder-command", (event) => {
+  if (event instanceof CustomEvent && typeof event.detail === "string")
+    void builder.command(event.detail);
+});
+window.addEventListener("beforeunload", (event) => {
+  if (
+    builder.id &&
+    builder.phase === "ready" &&
+    builder.saveStatus &&
+    builder.saveStatus !== "saved"
+  ) {
+    void builder.command("retry-save");
+    event.preventDefault();
+  }
+});
 const library = new LuaLibrary(
   (snapshot) => {
     document.dispatchEvent(new CustomEvent("luminous:library-state", { detail: snapshot }));
   },
-  (id) => location.assign(`/decks/${encodeURIComponent(id)}/edit?from=lua`),
+  (id) =>
+    document.dispatchEvent(new CustomEvent("luminous:route", { detail: { page: "builder", id } })),
 );
 document.addEventListener("luminous:library-command", (event) => {
   if (!(event instanceof CustomEvent) || typeof event.detail !== "string") return;
@@ -17,6 +44,7 @@ const account = new LuaAccount((snapshot) => {
   document.dispatchEvent(new CustomEvent("luminous:account-state", { detail: snapshot }));
   const fields = snapshot.split("\t").map(decodeURIComponent);
   library.session(fields[1] ?? "loading", fields[4] ?? "");
+  builder.session(fields[1] ?? "loading", fields[4] ?? "");
 });
 setSessionRecoveryHandler(async () => {
   await account.refresh();

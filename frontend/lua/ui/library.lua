@@ -145,8 +145,8 @@ function Library:build()
   self:add('Back',contentX,h-66,p and w-48 or 1000,40,'home',T.orange)
   if self.phase=='ready' then
     self:add('',contentX,48,p and 432 or 476,42,'input-search',T.ink,{input=true,placeholder='Search decks'})
-    self:add('Sort: '..(sortLabels[self.sort] or 'Name A-Z'),p and 24 or contentX+490,p and 102 or 48,p and 208 or 260,42,'sort',T.profile)
-    self:add('New deck',p and 248 or contentX+764,p and 102 or 48,p and 208 or 236,42,'new-deck',T.blue)
+    self:add('Sort: '..(sortLabels[self.sort] or 'Name A-Z'),p and 24 or contentX+490,p and 102 or 48,p and 208 or 260,42,'sort',T.blue)
+    self:add('New deck',p and 248 or contentX+764,p and 102 or 48,p and 208 or 236,42,'new-deck',T.red)
     for i,card in ipairs(self.cards) do
       self.controls[#self.controls+1]={label=card.item.name,x=card.homeX-71*card.baseScale,y=card.homeY-95*card.baseScale,w=142*card.baseScale,h=190*card.baseScale,action='card',card=i}
     end
@@ -317,8 +317,8 @@ function Library:draw(shaders)
     do
       -- create_option_cycle: w=4.5, h=0.8, no_pips=true; embossed center.
       local x,y=w/2-135,h-144
-      Button.panel(x,y+6,270,48,{T.red[1]*0.7,T.red[2]*0.7,T.red[3]*0.7,1})
-      Button.panel(x,y,270,48,T.red)
+      local hovered=not self.modal and Button.hit({x=x,y=y,w=270,h=48},self.mx or -1,self.my or -1)
+      Button.cycleFace(x,y,270,48,hovered)
       self.pageText:draw(self.time,self.reduced,x,y,270,48,w)
     end
 
@@ -328,7 +328,7 @@ function Library:draw(shaders)
     T.text(self.phase=='anonymous' and 'Sign in to browse and build your collection.' or ' ',p and 21 or 26,24,h/2,w-48,T.paper)
   end
   for i,b in ipairs(self.modal and self.baseControls or self.controls) do
-    if b.input then Input.draw(b,self.search,not self.modal and self.editing=='search',self.first,self.last,self.time)
+    if b.input then Input.draw(b,self.search,not self.modal and self.editing=='search',self.first,self.last,self.time,false,not self.modal and self.hover==i)
     elseif b.action~='card' then Button.draw(b,not self.modal and not b.disabled and (self.hover==i or self.focus==i),not self.modal and self.pressed==i,false,w) end
   end
   if not self.modal then
@@ -351,7 +351,7 @@ function Library:drawModal()
       T.text('This deck will be permanently deleted.',p and 20 or 24,m.x+24,m.y+124,m.w-48,T.paper)
     end
     for i,b in ipairs(self.controls) do
-      if b.input then Input.draw(b,self.draft,self.editing=='name',self.first,self.last,self.time)
+      if b.input then Input.draw(b,self.draft,self.editing=='name',self.first,self.last,self.time,false,self.hover==i)
       else Button.draw(b,not b.disabled and (self.hover==i or self.focus==i),self.pressed==i,false,w) end
     end
     caption(self.busy and 'Saving...' or self.message,20,m.x+20,m.y+m.h-91,m.w-40,self.busy and T.paper or T.red)

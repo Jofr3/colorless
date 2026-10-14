@@ -2,11 +2,20 @@ local T=require('ui.theme')
 local Button=require('ui.button')
 local Account=require('ui.account')
 local Input={}
-function Input.draw(item,value,editing,firstUnit,lastUnit,time,disabled)
+function Input.background(item,editing,disabled,hovered)
+  -- create_text_input + G.FUNCS.text_input: hooked colour is 30% darker;
+  -- hover adds the standard black overlay. Shadow opacity never changes.
+  local base=item.inputColour or T.ink
+  local colour=disabled and T.panel or editing and {
+    base[1]*0.7,base[2]*0.7,base[3]*0.7,base[4]} or base
+  Button.panel(item.x,item.y+4,item.w,item.h,{0,0,0,0.3})
+  Button.panel(item.x,item.y,item.w,item.h,Button.hoverColour(colour,hovered and not disabled))
+end
+function Input.draw(item,value,editing,firstUnit,lastUnit,time,disabled,hovered)
+  hovered=hovered and not disabled
   local g=love.graphics
   T.text(item.label,24,item.x,item.y-32,item.w)
-  Button.panel(item.x,item.y+4,item.w,item.h,{0,0,0,0.3})
-  Button.panel(item.x,item.y,item.w,item.h,(disabled or editing) and T.panel or T.ink)
+  Input.background(item,editing,disabled,hovered)
   local size=27
   while size>12 and T.font(size):getWidth(value)>item.w-20 do size=size-1 end
   local font=T.font(size)
