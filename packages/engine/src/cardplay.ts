@@ -9,7 +9,7 @@ import type {
   UseStadiumAbilityAction,
 } from "./actions";
 import { err, ok } from "./actions";
-import { resolveCopiedAttack, resolveFoundAttack, resolveInPlayCopiedAttack } from "./attack";
+import { resolveCoinRedo, resolveCopiedAttack, resolveFoundAttack, resolveInPlayCopiedAttack } from "./attack";
 import { cardOfUid, isBasicPokemon, topUid } from "./cards";
 import {
   // 🆕🆕🆕 D577 — the live per-seat Bench limit (Area Zero Underdepths, R-AZ1).
@@ -1259,6 +1259,9 @@ export function resolveEffect(state: GameState, action: ResolveEffectAction): Ap
   // 0.457 deploy reads off any answer to this park — decisions.md D574).
   const declined = action.choice.kind === "confirm" && !action.choice.yes;
   if (pendingOp.op === "useFoundAttackAs" && !declined) return resolveFoundAttack(state, phase, pendingOp, action.choice);
+  // 🆕🆕🆕 D646 — Backtrack Badge's offer at the printed coin flip: BOTH answers re-enter `attack()` (a 0.528 deploy has no
+  // route: the default drain ends the attack after its coins, its damage lost — why `MATCH_RECORD_VERSION` 48 → 49).
+  if (pendingOp.op === "reflipAttackCoins") return resolveCoinRedo(state, phase, pendingOp, action.choice);
   const events: GameEvent[] = [];
   // resumeTail (§9 on-KO trigger, flow.ts): this park was made MID-KO-SWEEP, so
   // finishing the program resumes the remaining prize/promotion tail rather than

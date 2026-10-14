@@ -44,6 +44,9 @@ import { BENCH_MAX, type PokemonTarget, type SpecialConditions } from "./types";
 // every coin event in `events.ts` already carries, and `AttackFlipThreshold.face`
 // reuses it rather than re-spelling `"heads" | "tails"` a second time.
 import type { CoinFace } from "./rng";
+// 🆕🆕🆕 D646 — TYPE-ONLY, like the edges above: `reflipAttackCoins.copied` carries the copy override `attack()` re-enters
+// with (attack.ts imports this file by value; this edge is erased, so no runtime cycle).
+import type { AttackCopyOverride } from "./attack";
 
 /** A declarative card predicate for deck searches (§15.E). Deliberately tiny
     — the representative cards need only "a Basic Pokémon", "any Pokémon", "a
@@ -6273,6 +6276,31 @@ export type EffectOp =
       order, collapsed on (card NAME, attack index, printed attack): two printings printed alike
       offer one row. The `chooseAttack` answer indexes THIS list, not one card's attacks. `accepted`
       is Haughty Order's *"You may"* once answered "yes" (the confirm park precedes it). All engine-written. */
+  /** 🆕🆕🆕 **§8 (D646) — BACKTRACK BADGE `me05-074`'s OFFER, PARKED AFTER A BATCH OF AN ATTACK PROGRAM's COINS.**
+      *"Once during your turn, after you flip any coins for an attack of the {C} Pokémon this card is attached to, you
+      may ignore all results of those coin flips and begin flipping those coins again."* SCHEDULED, never authored:
+      interpreter.ts's coin sites (`coinFlipGate`, `damageChosen`'s `perHeadsInPlay` / `flipEach`) queue it ahead of
+      the rest after the attacker's own coins are flipped and announced, while continuous.ts `coinRedoToolOf` answers a
+      Badge; stepped, it ALWAYS parks a `confirm`. "Yes" spends the once-per-turn key (`COINS_REFLIPPED`) and splices
+      `retry` as written, which flips again (the key is spent, so no second offer); "no" splices `retry` carrying
+      `faces`, which takes those results with no new coin. `toolUid` is the Badge, `faces` the batch as flipped, `retry`
+      the op that flipped it. All engine-written. A persisted park a 0.528 reader resolves by dropping `retry` (the
+      coin's consequent lost) — `MATCH_RECORD_VERSION` 48 → 49. */
+  | { op: "reflipCoins"; toolUid: string; faces: CoinFace[]; retry: EffectOp }
+  /** 🆕🆕🆕 **§8 (D646) — THE SAME OFFER AT attack.ts's PRINTED COIN FLIP** (the `AttackCoinFlip` family: Fury Swipes,
+      Rapid-Fire Combo, Hyper Fang …). Only ever the `pendingOp` of attack.ts `parkCoinRedo`'s in-attack park (an
+      `attackEpilogue` queued, `resumeTail`), answered through attack.ts `resolveCoinRedo` (cardplay.ts `resolveEffect`
+      routes it BEFORE `settleProgram`), which re-enters `attack()` past its declaration rows and pre-coin flips with
+      the faces kept ("no") or flipped again ("yes"). `index` is the declared attack; `copied` the copy override the
+      first pass ran under (absent on an ordinary attack). Never stepped (inert arm). All engine-written. A 0.528
+      reader drains the epilogue: the attack ends after its coins (its damage lost) — `MATCH_RECORD_VERSION` 48 → 49. */
+  | {
+      op: "reflipAttackCoins";
+      toolUid: string;
+      index: number;
+      faces: CoinFace[];
+      copied?: AttackCopyOverride;
+    }
   | {
       op: "useFoundAttackAs";
       from: ResolvedAttackCopy["from"];
@@ -7214,6 +7242,13 @@ export type EffectOp =
           the Bench flat). Only ever written with `count: "all"`, which never parks, so the key
           never reaches a record (R-NZ1). */
       flipEach?: true;
+      /** 🆕🆕🆕 §8 (D646) — ENGINE-WRITTEN ONLY: the `perHeadsInPlay` / `flipEach` coins a Backtrack Badge offer was
+          DECLINED over, taken in place of new coins (`coinFlipGate.faces`'s rule). Absent on every authored row. */
+      faces?: CoinFace[];
+      /** 🆕🆕🆕 §8 (D646) — ENGINE-WRITTEN ONLY: the `perHeadsInPlay` targets a resumed `pokemonMulti` pick named,
+          scheduled by `continuationOps` so the coins are flipped by `stepOp` (where an offer can park) rather than
+          inside `applyChoice`. Absent on every authored row. */
+      hitRefs?: PokemonRef[];
       /** 🆕🆕🆕 **D608 — Mandibuzz "Bone Sniper"** (*"This attack does 70 damage to 1 of your opponent's
           Pokémon that has any Special Energy attached."*). A BOARD narrowing at `snipeTargets`, beside
           `damagedOnly`: a candidate must hold a Special Energy (continuous.ts `hasAttachedEnergy(…,
@@ -7521,7 +7556,17 @@ export type EffectOp =
       into a persisted record — but an OPTIONAL field is a WIDENING (D125), and a
       continuation authored before this slice simply LACKS the key, which reads as
       one coin and reproduces the pre-slice behaviour exactly. */
-  | { op: "coinFlipGate"; then: EffectOp[]; otherwise?: EffectOp[]; onTails?: true; coins?: number }
+  | {
+      op: "coinFlipGate";
+      then: EffectOp[];
+      otherwise?: EffectOp[];
+      onTails?: true;
+      coins?: number;
+      /** 🆕🆕🆕 §8 (D646) — ENGINE-WRITTEN ONLY: the faces a Backtrack Badge offer was DECLINED over (`reflipCoins`'s
+          "keep"), taken in place of new coins — no `rngState` step, no row, no second offer. Absent on every
+          authored row. Rides `phase.cont` behind a park (`MATCH_RECORD_VERSION` 48 → 49). */
+      faces?: CoinFace[];
+    }
   // — Trainer / Ability ops (M4), controller-relative. —
   /** Draw `count` from the top of the controller's deck (short-draws when the
       deck is shallower — §14.3 deck-out is a turn-START rule only).

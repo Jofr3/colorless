@@ -1315,6 +1315,15 @@ export interface PassiveEffects {
       one coin, and tails keeps the Active and its Energy and still spends the retreat (R-SLD1 / R-SLD2 / R-SLD3 ⚠️
       UNRULED). Catalog-only: never persisted. */
   retreatFailsOnTails?: string;
+  /** 🆕🆕🆕 §7.4 / §8 (D646) — THE ATTACK RE-FLIP, borne by a POKÉMON TOOL: Backtrack Badge `me05-074` (*"Once during
+      your turn, after you flip any coins for an attack of the {C} Pokémon this card is attached to, you may ignore all
+      results of those coin flips and begin flipping those coins again."*). `name` is the card's name (the once-per-turn
+      key, `${toolUid}:${name}` on the shipped `allowances.abilitiesUsed`); `holderType` the printed {C}, read off the
+      holder's IN-PLAY types. Read by ONE function, continuous.ts `coinRedoToolOf` (through `toolsInEffect`, so Jamming
+      Tower silences it), asked after a batch of the attacker's own coins at attack.ts's printed coin flip and at
+      interpreter.ts's `coinFlipGate` and per-coin `damageChosen` hits; the offer parks a confirm (R-BTB1 … R-BTB4 ⚠️
+      UNRULED). Catalog-only: never persisted (the PARK is — `MATCH_RECORD_VERSION` 48 → 49). */
+  reflipAttackCoins?: { name: string; holderType: PokemonType };
   /** 🆕 §8.1 (D298) — the CAUSE-CONDITIONED PRIZE REDUCTION borne by an ATTACHED
       CARD. See `KoPrizeReduction` for the vocabulary; the two printings that reach
       this field are
@@ -11294,7 +11303,8 @@ const MULTI_ADAPTER: CardProgram = { passive: { toolCapForName: { nameContains: 
 // ── 🆕🆕🆕 D644 — Y1e: RULE HOOKS, ONE PRINTING EACH. Five objects, 5 printings, texts off the LOCAL D1 (2026-10-10,
 //    `legal_standard = 1`). New pieces: `CardProgram.setupActiveFromHand` / `.opponentMillWhenMilled` and
 //    `PassiveEffects.countersCantMove` / `.weaknessTimesWithNamedInPlay`; Transformation Tome is shipped ops. Dropped
-//    and named: Backtrack Badge `me05-074` (a re-flip of an attack's coins needs a persisted mid-attack park).
+//    and named: Backtrack Badge `me05-074` (a re-flip of an attack's coins needs a persisted mid-attack park)
+//    [🆕🆕🆕 D646 (D539): built at D646, `BACKTRACK_BADGE`].
 //    `ruleHooksMeD644.test.ts`. ──
 
 /** 🆕🆕🆕 **D644 — Cinderace `me01-028` "Explosiveness"**: may be put face down into the Active Spot at setup
@@ -11338,6 +11348,14 @@ const WILD_GROWTH: CardProgram = { passive: { basicEnergyProvidesTwice: "Grass" 
 /** 🆕🆕🆕 **D645 — Goodra `me04-068` / `mep-077` "Slimy Sliding"**: the opponent's retreat flips a coin; tails keeps
     the Active and its Energy (R-SLD1, R-SLD2, R-SLD3). Its attack "Dragon Pulse" keeps deriving. */
 const SLIMY_SLIDING: CardProgram = { passive: { retreatFailsOnTails: "Slimy Sliding" } };
+
+// ── 🆕🆕🆕 D646 — BACKTRACK BADGE, THE LAST UNBUILT LEGAL `me` PRINTING. One object, 1 printing, text off the LOCAL D1
+//    (2026-10-11, `legal_standard = 1`). New pieces: `PassiveEffects.reflipAttackCoins`, the parked `EffectOp`s
+//    `reflipCoins` / `reflipAttackCoins` and the event `COINS_REFLIPPED`. `backtrackBadgeMeD646.test.ts`. ──
+
+/** 🆕🆕🆕 **D646 — Backtrack Badge `me05-074` (Pokémon Tool)**: once during your turn, after the {C} holder's attack flips
+    its coins, you may ignore them and flip those coins again (R-BTB1 … R-BTB4). */
+const BACKTRACK_BADGE: CardProgram = { passive: { reflipAttackCoins: { name: "Backtrack Badge", holderType: "Colorless" } } };
 
 /** 🆕🆕🆕 **D578 — Technical Machine: Fluorite `sv08-188` (Tool, 1 legal printing)**: *"The Pokémon
     this card is attached to can use the attack on this card. (You still need the necessary
@@ -20785,6 +20803,8 @@ const REGISTRY: Record<string, CardProgram> = {
   "mep-001": WILD_GROWTH, // Meganium
   "me04-068": SLIMY_SLIDING, // Goodra — the opponent's retreat flips a coin; tails, it doesn't happen
   "mep-077": SLIMY_SLIDING, // Goodra
+  // 🆕🆕🆕 D646 — Backtrack Badge: 1 key / 1 object, MID-MAP (`raw[last]` does not move).
+  "me05-074": BACKTRACK_BADGE, // Backtrack Badge — once a turn, the {C} holder's attack coins may be flipped again
   // 🆕🆕🆕 D608 — WP30: 5 `30th` ATTACK-only keys / 2 objects, MID-MAP (`raw[last]` does not move).
   // 🆕🆕🆕 D612 — 3 now: Stealthy Slash ×2 RETIRED (the normalised text is `mep-099`'s, reader-built).
   "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex

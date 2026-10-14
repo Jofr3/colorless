@@ -591,9 +591,9 @@ describe("D535 §3 — the PERSISTED BYTES: the version claim, driven rather tha
     expect(fromBytes.state).toEqual(fromLive.state);
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 48 (🆕🆕🆕 D643 stepped it 47 → 48; D640 stepped it 46 → 47; D637 stepped it 45 → 46; D636 stepped it 44 → 45; D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) in `apps/api` — D237's POPULATION change, not a widening and not a rename", () => {
+  it("🛑 `MATCH_RECORD_VERSION` is 49 (🆕🆕🆕 D646 stepped it 48 → 49; D643 stepped it 47 → 48; D640 stepped it 46 → 47; D637 stepped it 45 → 46; D636 stepped it 44 → 45; D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) in `apps/api` — D237's POPULATION change, not a widening and not a rename", () => {
     // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
-    expect(raw("/lobby/match.ts")).toContain("export const MATCH_RECORD_VERSION = 48;");
+    expect(raw("/lobby/match.ts")).toContain("export const MATCH_RECORD_VERSION = 49;");
     // …and the reason, pinned where a successor will look: `cardplay.ts`'s distinctness
     // guard is what makes six parks the shape, and it is still there.
     expect(raw("/cardplay.ts")).toContain(
@@ -856,7 +856,7 @@ describe("D535 §8 — the POPULATION RUNG and the version", () => {
   });
 
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
-    expect(engineVersion).toBe("0.528.0");
+    expect(engineVersion).toBe("0.529.0");
     expect(manifest.version).toBe(engineVersion);
     expect(raw("/index.ts")).toContain("engineVersion 0.419.0 → **0.420.0** (D535");
   });

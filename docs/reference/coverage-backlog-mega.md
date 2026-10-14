@@ -6,6 +6,23 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D646 update (engine 0.529.0) — Backtrack Badge; THE PROGRAM IS CLOSED (`MATCH_RECORD_VERSION` 48 → 49)
+
+1 text / 1 printing (`backtrackBadgeMeD646.test.ts`): Backtrack Badge `me05-074` (D644's drop) on the new `PassiveEffects.reflipAttackCoins`:
+after a batch of the attacker's own attack coins, a live Badge on a {C} attacker parks a `confirm` (the new parked ops `reflipAttackCoins` /
+`reflipCoins`, the once-per-turn key on `allowances.abilitiesUsed`) — R-BTB1 … R-BTB4. A v48 record is re-stamped to v49. **Finished:** 1.
+**Dropped:** none. Every legal `me` printing with text is built; re-measured over the LOCAL D1, 1263 of 1266 `me` printings are fully built and
+the 3 left are the text-less `30th` Items (`30th-126` … `-128`), outside every column. Nothing in this backlog is owed.
+
+| Column | `me` built / units (D646) | Standard pool D646 |
+|---|---|---|
+| Attacks | 1,039 / 1,039 | **2,771 / 2,771** |
+| Abilities | 234 / 234 | **610 / 610** |
+| Trainers | 183 / 183 (+1) | **447 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+1263 `me` printings fully built (1262 + 1).
+
 ## 🆕 D645 update (engine 0.528.0) — the last one-offs (`MATCH_RECORD_VERSION` stays 48)
 
 3 texts / 5 printings (`lastOneOffsMeD645.test.ts`): Meganium "Wild Growth" `me01-010` / `mep-001` (the new
@@ -13,7 +30,7 @@
 `PassiveEffects.retreatFailsOnTails` at `retreat` — R-SLD1 … R-SLD3) and Deoxys "Psyspear" `me04-032` (the new `BoardCondition`
 `extraEnergyBeyondAttackCost`, resolved at declaration — R-PSP1). **Finished:** all 5. **Dropped:** none new. Every buildable legal `me`
 printing is now built; the one `me` text left is Backtrack Badge `me05-074` (D644's drop, persisted state), beside the 3 text-less `30th`
-Items.
+Items. [🆕🆕🆕 D646 (D539): Backtrack Badge BUILT at D646.]
 
 | Column | `me` built / units (D645) | Standard pool D645 |
 |---|---|---|
@@ -32,7 +49,7 @@ ops whiff, Rocket Brain / Adrena-Brain are refused — R-WEY1), Illumise "Supere
 `PassiveEffects.weaknessTimesWithNamedInPlay` at both Weakness sites — R-SPH1 / R-SPH2), Ferrothorn "Startling Drop" `me04-063` (the new
 `CardProgram.opponentMillWhenMilled`, answered inside `discardDeckTop` — R-STD1 / R-STD2) and Transformation Tome `me04-083` (a second-copy
 hand cost, then Ogre's Mask's swap over Basic Pokémon — R-TFT1 / R-TFT2). **Finished:** 5. **Dropped and named:** Backtrack Badge
-`me05-074` (re-flipping an attack's coins needs a persisted mid-attack park).
+`me05-074` (re-flipping an attack's coins needs a persisted mid-attack park). [🆕🆕🆕 D646 (D539): BUILT at D646, MRV 48 → 49.]
 
 | Column | `me` built / units (D644) | Standard pool D644 |
 |---|---|---|
@@ -1711,7 +1728,7 @@ Discard an Energy from 1 of your opponent's Pokémon. [🆕🆕🆕 D588: BUILT]
 ### Tool — 7 text(s) / 9 printing(s)
 
 - 1× **Adversity Policy** — If the Pokémon this card is attached to has Weakness to your opponent's Active Pokémon's type, is in the Active Spot, and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), draw 3 cards. [🆕🆕🆕 D620: dropped — a holder-has-Weakness-to-the-opponent's-Active gate, a new `BoardCondition` member] [🆕🆕🆕 D626: BUILT]
-- 1× **Backtrack Badge** — Once during your turn, after you flip any coins for an attack of the {C} Pokémon this card is attached to, you may ignore all results of those coin flips and begin flipping those coins again. [🆕🆕🆕 D644: dropped and named — the re-flip needs a persisted mid-attack park; waits for an MRV slice]
+- 1× **Backtrack Badge** — Once during your turn, after you flip any coins for an attack of the {C} Pokémon this card is attached to, you may ignore all results of those coin flips and begin flipping those coins again. [🆕🆕🆕 D644: dropped and named — the re-flip needs a persisted mid-attack park; waits for an MRV slice] [🆕🆕🆕 D646: BUILT (MRV 48 → 49)]
 - 1× **Light Ball** — Attacks used by the Pikachu ex this card is attached to do 50 more damage to your opponent's Active Pokémon ex (before applying Weakness and Resistance). [🆕🆕🆕 D620: BUILT]
 - 2× **Punk Helmet** — If the {D} Pokémon this card is attached to is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 4 damage counters on the Attacking Pokémon. [🆕🆕🆕 D620: BUILT]
 - 2× **Sacred Charm** — The Pokémon this card is attached to takes 30 less damage from attacks from your opponent's Pokémon that have an Ability (after applying Weakness and Resistance). [🆕🆕🆕 D619: BUILT]

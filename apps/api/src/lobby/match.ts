@@ -2161,6 +2161,27 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **48 → 49 AT D646 — THE TWENTY-SECOND POSITION, AND THE EIGHTH MIGRATION: BACKTRACK BADGE.** (Placed ABOVE the
+    D645 block.) Backtrack Badge `me05-074` (*"Once during your turn, after you flip any coins for an attack of the {C}
+    Pokémon this card is attached to, you may ignore all results of those coin flips and begin flipping those coins
+    again."*). The addresses, named first (D456's rule): ⑴ **the `EffectOp` `{ op: "reflipAttackCoins" }`** in
+    `phase.cont.pendingOp` (the offer at attack.ts's printed coin flip, an `attackEpilogue` queued behind it): 0.528's
+    `resolveEffect` has no route, so the default drain finishes the attack after its coins — the hit and every effect
+    behind them are lost. ⑵ **The `EffectOp` `{ op: "reflipCoins" }`** in `phase.cont.pendingOp` (the offer after an
+    attack program's `coinFlipGate` / per-coin `damageChosen`): 0.528's `stepOp` / `applyChoice` / `continuationOps`
+    have no arm, so the `retry` is dropped and the coin's consequent never happens. ⑶ **The optional `faces` on
+    `coinFlipGate` / `damageChosen` and `hitRefs` on `damageChosen`** in `phase.cont.rest`: 0.528 ignores both keys,
+    flipping a declined batch again and re-asking a resumed pick. The once-per-turn record is an entry on the shipped
+    `allowances.abilitiesUsed` (`${toolUid}:Backtrack Badge`), an inert string to 0.528. 🛑 **THE MIGRATION IS A
+    RE-STAMP**: no v48 writer could write any of the three (0.528 has no Backtrack Badge program, and its Target
+    Together pick resumes on its own arm — which 0.529 reads as the same hit through `continuationOps`).
+    `migrateMatchRecord` takes a v48 record by its version alone (`COIN_REDO_MIGRATABLE_MATCH_RECORD_VERSION = 48`), as
+    it takes a v45, v46 or v47 one; a v44 record takes D636's step, a v43 two, a v42 three, a v41 all four. Driven in
+    `coinRedoMigrationD646.test.ts`. A rollback to any build at 48 (0.526 … 0.528) RETIRES every v49 record (D124).
+    ⚠️ Also moved, and none is a second reason: the catalog-side `PassiveEffects.reflipAttackCoins` (never serialized)
+    and the event `COINS_REFLIPPED` (not persisted, D141). The offer is the shipped `confirm` prompt (with `labels`), so
+    no wire shape moves; the deploy order is the usual one.
+
     🆕🆕🆕 **STAYS 48 AT D645 — THE LAST ONE-OFFS ADD TWO `PassiveEffects` KEYS (`basicEnergyProvidesTwice`,
     `retreatFailsOnTails`) AND ONE `BoardCondition` MEMBER (`extraEnergyBeyondAttackCost`) THAT NEVER LEAVES attack.ts:
     `resolveDeclarationGates` answers it before `runProgram`, so no continuation carries it. NO PHASE, PROMPT KIND,
@@ -3054,7 +3075,7 @@ export interface MatchRecord {
     the `trimBench` `EffectOp` (parked in `cont`, a D125 widening carried by (ii)), the events
     `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side
     `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */
-export const MATCH_RECORD_VERSION = 48;
+export const MATCH_RECORD_VERSION = 49;
 
 /** 🆕🆕🆕 D583 — the one version this deploy MIGRATES rather than retires ("41 → 42 AT D583" above).
     🆕🆕🆕 D621 (D539): ~~"the one version"~~ — the version whose POOL is refreshed from D1; v42 is
@@ -3086,11 +3107,15 @@ export const PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION = 46;
     v45 or v46 record is. */
 export const TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION = 47;
 
+/** 🆕🆕🆕 D646 — the version migrated by a re-stamp alone ("48 → 49 AT D646" above): no D1 read, no key written, as a
+    v45, v46 or v47 record is. */
+export const COIN_REDO_MIGRATABLE_MATCH_RECORD_VERSION = 48;
+
 /** 🆕🆕🆕 D583 — the catalog ids a v41 record's pool holds (what `loadMatchRecord` re-reads from D1), or
     `null` for anything that is not a well-formed v41 record. PURE.
     🆕🆕🆕 D621 — `[]` for a well-formed v42 record: it is migrated, but its pool is not re-read.
     🆕🆕🆕 D630 — and `[]` for a well-formed v43 record, on the same terms. 🆕🆕🆕 D636 — and a v44 one. 🆕🆕🆕 D637 — and a
-    v45 one. 🆕🆕🆕 D640 — and a v46 one. 🆕🆕🆕 D643 — and a v47 one. */
+    v45 one. 🆕🆕🆕 D640 — and a v46 one. 🆕🆕🆕 D643 — and a v47 one. 🆕🆕🆕 D646 — and a v48 one. */
 export function migratablePoolIdsOf(raw: unknown): string[] | null {
   const record = readMigratableRecord(raw);
   if (record === null) return null;
@@ -3113,14 +3138,16 @@ export function migratablePoolIdsOf(raw: unknown): string[] | null {
     🆕🆕🆕 D637 — a v45 record is migrated too (`fresh` unread) by its version alone: it skips every step (it has every
     key, and D636's step would clobber a live lock). (D539: ~~"EVERY migrated version then takes D636's lock keys"~~ —
     every version below 45.)
-    🆕🆕🆕 D640 — and a v46 record the same way (a re-stamp alone). 🆕🆕🆕 D643 — and a v47 record. */
+    🆕🆕🆕 D640 — and a v46 record the same way (a re-stamp alone). 🆕🆕🆕 D643 — and a v47 record. 🆕🆕🆕 D646 — and a v48
+    record. */
 export function migrateMatchRecord(raw: unknown, fresh: Record<string, Card>): MatchRecord | null {
   const record = readMigratableRecord(raw);
   if (record === null) return null;
   if (
     record.version === FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION ||
     record.version === PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION ||
-    record.version === TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION
+    record.version === TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION ||
+    record.version === COIN_REDO_MIGRATABLE_MATCH_RECORD_VERSION
   )
     return { ...record, version: MATCH_RECORD_VERSION };
   const cardPool: Record<string, Card> = { ...record.state.cardPool };
@@ -3221,7 +3248,8 @@ export interface MatchSlot {
     pool to load. 🆕🆕🆕 D636 (D539): ~~"v44"~~ — v45; a v44 record is migrated too, with no pool to load.
     🆕🆕🆕 D637 (D539): ~~"v45"~~ — v46; a v45 record is migrated too, with no pool to load.
     🆕🆕🆕 D640 (D539): ~~"v46"~~ — v47; a v46 record is migrated too, with no pool to load.
-    🆕🆕🆕 D643 (D539): ~~"v47"~~ — v48; a v47 record is migrated too, with no pool to load. */
+    🆕🆕🆕 D643 (D539): ~~"v47"~~ — v48; a v47 record is migrated too, with no pool to load.
+    🆕🆕🆕 D646 (D539): ~~"v48"~~ — v49; a v48 record is migrated too, with no pool to load. */
 export async function loadMatchRecord(
   slot: MatchSlot,
   loadPool: (ids: readonly string[]) => Promise<Record<string, Card>>,
@@ -3233,7 +3261,7 @@ export async function loadMatchRecord(
   const ids = migratablePoolIdsOf(raw);
   if (ids === null) return { kind: "stale" };
   // 🆕🆕🆕 D621 — a v42 record has no pool to re-read (`[]`): D1 is not asked. 🆕🆕🆕 D630 — nor a v43 one. 🆕🆕🆕 D636 — nor a v44.
-  // 🆕🆕🆕 D637 — nor a v45. 🆕🆕🆕 D640 — nor a v46. 🆕🆕🆕 D643 — nor a v47.
+  // 🆕🆕🆕 D637 — nor a v45. 🆕🆕🆕 D640 — nor a v46. 🆕🆕🆕 D643 — nor a v47. 🆕🆕🆕 D646 — nor a v48.
   const fresh = ids.length === 0 ? {} : await loadPool(ids);
   const again = await slot.get();
   if (again === undefined) return { kind: "none" };
@@ -3245,7 +3273,7 @@ export async function loadMatchRecord(
   return { kind: "ok", record: migrated };
 }
 
-/** A v41 (🆕🆕🆕 D621: or v42; 🆕🆕🆕 D630: or v43; 🆕🆕🆕 D636: or v44; 🆕🆕🆕 D637: or v45; 🆕🆕🆕 D640: or v46; 🆕🆕🆕 D643: or v47) record passed through `readMatchRecord`'s own shape checks,
+/** A v41 (🆕🆕🆕 D621: or v42; 🆕🆕🆕 D630: or v43; 🆕🆕🆕 D636: or v44; 🆕🆕🆕 D637: or v45; 🆕🆕🆕 D640: or v46; 🆕🆕🆕 D643: or v47; 🆕🆕🆕 D646: or v48) record passed through `readMatchRecord`'s own shape checks,
     or `null`. The result keeps its OWN version (D621), which `migrateMatchRecord` branches on. */
 function readMigratableRecord(raw: unknown): MatchRecord | null {
   if (typeof raw !== "object" || raw === null) return null;
@@ -3257,7 +3285,8 @@ function readMigratableRecord(raw: unknown): MatchRecord | null {
     version !== LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&
     version !== FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION &&
     version !== PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION &&
-    version !== TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION
+    version !== TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION &&
+    version !== COIN_REDO_MIGRATABLE_MATCH_RECORD_VERSION
   )
     return null;
   const record = readMatchRecord({ ...raw, version: MATCH_RECORD_VERSION });

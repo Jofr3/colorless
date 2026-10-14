@@ -809,6 +809,10 @@ export type GameEvent =
   /** 🆕🆕🆕 §7 (D636) — the Quaking Fist coin `seat` flipped trying to use the Trainer card `uid` from hand:
       heads, the play goes on; tails, `uid` went from the hand to the discard pile instead (R-QF1). */
   | { type: "TRAINER_FLIP_LOCK_CHECK"; seat: Seat; uid: string; result: CoinFace }
+  /** 🆕🆕🆕 §8 (D646) — `seat` used Backtrack Badge `uid` (a Pokémon Tool on its attacking {C} Pokémon): the `count`
+      coins just flipped for the attack are ignored and flipped again (the new faces follow as their own coin rows).
+      Not persisted (D141). */
+  | { type: "COINS_REFLIPPED"; seat: Seat; uid: string; count: number }
   /** 🆕🆕🆕 (D575) — `actor` LOOKED AT the face-down Prize card in slot `index` of `seat`'s
       row (Team Rocket's Blipbug "Searching Eyes"). SLOT-ONLY, and that is the
       confidentiality rule (`DECK_TOP_REORDERED`'s): the log is broadcast to BOTH seats, so

@@ -289,6 +289,43 @@ export function toolsInEffect(state: GameState, pokemon: InPlayPokemon): readonl
   return stadiumEffectsOf(state)?.toolsHaveNoEffect === true ? [] : pokemon.tools;
 }
 
+/** 🆕🆕🆕 §7.4 / §8 (D646) — the once-per-turn key Backtrack Badge `toolUid` spends on the shipped
+    `allowances.abilitiesUsed` (`abilityUsedKey`'s `${uid}:${name}` shape, on the TOOL's uid). */
+export function coinRedoKey(toolUid: string, name: string): string {
+  return `${toolUid}:${name}`;
+}
+
+/** 🆕🆕🆕 §7.4 / §8 (D646) — the uid of a Backtrack Badge `me05-074` that may re-flip `body`'s attack coins NOW
+    (*"Once during your turn, after you flip any coins for an attack of the {C} Pokémon this card is attached to, you
+    may ignore all results of those coin flips and begin flipping those coins again."*), or `null`: an in-effect Tool
+    (`toolsInEffect` — Jamming Tower silences it) carrying `PassiveEffects.reflipAttackCoins`, on a body whose IN-PLAY
+    types (`inPlayCardOf`) include the printed {C}, whose key is not yet in this turn's `allowances.abilitiesUsed`. The
+    callers pass the ATTACKING body and ask only after the attacker's own coins (R-BTB1, R-BTB2). */
+export function coinRedoToolOf(state: GameState, body: InPlayPokemon): string | null {
+  const types = inPlayCardOf(state, body)?.types ?? [];
+  for (const uid of toolsInEffect(state, body)) {
+    const id = state.cardIdByUid[uid];
+    const redo = id === undefined ? undefined : programFor(id)?.passive?.reflipAttackCoins;
+    if (redo === undefined || !types.includes(redo.holderType)) continue;
+    if (state.allowances.abilitiesUsed.includes(coinRedoKey(uid, redo.name))) continue;
+    return uid;
+  }
+  return null;
+}
+
+/** 🆕🆕🆕 §7.4 / §8 (D646) — a Backtrack Badge offer answered YES: `COINS_REFLIPPED` (the `count` coins ignored) and the
+    Badge's once-per-turn key on `allowances.abilitiesUsed`. A uid carrying no `reflipAttackCoins` spends nothing. */
+export function spendCoinRedo(state: GameState, seat: Seat, toolUid: string, count: number, events: GameEvent[]): GameState {
+  const id = state.cardIdByUid[toolUid];
+  const redo = id === undefined ? undefined : programFor(id)?.passive?.reflipAttackCoins;
+  if (redo === undefined) return state;
+  events.push({ type: "COINS_REFLIPPED", seat, uid: toolUid, count });
+  return {
+    ...state,
+    allowances: { ...state.allowances, abilitiesUsed: [...state.allowances.abilitiesUsed, coinRedoKey(toolUid, redo.name)] },
+  };
+}
+
 /** 🆕🆕🆕 D562 — the in-effect Tools on `holder` whose printed sentence is keyed to an
     attack FROM YOUR OPPONENT'S Pokémon, each with its passive. The seat half of every
     consumable's antecedent, asked in ONE place: `holder`'s seat is derived off the live

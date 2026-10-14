@@ -746,7 +746,7 @@ describe("D611 §12 — `notYourFirstTurn`, and the version", () => {
     expect(conditionNote({ kind: "notYourFirstTurn" })).toBe("it is not your first turn");
   });
 
-  it("is built at engine 0.528.0", () => {
-    expect(engineVersion).toBe("0.528.0");
+  it("is built at engine 0.529.0", () => {
+    expect(engineVersion).toBe("0.529.0");
   });
 });

@@ -556,7 +556,7 @@ describe("§3 — TWO REQUIRED fields on a shipped op, and the record version do
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.528.0");
+    expect(engineVersion).toBe("0.529.0");
   });
 });
 

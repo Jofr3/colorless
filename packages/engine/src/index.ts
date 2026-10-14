@@ -20273,6 +20273,15 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.528.0 → **0.529.0** (D646 — BACKTRACK BADGE, THE LAST UNBUILT LEGAL `me` PRINTING: 1 TEXT /
+    1 PRINTING; `MATCH_RECORD_VERSION` 48 → 49 WITH A v48 MIGRATION, A RE-STAMP (apps/api match.ts "48 → 49 AT D646")).
+    registry.ts: Backtrack Badge `me05-074` (Tool) on the NEW `PassiveEffects.reflipAttackCoins` (continuous.ts
+    `coinRedoToolOf` / `spendCoinRedo`; the once-per-turn key on `allowances.abilitiesUsed`). After the attacker's own
+    coins, a live Badge on a {C} attacker parks a confirm: at attack.ts's printed coin flip (the NEW parked op
+    `reflipAttackCoins`, `parkCoinRedo` / `resolveCoinRedo`, re-entering `attack()` past its pre-coin rows with the
+    faces kept or flipped again) and at interpreter.ts's `coinFlipGate` and `damageChosen` `perHeadsInPlay` /
+    `flipEach` coins (the NEW scheduled op `reflipCoins`; the optional engine-written `faces` / `hitRefs`). The NEW event
+    `COINS_REFLIPPED`. R-BTB1 … R-BTB4. `backtrackBadgeMeD646.test.ts`, `coinRedoMigrationD646.test.ts`.)
     🆕🆕🆕 engineVersion 0.527.0 → **0.528.0** (D645 — THE LAST ONE-OFFS: 3 TEXTS / 5 PRINTINGS (`me`);
     `MATCH_RECORD_VERSION` STAYS 48 (apps/api match.ts "STAYS 48 AT D645")). registry.ts: Meganium `me01-010` / `mep-001`
     "Wild Growth" on the NEW `PassiveEffects.basicEnergyProvidesTwice` (continuous.ts `doubledBasicEnergyType`, read by
@@ -20281,7 +20290,7 @@ import type { GameState, Seat } from "./types";
     `retreatCoinFlipSource`, asked by turn.ts `retreat`: one coin, tails keeps the Active and its Energy and spends the
     retreat; R-SLD1, R-SLD2, R-SLD3). effects.ts: Deoxys `me04-032` "Psyspear" through `CONDITIONAL_BENCH_SNIPE` over
     the NEW `BoardCondition` `extraEnergyBeyondAttackCost`, answered at declaration by attack.ts
-    `resolveDeclarationGates` (R-PSP1). Dropped and named: none new; Backtrack Badge `me05-074` stays D644's.
+    `resolveDeclarationGates` (R-PSP1). Dropped and named: none new; Backtrack Badge `me05-074` stays D644's [🆕🆕🆕 D646 (D539): built at D646].
     `lastOneOffsMeD645.test.ts`.)
     🆕🆕🆕 engineVersion 0.526.0 → **0.527.0** (D644 — Y1e: RULE HOOKS, ONE PRINTING EACH, 5 TEXTS / 5 PRINTINGS (`me` +
     `30th`); `MATCH_RECORD_VERSION` STAYS 48 (apps/api match.ts "STAYS 48 AT D644")). registry.ts: Cinderace `me01-028`
@@ -20294,7 +20303,7 @@ import type { GameState, Seat } from "./types";
     the NEW `CardProgram.opponentMillWhenMilled` (interpreter.ts `startlingDropRetort`, called by `discardDeckTop`;
     R-STD1, R-STD2); Transformation Tome `me04-083` on shipped ops (`payFromHand` for the second copy, then
     `switchWithDiscardNamed` over Basic Pokémon; R-TFT1, R-TFT2). Dropped and named: Backtrack Badge `me05-074` (a
-    persisted mid-attack re-flip park). `ruleHooksMeD644.test.ts`.)
+    persisted mid-attack re-flip park) [🆕🆕🆕 D646 (D539): built at D646]. `ruleHooksMeD644.test.ts`.)
     🆕🆕🆕 engineVersion 0.525.0 → **0.526.0** (D643 — Y1a: MULTI ADAPTER, 1 TEXT / 3 PRINTINGS (`me`);
     `MATCH_RECORD_VERSION` 47 → 48 WITH A v47 MIGRATION, A RE-STAMP (apps/api match.ts "47 → 48 AT D643")). registry.ts:
     Rotom ex `me02-029` / `-111` / `-126` on the NEW `PassiveEffects.toolCapForName` (continuous.ts `toolCapOf`, read at
@@ -25807,7 +25816,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.528.0";
+export const engineVersion = "0.529.0";
 
 export type {
   ApplyResult,

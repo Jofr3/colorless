@@ -38,6 +38,9 @@ import {
   attackMenuOf,
   attackerHasSpecialEnergy,
   attackerSuppressesTargetEffects,
+  // 🆕🆕🆕 D646 — Backtrack Badge: the offer's reader (the printed coin flip) and the once-per-turn spend.
+  coinRedoToolOf,
+  spendCoinRedo,
   benchShieldedFromDamage,
   // 🆕🆕🆕 D578 — the IN-PLAY card (Scovillain ex "Double Type"): the attacker's and the
   // defender's types as the §8.5 reads see them.
@@ -145,6 +148,8 @@ import {
   attackTimingBlocked,
   attackTimingNote,
   attackerPreWRBonus,
+  // 🆕🆕🆕 D646 — Backtrack Badge's confirm, shared with the interpreter's `reflipCoins` park.
+  coinRedoPrompt,
   conditionHolds,
   conditionNote,
   countCardsInDiscardPile,
@@ -1458,6 +1463,10 @@ export function attack(
   state: GameState,
   action: AttackAction,
   copied?: AttackCopyOverride,
+  /** 🆕🆕🆕 §8 (D646) — present ONLY on `resolveCoinRedo`'s re-entry after a Backtrack Badge offer at the printed coin
+      flip: the attack is the SECOND HALF of one already declared, so no row before the coins is filed again and no
+      pre-coin coin is flipped again; `keep` takes the offered faces, `again` flips anew. */
+  coinRedo?: CoinRedo,
 ): ApplyResult {
   const rejected = turnGate(state, action);
   if (rejected !== null) return rejected;
@@ -1788,7 +1797,8 @@ export function attack(
   };
   // 🆕🆕🆕 D574 — a RESUMED re-entry (`resolveFoundAttack`) is the SECOND HALF of an attack whose
   // ATTACK_DECLARED already went out with the first; it declares nothing again.
-  const events: GameEvent[] = copiedFrom?.resumed === true ? [] : [declaredEvent];
+  // 🆕🆕🆕 D646 — and a Backtrack Badge re-entry (`coinRedo`) is the second half of one already declared.
+  const events: GameEvent[] = copiedFrom?.resumed === true || coinRedo !== undefined ? [] : [declaredEvent];
   let next = state;
 
   // 🆕🆕🆕 §8 (D547) — THE FLIP-TO-ATTACK LOCK: "During your opponent's next turn, if
@@ -1820,7 +1830,8 @@ export function attack(
   // attack would have ended there) and is never flipped twice.
   // 🆕🆕🆕 D636 — Jet of Ink's TWO coins (`attackFlipLockCoins`): every coin is flipped, one row each, and any
   // tails stops the attack (R-JOI1). A lone D547 lock is one coin, byte-identical.
-  const lockCoins = copiedFrom?.resumed === true ? 0 : attackFlipLockCoins(state, active);
+  // 🆕🆕🆕 D646 — nor on a Backtrack Badge re-entry (the first half flipped it, heads).
+  const lockCoins = copiedFrom?.resumed === true || coinRedo !== undefined ? 0 : attackFlipLockCoins(state, active);
   if (lockCoins > 0) {
     let lockTails = false;
     for (let coin = 0; coin < lockCoins; coin++) {
@@ -1845,7 +1856,8 @@ export function attack(
   // no damage, no effects — the attacker takes 30 itself (possibly a
   // self-KO, prized to the defender) and the turn still ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED].
   // 🆕🆕🆕 D574 — and not on a RESUMED half either (the first half flipped it, heads).
-  if (rotation === "confused" && copiedFrom?.resumed !== true) {
+  // 🆕🆕🆕 D646 — nor on a Backtrack Badge re-entry (R-BTB2: the Confusion coin is never re-flipped).
+  if (rotation === "confused" && copiedFrom?.resumed !== true && coinRedo === undefined) {
     const [face, rngState] = flipCoin(next.rngState);
     next = { ...next, rngState };
     events.push({ type: "CONFUSION_CHECK", seat: action.seat, uid: attackerUid, result: face });
@@ -1893,7 +1905,7 @@ export function attack(
   // and an EMPTY override (no candidate: a non-Tera Active against Gemstone Mimicry, an
   // opponent whose every attack is a copy, no Benched N's Pokémon with one) — resolve nothing
   // at all: the attack was declared and the turn ends through the staged tail.
-  if (copied?.flip === true) {
+  if (copied?.flip === true && coinRedo === undefined) {
     const [face, rngState] = flipCoin(next.rngState);
     next = { ...next, rngState };
     events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: action.seat, result: face });
@@ -1916,10 +1928,10 @@ export function attack(
   }
   // 🆕🆕🆕 D574 — a RESUMED half names what the attack became in its OWN row: ATTACK_DECLARED went
   // out with the first half, so `events[0]` here is not it and is never stamped.
-  if (copiedFrom !== null && copiedFrom?.resumed === true) {
+  if (copiedFrom !== null && copiedFrom?.resumed === true && coinRedo === undefined) {
     events.push({ type: "ATTACK_COPY_RESOLVED", seat: action.seat, uid: attackerUid, attack: declared.name, as: copiedFrom.attack.name });
   }
-  if (copiedFrom !== null && copiedFrom?.resumed !== true) events[0] = { ...declaredEvent, as: copiedFrom.attack.name };
+  if (copiedFrom !== null && copiedFrom?.resumed !== true && coinRedo === undefined) events[0] = { ...declaredEvent, as: copiedFrom.attack.name };
 
   // Coverage strategy (simulator.md): the mechanical part of the attack
   // (numeric damage, weakness/resistance) is simulated, and effect text
@@ -2771,9 +2783,10 @@ export function attack(
     costBoostOwnsTheBase ||
     discardScaledBoost !== null ||
     coinExplainsModifier;
+  // 🆕🆕🆕 D646 — filed by the first half only (a Backtrack Badge re-entry has already said it).
   if (
-    (modifier !== null && !modifierSimulated) ||
-    (effect !== null && effect !== "" && !effectSimulated)
+    coinRedo === undefined &&
+    ((modifier !== null && !modifierSimulated) || (effect !== null && effect !== "" && !effectSimulated))
   ) {
     events.push({
       type: "ATTACK_EFFECT_SKIPPED",
@@ -2936,7 +2949,10 @@ export function attack(
   // is KEPT — see `scaledBase` above, where the rule is stated.
   let coinBonus = 0;
   if (coinFlip !== null) {
-    const [faces, rngState] = takeFlips(next, action.seat, active, printedFlips(coinFlip));
+    // 🆕🆕🆕 D646 — a Backtrack Badge "keep" re-entry takes the offered faces (no coin, no row); "again" flips anew.
+    const kept = coinRedo?.kind === "keep" ? coinRedo.faces : undefined;
+    const [faces, rngState] =
+      kept === undefined ? takeFlips(next, action.seat, active, printedFlips(coinFlip)) : [kept, next.rngState];
     next = { ...next, rngState };
     // 🆕🆕🆕 D550 R1 — EVERY coin row is filed under the seat that FLIPS. For every member but
     // one that is the attacker; `opponentPerTails` prints *"Your opponent flips a coin"*, so
@@ -2948,8 +2964,23 @@ export function attack(
     const flipper = coinFlip.kind === "opponentPerTails" ? otherSeat(action.seat) : action.seat;
     let heads = 0;
     for (const face of faces) {
-      events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: flipper, result: face });
+      if (kept === undefined) events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: flipper, result: face });
       if (face === "heads") heads += 1;
+    }
+    // 🆕🆕🆕 D646 — Backtrack Badge `me05-074`: after the ATTACKER's own coins (not the opponent's — R-BTB2), on the first
+    // half only, a live Badge on the attacking body parks its "you may" before any coin is read.
+    const redoTool =
+      coinRedo === undefined && flipper === action.seat && faces.length > 0
+        ? coinRedoToolOf(next, next.players[action.seat].active ?? active)
+        : null;
+    if (redoTool !== null) {
+      return parkCoinRedo(next, events, action.seat, attackerUid, declared.name, {
+        op: "reflipAttackCoins",
+        toolUid: redoTool,
+        index: action.index,
+        faces: [...faces],
+        ...(copied === undefined ? {} : { copied }),
+      });
     }
     if (coinFlip.kind === "cancelOnTails" || coinFlip.kind === "cancelOnTailsElseProgram") {
       if (heads === 0) {
@@ -4736,6 +4767,66 @@ export function resolveFoundAttack(
   }
   if (!zone.includes(pair.uid)) return err("PHASE_DESYNC", "the found card has left the zone the copy found it in");
   return reenterFound(restored, { type: "attack", seat, index: op.index }, pair);
+}
+
+/** 🆕🆕🆕 §8 (D646) — `attack()`'s Backtrack Badge re-entry: `keep` the offered faces, or flip `again`. */
+export type CoinRedo = { kind: "keep"; faces: CoinFace[] } | { kind: "again" };
+
+/** 🆕🆕🆕 §8 (D646) — park Backtrack Badge's offer after the printed coin flip: `parkFoundCopy`'s in-attack shape (an
+    `attackEpilogue` queued, `resumeTail`), the `reflipAttackCoins` op as the `pendingOp` and the shared confirm. */
+function parkCoinRedo(
+  state: GameState,
+  events: GameEvent[],
+  seat: Seat,
+  attackerUid: string,
+  attackName: string,
+  op: Extract<EffectOp, { op: "reflipAttackCoins" }>,
+): ApplyResult {
+  const epilogue: PendingStage = { kind: "attackEpilogue", seat, uid: attackerUid, attack: attackName };
+  return settleProgram(
+    {
+      kind: "parked",
+      state: { ...state, pending: [...state.pending, epilogue] },
+      prompt: coinRedoPrompt(state, op.toolUid, op.faces),
+      cont: { pendingOp: op, rest: [], ctx: { seat, sourceUid: attackerUid, invokedBy: "attack", dealt: 0 } },
+    },
+    seat,
+    events,
+    { resumeTail: true },
+  );
+}
+
+/** 🆕🆕🆕 §8 (D646) — answer Backtrack Badge's printed-coin offer (cardplay.ts `resolveEffect` routes `reflipAttackCoins`
+    here, after `validateChoice` and BEFORE `settleProgram`): strip the queued epilogue, restore `turn:action`, check the
+    Active is still the body that declared, spend the Badge on a "yes" (`COINS_REFLIPPED`), and re-enter `attack()`
+    under the copy override the first half ran with — keeping the faces ("no") or flipping again ("yes"). R-BTB3. */
+export function resolveCoinRedo(
+  state: GameState,
+  phase: Extract<Phase, { kind: "effect:choose" }>,
+  op: Extract<EffectOp, { op: "reflipAttackCoins" }>,
+  choice: EffectChoice,
+): ApplyResult {
+  if (choice.kind !== "confirm") return err("BAD_EFFECT_CHOICE", "expected a yes or a no");
+  const seat = phase.seat;
+  const sourceUid = phase.cont.ctx.sourceUid ?? "";
+  const restored: GameState = {
+    ...state,
+    phase: { kind: "turn:action", seat },
+    pending: state.pending.filter((stage) => !(stage.kind === "attackEpilogue" && stage.uid === sourceUid)),
+  };
+  const attacker = restored.players[seat].active;
+  if (attacker === null || topUid(attacker) !== sourceUid) {
+    return err("PHASE_DESYNC", "the attacking Pokémon is no longer the Active that declared this attack");
+  }
+  const events: GameEvent[] = [];
+  const spent = choice.yes ? spendCoinRedo(restored, seat, op.toolUid, op.faces.length, events) : restored;
+  const resumed = attack(
+    spent,
+    { type: "attack", seat, index: op.index },
+    op.copied,
+    choice.yes ? { kind: "again" } : { kind: "keep", faces: op.faces },
+  );
+  return resumed.ok ? ok(resumed.state, [...events, ...resumed.events]) : resumed;
 }
 
 /** The copier's printed attack name at `index` (the re-parked prompt's caption). [🆕🆕🆕 D578: `index`

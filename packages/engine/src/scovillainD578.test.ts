@@ -214,8 +214,8 @@ function damageRow(events: readonly GameEvent[]): Extract<GameEvent, { type: "DA
 const SCOV_SPOT: Spot = { id: SCOVILLAIN, under: [CAPSAKID] };
 
 describe("D578 Scovillain §0 — the version", () => {
-  it("is built at engine 0.528.0", () => {
-    expect(engineVersion).toBe("0.528.0");
+  it("is built at engine 0.529.0", () => {
+    expect(engineVersion).toBe("0.529.0");
   });
 });
 
@@ -430,6 +430,8 @@ const ALLOWLIST: Record<string, string> = {
   "types · continuous.ts · attackerMatchesClass · attacker.types": `${E} — \`attackBlockOf\` callers pass the in-play attacker`,
   "types · continuous.ts · auraSuppresses · top.types": `${P} — R-WT1: the Watchtower read, under \`disabledAbilityUids\` (no {C} retype exists)`,
   "types · continuous.ts · berryReductionOf · attacker?.types": `${E} — the four §8.5 callers pass the in-play attacker`,
+  // 🆕🆕🆕 D646 — Backtrack Badge's printed {C}: the holder's IN-PLAY types.
+  "types · continuous.ts · coinRedoToolOf · inPlayCardOf(state, body)?.types": `${E} — Backtrack Badge's {C} holder, read in play (D646)`,
   "types · continuous.ts · effectiveTypesOf · inPlayCardOf(state, pokemon)?.types": `${E} — the projection itself`,
   "types · continuous.ts · passivesOf · holderCard?.types": `${E} — \`holderCard\` is \`inPlayCardOf\` (printed under a §9 lock)`,
   "types · continuous.ts · preventsAttackerType · attacker.types": `${E} — every damage site passes the in-play attacker`,

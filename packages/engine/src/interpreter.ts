@@ -35,6 +35,9 @@ import {
   benchShieldedFromDamage,
   benchShieldedFromEffects,
   coinFlipShieldPrevents,
+  // 🆕🆕🆕 D646 — Backtrack Badge: the offer's reader and the once-per-turn spend.
+  coinRedoToolOf,
+  spendCoinRedo,
   // 🆕 D372 — the FIRST value this file takes from continuous.ts's per-BODY Energy
   // counters. `countEnergyInPlay` (the line below) is the SEAT-wide one and has been
   // here since D193; the printed clause D372 buys names two BODIES, so the narrow
@@ -1293,7 +1296,9 @@ export function runProgram(
       // "heads then tails" indistinguishable in the history.
       let faces: readonly CoinFace[] = [];
       let rngState = next.rngState;
-      for (let flip = 0; flip < (op.coins ?? 1); flip += 1) {
+      // 🆕🆕🆕 D646 — a Backtrack Badge "keep" hands the declined faces back (`op.faces`): no coin, no row.
+      const kept = op.faces;
+      for (let flip = 0; kept === undefined && flip < (op.coins ?? 1); flip += 1) {
         const [drawn, advanced] = flipCoin(rngState);
         faces = [...faces, drawn];
         rngState = advanced;
@@ -1301,6 +1306,13 @@ export function runProgram(
       next = { ...next, rngState };
       for (const drawn of faces) {
         events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: ctx.seat, result: drawn });
+      }
+      if (kept !== undefined) faces = kept;
+      // 🆕🆕🆕 D646 — after the attacker's own coins, a live Backtrack Badge parks its offer AHEAD of the branch.
+      const redo = kept === undefined ? coinRedoOffer(next, ctx, faces) : null;
+      if (redo !== null) {
+        queue.unshift({ op: "reflipCoins", toolUid: redo, faces: [...faces], retry: op });
+        continue;
       }
       // 🛑 THE UNANIMOUS FACE, OR `null` WHEN THE COINS DISAGREE — and that is the
       // whole of "**If both of them are heads**" as a value. `null` equals neither
@@ -2279,6 +2291,15 @@ function continuationOps(
   before: GameState,
 ): EffectOp[] {
   const op = cont.pendingOp;
+  // 🆕🆕🆕 D646 — Backtrack Badge: "yes" re-runs the coin op as written (it flips again; the key is spent, so no second
+  // offer); "no" re-runs it with the faces it flipped (no coin, no row). R-BTB3.
+  if (op.op === "reflipCoins") {
+    return [choice.kind === "confirm" && choice.yes ? op.retry : withKeptFaces(op.retry, op.faces)];
+  }
+  // 🆕🆕🆕 D646 — Target Together's resumed pick: the op again, with the targets, so `stepOp` flips its coins.
+  if (op.op === "damageChosen" && op.perHeadsInPlay !== undefined && op.hitRefs === undefined) {
+    return choice.kind === "pokemonMulti" ? [{ ...op, hitRefs: [...choice.refs] }] : [];
+  }
   // 🆕🆕🆕 D561 (V5) — THE SIXTH MEMBER: Super Potion's parked pick buys the discard
   // from THAT body, through the helper the forced ending uses.
   // 🆕🆕🆕 D617 — and Pokémon Center Lady's parked pick buys the recovery (`healedRiderOps`).
@@ -2433,6 +2454,12 @@ export function resumeProgram(
   // (`continuationOps`); an answer that buys nothing splices nothing, as before.
   const rest = [...continuationOps(cont, choice, state), ...cont.rest];
   return runProgram(applied, rest, cont.ctx, events, record);
+}
+
+/** 🆕🆕🆕 §8 (D646) — `retry` carrying the declined Backtrack Badge `faces`: the two coin ops that read them
+    (`coinFlipGate.faces`, `damageChosen.faces`). Every other op is returned unchanged (no other op schedules an offer). */
+function withKeptFaces(retry: EffectOp, faces: readonly CoinFace[]): EffectOp {
+  return retry.op === "coinFlipGate" || retry.op === "damageChosen" ? { ...retry, faces: [...faces] } : retry;
 }
 
 /** One synchronous step, or a park request. Parking ops compute their
@@ -2869,6 +2896,14 @@ function stepOp(
     // through `resolveFoundAttack`. Inert (tsc's exhaustive switch).
     case "useFoundAttackAs":
       return { done: state };
+    // 🆕🆕🆕 D646 — Backtrack Badge's offer, scheduled by a coin site after the attacker's coins: it ALWAYS parks (the
+    // printed "you may"); `applyChoice` spends the Badge on a yes and `continuationOps` splices the retry.
+    case "reflipCoins":
+      return { park: coinRedoPrompt(state, op.toolUid, op.faces) };
+    // 🆕🆕🆕 D646 — NEVER QUEUED: only ever attack.ts `parkCoinRedo`'s `pendingOp`, answered through `resolveCoinRedo`.
+    // Inert (tsc's exhaustive switch).
+    case "reflipAttackCoins":
+      return { done: state };
     // 🆕🆕🆕 D638 — NEVER QUEUED either: `useInPlayAttackAs` is only ever the `pendingOp` of Skill Thief's
     // declaration-time park, answered through `resolveInPlayCopiedAttack`. Inert (tsc's exhaustive switch).
     case "useInPlayAttackAs":
@@ -3162,6 +3197,11 @@ function stepOp(
       // every program-emitted damage op.
       return { done: snipeActive(state, op.amount, false, ctx, events) };
     case "damageChosen": {
+      // 🆕🆕🆕 D646 — a resumed Target Together pick (`hitRefs`, scheduled by `continuationOps`): its coins are
+      // flipped HERE, where a Backtrack Badge offer can park, rather than inside `applyChoice`.
+      if (op.hitRefs !== undefined && op.perHeadsInPlay !== undefined) {
+        return perHeadsHit(state, op, op.perHeadsInPlay, op.hitRefs, snipeAmount(op, state, ctx, record), ctx, events);
+      }
       // The snipe (Hawlucha / Meowscarada): choose `count` of the opponent's
       // Benched Pokémon and put counters on each. An empty Bench is a no-op.
       // The pick asks for `count` EXACTLY — the printed number is a floor as
@@ -3244,7 +3284,10 @@ function stepOp(
         // 🆕🆕🆕 D605 — Nullifying Zero: one coin per candidate, every coin before any damage;
         // the heads targets take the hit together (R-NZ1).
         if (op.flipEach === true) {
-          const [flipped, faces] = flipCoinsFor(state, candidates.length, ctx, events);
+          const [flipped, faces] = op.faces === undefined ? flipCoinsFor(state, candidates.length, ctx, events) : [state, op.faces];
+          // 🆕🆕🆕 D646 — a live Backtrack Badge offers after the coins, before any damage.
+          const redo = op.faces === undefined ? coinRedoOffer(flipped, ctx, faces) : null;
+          if (redo !== null) return { done: flipped, schedule: [{ op: "reflipCoins", toolUid: redo, faces, retry: op }] };
           const hit = candidates.filter((_, index) => faces[index] === "heads");
           return {
             done: placeSnipe(flipped, hit, amount, op.deals === true, op.ignoreWR === true, op.source, ctx, events, op.wrOnly === true),
@@ -3252,7 +3295,7 @@ function stepOp(
         }
         // 🆕🆕🆕 D605 — Target Together with one candidate: the pick is forced, then the coins.
         if (op.perHeadsInPlay !== undefined) {
-          return { done: perHeadsHit(state, op, op.perHeadsInPlay, candidates, amount, ctx, events) };
+          return perHeadsHit(state, op, op.perHeadsInPlay, candidates, amount, ctx, events);
         }
         return {
           done: placeSnipe(
@@ -8644,6 +8687,9 @@ export function applyChoice(
   record: EffectRecord = {},
 ): GameState {
   switch (op.op) {
+    // 🆕🆕🆕 D646 — Backtrack Badge: "yes" spends the once-per-turn key and files `COINS_REFLIPPED`; "no" moves nothing.
+    case "reflipCoins":
+      return choice.kind === "confirm" && choice.yes ? spendCoinRedo(state, ctx.seat, op.toolUid, op.faces.length, events) : state;
     case "searchDeck": {
       // 🆕🆕 D502 — THE §9.2 FILING, AND IT COMES OFF `searchMove`'s OWN `moved`
       // RATHER THAN OFF `choice.uids` — `retrieveMove`'s rule one op over, verbatim:
@@ -9105,9 +9151,9 @@ export function applyChoice(
         return resumed;
       }
       // 🆕🆕🆕 D605 — Target Together: the pick is made, THEN the coins are flipped.
-      if (choice.kind === "pokemonMulti" && op.perHeadsInPlay !== undefined) {
-        return perHeadsHit(state, op, op.perHeadsInPlay, choice.refs, snipeAmount(op, state, ctx, record), ctx, events);
-      }
+      // 🆕🆕🆕 D646 — no longer HERE: `continuationOps` schedules the op again with `hitRefs`, and `stepOp` flips (so a
+      // Backtrack Badge offer can park); the pick itself moves nothing.
+      if (choice.kind === "pokemonMulti" && op.perHeadsInPlay !== undefined) return state;
       // Recompute the (possibly Prize-scaled) amount from state: no KO has
       // happened between parking and this pick, so the count is unchanged — the
       // same value snipeNote quoted in the prompt.
@@ -12208,10 +12254,42 @@ function perHeadsHit(
   amount: number,
   ctx: EffectContext,
   events: GameEvent[],
-): GameState {
-  const [flipped, faces] = flipCoinsFor(state, countPokemonInPlay(state, ctx.seat, filter), ctx, events);
+): { done: GameState; schedule?: EffectOp[] } {
+  // 🆕🆕🆕 D646 — the declined faces (`op.faces`) in place of new coins; otherwise the coins, then a Backtrack Badge
+  // offer whose `retry` carries the targets (`hitRefs`), so the re-run hits the same bodies.
+  const [flipped, faces] =
+    op.faces === undefined ? flipCoinsFor(state, countPokemonInPlay(state, ctx.seat, filter), ctx, events) : [state, op.faces];
+  const redo = op.faces === undefined ? coinRedoOffer(flipped, ctx, faces) : null;
+  if (redo !== null) {
+    return { done: flipped, schedule: [{ op: "reflipCoins", toolUid: redo, faces, retry: { ...op, hitRefs: [...refs] } }] };
+  }
   const heads = faces.filter((face) => face === "heads").length;
-  return placeSnipe(flipped, refs, amount * heads, op.deals === true, op.ignoreWR === true, op.source, ctx, events, op.wrOnly === true);
+  return {
+    done: placeSnipe(flipped, refs, amount * heads, op.deals === true, op.ignoreWR === true, op.source, ctx, events, op.wrOnly === true),
+  };
+}
+
+/** 🆕🆕🆕 §8 (D646) — Backtrack Badge `me05-074`: after a batch of ATTACK coins `ctx.seat` flipped (`faces`, at least
+    one), the uid of a Badge on the ATTACKING body (`ctx.sourceUid`, found on its owner's board) that may re-flip them
+    now (continuous.ts `coinRedoToolOf`), or `null`. Only an attack's program asks (`invokedBy`), so a Trainer's or an
+    Ability's coin is never offered (R-BTB2). */
+function coinRedoOffer(state: GameState, ctx: EffectContext, faces: readonly CoinFace[]): string | null {
+  if (ctx.invokedBy !== "attack" || faces.length === 0) return null;
+  const [ref] = sourceRef(state, ctx);
+  const body = ref === undefined ? undefined : refPokemon(state, ref);
+  return body === undefined ? null : coinRedoToolOf(state, body);
+}
+
+/** 🆕🆕🆕 §8 (D646) — the Backtrack Badge offer's prompt: the printed *"you may"*, with the faces it would ignore.
+    Shared by `stepOp`'s `reflipCoins` park and attack.ts's printed-coin park. */
+export function coinRedoPrompt(state: GameState, toolUid: string, faces: readonly CoinFace[]): EffectPrompt {
+  const name = cardOf(state, toolUid)?.name ?? "Backtrack Badge";
+  const these = faces.length === 1 ? "this coin flip" : `these ${String(faces.length)} coin flips`;
+  return {
+    kind: "confirm",
+    note: `${name}: ignore ${these} (${faces.join(", ")}) and flip ${faces.length === 1 ? "that coin" : "those coins"} again?`,
+    labels: { yes: "Flip again", no: "Keep the results" },
+  };
 }
 
 function placeSnipe(

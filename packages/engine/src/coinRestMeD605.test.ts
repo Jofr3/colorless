@@ -566,7 +566,7 @@ describe("D605 §7 — Miraculous Paint on a board: heads asks for a Special Con
 });
 
 describe("D605 §8 — the version", () => {
-  it("is built at engine 0.528.0", () => {
-    expect(engineVersion).toBe("0.528.0");
+  it("is built at engine 0.529.0", () => {
+    expect(engineVersion).toBe("0.529.0");
   });
 });

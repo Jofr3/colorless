@@ -6250,7 +6250,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.528.0";',
+    find: 'export const engineVersion = "0.529.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -11473,8 +11473,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540) — D637 stepped the constant 45 → 46; the patch is still ONE step back.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540) — D640 stepped the constant 46 → 47; the patch is still ONE step back.
     // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540) — D643 stepped the constant 47 → 48; the patch is still ONE step back.
-    find: "export const MATCH_RECORD_VERSION = 48;",
-    replace: "export const MATCH_RECORD_VERSION = 47;",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540) — D646 stepped the constant 48 → 49; the patch is still ONE step back.
+    find: "export const MATCH_RECORD_VERSION = 49;",
+    replace: "export const MATCH_RECORD_VERSION = 48;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a
@@ -14281,8 +14282,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D355",
     what: "🛑 THE PRINTED COUNT DROPPED: the loop runs ONCE whatever `coins` says, so Energy Coin becomes a ONE-coin card and its odds go from 1-in-4 to 1-in-2. ⚠️ **THE OUTCOME ASSERTIONS ALONE CANNOT SEE THIS** — every one of them is stated against the faces read off the same log, and a one-flip log is internally consistent. The witness is the ROW COUNT (§1), which is why that case counts the `ATTACK_EFFECT_COIN_FLIP` rows instead of reading a verdict",
     file: "packages/engine/src/interpreter.ts",
-    find: "      for (let flip = 0; flip < (op.coins ?? 1); flip += 1) {",
-    replace: "      for (let flip = 0; flip < 1; flip += 1) {",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): Backtrack Badge moved this site (the `coinRedo` re-entry guard, the kept `faces`, the v48 re-stamp or the scheduled Target Together hit); the claim is unchanged.
+    find: "      for (let flip = 0; kept === undefined && flip < (op.coins ?? 1); flip += 1) {",
+    replace: "      for (let flip = 0; kept === undefined && flip < 1; flip += 1) {",
     expectKilledBy: ["packages/engine/src/energyCoin.test.ts"],
   },
   {
@@ -14290,8 +14292,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D355",
     what: "🛑 THE WIDENING STOPS BEING A WIDENING: `?? 1` becomes `?? 2`, so every `coinFlipGate` authored before D355 — Poké Ball, Pokémon Catcher, Picnicker, Drasna, and every derived attack gate — silently takes TWO flips and halves its own odds. This is the exact failure the D104/D135 absent-field rule exists to prevent, and it is invisible to Energy Coin's own suite (which spells `coins: 2`); the whole corpus of one-coin cards is the witness",
     file: "packages/engine/src/interpreter.ts",
-    find: "      for (let flip = 0; flip < (op.coins ?? 1); flip += 1) {",
-    replace: "      for (let flip = 0; flip < (op.coins ?? 2); flip += 1) {",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): Backtrack Badge moved this site (the `coinRedo` re-entry guard, the kept `faces`, the v48 re-stamp or the scheduled Target Together hit); the claim is unchanged.
+    find: "      for (let flip = 0; kept === undefined && flip < (op.coins ?? 1); flip += 1) {",
+    replace: "      for (let flip = 0; kept === undefined && flip < (op.coins ?? 2); flip += 1) {",
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
@@ -29605,8 +29608,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540) — D637 stepped the constant 45 → 46; the patch is still ONE step back.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540) — D640 stepped the constant 46 → 47; the patch is still ONE step back.
     // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540) — D643 stepped the constant 47 → 48; the patch is still ONE step back.
-    find: "export const MATCH_RECORD_VERSION = 48;\n",
-    replace: "export const MATCH_RECORD_VERSION = 47;\n",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540) — D646 stepped the constant 48 → 49; the patch is still ONE step back.
+    find: "export const MATCH_RECORD_VERSION = 49;\n",
+    replace: "export const MATCH_RECORD_VERSION = 48;\n",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ────────────────────────────────────────────────────────────────────────────
@@ -34749,8 +34753,9 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/attack.ts",
     // 🆕🆕🆕 RE-ANCHORED AT D574 (by script off the new bytes — D540): the flip-lock and Confusion blocks each gained D574's `resumed` guard and its one-line comment; the mutation itself (the swap / the burned coin) is unchanged.
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the lock block now counts its coins (`attackFlipLockCoins`, Jet of Ink); the patch still moves the whole block below the Confusion flip.
-    find: "  // 🆕🆕🆕 §8 (D547) — THE FLIP-TO-ATTACK LOCK: \"During your opponent's next turn, if\n  // the Defending Pokémon tries to use an attack, your opponent flips a coin. If\n  // tails, that attack doesn't happen.\" (`censusAttackCorpus.ts:176`). The attack\n  // was DECLARED — the §8 gate above let it through, because this lock is NOT\n  // `attackLocked` (a hard lock still REJECTS the declaration there, first) — and\n  // now the locked player flips. Tails: ATTACK_FAILED `\"flipLock\"`, nothing\n  // resolves, no counters, and the turn ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED] (§5.3, `finishAttack`); heads: the\n  // attack resolves normally.\n  //\n  // ⚠️ THE RNG IS SPENT ONLY WHILE THE LOCK IS LIVE: the whole block is behind\n  // `attackFlipLockCoins` (🆕🆕🆕 D636; `attackFlipLocked` before), so an unlocked declaration draws nothing and every\n  // pre-D547 rng sequence — a Confused attacker's included — is byte-identical.\n  //\n  // 🛑 BEFORE THE CONFUSION FLIP, AND THAT ORDER IS THE RULEBOOK'S (docs/decisions.md\n  // D547 ruling 1). The official rulebook's \"Full details of attacking\" (pokemon.com\n  // `par_rulebook_en.pdf`, p. 20) lists B) \"Apply any effects that might alter or\n  // cancel the attack\" — and the worked example it prints is THIS sentence family —\n  // before C) \"If your Active Pokémon is Confused, check now to see if its attack\n  // doesn't happen.\" So a lock TAILS ends the attack with NO Confusion coin and NO\n  // Confusion counters, and only a lock HEADS reaches the Confusion block below.\n  //\n  // `active`, the declaration snapshot, is the right binding for the reason the\n  // Confusion block below gives: nothing before §8.5 has rebound the body. The seat\n  // is `action.seat` — \"your opponent flips\" names the LOCKED body's controller,\n  // who is the declaring player.\n  // 🆕🆕🆕 D574 — not on a RESUMED half: this coin was flipped in the first half (heads, or the\n  // attack would have ended there) and is never flipped twice.\n  // 🆕🆕🆕 D636 — Jet of Ink's TWO coins (`attackFlipLockCoins`): every coin is flipped, one row each, and any\n  // tails stops the attack (R-JOI1). A lone D547 lock is one coin, byte-identical.\n  const lockCoins = copiedFrom?.resumed === true ? 0 : attackFlipLockCoins(state, active);\n  if (lockCoins > 0) {\n    let lockTails = false;\n    for (let coin = 0; coin < lockCoins; coin++) {\n      const [face, rngState] = flipCoin(next.rngState);\n      next = { ...next, rngState };\n      events.push({ type: \"ATTACK_FLIP_LOCK_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n      if (face === \"tails\") lockTails = true;\n    }\n    if (lockTails) {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"flipLock\",\n      });\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n  // §8 step 3 — the confusion flip, AFTER every gate and the cost check\n  // passed (§12): tails and the declared attack does not resolve at all —\n  // no damage, no effects — the attacker takes 30 itself (possibly a\n  // self-KO, prized to the defender) and the turn still ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED].\n  // 🆕🆕🆕 D574 — and not on a RESUMED half either (the first half flipped it, heads).\n  if (rotation === \"confused\" && copiedFrom?.resumed !== true) {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };\n    events.push({ type: \"CONFUSION_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n    if (face === \"tails\") {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"confusion\",\n      });\n      // 🆕🆕🆕 **D501 — THE AMOUNT IS READ OFF THE BODY, NOT HARD-CODED.** This was a\n      // literal `30` in two places from P3-M3 (2026-07-17) until D501, and the two\n      // places are the whole of the observable behaviour: the DAMAGE and the ROW.\n      // `SpecialConditions.confusionDamage` carries the rulebook's 3 counters for\n      // every body that has never met a raising effect, so every pre-D501 board\n      // answers the identical number.\n      //\n      // ⚠️ **THE ATTACKER'S OWN CONDITIONS, AND `active` IS THE RIGHT BINDING HERE\n      // EVEN THOUGH IT IS THE DECLARATION SNAPSHOT (D429).** This block runs BEFORE\n      // §8.5 and before any pre-damage act — it is §8 step 3 — so nothing has\n      // rebound the body yet and `attackerBody` is still `active`. `rotation` on the\n      // line above is read off the same snapshot, so a read that reached elsewhere\n      // would be asking two questions of two boards.\n      const confusionDamage = active.conditions.confusionDamage;\n      const hurt = { ...active, damage: active.damage + confusionDamage };\n      next = withActive(next, action.seat, hurt);\n      events.push({\n        type: \"COUNTERS_PLACED\",\n        seat: action.seat,\n        uid: attackerUid,\n        amount: confusionDamage,\n        source: \"confusion\",\n      });\n      // The self-hit can KO the attacker itself — prized to the DEFENDER\n      // (collectKnockOuts owes each KO's prize to the KO'd side's opponent). The\n      // epilogue sweeps both boards; the defender took no damage on this failed\n      // attack, so only the attacker's own board can be lethal here.\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n",
-    replace: "  // §8 step 3 — the confusion flip, AFTER every gate and the cost check\n  // passed (§12): tails and the declared attack does not resolve at all —\n  // no damage, no effects — the attacker takes 30 itself (possibly a\n  // self-KO, prized to the defender) and the turn still ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED].\n  // 🆕🆕🆕 D574 — and not on a RESUMED half either (the first half flipped it, heads).\n  if (rotation === \"confused\" && copiedFrom?.resumed !== true) {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };\n    events.push({ type: \"CONFUSION_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n    if (face === \"tails\") {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"confusion\",\n      });\n      // 🆕🆕🆕 **D501 — THE AMOUNT IS READ OFF THE BODY, NOT HARD-CODED.** This was a\n      // literal `30` in two places from P3-M3 (2026-07-17) until D501, and the two\n      // places are the whole of the observable behaviour: the DAMAGE and the ROW.\n      // `SpecialConditions.confusionDamage` carries the rulebook's 3 counters for\n      // every body that has never met a raising effect, so every pre-D501 board\n      // answers the identical number.\n      //\n      // ⚠️ **THE ATTACKER'S OWN CONDITIONS, AND `active` IS THE RIGHT BINDING HERE\n      // EVEN THOUGH IT IS THE DECLARATION SNAPSHOT (D429).** This block runs BEFORE\n      // §8.5 and before any pre-damage act — it is §8 step 3 — so nothing has\n      // rebound the body yet and `attackerBody` is still `active`. `rotation` on the\n      // line above is read off the same snapshot, so a read that reached elsewhere\n      // would be asking two questions of two boards.\n      const confusionDamage = active.conditions.confusionDamage;\n      const hurt = { ...active, damage: active.damage + confusionDamage };\n      next = withActive(next, action.seat, hurt);\n      events.push({\n        type: \"COUNTERS_PLACED\",\n        seat: action.seat,\n        uid: attackerUid,\n        amount: confusionDamage,\n        source: \"confusion\",\n      });\n      // The self-hit can KO the attacker itself — prized to the DEFENDER\n      // (collectKnockOuts owes each KO's prize to the KO'd side's opponent). The\n      // epilogue sweeps both boards; the defender took no damage on this failed\n      // attack, so only the attacker's own board can be lethal here.\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n  // 🆕🆕🆕 §8 (D547) — THE FLIP-TO-ATTACK LOCK: \"During your opponent's next turn, if\n  // the Defending Pokémon tries to use an attack, your opponent flips a coin. If\n  // tails, that attack doesn't happen.\" (`censusAttackCorpus.ts:176`). The attack\n  // was DECLARED — the §8 gate above let it through, because this lock is NOT\n  // `attackLocked` (a hard lock still REJECTS the declaration there, first) — and\n  // now the locked player flips. Tails: ATTACK_FAILED `\"flipLock\"`, nothing\n  // resolves, no counters, and the turn ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED] (§5.3, `finishAttack`); heads: the\n  // attack resolves normally.\n  //\n  // ⚠️ THE RNG IS SPENT ONLY WHILE THE LOCK IS LIVE: the whole block is behind\n  // `attackFlipLockCoins` (🆕🆕🆕 D636; `attackFlipLocked` before), so an unlocked declaration draws nothing and every\n  // pre-D547 rng sequence — a Confused attacker's included — is byte-identical.\n  //\n  // 🛑 BEFORE THE CONFUSION FLIP, AND THAT ORDER IS THE RULEBOOK'S (docs/decisions.md\n  // D547 ruling 1). The official rulebook's \"Full details of attacking\" (pokemon.com\n  // `par_rulebook_en.pdf`, p. 20) lists B) \"Apply any effects that might alter or\n  // cancel the attack\" — and the worked example it prints is THIS sentence family —\n  // before C) \"If your Active Pokémon is Confused, check now to see if its attack\n  // doesn't happen.\" So a lock TAILS ends the attack with NO Confusion coin and NO\n  // Confusion counters, and only a lock HEADS reaches the Confusion block below.\n  //\n  // `active`, the declaration snapshot, is the right binding for the reason the\n  // Confusion block below gives: nothing before §8.5 has rebound the body. The seat\n  // is `action.seat` — \"your opponent flips\" names the LOCKED body's controller,\n  // who is the declaring player.\n  // 🆕🆕🆕 D574 — not on a RESUMED half: this coin was flipped in the first half (heads, or the\n  // attack would have ended there) and is never flipped twice.\n  // 🆕🆕🆕 D636 — Jet of Ink's TWO coins (`attackFlipLockCoins`): every coin is flipped, one row each, and any\n  // tails stops the attack (R-JOI1). A lone D547 lock is one coin, byte-identical.\n  const lockCoins = copiedFrom?.resumed === true ? 0 : attackFlipLockCoins(state, active);\n  if (lockCoins > 0) {\n    let lockTails = false;\n    for (let coin = 0; coin < lockCoins; coin++) {\n      const [face, rngState] = flipCoin(next.rngState);\n      next = { ...next, rngState };\n      events.push({ type: \"ATTACK_FLIP_LOCK_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n      if (face === \"tails\") lockTails = true;\n    }\n    if (lockTails) {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"flipLock\",\n      });\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): Backtrack Badge moved this site (the `coinRedo` re-entry guard, the kept `faces`, the v48 re-stamp or the scheduled Target Together hit); the claim is unchanged.
+    find: "  // 🆕🆕🆕 §8 (D547) — THE FLIP-TO-ATTACK LOCK: \"During your opponent's next turn, if\n  // the Defending Pokémon tries to use an attack, your opponent flips a coin. If\n  // tails, that attack doesn't happen.\" (`censusAttackCorpus.ts:176`). The attack\n  // was DECLARED — the §8 gate above let it through, because this lock is NOT\n  // `attackLocked` (a hard lock still REJECTS the declaration there, first) — and\n  // now the locked player flips. Tails: ATTACK_FAILED `\"flipLock\"`, nothing\n  // resolves, no counters, and the turn ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED] (§5.3, `finishAttack`); heads: the\n  // attack resolves normally.\n  //\n  // ⚠️ THE RNG IS SPENT ONLY WHILE THE LOCK IS LIVE: the whole block is behind\n  // `attackFlipLockCoins` (🆕🆕🆕 D636; `attackFlipLocked` before), so an unlocked declaration draws nothing and every\n  // pre-D547 rng sequence — a Confused attacker's included — is byte-identical.\n  //\n  // 🛑 BEFORE THE CONFUSION FLIP, AND THAT ORDER IS THE RULEBOOK'S (docs/decisions.md\n  // D547 ruling 1). The official rulebook's \"Full details of attacking\" (pokemon.com\n  // `par_rulebook_en.pdf`, p. 20) lists B) \"Apply any effects that might alter or\n  // cancel the attack\" — and the worked example it prints is THIS sentence family —\n  // before C) \"If your Active Pokémon is Confused, check now to see if its attack\n  // doesn't happen.\" So a lock TAILS ends the attack with NO Confusion coin and NO\n  // Confusion counters, and only a lock HEADS reaches the Confusion block below.\n  //\n  // `active`, the declaration snapshot, is the right binding for the reason the\n  // Confusion block below gives: nothing before §8.5 has rebound the body. The seat\n  // is `action.seat` — \"your opponent flips\" names the LOCKED body's controller,\n  // who is the declaring player.\n  // 🆕🆕🆕 D574 — not on a RESUMED half: this coin was flipped in the first half (heads, or the\n  // attack would have ended there) and is never flipped twice.\n  // 🆕🆕🆕 D636 — Jet of Ink's TWO coins (`attackFlipLockCoins`): every coin is flipped, one row each, and any\n  // tails stops the attack (R-JOI1). A lone D547 lock is one coin, byte-identical.\n  // 🆕🆕🆕 D646 — nor on a Backtrack Badge re-entry (the first half flipped it, heads).\n  const lockCoins = copiedFrom?.resumed === true || coinRedo !== undefined ? 0 : attackFlipLockCoins(state, active);\n  if (lockCoins > 0) {\n    let lockTails = false;\n    for (let coin = 0; coin < lockCoins; coin++) {\n      const [face, rngState] = flipCoin(next.rngState);\n      next = { ...next, rngState };\n      events.push({ type: \"ATTACK_FLIP_LOCK_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n      if (face === \"tails\") lockTails = true;\n    }\n    if (lockTails) {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"flipLock\",\n      });\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n  // §8 step 3 — the confusion flip, AFTER every gate and the cost check\n  // passed (§12): tails and the declared attack does not resolve at all —\n  // no damage, no effects — the attacker takes 30 itself (possibly a\n  // self-KO, prized to the defender) and the turn still ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED].\n  // 🆕🆕🆕 D574 — and not on a RESUMED half either (the first half flipped it, heads).\n  // 🆕🆕🆕 D646 — nor on a Backtrack Badge re-entry (R-BTB2: the Confusion coin is never re-flipped).\n  if (rotation === \"confused\" && copiedFrom?.resumed !== true && coinRedo === undefined) {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };\n    events.push({ type: \"CONFUSION_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n    if (face === \"tails\") {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"confusion\",\n      });\n      // 🆕🆕🆕 **D501 — THE AMOUNT IS READ OFF THE BODY, NOT HARD-CODED.** This was a\n      // literal `30` in two places from P3-M3 (2026-07-17) until D501, and the two\n      // places are the whole of the observable behaviour: the DAMAGE and the ROW.\n      // `SpecialConditions.confusionDamage` carries the rulebook's 3 counters for\n      // every body that has never met a raising effect, so every pre-D501 board\n      // answers the identical number.\n      //\n      // ⚠️ **THE ATTACKER'S OWN CONDITIONS, AND `active` IS THE RIGHT BINDING HERE\n      // EVEN THOUGH IT IS THE DECLARATION SNAPSHOT (D429).** This block runs BEFORE\n      // §8.5 and before any pre-damage act — it is §8 step 3 — so nothing has\n      // rebound the body yet and `attackerBody` is still `active`. `rotation` on the\n      // line above is read off the same snapshot, so a read that reached elsewhere\n      // would be asking two questions of two boards.\n      const confusionDamage = active.conditions.confusionDamage;\n      const hurt = { ...active, damage: active.damage + confusionDamage };\n      next = withActive(next, action.seat, hurt);\n      events.push({\n        type: \"COUNTERS_PLACED\",\n        seat: action.seat,\n        uid: attackerUid,\n        amount: confusionDamage,\n        source: \"confusion\",\n      });\n      // The self-hit can KO the attacker itself — prized to the DEFENDER\n      // (collectKnockOuts owes each KO's prize to the KO'd side's opponent). The\n      // epilogue sweeps both boards; the defender took no damage on this failed\n      // attack, so only the attacker's own board can be lethal here.\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n",
+    replace: "  // §8 step 3 — the confusion flip, AFTER every gate and the cost check\n  // passed (§12): tails and the declared attack does not resolve at all —\n  // no damage, no effects — the attacker takes 30 itself (possibly a\n  // self-KO, prized to the defender) and the turn still ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED].\n  // 🆕🆕🆕 D574 — and not on a RESUMED half either (the first half flipped it, heads).\n  // 🆕🆕🆕 D646 — nor on a Backtrack Badge re-entry (R-BTB2: the Confusion coin is never re-flipped).\n  if (rotation === \"confused\" && copiedFrom?.resumed !== true && coinRedo === undefined) {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };\n    events.push({ type: \"CONFUSION_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n    if (face === \"tails\") {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"confusion\",\n      });\n      // 🆕🆕🆕 **D501 — THE AMOUNT IS READ OFF THE BODY, NOT HARD-CODED.** This was a\n      // literal `30` in two places from P3-M3 (2026-07-17) until D501, and the two\n      // places are the whole of the observable behaviour: the DAMAGE and the ROW.\n      // `SpecialConditions.confusionDamage` carries the rulebook's 3 counters for\n      // every body that has never met a raising effect, so every pre-D501 board\n      // answers the identical number.\n      //\n      // ⚠️ **THE ATTACKER'S OWN CONDITIONS, AND `active` IS THE RIGHT BINDING HERE\n      // EVEN THOUGH IT IS THE DECLARATION SNAPSHOT (D429).** This block runs BEFORE\n      // §8.5 and before any pre-damage act — it is §8 step 3 — so nothing has\n      // rebound the body yet and `attackerBody` is still `active`. `rotation` on the\n      // line above is read off the same snapshot, so a read that reached elsewhere\n      // would be asking two questions of two boards.\n      const confusionDamage = active.conditions.confusionDamage;\n      const hurt = { ...active, damage: active.damage + confusionDamage };\n      next = withActive(next, action.seat, hurt);\n      events.push({\n        type: \"COUNTERS_PLACED\",\n        seat: action.seat,\n        uid: attackerUid,\n        amount: confusionDamage,\n        source: \"confusion\",\n      });\n      // The self-hit can KO the attacker itself — prized to the DEFENDER\n      // (collectKnockOuts owes each KO's prize to the KO'd side's opponent). The\n      // epilogue sweeps both boards; the defender took no damage on this failed\n      // attack, so only the attacker's own board can be lethal here.\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n  // 🆕🆕🆕 §8 (D547) — THE FLIP-TO-ATTACK LOCK: \"During your opponent's next turn, if\n  // the Defending Pokémon tries to use an attack, your opponent flips a coin. If\n  // tails, that attack doesn't happen.\" (`censusAttackCorpus.ts:176`). The attack\n  // was DECLARED — the §8 gate above let it through, because this lock is NOT\n  // `attackLocked` (a hard lock still REJECTS the declaration there, first) — and\n  // now the locked player flips. Tails: ATTACK_FAILED `\"flipLock\"`, nothing\n  // resolves, no counters, and the turn ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED] (§5.3, `finishAttack`); heads: the\n  // attack resolves normally.\n  //\n  // ⚠️ THE RNG IS SPENT ONLY WHILE THE LOCK IS LIVE: the whole block is behind\n  // `attackFlipLockCoins` (🆕🆕🆕 D636; `attackFlipLocked` before), so an unlocked declaration draws nothing and every\n  // pre-D547 rng sequence — a Confused attacker's included — is byte-identical.\n  //\n  // 🛑 BEFORE THE CONFUSION FLIP, AND THAT ORDER IS THE RULEBOOK'S (docs/decisions.md\n  // D547 ruling 1). The official rulebook's \"Full details of attacking\" (pokemon.com\n  // `par_rulebook_en.pdf`, p. 20) lists B) \"Apply any effects that might alter or\n  // cancel the attack\" — and the worked example it prints is THIS sentence family —\n  // before C) \"If your Active Pokémon is Confused, check now to see if its attack\n  // doesn't happen.\" So a lock TAILS ends the attack with NO Confusion coin and NO\n  // Confusion counters, and only a lock HEADS reaches the Confusion block below.\n  //\n  // `active`, the declaration snapshot, is the right binding for the reason the\n  // Confusion block below gives: nothing before §8.5 has rebound the body. The seat\n  // is `action.seat` — \"your opponent flips\" names the LOCKED body's controller,\n  // who is the declaring player.\n  // 🆕🆕🆕 D574 — not on a RESUMED half: this coin was flipped in the first half (heads, or the\n  // attack would have ended there) and is never flipped twice.\n  // 🆕🆕🆕 D636 — Jet of Ink's TWO coins (`attackFlipLockCoins`): every coin is flipped, one row each, and any\n  // tails stops the attack (R-JOI1). A lone D547 lock is one coin, byte-identical.\n  // 🆕🆕🆕 D646 — nor on a Backtrack Badge re-entry (the first half flipped it, heads).\n  const lockCoins = copiedFrom?.resumed === true || coinRedo !== undefined ? 0 : attackFlipLockCoins(state, active);\n  if (lockCoins > 0) {\n    let lockTails = false;\n    for (let coin = 0; coin < lockCoins; coin++) {\n      const [face, rngState] = flipCoin(next.rngState);\n      next = { ...next, rngState };\n      events.push({ type: \"ATTACK_FLIP_LOCK_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n      if (face === \"tails\") lockTails = true;\n    }\n    if (lockTails) {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"flipLock\",\n      });\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   {
@@ -34760,8 +34765,9 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/attack.ts",
     // 🆕🆕🆕 RE-ANCHORED AT D574 (by script off the new bytes — D540): the flip-lock and Confusion blocks each gained D574's `resumed` guard and its one-line comment; the mutation itself (the swap / the burned coin) is unchanged.
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the gate is the coin count since D636; the patch still spends a flip on every declaration.
-    find: "  const lockCoins = copiedFrom?.resumed === true ? 0 : attackFlipLockCoins(state, active);\n",
-    replace: "  next = { ...next, rngState: flipCoin(next.rngState)[1] };\n  const lockCoins = copiedFrom?.resumed === true ? 0 : attackFlipLockCoins(state, active);\n",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): Backtrack Badge moved this site (the `coinRedo` re-entry guard, the kept `faces`, the v48 re-stamp or the scheduled Target Together hit); the claim is unchanged.
+    find: "  const lockCoins = copiedFrom?.resumed === true || coinRedo !== undefined ? 0 : attackFlipLockCoins(state, active);\n",
+    replace: "  next = { ...next, rngState: flipCoin(next.rngState)[1] };\n  const lockCoins = copiedFrom?.resumed === true || coinRedo !== undefined ? 0 : attackFlipLockCoins(state, active);\n",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   {
@@ -35012,7 +35018,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
     // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 48 since D643; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 48;",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 49 since D646; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 49;",
     // 🆕🆕🆕 D549 - RE-ANCHORED AGAIN off the bytes (D540): D549's block now sits between
     //    D548's doc tail and the constant, so the anchor is D549's last two lines and the
     //    patch drops the constant THREE steps, to D547's pre-bump 30.
@@ -35221,7 +35228,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
     // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 48 since D643; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 48;",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 49 since D646; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 49;",
     // 🆕🆕🆕 D549 - RE-ANCHORED off the bytes onto D549's doc tail; the patch drops the
     //    constant TWO steps, to D548's pre-bump 31 (a different patch from
     //    `D549-record-version-not-bumped`, one step, same anchor).
@@ -35728,7 +35736,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
     // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 48 since D643; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 48;",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 49 since D646; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 49;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 32;",
     expectKilledBy: ["packages/engine/src/sideAttackLock.test.ts", "apps/api/src/lobby/match.test.ts"],
   },
@@ -36345,7 +36354,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
     // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 48 since D643; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 48;",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 49 since D646; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 49;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 33;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -37294,7 +37304,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
     // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 48 since D643; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 48;",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 49 since D646; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 49;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 34;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -40674,7 +40685,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
     // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 48 since D643; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 48;",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 49 since D646; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 49;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 35;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -43541,7 +43553,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
     // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 48 since D643; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 48;",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 49 since D646; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 49;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 36;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -44184,7 +44197,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D573",
     what: "Try to Imitate never flips: \"If heads\" is dropped and every copy resolves. Killed by §4's tails rung and §2's coin-row rungs.",
     file: "packages/engine/src/attack.ts",
-    find: "  if (copied?.flip === true) {",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): Backtrack Badge moved this site (the `coinRedo` re-entry guard, the kept `faces`, the v48 re-stamp or the scheduled Target Together hit); the claim is unchanged.
+    find: "  if (copied?.flip === true && coinRedo === undefined) {",
     replace: "  if (false) {",
     expectKilledBy: ["packages/engine/src/copyAttackD573.test.ts"],
   },
@@ -44285,7 +44299,8 @@ export const MUTANTS: Mutant[] = [
     what: "ATTACK_DECLARED loses `as`: the log can no longer say what the copy became. Killed by every `as:` rung and the log rung. (🆕🆕🆕 RE-ANCHORED IN THE D573 REVIEW ROUND, by script off the new bytes — D540: `as` is now STAMPED onto `events[0]` below Try to Imitate's coin, and this row drops the stamp.)",
     file: "packages/engine/src/attack.ts",
     // 🆕🆕🆕 RE-ANCHORED AT D574 (by script off the new bytes — D540): the stamp gained D574's `resumed` guard (a RESUMED half names the copy on its own ATTACK_COPY_RESOLVED row instead).
-    find: "  if (copiedFrom !== null && copiedFrom?.resumed !== true) events[0] = { ...declaredEvent, as: copiedFrom.attack.name };",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): Backtrack Badge moved this site (the `coinRedo` re-entry guard, the kept `faces`, the v48 re-stamp or the scheduled Target Together hit); the claim is unchanged.
+    find: "  if (copiedFrom !== null && copiedFrom?.resumed !== true && coinRedo === undefined) events[0] = { ...declaredEvent, as: copiedFrom.attack.name };",
     replace: "  if (false) events[0] = { ...declaredEvent, as: copiedFrom.attack.name };",
     expectKilledBy: ["packages/engine/src/copyAttackD573.test.ts"],
   },
@@ -44385,8 +44400,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D574",
     what: "the answer re-enters `attack()` WITHOUT stripping the park's queued `attackEpilogue`, so the copier's attack epilogue runs TWICE (a second `finishAttack` after the turn tail) and the turn does not pass cleanly. Killed by §2's one-epilogue rung (`pending` empty, the turn passed) and §3's parked Seek rung.",
     file: "packages/engine/src/attack.ts",
-    find: "    pending: state.pending.filter((stage) => !(stage.kind === \"attackEpilogue\" && stage.uid === sourceUid)),",
-    replace: "    pending: state.pending,",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): Backtrack Badge moved this site (the `coinRedo` re-entry guard, the kept `faces`, the v48 re-stamp or the scheduled Target Together hit); the claim is unchanged.
+    find: "    pending: state.pending.filter((stage) => !(stage.kind === \"attackEpilogue\" && stage.uid === sourceUid)),\n  };\n  const copier = restored.players[seat].active;",
+    replace: "    pending: state.pending,\n  };\n  const copier = restored.players[seat].active;",
     expectKilledBy: ["packages/engine/src/copyRemainderBundleD574.test.ts"],
   },
   {
@@ -44394,8 +44410,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D574",
     what: "the RESUMED half flips the Confusion coin again: a Confused copier that passed its heads in the first half can fail at the answer. Killed by §2's resumed-half Confusion rung (one CONFUSION_CHECK, no ATTACK_FAILED).",
     file: "packages/engine/src/attack.ts",
-    find: "  if (rotation === \"confused\" && copiedFrom?.resumed !== true) {",
-    replace: "  if (rotation === \"confused\") {",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): Backtrack Badge moved this site (the `coinRedo` re-entry guard, the kept `faces`, the v48 re-stamp or the scheduled Target Together hit); the claim is unchanged.
+    find: "  if (rotation === \"confused\" && copiedFrom?.resumed !== true && coinRedo === undefined) {",
+    replace: "  if (rotation === \"confused\" && coinRedo === undefined) {",
     expectKilledBy: ["packages/engine/src/copyRemainderBundleD574.test.ts"],
   },
   {
@@ -44404,8 +44421,9 @@ export const MUTANTS: Mutant[] = [
     what: "the RESUMED half flips the flip-to-attack lock's coin again. Killed by §2's resumed-half flip-lock rung (one ATTACK_FLIP_LOCK_CHECK).",
     file: "packages/engine/src/attack.ts",
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the resumed-half guard is the coin count's first arm since D636.
-    find: "  const lockCoins = copiedFrom?.resumed === true ? 0 : attackFlipLockCoins(state, active);\n",
-    replace: "  const lockCoins = attackFlipLockCoins(state, active);\n",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): Backtrack Badge moved this site (the `coinRedo` re-entry guard, the kept `faces`, the v48 re-stamp or the scheduled Target Together hit); the claim is unchanged.
+    find: "  const lockCoins = copiedFrom?.resumed === true || coinRedo !== undefined ? 0 : attackFlipLockCoins(state, active);\n",
+    replace: "  const lockCoins = coinRedo !== undefined ? 0 : attackFlipLockCoins(state, active);\n",
     expectKilledBy: ["packages/engine/src/copyRemainderBundleD574.test.ts"],
   },
   {
@@ -44413,8 +44431,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D574",
     what: "the RESUMED half emits ATTACK_DECLARED again — the attack is declared twice in one turn's log. Killed by §2's one-declaration rung and §3's inline rung (the event order).",
     file: "packages/engine/src/attack.ts",
-    find: "  const events: GameEvent[] = copiedFrom?.resumed === true ? [] : [declaredEvent];",
-    replace: "  const events: GameEvent[] = [declaredEvent];",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): Backtrack Badge moved this site (the `coinRedo` re-entry guard, the kept `faces`, the v48 re-stamp or the scheduled Target Together hit); the claim is unchanged.
+    find: "  const events: GameEvent[] = copiedFrom?.resumed === true || coinRedo !== undefined ? [] : [declaredEvent];",
+    replace: "  const events: GameEvent[] = coinRedo !== undefined ? [] : [declaredEvent];",
     expectKilledBy: ["packages/engine/src/copyRemainderBundleD574.test.ts"],
   },
   {
@@ -44476,7 +44495,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D574",
     what: "the resumed half never names what the attack became: no ATTACK_COPY_RESOLVED row. Killed by §2's park rung, the log rung and §3's inline rung.",
     file: "packages/engine/src/attack.ts",
-    find: "  if (copiedFrom !== null && copiedFrom?.resumed === true) {",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): Backtrack Badge moved this site (the `coinRedo` re-entry guard, the kept `faces`, the v48 re-stamp or the scheduled Target Together hit); the claim is unchanged.
+    find: "  if (copiedFrom !== null && copiedFrom?.resumed === true && coinRedo === undefined) {",
     replace: "  if (false) {",
     expectKilledBy: ["packages/engine/src/copyRemainderBundleD574.test.ts"],
   },
@@ -44988,7 +45008,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
     // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 48 since D643; the replace and the claim are unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 48;",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 49 since D646; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 49;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 37;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -46449,7 +46470,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 46 since D637; the replace and the claim are unchanged.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 47 since D640; the replace and the claim are unchanged.
     // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 48 since D643; the replace and the claim are unchanged.
-    find: "export const MATCH_RECORD_VERSION = 48;",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 49 since D646; the replace and the claim are unchanged.
+    find: "export const MATCH_RECORD_VERSION = 49;",
     replace: "export const MATCH_RECORD_VERSION = 40;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts", "packages/engine/src/koraidonD579.test.ts"],
   },
@@ -47135,7 +47157,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D637 — RE-ANCHORED off the bytes (D540): the version test gained D637's v45 conjunct; the patch still deletes the whole test.
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the version test gained D640's v46 conjunct; the patch still deletes the whole test.
     // 🆕🆕🆕 D643 — RE-ANCHORED off the bytes (D540): the version test gained D643's v47 conjunct; the patch still deletes the whole test.
-    find: "  if (\n    version !== MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION\n  )\n    return null;\n",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): Backtrack Badge moved this site (the `coinRedo` re-entry guard, the kept `faces`, the v48 re-stamp or the scheduled Target Together hit); the claim is unchanged.
+    find: "  if (\n    version !== MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== COIN_REDO_MIGRATABLE_MATCH_RECORD_VERSION\n  )\n    return null;\n",
     replace: "",
     expectKilledBy: ["apps/api/src/lobby/poolMigrationD583.test.ts"],
   },
@@ -51523,8 +51546,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D605",
     what: "a forced Target Together pick deals a flat 50 with no coins. Killed by coinRestMeD605 §3.",
     file: "packages/engine/src/interpreter.ts",
-    find: "        if (op.perHeadsInPlay !== undefined) {\n          return { done: perHeadsHit(",
-    replace: "        if (op.perHeadsInPlay !== undefined && candidates.length < 0) {\n          return { done: perHeadsHit(",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): Backtrack Badge moved this site (the `coinRedo` re-entry guard, the kept `faces`, the v48 re-stamp or the scheduled Target Together hit); the claim is unchanged.
+    find: "        if (op.perHeadsInPlay !== undefined) {\n          return perHeadsHit(",
+    replace: "        if (op.perHeadsInPlay !== undefined && candidates.length < 0) {\n          return perHeadsHit(",
     expectKilledBy: ["packages/engine/src/coinRestMeD605.test.ts"],
   },
   {
@@ -51532,8 +51556,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D605",
     what: "a resumed Target Together pick deals a flat 50 with no coins. Killed by coinRestMeD605 §3.",
     file: "packages/engine/src/interpreter.ts",
-    find: "      if (choice.kind === \"pokemonMulti\" && op.perHeadsInPlay !== undefined) {",
-    replace: "      if (choice.kind === \"pokemonMulti\" && op.perHeadsInPlay !== undefined && choice.refs.length < 0) {",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): Backtrack Badge moved this site (the `coinRedo` re-entry guard, the kept `faces`, the v48 re-stamp or the scheduled Target Together hit); the claim is unchanged.
+    find: "      if (choice.kind === \"pokemonMulti\" && op.perHeadsInPlay !== undefined) return state;",
+    replace: "      if (choice.kind === \"pokemonMulti\" && op.perHeadsInPlay !== undefined && choice.refs.length < 0) return state;",
     expectKilledBy: ["packages/engine/src/coinRestMeD605.test.ts"],
   },
   {
@@ -51550,8 +51575,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D605",
     what: "the coins count the OPPONENT's Tauros (the D447/D454 crossing). Killed by coinRestMeD605 §3.",
     file: "packages/engine/src/interpreter.ts",
-    find: "flipCoinsFor(state, countPokemonInPlay(state, ctx.seat, filter), ctx, events);",
-    replace: "flipCoinsFor(state, countPokemonInPlay(state, otherSeat(ctx.seat), filter), ctx, events);",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): Backtrack Badge moved this site (the `coinRedo` re-entry guard, the kept `faces`, the v48 re-stamp or the scheduled Target Together hit); the claim is unchanged.
+    find: "flipCoinsFor(state, countPokemonInPlay(state, ctx.seat, filter), ctx, events) : [state, op.faces];",
+    replace: "flipCoinsFor(state, countPokemonInPlay(state, otherSeat(ctx.seat), filter), ctx, events) : [state, op.faces];",
     expectKilledBy: ["packages/engine/src/coinRestMeD605.test.ts"],
   },
   {
@@ -51559,8 +51585,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D605",
     what: "Target Together's flips do not advance the board's rng. Killed by coinRestMeD605 §3's rng rungs.",
     file: "packages/engine/src/interpreter.ts",
-    find: "  return placeSnipe(flipped, refs, amount * heads,",
-    replace: "  return placeSnipe(state, refs, amount * heads,",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): Backtrack Badge moved this site (the `coinRedo` re-entry guard, the kept `faces`, the v48 re-stamp or the scheduled Target Together hit); the claim is unchanged.
+    find: "    done: placeSnipe(flipped, refs, amount * heads,",
+    replace: "    done: placeSnipe(state, refs, amount * heads,",
     expectKilledBy: ["packages/engine/src/coinRestMeD605.test.ts"],
   },
   {
@@ -58573,8 +58600,9 @@ export const MUTANTS: Mutant[] = [
     file: "apps/api/src/lobby/match.ts",
     // 🆕🆕🆕 D640 — RE-ANCHORED off the bytes (D540): the re-stamp takes v45 OR v46; the patch still keeps a v45 record at 45.
     // 🆕🆕🆕 D643 — RE-ANCHORED again (D540): the last disjunct is now v47's.
-    find: "    record.version === TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION\n  )\n    return { ...record, version: MATCH_RECORD_VERSION };",
-    replace: "    record.version === TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION\n  )\n    return {\n      ...record,\n      version:\n        record.version === FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION ? FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION : MATCH_RECORD_VERSION,\n    };",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): Backtrack Badge moved this site (the `coinRedo` re-entry guard, the kept `faces`, the v48 re-stamp or the scheduled Target Together hit); the claim is unchanged.
+    find: "    record.version === TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION ||\n    record.version === COIN_REDO_MIGRATABLE_MATCH_RECORD_VERSION\n  )\n    return { ...record, version: MATCH_RECORD_VERSION };",
+    replace: "    record.version === TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION ||\n    record.version === COIN_REDO_MIGRATABLE_MATCH_RECORD_VERSION\n  )\n    return {\n      ...record,\n      version:\n        record.version === FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION ? FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION : MATCH_RECORD_VERSION,\n    };",
     expectKilledBy: ["apps/api/src/lobby/fossilsMigrationD637.test.ts"],
   },
   {
@@ -59897,8 +59925,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D643",
     what: "the migratable-version test drops v47: a v47 record is retired, not re-stamped. Killed by toolTrimMigrationD643.",
     file: "apps/api/src/lobby/match.ts",
-    find: "    version !== PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION\n",
-    replace: "    version !== PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION\n",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): Backtrack Badge moved this site (the `coinRedo` re-entry guard, the kept `faces`, the v48 re-stamp or the scheduled Target Together hit); the claim is unchanged.
+    find: "    version !== PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION &&\n",
+    replace: "    version !== PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION &&\n",
     expectKilledBy: ["apps/api/src/lobby/toolTrimMigrationD643.test.ts"],
   },
   {
@@ -59906,8 +59935,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D643",
     what: "the re-stamp drops v47: a v47 record takes D621's / D630's / D636's steps, nulling live keys. Killed by toolTrimMigrationD643.",
     file: "apps/api/src/lobby/match.ts",
-    find: "    record.version === PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION ||\n    record.version === TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION\n  )",
-    replace: "    record.version === PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION\n  )",
+    // 🆕🆕🆕 D646 — RE-ANCHORED off the bytes (D540): Backtrack Badge moved this site (the `coinRedo` re-entry guard, the kept `faces`, the v48 re-stamp or the scheduled Target Together hit); the claim is unchanged.
+    find: "    record.version === PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION ||\n    record.version === TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION ||\n",
+    replace: "    record.version === PRIZE_STAGE_MIGRATABLE_MATCH_RECORD_VERSION ||\n",
     expectKilledBy: ["apps/api/src/lobby/toolTrimMigrationD643.test.ts"],
   },
   {
@@ -60372,5 +60402,295 @@ export const MUTANTS: Mutant[] = [
     find: "const SLIMY_SLIDING: CardProgram = { passive: { retreatFailsOnTails: \"Slimy Sliding\" } };",
     replace: "const SLIMY_SLIDING: CardProgram = { passive: { retreatFailsOnTails: \"Goodra\" } };",
     expectKilledBy: ["packages/engine/src/lastOneOffsMeD645.test.ts"],
+  },
+  // ── D646 — Backtrack Badge: the attack re-flip (attack.ts's printed coin, the interpreter's coin gate and per-coin hits),
+  //    the once-per-turn key and the v48 re-stamp.
+  {
+    id: "D646-redo-any-type",
+    decision: "D646",
+    what: "the printed {C} is not asked: a non-{C} holder's Badge offers. Killed by backtrackBadgeMeD646 §3.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (redo === undefined || !types.includes(redo.holderType)) continue;\n",
+    replace: "    if (redo === undefined) continue;\n",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-redo-once-ignored",
+    decision: "D646",
+    what: "the once-per-turn key is not asked: a spent Badge offers again. Killed by backtrackBadgeMeD646 §3.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (state.allowances.abilitiesUsed.includes(coinRedoKey(uid, redo.name))) continue;\n    return uid;",
+    replace: "    return uid;",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-redo-tower-ignored",
+    decision: "D646",
+    what: "the Tools are read raw, not `toolsInEffect`: a Badge offers under Jamming Tower. Killed by backtrackBadgeMeD646 §3.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  for (const uid of toolsInEffect(state, body)) {\n    const id = state.cardIdByUid[uid];\n    const redo = id === undefined ? undefined : programFor(id)?.passive?.reflipAttackCoins;",
+    replace: "  for (const uid of body.tools) {\n    const id = state.cardIdByUid[uid];\n    const redo = id === undefined ? undefined : programFor(id)?.passive?.reflipAttackCoins;",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-spend-no-key",
+    decision: "D646",
+    what: "a yes spends nothing: the Badge's key is never written. Killed by backtrackBadgeMeD646 §3.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    allowances: { ...state.allowances, abilitiesUsed: [...state.allowances.abilitiesUsed, coinRedoKey(toolUid, redo.name)] },",
+    replace: "    allowances: { ...state.allowances, abilitiesUsed: state.allowances.abilitiesUsed },",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-spend-no-row",
+    decision: "D646",
+    what: "a yes files no `COINS_REFLIPPED`. Killed by backtrackBadgeMeD646 §2 / §3 / §4.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  events.push({ type: \"COINS_REFLIPPED\", seat, uid: toolUid, count });\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-key-loses-uid",
+    decision: "D646",
+    what: "the key is the card name alone, not the Tool's uid. Killed by backtrackBadgeMeD646 §3.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return `${toolUid}:${name}`;",
+    replace: "  return `${name}`;",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-attack-no-offer",
+    decision: "D646",
+    what: "attack.ts's printed coin never asks for a Badge. Killed by backtrackBadgeMeD646 §2.",
+    file: "packages/engine/src/attack.ts",
+    find: "        ? coinRedoToolOf(next, next.players[action.seat].active ?? active)\n        : null;",
+    replace: "        ? null\n        : null;",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-attack-opponent-coins",
+    decision: "D646",
+    what: "the opponent's coins (`opponentPerTails`) are offered too. Killed by backtrackBadgeMeD646 §3.",
+    file: "packages/engine/src/attack.ts",
+    find: "      coinRedo === undefined && flipper === action.seat && faces.length > 0",
+    replace: "      coinRedo === undefined && faces.length > 0",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-attack-keep-reflips",
+    decision: "D646",
+    what: "a \"no\" re-entry flips new coins instead of keeping the offered faces. Killed by backtrackBadgeMeD646 §2.",
+    file: "packages/engine/src/attack.ts",
+    find: "    const kept = coinRedo?.kind === \"keep\" ? coinRedo.faces : undefined;",
+    replace: "    const kept = coinRedo?.kind === \"keep\" ? undefined : undefined;",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-attack-kept-rows-refiled",
+    decision: "D646",
+    what: "a \"no\" re-entry files the kept coins' rows a second time. Killed by backtrackBadgeMeD646 §2.",
+    file: "packages/engine/src/attack.ts",
+    find: "      if (kept === undefined) events.push({ type: \"ATTACK_EFFECT_COIN_FLIP\", seat: flipper, result: face });",
+    replace: "      events.push({ type: \"ATTACK_EFFECT_COIN_FLIP\", seat: flipper, result: face });",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-attack-redeclared",
+    decision: "D646",
+    what: "a re-entry files ATTACK_DECLARED again. Killed by backtrackBadgeMeD646 §2.",
+    file: "packages/engine/src/attack.ts",
+    find: "  const events: GameEvent[] = copiedFrom?.resumed === true || coinRedo !== undefined ? [] : [declaredEvent];",
+    replace: "  const events: GameEvent[] = copiedFrom?.resumed === true ? [] : [declaredEvent];",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-attack-confusion-reflipped",
+    decision: "D646",
+    what: "a re-entry flips the Confusion coin again. Killed by backtrackBadgeMeD646 §3.",
+    file: "packages/engine/src/attack.ts",
+    find: "  if (rotation === \"confused\" && copiedFrom?.resumed !== true && coinRedo === undefined) {",
+    replace: "  if (rotation === \"confused\" && copiedFrom?.resumed !== true) {",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-resolve-yes-unspent",
+    decision: "D646",
+    what: "a yes re-flips without spending the Badge (no `COINS_REFLIPPED`). Killed by backtrackBadgeMeD646 §2.",
+    file: "packages/engine/src/attack.ts",
+    find: "  const spent = choice.yes ? spendCoinRedo(restored, seat, op.toolUid, op.faces.length, events) : restored;",
+    replace: "  const spent = restored;",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-resolve-answers-swapped",
+    decision: "D646",
+    what: "\"yes\" keeps the faces and \"no\" flips again. Killed by backtrackBadgeMeD646 §2.",
+    file: "packages/engine/src/attack.ts",
+    find: "    choice.yes ? { kind: \"again\" } : { kind: \"keep\", faces: op.faces },",
+    replace: "    choice.yes ? { kind: \"keep\", faces: op.faces } : { kind: \"again\" },",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-resolve-epilogue-kept",
+    decision: "D646",
+    what: "the queued epilogue is not stripped before the re-entry. Killed by backtrackBadgeMeD646 §2.",
+    file: "packages/engine/src/attack.ts",
+    find: "    pending: state.pending.filter((stage) => !(stage.kind === \"attackEpilogue\" && stage.uid === sourceUid)),\n  };\n  const attacker = restored.players[seat].active;",
+    replace: "    pending: state.pending,\n  };\n  const attacker = restored.players[seat].active;",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-route-missing",
+    decision: "D646",
+    what: "cardplay.ts `resolveEffect` has no route for `reflipAttackCoins`: the default drain ends the attack. Killed by backtrackBadgeMeD646 §2.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (pendingOp.op === \"reflipAttackCoins\") return resolveCoinRedo(state, phase, pendingOp, action.choice);\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts", "apps/api/src/lobby/coinRedoMigrationD646.test.ts"],
+  },
+  {
+    id: "D646-gate-no-offer",
+    decision: "D646",
+    what: "the attack program's `coinFlipGate` never offers. Killed by backtrackBadgeMeD646 §4.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const redo = kept === undefined ? coinRedoOffer(next, ctx, faces) : null;",
+    replace: "      const redo = kept === undefined ? null : null;",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-gate-keep-reflips",
+    decision: "D646",
+    what: "a kept `coinFlipGate` flips new coins (and offers again). Killed by backtrackBadgeMeD646 §4.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const kept = op.faces;\n",
+    replace: "      const kept = undefined;\n",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-offer-any-invoker",
+    decision: "D646",
+    what: "an Ability's (or Trainer's) coin is offered too. Killed by backtrackBadgeMeD646 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (ctx.invokedBy !== \"attack\" || faces.length === 0) return null;",
+    replace: "  if (faces.length === 0) return null;",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-flipeach-no-offer",
+    decision: "D646",
+    what: "Nullifying Zero's coins never offer. Killed by backtrackBadgeMeD646 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          if (redo !== null) return { done: flipped, schedule: [{ op: \"reflipCoins\", toolUid: redo, faces, retry: op }] };\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-flipeach-keep-reflips",
+    decision: "D646",
+    what: "a kept Nullifying Zero flips new coins. Killed by backtrackBadgeMeD646 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          const [flipped, faces] = op.faces === undefined ? flipCoinsFor(state, candidates.length, ctx, events) : [state, op.faces];",
+    replace: "          const [flipped, faces] = flipCoinsFor(state, candidates.length, ctx, events);",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-hit-no-offer",
+    decision: "D646",
+    what: "Target Together's coins never offer. Killed by backtrackBadgeMeD646 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (redo !== null) {\n    return { done: flipped, schedule: [{ op: \"reflipCoins\", toolUid: redo, faces, retry: { ...op, hitRefs: [...refs] } }] };\n  }\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-hit-retry-loses-refs",
+    decision: "D646",
+    what: "Target Together's retry forgets the picked body (it re-asks the pick). Killed by backtrackBadgeMeD646 §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "retry: { ...op, hitRefs: [...refs] } }] };",
+    replace: "retry: op }] };",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-pick-schedules-nothing",
+    decision: "D646",
+    what: "the resumed Target Together pick schedules no hit. Killed by backtrackBadgeMeD646 §5 / coinRestMeD605 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    return choice.kind === \"pokemonMulti\" ? [{ ...op, hitRefs: [...choice.refs] }] : [];",
+    replace: "    return [];",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts", "packages/engine/src/coinRestMeD605.test.ts"],
+  },
+  {
+    id: "D646-hitrefs-not-stepped",
+    decision: "D646",
+    what: "`stepOp` does not take a `hitRefs` op's coins (the pick parks again). Killed by backtrackBadgeMeD646 §5 / coinRestMeD605 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (op.hitRefs !== undefined && op.perHeadsInPlay !== undefined) {",
+    replace: "      if (op.hitRefs !== undefined && op.perHeadsInPlay !== undefined && false) {",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts", "packages/engine/src/coinRestMeD605.test.ts"],
+  },
+  {
+    id: "D646-reflip-answers-swapped",
+    decision: "D646",
+    what: "`continuationOps`: \"yes\" keeps and \"no\" flips again. Killed by backtrackBadgeMeD646 §4.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    return [choice.kind === \"confirm\" && choice.yes ? op.retry : withKeptFaces(op.retry, op.faces)];",
+    replace: "    return [choice.kind === \"confirm\" && choice.yes ? withKeptFaces(op.retry, op.faces) : op.retry];",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-reflip-yes-unspent",
+    decision: "D646",
+    what: "`applyChoice`: a yes spends nothing. Killed by backtrackBadgeMeD646 §4.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return choice.kind === \"confirm\" && choice.yes ? spendCoinRedo(state, ctx.seat, op.toolUid, op.faces.length, events) : state;",
+    replace: "      return state;",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-kept-faces-dropped",
+    decision: "D646",
+    what: "`withKeptFaces` hands the retry back without its faces (a \"no\" flips again). Killed by backtrackBadgeMeD646 §4 / §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return retry.op === \"coinFlipGate\" || retry.op === \"damageChosen\" ? { ...retry, faces: [...faces] } : retry;",
+    replace: "  return retry;",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-badge-row-dropped",
+    decision: "D646",
+    what: "Backtrack Badge `me05-074` loses its registry row. Killed by backtrackBadgeMeD646 §1 / censusAtHead.",
+    file: "packages/engine/src/registry.ts",
+    find: "  \"me05-074\": BACKTRACK_BADGE, // Backtrack Badge — once a turn, the {C} holder's attack coins may be flipped again\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D646-badge-holder-type",
+    decision: "D646",
+    what: "the printed {C} is written as {L}. Killed by backtrackBadgeMeD646 §1 / §2.",
+    file: "packages/engine/src/registry.ts",
+    find: "reflipAttackCoins: { name: \"Backtrack Badge\", holderType: \"Colorless\" } } };",
+    replace: "reflipAttackCoins: { name: \"Backtrack Badge\", holderType: \"Lightning\" } } };",
+    expectKilledBy: ["packages/engine/src/backtrackBadgeMeD646.test.ts"],
+  },
+  {
+    id: "D646-migration-v48-refused",
+    decision: "D646",
+    what: "match.ts `migrateMatchRecord` no longer re-stamps a v48 record. Killed by coinRedoMigrationD646.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "    record.version === TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION ||\n    record.version === COIN_REDO_MIGRATABLE_MATCH_RECORD_VERSION\n  )",
+    replace: "    record.version === TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION\n  )",
+    expectKilledBy: ["apps/api/src/lobby/coinRedoMigrationD646.test.ts"],
+  },
+  {
+    id: "D646-migration-v48-unread",
+    decision: "D646",
+    what: "match.ts `readMigratableRecord` does not admit a v48 record. Killed by coinRedoMigrationD646.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "    version !== TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== COIN_REDO_MIGRATABLE_MATCH_RECORD_VERSION\n  )",
+    replace: "    version !== TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION\n  )",
+    expectKilledBy: ["apps/api/src/lobby/coinRedoMigrationD646.test.ts"],
   },
 ];

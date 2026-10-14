@@ -1329,6 +1329,13 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(event.result),
         plain(event.result === "tails" ? ": it is discarded instead of used" : ""),
       ]);
+    // 🆕🆕🆕 D646 — Backtrack Badge: the attack's coins ignored and flipped again (the new faces are their own rows).
+    case "COINS_REFLIPPED":
+      return row(event.seat, [
+        plain("used "),
+        strong(cardName(state, event.uid)),
+        plain(` — ignored ${event.count === 1 ? "the coin flip" : `${String(event.count)} coin flips`} and flipped again`),
+      ]);
     case "ATTACK_FLIP_LOCK_CHECK":
       return row(event.seat, [
         strong(cardName(state, event.uid)),

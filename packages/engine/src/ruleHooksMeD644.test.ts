@@ -31,7 +31,7 @@ import {
 // `weaknessAmountOverride`; R-SPH1, R-SPH2), Ferrothorn `me04-063` "Startling Drop" (the NEW
 // `CardProgram.opponentMillWhenMilled`, interpreter.ts `startlingDropRetort`; R-STD1, R-STD2) and Transformation Tome
 // `me04-083` (shipped `payFromHand` + `switchWithDiscardNamed`; R-TFT1, R-TFT2). Dropped and named: Backtrack Badge
-// `me05-074`. Every id and text off the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-10,
+// `me05-074` [🆕🆕🆕 D646 (D539): built at D646]. Every id and text off the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-10,
 // `legal_standard = 1`. Driven on a LOCAL `cardPool` (D275) in the suite's OWN 60-card deck (D270).
 
 const EXPLOSIVENESS_TEXT =
@@ -48,7 +48,7 @@ const PATRAT = "me04-070";
 const ILLUMISE = "30th-004";
 const FERROTHORN = "me04-063";
 const TOME = "me04-083";
-const BADGE = "me05-074"; // Backtrack Badge — dropped and named
+const BADGE = "me05-074"; // Backtrack Badge — dropped and named [🆕🆕🆕 D646 (D539): built at D646, `backtrackBadgeMeD646.test.ts`]
 const FLUTTER = "sv05-078"; // Flutter Mane "Midnight Fluttering": the opposing Active has no Abilities
 const MUNKIDORI = "sv06-095"; // "Adrena-Brain" (D572)
 const ORBEETLE = "sv10-089"; // Team Rocket's Orbeetle "Rocket Brain" (D565)
@@ -300,7 +300,7 @@ const idOf = (state: GameState, uid: string | undefined) => (uid === undefined ?
 const topId = (state: GameState, seat: Seat) => idOf(state, state.players[seat].active?.stack.at(-1));
 
 describe("D644 §1 — the prints and the registry rows", () => {
-  it("five keys on five NEW objects; Backtrack Badge stays unkeyed (dropped and named)", () => {
+  it("five keys on five NEW objects; ~~Backtrack Badge stays unkeyed (dropped and named)~~ (🆕🆕🆕 D646 (D539): keyed at D646)", () => {
     expect(programFor(CINDERACE)).toEqual({ setupActiveFromHand: "Explosiveness" });
     expect(programFor(PATRAT)).toEqual({ passive: { countersCantMove: true } });
     expect(programFor(ILLUMISE)).toEqual({ passive: { weaknessTimesWithNamedInPlay: { name: "Volbeat", amount: 3 } } });
@@ -311,11 +311,11 @@ describe("D644 §1 — the prints and the registry rows", () => {
         { op: "switchWithDiscardNamed", filter: { kind: "basicPokemon" } },
       ],
     });
-    expect(programFor(BADGE)).toBeUndefined();
+    expect(Object.keys(programFor(BADGE) ?? {})).toEqual(["passive"]); // 🆕🆕🆕 D646 (D539): was `toBeUndefined()` — keyed at D646.
   });
 
-  it("is built at engine 0.528.0", () => {
-    expect(engineVersion).toBe("0.528.0");
+  it("is built at engine 0.529.0", () => {
+    expect(engineVersion).toBe("0.529.0");
   });
 });
 

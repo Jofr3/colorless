@@ -883,7 +883,8 @@ export class LobbyDO {
       record takes D630's step and D636's, a v42 three, a v41 all four.
       🆕🆕🆕 D637 — and a v45 record too, by a re-stamp alone (the four `me` fossils; match.ts "45 → 46 AT D637").
       🆕🆕🆕 D640 — and a v46 record too, by a re-stamp alone (Overwriting Bolt, Celebration; match.ts "46 → 47 AT D640").
-      🆕🆕🆕 D643 — and a v47 record too, by a re-stamp alone (Multi Adapter; match.ts "47 → 48 AT D643"). */
+      🆕🆕🆕 D643 — and a v47 record too, by a re-stamp alone (Multi Adapter; match.ts "47 → 48 AT D643").
+      🆕🆕🆕 D646 — and a v48 record too, by a re-stamp alone (Backtrack Badge; match.ts "48 → 49 AT D646"). */
   private async peekMatch(): Promise<MatchLoad> {
     // 🆕🆕🆕 D583 — the read, the migration's D1 load, the re-read and the write are match.ts
     // `loadMatchRecord` (driven with a fake slot in poolMigrationD583.test.ts); the D1 read is

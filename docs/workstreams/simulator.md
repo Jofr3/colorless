@@ -30248,10 +30248,29 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D646 — Backtrack Badge (engine 0.529.0, `MATCH_RECORD_VERSION` 48 → 49)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D645 (`dbaa4780`), NOT committed. 1 text / 1 printing (`me`), D644's drop — the
+last unbuilt legal `me` printing; the Mega program closes here (what is owed: `progress.md` NEXT).
+
+- **Backtrack Badge** `me05-074` (Tool): the NEW `PassiveEffects.reflipAttackCoins`; continuous.ts `coinRedoToolOf` (in-effect Tool,
+  in-play {C} holder, key unspent) and `spendCoinRedo` (the key `${toolUid}:Backtrack Badge` on `allowances.abilitiesUsed`; the NEW event
+  `COINS_REFLIPPED`).
+- **The offer.** A `confirm` after a batch of the attacker's own attack coins, before any is read. At attack.ts's printed coin flip it is
+  the NEW parked op `reflipAttackCoins` (`parkCoinRedo` queues the `attackEpilogue`; `resolveCoinRedo` strips it and re-enters `attack()`
+  past the declaration rows and pre-coin coins). At interpreter.ts's `coinFlipGate` and `damageChosen` `flipEach` / `perHeadsInPlay` it is
+  the NEW scheduled op `reflipCoins { toolUid, faces, retry }` (the engine-written `faces` / `hitRefs`). "Yes" flips again with no second
+  offer; "no" keeps the faces and spends nothing. R-BTB1 … R-BTB4 ⚠️ UNRULED.
+- **MRV 48 → 49** (match.ts "48 → 49 AT D646"): a 0.528 reader loses either park's consequent; a v48 record is re-stamped
+  (`coinRedoMigrationD646.test.ts`), v47 … v41 chain to v49.
+- **Suite.** `backtrackBadgeMeD646.test.ts` (22), `coinRedoMigrationD646.test.ts` (10), census D646 block (2). +32 mutant rows, all
+  KILLED; 31 re-anchored. Census (re-measured over the LOCAL D1): attacks **2771 / 2771**, abilities **610 / 610**, trainers
+  **447 / 447**, Special Energy **22 / 22**; 1263 of 1266 `me` printings fully built (the 3 text-less `30th` Items left). Sweep PENDING.
+
 ## D645 — the last one-offs (engine 0.528.0, `MATCH_RECORD_VERSION` stays 48)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D644 (`1b624a3b`), NOT committed. 3 texts / 5 printings (`me`) — after it every
-buildable legal `me` printing is built (Backtrack Badge, D644's drop, is the one `me` text left).
+buildable legal `me` printing is built (Backtrack Badge, D644's drop, is the one `me` text left [🆕🆕🆕 D646 (D539): BUILT at D646]).
 
 - **Wild Growth** (Meganium `me01-010` / `mep-001`): the NEW `PassiveEffects.basicEnergyProvidesTwice`; continuous.ts
   `doubledBasicEnergyType` (own board, §9 per holder, no stacking), read inside `unitsOf`, so a Basic {G} provides {G}{G} to every
@@ -30269,7 +30288,7 @@ buildable legal `me` printing is built (Backtrack Badge, D644's drop, is the one
 ## D644 — Y1e: rule hooks, one printing each (engine 0.527.0, `MATCH_RECORD_VERSION` stays 48)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D643 (`0c50eeb2`), NOT committed. 5 texts / 5 printings (`me` + `30th`) —
-the D625 re-rank's Y1e group less Backtrack Badge (dropped and named).
+the D625 re-rank's Y1e group less Backtrack Badge (dropped and named) [🆕🆕🆕 D646 (D539): BUILT at D646].
 
 - **Explosiveness** (Cinderace `me01-028`): the NEW `CardProgram.setupActiveFromHand`, read by setup.ts `setupPlaceActive`
   (`explosivenessPlacement`): the Stage 2 may be the face-down Active; the Bench still takes Basics only. R-EXP1 ⚠️ UNRULED: the mulligan
@@ -30285,7 +30304,7 @@ the D625 re-rank's Y1e group less Backtrack Badge (dropped and named).
   R-STD1 / R-STD2 ⚠️ UNRULED.
 - **Transformation Tome** (`me04-083`): shipped ops — a second-copy `payFromHand` (one alone: `PLAY_CONDITION_NOT_MET`), then
   `switchWithDiscardNamed` over Basic Pokémon. R-TFT1 / R-TFT2 ⚠️ UNRULED.
-- **Dropped and named:** Backtrack Badge `me05-074` — the re-flip needs a persisted mid-attack park (and a once-per-turn record).
+- **Dropped and named:** Backtrack Badge `me05-074` — the re-flip needs a persisted mid-attack park (and a once-per-turn record). [🆕🆕🆕 D646 (D539): BUILT at D646, MRV 48 → 49.]
 - **MRV stays 48** (match.ts "STAYS 48 AT D644"): catalog-only keys.
 - **Suite.** `ruleHooksMeD644.test.ts` (29), census D644 block (2). +29 mutant rows, all KILLED; 8 D432 / D552 / D559 Weakness-site rows
   re-anchored, all KILLED. Census: abilities **606 / 610**, trainers **446 / 447**, 1257 `me` printings fully built. Sweep PENDING.
