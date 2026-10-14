@@ -57,6 +57,11 @@ function Pile:juiceUp(time,scale,rotation,reduced)
   -- Card:hover calls juice_up(0.05, 0.03), converted by Card:juice_up.
   Card.juiceUp(self,time,scale or 0.05,rotation or 0.03,reduced)
 end
+function Pile:click(time,reduced)
+  -- Use Card:juice_up's default pulse (0.11 scale, +/-0.16 rotation),
+  -- rather than the smaller Card:hover pulse used by piles above.
+  Card.juiceUp(self,time,nil,nil,reduced)
+end
 function Pile:update(dt,time,active,reduced,roomWidth)
   self.hovered=active and not self.dragging
   roomWidth=roomWidth or 1280

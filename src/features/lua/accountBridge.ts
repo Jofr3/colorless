@@ -1,6 +1,8 @@
 import { LuaAccount } from "./account";
 import { LuaBuilder } from "./builder";
 import { LuaLibrary } from "./library";
+import { LuaSandbox } from "./sandbox";
+import { launchSandbox } from "./sandboxLaunch";
 import { setSessionRecoveryHandler } from "../../lib/api";
 
 const builder = new LuaBuilder(
@@ -40,11 +42,22 @@ document.addEventListener("luminous:library-command", (event) => {
   void library.command(event.detail);
 });
 
+const sandbox = new LuaSandbox(
+  (snapshot) =>
+    document.dispatchEvent(new CustomEvent("luminous:sandbox-state", { detail: snapshot })),
+  (setup) => launchSandbox(setup, () => location.assign("/simulator")),
+);
+document.addEventListener("luminous:sandbox-command", (event) => {
+  if (event instanceof CustomEvent && typeof event.detail === "string")
+    void sandbox.command(event.detail);
+});
+
 const account = new LuaAccount((snapshot) => {
   document.dispatchEvent(new CustomEvent("luminous:account-state", { detail: snapshot }));
   const fields = snapshot.split("\t").map(decodeURIComponent);
   library.session(fields[1] ?? "loading", fields[4] ?? "");
   builder.session(fields[1] ?? "loading", fields[4] ?? "");
+  sandbox.session(fields[1] ?? "loading", fields[4] ?? "");
 });
 setSessionRecoveryHandler(async () => {
   await account.refresh();
