@@ -1,11 +1,13 @@
-import { cardOfUid, type EffectChoice, type PokemonRef } from "@luminous/engine";
+import { cardOfUid, topUid, type EffectChoice, type PokemonRef } from "@luminous/engine";
 import type { RedactedEffectPrompt, RedactedCard } from "@luminous/schema";
 import type { LuaSimulator, SimMenu, SimOption } from "./simulator";
 
-/** Shared engine prompt shapes, rendered with Lua buttons/selection rows. */
+/** Shared engine prompt shapes, rendered by Lua as button lists, real card
+ * rows (the pack picker), board targets or prize slots. Board/prize menus name
+ * the top-card uid / prize slot so the table itself becomes the picker. */
 export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): SimMenu {
   const host = sim.host;
-  if (!host) return { title: "No game", options: [] };
+  if (!host) return { kind: "list", title: "No game", options: [] };
   const seat = host.viewerSeat;
   const selected: string[] = [];
   const assignments = new Map<string, number>();
@@ -14,7 +16,13 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
   const refName = (ref: PokemonRef) => {
     const side = host.game.players[ref.seat];
     const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
-    return `${host.names[ref.seat]}: ${body ? (cardOfUid(host.game, body.stack.at(-1) ?? "")?.name ?? "Pokemon") : "Pokemon"}`;
+    const who = ref.seat === seat ? "You" : "Opponent";
+    return `${who}: ${body ? (cardOfUid(host.game, topUid(body) ?? "")?.name ?? "Pokemon") : "Pokemon"}`;
+  };
+  const refUid = (ref: PokemonRef) => {
+    const side = host.game.players[ref.seat];
+    const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
+    return (body && topUid(body)) || "";
   };
   const card = (uid: string): RedactedCard | undefined => {
     const c = cardOfUid(host.game, uid);
@@ -29,8 +37,8 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
       }
     );
   };
-  const confirm = (choice: EffectChoice, label = "Confirm") =>
-    sim.action(label, { type: "resolveEffect", seat, choice });
+  const confirm = (choice: EffectChoice, label = "Confirm", colour = "blue") =>
+    sim.action(label, { type: "resolveEffect", seat, choice }, colour);
   const refresh = () => {
     sim.menu = build();
     sim.emit();
@@ -41,26 +49,37 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
     else selected.push(id);
     refresh();
   };
-  const pick = (id: string, label: string, face?: RedactedCard): SimOption => ({
+  const pick = (id: string, label: string, face?: RedactedCard, uid = ""): SimOption => ({
     label,
     card: face,
+    uid,
     selected: selected.includes(id),
     run: () => toggle(id),
   });
   const build = (): SimMenu => {
-    const menu: SimMenu = { title: "Choose", note: prompt.note, options: [], mandatory: true };
+    const menu: SimMenu = {
+      kind: "list",
+      title: "Choose",
+      note: prompt.note,
+      options: [],
+      mandatory: true,
+    };
     switch (prompt.kind) {
       case "mayDraw":
         menu.title = "Draw cards";
         menu.options = [
           confirm({ kind: "mayDraw", draw: true }, `Draw ${prompt.count}`),
-          confirm({ kind: "mayDraw", draw: false }, "Skip"),
+          confirm({ kind: "mayDraw", draw: false }, "Skip", "red"),
         ];
         break;
-      case "confirm":
-        menu.title = "Confirm";
-        menu.options = (prompt.targets ?? []).map((ref, i) => ({
+      case "confirm": {
+        const targets = prompt.targets ?? [];
+        menu.title = prompt.note || "Confirm";
+        menu.note = targets.length ? "Choose a Pokémon, then confirm." : prompt.note;
+        menu.kind = targets.length ? "board" : "list";
+        menu.options = targets.map((ref, i) => ({
           label: refName(ref),
+          uid: refUid(ref),
           selected: target === i,
           run: () => {
             target = i;
@@ -72,13 +91,15 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
             {
               kind: "confirm",
               yes: true,
-              ...(prompt.targets?.[target] ? { target: prompt.targets[target] } : {}),
+              ...(targets[target] ? { target: targets[target] } : {}),
             },
             prompt.labels?.yes ?? "Yes",
+            "green",
           ),
-          confirm({ kind: "confirm", yes: false }, prompt.labels?.no ?? "No"),
+          confirm({ kind: "confirm", yes: false }, prompt.labels?.no ?? "No", "red"),
         ];
         break;
+      }
       case "guessHp":
         menu.title = `Guess ${prompt.name}'s HP`;
         menu.options = [
@@ -102,20 +123,25 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
       case "chooseAttack":
         menu.title = "Choose an attack";
         menu.options = prompt.candidates.map((c) =>
-          confirm({ kind: "attack", index: c.index }, c.name),
+          confirm({ kind: "attack", index: c.index }, c.name, "red"),
         );
         break;
       case "choosePrize":
+        menu.kind = "prizes";
         menu.title = "Choose a Prize";
-        menu.options = prompt.indices.map((index) =>
-          confirm({ kind: "prize", index }, `Prize ${index + 1}`),
-        );
+        menu.note = prompt.note || "Click one of your Prize cards.";
+        menu.options = prompt.indices.map((index) => ({
+          ...confirm({ kind: "prize", index }, `Prize ${index + 1}`),
+          uid: `prize:${index}`,
+        }));
         break;
       case "choosePokemon":
-        menu.title = "Choose a Pokemon";
-        menu.options = prompt.candidates.map((ref) =>
-          confirm({ kind: "pokemon", ref, ...(prompt.upTo ? { take: amount } : {}) }, refName(ref)),
-        );
+        menu.kind = "board";
+        menu.title = "Choose a Pokémon";
+        menu.options = prompt.candidates.map((ref) => ({
+          ...confirm({ kind: "pokemon", ref, ...(prompt.upTo ? { take: amount } : {}) }, refName(ref)),
+          uid: refUid(ref),
+        }));
         if (prompt.upTo)
           menu.footer = [
             {
@@ -125,12 +151,16 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
                 refresh();
               },
             },
-            confirm({ kind: "pokemon" }, "Skip"),
+            confirm({ kind: "pokemon" }, "Skip", "red"),
           ];
         break;
       case "choosePokemonMulti":
-        menu.title = `Choose Pokemon (${selected.length}/${prompt.max})`;
-        menu.options = prompt.candidates.map((ref, i) => pick(String(i), refName(ref)));
+        menu.kind = "board";
+        menu.title = `Choose Pokémon (${selected.length}/${prompt.max})`;
+        menu.options = prompt.candidates.map((ref, i) => ({
+          ...pick(String(i), refName(ref)),
+          uid: refUid(ref),
+        }));
         menu.footer = [
           confirm({
             kind: "pokemonMulti",
@@ -143,6 +173,7 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
         break;
       case "chooseCards":
       case "orderCards":
+        menu.kind = "cards";
         menu.title =
           prompt.kind === "orderCards"
             ? "Choose card order"
@@ -152,6 +183,7 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
             c.id,
             `${prompt.kind === "orderCards" && selected.includes(c.id) ? `${selected.indexOf(c.id) + 1}. ` : ""}${c.name}`,
             c,
+            c.id,
           ),
         );
         menu.footer = [
@@ -163,9 +195,10 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
         break;
       case "discardEnergy":
       case "discardTools":
+        menu.kind = "cards";
         menu.title = prompt.kind === "discardTools" ? "Discard Tools" : "Discard Energy";
         menu.options = prompt.discardable.map((c) =>
-          pick(c.uid, `${card(c.uid)?.name ?? "Card"} — ${refName(c.from)}`, card(c.uid)),
+          pick(c.uid, `${card(c.uid)?.name ?? "Card"} — ${refName(c.from)}`, card(c.uid), c.uid),
         );
         menu.footer = [confirm({ kind: prompt.kind, uids: [...selected] })];
         break;
@@ -176,12 +209,13 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
           prompt.kind === "attachCards"
             ? prompt.candidates
             : prompt.movable.map((c) => card(c.uid)).filter((c): c is RedactedCard => !!c);
+        menu.kind = "cards";
         menu.title = prompt.kind === "attachCards" ? "Attach cards" : "Move Energy";
-        menu.note +=
-          "\nClick each card to cycle its destination. Unselected cards stay where they are.";
+        menu.note = `${prompt.note ?? ""}\nClick each card to cycle its destination; unselected cards stay put.`;
         menu.options = cards.map((c) => ({
-          label: `${c.name}: ${targets[assignments.get(c.id) ?? -1] ? refName(targets[assignments.get(c.id) ?? -1] as PokemonRef) : "Not selected"}`,
+          label: `${c.name}: ${targets[assignments.get(c.id) ?? -1] ? refName(targets[assignments.get(c.id) ?? -1] as PokemonRef) : "stays"}`,
           card: c,
+          uid: c.id,
           selected: assignments.has(c.id),
           run: () => {
             const next = (assignments.get(c.id) ?? -1) + 1;

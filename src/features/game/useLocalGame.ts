@@ -31,6 +31,8 @@ export interface LocalGameSetup {
     turns?: LocalTurnSnapshot[];
     turnIndex?: number;
     latestTurn?: LocalTurnSnapshot;
+    steps?: LocalStep[];
+    stepIndex?: number;
   };
 }
 
@@ -39,6 +41,18 @@ export interface LocalTurnSnapshot {
   log: SeatLogEntry[];
   viewerSeat: Seat;
 }
+
+/** One accepted action's outcome, for action-level undo/redo. `checkpoint`
+    marks the steps that also began a turn (or a setup handoff) — the
+    "undo turn" / "redo turn" stops — and `turnIndex` the turn-history index
+    that was current after it. */
+export interface LocalStep extends LocalTurnSnapshot {
+  checkpoint: boolean;
+  turnIndex: number;
+}
+
+/** How many accepted actions stay undoable (and get saved). */
+export const MAX_STEPS = 40;
 
 export interface GameError {
   code: ErrorCode;
@@ -62,6 +76,9 @@ interface HostState {
   turns: LocalTurnSnapshot[];
   turnIndex: number;
   latestTurn: LocalTurnSnapshot;
+  /** Every accepted action's outcome (newest last), the current one at `stepIndex`. */
+  steps: LocalStep[];
+  stepIndex: number;
 }
 
 interface HostActionEvent {
@@ -73,7 +90,42 @@ interface HostActionEvent {
 type HostEvent =
   | HostActionEvent
   | { type: "previousTurn" | "nextTurn" }
+  | { type: "undoAction" | "redoAction" | "undoTurn" | "redoTurn" }
   | { type: "finishCoinFlip"; id: number };
+
+/** Where an undo/redo lands in `steps`, or null when there is nowhere to go.
+    Actions step one at a time; turns jump to the nearest checkpoint (the
+    start of the current turn when mid-turn, else the previous turn), and
+    "redo turn" to the next checkpoint or the newest step. */
+export function stepTarget(
+  host: HostState,
+  type: "undoAction" | "redoAction" | "undoTurn" | "redoTurn",
+): number | null {
+  const { steps, stepIndex } = host;
+  // A step whose state is still inside a card's prompt (Brock's Scouting
+  // waiting for its pick) is not a place to land: undoing a resolved Trainer
+  // puts the card back in hand rather than reopening its prompt, and redo
+  // replays it through to the pick.
+  const settled = (i: number) => steps[i]?.game.phase.kind !== "effect:choose";
+  if (type === "undoAction") {
+    if (stepIndex === 0) return null;
+    for (let i = stepIndex - 1; i > 0; i--) if (settled(i)) return i;
+    return 0;
+  }
+  if (type === "redoAction") {
+    if (stepIndex >= steps.length - 1) return null;
+    for (let i = stepIndex + 1; i < steps.length - 1; i++) if (settled(i)) return i;
+    return steps.length - 1;
+  }
+  if (type === "undoTurn") {
+    if (stepIndex === 0) return null;
+    for (let i = stepIndex - 1; i > 0; i--) if (steps[i]?.checkpoint) return i;
+    return 0;
+  }
+  if (stepIndex >= steps.length - 1) return null;
+  for (let i = stepIndex + 1; i < steps.length; i++) if (steps[i]?.checkpoint) return i;
+  return steps.length - 1;
+}
 
 /** The seat the hot-seat screen should hand the device to: the projection's
     own phase→seat mapping (phaseViewOf — THE one exhaustive switch over the
@@ -96,11 +148,37 @@ export function hostReducer(prev: HostState, event: HostEvent): HostState {
       : prev;
   }
   if (prev.coinFlipPresentation !== null) return prev;
+  if ("type" in event && event.type !== "previousTurn" && event.type !== "nextTurn") {
+    const index = stepTarget(prev, event.type);
+    const step = index === null ? undefined : prev.steps[index];
+    if (!step) return prev;
+    return {
+      ...prev,
+      game: step.game,
+      log: step.log,
+      viewerSeat: step.viewerSeat,
+      turnIndex: Math.max(0, Math.min(step.turnIndex, prev.turns.length - 1)),
+      stepIndex: index as number,
+      lastError: null,
+    };
+  }
   if ("type" in event) {
     const turnIndex = prev.turnIndex + (event.type === "previousTurn" ? -1 : 1);
     const turn = turnIndex === prev.turns.length - 1 ? prev.latestTurn : prev.turns[turnIndex];
     if (!turn) return prev;
-    return { ...prev, ...turn, turnIndex, lastError: null };
+    // Land on the step that began this turn; without one (an older save),
+    // the action history restarts here.
+    let stepIndex = prev.steps.findIndex((s) => s.checkpoint && s.turnIndex === turnIndex);
+    if (turnIndex === prev.turns.length - 1) stepIndex = prev.steps.length - 1;
+    const steps = stepIndex >= 0 ? prev.steps : [{ ...turn, checkpoint: true, turnIndex }];
+    return {
+      ...prev,
+      ...turn,
+      turnIndex,
+      steps,
+      stepIndex: Math.max(0, stepIndex),
+      lastError: null,
+    };
   }
   const result = applyAction(prev.game, event.action);
   if (!result.ok) {
@@ -133,13 +211,19 @@ export function hostReducer(prev: HostState, event: HostEvent): HostState {
       (prev.game.phase.kind === "setup:place" &&
         result.state.phase.kind === "setup:place" &&
         prev.game.phase.stage !== result.state.phase.stage));
+  let checkpoint = false;
   if (
     result.state.phase.kind !== "setup:drawExtra" &&
     (result.state.turn !== prev.game.turn || setupHandoff)
   ) {
     if (turns[prev.turnIndex]?.game.phase.kind === "setup:drawExtra") turns[prev.turnIndex] = turn;
     else turns.push(turn);
+    checkpoint = true;
   }
+  const steps = [
+    ...prev.steps.slice(0, prev.stepIndex + 1),
+    { ...turn, checkpoint, turnIndex: turns.length - 1 },
+  ].slice(-MAX_STEPS);
   return {
     ...prev,
     coinFlipPresentation:
@@ -162,6 +246,8 @@ export function hostReducer(prev: HostState, event: HostEvent): HostState {
     turns,
     turnIndex: turns.length - 1,
     latestTurn: turn,
+    steps,
+    stepIndex: steps.length - 1,
   };
 }
 
@@ -182,6 +268,13 @@ export function initHost(setup: LocalGameSetup): HostState {
     0,
     Math.min(setup.resume?.turnIndex ?? turns.length - 1, turns.length - 1),
   );
+  const current = { game: setup.state, log, viewerSeat };
+  const savedSteps = setup.resume?.steps;
+  const steps = savedSteps?.length ? savedSteps : [{ ...current, checkpoint: true, turnIndex }];
+  const stepIndex = Math.max(
+    0,
+    Math.min(setup.resume?.stepIndex ?? steps.length - 1, steps.length - 1),
+  );
   return {
     coinFlipBatch: null,
     coinFlipPresentation: null,
@@ -193,7 +286,9 @@ export function initHost(setup: LocalGameSetup): HostState {
     viewerSeat,
     turns,
     turnIndex,
-    latestTurn: setup.resume?.latestTurn ?? { game: setup.state, log, viewerSeat },
+    latestTurn: setup.resume?.latestTurn ?? current,
+    steps,
+    stepIndex,
   };
 }
 
@@ -237,6 +332,8 @@ export function useLocalGame(
         turns: host.turns,
         turnIndex: host.turnIndex,
         latestTurn: host.latestTurn,
+        steps: host.steps,
+        stepIndex: host.stepIndex,
       },
     });
   }, [
@@ -249,6 +346,8 @@ export function useLocalGame(
     host.turnIndex,
     host.latestTurn,
     onSave,
+    host.steps,
+    host.stepIndex,
   ]);
 
   const dispatch = useCallback((action: GameAction) => {
@@ -256,7 +355,10 @@ export function useLocalGame(
   }, []);
   const previousTurn = useCallback(() => dispatchHost({ type: "previousTurn" }), []);
   const nextTurn = useCallback(() => dispatchHost({ type: "nextTurn" }), []);
-  const finishCoinFlip = useCallback((id: number) => dispatchHost({ type: "finishCoinFlip", id }), []);
+  const finishCoinFlip = useCallback(
+    (id: number) => dispatchHost({ type: "finishCoinFlip", id }),
+    [],
+  );
 
   const presentation = host.coinFlipPresentation ?? host;
   const projection = useMemo(

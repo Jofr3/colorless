@@ -100,7 +100,7 @@ function Card:update(dt,time,active,reduced)
   self.hovered=active
   local m=self.motion
   m.T.x=(self.dragging and self.targetX or self.homeX)/self.unit
-  m.T.y=(self.dragging and self.targetY or self.homeY)/self.unit
+  m.T.y=(self.dragging and self.targetY or (self.homeY-(self.lift or 0)))/self.unit
   m:update(dt,time,active,self.dragging,reduced)
   self.x,self.y,self.angle=m.VT.x*self.unit,m.VT.y*self.unit,m.VT.r
 end
@@ -129,9 +129,9 @@ function Card:shaderValues(time,mx,my,reduced)
   local j=self.motion.juice
   local phase=math.min(self.angle*3,1)+time/28+(j and j.r*20 or 0)+tiltAmount
   return {
-    dissolve=0, time=(123.33412*(self.index/1.14212))%3000,
+    dissolve=self.dissolve or 0, time=(123.33412*(self.index/1.14212))%3000,
     texture_details={0,0,W*(self.item.resolution or 1),H*(self.item.resolution or 1)},image_details={W*(self.item.resolution or 1),H*(self.item.resolution or 1)},shadow=false,
-    burn_colour_1={1,1,1,0},burn_colour_2={1,1,1,0},
+    burn_colour_1=self.burn1 or {1,1,1,0},burn_colour_2=self.burn2 or {1,1,1,0},
     mouse_screen_pos={px,py},hovering=reduced and 0 or 1,
     screen_scale=math.sqrt((ux-ox)^2+(uy-oy)^2),
   },{phase,time}
@@ -162,7 +162,7 @@ function Card:draw(shaders,time,mx,my,reduced,roomWidth)
 
   values.shadow=false; values.hovering=reduced and 0 or 1
   send(dissolve,values)
-  g.setShader(dissolve); g.setColor(1,1,1,1)
+  g.setShader(dissolve); g.setColor(self.tint or {1,1,1,1})
   g.draw(self.texture,self.x,self.y,self.angle,sx,sy,W*resolution/2,H*resolution/2)
   -- Balatro draws every edition ON TOP of the ordinary card, with identical
   -- geometry; foil's partially transparent pass must never have its own tilt.

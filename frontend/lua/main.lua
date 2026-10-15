@@ -25,10 +25,12 @@ local menu = {
   {label='Online', route='/lobby', colour=T.red, description='Challenge another player'},
   {label='Decks', route='/decks', colour=T.paleGreen, description='Build your next winning hand'},
 }
+local quiet={paper1=0.35,multhit1=0.7,multhit2=0.7,coin1=0.6,coin3=0.6,glass2=0.5,cardFan2=0.5,whoosh=0.5,win=0.7,tarot2=0.4}
 local function sound(name,pitch)
   if state.muted then return end
   local s=sounds[name]
-  s:stop(); s:setPitch(pitch or 1); s:setVolume((name=='paper1' and 0.35 or 0.6)*preferences.volume/100*preferences.effectsVolume/100); s:play()
+  if not s then return end
+  s:stop(); s:setPitch(pitch or 1); s:setVolume((quiet[name] or 0.6)*preferences.volume/100*preferences.effectsVolume/100); s:play()
 end
 local function announce(text) print('LUMINOUS:announce:'..text) end
 local function layout(w,h)
@@ -188,7 +190,9 @@ function love.load()
   state.handCursor=love.mouse.getSystemCursor('hand')
   state.arrowCursor=love.mouse.getSystemCursor('arrow')
   for _,name in ipairs({'splash','background','CRT','dissolve'}) do shaders[name]=g.newShader('assets/shaders/'..name..'.fs') end
-  for _,name in ipairs({'button','music1','cardSlide1','highlight1','paper1'}) do sounds[name]=love.audio.newSource('assets/sounds/'..name..'.ogg',name=='music1' and 'stream' or 'static') end
+  for _,name in ipairs({'button','music1','cardSlide1','highlight1','paper1','card1','cardSlide2','cardFan2','chips1','multhit1','multhit2','cancel','coin1','coin3','tarot2','whoosh','win','glass2'}) do
+    if love.filesystem.getInfo('assets/sounds/'..name..'.ogg') then sounds[name]=love.audio.newSource('assets/sounds/'..name..'.ogg',name=='music1' and 'stream' or 'static') end
+  end
   sounds.music1:setLooping(true); sounds.music1:setVolume(0.16)
   library=Library.new({
     command=function(command) print('LUMINOUS:library:'..command) end,
@@ -214,7 +218,7 @@ function love.load()
     decks=function() print('LUMINOUS:page:decks') end,
     signin=function() openSettings(false,4); popup:openAuth('login') end,
   })
-  simulator=Simulator.new({command=function(command) print('LUMINOUS:simulator:'..command) end, feedback=function(name,pitch) sound(name,pitch) end, announce=announce, settings=function() openSettings() end})
+  simulator=Simulator.new({command=function(command) print('LUMINOUS:simulator:'..command) end, feedback=function(name,pitch) sound(name,pitch) end, announce=announce, settings=function() openSettings() end, jiggle=function(amount) room.jiggle=room.jiggle+(amount or 1) end})
   layout(g.getDimensions())
   browserState()
   state.ready=true
@@ -256,7 +260,7 @@ function love.update(dt)
     love.mouse.setCursor(collection().hover>0 and state.handCursor or state.arrowCursor)
     return
   end
-  if state.page=='simulator' then love.mouse.setCursor((simulator.hover>0 or simulator:cardHit(simulator.mx,simulator.my)) and state.handCursor or state.arrowCursor);return end
+  if state.page=='simulator' then love.mouse.setCursor((simulator.hover>0 or simulator.hoverCard or (simulator.overlay and simulator.overlay.hover>0)) and state.handCursor or state.arrowCursor);return end
   local hovered=hit(mx,my)
   if hovered~=state.hovered then
     state.hovered=hovered
@@ -279,11 +283,10 @@ function love.draw()
   g.setCanvas(scene); g.clear(T.ink)
   local bg=state.page=='simulator' and shaders.background or shaders.splash
   if state.page=='simulator' then
-    -- Small/Big blind table palette: ease_background_colour with contrast=1.
+    -- Game:draw's background.fs with ease_background_colour's eased palette.
+    local c=simulator:backgroundColours()
     bg:send('time',t);bg:send('spin_time',0);bg:send('spin_amount',0)
-    bg:send('colour_1',{0.9*80/255,0.9*132/255,0.9*110/255,1})
-    bg:send('colour_2',{1.3*80/255,1.3*132/255,1.3*110/255,1})
-    bg:send('colour_3',{0.7*80/255,0.7*132/255,0.7*110/255,1});bg:send('contrast',1)
+    bg:send('colour_1',c[2]);bg:send('colour_2',c[1]);bg:send('colour_3',c[3]);bg:send('contrast',c.contrast or 1)
   else
   bg:send('time',t); bg:send('vort_speed',0.4); bg:send('colour_1',T.red); bg:send('colour_2',T.blue); bg:send('mid_flash',0); bg:send('vort_offset',0)
   end
@@ -391,7 +394,7 @@ function love.focus(focused)
     end
     if simulator then
       if simulator.drag then simulator.drag.card.dragging=false end
-      simulator.drag=nil;simulator.clicked=nil;simulator.pressed=nil
+      simulator.drag=nil;simulator.clicked=nil;simulator.pressed=nil;simulator.pressedOverlay=nil;simulator.clickedPrize=nil
     end
     if sandbox then sandbox.pressed=nil end
     if library then

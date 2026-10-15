@@ -1,14 +1,26 @@
 import {
   applyAction,
   cardOfUid,
+  energyProvidesOf,
   otherSeat,
   redactGame,
   type GameAction,
   type PokemonTarget,
 } from "@luminous/engine";
-import type { RedactedCard, RedactedInPlay, RedactedGame } from "@luminous/schema";
+import type { Card, RedactedCard, RedactedInPlay, RedactedGame } from "@luminous/schema";
 import { encodeFields } from "./account";
-import { initHost, hostReducer } from "../game/useLocalGame";
+
+/** m6x11plus has no arrow, middle dot, em dash, minus or ellipsis glyphs; the
+    engine's log and card text use them, so spell them in ASCII for Lua. */
+export function pixelText(text: string): string {
+  return text
+    .replace(/\s*→\s*/g, " -> ")
+    .replace(/\s*·\s*/g, ", ")
+    .replace(/\s*—\s*/g, " - ")
+    .replace(/−/g, "-")
+    .replace(/…/g, "...");
+}
+import { initHost, hostReducer, stepTarget } from "../game/useLocalGame";
 import { projectGameState, GAME_OVER_DETAIL } from "../game/projection";
 import { moveToAction } from "../game/moveToAction";
 import { loadSimulatorSave, saveSimulator, clearSimulatorSave } from "../playmat/simulatorSave";
@@ -22,14 +34,45 @@ export interface SimOption {
   selected?: boolean;
   card?: RedactedCard;
   colour?: string;
+  /** Board/prize menus: the top-card uid or `prize:<index>` Lua highlights. */
+  uid?: string;
+  /** Sidebar placement: primary (blue, big), danger (red), minor. */
+  slot?: "primary" | "danger" | "minor";
 }
+export type SimMenuKind = "list" | "cards" | "board" | "prizes" | "coin" | "log" | "pile";
 export interface SimMenu {
+  kind: SimMenuKind;
   title: string;
   note?: string;
   options: SimOption[];
   footer?: SimOption[];
   mandatory?: boolean;
 }
+/** An action attached to a card (Balatro's use/sell buttons). Targeted actions
+ * share a `group` and name their `targetUid`; Lua collapses them into one
+ * button that turns the table into a target picker. */
+export interface SimCardAction {
+  label: string;
+  run: () => void;
+  disabled?: boolean;
+  colour?: string;
+  targetUid?: string;
+  group?: string;
+  cost?: readonly string[];
+  /** Printed damage, drawn at the right of an attack row. */
+  damage?: string;
+}
+const RS = "\x1e";
+const US = "\x1f";
+const HINTS = {
+  "setup:chooseFirst": "The coin winner chooses who goes first.",
+  "setup:place": "Drag a Basic Pokémon to your Active spot, then fill your Bench and press Ready.",
+  "turn:action": "Attach Energy, play Trainers and Pokémon, then attack or end your turn.",
+  "ko:takePrizes": "Take your Prize cards.",
+  "ko:promote": "Choose a new Active Pokémon from your Bench.",
+  "effect:choose": "Resolve the card effect.",
+  gameOver: "The game is over.",
+} as const;
 /** Lua renders a full table. The existing local host remains the sole rules/state owner. */
 export class LuaSimulator {
   host: ReturnType<typeof initHost> | null = null;
@@ -54,7 +97,7 @@ export class LuaSimulator {
     if (!this.host) return;
     this.host = hostReducer(this.host, { action, at: Date.now() });
     const flips = this.host.coinFlipPresentation ? this.host.coinFlipBatch : null;
-    // The Lua result dialog replaces the React dice presentation.
+    // The Lua coin overlay replaces the React dice presentation.
     if (this.host.coinFlipPresentation && this.host.coinFlipBatch) {
       this.host = hostReducer(this.host, {
         type: "finishCoinFlip",
@@ -66,8 +109,10 @@ export class LuaSimulator {
       this.menu = null;
       this.persist();
       this.prompt();
-      if (flips)
+      if (flips) {
+        this.menuId++;
         this.menu = {
+          kind: "coin",
           title: flips.title,
           note: flips.flips
             .map((f) => `${f.player}: ${f.result === "heads" ? "Heads" : "Tails"}`)
@@ -84,6 +129,7 @@ export class LuaSimulator {
             },
           ],
         };
+      }
     }
     this.emit();
   }
@@ -101,6 +147,8 @@ export class LuaSimulator {
         turns: h.turns,
         turnIndex: h.turnIndex,
         latestTurn: h.latestTurn,
+        steps: h.steps,
+        stepIndex: h.stepIndex,
       },
     });
     if (loadSimulatorSave()?.startedAt !== h.startedAt)
@@ -117,9 +165,16 @@ export class LuaSimulator {
   action(label: string, action: GameAction, colour = "blue"): SimOption {
     return { label, colour, disabled: !this.allowed(action), run: () => this.dispatch(action) };
   }
-  choose(title: string, options: SimOption[], note = "", mandatory = false) {
+  choose(
+    title: string,
+    options: SimOption[],
+    note = "",
+    mandatory = false,
+    kind: SimMenuKind = "list",
+    footer?: SimOption[],
+  ) {
     this.menuId++;
-    this.menu = { title, options, note, mandatory };
+    this.menu = { kind, title, options, note, mandatory, footer };
     this.emit();
   }
   prompt() {
@@ -135,11 +190,13 @@ export class LuaSimulator {
       const picked = new Set<number>();
       const draw = () => {
         this.menu = {
-          title: "Take Prize cards",
-          note: `Choose ${p.count} Prize cards.`,
+          kind: "prizes",
+          title: `Take ${p.count} Prize card${p.count > 1 ? "s" : ""}`,
+          note: "Click the Prize cards you want, then confirm.",
           mandatory: true,
           options: Array.from({ length: v.board.you.prizesRemaining }, (_, i) => ({
             label: `Prize ${i + 1}`,
+            uid: `prize:${i}`,
             selected: picked.has(i),
             run: () => {
               if (picked.has(i)) picked.delete(i);
@@ -148,16 +205,19 @@ export class LuaSimulator {
               this.emit();
             },
           })),
-          footer: [this.action("Confirm", { type: "takePrizes", seat, prizeIndices: [...picked] })],
+          footer: [this.action("Take", { type: "takePrizes", seat, prizeIndices: [...picked] })],
         };
       };
       draw();
     } else if (p.kind === "ko:promote") {
       this.menu = {
-        title: "Choose your Active Pokemon",
+        kind: "board",
+        title: "Choose your new Active Pokémon",
+        note: "Click a Benched Pokémon.",
         mandatory: true,
         options: v.board.you.bench.map((c, i) => ({
           ...this.action(c.name, { type: "promote", seat, benchIndex: i }),
+          uid: c.id,
           card: c,
         })),
       };
@@ -176,243 +236,286 @@ export class LuaSimulator {
       })),
     ];
   }
-  inspect(uid: string) {
+  /** Every action a card offers right now, keyed by its uid (own hand and
+   * in-play cards, plus the Stadium's ability). */
+  cardActions(): Map<string, SimCardAction[]> {
+    const out = new Map<string, SimCardAction[]>();
     const v = this.view();
     const h = this.host;
-    if (!v || !h) return;
+    if (!v || !h) return out;
     const seat = h.viewerSeat;
     const p = v.phase;
-    const card = [
-      ...v.board.you.hand,
-      ...this.targets().map((t) => t.card),
-      ...v.board.opponent.bench,
-      ...(v.board.opponent.active ? [v.board.opponent.active] : []),
-      ...(v.board.stadium ? [v.board.stadium] : []),
-    ].find((c) => c.id === uid);
-    if (!card || card.cardId === "hidden") return;
-    const options: SimOption[] = [];
-    if (v.board.you.hand.some((c) => c.id === uid)) {
+    const push = (uid: string, a: SimCardAction) => {
+      const list = out.get(uid) ?? [];
+      list.push(a);
+      out.set(uid, list);
+    };
+    const act = (
+      uid: string,
+      label: string,
+      action: GameAction,
+      colour = "blue",
+      extra: Partial<SimCardAction> = {},
+    ) =>
+      push(uid, {
+        label,
+        colour,
+        disabled: !this.allowed(action),
+        run: () => this.dispatch(action),
+        ...extra,
+      });
+    for (const card of v.board.you.hand) {
+      const uid = card.id;
       if (p.kind === "setup:place") {
-        options.push(
-          this.action("Place Active", { type: "setupPlaceActive", seat, uid }),
-          this.action("Place on Bench", { type: "setupPlaceBench", seat, uid }),
-        );
+        act(uid, "Place Active", { type: "setupPlaceActive", seat, uid });
+        act(uid, "Place on Bench", { type: "setupPlaceBench", seat, uid });
       } else if (p.kind === "turn:action") {
-        if (card.category === "Pokemon")
-          options.push(this.action("Play to Bench", { type: "playBasicToBench", seat, uid }));
-        if (card.category === "Trainer") {
+        if (card.category === "Pokemon") {
+          act(uid, "Bench", { type: "playBasicToBench", seat, uid });
+          for (const { card: targetCard, target } of this.targets())
+            act(uid, `Evolve ${targetCard.name}`, { type: "evolve", seat, uid, target }, "green", {
+              targetUid: targetCard.id,
+              group: "evolve",
+            });
+        } else if (card.category === "Trainer") {
           const trainer = p.trainers.find((t) => t.uid === uid);
           if (trainer?.rareCandy) {
             for (const target of p.rareCandy)
               for (const evolution of target.stage2)
-                options.push(
-                  this.action(`${target.basicName} → ${evolution.name}`, {
-                    type: "rareCandy",
-                    seat,
-                    uid,
-                    target: target.target,
-                    evolutionUid: evolution.uid,
-                  }),
-                );
-          } else options.push(this.action("Play card", { type: "playTrainer", seat, uid }));
-        }
-        const type =
-          card.category === "Energy"
-            ? "attachEnergy"
-            : card.category === "Pokemon"
-              ? "evolve"
-              : card.trainerType === "Tool" || card.trainerType === "Pokémon Tool"
-                ? "attachTool"
-                : null;
-        if (type)
-          for (const { card: targetCard, target } of this.targets())
-            options.push(
-              this.action(`${type === "evolve" ? "Evolve" : "Attach to"} ${targetCard.name}`, {
-                type,
-                seat,
+                act(uid, `${target.basicName} → ${evolution.name}`, {
+                  type: "rareCandy",
+                  seat,
+                  uid,
+                  target: target.target,
+                  evolutionUid: evolution.uid,
+                });
+          } else if (card.trainerType === "Tool" || card.trainerType === "Pokémon Tool") {
+            for (const { card: targetCard, target } of this.targets())
+              act(
                 uid,
-                target,
-              }),
+                `Attach to ${targetCard.name}`,
+                { type: "attachTool", seat, uid, target },
+                "blue",
+                { targetUid: targetCard.id, group: "tool" },
+              );
+          } else act(uid, "Play", { type: "playTrainer", seat, uid });
+        } else if (card.category === "Energy") {
+          for (const { card: targetCard, target } of this.targets())
+            act(
+              uid,
+              `Attach to ${targetCard.name}`,
+              { type: "attachEnergy", seat, uid, target },
+              "blue",
+              { targetUid: targetCard.id, group: "attach" },
             );
+        }
       }
-    } else if (p.kind === "turn:action") {
-      const target = this.targets().find((t) => t.card.id === uid);
-      if (target) {
-        if (target.target.spot === "active") {
-          p.attacks.forEach((a, index) =>
-            options.push(
-              this.action(
-                `${a.name}${a.damage ? ` · ${a.damage}` : ""}`,
-                { type: "attack", seat, index },
-                "red",
-              ),
-            ),
-          );
-          if (p.retreat?.can) options.push({ label: "Retreat", run: () => this.retreat() });
+    }
+    if (p.kind === "turn:action") {
+      for (const { card, target } of this.targets()) {
+        const uid = card.id;
+        if (target.spot === "active") {
+          for (const a of p.attacks)
+            act(uid, a.name, { type: "attack", seat, index: a.index }, "red", {
+              cost: a.effectiveCost ?? a.cost,
+              damage: a.damage ?? "",
+            });
+          if (p.retreat)
+            push(uid, {
+              label: "Retreat",
+              colour: "blue",
+              disabled: !p.retreat.can,
+              cost: Array.from({ length: p.retreat.cost }, () => "Colorless"),
+              run: () => this.retreat(),
+            });
         }
         for (const a of p.abilities)
-          if (JSON.stringify(a.target) === JSON.stringify(target.target))
-            options.push(
-              this.action(a.abilityName, {
-                type: "useAbility",
-                seat,
-                target: a.target,
-                abilityName: a.abilityName,
-              }),
-            );
+          if (JSON.stringify(a.target) === JSON.stringify(target))
+            push(uid, {
+              label: a.abilityName,
+              colour: "green",
+              disabled: a.disabled,
+              run: () =>
+                this.dispatch({
+                  type: "useAbility",
+                  seat,
+                  target: a.target,
+                  abilityName: a.abilityName,
+                }),
+            });
         for (const a of p.discardable ?? [])
-          if (JSON.stringify(a.target) === JSON.stringify(target.target))
-            options.push(this.action(a.label, { type: "discardFromPlay", seat, target: a.target }));
+          if (JSON.stringify(a.target) === JSON.stringify(target))
+            act(uid, a.label, { type: "discardFromPlay", seat, target: a.target }, "red");
       }
-      if (v.board.stadium?.id === uid && p.stadiumAbility)
-        options.push(this.action(p.stadiumAbility.label, { type: "useStadiumAbility", seat }));
+      if (v.board.stadium && p.stadiumAbility)
+        push(v.board.stadium.id, {
+          label: p.stadiumAbility.label,
+          colour: "green",
+          disabled: p.stadiumAbility.disabled,
+          run: () => this.dispatch({ type: "useStadiumAbility", seat }),
+        });
     }
-    const full = cardOfUid(h.game, uid);
-    const body = card as RedactedInPlay;
-    const note = [
-      full?.effect,
-      ...(full?.abilities ?? []).map((a) => `${a.name}: ${a.effect}`),
-      ...(full?.attacks ?? []).map((a) => `${a.name} (${a.damage ?? "—"}): ${a.effect ?? ""}`),
-      ...(body.attached?.energies ?? []).map((c) => `Energy: ${c.name}`),
-      ...(body.attached?.tools ?? []).map((c) => `Tool: ${c.name}`),
-    ]
-      .filter(Boolean)
-      .join("\n");
-    this.choose(
-      card.name,
-      [{ label: card.name, card, run: () => {}, disabled: true }, ...options],
-      note,
-    );
+    return out;
   }
-  retreat() {
-    this.menuId++;
+  /** Retreat: pick the Benched Pokémon on the table, then the Energy to discard
+   * as a card row; both steps are skipped when the choice is forced. */
+  retreat(promote?: number) {
     const h = this.host;
     const v = this.view();
     if (!h || !v || v.phase.kind !== "turn:action") return;
     const seat = h.viewerSeat;
+    const cost = v.phase.retreat?.cost ?? 0;
+    const energies = v.board.you.active?.attached?.energies ?? [];
+    if (promote === undefined) {
+      this.choose(
+        "Retreat to which Pokémon?",
+        v.board.you.bench.map((c, i) => ({
+          label: c.name,
+          uid: c.id,
+          card: c,
+          run: () => this.retreat(i),
+        })),
+        cost ? `Retreat cost: ${cost} Energy.` : "Retreating is free.",
+        false,
+        "board",
+      );
+      return;
+    }
+    const bench = promote;
+    if (cost === 0 || energies.length <= cost) {
+      this.dispatch({
+        type: "retreat",
+        seat,
+        discardEnergy: energies.slice(0, cost).map((c) => c.id),
+        promoteBenchIndex: bench,
+      });
+      return;
+    }
     const picked = new Set<string>();
-    let bench = 0;
     const draw = () => {
+      this.menuId++;
       this.menu = {
-        title: "Retreat",
-        note: `Choose a Benched Pokemon and Energy to pay the retreat cost (${v.phase.kind === "turn:action" ? (v.phase.retreat?.cost ?? 0) : 0}).`,
-        options: [
-          ...v.board.you.bench.map((c, i) => ({
-            label: c.name,
-            card: c,
-            selected: bench === i,
-            run: () => {
-              bench = i;
-              draw();
-              this.emit();
-            },
-          })),
-          ...(v.board.you.active?.attached?.energies ?? []).map((c) => ({
-            label: `Discard ${c.name}`,
-            card: c,
-            selected: picked.has(c.id),
-            run: () => {
-              if (picked.has(c.id)) picked.delete(c.id);
-              else picked.add(c.id);
-              draw();
-              this.emit();
-            },
-          })),
-        ],
+        kind: "cards",
+        title: `Discard ${cost} Energy to retreat`,
+        note: `Choose ${cost} attached Energy card${cost > 1 ? "s" : ""} to discard.`,
+        options: energies.map((c) => ({
+          label: c.name,
+          card: c,
+          uid: c.id,
+          selected: picked.has(c.id),
+          run: () => {
+            if (picked.has(c.id)) picked.delete(c.id);
+            else if (picked.size < cost) picked.add(c.id);
+            draw();
+            this.emit();
+          },
+        })),
         footer: [
-          this.action("Retreat", {
-            type: "retreat",
-            seat,
-            discardEnergy: [...picked],
-            promoteBenchIndex: bench,
-          }),
+          {
+            label: "Retreat",
+            colour: "blue",
+            disabled: picked.size !== cost,
+            run: () =>
+              this.dispatch({
+                type: "retreat",
+                seat,
+                discardEnergy: [...picked],
+                promoteBenchIndex: bench,
+              }),
+          },
         ],
       };
     };
     draw();
     this.emit();
   }
+  history(
+    type: "previousTurn" | "nextTurn" | "undoAction" | "redoAction" | "undoTurn" | "redoTurn",
+  ) {
+    if (!this.host) return;
+    this.host = hostReducer(this.host, { type });
+    this.message = "";
+    this.persist();
+    this.prompt();
+    this.emit();
+  }
   sidebar(): SimOption[] {
     const h = this.host;
     const v = this.view();
-    if (!h || !v) return [{ label: "Choose decks", run: () => this.route("sandbox") }];
+    if (!h || !v)
+      return [{ label: "Choose decks", slot: "primary", run: () => this.route("sandbox") }];
     const seat = h.viewerSeat;
     const p = v.phase;
     if (p.kind === "setup:chooseFirst")
       return [
-        this.action("Player 1 first", { type: "chooseFirstPlayer", seat, first: "p1" }),
-        this.action("Player 2 first", { type: "chooseFirstPlayer", seat, first: "p2" }),
-        this.action("Random", {
-          type: "chooseFirstPlayer",
-          seat,
-          first: h.game.phase.kind === "setup:chooseFirst" ? h.game.phase.coinWinner : seat,
-        }),
+        {
+          ...this.action("Player 1 first", { type: "chooseFirstPlayer", seat, first: "p1" }),
+          slot: "primary",
+        },
+        {
+          ...this.action("Player 2 first", { type: "chooseFirstPlayer", seat, first: "p2" }),
+          slot: "primary",
+        },
+        {
+          ...this.action(
+            "Random",
+            {
+              type: "chooseFirstPlayer",
+              seat,
+              first: h.game.phase.kind === "setup:chooseFirst" ? h.game.phase.coinWinner : seat,
+            },
+            "red",
+          ),
+          slot: "minor",
+        },
       ];
     if (p.kind === "setup:drawExtra")
       return [
-        this.action(`Draw ${p.owed}`, { type: "setupDrawExtra", seat, count: p.owed }),
-        this.action("Skip draw", { type: "setupDrawExtra", seat, count: 0 }),
+        {
+          ...this.action(`Draw ${p.owed}`, { type: "setupDrawExtra", seat, count: p.owed }),
+          slot: "primary",
+        },
+        {
+          ...this.action("Skip draw", { type: "setupDrawExtra", seat, count: 0 }, "red"),
+          slot: "minor",
+        },
       ];
-    if (p.kind === "setup:place") return [this.action("Ready", { type: "setupReady", seat })];
-    if (p.kind === "turn:action")
+    if (p.kind === "setup:place")
+      return [{ ...this.action("Ready", { type: "setupReady", seat }), slot: "primary" }];
+    if (p.kind === "turn:action") {
+      // Attacks, Retreat and Abilities live on the Active card's attached
+      // buttons; the panel keeps End turn and the undo/redo history.
+      const history = (
+        label: string,
+        type: "undoAction" | "redoAction" | "undoTurn" | "redoTurn",
+      ): SimOption => ({
+        label,
+        colour: "blue",
+        slot: "minor",
+        disabled: stepTarget(h, type) === null,
+        run: () => this.history(type),
+      });
       return [
-        {
-          label: "Attack",
-          colour: "blue",
-          disabled: !p.attacks.length,
-          run: () =>
-            this.choose(
-              "Choose an attack",
-              p.attacks.map((a, index) =>
-                this.action(
-                  `${a.name}${a.damage ? ` · ${a.damage}` : ""}`,
-                  { type: "attack", seat, index },
-                  "blue",
-                ),
-              ),
-            ),
-        },
-        {
-          label: "Abilities",
-          disabled: !p.abilities.length && !p.stadiumAbility,
-          run: () =>
-            this.choose("Abilities", [
-              ...p.abilities.map((a) =>
-                this.action(a.label, {
-                  type: "useAbility",
-                  seat,
-                  target: a.target,
-                  abilityName: a.abilityName,
-                }),
-              ),
-              ...(p.stadiumAbility
-                ? [this.action(p.stadiumAbility.label, { type: "useStadiumAbility", seat })]
-                : []),
-            ]),
-        },
-        { label: "Retreat", disabled: !p.retreat?.can, run: () => this.retreat() },
-        this.action("End turn", { type: "endTurn", seat }, "red"),
+        { ...this.action("End turn", { type: "endTurn", seat }, "red"), slot: "primary" },
+        history("Undo action", "undoAction"),
+        history("Redo action", "redoAction"),
+        history("Undo turn", "undoTurn"),
+        history("Redo turn", "redoTurn"),
       ];
+    }
     if (p.kind === "gameOver")
       return [
         {
           label: "New game",
           colour: "red",
+          slot: "danger",
           run: () => {
             clearSimulatorSave();
             this.route("sandbox");
           },
         },
       ];
-    return [
-      {
-        label: "Continue",
-        run: () => {
-          this.prompt();
-          this.emit();
-        },
-      },
-    ];
+    return [];
   }
   command(raw: string) {
     const [cmd, ...args] = raw.split("\t").map(decodeURIComponent);
@@ -441,18 +544,17 @@ export class LuaSimulator {
       }
       return;
     }
-    if (cmd === "card" && !this.menu) {
-      this.inspect(args[0] ?? "");
-      return;
-    }
     if (cmd === "history" && this.host && !this.menu) {
-      this.host = hostReducer(this.host, {
-        type: args[0] === "previous" ? "previousTurn" : "nextTurn",
-      });
-      this.message = "";
-      this.persist();
-      this.prompt();
-      this.emit();
+      const kinds = {
+        previous: "previousTurn",
+        next: "nextTurn",
+        undoAction: "undoAction",
+        redoAction: "redoAction",
+        undoTurn: "undoTurn",
+        redoTurn: "redoTurn",
+      } as const;
+      const type = kinds[args[0] as keyof typeof kinds];
+      if (type) this.history(type);
       return;
     }
     if (cmd === "new" && !this.menu) {
@@ -472,6 +574,20 @@ export class LuaSimulator {
       );
       return;
     }
+    if (cmd === "newgame") {
+      clearSimulatorSave();
+      this.route("sandbox");
+      return;
+    }
+    if (cmd === "concede" && this.host && !this.menu) {
+      const seat = this.host.viewerSeat;
+      this.choose(
+        "Concede the game?",
+        [this.action("Concede", { type: "concede", seat }, "red")],
+        "Your opponent wins immediately.",
+      );
+      return;
+    }
     if (cmd === "leave") {
       this.persist();
       this.route("home");
@@ -484,10 +600,17 @@ export class LuaSimulator {
         this.host.log
           .map((e) =>
             e.kind === "turn"
-              ? `Turn ${e.turn}`
-              : `${e.elapsed} ${e.segments.map((s) => s.text).join("")}`,
+              ? `turn\t\t\tTurn ${e.turn}`
+              : [
+                  e.who,
+                  e.who === "system" ? "" : (this.host?.names[e.who] ?? ""),
+                  e.elapsed,
+                  e.segments.map((s) => s.text).join(""),
+                ].join("\t"),
           )
           .join("\n"),
+        false,
+        "log",
       );
       return;
     }
@@ -496,10 +619,20 @@ export class LuaSimulator {
       if (!v) return;
       const side = args[0] === "opponent" ? v.board.opponent : v.board.you;
       this.choose(
-        "Discard pile",
-        side.discard.map((card) => ({ label: card.name, card, run: () => {}, disabled: true })),
-        side.discard.length ? "" : "No discarded cards.",
+        args[0] === "opponent" ? "Opponent's discard pile" : "Your discard pile",
+        side.discard
+          .slice()
+          .reverse()
+          .map((card) => ({ label: card.name, card, uid: card.id, run: () => {}, disabled: true })),
+        side.discard.length ? `${side.discard.length} cards, newest first.` : "No discarded cards.",
+        false,
+        "pile",
       );
+      return;
+    }
+    if (cmd === "retreat" && this.host && !this.menu) {
+      const index = Number(args[0]);
+      this.retreat(Number.isInteger(index) && index >= 0 ? index : undefined);
       return;
     }
     if (cmd === "move" && this.host && !this.menu) {
@@ -534,7 +667,47 @@ export class LuaSimulator {
         },
       );
       if (action) this.dispatch(action);
+      else if (fromZone === "hand") {
+        this.message = "That card cannot go there right now.";
+        this.emit();
+      }
     }
+  }
+  private infoRow(card: Card): string {
+    const abilities = (card.abilities ?? [])
+      .map((a) => [a.name, a.effect ?? "", a.type ?? "Ability"].join(US))
+      .join(RS);
+    const attacks = (card.attacks ?? [])
+      .map((a) =>
+        [
+          a.name,
+          (a.cost ?? []).join(","),
+          a.damage === undefined || a.damage === null ? "" : String(a.damage),
+          a.effect ?? "",
+        ].join(US),
+      )
+      .join(RS);
+    const wr = (list: { type: string; value?: string }[] | null) =>
+      list?.[0] ? `${list[0].type}:${list[0].value ?? ""}` : "";
+    return encodeFields(
+      [
+        "I",
+        card.id,
+        card.category,
+        card.trainerType ?? "",
+        card.stage ?? "",
+        card.hp ?? "",
+        (card.category === "Energy" ? [energyProvidesOf(card)] : (card.types ?? [])).join(","),
+        card.retreat ?? "",
+        wr(card.weaknesses),
+        wr(card.resistances),
+        card.effect ?? "",
+        abilities,
+        attacks,
+        card.energyType ?? "",
+        card.name,
+      ].map((f) => pixelText(String(f))),
+    );
   }
   emit() {
     if (!this.active) return;
@@ -543,15 +716,40 @@ export class LuaSimulator {
     this.handlers.clear();
     const rows: string[] = [];
     const art = new Map<string, string>();
+    const infoIds = new Set<string>();
     const row = (...fields: (string | number | boolean)[]) =>
-      rows.push(encodeFields(fields.map(String)));
+      rows.push(encodeFields(fields.map((f) => pixelText(String(f)))));
     let token = 0;
-    const option = (kind: string, o: SimOption) => {
+    const register = (o: { run: () => void; disabled?: boolean }) => {
       const id = String(++token);
       if (!o.disabled) this.handlers.set(id, o.run);
-      row(kind, id, o.label, o.colour ?? "blue", !!o.disabled, !!o.selected, o.card?.cardId ?? "");
-      if (o.card?.hasImage) art.set(o.card.cardId, cardImageUrl(o.card.cardId, "high"));
+      return id;
     };
+    const noteArt = (c: RedactedCard | undefined) => {
+      if (!c || c.cardId === "hidden" || c.cardId === "empty") return;
+      infoIds.add(c.cardId);
+      if (c.hasImage) art.set(c.cardId, cardImageUrl(c.cardId, "high"));
+    };
+    const option = (kind: string, o: SimOption) => {
+      row(
+        kind,
+        register(o),
+        o.label,
+        o.colour ?? "blue",
+        !!o.disabled,
+        !!o.selected,
+        o.card?.cardId ?? "",
+        o.uid ?? "",
+      );
+      noteArt(o.card);
+    };
+    const outcome = v?.outcome
+      ? v.outcome.result === "tie"
+        ? "tie"
+        : v.outcome.winner === "you"
+          ? "win"
+          : "loss"
+      : "";
     const title = v?.outcome
       ? v.outcome.result === "tie"
         ? "Draw"
@@ -559,10 +757,19 @@ export class LuaSimulator {
       : v?.phase.kind === "setup:chooseFirst"
         ? "Choose who goes first"
         : v?.phase.kind === "setup:place"
-          ? "Place your Pokemon"
+          ? "Place your Pokémon"
           : v?.phase.kind === "turn:action"
             ? "Your turn"
             : "Choose your next move";
+    let hint = v ? (HINTS[v.phase.kind as keyof typeof HINTS] ?? "") : "Choose two decks to start.";
+    if (v?.phase.kind === "setup:drawExtra")
+      hint = `Your opponent mulliganed. Draw up to ${v.phase.owed} extra card${v.phase.owed === 1 ? "" : "s"}.`;
+    if (v?.phase.kind === "ko:takePrizes")
+      hint = `Take ${v.phase.count} Prize card${v.phase.count === 1 ? "" : "s"}.`;
+    if (v?.phase.kind === "effect:choose" && v.phase.prompt?.note) hint = v.phase.prompt.note;
+    if (v?.phase.kind === "gameOver" && v.outcome?.result === "win")
+      hint = GAME_OVER_DETAIL[v.outcome.reason];
+    const allow = h?.game.allowances;
     row(
       ++this.revision,
       h ? "ready" : "empty",
@@ -572,16 +779,67 @@ export class LuaSimulator {
       v?.phase.kind ?? "",
       this.message,
       title,
+      hint,
       h?.turnIndex ?? 0,
       h?.turns.length ?? 0,
+      v?.waitingOn ?? "",
+      v?.activePlayer ?? "",
+      h?.viewerSeat ?? "",
+      allow?.energyAttached ? 1 : 0,
+      allow?.supporterPlayed ? 1 : 0,
+      allow?.retreated ? 1 : 0,
+      outcome,
+      v?.outcome?.result === "win"
+        ? GAME_OVER_DETAIL[v.outcome.reason]
+        : outcome === "tie"
+          ? "Both players ran out of options."
+          : "",
     );
-    if (v) {
+    if (v && h) {
+      const isViewerTurn =
+        h.game.phase.kind === "turn:action" && h.game.phase.seat === h.viewerSeat;
+      const canDragHand = v.phase.kind === "setup:place" || isViewerTurn;
       for (const owner of ["you", "opponent"] as const) {
         const side = v.board[owner];
-        row("S", owner, side.deckCount, side.prizesRemaining, side.hand.length);
+        row(
+          "S",
+          owner,
+          side.deckCount,
+          side.prizesRemaining,
+          side.hand.length,
+          side.discard.length,
+          side.mulliganCount ?? 0,
+        );
         const cardRow = (c: RedactedCard, zone: string, index: number) => {
           const b = (c as RedactedInPlay).battle;
           const a = (c as RedactedInPlay).attached;
+          const full = c.cardId === "hidden" ? undefined : cardOfUid(h.game, c.id);
+          // Attached cards travel as "type|uid|cardId" so Lua can draw the
+          // real Energy card tucked behind the Pokémon.
+          const energies = (a?.energies ?? []).map((e) => {
+            const ec = cardOfUid(h.game, e.id);
+            // Catalog basic energies carry no `types`; the name is the datum.
+            const type = !ec
+              ? "Colorless"
+              : ec.energyType === "Special"
+                ? "Special"
+                : energyProvidesOf(ec);
+            return [type, e.id, e.cardId].join("|");
+          });
+          const tools = (a?.tools ?? []).map((t) => [t.id, t.cardId].join("|"));
+          const status = b
+            ? [
+                b.conditions.rotation !== "none" ? b.conditions.rotation : "",
+                b.conditions.poisonDamage > 0 ? "poisoned" : "",
+                b.conditions.burned ? "burned" : "",
+              ].filter(Boolean)
+            : [];
+          const draggable =
+            owner === "you" &&
+            c.cardId !== "hidden" &&
+            ((zone === "hand" && canDragHand) ||
+              (zone === "bench" && (v.phase.kind === "setup:place" || isViewerTurn)) ||
+              (zone === "active" && isViewerTurn));
           row(
             "C",
             c.id,
@@ -591,20 +849,20 @@ export class LuaSimulator {
             zone,
             index,
             c.cardId === "hidden",
+            c.category,
+            c.trainerType ?? "",
+            c.stage ?? full?.stage ?? "",
             b?.hp ?? "",
             b?.damage ?? 0,
-            a?.energies.length ?? 0,
-            b
-              ? [
-                  b.conditions.rotation !== "none" ? b.conditions.rotation : "",
-                  b.conditions.poisonDamage > 0 ? "Poisoned" : "",
-                  b.conditions.burned ? "Burned" : "",
-                ]
-                  .filter(Boolean)
-                  .join(", ")
-              : "",
+            energies.join(","),
+            tools.join(","),
+            status.join(","),
+            (full?.types ?? []).join(","),
+            draggable,
           );
-          if (c.hasImage) art.set(c.cardId, cardImageUrl(c.cardId, "high"));
+          noteArt(c);
+          for (const e of a?.energies ?? []) noteArt(e);
+          for (const t of a?.tools ?? []) noteArt(t);
         };
         side.hand.forEach((c, i) => cardRow(c, "hand", i));
         if (side.active) cardRow(side.active, "active", 0);
@@ -615,18 +873,66 @@ export class LuaSimulator {
       }
       if (v.board.stadium) {
         const c = v.board.stadium;
-        row("C", c.id, c.cardId, c.name, "global", "stadium", 0, false, "", 0, 0, "");
-        if (c.hasImage) art.set(c.cardId, cardImageUrl(c.cardId, "high"));
+        row(
+          "C",
+          c.id,
+          c.cardId,
+          c.name,
+          "global",
+          "stadium",
+          0,
+          false,
+          c.category,
+          c.trainerType ?? "",
+          "",
+          "",
+          0,
+          "",
+          0,
+          "",
+          "",
+          false,
+        );
+        noteArt(c);
       }
-      if (v.outcome?.result === "win") row("N", GAME_OVER_DETAIL[v.outcome.reason]);
+      if (!this.menu) {
+        for (const [uid, actions] of this.cardActions())
+          for (const a of actions)
+            row(
+              "K",
+              register(a),
+              uid,
+              a.label,
+              a.colour ?? "blue",
+              !!a.disabled,
+              a.targetUid ?? "",
+              a.group ?? "",
+              (a.cost ?? []).join(","),
+              a.damage ?? "",
+            );
+      }
     }
-    if (!this.menu) for (const o of this.sidebar()) option("A", o);
+    if (!this.menu)
+      for (const o of this.sidebar())
+        row("A", register(o), o.label, o.colour ?? "blue", !!o.disabled, o.slot ?? "minor");
     if (this.menu) {
-      row("M", this.menu.title, this.menu.note ?? "", !!this.menu.mandatory, this.menuId);
+      row(
+        "M",
+        this.menu.kind,
+        this.menu.title,
+        this.menu.note ?? "",
+        !!this.menu.mandatory,
+        this.menuId,
+      );
       for (const o of this.menu.options) option("O", o);
       for (const o of this.menu.footer ?? []) option("F", o);
     }
-    this.images([...art].slice(0, 60).map(([id, url]) => ({ id, url })));
+    if (h)
+      for (const id of infoIds) {
+        const card = h.game.cardPool[id];
+        if (card) rows.push(this.infoRow(card));
+      }
+    this.images([...art].slice(0, 64).map(([id, url]) => ({ id, url })));
     this.publish(rows.join("\n"));
   }
 }

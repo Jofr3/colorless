@@ -28,10 +28,12 @@ const output = join(root, "public/lua");
 const assets = [
   "fonts/m6x11plus.ttf",
   "textures/2x/Enhancers.png",
+  "textures/2x/chips.png",
   ...["splash", "background", "CRT", "dissolve", "foil", "holo", "polychrome"].map((n) => `shaders/${n}.fs`),
-  ...["button", "card1", "cardSlide1", "highlight1", "paper1", "music1"].map(
-    (n) => `sounds/${n}.ogg`,
-  ),
+  ...[
+    "button", "card1", "cardSlide1", "cardSlide2", "cardFan2", "highlight1", "paper1", "music1",
+    "chips1", "multhit1", "multhit2", "cancel", "coin1", "coin3", "tarot2", "whoosh", "win", "glass2",
+  ].map((n) => `sounds/${n}.ogg`),
 ];
 try {
   for (const name of ["conf.lua", "main.lua", "ui"])
@@ -50,6 +52,18 @@ try {
     [compiler, "--compatibility", "--title", "Luminous", "--memory", "134217728", stage, output],
     { stdio: "inherit" },
   );
+  // The compiler copies the runtime with fs-extra, which unlinks the old file
+  // first; a running Vite dev server sees the unlink but tends to miss the
+  // instant re-add and then serves index.html for /lua/love.js. Re-create
+  // the two files with a pause between unlink and write so the watcher
+  // registers them again.
+  for (const name of ["love.js", "love.wasm"]) {
+    const path = join(output, name);
+    const bytes = readFileSync(path);
+    rmSync(path);
+    await new Promise((done) => setTimeout(done, 500));
+    writeFileSync(path, bytes);
+  }
   for (const name of ["index.html", "host.js", "host.css"])
     copyFileSync(join(here, "web", name), join(output, name));
   // Also make the standalone WASM output usable outside the Vite dev server.

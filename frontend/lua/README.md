@@ -216,31 +216,75 @@ The shared pile's original CardArea comparison lives in `tests/deck_pile.lua`.
 
 ## Sandbox gameplay
 
-`/lua/?page=simulator` is a full page, with no home screen or outer modal underneath.
-The original `background.fs` runs with the Small/Big blind palette from
-`globals.lua` and `ease_background_colour`. The HUD uses the existing pixel panel,
-button, font, shadow and CRT implementations. Table wells use CardArea's black
-10% fill; hand rotation, breathing and arc follow `CardArea:align_cards`. Cards
-retain the shared Moveable hover, drag and return physics. Portrait moves the HUD
-to the top and game controls below the hand.
+`/lua/?page=simulator` is a full page built like Balatro's run screen. The
+original `background.fs` runs with `ease_background_colour` palettes (the Small
+Blind green on your turn, the grey-blue won palette on the opponent's, the boss
+red or chips blue when the game ends). The left column ports
+`create_UIBox_HUD`: a dark column running past the top and bottom of the room
+inside a thin `DYN_UI.MAIN` frame, so only its two side lines show. That
+dynamic colour follows the seat whose turn it is (player 1 blue, player 2 red,
+neutral grey with no game) and also tints the turn panel's header and body
+like the blind colour does. Inside: a turn panel in the HUD blind's shape (DynaText header,
+hint lines, your stake chip and a "Prizes left" box), the action panel in the
+hand area's slot (End turn above Undo action / Redo action / Undo turn / Redo
+turn, or Ready and the other setup buttons), the red GAME LOG / orange OPTIONS
+buttons, and Hand / Deck / Turn / Energy / Supporter counters. Undo and redo
+step through every accepted action; the turn buttons jump between the
+checkpoints that begin each turn, and both survive a reload. Everything on the table sits in
+CardArea wells (black 10%, `r=0.1`, plus a whisper of the seat colour: the
+opponent's half warm, yours cool) with `area_uibox` counters. The table is
+four rows of wells between three columns: the opponent's discard, deck and
+your prizes down the left; the wide benches top and bottom with the two
+Actives stacked in the middle and the Stadium beside yours; the opponent's
+prizes, your deck and your discard down the right. Prizes are 2×3 grids of
+backs, the opponent's hand is a count on their bench strip, and your hand fans
+along the bottom with `align_cards`' rotation, arc and breathing. Decks use
+the shared `G.deck` pile; discards are a pile too, newest card face up.
+In-play Pokémon show their attached cards the way a real table does: Energy
+cards tucked sideways behind the right edge, aligned to the bottom, Tools
+behind the left edge aligned to the top, each further card a little less
+exposed. HP lives in the hover popup as remaining/max.
 
-`LuaSimulator` reuses `hostReducer`, `redactGame`, `moveToAction`, and the existing
-simulator saves. Lua receives only the current viewer's projection, never hidden
-opponent identities or deck order. Play includes first-player selection, setup,
-hand/bench dragging, attachments, evolution, attacks, abilities, retreat, Trainer
-choices, prizes and promotion. Click a visible card to inspect its scan, rules and
-available actions. Coin results come from the engine and appear in a result dialog;
-they are not rerolled by the renderer. The game log, previous/next turn history,
-Save & Back, and refresh all use the shared saved-game format. New game asks before
-replacing that save and returning to the deck chooser.
+Hovering a face-up card shows `card_h_popup`: a lightened JOKER_GREY frame, a
+white description box with Ability tags, attack rows (energy pips, name,
+damage) and the Weak / Resist / Retreat line, plus type, stage, Trainer or
+Energy badges. Clicking one of your cards highlights it (`G.HIGHLIGHT_H`) and
+attaches use/sell-style buttons: Bench, Play, Place Active, attack rows with
+cost pips and printed damage, Retreat, Abilities and View (attacks, Retreat
+and Abilities live only here). Targeted actions
+(Attach, Evolve, Tools) turn the table into a picker: candidates bob with
+`juice_card_until` and a white outline while everything else is tinted.
+Cards can also be dragged: hand cards onto the Active or Bench wells (attach,
+evolve, place), onto the Stadium slot, or onto the centre to play a Trainer;
+Bench cards reorder; the Active dropped on a Benched Pokémon retreats.
 
-`simulatorChoices.ts` exhaustively adapts the existing effect prompt union; action
-availability and submitted choices are checked by the engine. Action tokens carry
-a snapshot revision, so stale clicks cannot apply a different action. Artwork uses
-the builder's existing browser cache. The React simulator remains available and
-reads the same save format.
+Host prompts render as `create_UIBox_generic_options` overlays or on the table
+itself: button lists, real card rows in the collection tray (searches, Energy
+discards, card orders), board picks and prize picks highlighted in place,
+coin flips as spinning stake chips, the game log, discard piles, a card
+inspector, an Options menu (Settings, turn history cycle, New game, Concede,
+Save & back) and `create_UIBox_game_over`. Snapshot diffs drive the juice:
+damage and heals use `attention_text` with its growing backdrop square and the
+mult/chips sounds, KO'd Pokémon dissolve with burn colours, prizes pop in
+gold with the coin sound, errors pop in red with `cancel`, and new cards slide
+in from their deck. Hot-seat turns end with a handoff card that hides the next
+player's hand until Continue; the attack juice finishes first.
 
-Checks: `bun run test:run src/features/lua/simulator.test.ts` and
-`luajit frontend/lua/tests/simulator.lua`. These exercise real setup/handoffs,
-redaction, stale actions, attachment drops, search choices, attacks, history,
-persistence, drag return, modal input blocking and viewport bounds.
+`LuaSimulator` reuses `hostReducer`, `redactGame`, `moveToAction` and the
+existing simulator saves. Lua receives the viewer's projection only, never
+hidden opponent identities or deck order, plus catalogue text for the visible
+cards, per-card action rows (`K`) with targets, costs and damage, sidebar
+actions (`A`) with their slot, and menus (`M`/`O`/`F`) with a kind. Action
+tokens carry a snapshot revision, so stale clicks cannot apply a different
+action. Coin results come from the engine. Artwork uses the builder's browser
+cache; cards without a scan draw a pixel placeholder in their type colour.
+`build.mjs` additionally copies `chips.png` and the chips, mult, coin, cancel,
+whoosh, win and glass sounds.
+
+Checks: `bun run test:run src/features/lua/simulator.test.ts`,
+`lua frontend/lua/tests/simulator.lua` and
+`lua frontend/lua/tests/simulator_draw.lua`. They exercise real setup and
+handoffs, redaction, stale actions, attachment drops, card-row prompts,
+attacks from attached rows, retreat picks, persistence, hand drags and drops,
+targeting, every menu kind, the handoff delay, the game-over screen and both
+layouts, with the draw paths rendered against a stub LÖVE.

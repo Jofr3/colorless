@@ -24,6 +24,7 @@ export function saveSimulator(snapshot: LocalGameSetup): void {
           latestTurn: snapshot.resume.latestTurn
             ? compactTurn(snapshot.resume.latestTurn)
             : undefined,
+          steps: snapshot.resume.steps?.map((step) => ({ ...step, ...compactTurn(step) })),
         },
       }
     : snapshot;
@@ -88,6 +89,27 @@ function parseSave(raw: string): LocalGameSetup | undefined {
     };
     resume.turns = resume.turns.map(restoreTurn);
     resume.latestTurn = restoreTurn(resume.latestTurn);
+    // Action history is optional; a malformed one is dropped, not fatal.
+    if (
+      Array.isArray(resume.steps) &&
+      resume.steps.length > 0 &&
+      Number.isInteger(resume.stepIndex) &&
+      (resume.stepIndex ?? -1) >= 0 &&
+      (resume.stepIndex ?? 0) < resume.steps.length &&
+      resume.steps.every(
+        (step) => typeof step?.checkpoint === "boolean" && Number.isInteger(step.turnIndex),
+      )
+    ) {
+      try {
+        resume.steps = resume.steps.map((step) => ({ ...step, ...restoreTurn(step) }));
+      } catch {
+        resume.steps = undefined;
+        resume.stepIndex = undefined;
+      }
+    } else {
+      resume.steps = undefined;
+      resume.stepIndex = undefined;
+    }
     if (
       resume.turns[resume.turnIndex]?.game.turn !== state.turn ||
       resume.turns.at(-1)?.game.turn !== resume.latestTurn.game.turn ||

@@ -15,7 +15,13 @@ import {
   mustApply,
   mustCreate,
 } from "../../../packages/engine/src/testFixtures";
-import { hostReducer, initHost, waitingSeatOf, type LocalGameSetup } from "./useLocalGame";
+import {
+  hostReducer,
+  initHost,
+  stepTarget,
+  waitingSeatOf,
+  type LocalGameSetup,
+} from "./useLocalGame";
 
 const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
 
@@ -106,7 +112,9 @@ describe("initHost / hostReducer", () => {
     });
     expect(tossing.game).not.toBe(initial.game);
     expect(hostReducer(tossing, { type: "previousTurn" })).toBe(tossing);
-    expect(hostReducer(tossing, { action: { type: "endTurn", seat: "p1" }, at: 2000 })).toBe(tossing);
+    expect(hostReducer(tossing, { action: { type: "endTurn", seat: "p1" }, at: 2000 })).toBe(
+      tossing,
+    );
     expect(hostReducer(tossing, { type: "finishCoinFlip", id: -1 })).toBe(tossing);
     const id = tossing.coinFlipBatch?.id;
     if (id === undefined) throw new Error("missing dice batch");
@@ -159,6 +167,85 @@ describe("initHost / hostReducer", () => {
     expect(forward.game).toBe(latest.game);
     expect(forward.log).toBe(latest.log);
     expect(hostReducer(forward, { type: "nextTurn" })).toBe(forward);
+  });
+
+  it("undoes and redoes single actions, and jumps turns by checkpoint", () => {
+    const state = handFromDeck(
+      driveSetup(
+        11,
+        {
+          p1: deckOf({ "fix-attacker": 30, "fix-fire-energy": 30 }),
+          p2: MIXED_DECK,
+        },
+        { first: "p1", active: { p1: "fix-attacker" } },
+      ),
+      "p1",
+      "fix-fire-energy",
+      2,
+    );
+    const uid = handUid(state, "p1", "fix-fire-energy");
+    const start = initHost({ state, events: [], names: NAMES, startedAt: 0 });
+    expect(hostReducer(start, { type: "undoAction" })).toBe(start);
+    expect(hostReducer(start, { type: "undoTurn" })).toBe(start);
+    const attached = hostReducer(start, {
+      action: { type: "attachEnergy", seat: "p1", uid, target: { spot: "active" } },
+      at: 1000,
+    });
+    expect(attached.steps).toHaveLength(2);
+    expect(attached.steps[1]?.checkpoint).toBe(false);
+    // One action back restores the hand without touching the turn history.
+    const undone = hostReducer(attached, { type: "undoAction" });
+    expect(undone.game).toBe(start.game);
+    expect(undone.game.players.p1.hand).toContain(uid);
+    expect(undone.turnIndex).toBe(0);
+    expect(hostReducer(undone, { type: "redoAction" }).game).toBe(attached.game);
+    // Mid-turn, "undo turn" goes to the start of this turn; at a turn's
+    // start it goes to the previous turn's start.
+    const second = hostReducer(attached, { action: { type: "endTurn", seat: "p1" }, at: 2000 });
+    const third = hostReducer(second, { action: { type: "endTurn", seat: "p2" }, at: 3000 });
+    expect(third.steps[3]?.checkpoint).toBe(true);
+    const nextEnergy = handUid(third.game, "p1", "fix-fire-energy");
+    const latest = hostReducer(third, {
+      action: { type: "attachEnergy", seat: "p1", uid: nextEnergy, target: { spot: "active" } },
+      at: 4000,
+    });
+    const turnStart = hostReducer(latest, { type: "undoTurn" });
+    expect(turnStart.game).toBe(third.game);
+    expect(turnStart.turnIndex).toBe(third.turnIndex);
+    const previousTurn = hostReducer(turnStart, { type: "undoTurn" });
+    expect(previousTurn.game).toBe(second.game);
+    expect(hostReducer(previousTurn, { type: "redoTurn" }).game).toBe(third.game);
+    expect(hostReducer(turnStart, { type: "redoTurn" }).game).toBe(latest.game);
+    expect(hostReducer(latest, { type: "redoTurn" })).toBe(latest);
+    // A new action after an undo discards the redo future.
+    const replayed = hostReducer(undone, { action: { type: "endTurn", seat: "p1" }, at: 5000 });
+    expect(replayed.steps).toHaveLength(2);
+    expect(hostReducer(replayed, { type: "redoAction" })).toBe(replayed);
+    // Turn navigation keeps the step cursor on the matching checkpoint
+    // (previousTurn from turn 3 lands on turn 2's start, step 2).
+    const back = hostReducer(latest, { type: "previousTurn" });
+    expect(back.game).toBe(second.game);
+    expect(back.stepIndex).toBe(2);
+    expect(hostReducer(back, { type: "undoAction" }).game).toBe(attached.game);
+  });
+
+  it("skips a card's open prompt when undoing or redoing single actions", () => {
+    const step = (kind: string, checkpoint = false) =>
+      ({ game: { phase: { kind } }, log: [], viewerSeat: "p1", checkpoint, turnIndex: 0 }) as never;
+    // 0 start, 1 Trainer played (prompt open), 2 its pick resolved, 3 another action.
+    const steps = [
+      step("turn:action", true),
+      step("effect:choose"),
+      step("turn:action"),
+      step("turn:action"),
+    ];
+    const host = (stepIndex: number) =>
+      ({ steps, stepIndex }) as unknown as Parameters<typeof stepTarget>[0];
+    expect(stepTarget(host(2), "undoAction")).toBe(0);
+    expect(stepTarget(host(0), "redoAction")).toBe(2);
+    expect(stepTarget(host(3), "undoAction")).toBe(2);
+    expect(stepTarget(host(1), "undoAction")).toBe(0);
+    expect(stepTarget(host(2), "redoAction")).toBe(3);
   });
 
   it("keeps future turns after rejection and replaces them after a replayed action", () => {
