@@ -203,6 +203,10 @@ describe("Lua simulator", () => {
     expect(sim.host?.game.phase.kind).toBe("turn:action");
     expect(sim.host?.game.players[h.viewerSeat].bench).toHaveLength(1);
     expect(sim.menu).toBeNull();
+    // The search shuffled the deck: the header says so once, then clears.
+    expect(rows(publish)[0][19]).toBe("you");
+    sim.emit();
+    expect(rows(publish)[0][19]).toBe("");
   });
   it("dispatches attacks from the Active's attached actions and advances to the opponent", () => {
     const { sim, publish } = setup();

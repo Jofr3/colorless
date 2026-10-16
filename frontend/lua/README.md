@@ -224,11 +224,11 @@ red or chips blue when the game ends). The left column ports
 inside a thin `DYN_UI.MAIN` frame, so only its two side lines show. That
 dynamic colour follows the seat whose turn it is (player 1 blue, player 2 red,
 neutral grey with no game) and also tints the turn panel's header and body
-like the blind colour does. Inside: a turn panel in the HUD blind's shape (DynaText header,
-hint lines, your stake chip and a "Prizes left" box), the action panel in the
+like the blind colour does. Inside: a turn panel in the HUD blind's shape (a DynaText header naming the acting player
+over an empty body, reserved for later), the action panel in the
 hand area's slot (End turn above Undo action / Redo action / Undo turn / Redo
 turn, or Ready and the other setup buttons), the red GAME LOG / orange OPTIONS
-buttons, and Hand / Deck / Turn / Energy / Supporter counters. Undo and redo
+buttons, and P1 Hand / P2 Hand / Turn / Energy / Supporter counters. Undo and redo
 step through every accepted action; the turn buttons jump between the
 checkpoints that begin each turn, and both survive a reload. Everything on the table sits in
 CardArea wells (black 10%, `r=0.1`, plus a whisper of the seat colour: the
@@ -239,7 +239,9 @@ Actives stacked in the middle and the Stadium beside yours; the opponent's
 prizes, your deck and your discard down the right. Prizes are 2×3 grids of
 backs, the opponent's hand is a count on their bench strip, and your hand fans
 along the bottom with `align_cards`' rotation, arc and breathing. Decks use
-the shared `G.deck` pile; discards are a pile too, newest card face up.
+the shared `G.deck` pile; discards are a pile too, newest card face up. An
+action that shuffles a deck riffles its pile with `align_cards`' `shuffle_amt`
+(odd ranks slide and turn, twice) and the card-fan sound.
 In-play Pokémon show their attached cards the way a real table does: Energy
 cards tucked sideways behind the right edge, aligned to the bottom, Tools
 behind the left edge aligned to the top, each further card a little less
@@ -256,7 +258,10 @@ and Abilities live only here). Targeted actions
 `juice_card_until` and a white outline while everything else is tinted.
 Cards can also be dragged: hand cards onto the Active or Bench wells (attach,
 evolve, place), onto the Stadium slot, or onto the centre to play a Trainer;
-Bench cards reorder; the Active dropped on a Benched Pokémon retreats.
+Bench cards reorder; the Active dropped on a Benched Pokémon retreats, and
+so does a Benched Pokémon dropped on the Active spot. The retreat cost comes
+out of the attached Energy without a picker whenever every attached card is
+the same Energy.
 
 Host prompts render as `create_UIBox_generic_options` overlays or on the table
 itself: button lists, real card rows in the collection tray (searches, Energy
@@ -267,8 +272,8 @@ Save & back) and `create_UIBox_game_over`. Snapshot diffs drive the juice:
 damage and heals use `attention_text` with its growing backdrop square and the
 mult/chips sounds, KO'd Pokémon dissolve with burn colours, prizes pop in
 gold with the coin sound, errors pop in red with `cancel`, and new cards slide
-in from their deck. Hot-seat turns end with a handoff card that hides the next
-player's hand until Continue; the attack juice finishes first.
+in from their deck. A hot-seat flip passes the table straight to the next
+player once the attack juice lands, announced by the TURN banner.
 
 `LuaSimulator` reuses `hostReducer`, `redactGame`, `moveToAction` and the
 existing simulator saves. Lua receives the viewer's projection only, never
@@ -284,7 +289,7 @@ whoosh, win and glass sounds.
 Checks: `bun run test:run src/features/lua/simulator.test.ts`,
 `lua frontend/lua/tests/simulator.lua` and
 `lua frontend/lua/tests/simulator_draw.lua`. They exercise real setup and
-handoffs, redaction, stale actions, attachment drops, card-row prompts,
+hot-seat flips, redaction, stale actions, attachment drops, card-row prompts,
 attacks from attached rows, retreat picks, persistence, hand drags and drops,
-targeting, every menu kind, the handoff delay, the game-over screen and both
+targeting, every menu kind, the hot-seat flip, the game-over screen and both
 layouts, with the draw paths rendered against a stub LÖVE.

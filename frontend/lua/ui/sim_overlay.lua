@@ -1,7 +1,7 @@
 -- Overlay menus for the table: create_UIBox_generic_options (JOKER_GREY frame,
 -- 0.1 emboss, L_BLACK body, orange Back) holding engine prompts rendered as
 -- button lists or real card rows (the booster-pack picker), the coin flip,
--- the game log, discard piles, the options menu, hot-seat handoffs, a card
+-- the game log, discard piles, the options menu, a card
 -- inspector and the game-over screen (create_UIBox_game_over).
 local T=require('ui.theme')
 local Button=require('ui.button')
@@ -32,8 +32,7 @@ function Overlay.new(sim,kind,data)
   local self=setmetatable({sim=sim,kind=kind,data=data or {},controls={},cards={},page=1,pages=1,scroll=0,focus=0,hover=0,
     motion=Modal.motion(sim.reduced),pageText=PageText.new(),created=sim.time},Overlay)
   self.motion.T.y=0
-  local seat=(kind=='handoff') and (sim.viewerSeat=='p2' and T.red or T.blue) or nil
-  self.titleText=Dyna.new({string=self.data.title or '',scale=kind=='gameover' and 1.1 or kind=='handoff' and 0.8 or 0.62,colours={kind=='gameover' and (sim.outcome=='win' and T.blue or T.red) or seat or T.white},shadow=true,float=true,pop_in=kind=='gameover' and 0.4 or nil,pop_in_rate=kind=='gameover' and 2 or 8,time=sim.time,maxw=kind=='gameover' and 520 or 600})
+  self.titleText=Dyna.new({string=self.data.title or '',scale=kind=='gameover' and 1.1 or 0.62,colours={kind=='gameover' and (sim.outcome=='win' and T.blue or T.red) or T.white},shadow=true,float=true,pop_in=kind=='gameover' and 0.4 or nil,pop_in_rate=kind=='gameover' and 2 or 8,time=sim.time,maxw=kind=='gameover' and 520 or 600})
   self:layout()
   return self
 end
@@ -68,7 +67,6 @@ function Overlay:layout()
   elseif self.kind=='gameover' then w,h=p and 456 or 720,p and 620 or 560
   elseif self.kind=='log' then w,h=p and 456 or 760,p and 760 or 640
   elseif self.kind=='coin' then w,h=p and 420 or 560,p and 440 or 400
-  elseif self.kind=='handoff' then w,h=p and 400 or 520,p and 300 or 300
   elseif self.kind=='options' then w,h=p and 400 or 520,p and 520 or 500
   else
     -- Sized to the rows it holds: title band, note lines, up to seven
@@ -243,8 +241,6 @@ function Overlay:build()
       self:add(a.label,ax,ay+(i-1)*46,aw,38,'cardAction',a.colour,{token=a.token,disabled=a.disabled,fontSize=22,cardAction=a})
     end
     self:add('Back',x+24,bottom,bw,38,'back',T.orange,{fontSize=26})
-  elseif kind=='handoff' then
-    self:add(d.button or 'Continue',x+24,bottom,bw,40,'handoff',T.blue,{fontSize=28})
   elseif kind=='gameover' then
     local top=y+h-150
     if p then
@@ -277,8 +273,11 @@ function Overlay:update(dt,time,mx,my,reduced)
   self.hover=self:hit(mx,my)
   local ly=my-self:offset()
   for i,c in ipairs(self.cards) do
-    local active=false
+    local active,held=false,nil
     for _,b in ipairs(self.controls) do if b.card==c and (self.hover==i or self.controls[self.hover]==b or self.controls[self.focus]==b) then active=true end end
+    local pressed=self.controls[self.sim.pressedOverlay or 0]
+    if pressed and pressed.card==c then held=true end
+    c.held=held
     if active and not c.hovered then c:juiceUp(time,0.05,0.03,reduced);self.sim.callbacks.feedback('paper1',0.9+love.math.random()*0.2) end
     c.lift=c.item.selected and 0.2*190*c.baseScale or 0
     c:update(dt,time,active,reduced)
@@ -293,14 +292,20 @@ function Overlay:activate(i)
   local b=self.controls[i]
   if not b or b.disabled then return end
   local sim=self.sim
-  sim.callbacks.feedback('button')
   local a=b.action
+  if a=='card' then
+    -- Pack cards highlight on click: lift at once (the host's re-emit
+    -- confirms or reverts it) with cardSlide1, or drop with a quiet cardSlide2.
+    local item=b.card.item
+    item.selected=not item.selected
+    b.card:juiceUp(self.time,0.05,0.03,sim.reduced)
+    sim.callbacks.feedback(item.selected and 'cardSlide1' or 'cardSlide2',1,item.selected and 1 or 0.3)
+  else sim.callbacks.feedback('button') end
   if a=='invoke' or a=='card' then sim:invoke(b.token)
   elseif a=='back' then sim:closeOverlay(true)
   elseif a=='prev' or a=='next' then
     self.page=(self.page-1+(a=='prev' and -1 or 1)+self.pages)%self.pages+1
     self:build()
-  elseif a=='handoff' then sim:finishHandoff()
   elseif a=='settings' then sim:closeOverlay();sim.callbacks.settings()
   elseif a=='log' then sim:command('log')
   elseif a=='historyPrevious' then sim:command('history','previous')
@@ -316,7 +321,7 @@ end
 function Overlay:keypressed(key)
   local sim=self.sim
   if key=='escape' then
-    if self.kind=='handoff' then sim:finishHandoff() elseif not self.data.mandatory and self.kind~='gameover' then sim:closeOverlay(true) end
+    if not self.data.mandatory and self.kind~='gameover' then sim:closeOverlay(true) end
     return true
   end
   if key=='tab' or key=='left' or key=='right' or key=='up' or key=='down' then
@@ -346,7 +351,7 @@ function Overlay:draw(shaders)
   g.push();g.translate(0,self:offset())
   frame(x,y,w,h)
   local kind=self.kind
-  if kind~='inspect' and kind~='handoff' and kind~='gameover' then self.titleText:draw(x+w/2,y+38,rw) end
+  if kind~='inspect' and kind~='gameover' then self.titleText:draw(x+w/2,y+38,rw) end
   if kind=='list' then
     local top=y+74
     for i=1,math.min(4,#(self.noteLines or {})) do Dyna.static(self.noteLines[i],0.3,x+32,top+(i-1)*18,w-64,18,JOKER_GREY,{roomWidth=rw}) end
@@ -360,10 +365,7 @@ function Overlay:draw(shaders)
     Button.panel(tx,ty+3,tw,th,{T.panel[1]*0.7,T.panel[2]*0.7,T.panel[3]*0.7,1})
     Button.panel(tx,ty,tw,th,T.panel)
     for _,c in ipairs(self.cards) do
-      if c.item.selected then
-        g.setLineWidth(2)
-        Button.outline(c.x-71*c.baseScale*c.motion.VT.scale-3,c.y-95*c.baseScale*c.motion.VT.scale-3,142*c.baseScale*c.motion.VT.scale+6,190*c.baseScale*c.motion.VT.scale+6,T.white,1.2)
-      end
+      -- Selected cards lift (c.lift) rather than taking an outline, as in Balatro's hand.
       c:draw(shaders,self.time or 0,sim.mx or 0,(sim.my or 0)-self:offset(),sim.reduced,rw)
       if c.item.disabled and kind=='cards' then g.setColor(0,0,0,0.35);g.rectangle('fill',c.x-71*c.baseScale,c.y-95*c.baseScale,142*c.baseScale,190*c.baseScale) end
       local o=d.options[c.option]
@@ -430,11 +432,6 @@ function Overlay:draw(shaders)
       local py=p and y+40+190*(c and c.baseScale or 1.2)+12 or y+36
       self.popup.draw(px,py)
     end
-  elseif kind=='handoff' then
-    Dyna.static('PASS THE TABLE TO',0.36,x+24,y+40,w-48,20,JOKER_GREY,{roomWidth=rw})
-    self.titleText:draw(x+w/2,y+100,rw)
-    Dyna.static(d.note or '',0.3,x+24,y+150,w-48,18,T.white,{roomWidth=rw,fit=true})
-    Dyna.static('Keep your hand hidden until the other player looks away.',0.24,x+24,y+180,w-48,14,JOKER_GREY,{roomWidth=rw,fit=true,shadow=false})
   elseif kind=='gameover' then
     self.titleText:draw(x+w/2,y+60,rw)
     -- Stats: BLACK box, emboss 0.05, rows of label / value like round_scores_row.

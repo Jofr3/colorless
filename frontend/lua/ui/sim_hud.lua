@@ -31,10 +31,11 @@ local function emboss(x,y,w,h,colour,r,hovered)
 end
 function Hud.new()
   local self=setmetatable({},Hud)
-  self.turnText=Dyna.new({string='SETUP',scale=0.64,colours={LIGHT},shadow=true,rotate=true,float=true,silent=true,maxw=230,pop_in=0})
+  self.turnText=Dyna.new({string='Setup',scale=0.64,colours={LIGHT},shadow=true,rotate=true,float=true,silent=true,maxw=230,pop_in=0})
   self.prizeText=Dyna.new({string='6',scale=0.9,colours={T.red},shadow=true,maxw=120})
-  self.handText=Dyna.new({string='0',scale=0.8,colours={T.blue},shadow=true,rotate=true})
-  self.deckText=Dyna.new({string='0',scale=0.8,colours={T.red},shadow=true,rotate=true})
+  -- Hand sizes by seat (the hot-seat table has no fixed "you"): P1 blue, P2 red.
+  self.p1HandText=Dyna.new({string='0',scale=0.8,colours={T.blue},shadow=true,rotate=true})
+  self.p2HandText=Dyna.new({string='0',scale=0.8,colours={T.red},shadow=true,rotate=true})
   self.turnCount=Dyna.new({string='0',scale=0.88,colours={MONEY},shadow=true,bump=true,spacing=2})
   self.values={};self.inited={}
   self.hint='';self.oppName='';self.allow={};self.hasActive=false
@@ -44,14 +45,17 @@ function Hud.new()
   self.dynDark=mix(self.dyn,BLACK,0.4)
   return self
 end
+-- The blind name slot names the player whose turn it is (the hot-seat table
+-- has no fixed "you"), so the header reads "PLAYER 2" in their colour.
 local function statusLabel(sim)
-  if sim.phase~='ready' then return 'NO GAME' end
-  if sim.outcome~='' then return sim.outcome=='win' and 'VICTORY' or sim.outcome=='loss' and 'DEFEAT' or 'DRAW' end
-  if sim.gamePhase:sub(1,6)=='setup:' then return 'SETUP' end
-  if sim.gamePhase=='ko:takePrizes' or sim.gamePhase=='ko:promote' then return sim.waiting=='you' and 'YOUR MOVE' or 'WAITING' end
-  if sim.activePlayer=='you' then return 'YOUR TURN' end
-  if sim.activePlayer=='opponent' then return 'OPPONENT' end
-  return 'YOUR MOVE'
+  if sim.phase~='ready' then return 'No game' end
+  if sim.outcome~='' then return sim.outcome=='win' and 'Victory' or sim.outcome=='loss' and 'Defeat' or 'Draw' end
+  local viewer=sim.you or 'Player'
+  if sim.gamePhase:sub(1,6)=='setup:' then return viewer..' setup' end
+  if sim.gamePhase=='ko:takePrizes' or sim.gamePhase=='ko:promote' then return sim.waiting=='you' and viewer or 'Waiting' end
+  if sim.activePlayer=='you' then return viewer end
+  if sim.activePlayer=='opponent' then return sim.opponent or 'Opponent' end
+  return viewer
 end
 -- Pull live numbers; DynaTexts re-pop when their string changes, and a
 -- change in HP or prizes pulses the number like ease_chips/ease_dollars.
@@ -71,8 +75,10 @@ function Hud:sync(sim,time)
   end
   set(self.turnText,statusLabel(sim))
   set(self.prizeText,you.prizes,true)
-  set(self.handText,you.hand,true)
-  set(self.deckText,you.deck,true)
+  local p1,p2=you,opp
+  if sim.viewerSeat=='p2' then p1,p2=opp,you end
+  set(self.p1HandText,p1.hand,true)
+  set(self.p2HandText,p2.hand,true)
   set(self.turnCount,sim.turn or 0,true)
   self.hint=sim.hint or ''
   self.oppName=sim.opponent or ''
@@ -97,19 +103,19 @@ function Hud:update(dt,time,reduced)
   local k=math.min(1,dt*8)
   for ch=1,3 do self.dyn[ch]=self.dyn[ch]+(self.dynTarget[ch]-self.dyn[ch])*k end
   self.dynDark=mix(self.dyn,BLACK,0.4)
-  for _,t in ipairs({self.turnText,self.prizeText,self.handText,self.deckText,self.turnCount}) do t:update(time,reduced) end
+  for _,t in ipairs({self.turnText,self.prizeText,self.p1HandText,self.p2HandText,self.turnCount}) do t:update(time,reduced) end
 end
 -- Button rectangles the page registers as controls (Run Info / Options).
 function Hud:buttons(L)
   local x,y,w=L.hud.x,L.hud.y,L.hud.w
   if L.portrait then
-    return {log={x=x+w-150,y=y+8,w=68,h=46,label='LOG',colour=T.red,fontSize=20},
-            options={x=x+w-76,y=y+8,w=68,h=46,label='OPTIONS',colour=T.orange,fontSize=16}}
+    return {log={x=x+w-150,y=y+8,w=68,h=46,label='Log',colour=T.red,fontSize=20},
+            options={x=x+w-76,y=y+8,w=68,h=46,label='Options',colour=T.orange,fontSize=16}}
   end
   local top=self:top(L)+390
   local ix,iw=x+10,w-20
-  return {log={x=x+18,y=top,w=96,h=90,lines={'GAME','LOG'},colour=T.red},
-          options={x=x+18,y=top+100,w=96,h=78,lines={'OPTIONS'},colour=T.orange},
+  return {log={x=x+18,y=top,w=96,h=90,lines={'Game','log'},colour=T.red},
+          options={x=x+18,y=top+100,w=96,h=78,lines={'Options'},colour=T.orange},
           cluster={x=ix+8,y=self:top(L)+226+10+8,w=iw-16,h=128}}
 end
 local function cell(x,y,w,h,label,text,roomWidth,time,reduced)
@@ -140,29 +146,10 @@ function Hud:draw(sim,L,time,reduced,hovered)
   Button.panel(ix+3,cy,iw-6,42,self.dyn,2.4)
   self.turnText.cfg.maxw=230
   self.turnText:draw(ix+iw/2,cy+20,rw)
+  -- The body under the name (the blind's debuff text and score box) is
+  -- intentionally empty for now.
   local body=cy+48
   Button.panel(ix+3,body,iw-6,th-52,self.dynDark,2.4)
-  do -- hint lines, maxw 4.2 tiles, scale 0.36
-    local lines=Dyna.wrap(self.hint,0.28,iw-20)
-    for i=1,math.min(3,#lines) do Dyna.static(lines[i],0.28,ix+10,body+4+(i-1)*16,iw-20,16,LIGHT,{roomWidth=rw}) end
-  end
-  do -- chip + "Prizes left" box (ph_blind_score_at_least)
-    local chipX,chipY=ix+44,body+118
-    local mine=self.activeOwner~='opponent'
-    local px=(chipX-rw/2)/(rw/2)*1.5
-    if not Sprites.chip(mine and Sprites.BLUE or Sprites.RED,chipX,chipY,72,reduced and 0 or math.sin(time*0.8)*0.08,1,px,0.1) then
-      g.setColor(mine and T.blue or T.red);g.circle('fill',chipX,chipY,34,8)
-    end
-    local bx,bw,bh=ix+86,iw-94,118
-    local by=body+56
-    emboss(bx,by,bw,bh,BLACK,1.2)
-    Dyna.static('Prizes left',0.3,bx,by+6,bw,16,LIGHT,{roomWidth=rw})
-    local chipR=10
-    local numW=Dyna.measure(self.prizeText.string,self.prizeText.scale)
-    Sprites.chip(Sprites.BLUE,bx+bw/2-numW/2-chipR-4,by+54,chipR*2,0,1,px,0.05)
-    self.prizeText:draw(bx+bw/2+chipR,by+54,rw)
-    Dyna.static(sim.phase=='ready' and 'take them all to win' or 'no game',0.26,bx,by+96,bw,14,JOKER_GREY,{roomWidth=rw,shadow=false})
-  end
   cy=cy+th+10
   -- 3. Action panel (hand_text_area's slot): the page draws the turn's
   -- Attack / End turn / Retreat / Abilities buttons inside this dark box.
@@ -176,12 +163,12 @@ function Hud:draw(sim,L,time,reduced,hovered)
     local gx=ix+112
     local gw=iw-112
     local cw=(gw-8)/2
-    cell(gx,cy,cw,66,'Hand',self.handText,rw,time,reduced)
-    cell(gx+cw+8,cy,cw,66,'Deck',self.deckText,rw,time,reduced)
+    cell(gx,cy,cw,66,'P1 Hand',self.p1HandText,rw,time,reduced)
+    cell(gx+cw+8,cy,cw,66,'P2 Hand',self.p2HandText,rw,time,reduced)
     cy=cy+74
     emboss(gx,cy,gw,60,BOSS_MAIN,1.2)
     Button.panel(gx+6,cy+6,gw-12,48,BOSS_DARK,1.2)
-    Dyna.static('TURN',0.3,gx+10,cy+8,50,14,LIGHT,{align='left',roomWidth=rw})
+    Dyna.static('Turn',0.3,gx+10,cy+8,50,14,LIGHT,{align='left',roomWidth=rw})
     self.turnCount:draw(gx+gw/2+14,cy+32,rw)
     cy=cy+68
     local function flag(xx,label,on)
@@ -213,8 +200,8 @@ function Hud:drawPortrait(sim,L,time,reduced,hovered)
     text:draw(xx+32,yy+28,rw)
     text.scale=keep
   end
-  mini(ix,y+72,'Hand',self.handText)
-  mini(ix+70,y+72,'Deck',self.deckText)
+  mini(ix,y+72,'P1 Hand',self.p1HandText)
+  mini(ix+70,y+72,'P2 Hand',self.p2HandText)
   mini(ix+140,y+72,'Turn',self.turnCount)
   emboss(ix+166,y+10,70,42,BLACK,1.2)
   Dyna.static('Prizes',0.24,ix+166,y+12,70,12,LIGHT,{roomWidth=rw})

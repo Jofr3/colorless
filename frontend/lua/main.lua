@@ -26,11 +26,11 @@ local menu = {
   {label='Decks', route='/decks', colour=T.paleGreen, description='Build your next winning hand'},
 }
 local quiet={paper1=0.35,multhit1=0.7,multhit2=0.7,coin1=0.6,coin3=0.6,glass2=0.5,cardFan2=0.5,whoosh=0.5,win=0.7,tarot2=0.4}
-local function sound(name,pitch)
+local function sound(name,pitch,volume)
   if state.muted then return end
   local s=sounds[name]
   if not s then return end
-  s:stop(); s:setPitch(pitch or 1); s:setVolume((quiet[name] or 0.6)*preferences.volume/100*preferences.effectsVolume/100); s:play()
+  s:stop(); s:setPitch(pitch or 1); s:setVolume((quiet[name] or 0.6)*(volume or 1)*preferences.volume/100*preferences.effectsVolume/100); s:play()
 end
 local function announce(text) print('LUMINOUS:announce:'..text) end
 local function layout(w,h)
@@ -196,7 +196,7 @@ function love.load()
   sounds.music1:setLooping(true); sounds.music1:setVolume(0.16)
   library=Library.new({
     command=function(command) print('LUMINOUS:library:'..command) end,
-    feedback=function(name,pitch) sound(name,pitch) end,
+    feedback=function(name,pitch,volume) sound(name,pitch,volume) end,
     announce=announce,
     refresh=function() print('LUMINOUS:account:refresh') end,
     home=function() print('LUMINOUS:page:home') end,
@@ -205,20 +205,20 @@ function love.load()
   })
   builder=Builder.new({
     command=function(command) print('LUMINOUS:builder:'..command) end,
-    feedback=function(name,pitch) sound(name,pitch) end,
+    feedback=function(name,pitch,volume) sound(name,pitch,volume) end,
     announce=announce,
     signin=function() openSettings(false,4); popup:openAuth('login') end,
   })
   sandbox=Sandbox.new({
     command=function(command) print('LUMINOUS:sandbox:'..command) end,
-    feedback=function(name,pitch) sound(name,pitch) end,
+    feedback=function(name,pitch,volume) sound(name,pitch,volume) end,
     announce=announce,
     refresh=function() print('LUMINOUS:account:refresh') end,
     home=function() print('LUMINOUS:page:home') end,
     decks=function() print('LUMINOUS:page:decks') end,
     signin=function() openSettings(false,4); popup:openAuth('login') end,
   })
-  simulator=Simulator.new({command=function(command) print('LUMINOUS:simulator:'..command) end, feedback=function(name,pitch) sound(name,pitch) end, announce=announce, settings=function() openSettings() end, jiggle=function(amount) room.jiggle=room.jiggle+(amount or 1) end})
+  simulator=Simulator.new({command=function(command) print('LUMINOUS:simulator:'..command) end, feedback=function(name,pitch,volume) sound(name,pitch,volume) end, announce=announce, settings=function() openSettings() end, jiggle=function(amount) room.jiggle=room.jiggle+(amount or 1) end})
   layout(g.getDimensions())
   browserState()
   state.ready=true

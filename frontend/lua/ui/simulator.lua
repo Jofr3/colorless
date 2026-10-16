@@ -43,11 +43,12 @@ function Simulator:command(...)
   self.callbacks.command(table.concat(fields,'\t'))
 end
 function Simulator:open(reduced)
-  self.reduced=reduced;self.drag=nil;self.focus=0;self.raw=nil;self.previous=nil;self.highlight=nil;self.targeting=nil;self.luaTargeting=nil;self.pendingHandoff=nil
+  self.reduced=reduced;self.drag=nil;self.focus=0;self.raw=nil;self.previous=nil;self.highlight=nil;self.targeting=nil;self.luaTargeting=nil
   if self.overlay then self.overlay:release();self.overlay=nil end
   -- Forget the last game so a reopened page never diffs against it.
   for _,c in ipairs(self.cards) do c.texture:release() end
   for _,c in ipairs(self.ghosts) do c.texture:release() end
+  for _,p in pairs(self.pendingPiles or {}) do p.texture:release() end;self.pendingPiles={}
   self.cards={};self.byUid={};self.ghosts={};self.items={};self.sides={};self.actions={};self.cardActions={}
   self.phase='empty';self.viewerSeat='';self.outcome='';self.menu=nil;self.menuId=nil;self.message='';self.turn=0
   self.fx:clear();self.fx:background('setup',true)
@@ -123,6 +124,7 @@ function Simulator:sync(raw)
   self.waiting,self.activePlayer,self.viewerSeat=f[12] or '',f[13] or '',f[14] or ''
   self.allow={energy=f[15]=='1',supporter=f[16]=='1',retreated=f[17]=='1'}
   self.outcome,self.outcomeDetail=f[18] or '',f[19] or ''
+  self.shuffled=f[20] or ''
   self.items={};self.sides={};self.actions={};self.cardActions={};self.info=self.info or {}
   local menu
   for i=2,#rows do
@@ -162,6 +164,19 @@ function Simulator:sync(raw)
   self:placeCards(false,previous)
   self:react(previous)
   self:applyMenu(previous)
+  -- A shuffle riffles the owner's deck pile (CardArea shuffle_amt), with the
+  -- fan sound; the riffle survives a snapshot arriving mid-animation.
+  if self.shuffled~='' and self.revision~=previous.revision then
+    self.shuffleAt=self.shuffleAt or {}
+    for _,owner in ipairs({'you','opponent'}) do
+      if self.shuffled=='both' or self.shuffled==owner then self.shuffleAt[owner]=self.time end
+    end
+    if not self.reduced then self.callbacks.feedback('cardFan2',0.95+love.math.random()*0.1) end
+  end
+  for _,p in ipairs(self.piles) do
+    local at=self.shuffleAt and self.shuffleAt[p.owner]
+    if p.item.kind=='deck' and at and self.time-at<Pile.SHUFFLE_TIME then p:shuffle(at) end
+  end
   self.hud:sync(self,self.time)
   self:build()
   self.callbacks.announce(self.message~='' and self.message or (menu and menu.title) or self.title)
@@ -198,6 +213,35 @@ function Simulator:placeCards(resize,previous)
     end
   end
   if previous and previous.items then for _,it in ipairs(previous.items) do prevByUid[it.owner..':'..it.id]=it end end
+  -- Where a card attached to a Pokémon was last seen: under that Pokémon.
+  -- A discarded Energy or Tool starts its slide there, together with the
+  -- retreat or swap that paid it, not from the hand.
+  local attachedFrom={}
+  if previous and previous.items then
+    for _,it in ipairs(previous.items) do
+      local host=old[it.owner..':'..it.id]
+      if host then
+        for _,list in ipairs({it.energyCards or {},it.toolCards or {}}) do
+          for _,a in ipairs(list) do attachedFrom[it.owner..':'..a.id]={x=host.x,y=host.y} end
+        end
+      end
+    end
+  end
+  -- Evolution gives the in-play stack the new top card's uid. A Pokémon that
+  -- appears on a spot whose previous occupant is nowhere in this snapshot is
+  -- that occupant evolved: it takes over the old card's place rather than
+  -- sliding in while the Basic ghosts to the discard.
+  local nowByUid={}
+  for _,it in ipairs(self.items) do nowByUid[it.owner..':'..it.id]=it end
+  local prevBySpot,occupied={},{}
+  if previous and previous.items then
+    for _,it in ipairs(previous.items) do
+      if it.zone=='active' or it.zone=='bench' then
+        occupied[it.owner..':'..it.zone..':'..it.index]=true
+        if not nowByUid[it.owner..':'..it.id] then prevBySpot[it.owner..':'..it.zone..':'..it.index]=it end
+      end
+    end
+  end
   local youPrizesTaken=previous and previous.sides and previous.sides.you and self.sides.you and self.sides.you.prizes<previous.sides.you.prizes
   -- A hot-seat flip mirrors the whole table: every card is re-created in
   -- place, with no entrance slide and no ghosts.
@@ -213,7 +257,7 @@ function Simulator:placeCards(resize,previous)
       -- as a short-lived ghost. Cards leaving the table already ghost there.
       local prev=prevByUid[item.owner..':'..item.id]
       if not fresh and previous.items and not resize and not flipped and not self.reduced and (not prev or prev.zone=='hand') then
-        local from=L.zones[prefix(item.owner)..'hand']
+        local from=attachedFrom[item.owner..':'..item.id] or L.zones[prefix(item.owner)..'hand']
         local c=self:newCard(item,i,from.x,from.y,zone.scale)
         c.ghost={start=self.time,target=zone}
         self.ghosts[#self.ghosts+1]=c
@@ -231,6 +275,21 @@ function Simulator:placeCards(resize,previous)
       local key=item.owner..':'..item.id
       local c=old[key];old[key]=nil
       if c and (c.item.cardId~=item.cardId or c.item.hidden~=item.hidden) then c.texture:release();c=nil end
+      if (item.zone=='active' or item.zone=='bench') and not item.hidden then
+        local was=prevBySpot[item.owner..':'..item.zone..':'..item.index]
+        local oldKey=was and (item.owner..':'..was.id)
+        if oldKey and old[oldKey] then
+          item.evolvedFrom=was
+          if c then
+            -- The Stage card slides from the hand onto the spot; the Basic
+            -- underneath simply stops being drawn.
+            old[oldKey].texture:release();old[oldKey]=nil
+          else
+            c=old[oldKey];old[oldKey]=nil
+            c.texture:release();c.item=item;c.index=i;c:rebuild()
+          end
+        end
+      end
       if not c then
         c=self:newCard(item,i,x,y,scale)
         local prev=prevByUid[key]
@@ -239,6 +298,10 @@ function Simulator:placeCards(resize,previous)
           local from
           if item.zone=='hand' then from=youPrizesTaken and item.owner=='you' and L.zones.you_prizes or L.zones[prefix(item.owner)..'deck']
           elseif item.zone=='discard' then from=prev and L.zones[prefix(item.owner)..prev.zone] or L.zones[prefix(item.owner)..'hand']
+          elseif (item.zone=='active' or item.zone=='bench') and occupied[item.owner..':'..item.zone..':'..item.index] then
+            -- A Pokémon reappearing on an occupied spot (an undone evolution
+            -- putting the Basic back) was there all along: no entrance.
+            from=nil
           elseif item.owner=='opponent' then from=L.zones.opp_hand
           else from=L.zones.you_deck end
           if from then c.motion.VT.x=from.x/c.unit;c.motion.VT.y=from.y/c.unit end
@@ -292,8 +355,18 @@ function Simulator:placeCards(resize,previous)
     end
   end
   for uid,c in pairs(self.attached) do if not keep[uid] then c.texture:release();self.attached[uid]=nil end end
-  -- Deck piles, and the discard piles showing their top card face up.
-  for _,p in ipairs(self.piles) do p.texture:release() end;self.piles={}
+  -- Deck piles, and the discard piles showing their top card face up. A
+  -- discard pile with a card still sliding towards it keeps its old face and
+  -- count until that card lands (the new pile waits in `pendingPiles`).
+  local oldPiles={}
+  for _,p in ipairs(self.piles) do oldPiles[p.owner..':'..p.item.kind]=p end
+  self.piles={};self.pendingPiles=self.pendingPiles or {}
+  local landing={}
+  for _,c in ipairs(self.ghosts) do
+    if c.ghost and c.ghost.target and not c.ghost.koed and self.time-c.ghost.start<0.7 then
+      landing[(c.item.owner=='global' and 'you' or c.item.owner)]=true
+    end
+  end
   for _,owner in ipairs({'opponent','you'}) do
     local side=self.sides[owner]
     local zone=L.zones[prefix(owner)..'deck']
@@ -308,9 +381,18 @@ function Simulator:placeCards(resize,previous)
     if side and dzone and top then
       local item={id=owner..'discard',owner=owner,kind='discard',count=math.max(1,side.discard),name='Discard',drawFace=function(w,h) self:face(top,w,h) end}
       local p=Pile.new(item,1);p:place(dzone.x,dzone.y,dzone.scale,false,self.boardW);p.owner=owner;p.topItem=top
-      self.piles[#self.piles+1]=p
+      if landing[owner] and not resize then
+        if self.pendingPiles[owner] then self.pendingPiles[owner].texture:release() end
+        self.pendingPiles[owner]=p
+        local keep=oldPiles[owner..':discard']
+        if keep then self.piles[#self.piles+1]=keep;oldPiles[owner..':discard']=nil end
+      else
+        self.piles[#self.piles+1]=p
+        if self.pendingPiles[owner] then self.pendingPiles[owner].texture:release();self.pendingPiles[owner]=nil end
+      end
     end
   end
+  for _,p in pairs(oldPiles) do p.texture:release() end
 end
 -- Diff the previous snapshot into juice: damage pops, heals, KO sounds,
 -- prize chips, errors and background colour.
@@ -370,6 +452,12 @@ function Simulator:react(previous)
         end)
         delay=0.3
       end
+    elseif c and not was and item.evolvedFrom then
+      fx:after(delay,function()
+        fx:attention({text='Evolved',scale=0.6,colour=T.white,backdrop=T.blue,follow=function() return c.x,c.y end,offsetY=-0.15*190*c.baseScale,hold=0.8,sound='highlight1'})
+        c:juiceUp(self.time,0.5,0.1,self.reduced)
+      end)
+      delay=0.3
     elseif c and not was and (item.zone=='bench' or item.zone=='active') and not item.hidden then
       self.callbacks.feedback('cardSlide1',1)
     elseif c and not was and item.zone=='hand' and item.owner=='you' and not self.reduced then
@@ -397,19 +485,16 @@ function Simulator:react(previous)
       delay=0.4
     end
   end
-  local handoff=self.viewerSeat~=previous.viewerSeat and previous.viewerSeat~='' and self.outcome==''
-  if self.turn~=previous.turn and self.turn>0 and self.gamePhase=='turn:action' and not handoff then
+  -- A hot-seat flip passes the table straight to the next player: the
+  -- TURN banner (after the attack juice) is the only announcement.
+  local flipped=self.viewerSeat~=previous.viewerSeat and previous.viewerSeat~=''
+  if (self.turn~=previous.turn or flipped) and self.turn>0 and self.gamePhase=='turn:action' and self.outcome=='' then
     fx:after(delay,function()
       fx:attention({text='TURN '..self.turn,scale=0.9,colour=T.white,backdrop=self.activePlayer=='you' and T.blue or T.red,x=L.banner.x,y=L.banner.y,hold=0.9,sound='cardFan2',jiggle=1})
     end)
   end
   if self.outcome~='' and self.outcome~=previous.outcome then
     fx:after(delay+0.3,function() self:openGameOver() end)
-  elseif handoff then
-    -- Let the attack juice land before the table is passed; the next
-    -- player's hand stays hidden meanwhile.
-    self.pendingHandoff=true
-    fx:after(delay+(delay>0 and 0.6 or 0),function() self:openHandoff() end)
   end
 end
 function Simulator:openGameOver()
@@ -428,38 +513,15 @@ function Simulator:openGameOver()
   self.callbacks.feedback(self.outcome=='win' and 'win' or 'cancel',self.outcome=='win' and 1 or 0.8)
   if self.callbacks.jiggle then self.callbacks.jiggle(2) end
 end
-function Simulator:openHandoff()
-  -- Coin flips show first; the handoff follows once they are dismissed.
-  if self.overlay and self.overlay.kind=='coin' then self.pendingHandoff=true;self.handoffAfterCoin=true;return end
-  self.pendingHandoff=nil
-  if self.overlay and self.overlay.kind=='gameover' then return end
-  if self.overlay then self.overlay:release() end
-  self.targeting=nil
-  self.overlay=Overlay.new(self,'handoff',{title=(self.you or 'Player'):upper(),note='Turn '..tostring(self.turn)..(self.gamePhase:sub(1,6)=='setup:' and ' · Setup' or ''),mandatory=true,button='Continue'})
-  self.callbacks.feedback('whoosh',1)
-end
-function Simulator:finishHandoff()
-  if self.overlay and self.overlay.kind=='handoff' then
-    self.overlay:release();self.overlay=nil
-    self.callbacks.feedback('cardFan2',1)
-    if self.callbacks.jiggle then self.callbacks.jiggle(1) end
-    if self.gamePhase=='turn:action' and self.turn>0 then
-      self.fx:attention({text='TURN '..self.turn,scale=0.9,colour=T.white,backdrop=self.activePlayer=='you' and T.blue or T.red,x=self.L.banner.x,y=self.L.banner.y,hold=0.9})
-    end
-    self:applyMenu({menuId=nil})
-    self:build()
-  end
-end
 -- Menus from the host become overlays, or (for board targets and prizes)
 -- a targeting banner over the live table.
 function Simulator:applyMenu(previous)
   local menu=self.menu
-  if self.overlay and (self.overlay.kind=='handoff' or self.overlay.kind=='gameover') and not (menu and menu.kind=='coin') then return end
+  if self.overlay and self.overlay.kind=='gameover' and not (menu and menu.kind=='coin') then return end
   if not menu then
     if self.overlay and self.overlay.kind~='options' and self.overlay.kind~='inspect' and self.overlay.kind~='gameover' then
       local kind=self.overlay.kind
       self.overlay:release();self.overlay=nil
-      if kind=='coin' and self.handoffAfterCoin then self.handoffAfterCoin=nil;self:openHandoff() end
     end
     self.targeting=nil
     return
@@ -525,8 +587,8 @@ function Simulator:build()
     end
   else
     local y=cl.y
-    for _,a in ipairs(primaries) do self:add(a.label,cl.x,y,cl.w,44,'invoke',a.colour,{token=a.token,disabled=a.disabled,fontSize=24,uppercase=true});y=y+50 end
-    for _,a in ipairs(dangers) do self:add(a.label,cl.x,y,cl.w,40,'invoke',a.colour,{token=a.token,disabled=a.disabled,fontSize=22,uppercase=true});y=y+46 end
+    for _,a in ipairs(primaries) do self:add(a.label,cl.x,y,cl.w,44,'invoke',a.colour,{token=a.token,disabled=a.disabled,fontSize=24});y=y+50 end
+    for _,a in ipairs(dangers) do self:add(a.label,cl.x,y,cl.w,40,'invoke',a.colour,{token=a.token,disabled=a.disabled,fontSize=22});y=y+46 end
     -- With one tall button (Ready / Choose decks) the panel still looks filled.
     if #primaries+#dangers==1 and #minors==0 then self.controls[#self.controls].h=56;self.controls[#self.controls].y=cl.y+(cl.h-56)/2 end
     local n=#minors
@@ -685,6 +747,7 @@ function Simulator:update(dt,time,mx,my,reduced)
   for _,c in ipairs(self.cards) do
     local active=not blocked and (c==hovered or self.focusCard==c)
     if active and not c.hovered then c:juiceUp(time,0.05,0.03,reduced);self.callbacks.feedback('paper1',0.9+love.math.random()*0.2) end
+    c.held=(self.drag~=nil and self.drag.card==c) or nil
     local breathe=reduced and 0 or 1
     if c.fan then
       local sign=c.item.owner=='opponent' and -1 or 1
@@ -714,7 +777,16 @@ function Simulator:update(dt,time,mx,my,reduced)
     else
       if c.ghost.target then c.homeX,c.homeY=c.ghost.target.x,c.ghost.target.y;c.motion.T.r=0 end
       c:update(dt,time,false,reduced)
-      if age>0.7 then c.texture:release();table.remove(self.ghosts,i) end
+      if age>0.7 then
+        c.texture:release();table.remove(self.ghosts,i)
+        -- The card has landed: the pile it joined shows its new face.
+        local owner=c.item.owner=='global' and 'you' or c.item.owner
+        local pending=self.pendingPiles and self.pendingPiles[owner]
+        if pending then
+          for k=#self.piles,1,-1 do local p=self.piles[k];if p.owner==owner and p.item.kind=='discard' then p.texture:release();table.remove(self.piles,k) end end
+          self.piles[#self.piles+1]=pending;self.pendingPiles[owner]=nil
+        end
+      end
     end
   end
   for _,p in ipairs(self.piles) do p:update(dt,time,false,reduced,self.boardW) end
@@ -744,6 +816,9 @@ function Simulator:dropZoneAt(x,y,card)
       local count=0;for _,c in ipairs(self.cards) do if c.item.owner=='you' and c.item.zone=='bench' then count=count+1 end end
       return {zone='bench',index=math.min(count-1,Layout.benchIndex(Z.you_bench,count,x)),well=Z.you_bench.well}
     end
+    -- A Benched Pokémon dropped on the Active spot swaps in: the Active
+    -- retreats to this one, paying its cost from the attached Energy.
+    if Layout.inside(Z.you_active.well,x,y) then return {zone='retreat',index=item.index,well=Z.you_active.well} end
   elseif item.zone=='active' then
     for _,c in ipairs(self.cards) do if c.item.owner=='you' and c.item.zone=='bench' and c:hit(x,y) then return {zone='retreat',index=c.item.index,well=Z.you_bench.well,card=c} end end
     if Layout.inside(Z.you_bench.well,x,y) then return {zone='retreat',index=-1,well=Z.you_bench.well} end
@@ -805,7 +880,6 @@ function Simulator:mousepressed(x,y)
   x,y=self:point(x,y);self.focus=0;self.focusCard=nil
   if self.peek then self.peek=false;return end
   if self.overlay then self.pressedOverlay=self.overlay:hit(x,y);return end
-  if self.pendingHandoff then return end
   self.pressed=self:hit(x,y)
   if self.pressed>0 then return end
   local c=self:cardHit(x,y)
@@ -855,9 +929,13 @@ function Simulator:mousereleased(x,y)
     elseif c.item.zone=='discard' then self.callbacks.feedback('cardSlide2',1);self:command('pile',c.item.owner)
     elseif c.item.hidden then c:juiceUp(self.time,nil,nil,self.reduced)
     else
-      c:juiceUp(self.time,nil,nil,self.reduced)
-      self.callbacks.feedback('cardSlide1',1.05)
-      self.highlight=(self.highlight==c) and nil or c
+      -- Card:click lifts the card 0.2 card heights (cardSlide1 to select, a
+      -- quiet cardSlide2 to drop), with the hover-sized Card:juice_up(0.05,0.03)
+      -- wobble the real game shows on a pick.
+      local selecting=self.highlight~=c
+      c:juiceUp(self.time,0.05,0.03,self.reduced)
+      self.callbacks.feedback(selecting and 'cardSlide1' or 'cardSlide2',1,selecting and 1 or 0.3)
+      self.highlight=selecting and c or nil
       self:build()
     end
   end
@@ -963,11 +1041,13 @@ end
 function Simulator:drawCard(c,shaders,rw)
   self:drawAttached(c)
   c:draw(shaders,self.time,self.mx or 0,self.my or 0,self.reduced,rw)
-  if self:isCandidate(c) or c==self.highlight then
+  -- Targetable cards get the focus outline; the clicked card only lifts,
+  -- like a selected card in Balatro's hand.
+  if self:isCandidate(c) then
     local scale=c.baseScale*c.motion.VT.scale
     g.setLineWidth(2)
     g.push();g.translate(c.x,c.y);g.rotate(c.angle)
-    Button.outline(-71*scale-3,-95*scale-3,142*scale+6,190*scale+6,c==self.highlight and T.white or T.white,1.2)
+    Button.outline(-71*scale-3,-95*scale-3,142*scale+6,190*scale+6,T.white,1.2)
     g.pop()
   end
   self:drawBadges(c,rw)
@@ -987,11 +1067,12 @@ function Simulator:drawPrizes(owner,rw)
         for _,o in ipairs(self.targeting.menu.options) do if o.uid=='prize:'..i then selected=o.selected end end
       end
       local bob=(self.targeting and self.targeting.menu.kind=='prizes' and owner=='you' and not self.reduced) and math.sin(self.time*6+i)*2 or 0
+      -- A selected prize lifts like a highlighted hand card instead of taking an outline.
+      if selected then bob=bob+0.2*h end
       g.push();g.translate(px-w/2,py-h/2-bob)
       g.setColor(0,0,0,0.3);g.push();g.translate(0,3);Library.face(self,{},w,h);g.pop()
       Library.face(self,{},w,h)
       g.pop()
-      if selected then g.setLineWidth(2);Button.outline(px-w/2-2,py-h/2-bob-2,w+4,h+4,T.white,1) end
     end
   end
 end
@@ -1013,7 +1094,7 @@ function Simulator:draw(shaders)
   for _,p in ipairs(self.piles) do p:draw() end
   self:drawPrizes('opponent',rw);self:drawPrizes('you',rw)
   for _,c in ipairs(self.ghosts) do c:draw(shaders,self.time,self.mx or 0,self.my or 0,self.reduced,rw) end
-  local hideHand=(self.overlay and self.overlay.kind=='handoff') or self.pendingHandoff
+  local hideHand=false
   local order={'opponent_hand','opponent_discard','opponent_bench','opponent_active','global_stadium','you_discard','you_bench','you_active','you_prize','opponent_prize','you_hand'}
   for _,zoneKey in ipairs(order) do
     for _,c in ipairs(self.cards) do

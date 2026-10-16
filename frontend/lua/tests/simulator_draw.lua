@@ -96,7 +96,7 @@ for _,size in ipairs({{1280,800},{480,850}}) do
   for _,r in ipairs(changed) do out[#out+1]=r end
   out[#out]=out[#out]:gsub('^S\tyou\t46\t6','S\tyou\t46\t5')
   sim:sync(table.concat(out,'\n'));frames(90,19)
-  assert(sim.overlay and sim.overlay.kind=='handoff','handoff');sim:finishHandoff();frames(120,21)
+  assert(sim.overlay==nil,'no handoff overlay');frames(120,21)
   local over={row(11,'ready','Player 2','Player 1',9,'gameOver','','Player 2 wins','All prize cards taken.',3,4,'','','p2',0,0,0,'win','All prize cards taken.')}
   for _,r in ipairs(base) do over[#over+1]=r end
   sim:sync(table.concat(over,'\n'));frames(90,24)

@@ -62,16 +62,29 @@ function Pile:click(time,reduced)
   -- rather than the smaller Card:hover pulse used by piles above.
   Card.juiceUp(self,time,nil,nil,reduced)
 end
+-- CardArea:align_cards' shuffle_amt: odd ranks slide 0.9 tiles sideways and
+-- turn 0.3 radians while the amount is up. Two riffles over 0.7 seconds.
+Pile.SHUFFLE_TIME=0.7
+function Pile:shuffle(time) self.shuffleStart=time end
+function Pile:shuffleAmount(time,reduced)
+  if reduced or not self.shuffleStart then return 0 end
+  local t=time-self.shuffleStart
+  if t<0 or t>Pile.SHUFFLE_TIME then return 0 end
+  return math.abs(math.sin(math.pi*t/(Pile.SHUFFLE_TIME/2)))
+end
 function Pile:update(dt,time,active,reduced,roomWidth)
   self.hovered=active and not self.dragging
   roomWidth=roomWidth or 1280
+  local amt=self:shuffleAmount(time,reduced)
   for _,layer in ipairs(self.layers) do
     local m=layer.motion
     local top=layer.rank==1
     local px=Pile.parallax(m.T.x-self.homeX/self.unit)
     local tx,ty=self:target(layer.rank,roomWidth,px)
-    m.T.x=(top and self.dragging and self.targetX or tx)/self.unit
+    local odd=(layer.rank%2==1) and 1 or 0
+    m.T.x=(top and self.dragging and self.targetX or tx)/self.unit+0.9*amt*(1-layer.rank*0.01)*odd
     m.T.y=(top and self.dragging and self.targetY or ty)/self.unit
+    m.T.r=0.3*amt*(1+layer.rank*0.05)*odd
     m:update(dt,time,top and self.hovered,top and self.dragging,reduced)
   end
   local v=self.motion.VT

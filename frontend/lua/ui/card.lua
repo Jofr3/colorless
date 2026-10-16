@@ -101,7 +101,9 @@ function Card:update(dt,time,active,reduced)
   local m=self.motion
   m.T.x=(self.dragging and self.targetX or self.homeX)/self.unit
   m.T.y=(self.dragging and self.targetY or (self.homeY-(self.lift or 0)))/self.unit
-  m:update(dt,time,active,self.dragging,reduced)
+  -- Balatro flags states.drag.is on the press itself, so a held card zooms
+  -- and raises its shadow before (or without) moving.
+  m:update(dt,time,active,self.dragging or self.held,reduced)
   self.x,self.y,self.angle=m.VT.x*self.unit,m.VT.y*self.unit,m.VT.r
 end
 
@@ -151,7 +153,7 @@ function Card:draw(shaders,time,mx,my,reduced,roomWidth)
   local dissolve=shaders.dissolve
   -- Sprite:draw_shader's shadow pass is un-tilted, scaled down, and projected
   -- away from the room centre. Dragging raises it from 0.1 to 0.35 tile units.
-  local shadowHeight=self.dragging and 0.35 or 0.1
+  local shadowHeight=(self.dragging or self.held) and 0.35 or 0.1
   local parallax=(self.motion.T.x*self.unit-roomWidth/2)/(roomWidth/2)*1.5
   values.shadow=true; values.hovering=0
   send(dissolve,values)

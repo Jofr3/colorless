@@ -93,9 +93,25 @@ export class LuaSimulator {
   allowed(action: GameAction) {
     return !!this.host && applyAction(this.host.game, action).ok;
   }
+  /** Seats whose deck was shuffled by the last accepted action ("you" /
+      "opponent" / "both"), emitted once so the table can riffle the pile. */
+  private shuffled = "";
   dispatch(action: GameAction) {
     if (!this.host) return;
+    const before = this.host.log.length;
     this.host = hostReducer(this.host, { action, at: Date.now() });
+    const seats = new Set<string>();
+    for (const e of this.host.log.slice(before)) {
+      if (e.kind !== "action" || e.who === "system") continue;
+      const text = e.segments.map((s) => s.text).join("");
+      if (/shuffled their (deck|hand)/.test(text) && !/bottom of their deck/.test(text))
+        seats.add(e.who);
+    }
+    if (seats.size > 0) {
+      const mine = seats.has(this.host.viewerSeat);
+      const theirs = seats.has(otherSeat(this.host.viewerSeat));
+      this.shuffled = mine && theirs ? "both" : mine ? "you" : "opponent";
+    }
     const flips = this.host.coinFlipPresentation ? this.host.coinFlipBatch : null;
     // The Lua coin overlay replaces the React dice presentation.
     if (this.host.coinFlipPresentation && this.host.coinFlipBatch) {
@@ -382,7 +398,10 @@ export class LuaSimulator {
       return;
     }
     const bench = promote;
-    if (cost === 0 || energies.length <= cost) {
+    // No real choice when every attached Energy is the same card: pay from
+    // the first ones rather than opening a picker.
+    const allAlike = energies.every((c) => c.cardId === energies[0]?.cardId);
+    if (cost === 0 || energies.length <= cost || allAlike) {
       this.dispatch({
         type: "retreat",
         seat,
@@ -794,7 +813,9 @@ export class LuaSimulator {
         : outcome === "tie"
           ? "Both players ran out of options."
           : "",
+      this.shuffled,
     );
+    this.shuffled = "";
     if (v && h) {
       const isViewerTurn =
         h.game.phase.kind === "turn:action" && h.game.phase.seat === h.viewerSeat;

@@ -20,7 +20,7 @@ local RS,US='\30','\31'
 local function enc(s) return (tostring(s):gsub('[^%w%-_%.~]',function(c) return string.format('%%%02X',c:byte()) end)) end
 local function row(...) local f={...};for i,v in ipairs(f) do f[i]=enc(v) end;return table.concat(f,'\t') end
 local function header(rev,extra)
-  return row(rev,'ready','Player 1','Player 2',1,'turn:action','',(extra or {}).title or 'Your turn','Attach Energy, then attack.',0,1,'you','you','p1',0,0,0,'','')
+  return row(rev,'ready','Player 1','Player 2',1,'turn:action','',(extra or {}).title or 'Your turn','Attach Energy, then attack.',0,1,'you','you','p1',0,0,0,'','',(extra or {}).shuffled or '')
 end
 local base={
   row('S','you',46,6,2,0,0),row('S','opponent',47,6,7,1,0),
@@ -105,6 +105,11 @@ assert(sim.highlight==nil,'Invoking clears the highlight')
 local active=cardOf('active1')
 sim:mousepressed(active.x,active.y);sim:update(1/60,10,bench.x,bench.y,false);sim:mousereleased(bench.x,bench.y)
 assert(commands[#commands]=='retreat\t0','Active dropped on a Benched Pokémon retreats to it, got '..tostring(commands[#commands]))
+-- And the other way round: a Benched Pokémon dropped on the Active spot.
+for _=1,40 do sim:update(1/60,10+_/60,0,0,false) end
+local benchCard=cardOf('bench1');local activeZone=sim.L.zones.you_active
+sim:mousepressed(benchCard.x,benchCard.y);sim:update(1/60,11,activeZone.x,activeZone.y,false);sim:mousereleased(activeZone.x,activeZone.y)
+assert(commands[#commands]=='retreat\t0','Benched Pokémon dropped on the Active spot retreats to it, got '..tostring(commands[#commands]))
 -- Host board prompt: candidates highlighted on the table, footer in the banner.
 sim:sync(snapshot(2,{row('M','board','Choose a Pokémon','Pick one','true','m1'),row('O','8','Houndour','blue','false','false','sv01-033','active1'),row('F','9','Confirm','blue','true','false','','')}))
 assert(sim.targeting and sim.overlay==nil,'Board prompts do not open an overlay')
@@ -128,18 +133,22 @@ sim:sync(snapshot(4,{row('M','cards','Choose cards (1/1)','Pick','true','m2'),ro
 assert(sim.overlay==keep and sim.overlay.cards[1].item.selected,'Refreshed menu keeps its cards')
 sim:sync(snapshot(5,{row('M','coin','Coin flip','Player 1: Heads\nPlayer 2: Tails','true','m3'),row('O','16','Continue','blue','false','false','','')}))
 assert(sim.overlay~=keep and sim.overlay.kind=='coin' and #sim.overlay.flips==2 and sim.overlay.flips[1].heads and not sim.overlay.flips[2].heads,'Coin overlay parses flips')
--- Menu cleared -> overlay closes; damage delta queues juice; viewer change opens a handoff.
+-- Menu cleared -> overlay closes; damage delta queues juice; a viewer change
+-- passes the table straight on (no handoff card), announced by the TURN banner.
 local damaged={}
 for _,r in ipairs(base) do damaged[#damaged+1]=(r:gsub('^C\tactive1\t(.-)\t70\t20\t','C\tactive1\t%1\t70\t50\t')) end
 local out={row(6,'ready','Player 2','Player 1',2,'turn:action','','Your turn','',1,2,'you','you','p2',0,0,0,'','')}
 for _,r in ipairs(damaged) do out[#out+1]=r end
 sim:sync(table.concat(out,'\n'))
-assert(sim.pendingHandoff and sim.overlay==nil,'The handoff waits for the attack juice')
+assert(sim.overlay==nil,'No handoff overlay on a viewer change')
 assert(#sim.fx.queue>0,'Damage change queues an attention text')
-for i=1,150 do sim:update(1/60,12+i/60,-100,-100,false) end
-assert(sim.overlay and sim.overlay.kind=='handoff','Viewer change opens the handoff overlay once the juice lands')
-sim:finishHandoff()
-assert(sim.overlay==nil,'Handoff continues to the table')
+local sawTurn=false
+for i=1,150 do
+  sim:update(1/60,12+i/60,-100,-100,false)
+  for _,at in ipairs(sim.fx.texts) do if at.text.string=='TURN 2' then sawTurn=true end end
+end
+assert(sim.overlay==nil,'Still no overlay once the juice lands')
+assert(sawTurn,'The TURN banner announces the new player')
 -- Options overlay and escape handling.
 sim:keypressed('escape')
 assert(sim.overlay and sim.overlay.kind=='options','Escape opens Options')
@@ -157,6 +166,77 @@ sim:sync(snapshot(8))
 for _,b in ipairs(sim.controls) do assert(b.x>=0 and b.x+b.w<=480 and b.y>=0 and b.y+b.h<=850,'Control inside the portrait board: '..tostring(b.label)) end
 for _,c in ipairs(sim.cards) do if c.item.zone~='hand' then assert(c.homeX>0 and c.homeX<480,'Card inside portrait board') end end
 assert(sim.zoom>0 and sim.ox>=0 and sim.oy>=0,'Small viewport still fits full page')
+-- Evolving: the stack reports the new top card's uid. The Basic's card is
+-- taken over in place (no ghost to the discard, no slide in from the deck).
+sim:layout(1280,800);sim:open(false)
+sim:sync(snapshot(30))
+for _=1,30 do sim:update(1/60,_/60,0,0,false) end
+local basic=cardOf('active1');local bx,by=basic.x,basic.y
+local evolved={}
+for _,r in ipairs(base) do if not r:match('^C\tactive1\t') then evolved[#evolved+1]=r end end
+evolved[#evolved+1]=row('C','stage1','sv01-034','Houndoom','you','active',0,'false','Pokemon','','Stage1',130,20,'Fire,Fire',0,'','Fire','true')
+sim:sync(table.concat({header(31)},'\n')..'\n'..table.concat(evolved,'\n'))
+assert(#sim.ghosts==0,'Evolving leaves no ghost, got '..#sim.ghosts)
+local stage=cardOf('stage1')
+assert(stage and math.abs(stage.x-bx)<1 and math.abs(stage.y-by)<1,'Evolved card takes over the Basic in place')
+assert(stage.item.evolvedFrom and stage.item.evolvedFrom.id=='active1','Evolution remembers the Basic')
+assert(cardOf('active1')==nil,'The Basic is gone from the table')
+-- The usual case: the Stage card keeps its hand uid and slides onto the spot.
+sim:sync(snapshot(32))
+for _=1,30 do sim:update(1/60,2+_/60,0,0,false) end
+local fromHand={}
+for _,r in ipairs(base) do if not r:match('^C\tactive1\t') and not r:match('^C\tcard1\t') then fromHand[#fromHand+1]=r end end
+fromHand[#fromHand+1]=row('C','card1','sv01-036','Fuecoco','you','active',0,'false','Pokemon','','Basic',80,0,'',0,'','Fire','true')
+sim:sync(table.concat({header(33)},'\n')..'\n'..table.concat(fromHand,'\n'))
+assert(#sim.ghosts==0,'Evolving from hand leaves no ghost, got '..#sim.ghosts)
+assert(cardOf('card1') and cardOf('card1').item.zone=='active' and cardOf('card1').item.evolvedFrom,'Hand card now sits on the Active spot as the evolution')
+assert(cardOf('active1')==nil,'The Basic is retired')
+-- Undoing that evolution: the Basic returns to the spot in place while the
+-- Stage card goes back to the hand; nothing slides in from the deck.
+sim:sync(snapshot(34))
+local back=cardOf('active1')
+assert(back and math.abs(back.x-back.homeX)<1 and math.abs(back.y-back.homeY)<1,'Undone evolution puts the Basic back in place')
+assert(#sim.ghosts==0,'No ghosts on undo, got '..#sim.ghosts)
+
+-- Retreat paid with an attached Energy: the Energy's discard slide starts
+-- under the Pokémon that carried it, not at the hand.
+sim:sync(snapshot(35))
+for _=1,30 do sim:update(1/60,sim.time+1/60,0,0,false) end
+local carrier=cardOf('active1');local cx0,cy0=carrier.x,carrier.y
+local paid={}
+for _,r in ipairs(base) do if not r:match('^C\tactive1\t') then paid[#paid+1]=r end end
+paid[#paid+1]=row('C','active1','sv01-033','Houndour','you','active',0,'false','Pokemon','','Basic',70,20,'Fire|en1|sv03-230',0,'','Fire','true')
+sim:sync(table.concat({header(36)},'\n')..'\n'..table.concat(paid,'\n'))
+for _=1,30 do sim:update(1/60,sim.time+1/60,0,0,false) end
+local afterPay={}
+for _,r in ipairs(base) do if not r:match('^C\tactive1\t') and not r:match('^C\tbench1\t') then afterPay[#afterPay+1]=r end end
+afterPay[#afterPay+1]=row('C','bench1','sv01-030','Growlithe','you','active',0,'false','Pokemon','','Basic',70,0,'',0,'','Fire','true')
+afterPay[#afterPay+1]=row('C','active1','sv01-033','Houndour','you','bench',0,'false','Pokemon','','Basic',70,20,'',0,'','Fire','true')
+afterPay[#afterPay+1]=row('C','en1','sv03-230','Fire Energy','you','discard',0,'false','Energy','','','',0,'',0,'','Fire','false')
+sim:sync(table.concat({header(37)},'\n')..'\n'..table.concat(afterPay,'\n'))
+local slide
+for _,g in ipairs(sim.ghosts) do if g.item.id=='en1' then slide=g end end
+assert(slide,'Discarded Energy slides to the pile')
+assert(math.abs(slide.x-cx0)<2 and math.abs(slide.y-cy0)<2,'The slide starts under the Pokémon that carried it, got '..math.floor(slide.x)..','..math.floor(slide.y)..' vs '..math.floor(cx0)..','..math.floor(cy0))
+-- The discard pile only shows the Energy once the slide has landed.
+local function discardPile() for _,p in ipairs(sim.piles) do if p.owner=='you' and p.item.kind=='discard' then return p end end end
+assert(discardPile()==nil,'Discard pile waits for the sliding card')
+for _=1,50 do sim:update(1/60,sim.time+1/60,0,0,false) end
+assert(discardPile() and discardPile().topItem.id=='en1','Discard pile shows the Energy after it lands')
+
+-- A shuffle in the header riffles your deck pile: odd ranks slide sideways
+-- and turn while the amount is up, then settle; the opponent's pile stays.
+sim:sync(snapshot(36,nil,{shuffled='you'}))
+local function pileOf(owner) for _,p in ipairs(sim.piles) do if p.owner==owner and p.item.kind=='deck' then return p end end end
+assert(pileOf('you').shuffleStart,'Your deck pile is shuffling')
+assert(not pileOf('opponent').shuffleStart,'The opponent pile is still')
+for _=1,12 do sim:update(1/60,sim.time+1/60,0,0,false) end
+local moved=false
+for _,layer in ipairs(pileOf('you').layers) do if layer.rank%2==1 and math.abs(layer.motion.T.r)>0.05 then moved=true end end
+assert(moved,'Odd ranks turn during the riffle')
+for _=1,60 do sim:update(1/60,sim.time+1/60,0,0,false) end
+for _,layer in ipairs(pileOf('you').layers) do assert(math.abs(layer.motion.T.r)<1e-6,'Riffle settles back') end
+
 -- Discard piles paint their top card; a scan arriving later (a reload) repaints them.
 sim:layout(1280,800);sim:open(false)
 sim:sync(snapshot(40,{row('C','d1','sv01-033','Houndour','you','discard',0,'false','Pokemon','','Basic',70,0,'',0,'','Fire','false')}))
@@ -180,4 +260,4 @@ sim:update(1/60,0.1,0,0,false)
 assert(rebuilt>=1,'Discard pile repainted when its top card art arrives, got '..rebuilt)
 love.filesystem.getInfo=function() return nil end
 Card.rebuild=baseRebuild
-print('PASS: Lua simulator parsing, fan layout, drags, targeting, prompts, handoff, options, game over and portrait layout')
+print('PASS: Lua simulator parsing, fan layout, drags, targeting, prompts, hot-seat flips, options, game over and portrait layout')
