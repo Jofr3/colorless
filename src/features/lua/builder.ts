@@ -14,6 +14,7 @@ import {
   remainingAllowedFor,
   validateDeck,
   countsBySupertype,
+  illegalCardNames,
   type Deck,
 } from "../builder/deckMath";
 import { createDeckSaver, type DeckSaver } from "../builder/deckSaver";
@@ -163,6 +164,7 @@ export class LuaBuilder {
     const copyLimit = remainingAllowedFor([], formatById(this.format));
     const count = [...this.entries.values()].reduce((a, b) => a + b, 0);
     const validation = validateDeck(deck, formatById(this.format));
+    const illegal = illegalCardNames(deck, formatById(this.format));
     const missing = [...this.entries.keys()].filter((id) => !this.cards.has(id)).length;
     const groups = countsBySupertype(deck);
     const rows: (string | number)[][] = [
@@ -199,6 +201,7 @@ export class LuaBuilder {
       c.number ?? "",
       c.hasImage === false ? 0 : 1,
       copyLimit(c),
+      +illegal.has(c.name),
     ];
     for (const c of this.results) rows.push(row("C", c));
     for (const [id, quantity] of this.entries) {

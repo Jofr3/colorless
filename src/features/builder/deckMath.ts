@@ -133,6 +133,37 @@ export interface DeckValidation {
   issues: DeckIssue[];
 }
 
+/** The per-name copy-cap error for `count` copies of `card`'s name, or null
+    when the count is allowed. Basic Energy is exempt from the per-name cap;
+    ACE SPECs and Radiant Pokémon are governed by their deck-wide rules, so
+    they never produce a (wrongly "max 4"-worded) message here. Prism Star:
+    one copy of the name, superseding the format cap. */
+function copyCapMessage(card: BuilderCard, count: number, format: Format): string | null {
+  if (isBasicEnergy(card) || isAceSpec(card) || isRadiantPokemon(card)) return null;
+  if (isPrismStar(card)) {
+    return count > 1 ? `${count} copies of ${card.name} — Prism Star cards are limited to 1.` : null;
+  }
+  return count > format.maxCopiesByName
+    ? `${count} copies of ${card.name} — max ${format.maxCopiesByName}.`
+    : null;
+}
+
+/** Names of deck entries that are illegal on their own: not legal in the
+    format, or holding more copies than their name allows. Deck-wide rules
+    (size, Basic count, ACE SPEC / Radiant totals) belong to the deck, not to
+    a card, so they are not attributed here. Drives the per-row "!" alert. */
+export function illegalCardNames(deck: Deck, format: Format): Set<string> {
+  const names = new Set<string>();
+  for (const [name, count] of copiesByName(deck)) {
+    const card = deck.find((e) => e.card.name === name)?.card;
+    if (card === undefined) continue;
+    if (!isLegalInFormat(card, format) || copyCapMessage(card, count, format) !== null) {
+      names.add(name);
+    }
+  }
+  return names;
+}
+
 /** Validate a deck against a format. Errors are hard illegalities (over the
     size, over the copy limit — 1 per Prism Star name, ACE SPEC and Radiant
     each over their deck-wide slot, no Basic Pokémon, an out-of-format card);
@@ -158,24 +189,8 @@ export function validateDeck(deck: Deck, format: Format): DeckValidation {
     // every print of a name shares them.
     const card = deck.find((e) => e.card.name === name)?.card;
     if (card === undefined) continue; // Unreachable: the name came from the deck.
-    // Basic Energy is exempt from the per-name cap; ACE SPECs and Radiant
-    // Pokémon are governed by their deck-wide rules below, so skip them here
-    // to avoid a redundant (and wrongly "max 4"-worded) message.
-    if (isBasicEnergy(card) || isAceSpec(card) || isRadiantPokemon(card)) continue;
-    // Prism Star: one copy of the name, superseding the format cap.
-    if (isPrismStar(card)) {
-      if (count > 1) {
-        issues.push({
-          level: "error",
-          message: `${count} copies of ${name} — Prism Star cards are limited to 1.`,
-        });
-      }
-    } else if (count > format.maxCopiesByName) {
-      issues.push({
-        level: "error",
-        message: `${count} copies of ${name} — max ${format.maxCopiesByName}.`,
-      });
-    }
+    const message = copyCapMessage(card, count, format);
+    if (message !== null) issues.push({ level: "error", message });
   }
 
   if (basicPokemonCount(deck) < format.minBasicPokemon) {

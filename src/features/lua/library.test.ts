@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { json, stubFetch } from "../../test/fetchStub";
+import { cardBrief } from "../../test/fixtures";
+import { clearCardPoolCache } from "../game/cardPool";
 import { encodeFields } from "./account";
 import { LuaLibrary } from "./library";
 
@@ -48,8 +50,81 @@ beforeEach(() => {
     setItem: (key: string, value: string) => values.set(key, value),
   });
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  clearCardPoolCache();
+});
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+const deckRows = (snapshot: unknown) =>
+  Object.fromEntries(
+    String(snapshot)
+      .split("\n")
+      .filter((line) => line.startsWith("D\t"))
+      .map((line) => line.split("\t"))
+      .map((fields) => [fields[1], fields[7]]),
+  );
 describe("Lua deck library", () => {
+  it("marks incomplete decks illegal at once and judges complete ones in the background", async () => {
+    const card = {
+      ...cardBrief(),
+      illustrator: null,
+      evolveFrom: null,
+      retreat: 0,
+      abilities: null,
+      attacks: null,
+      weaknesses: null,
+      resistances: null,
+      effect: null,
+      variants: null,
+    };
+    const rotated = { ...card, id: "old", legal: { standard: false, expanded: true } };
+    const energy = {
+      ...card,
+      id: "energy",
+      name: "Basic Grass Energy",
+      category: "Energy",
+      energyType: "Normal",
+      stage: null,
+    };
+    const filled = (cardId: string) => [
+      { cardId, count: 4 },
+      { cardId: "energy", count: 56 },
+    ];
+    const contents = (cards: { cardId: string; count: number }[]) => ({
+      id: "a",
+      name: "Zebra",
+      format: "standard",
+      cards,
+    });
+    const complete = [
+      ...decks,
+      { id: "d", name: "Rotated", folderId: null, cardCount: 60, tint: 0, coverCardId: null, position: 3 },
+    ];
+    stubFetch({
+      "GET /decks": () => json(complete),
+      "GET /decks/a": () => json(contents(filled(card.id))),
+      "GET /decks/d": () => json({ ...contents(filled("old")), id: "d" }),
+      [`GET /cards/${card.id}`]: () => json(card),
+      "GET /cards/old": () => json(rotated),
+      "GET /cards/energy": () => json(energy),
+    });
+    const { publish } = await setup();
+    expect(deckRows(publish.mock.lastCall?.[0])).toEqual({ a: "", b: "1", c: "1", d: "" });
+    await flush();
+    await flush();
+    expect(deckRows(publish.mock.lastCall?.[0])).toEqual({ a: "0", b: "1", c: "1", d: "1" });
+  });
+  it("leaves piles unmarked when a legality check fails", async () => {
+    stubFetch({
+      "GET /decks": () => json(decks),
+      "GET /decks/a": () => json({ error: "down" }, 500),
+    });
+    const { library, publish } = await setup();
+    await flush();
+    await flush();
+    expect(library.phase).toBe("ready");
+    expect(deckRows(publish.mock.lastCall?.[0])).toEqual({ a: "", b: "1", c: "1" });
+  });
   it("loads the shared API, searches across folders and escapes mailbox delimiters", async () => {
     stubFetch(reads);
     const { library, publish, open } = await setup();

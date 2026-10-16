@@ -2,6 +2,7 @@
 -- quantity replaces the level, and +/- replace the chips/mult values.
 local T=require('ui.theme')
 local Button=require('ui.button')
+local Alert=require('ui.card_alert')
 local Row={colours={
   background={191/255*0.9,199/255*0.9,213/255*0.9,1}, -- darken(JOKER_GREY,.1)
   badge={239/255,239/255,239/255,1}, -- HAND_LEVELS[1]
@@ -51,6 +52,21 @@ function Row.draw(b,hovered,roomWidth)
   text(b.arg.name,0.45,x+48,y,w-132,h,T.white,true,roomWidth)
   -- Dark score-group inset, with three-pixel padding around both actions.
   Button.panel(x+w-81,y+3,78,h-6,Row.colours.inset)
+end
+-- The illegal-card alert (ui/card_alert.lua, red_bad like the collection
+-- buttons), attached 'tri' to the name cell: its right edge at the dark inset
+-- and 0.05 tiles above the row. Drawn on draw_layer 1 by the builder.
+Row.alert={
+  size=Alert.box.size*60,colour=Alert.colour(true),emboss=Alert.box.emboss*60,radius=1.8,offset={x=0,y=-3},
+  text=Alert.text,
+}
+function Row.alertBox(b)
+  local a=Row.alert
+  return b.x+b.rowWidth-81+a.offset.x-a.size,b.y+a.offset.y,a.size,a.size
+end
+function Row.drawAlert(b,time,reduced,roomWidth)
+  local x,y=Row.alertBox(b)
+  Alert.draw(x,y,60,time,reduced,roomWidth,true)
 end
 function Row.action(b,hovered,pressed,roomWidth)
   -- Flat score cells from the source row; hover is applied because these

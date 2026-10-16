@@ -171,6 +171,28 @@ describe("Lua deck builder", () => {
     await b.command("add\ta");
     expect(b.entries.get("a")).toBe(1);
   });
+  it("flags format-illegal deck rows for the Lua alert badge", async () => {
+    vi.mocked(api.getCards).mockResolvedValue({
+      items: [card("a"), { ...card("x", "Rotated"), legal: { standard: false, expanded: true } }],
+      total: 2,
+      page: 1,
+      pageSize: 8,
+    });
+    const { b, publish } = await setup();
+    await b.command("add\ta");
+    await b.command("add\tx");
+    const rows = () =>
+      Object.fromEntries(
+        String(publish.mock.lastCall?.[0])
+          .split("\n")
+          .filter((line) => line.startsWith("D\t"))
+          .map((line) => line.split("\t"))
+          .map((fields) => [fields[1], fields[12]]),
+      );
+    expect(rows()).toEqual({ a: "0", x: "1" });
+    await b.command("format");
+    expect(rows()).toEqual({ a: "0", x: "0" });
+  });
   it("drops cover pins when removing the selected cover", async () => {
     const { b } = await setup();
     await b.command("add\ta");

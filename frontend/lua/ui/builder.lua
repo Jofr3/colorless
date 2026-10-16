@@ -4,6 +4,7 @@ local Card=require('ui.card')
 local DeckLabels=require('ui.deck_labels')
 local DeckStats=require('ui.deck_stats')
 local DeckRow=require('ui.deck_row')
+local Alert=require('ui.card_alert')
 local PageText=require('ui.page_text')
 local Modal=require('ui.modal')
 local Codec=require('ui.account')
@@ -83,7 +84,7 @@ function Builder:makeDeckCards()
       self.deckCards[i]=c
     end
   else
-    for i,c in ipairs(self.deckCards)do c.item.quantity=items[i].quantity;c.item.remaining=items[i].remaining;c.item.copyLimit=items[i].copyLimit end
+    for i,c in ipairs(self.deckCards)do c.item.quantity=items[i].quantity;c.item.remaining=items[i].remaining;c.item.copyLimit=items[i].copyLimit;c.item.illegal=items[i].illegal end
   end
   local ids={};for _,item in ipairs(items)do ids[#ids+1]=item.id end
   local preview=table.concat(ids,'\n')
@@ -143,7 +144,7 @@ function Builder:sync(raw)
   local signature={tostring(self.page)}
   for i=2,#lines do local r=lines[i]
     if r[1]=='C' or r[1]=='D' or r[1]=='S' then
-      local item={id=r[2],name=r[3],kind=r[4],subtype=r[5],quantity=tonumber(r[6]) or 0,remaining=tonumber(r[7]) or 0,hp=r[8] or '',mark=r[9] or '',number=r[10] or '',copyLimit=tonumber(r[12]) or 4}
+      local item={id=r[2],name=r[3],kind=r[4],subtype=r[5],quantity=tonumber(r[6]) or 0,remaining=tonumber(r[7]) or 0,hp=r[8] or '',mark=r[9] or '',number=r[10] or '',copyLimit=tonumber(r[12]) or 4,illegal=r[13]=='1'}
       if r[1]=='C' then self.items[#self.items+1]=item;signature[#signature+1]=item.id
       elseif r[1]=='D' then self.deck[#self.deck+1]=item
       else self.selectedItem=item end
@@ -505,6 +506,13 @@ function Builder:wheelmoved(y)
   elseif not self.busy then self:command('page',y>0 and -1 or 1)end
 end
 function Builder:drawControls(controls,active)
+  self:drawControlFaces(controls,active)
+  -- Alerts sit on draw_layer 1: above every row face and action in the list.
+  for _,b in ipairs(controls)do
+    if b.deckRow and b.arg.illegal then DeckRow.drawAlert(b,self.time,self.reduced,self.width) end
+  end
+end
+function Builder:drawControlFaces(controls,active)
   for i,b in ipairs(controls)do
     if b.deckRow then
       DeckRow.draw(b,active and (self.hover==i or self.focus==i),self.width)
@@ -619,7 +627,10 @@ function Builder:draw(shaders)
       self.deckPageText:draw(self.time,self.reduced,pagerX,pagerY,170,36,w)
       if self.deckView=='cards' then
         for _,c in ipairs(self.deckCards)do
-          if not (self.dragCard and self.dragCard.item.id==c.item.id)then c:draw(shaders,self.time,self.mx,self.my,self.reduced,w)end
+          if not (self.dragCard and self.dragCard.item.id==c.item.id)then
+            c:draw(shaders,self.time,self.mx,self.my,self.reduced,w)
+            if c.item.illegal then Alert.drawOnCard(c,self.time,self.reduced,w,Alert.gallery) end
+          end
           DeckLabels.drawQuantity(c)
         end
       end
@@ -636,7 +647,10 @@ function Builder:draw(shaders)
   local controls=self.modal and self.baseControls or self.controls
   self:drawControls(controls,not self.modal)
   for _,c in ipairs(self.cards)do if c.dragging then c:draw(shaders,self.time,self.mx,self.my,self.reduced,w)end end
-  if self.dragCard then self.dragCard:draw(shaders,self.time,self.mx,self.my,self.reduced,w)end
+  if self.dragCard then
+    self.dragCard:draw(shaders,self.time,self.mx,self.my,self.reduced,w)
+    if self.dragCard.item.illegal then Alert.drawOnCard(self.dragCard,self.time,self.reduced,w,Alert.gallery) end
+  end
 end
 function Builder:drawModal(shaders)
   local m=self.modal;if not m then return end

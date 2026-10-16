@@ -152,3 +152,19 @@ for i,c in ipairs(tabs.controls)do
 end
 assert(#commands==beforeFilterClick,'Filter values must not send picker or format commands')
 print('PASS: filter centers are inert; arrow controls remain available')
+
+local flagged=snapshot(5000,8)..'\nD\tx1\tOld card\tPokemon\tBasic\t2\t2\t60\tE\t1\t1\t4\t1\nD\tx2\tNew card\tPokemon\tBasic\t2\t2\t60\tH\t1\t1\t4\t0'
+tabs.deckType='all';tabs.deckView='list';tabs.deckPage=1;tabs:sync(flagged);tabs:closeModal()
+local byId={};for _,item in ipairs(tabs.deck)do byId[item.id]=item end
+assert(byId.x1.illegal==true and byId.x2.illegal==false and byId.d1.illegal==false,'Row legality follows the thirteenth field')
+local alerts=0;for _,c in ipairs(tabs.controls)do if c.deckRow and c.arg.illegal then alerts=alerts+1 end end
+assert(alerts==0,'The flagged rows are on a later page')
+tabs.deckPage=2;tabs:build();alerts=0
+for _,c in ipairs(tabs.controls)do if c.deckRow and c.arg.illegal then alerts=alerts+1;assert(c.arg.id=='x1')end end
+assert(alerts==1,'Only the illegal row carries an alert')
+print('PASS: illegal deck rows are flagged from the sync payload')
+tabs.deckView='cards';tabs.deckPage=3;tabs:makeDeckCards()
+local galleryAlerts=0;for _,c in ipairs(tabs.deckCards)do if c.item.illegal then galleryAlerts=galleryAlerts+1;assert(c.item.id=='x1')end end
+assert(galleryAlerts==1,'Gallery cards carry the same legality flag')
+tabs.deckView='list';tabs.deckPage=1
+print('PASS: gallery cards share the deck row legality flag')

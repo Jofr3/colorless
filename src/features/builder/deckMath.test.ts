@@ -6,6 +6,7 @@ import {
   copiesByName,
   countsBySupertype,
   type Deck,
+  illegalCardNames,
   pokemonTypeDistribution,
   remainingAllowed,
   totalCount,
@@ -363,5 +364,36 @@ describe("FORMATS", () => {
   it("maps each format to its card.legal flag (validator + rail share it)", () => {
     expect(formatById("standard").legalFlag).toBe("standard");
     expect(formatById("expanded").legalFlag).toBe("expanded");
+  });
+});
+
+describe("illegalCardNames", () => {
+  const standard = formatById("standard");
+  it("is empty for a deck whose entries are all allowed", () => {
+    const deck: Deck = [
+      { card: charizard, quantity: 2 },
+      { card: charizardReprint, quantity: 2 },
+      { card: charmander, quantity: 4 },
+    ];
+    expect(illegalCardNames(deck, standard)).toEqual(new Set());
+  });
+  it("names cards over their per-name cap, counting across prints", () => {
+    const deck: Deck = [
+      { card: charizard, quantity: 3 },
+      { card: charizardReprint, quantity: 2 },
+      { card: charmander, quantity: 4 },
+    ];
+    expect(illegalCardNames(deck, standard)).toEqual(new Set(["Charizard ex"]));
+  });
+  it("names cards the format rejects, and ignores deck-wide rules", () => {
+    const rotated: BuilderCard = {
+      ...charmander,
+      cardId: "old-1",
+      name: "Charmander (old)",
+      legal: { standard: false, expanded: true },
+    };
+    const deck: Deck = [{ card: rotated, quantity: 1 }]; // Too small, but that is a deck issue.
+    expect(illegalCardNames(deck, standard)).toEqual(new Set(["Charmander (old)"]));
+    expect(illegalCardNames(deck, formatById("expanded"))).toEqual(new Set());
   });
 });

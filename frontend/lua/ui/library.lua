@@ -1,6 +1,7 @@
 local T=require('ui.theme')
 local Button=require('ui.button')
 local Pile=require('ui.deck_pile')
+local Alert=require('ui.card_alert')
 local DeckLabels=require('ui.deck_labels')
 local PageText=require('ui.page_text')
 local Modal=require('ui.modal')
@@ -98,14 +99,18 @@ function Library:sync(raw)
   for i=2,#lines do
     local row=lines[i]
     if row[1]=='D' then
-      items[#items+1]={kind='deck',id=row[2],name=row[3],parent=row[4],count=tonumber(row[5]) or 0,tint=tonumber(row[6]) or 0,cover=row[7] or ''}
-      signature[#signature+1]=table.concat(row,'\t')
+      -- Field 8 is the legality verdict: '' while it is still being checked.
+      items[#items+1]={kind='deck',id=row[2],name=row[3],parent=row[4],count=tonumber(row[5]) or 0,tint=tonumber(row[6]) or 0,cover=row[7] or '',illegal=row[8]=='1'}
+      signature[#signature+1]=table.concat(row,'\t',1,7)
     end
   end
   signature=table.concat(signature,'\n')
   if signature~=self.signature then
     self.signature=signature; self.items=items; self.focus=0; self.pressed=nil; self.drag=nil
     self:makeCards(true)
+  else
+    -- A verdict arriving later only flips the alert; the piles stay put.
+    for i,item in ipairs(items) do if self.items[i] then self.items[i].illegal=item.illegal end end
   end
   if self.modal and self.modal.pending and f[14]=='ok' then self:closeModal() end
   if self.phase~='ready' and not self.busy then self:closeModal() end
@@ -306,6 +311,7 @@ function Library:draw(shaders)
       card:draw()
       DeckLabels.drawCounter(card)
       DeckLabels.drawHover(card)
+      if card.item.illegal and not card.dragging then Alert.drawOnCard(card,self.time,self.reduced,w,Alert.pile) end
       local labelWidth=142*card.baseScale+12
       local pileX,pileY=card:target(1,w,Pile.parallax())
       caption(card.item.name,22,pileX-labelWidth/2,pileY-95*card.baseScale-40,labelWidth)
@@ -335,7 +341,12 @@ function Library:draw(shaders)
     if self.message~='' then caption(self.message,23,28,h-178,w-56,T.red) end
     if self.busy then T.text('Loading...',22,24,h-178,w-48,T.paper) end
   end
-  for _,card in ipairs(self.cards) do if card.dragging then card:drawDragged(shaders,self.time,self.mx,self.my,self.reduced,w) end end
+  for _,card in ipairs(self.cards) do
+    if card.dragging then
+      card:drawDragged(shaders,self.time,self.mx,self.my,self.reduced,w)
+      if card.item.illegal then Alert.drawOnCard(card,self.time,self.reduced,w,Alert.pile) end
+    end
+  end
 end
 function Library:drawModal()
   local w,p=self.width,self.portrait

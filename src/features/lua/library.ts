@@ -1,5 +1,6 @@
 import * as api from "../../lib/api";
 import type { Deck } from "../decks/data";
+import { deckLegality } from "../playmat/sandboxDecks";
 import { encodeFields } from "./account";
 
 const sorts: [string, ...string[]] = ["name-asc", "name-desc", "cards-desc"];
@@ -15,6 +16,8 @@ const stored = (key: string, allowed: [string, ...string[]]) => {
 /** Data/session adapter only. Layout, card physics and all controls live in Lua. */
 export class LuaLibrary {
   decks: Deck[] = [];
+  /** Deck id → legal, for the "!" alert on a pile; absent while unchecked. */
+  legality = new Map<string, boolean>();
   query = "";
   sort = stored("decks.sortKey", sorts);
   page = 1;
@@ -38,6 +41,7 @@ export class LuaLibrary {
     this.epoch++;
     this.user = status === "authenticated" ? id : "";
     this.decks = [];
+    this.legality = new Map();
     this.busy = false;
     this.message = "";
     this.result = "";
@@ -85,7 +89,19 @@ export class LuaLibrary {
         ]),
         ...decks
           .slice((this.page - 1) * this.size, this.page * this.size)
-          .map((d) => encodeFields(["D", d.id, d.name, "", d.cardCount, d.tint, ""])),
+          .map((d) => {
+            const legal = this.legality.get(d.id);
+            return encodeFields([
+              "D",
+              d.id,
+              d.name,
+              "",
+              d.cardCount,
+              d.tint,
+              "",
+              legal === undefined ? "" : +!legal,
+            ]);
+          }),
       ].join("\n"),
     );
   }
@@ -103,7 +119,12 @@ export class LuaLibrary {
       const decks = await api.listDecks();
       if (epoch !== this.epoch) return;
       this.decks = decks;
+      // Incomplete decks are illegal on sight; complete ones are judged below.
+      this.legality = new Map(
+        decks.filter((d) => d.cardCount !== 60).map((d) => [d.id, false] as const),
+      );
       this.phase = "ready";
+      void this.judge(epoch);
     } catch (error) {
       if (epoch !== this.epoch) return;
       this.phase = error instanceof api.ApiError && error.status === 401 ? "anonymous" : "error";
@@ -119,6 +140,21 @@ export class LuaLibrary {
         this.busy = false;
         this.emit();
       }
+    }
+  }
+
+  /** Judge the loaded decks in the background and republish the alerts. A
+      failed check leaves the piles unmarked rather than surfacing an error:
+      the library itself loaded, and the next load retries. */
+  private async judge(epoch: number) {
+    const current = () => epoch === this.epoch;
+    try {
+      const legality = await deckLegality(this.decks, current);
+      if (!current()) return;
+      this.legality = legality;
+      this.emit();
+    } catch {
+      /* Left unmarked; see above. */
     }
   }
 

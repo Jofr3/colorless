@@ -17,15 +17,18 @@ export function isValidSandboxDeck(deck: SavedDeck, pool: Record<string, Card>):
   return validateDeck(entries, formatById(deck.format ?? "standard")).legal;
 }
 
-/** Check complete candidates with bounded requests. Network failures remain
- * retryable errors, rather than silently classifying those decks as invalid. */
-export async function validSandboxDecks(
+/** Fetch the complete candidates' contents and their card pool with bounded
+ * requests, then judge each. Network failures remain retryable errors, rather
+ * than silently classifying those decks as invalid; a deck deleted since the
+ * summary was fetched (404) is simply absent from the result. */
+async function judgeSandboxDecks(
   summaries: Deck[],
   current: () => boolean,
-): Promise<Deck[]> {
+): Promise<Map<string, { deck: SavedDeck; valid: boolean }>> {
   const candidates = summaries.filter((deck) => deck.cardCount === 60);
   const queue = candidates.values();
   const saved = new Map<string, SavedDeck>();
+  const verdicts = new Map<string, { deck: SavedDeck; valid: boolean }>();
   let failed = false;
   async function worker() {
     for (const deck of queue) {
@@ -33,7 +36,6 @@ export async function validSandboxDecks(
       try {
         saved.set(deck.id, await getDeck(deck.id));
       } catch (error) {
-        // A deck may have been deleted after the library summary was fetched.
         if (error instanceof ApiError && error.status === 404) continue;
         failed = true;
         throw error;
@@ -41,13 +43,38 @@ export async function validSandboxDecks(
     }
   }
   await Promise.all(Array.from({ length: Math.min(4, candidates.length) }, worker));
-  if (!current()) return [];
+  if (!current()) return verdicts;
   const { pool } = await fetchCardPool(
     [...saved.values()].flatMap((deck) => deck.cards.map((entry) => entry.cardId)),
   );
-  if (!current()) return [];
-  return candidates.flatMap((summary) => {
-    const deck = saved.get(summary.id);
-    return deck && isValidSandboxDeck(deck, pool) ? [{ ...summary, name: deck.name }] : [];
+  if (!current()) return verdicts;
+  for (const [id, deck] of saved) verdicts.set(id, { deck, valid: isValidSandboxDeck(deck, pool) });
+  return verdicts;
+}
+
+/** The complete, legal decks among `summaries`, carrying their fresh names. */
+export async function validSandboxDecks(
+  summaries: Deck[],
+  current: () => boolean,
+): Promise<Deck[]> {
+  const verdicts = await judgeSandboxDecks(summaries, current);
+  return summaries.flatMap((summary) => {
+    const verdict = verdicts.get(summary.id);
+    return verdict?.valid ? [{ ...summary, name: verdict.deck.name }] : [];
   });
+}
+
+/** Per-deck legality for a library listing, for the illegal-deck alert: an
+ * incomplete deck is illegal without a request; a complete one gets the
+ * builder's verdict on its fetched contents. A deck missing from the result
+ * could not be judged (deleted meanwhile, or the check was superseded). */
+export async function deckLegality(
+  summaries: Deck[],
+  current: () => boolean,
+): Promise<Map<string, boolean>> {
+  const legality = new Map<string, boolean>();
+  for (const deck of summaries) if (deck.cardCount !== 60) legality.set(deck.id, false);
+  const verdicts = await judgeSandboxDecks(summaries, current);
+  for (const [id, verdict] of verdicts) legality.set(id, verdict.valid);
+  return legality;
 }

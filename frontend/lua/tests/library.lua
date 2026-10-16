@@ -91,3 +91,14 @@ for _,card in ipairs(library.cards) do
   assert(card.motion.VT.x==card.motion.T.x and card.motion.VT.y==card.motion.T.y,'Reduced motion must place the new page immediately')
 end
 print('PASS: page replacement triggers collection entrance; reduced motion skips it')
+
+-- Legality verdicts arrive later in field 8 and must not restart the entrance.
+library:layout(1280,800); library:sync(snapshot(5000,3)); library:layout(1280,800)
+local firstCards=library.cards
+local judged={table.concat({5001,'ready','0','','','','decks','name-asc','1','2','3','','0',''},'\t'),
+ 'D\tdeck1\tDeck 1\t\t60\t0\t\t0','D\tdeck2\tDeck 2\t\t60\t0\t\t1','D\tdeck3\tDeck 3\t\t60\t0\t\t1'}
+library:sync(table.concat(judged,'\n'))
+assert(library.cards==firstCards,'A verdict must not rebuild the piles')
+assert(not library.items[1].illegal and library.items[2].illegal and library.items[3].illegal)
+assert(library.cards[2].item.illegal,'Piles read the flag through their shared item')
+print('PASS: deck legality verdicts flip pile alerts in place')

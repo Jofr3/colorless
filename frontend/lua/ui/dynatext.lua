@@ -131,14 +131,23 @@ function Dyna:update(time,reduced)
 end
 function Dyna:visible() return self.letters[#self.letters] and self.letters[#self.letters].pop>0 end
 -- Draw centred on (cx,cy). `alpha` multiplies every colour (attention fades).
-function Dyna:draw(cx,cy,roomWidth,alpha)
+-- `parallaxX` overrides the room x used for shadow parallax when (cx,cy) are
+-- local to a transform.
+function Dyna:draw(cx,cy,roomWidth,alpha,parallaxX)
   alpha=alpha or 1
   local font=T.font(200)
   local f=factor(self.scale)
   roomWidth=roomWidth or 1280
-  local px=(cx-roomWidth/2)/(roomWidth/2)*1.5
+  local px=((parallaxX or cx)-roomWidth/2)/(roomWidth/2)*1.5
   local norm=math.sqrt(px*px+2.25)
   g.setFont(font)
+  -- text_rot rotates the whole DynaText (its Moveable T.r) about its centre.
+  local rot=self.cfg.text_rot or 0
+  if rot~=0 then g.push();g.translate(cx,cy);g.rotate(rot);g.translate(-cx,-cy) end
+  -- DynaText:init shifts every glyph by the font's TEXT_OFFSET*scale, the
+  -- same (10,-20) atlas offset Dyna.static applies. Opt-in here: the HUD and
+  -- overlay callers were positioned by hand without it.
+  if self.cfg.font_offset then cx,cy=cx+Dyna.OFFSET_X*f,cy+Dyna.OFFSET_Y*f end
   local left=cx-self.W/2+(self.cfg.spacing or 0)*0.3
   if self.shadow then
     local cursor=left
@@ -158,5 +167,6 @@ function Dyna:draw(cx,cy,roomWidth,alpha)
     g.print(letter.char,cursor+letter.w/2+px/norm*0.3,cy-self.H/2+letter.h/2-letter.offset*0.15+(-1.5/norm)*0.3,letter.r,s,s,letter.rawW/2,font:getHeight()*Dyna.HEIGHT_SCALE/2)
     cursor=cursor+letter.w
   end
+  if rot~=0 then g.pop() end
 end
 return Dyna
