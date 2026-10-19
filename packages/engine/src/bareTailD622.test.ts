@@ -257,6 +257,6 @@ describe("D622 §4 — an in-flight v43 park keeps the reading it was parked und
 
 describe("D622 §5 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.540.0");
+    expect(engineVersion).toBe("0.541.0");
   });
 });

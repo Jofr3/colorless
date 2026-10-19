@@ -2161,6 +2161,11 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕 **STAYS 49 AT CARD REVISION B14 — A REFUSAL MESSAGE ONLY. NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY,
+    `InPlayPokemon` FIELD, `EffectOp` MEMBER OR KEY, OR EVENT MEMBER.** (Placed ABOVE the B12 block.) cardplay.ts's
+    `HAND_PLAY_BLOCKED` message names "ACE SPEC cards" when Genesect "ACE Nullifier" (`sv06.5-040`) is the only bar
+    (continuous.ts `handPlayBarredReason`); an error message is never persisted, and every accept/refuse is unchanged.
+
     🆕 **STAYS 49 AT CARD REVISION B12 — ONE OPTIONAL `EffectOp` KEY (`attachEnergyFrom.atLeastOne`) AND A LOG-ONLY
     HOST FALLBACK. NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR EVENT
     MEMBER.** (Placed ABOVE the B10 block.) ⑴ Infernape "Pyro Dance" (`sv06-033` / `sv06-173` / `svp-116`) authors

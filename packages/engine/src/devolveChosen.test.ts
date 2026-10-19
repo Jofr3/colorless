@@ -1029,7 +1029,7 @@ describe("🛑 §10 — the persisted `pendingOp`, over the serialized bytes", (
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.540.0");
+    expect(engineVersion).toBe("0.541.0");
   });
 });
 

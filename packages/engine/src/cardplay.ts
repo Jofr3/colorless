@@ -16,6 +16,8 @@ import {
   benchLimitOf,
   disabledAbilityUids,
   handPlayBarred,
+  // 🆕🆕🆕 B14 — the refusal names ACE SPEC cards when only Genesect's rarity bar refuses.
+  handPlayBarredReason,
   // 🆕🆕🆕 D572 — Adrena-Brain's {D} body gate and the Milotic lock (R-MC2).
   hasAttachedEnergy,
   inPlayToHandBlocked,
@@ -208,7 +210,7 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
   if (handPlayBarred(state, action.seat, trainerType, card)) {
     return err(
       "HAND_PLAY_BLOCKED",
-      `your opponent prevents you from playing ${trainerType} cards from your hand`,
+      handPlayBarredReason(state, action.seat, trainerType, card),
     );
   }
   // The card's own printed "You can use this card only if …" line (Fighting Au
@@ -312,7 +314,7 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
 function playFossil(state: GameState, action: PlayTrainerAction, card: Card): ApplyResult {
   const itemBarred = handPlayBarred(state, action.seat, "Item", card);
   if (itemBarred) {
-    return err("HAND_PLAY_BLOCKED", "your opponent prevents you from playing Item cards from your hand");
+    return err("HAND_PLAY_BLOCKED", handPlayBarredReason(state, action.seat, "Item", card));
   }
   const side = state.players[action.seat];
   if (!fossilPlayable(state, action.seat)) {
@@ -380,7 +382,7 @@ function playStadium(state: GameState, action: PlayTrainerAction, card: Card): A
   if (handPlayBarred(state, action.seat, "Stadium", card)) {
     return err(
       "HAND_PLAY_BLOCKED",
-      "your opponent prevents you from playing Stadium cards from your hand",
+      handPlayBarredReason(state, action.seat, "Stadium", card),
     );
   }
   if (programFor(card.id)?.stadium === undefined) {
@@ -544,7 +546,7 @@ export function attachTool(state: GameState, action: AttachToolAction): ApplyRes
   if (handPlayBarred(state, action.seat, "Tool", card)) {
     return err(
       "HAND_PLAY_BLOCKED",
-      "your opponent prevents you from playing Pokémon Tool cards from your hand",
+      handPlayBarredReason(state, action.seat, "Tool", card),
     );
   }
   // 🆕🆕🆕 D565 — the predicate is EXTRACTED to `toolCardSimulated` (continuous.ts) and
@@ -697,7 +699,7 @@ export function rareCandy(state: GameState, action: RareCandyAction): ApplyResul
   if (handPlayBarred(state, action.seat, "Item", card)) {
     return err(
       "HAND_PLAY_BLOCKED",
-      "your opponent prevents you from playing Item cards from your hand",
+      handPlayBarredReason(state, action.seat, "Item", card),
     );
   }
   // Resolve the target Basic (the actor's own in-play) — wire shape check, then

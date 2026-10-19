@@ -995,3 +995,67 @@ describe("D291 §7 — the bar is DERIVED, and the wire greys the row it should"
     expect(wireDisabled(state, "p1", ITEM)).toBe(false);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 8. 🆕 CARD REVISION B14 — THE REFUSAL NAMES THE RULE THAT REFUSED IT.
+//    *"your opponent can't play any ACE SPEC cards from their hand"* bars by
+//    RARITY, and the three Trainer gates (`playTrainer`, `playStadium`,
+//    `attachTool`) told the barred seat that the whole CLASS was locked — "Item
+//    cards", "Pokémon Tool cards", "Stadium cards" — while that seat's plain Item,
+//    Tool and Stadium play on the very same board (§2/§4). Only the Energy gate
+//    (D292) said "ACE SPEC cards". The reason is now `handPlayBarredReason`
+//    (continuous.ts): the class word when a CLASS source bars, the rarity word
+//    when only the rarity term does.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** The refusal's MESSAGE (or "OK"), for the three surfaces `play`/`attach`/
+    `attachEnergy` reach — those helpers report the code only. */
+function refusal(state: GameState, seat: Seat, cardId: string, how: "play" | "tool" | "energy"): string {
+  const uid = handUid(state, seat, cardId);
+  const action =
+    how === "play"
+      ? ({ type: "playTrainer", seat, uid } as const)
+      : ({ type: how === "tool" ? "attachTool" : "attachEnergy", seat, uid, target: { spot: "active" } } as const);
+  const result = applyAction(deepFreeze(state), action);
+  return result.ok ? "OK" : `${result.error.code}: ${result.error.message}`;
+}
+
+const ACE_SPEC_REASON = "HAND_PLAY_BLOCKED: your opponent prevents you from playing ACE SPEC cards from your hand";
+
+describe("B14 §8 — the ACE Nullifier refusal names ACE SPEC cards, on every surface", () => {
+  it("🛑 an Active Genesect with a Tool: Item, second Item, Stadium, Tool and Energy all say ACE SPEC", () => {
+    for (const seed of SEEDS) {
+      const state = turnOf(board(seed, "p1", "p1", ARMED), "p2");
+      expect(refusal(state, "p2", ACE_ITEM, "play"), `${seed}`).toBe(ACE_SPEC_REASON);
+      expect(refusal(state, "p2", ACE_ITEM_2, "play"), `${seed}`).toBe(ACE_SPEC_REASON);
+      expect(refusal(state, "p2", ACE_STADIUM, "play"), `${seed}`).toBe(ACE_SPEC_REASON);
+      expect(refusal(state, "p2", ACE_TOOL, "tool"), `${seed}`).toBe(ACE_SPEC_REASON);
+      expect(refusal(state, "p2", ACE_ENERGY, "energy"), `${seed}`).toBe(ACE_SPEC_REASON);
+      // The class-matched controls still play — the message is not a cover for a class lock.
+      expect(refusal(state, "p2", ITEM, "play"), `${seed}`).toBe("OK");
+      expect(refusal(state, "p2", STADIUM, "play"), `${seed}`).toBe("OK");
+      expect(refusal(state, "p2", TOOL, "tool"), `${seed}`).toBe("OK");
+    }
+  });
+
+  it("a BENCHED Genesect with a Tool words it the same way", () => {
+    const state = turnOf(board(SEEDS[1], "p1", "p1", { where: "bench", tool: true }), "p2");
+    expect(refusal(state, "p2", ACE_ITEM, "play")).toBe(ACE_SPEC_REASON);
+    expect(refusal(state, "p2", ACE_TOOL, "tool")).toBe(ACE_SPEC_REASON);
+  });
+
+  it("🛑 a CLASS bar keeps its class word: Copperajah Active + Genesect benched with a Tool", () => {
+    // Both sources bar the ACE SPEC Stadium; the Stadium lock is the wider truth and the plain
+    // Stadium is refused by it alone. The ACE SPEC Item is refused by Genesect alone.
+    let state = board(SEEDS[2], "p1", "p1", { where: "active", tool: false, id: COPPERAJAH });
+    state = benchFromDeck(state, "p1", GENESECT);
+    const at = state.players.p1.bench.findIndex((b) => state.cardIdByUid[b.stack[b.stack.length - 1] ?? ""] === GENESECT);
+    expect(at).toBeGreaterThanOrEqual(0);
+    state = turnOf(attachToolFromDeck(state, "p1", at, TOOL), "p2");
+    const STADIUM_REASON = "HAND_PLAY_BLOCKED: your opponent prevents you from playing Stadium cards from your hand";
+    expect(refusal(state, "p2", STADIUM, "play")).toBe(STADIUM_REASON);
+    expect(refusal(state, "p2", ACE_STADIUM, "play")).toBe(STADIUM_REASON);
+    expect(refusal(state, "p2", ACE_ITEM, "play")).toBe(ACE_SPEC_REASON);
+    expect(refusal(state, "p2", ACE_TOOL, "tool")).toBe(ACE_SPEC_REASON);
+  });
+});

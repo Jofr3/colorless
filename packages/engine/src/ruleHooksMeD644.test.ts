@@ -314,8 +314,8 @@ describe("D644 §1 — the prints and the registry rows", () => {
     expect(Object.keys(programFor(BADGE) ?? {})).toEqual(["passive"]); // 🆕🆕🆕 D646 (D539): was `toBeUndefined()` — keyed at D646.
   });
 
-  it("is built at engine 0.540.0", () => {
-    expect(engineVersion).toBe("0.540.0");
+  it("is built at engine 0.541.0", () => {
+    expect(engineVersion).toBe("0.541.0");
   });
 });
 

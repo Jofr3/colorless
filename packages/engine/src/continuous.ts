@@ -5802,6 +5802,35 @@ export function handPlayBarred(
   );
 }
 
+/** The noun each class's refusal names (`attachTool` has always said "Pokémon Tool"). */
+const HAND_PLAY_NOUN: Record<HandPlayClass, string> = {
+  Item: "Item",
+  Supporter: "Supporter",
+  Tool: "Pokémon Tool",
+  Stadium: "Stadium",
+};
+
+/** 🆕🆕🆕 CARD REVISION B14 — the `HAND_PLAY_BLOCKED` REASON for a play `handPlayBarred`
+    refused, so the message names the rule that actually refused it. Genesect `sv06.5-040`
+    "ACE Nullifier" bars by RARITY (*"can't play any ACE SPEC cards"*), and the Trainer
+    gates used to answer with the CLASS word — "Item cards", "Pokémon Tool cards", "Stadium
+    cards" — while the same seat's plain Item / Tool / Stadium played on that board. The
+    class word stands whenever a CLASS source (the stamp or the Active's passive) bars the
+    play, because it is then the wider truth; "ACE SPEC" is named only when the rarity term
+    is the sole cause — the wording `attachEnergy` (turn.ts, D292) already used. Asked ONLY
+    inside a branch where `handPlayBarred(state, seat, klass, card)` answered `true`. */
+export function handPlayBarredReason(
+  state: GameState,
+  seat: Seat,
+  klass: HandPlayClass,
+  card: Card | undefined,
+): string {
+  const byClass =
+    stampedBarFor(state, seat, klass) || handPlayBarredByOpponentActive(state, seat, klass);
+  const noun = !byClass && aceSpecPlayBarred(state, seat, card) ? "ACE SPEC" : HAND_PLAY_NOUN[klass];
+  return `your opponent prevents you from playing ${noun} cards from your hand`;
+}
+
 /** §7.5/§10 (D285) — the CONTINUOUS half of the POKÉMON-surface bar, and
     `handPlayBarredByOpponentActive`'s shape one surface over with ONE addition:
     the noun this sentence bars is NARROWED, so the predicate needs the CARD.

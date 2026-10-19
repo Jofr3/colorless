@@ -6252,7 +6252,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.540.0";',
+    find: 'export const engineVersion = "0.541.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -7527,9 +7527,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D286",
     what: "🛑 THE ORIGINAL DEFECT, TRANSCRIBED: `rareCandy`'s gate asks about `\"Tool\"` instead of the card's own class, so no Item bar reaches the action and Rare Candy walks through Galvantula ex, Budew, Tyranitar and Jellicent ex alike. ⚠️ THIS IS EXACTLY WHAT SHIPPED FROM D283 TO D285 AND THE WHOLE SUITE WAS GREEN — the class list, the funnel, both mirrors and every Trainer board are untouched; only a board that plays a RARE CANDY into a barred hand can see it",
     file: "packages/engine/src/cardplay.ts",
-    find: '  if (handPlayBarred(state, action.seat, "Item", card)) {\n    return err(\n      "HAND_PLAY_BLOCKED",\n      "your opponent prevents you from playing Item cards from your hand",\n    );\n  }',
+    find: '  if (handPlayBarred(state, action.seat, "Item", card)) {\n    return err(\n      "HAND_PLAY_BLOCKED",\n      handPlayBarredReason(state, action.seat, "Item", card),\n    );\n  }',
     replace:
-      '  if (handPlayBarred(state, action.seat, "Tool", card)) {\n    return err(\n      "HAND_PLAY_BLOCKED",\n      "your opponent prevents you from playing Item cards from your hand",\n    );\n  }',
+      '  if (handPlayBarred(state, action.seat, "Tool", card)) {\n    return err(\n      "HAND_PLAY_BLOCKED",\n      handPlayBarredReason(state, action.seat, "Item", card),\n    );\n  }',
     expectKilledBy: ["packages/engine/src/rareCandyBar.test.ts"],
   },
   {
@@ -7581,7 +7581,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D287",
     what: "🛑 THE ORIGINAL ABSENCE, TRANSCRIBED: `playStadium` stops asking `handPlayBarred`, so Copperajah's printed sentence stops working entirely and a barred seat plays Stadiums freely. ⚠️ THIS IS EXACTLY WHAT SHIPPED FROM D284 TO D286 AND THE WHOLE 5,858-TEST SUITE WAS GREEN — the class list, the funnel, the registry row and every Item/Supporter/Tool board are untouched; only a board that plays a STADIUM into a barred hand can see it",
     file: "packages/engine/src/cardplay.ts",
-    find: '  if (handPlayBarred(state, action.seat, "Stadium", card)) {\n    return err(\n      "HAND_PLAY_BLOCKED",\n      "your opponent prevents you from playing Stadium cards from your hand",\n    );\n  }',
+    find: '  if (handPlayBarred(state, action.seat, "Stadium", card)) {\n    return err(\n      "HAND_PLAY_BLOCKED",\n      handPlayBarredReason(state, action.seat, "Stadium", card),\n    );\n  }',
     replace: '  void handPlayBarred(state, action.seat, "Stadium", card);',
     expectKilledBy: ["packages/engine/src/stadiumBar.test.ts"],
   },
@@ -60887,5 +60887,24 @@ export const MUTANTS: Mutant[] = [
     find: "  const knockedOut = koHosts.get(energyUid);",
     replace: "  const knockedOut: string | undefined = undefined;",
     expectKilledBy: ["packages/engine/src/revisionB12.test.ts"],
+  },
+  // ── Card revision B14 (Abilities) — Genesect "ACE Nullifier"'s refusal names ACE SPEC cards. ──
+  {
+    id: "B14-ace-spec-refusal-names-the-class",
+    decision: "B14",
+    what: "`handPlayBarredReason` never names the rarity: Genesect's bar on an ACE SPEC Item / Tool / Stadium reads 'Item cards' / 'Pokémon Tool cards' / 'Stadium cards' again while the plain card of that class plays. Killed by aceSpecBar B14 §8.",
+    file: "packages/engine/src/continuous.ts",
+    find: '  const noun = !byClass && aceSpecPlayBarred(state, seat, card) ? "ACE SPEC" : HAND_PLAY_NOUN[klass];',
+    replace: "  const noun = HAND_PLAY_NOUN[klass];",
+    expectKilledBy: ["packages/engine/src/aceSpecBar.test.ts"],
+  },
+  {
+    id: "B14-class-bar-reworded-as-ace-spec",
+    decision: "B14",
+    what: "`handPlayBarredReason` stops asking the CLASS sources first: with Copperajah Active and a Tool-wearing Genesect benched, the ACE SPEC Stadium is refused as 'ACE SPEC cards' although every Stadium is locked. Killed by aceSpecBar B14 §8.",
+    file: "packages/engine/src/continuous.ts",
+    find: '  const noun = !byClass && aceSpecPlayBarred(state, seat, card) ? "ACE SPEC" : HAND_PLAY_NOUN[klass];',
+    replace: '  const noun = byClass !== undefined && aceSpecPlayBarred(state, seat, card) ? "ACE SPEC" : HAND_PLAY_NOUN[klass];',
+    expectKilledBy: ["packages/engine/src/aceSpecBar.test.ts"],
   },
 ];
