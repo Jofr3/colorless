@@ -33,6 +33,7 @@ local base={
   row('C','bench1','sv01-030','Growlithe','you','bench',0,'false','Pokemon','','Basic',70,0,'',0,'','Fire','true'),
   row('C','opp1','sv01-052','Quaxly','opponent','active',0,'false','Pokemon','','Basic',60,0,'Water',0,'','Water','false'),
   row('C','oppd','sv01-194','Switch','opponent','discard',0,'false','Trainer','Item','','',0,'',0,'','','false'),
+  row('C','used','sv01-181','Nest Ball','you','played',0,'false','Trainer','Item','','',0,'',0,'','','false'),
   row('C','std','sv01-167','Beach Court','global','stadium',0,'false','Trainer','Stadium','','',0,'',0,'','','false'),
   row('C','pz','sv01-030','Growlithe','you','prize',2,'false','Pokemon','','Basic','',0,'',0,'','Fire','false'),
   row('C','h1','hidden','Face-down card','opponent','hand',0,'true','','','','',0,'',0,'','','false'),

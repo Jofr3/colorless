@@ -4,10 +4,20 @@ import {
   mustCreate,
   ALL_BASIC_DECK,
   trainerCard,
+  PRIZE_DECK,
+  attachFromDeck,
+  benchFromDeck,
+  setActiveFromDeck,
+  setDamage,
+  setPrizes,
+  must,
+  RARE_CANDY_DECK,
+  handFromDeck,
+  handUid,
 } from "../../../packages/engine/src/testFixtures";
 import { LuaSimulator } from "./simulator";
 import { loadSimulatorSave } from "../playmat/simulatorSave";
-import { cardOfUid, isBasicPokemon, otherSeat } from "@luminous/engine";
+import { applyAction, cardOfUid, isBasicPokemon, otherSeat } from "@luminous/engine";
 
 beforeEach(() => {
   const storage = new Map<string, string>();
@@ -35,7 +45,173 @@ function rows(publish: ReturnType<typeof vi.fn>) {
     .split("\n")
     .map((s: string) => s.split("\t").map(decodeURIComponent));
 }
+function knockoutState(id: string, hp: number, seed = 1) {
+  let state = driveSetup(seed, { p1: PRIZE_DECK, p2: PRIZE_DECK }, { first: "p2" });
+  state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
+  state = setActiveFromDeck(state, "p1", "fix-attacker");
+  state = attachFromDeck(state, "p1", "fix-energy", 1);
+  state = setActiveFromDeck(state, "p2", id);
+  state = benchFromDeck(state, "p2", "fix-victim");
+  return setDamage(state, "p2", hp - 30);
+}
+function rareCandySetup(turn = 3) {
+  let state = driveSetup(
+    4,
+    { p1: RARE_CANDY_DECK, p2: RARE_CANDY_DECK },
+    {
+      first: "p1",
+      active: { p1: "fix-basic-1", p2: "fix-basic-1" },
+      bench: { p1: ["fix-basic-1"] },
+    },
+  );
+  while (state.turn < turn) {
+    if (state.phase.kind !== "turn:action") throw Error("Expected action phase");
+    state = must(applyAction(state, { type: "endTurn", seat: state.phase.seat }));
+  }
+  state = handFromDeck(state, "p1", "sv01-191", 1);
+  state = handFromDeck(state, "p1", "fix-stage2", 1);
+  state = benchFromDeck(state, "p1", "fix-basic-2");
+  const candy = handUid(state, "p1", "sv01-191");
+  const stage2 = handUid(state, "p1", "fix-stage2");
+  const publish = vi.fn();
+  const sim = new LuaSimulator(publish, vi.fn());
+  sim.open({
+    state,
+    events: [],
+    names: { p1: "One", p2: "Two" },
+    startedAt: 100,
+    resume: { log: [{ kind: "turn", turn }], viewerSeat: "p1" },
+  });
+  const cardRow = (uid: string) =>
+    rows(publish).find((r: string[]) => r[0] === "C" && r[1] === uid);
+  return { sim, publish, state, candy, stage2, cardRow };
+}
 describe("Lua simulator", () => {
+  it.each(["active", "bench"] as const)(
+    "stages Rare Candy then evolves the %s Basic with a Stage 2 drag",
+    (zone) => {
+      const { sim, publish, state, candy, stage2, cardRow } = rareCandySetup();
+      expect(cardRow(candy)?.[17]).toBe("true");
+      sim.command(`move\t${candy}\thand\t0\tplaymat\t0`);
+      expect(sim.host?.game).toBe(state);
+      expect(sim.host?.steps).toHaveLength(1);
+      expect(cardRow(candy)?.[5]).toBe("played");
+      expect(cardRow(stage2)?.[17]).toBe("true");
+      expect(rows(publish).find((r: string[]) => r[0] === "S" && r[1] === "you")?.[4]).toBe(
+        String(state.players.p1.hand.length - 1),
+      );
+      expect(sim.menu).toBeNull();
+      // An invalid destination must not spend either card or lose the pending play.
+      sim.command(`move\t${stage2}\thand\t0\tbench\t1`);
+      expect(sim.host?.game).toBe(state);
+      expect(cardRow(candy)?.[5]).toBe("played");
+      expect(sim.message).not.toBe("");
+      sim.command(`move\t${stage2}\thand\t0\t${zone}\t0`);
+      const after = sim.host?.game;
+      const evolved = zone === "active" ? after?.players.p1.active : after?.players.p1.bench[0];
+      const basic = zone === "active" ? state.players.p1.active : state.players.p1.bench[0];
+      expect(sim.message).toBe("");
+      expect(evolved?.stack).toEqual([...(basic?.stack ?? []), stage2]);
+      expect(after?.players.p1.discard).toContain(candy);
+      expect(after?.players.p1.hand).not.toContain(candy);
+      expect(after?.players.p1.hand).not.toContain(stage2);
+      expect(rows(publish).filter((r: string[]) => r[0] === "C" && r[1] === candy)).toHaveLength(1);
+      expect(cardRow(candy)?.[5]).toBe("played");
+      expect(rows(publish).some((r: string[]) => r[0] === "R")).toBe(false);
+      expect(sim.host?.steps).toHaveLength(2);
+      expect(loadSimulatorSave()?.state).toEqual(after);
+      sim.history("undoAction");
+      expect(sim.host?.game).toEqual(state);
+      expect(cardRow(candy)?.[5]).toBe("hand");
+      expect(cardRow(stage2)?.[5]).toBe("hand");
+      sim.history("redoAction");
+      expect(sim.host?.game).toEqual(after);
+    },
+  );
+  it("cancels a staged Rare Candy and restores it on reload without spending it", () => {
+    const { sim, state, candy, cardRow } = rareCandySetup();
+    sim.persist();
+    sim.command(`move\t${candy}\thand\t0\tplaymat\t0`);
+    sim.command("cancelRareCandy");
+    expect(sim.host?.game).toBe(state);
+    expect(cardRow(candy)?.[5]).toBe("hand");
+    sim.command(`move\t${candy}\thand\t0\tplaymat\t0`);
+    sim.history("undoAction");
+    expect(sim.host?.game).toBe(state);
+    expect(cardRow(candy)?.[5]).toBe("hand");
+    sim.command(`move\t${candy}\thand\t0\tplaymat\t0`);
+    sim.command("close");
+    sim.command("open");
+    expect(sim.host?.game).toEqual(state);
+    expect(cardRow(candy)?.[5]).toBe("hand");
+  });
+  it("allows dragging Rare Candy but returns it to hand when no legal pairing exists", () => {
+    const { sim, state, candy, cardRow } = rareCandySetup(1);
+    expect(cardRow(candy)?.[17]).toBe("true");
+    sim.command(`move\t${candy}\thand\t0\tplaymat\t0`);
+    expect(sim.host?.game).toBe(state);
+    expect(cardRow(candy)?.[5]).toBe("hand");
+    expect(sim.message).not.toBe("");
+    expect(cardRow(candy)?.[17]).toBe("true");
+  });
+  it.each([
+    { id: "fix-victim", hp: 30, count: 1, seed: 3 },
+    { id: "fix-pokemon-v", hp: 210, count: 2, seed: 1 },
+    { id: "fix-pokemon-vmax", hp: 330, count: 3, seed: 2 },
+  ])(
+    "automatically takes $count KO prizes and keeps the KO together in history",
+    ({ id, hp, count, seed }) => {
+      const state = knockoutState(id, hp, seed);
+      const publish = vi.fn();
+      const sim = new LuaSimulator(publish, vi.fn());
+      sim.open({ state, events: [], names: { p1: "One", p2: "Two" }, startedAt: 100 });
+      sim.dispatch({ type: "attack", seat: "p1", index: 0 });
+      const after = sim.host?.game;
+      expect(sim.message).toBe("");
+      expect(after?.players.p1.prizes).toEqual(state.players.p1.prizes.slice(count));
+      expect(after?.players.p1.hand).toEqual([
+        ...state.players.p1.hand,
+        ...state.players.p1.prizes.slice(0, count),
+      ]);
+      expect(after?.phase.kind).toBe("ko:promote");
+      expect(sim.menu?.kind).toBe("board");
+      expect(sim.host?.viewerSeat).toBe("p2");
+      expect(rows(publish).some((r: string[]) => r[0] === "M" && r[1] === "prizes")).toBe(false);
+      expect(sim.host?.steps.some((s) => s.game.phase.kind === "ko:takePrizes")).toBe(false);
+      expect(loadSimulatorSave()?.state).toEqual(after);
+      sim.command("close");
+      sim.command("open");
+      expect(sim.host?.game).toEqual(after);
+      sim.history("undoAction");
+      expect(sim.host?.game).toEqual(state);
+      expect(sim.menu).toBeNull();
+      sim.history("redoAction");
+      expect(sim.host?.game).toEqual(after);
+    },
+  );
+  it("automatically resolves a saved pending KO prize pick when reopening", () => {
+    const before = knockoutState("fix-pokemon-v", 210);
+    const pending = must(applyAction(before, { type: "attack", seat: "p1", index: 0 }));
+    expect(pending.phase.kind).toBe("ko:takePrizes");
+    const sim = new LuaSimulator(vi.fn(), vi.fn());
+    sim.open({ state: pending, events: [], names: { p1: "One", p2: "Two" }, startedAt: 100 });
+    expect(sim.host?.game.players.p1.prizes).toHaveLength(4);
+    expect(sim.host?.game.phase.kind).toBe("ko:promote");
+    expect(loadSimulatorSave()?.state).toEqual(sim.host?.game);
+  });
+  it("finishes a last-prize KO without an extra prize prompt", () => {
+    const state = setPrizes(knockoutState("fix-pokemon-v", 210), "p1", 1);
+    const sim = new LuaSimulator(vi.fn(), vi.fn());
+    sim.open({ state, events: [], names: { p1: "One", p2: "Two" }, startedAt: 100 });
+    sim.dispatch({ type: "attack", seat: "p1", index: 0 });
+    expect(sim.view()?.outcome).toMatchObject({
+      result: "win",
+      winner: "you",
+      reason: "prizesTaken",
+    });
+    expect(sim.host?.game.players.p1.prizes).toHaveLength(0);
+    expect(sim.menu?.kind).not.toBe("prizes");
+  });
   it("renders redacted hands and never sends hidden card identities", () => {
     const { sim, publish } = setup();
     const raw = decodeURIComponent(publish.mock.lastCall?.[0] ?? "");
@@ -207,6 +383,91 @@ describe("Lua simulator", () => {
     expect(rows(publish)[0][19]).toBe("you");
     sim.emit();
     expect(rows(publish)[0][19]).toBe("");
+  });
+  it("stages played Trainers, sends Ultra Ball costs straight to discard, and preserves order across turns and history", () => {
+    const { sim, publish } = setup();
+    const h = sim.host;
+    if (!h) throw Error("Missing host");
+    const seat = h.viewerSeat;
+    const ball = trainerCard(
+      "sv01-196",
+      "Item",
+      "You can use this card only if you discard 2 other cards from your hand. Search your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.",
+    );
+    const nest = trainerCard(
+      "sv01-181",
+      "Item",
+      "Search your deck for a Basic Pokémon and put it onto your Bench. Then, shuffle your deck.",
+    );
+    const side = h.game.players[seat];
+    const cost = side.hand[0];
+    if (!cost) throw Error("Missing cost card");
+    sim.open({
+      state: {
+        ...h.game,
+        cardPool: { ...h.game.cardPool, [ball.id]: ball, [nest.id]: nest },
+        cardIdByUid: { ...h.game.cardIdByUid, ball: ball.id, nest: nest.id, costTrainer: nest.id },
+        players: {
+          ...h.game.players,
+          [seat]: { ...side, hand: [...side.hand, "ball", "nest", "costTrainer"] },
+        },
+      },
+      events: [],
+      names: h.names,
+      startedAt: h.startedAt,
+      resume: { log: [{ kind: "turn", turn: h.game.turn }], viewerSeat: seat },
+    });
+    const cards = (zone: string, owner = "you") =>
+      rows(publish)
+        .filter((r: string[]) => r[0] === "C" && r[4] === owner && r[5] === zone)
+        .map((r: string[]) => r[1]);
+    const confirm = () => {
+      const option = sim.menu?.footer?.find((o) => !o.disabled);
+      expect(option).toBeDefined();
+      option?.run();
+      expect(sim.message).toBe("");
+    };
+    sim.dispatch({ type: "playTrainer", seat, uid: "ball" });
+    expect(sim.message).toBe("");
+    for (const uid of [cost, "costTrainer"]) {
+      const option = sim.menu?.options.find((o) => o.uid === uid);
+      expect(option).toBeDefined();
+      option?.run();
+    }
+    confirm();
+    expect(cards("discard")).toEqual([cost, "costTrainer"]);
+    sim.menu?.options.find((o) => !o.disabled)?.run();
+    confirm();
+    expect(cards("played")).toEqual(["ball"]);
+    expect(cards("discard")).toEqual([cost, "costTrainer"]);
+    sim.dispatch({ type: "playTrainer", seat, uid: "nest" });
+    sim.menu?.options.find((o) => !o.disabled)?.run();
+    confirm();
+    expect(cards("played")).toEqual(["ball", "nest"]);
+    expect(cards("discard")).toEqual([cost, "costTrainer"]);
+    const original = [...(sim.host?.game.players[seat].discard ?? [])];
+    expect(original).toHaveLength(4);
+    sim.command("pile\tyou");
+    expect(sim.menu?.options.map((o) => o.uid)).toEqual(["costTrainer", cost]);
+    sim.command("dismiss");
+    sim.command("close");
+    sim.command("open");
+    expect(cards("played")).toEqual(["ball", "nest"]);
+    sim.history("undoAction");
+    expect(cards("played")).toEqual(["ball"]);
+    expect(cards("hand")).toContain("nest");
+    sim.history("redoAction");
+    expect(cards("played")).toEqual(["ball", "nest"]);
+    sim.dispatch({ type: "endTurn", seat });
+    expect(cards("played", "opponent")).toEqual([]);
+    expect(cards("discard", "opponent")).toEqual(original);
+    expect(sim.host?.game.players[seat].discard).toEqual(original);
+    sim.command("pile\topponent");
+    expect(sim.menu?.options.map((o) => o.uid)).toEqual([...original].reverse());
+    sim.command("dismiss");
+    sim.history("undoAction");
+    expect(cards("played")).toEqual(["ball", "nest"]);
+    expect(cards("discard")).toEqual([cost, "costTrainer"]);
   });
   it("dispatches attacks from the Active's attached actions and advances to the opponent", () => {
     const { sim, publish } = setup();

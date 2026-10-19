@@ -7,6 +7,7 @@
 local T=require('ui.theme')
 local Button=require('ui.button')
 local Card=require('ui.card')
+local Motion=require('ui.motion')
 local Pile=require('ui.deck_pile')
 local Library=require('ui.library')
 local Codec=require('ui.account')
@@ -43,7 +44,9 @@ function Simulator:command(...)
   self.callbacks.command(table.concat(fields,'\t'))
 end
 function Simulator:open(reduced)
-  self.reduced=reduced;self.drag=nil;self.focus=0;self.raw=nil;self.previous=nil;self.highlight=nil;self.targeting=nil;self.luaTargeting=nil
+  self.prizeMotion={}
+  self.rareCandy=nil
+  self.reduced=reduced;self.drag=nil;self.focus=0;self.raw=nil;self.previous=nil;self.highlight=nil;self.hoverCard=nil;self.targeting=nil;self.luaTargeting=nil
   if self.overlay then self.overlay:release();self.overlay=nil end
   -- Forget the last game so a reopened page never diffs against it.
   for _,c in ipairs(self.cards) do c.texture:release() end
@@ -61,7 +64,7 @@ function Simulator:layout(w,h)
   self.boardW,self.boardH=self.L.w,self.L.h
   self.zoom=math.min(w/self.boardW,h/self.boardH)
   self.ox,self.oy=(w-self.boardW*self.zoom)/2,(h-self.boardH*self.zoom)/2
-  self.drag=nil;self.highlight=nil
+  self.drag=nil;self.highlight=nil;self.hoverCard=nil
   -- A browser resize goes through love.window.setMode, which empties every
   -- Canvas in love.js; card faces are canvases, so repaint them.
   for _,c in ipairs(self.cards) do c:rebuild() end
@@ -116,7 +119,7 @@ function Simulator:sync(raw)
   self.raw=raw
   local rows=fieldsOf(raw)
   local f=rows[1];if not f then return end
-  local previous={items=self.items,sides=self.sides,turn=self.turn,viewerSeat=self.viewerSeat,outcome=self.outcome,phase=self.phase,activePlayer=self.activePlayer,menuId=self.menuId,revision=self.revision,message=self.message,gamePhase=self.gamePhase}
+  local previous={items=self.items,sides=self.sides,turn=self.turn,viewerSeat=self.viewerSeat,outcome=self.outcome,phase=self.phase,activePlayer=self.activePlayer,menuId=self.menuId,revision=self.revision,message=self.message,gamePhase=self.gamePhase,rareCandy=self.rareCandy}
   self.revision=tonumber(f[1]) or 0
   self.phase,self.you,self.opponent=f[2],f[3],f[4]
   self.turn=tonumber(f[5]) or 0;self.gamePhase=f[6] or '';self.message=f[7] or '';self.title=f[8] or '';self.hint=f[9] or ''
@@ -125,7 +128,7 @@ function Simulator:sync(raw)
   self.allow={energy=f[15]=='1',supporter=f[16]=='1',retreated=f[17]=='1'}
   self.outcome,self.outcomeDetail=f[18] or '',f[19] or ''
   self.shuffled=f[20] or ''
-  self.items={};self.sides={};self.actions={};self.cardActions={};self.info=self.info or {}
+  self.items={};self.sides={};self.actions={};self.cardActions={};self.info=self.info or {};self.rareCandy=nil
   local menu
   for i=2,#rows do
     local r=rows[i]
@@ -145,6 +148,7 @@ function Simulator:sync(raw)
       end
       self.items[#self.items+1]={id=r[2],cardId=r[3],name=r[4],owner=r[5],zone=r[6],index=tonumber(r[7]) or 0,hidden=r[8]=='true',category=r[9] or '',trainerType=r[10] or '',stage=r[11] or '',
         hp=tonumber(r[12]),damage=tonumber(r[13]) or 0,energies=energies,energyCards=energyCards,tools=#toolCards,toolCards=toolCards,status=r[16] or '',types=r[17] or '',draggable=r[18]=='true'}
+    elseif r[1]=='R' then self.rareCandy=r[2]
     elseif r[1]=='I' then
       self.info[r[2]]={category=r[3] or '',trainerType=r[4] or '',stage=r[5] or '',hp=r[6] or '',types=r[7] or '',retreat=r[8] or '',weakness=r[9] or '',resistance=r[10] or '',effect=r[11] or '',abilities=r[12] or '',attacks=r[13] or '',energyType=r[14] or '',name=r[15] or ''}
     elseif r[1]=='A' then self.actions[#self.actions+1]={token=r[2],label=r[3],colour=T[r[4]] or T.blue,disabled=r[5]=='true',slot=r[6] or 'minor'}
@@ -158,9 +162,10 @@ function Simulator:sync(raw)
     end
   end
   self.menu=menu
+  if previous.rareCandy and not self.rareCandy then self.luaTargeting=nil end
   self.menuId=menu and menu.id or nil
   if self.drag then self.drag.card.dragging=false;self.drag=nil end
-  self.highlight=nil
+  self.highlight=nil;self.hoverCard=nil
   self:placeCards(false,previous)
   self:react(previous)
   self:applyMenu(previous)
@@ -214,8 +219,8 @@ function Simulator:placeCards(resize,previous)
   end
   if previous and previous.items then for _,it in ipairs(previous.items) do prevByUid[it.owner..':'..it.id]=it end end
   -- Where a card attached to a Pokémon was last seen: under that Pokémon.
-  -- A discarded Energy or Tool starts its slide there, together with the
-  -- retreat or swap that paid it, not from the hand.
+  -- Discarded attachments and attachments returned to hand (including undo)
+  -- start their slide at the Pokémon that carried them.
   local attachedFrom={}
   if previous and previous.items then
     for _,it in ipairs(previous.items) do
@@ -232,7 +237,28 @@ function Simulator:placeCards(resize,previous)
   -- that occupant evolved: it takes over the old card's place rather than
   -- sliding in while the Basic ghosts to the discard.
   local nowByUid={}
-  for _,it in ipairs(self.items) do nowByUid[it.owner..':'..it.id]=it end
+  local nowById={}
+  for _,it in ipairs(self.items) do
+    nowByUid[it.owner..':'..it.id]=it
+    if not it.hidden then nowById[it.id]=it end
+  end
+  -- Undo/recovery can arrive while a discard is still flying. Return that
+  -- same card from its visible position instead of leaving a duplicate ghost.
+  for i=#self.ghosts,1,-1 do
+    local c=self.ghosts[i]
+    if c.ghost.target then
+      local item=nowById[c.item.id]
+      if not item or item.zone~='discard' then
+        table.remove(self.ghosts,i);c.ghost=nil
+        local key=item and (item.owner..':'..item.id)
+        if key and not old[key] then old[key]=c else c.texture:release() end
+      else
+        c.item=item;c.ghost.target=L.zones[prefix(item.owner)..'discard']
+      end
+    end
+  end
+  local playedFrom={}
+  for _,c in pairs(old) do if c.item.zone=='played' then playedFrom[c.item.id]=c end end
   local prevBySpot,occupied={},{}
   if previous and previous.items then
     for _,it in ipairs(previous.items) do
@@ -251,16 +277,23 @@ function Simulator:placeCards(resize,previous)
   local fresh=not previous or previous.phase~='ready'
   for i,item in ipairs(self.items) do
     item.edition='dissolve';item.resolution=2;item.drawFace=function(w,h) self:face(item,w,h) end
-    local zone=L.zones[prefix(item.owner)..(item.zone=='prize' and 'prizes' or item.zone)] or L.zones.playmat
+    local zone=(item.zone=='played' and L.zones.played) or L.zones[prefix(item.owner)..(item.zone=='prize' and 'prizes' or item.zone)] or L.zones.playmat
     if item.zone=='discard' then
-      -- The discard is a pile (below); a card arriving from a hand slides in
-      -- as a short-lived ghost. Cards leaving the table already ghost there.
+      -- Cost discards slide straight in; played Trainers wait until the turn
+      -- ends. Keep their visible position even when hot-seat swaps the owners.
       local prev=prevByUid[item.owner..':'..item.id]
-      if not fresh and previous.items and not resize and not flipped and not self.reduced and (not prev or prev.zone=='hand') then
-        local from=attachedFrom[item.owner..':'..item.id] or L.zones[prefix(item.owner)..'hand']
-        local c=self:newCard(item,i,from.x,from.y,zone.scale)
+      local staged=playedFrom[item.id]
+      local c=old[item.owner..':'..item.id] or staged
+      if c then old[c.item.owner..':'..c.item.id]=nil end
+      if not fresh and previous.items and not resize and (not flipped or staged) and not self.reduced and (staged or not prev or prev.zone~='discard') then
+        if not c then
+          local from=attachedFrom[item.owner..':'..item.id] or L.zones[prefix(item.owner)..'hand']
+          c=self:newCard(item,i,from.x,from.y,zone.scale)
+        end
+        c.item=item;c.dragging=false;c.lift=0
         c.ghost={start=self.time,target=zone}
         self.ghosts[#self.ghosts+1]=c
+      elseif c then c.texture:release()
       end
     elseif not (item.zone=='hand' and zone.hidden) then
       local n=counts[item.owner..item.zone] or 1
@@ -271,6 +304,7 @@ function Simulator:placeCards(resize,previous)
         if item.owner=='opponent' then rotation=-rotation;y=zone.y-(y-zone.y) end
       elseif item.zone=='bench' then x,y=(benchX[item.owner] or {})[item.index] or Layout.bench(zone,n,item.index),zone.y
       elseif item.zone=='prize' then x,y=Layout.prize(zone,item.index)
+      elseif item.zone=='played' then x,y=Layout.played(zone,n,item.index)
       end
       local key=item.owner..':'..item.id
       local c=old[key];old[key]=nil
@@ -296,20 +330,22 @@ function Simulator:placeCards(resize,previous)
         if not self.reduced and previous and previous.items and not resize and not flipped and (not fresh or item.zone=='hand') then
           -- A card entering the table starts where it came from.
           local from
-          if item.zone=='hand' then from=youPrizesTaken and item.owner=='you' and L.zones.you_prizes or L.zones[prefix(item.owner)..'deck']
+          if item.zone=='hand' then
+            from=attachedFrom[key] or (youPrizesTaken and item.owner=='you' and L.zones.you_prizes or L.zones[prefix(item.owner)..'deck'])
           elseif item.zone=='discard' then from=prev and L.zones[prefix(item.owner)..prev.zone] or L.zones[prefix(item.owner)..'hand']
+          elseif item.zone=='played' then from=L.zones[prefix(item.owner)..'hand']
           elseif (item.zone=='active' or item.zone=='bench') and occupied[item.owner..':'..item.zone..':'..item.index] then
             -- A Pokémon reappearing on an occupied spot (an undone evolution
             -- putting the Basic back) was there all along: no entrance.
             from=nil
           elseif item.owner=='opponent' then from=L.zones.opp_hand
           else from=L.zones.you_deck end
-          if from then c.motion.VT.x=from.x/c.unit;c.motion.VT.y=from.y/c.unit end
+          if from then c.motion.VT.x=from.x/c.unit;c.motion.VT.y=from.y/c.unit;c.x,c.y=from.x,from.y end
         end
       else
         c.item=item
         if resize or math.abs(c.baseScale-scale)>0.001 then
-          local px,py=c.x,c.y;c:place(x,y,scale,false);c.motion.VT.x=px/c.unit;c.motion.VT.y=py/c.unit
+          local px,py=c.x,c.y;c:place(x,y,scale,false);c.motion.VT.x=px/c.unit;c.motion.VT.y=py/c.unit;c.x,c.y=px,py
         else c.homeX,c.homeY=x,y end
       end
       c.baseY=y;c.baseRotation=rotation
@@ -359,7 +395,14 @@ function Simulator:placeCards(resize,previous)
   -- discard pile with a card still sliding towards it keeps its old face and
   -- count until that card lands (the new pile waits in `pendingPiles`).
   local oldPiles={}
-  for _,p in ipairs(self.piles) do oldPiles[p.owner..':'..p.item.kind]=p end
+  for _,p in ipairs(self.piles) do
+    if flipped then
+      p.owner=p.owner=='you' and 'opponent' or 'you';p.item.owner=p.owner
+      local zone=L.zones[prefix(p.owner)..p.item.kind]
+      p:place(zone.x,zone.y,zone.scale,false,self.boardW)
+    end
+    oldPiles[p.owner..':'..p.item.kind]=p
+  end
   self.piles={};self.pendingPiles=self.pendingPiles or {}
   local landing={}
   for _,c in ipairs(self.ghosts) do
@@ -390,6 +433,8 @@ function Simulator:placeCards(resize,previous)
         self.piles[#self.piles+1]=p
         if self.pendingPiles[owner] then self.pendingPiles[owner].texture:release();self.pendingPiles[owner]=nil end
       end
+    elseif self.pendingPiles[owner] then
+      self.pendingPiles[owner].texture:release();self.pendingPiles[owner]=nil
     end
   end
   for _,p in pairs(oldPiles) do p.texture:release() end
@@ -676,6 +721,9 @@ function Simulator:hit(x,y)
 end
 function Simulator:cardHit(x,y)
   if self.overlay then return nil end
+  -- Raised cards are painted last, so they also receive the pointer first.
+  if self.hoverCard and self.hoverCard:hit(x,y) then return self.hoverCard end
+  if self.highlight and self.highlight:hit(x,y) then return self.highlight end
   local best
   for i=#self.cards,1,-1 do
     local c=self.cards[i]
@@ -702,6 +750,19 @@ function Simulator:targetFor(card)
   return nil
 end
 function Simulator:isCandidate(card) return self:targetFor(card)~=nil end
+function Simulator:isRareCandyDropTarget(card)
+  local d=self.drag
+  if not self.rareCandy or card.item.owner~='you' then return false end
+  if card.item.zone~='active' and card.item.zone~='bench' then return false end
+  for uid,actions in pairs(self.cardActions) do
+    if not d or uid==d.card.item.id then
+      for _,a in ipairs(actions) do
+        if a.group=='evolve' and a.targetUid==card.item.id and not a.disabled then return true end
+      end
+    end
+  end
+  return false
+end
 function Simulator:prizeSlotHit(x,y)
   if not self.targeting or self.targeting.menu.kind~='prizes' then return nil end
   local z=self.L.zones.you_prizes
@@ -712,6 +773,46 @@ function Simulator:prizeSlotHit(x,y)
     if x>=px-w/2-4 and x<=px+w/2+4 and y>=py-h/2-4 and y<=py+h/2+4 then return i end
   end
   return nil
+end
+function Simulator:prizePosition(owner,index)
+  local z=self.L.zones[prefix(owner)..'prizes']
+  local x,y=Layout.prize(z,index)
+  if self.targeting and self.targeting.menu.kind=='prizes' and owner=='you' then
+    if not self.reduced then y=y-math.sin(self.time*6+index)*2 end
+    for _,o in ipairs(self.targeting.menu.options) do
+      if o.uid=='prize:'..index and o.selected then y=y-0.2*190*z.scale end
+    end
+  end
+  return x,y
+end
+function Simulator:updatePrizes(dt,time,mx,my,reduced,blocked)
+  local previous=self.prizeMotion or {}
+  local current={}
+  local faceUp={}
+  for _,c in ipairs(self.cards) do
+    if c.item.zone=='prize' then faceUp[c.item.owner..':'..c.item.index]=true end
+  end
+  for _,owner in ipairs({'opponent','you'}) do
+    local z=self.L.zones[prefix(owner)..'prizes']
+    local side=self.sides[owner] or {prizes=0}
+    for i=0,side.prizes-1 do
+      local key=owner..':'..i
+      if not faceUp[key] then
+        local p=previous[key] or {motion=Motion.new(0,0,0)}
+        local x,y=self:prizePosition(owner,i)
+        local active=not blocked and not self.drag and self.hover==0 and not self.hoverCard
+          and math.abs(mx-x)<=71*z.scale and math.abs(my-y)<=95*z.scale
+        if active and not p.hovered then
+          Card.juiceUp(p,time,0.05,0.03,reduced)
+          self.callbacks.feedback('paper1',0.9+love.math.random()*0.2)
+        end
+        p.hovered=active
+        p.motion:update(dt,time,active,false,reduced)
+        current[key]=p
+      end
+    end
+  end
+  self.prizeMotion=current
 end
 -- ---------------------------------------------------------------- update
 function Simulator:update(dt,time,mx,my,reduced)
@@ -758,10 +859,16 @@ function Simulator:update(dt,time,mx,my,reduced)
       c.homeY=c.baseY+breathe*0.03*math.sin(0.666*time+c.homeX/c.unit)*c.unit*0.5
     end
     local candidate=self:isCandidate(c)
-    if candidate and not reduced then
+    local candyTarget=not blocked and self:isRareCandyDropTarget(c)
+    if (candidate or candyTarget) and not reduced then
       c.candidateClock=(c.candidateClock or 0)+dt
-      if c.candidateClock>0.8 then c.candidateClock=0;c:juiceUp(time,0.1,0.1,reduced) end
+      if c.candidateClock>0.8 or (candyTarget and not c.candyTarget) then
+        c.candidateClock=0;c:juiceUp(time,candyTarget and 0.25 or 0.1,candyTarget and 0.3 or 0.1,reduced)
+      end
+    else
+      c.candidateClock=0
     end
+    c.candyTarget=candyTarget and not reduced
     c.lift=(c==self.highlight) and 0.2*190*c.baseScale or 0
     c.tint=nil
     if (self.targeting or self.luaTargeting) and not candidate and c.item.owner~='global' and c.item.zone~='hand' and c.item.zone~='prize' then c.tint={0.6,0.6,0.6,1} end
@@ -789,7 +896,18 @@ function Simulator:update(dt,time,mx,my,reduced)
       end
     end
   end
-  for _,p in ipairs(self.piles) do p:update(dt,time,false,reduced,self.boardW) end
+  local control=self.controls[self.hover]
+  for _,p in ipairs(self.piles) do
+    local active=not blocked and not self.drag and not hovered and (
+      (self.hover==0 and p:hit(mx,my)) or
+      (control and control.action=='pile' and control.owner==p.owner and p.item.kind=='discard'))
+    if active and not p.hovered then
+      p:juiceUp(time,0.05,0.03,reduced)
+      self.callbacks.feedback('paper1',0.9+love.math.random()*0.2)
+    end
+    p:update(dt,time,active,reduced,self.boardW)
+  end
+  self:updatePrizes(dt,time,mx,my,reduced,blocked)
   -- Hover popup (card_h_popup) for face-up cards with catalogue info.
   self.popup=nil
   if hovered and hovered~=self.highlight and not hovered.item.hidden and not self.drag and self.info[hovered.item.cardId] and not blocked then
@@ -802,6 +920,11 @@ function Simulator:dropZoneAt(x,y,card)
   local L=self.L;local item=card.item
   local Z=L.zones
   if item.zone=='hand' then
+    if item.category=='Trainer' and item.trainerType=='Item' then
+      for _,zone in ipairs({Z.you_bench,Z.opp_bench}) do
+        if Layout.inside(zone.well,x,y) then return {zone='playmat',index=0,well=zone.well} end
+      end
+    end
     if Layout.inside(Z.you_active.well,x,y) then return {zone='active',index=0,well=Z.you_active.well} end
     if Layout.inside(Z.you_bench.well,x,y) then
       local count=0;local onto
@@ -810,6 +933,7 @@ function Simulator:dropZoneAt(x,y,card)
       return {zone='bench',index=index,well=Z.you_bench.well,card=onto}
     end
     if Layout.inside(Z.stadium.well,x,y) then return {zone='stadium',index=0,well=Z.stadium.well} end
+    if Layout.inside(Z.played.well,x,y) then return {zone='playmat',index=0,well=Z.played.well} end
     if Layout.inside(Z.playmat.well,x,y) or Layout.inside(Z.opp_active.well,x,y) then return {zone='playmat',index=0,well=Z.playmat.well} end
   elseif item.zone=='bench' then
     if Layout.inside(Z.you_bench.well,x,y) then
@@ -945,7 +1069,8 @@ function Simulator:keypressed(key)
   if self.peek then self.peek=false;return end
   if self.overlay then self.overlay:keypressed(key);return end
   if key=='escape' then
-    if self.luaTargeting then self.luaTargeting=nil;self:build()
+    if self.rareCandy then self:command('cancelRareCandy')
+    elseif self.luaTargeting then self.luaTargeting=nil;self:build()
     elseif self.highlight then self.highlight=nil;self:build()
     elseif self.targeting and not self.targeting.menu.mandatory then self:command('dismiss')
     else self:openOptions() end
@@ -975,13 +1100,9 @@ function Simulator:wheelmoved(y)
 end
 function Simulator:backgroundColours() return self.fx:colours() end
 -- ---------------------------------------------------------------- drawing
--- CardArea area_uibox: black 10% r=0.1, with a whisper of the seat colour so
--- the two halves of the table read at a glance (opponent warm, you cool).
-local WELL_TINT={opponent={0.55,0.12,0.12},you={0.06,0.22,0.5},global={0,0,0}}
-local function well(x,y,w,h,owner)
-  local t=WELL_TINT[owner or 'global']
+-- CardArea area_uibox (cardarea.lua): black at 10% opacity, r=0.1.
+local function well(x,y,w,h)
   Button.panel(x,y,w,h,{0,0,0,0.1},1.2)
-  if owner and owner~='global' then Button.panel(x,y,w,h,{t[1],t[2],t[3],0.22},1.2) end
 end
 function Simulator:drawBadges(c,rw)
   local item=c.item
@@ -1060,16 +1181,12 @@ function Simulator:drawPrizes(owner,rw)
   for _,c in ipairs(self.cards) do if c.item.owner==owner and c.item.zone=='prize' then faceUp[c.item.index]=c;c.prizeSlot=c.item.index end end
   local w,h=142*z.scale,190*z.scale
   for i=0,side.prizes-1 do
-    local px,py=Layout.prize(z,i)
+    local px,py=self:prizePosition(owner,i)
     if not faceUp[i] then
-      local selected=false
-      if self.targeting and self.targeting.menu.kind=='prizes' and owner=='you' then
-        for _,o in ipairs(self.targeting.menu.options) do if o.uid=='prize:'..i then selected=o.selected end end
-      end
-      local bob=(self.targeting and self.targeting.menu.kind=='prizes' and owner=='you' and not self.reduced) and math.sin(self.time*6+i)*2 or 0
-      -- A selected prize lifts like a highlighted hand card instead of taking an outline.
-      if selected then bob=bob+0.2*h end
-      g.push();g.translate(px-w/2,py-h/2-bob)
+      local p=self.prizeMotion and self.prizeMotion[owner..':'..i]
+      g.push();g.translate(px,py)
+      if p then g.rotate(p.motion.VT.r);g.scale(p.motion.VT.scale) end
+      g.translate(-w/2,-h/2)
       g.setColor(0,0,0,0.3);g.push();g.translate(0,3);Library.face(self,{},w,h);g.pop()
       Library.face(self,{},w,h)
       g.pop()
@@ -1083,10 +1200,13 @@ function Simulator:draw(shaders)
   -- Wells (CardArea area_uibox: black 10%, r=0.1), unlabelled: the cards and
   -- the HUD counters say what each one is.
   for _,name in ipairs({'opp_bench','opp_prizes','opp_deck','opp_discard','stadium','opp_active','you_active','you_prizes','you_bench','you_deck','you_discard'}) do
-    local z=Z[name];if z and z.well and not z.tiny then well(z.well.x,z.well.y,z.well.w,z.well.h,name:sub(1,4)=='opp_' and 'opponent' or name:sub(1,4)=='you_' and 'you' or 'global') end
+    local z=Z[name];if z and z.well and not z.tiny then well(z.well.x,z.well.y,z.well.w,z.well.h) end
   end
-  -- Drop target glow (the UIElement focus outline) while dragging.
-  if self.drag and self.drag.moved and self.dropZone and self.dropZone.well then
+  -- Items and Supporters play without a drop-target outline or glow.
+  local dragged=self.drag and self.drag.card.item
+  local trainerPlay=dragged and (dragged.trainerType=='Item' or dragged.trainerType=='Supporter')
+  local sameSlot=dragged and self.dropZone and self.dropZone.zone==dragged.zone and self.dropZone.index==dragged.index
+  if self.drag and self.drag.moved and self.dropZone and self.dropZone.well and not trainerPlay and not sameSlot then
     local w=self.dropZone.well
     g.setLineWidth(2.5);Button.outline(w.x-2,w.y-2,w.w+4,w.h+4,T.white,1.2)
     g.setColor(1,1,1,0.08);Button.panel(w.x,w.y,w.w,w.h,{1,1,1,0.08},1.2)
@@ -1095,13 +1215,14 @@ function Simulator:draw(shaders)
   self:drawPrizes('opponent',rw);self:drawPrizes('you',rw)
   for _,c in ipairs(self.ghosts) do c:draw(shaders,self.time,self.mx or 0,self.my or 0,self.reduced,rw) end
   local hideHand=false
-  local order={'opponent_hand','opponent_discard','opponent_bench','opponent_active','global_stadium','you_discard','you_bench','you_active','you_prize','opponent_prize','you_hand'}
+  local order={'opponent_hand','opponent_discard','opponent_bench','opponent_active','global_stadium','you_discard','you_bench','you_active','you_prize','opponent_prize','you_played','opponent_played','you_hand'}
   for _,zoneKey in ipairs(order) do
     for _,c in ipairs(self.cards) do
-      if c.zoneKey==zoneKey and not c.dragging and not (c==self.hoverCard and c.item.zone=='hand') and not (zoneKey=='you_hand' and hideHand) then self:drawCard(c,shaders,rw) end
+      if c.zoneKey==zoneKey and not c.dragging and c~=self.hoverCard and c~=self.highlight and not (zoneKey=='you_hand' and hideHand) then self:drawCard(c,shaders,rw) end
     end
   end
-  if self.hoverCard and self.hoverCard.item.zone=='hand' and not self.hoverCard.dragging and not hideHand then self:drawCard(self.hoverCard,shaders,rw) end
+  if self.highlight and self.highlight~=self.hoverCard and not self.highlight.dragging and not (hideHand and self.highlight.item.zone=='hand') then self:drawCard(self.highlight,shaders,rw) end
+  if self.hoverCard and not self.hoverCard.dragging and not (hideHand and self.hoverCard.item.zone=='hand') then self:drawCard(self.hoverCard,shaders,rw) end
   if self.drag and self.drag.moved then
     -- Attached cards ride along under the dragged Pokémon.
     self:drawAttached(self.drag.card)

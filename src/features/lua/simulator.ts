@@ -26,6 +26,8 @@ import { moveToAction } from "../game/moveToAction";
 import { loadSimulatorSave, saveSimulator, clearSimulatorSave } from "../playmat/simulatorSave";
 import { cardImageUrl } from "../../lib/api";
 import { effectMenu } from "./simulatorChoices";
+import { viewLogEntries } from "../game/viewLog";
+import { usedTrainersForTurn } from "../playmat/utils/usedTrainers";
 
 export interface SimOption {
   label: string;
@@ -82,6 +84,7 @@ export class LuaSimulator {
   private menuId = 0;
   private active = false;
   private handlers = new Map<string, () => void>();
+  private pendingRareCandy: string | null = null;
   constructor(
     private publish: (raw: string) => void,
     private route: (page: string) => void,
@@ -89,6 +92,29 @@ export class LuaSimulator {
   ) {}
   view(): RedactedGame | null {
     return this.host && redactGame(this.host.game, this.host.viewerSeat);
+  }
+  /** Stage resolved Items/Supporters without changing the engine's discard
+   * order or making those cards unavailable to recovery effects. */
+  private tablePiles(view: RedactedGame) {
+    const h = this.host;
+    const used = new Set(
+      h
+        ? usedTrainersForTurn(viewLogEntries(h.log, h.viewerSeat), h.game.turn).map((c) => c.id)
+        : [],
+    );
+    const split = (owner: "you" | "opponent") => {
+      const discard = view.board[owner].discard;
+      const played = discard.filter(
+        (c) => used.has(c.id) && (c.trainerType === "Item" || c.trainerType === "Supporter"),
+      );
+      if (owner === "you" && this.pendingRareCandy) {
+        const candy = view.board.you.hand.find((c) => c.id === this.pendingRareCandy);
+        if (candy) played.push(candy);
+      }
+      const held = new Set(played.map((c) => c.id));
+      return { played, discard: discard.filter((c) => !held.has(c.id)) };
+    };
+    return { you: split("you"), opponent: split("opponent") };
   }
   allowed(action: GameAction) {
     return !!this.host && applyAction(this.host.game, action).ok;
@@ -98,6 +124,14 @@ export class LuaSimulator {
   private shuffled = "";
   dispatch(action: GameAction) {
     if (!this.host) return;
+    if (
+      this.pendingRareCandy &&
+      (action.type !== "rareCandy" || action.uid !== this.pendingRareCandy)
+    ) {
+      this.message = "Finish Rare Candy or cancel it first.";
+      this.emit();
+      return;
+    }
     const before = this.host.log.length;
     this.host = hostReducer(this.host, { action, at: Date.now() });
     const seats = new Set<string>();
@@ -106,11 +140,6 @@ export class LuaSimulator {
       const text = e.segments.map((s) => s.text).join("");
       if (/shuffled their (deck|hand)/.test(text) && !/bottom of their deck/.test(text))
         seats.add(e.who);
-    }
-    if (seats.size > 0) {
-      const mine = seats.has(this.host.viewerSeat);
-      const theirs = seats.has(otherSeat(this.host.viewerSeat));
-      this.shuffled = mine && theirs ? "both" : mine ? "you" : "opponent";
     }
     const flips = this.host.coinFlipPresentation ? this.host.coinFlipBatch : null;
     // The Lua coin overlay replaces the React dice presentation.
@@ -122,6 +151,7 @@ export class LuaSimulator {
     }
     this.message = this.host.lastError?.message ?? "";
     if (!this.host.lastError) {
+      this.pendingRareCandy = null;
       this.menu = null;
       this.persist();
       this.prompt();
@@ -146,6 +176,11 @@ export class LuaSimulator {
           ],
         };
       }
+    }
+    if (seats.size > 0) {
+      const mine = seats.has(this.host.viewerSeat);
+      const theirs = seats.has(otherSeat(this.host.viewerSeat));
+      this.shuffled = mine && theirs ? "both" : mine ? "you" : "opponent";
     }
     this.emit();
   }
@@ -172,6 +207,7 @@ export class LuaSimulator {
   }
   open(setup = loadSimulatorSave()) {
     this.active = true;
+    this.pendingRareCandy = null;
     this.menu = null;
     this.message = "";
     this.host = setup ? initHost(setup) : null;
@@ -180,6 +216,11 @@ export class LuaSimulator {
   }
   action(label: string, action: GameAction, colour = "blue"): SimOption {
     return { label, colour, disabled: !this.allowed(action), run: () => this.dispatch(action) };
+  }
+  private cancelRareCandy() {
+    this.pendingRareCandy = null;
+    this.message = "";
+    this.emit();
   }
   choose(
     title: string,
@@ -193,7 +234,34 @@ export class LuaSimulator {
     this.menu = { kind, title, options, note, mandatory, footer };
     this.emit();
   }
+  private takePrizesAutomatically() {
+    let taken = false;
+    while (this.host?.game.phase.kind === "ko:takePrizes") {
+      const h = this.host;
+      const phase = h.game.phase;
+      if (phase.kind !== "ko:takePrizes") break;
+      const next = hostReducer(h, {
+        action: {
+          type: "takePrizes",
+          seat: phase.seat,
+          prizeIndices: Array.from({ length: phase.count }, (_, i) => i),
+        },
+        at: Date.now(),
+      });
+      if (next.lastError || next.game === h.game) break;
+      this.host = next;
+      taken = true;
+    }
+    if (taken && this.host) {
+      // Prize-taking belongs to the KO that caused it. Undo/redo must not
+      // land on a pending automatic pick and immediately perform it again.
+      const steps = this.host.steps.filter((step) => step.game.phase.kind !== "ko:takePrizes");
+      this.host = { ...this.host, steps, stepIndex: steps.length - 1 };
+      this.persist();
+    }
+  }
   prompt() {
+    this.takePrizesAutomatically();
     this.menuId++;
     const v = this.view();
     const h = this.host;
@@ -280,6 +348,28 @@ export class LuaSimulator {
         run: () => this.dispatch(action),
         ...extra,
       });
+    if (this.pendingRareCandy && p.kind === "turn:action") {
+      const candy = this.pendingRareCandy;
+      for (const option of p.rareCandy) {
+        for (const evolution of option.stage2) {
+          act(
+            evolution.uid,
+            `Evolve ${option.basicName}`,
+            {
+              type: "rareCandy",
+              seat,
+              uid: candy,
+              target: option.target,
+              evolutionUid: evolution.uid,
+            },
+            "green",
+            { targetUid: option.basicUid, group: "evolve" },
+          );
+        }
+      }
+      push(candy, { label: "Cancel", colour: "orange", run: () => this.cancelRareCandy() });
+      return out;
+    }
     for (const card of v.board.you.hand) {
       const uid = card.id;
       if (p.kind === "setup:place") {
@@ -452,7 +542,12 @@ export class LuaSimulator {
     type: "previousTurn" | "nextTurn" | "undoAction" | "redoAction" | "undoTurn" | "redoTurn",
   ) {
     if (!this.host) return;
+    if (this.pendingRareCandy) {
+      this.cancelRareCandy();
+      return;
+    }
     this.host = hostReducer(this.host, { type });
+    this.menu = null;
     this.message = "";
     this.persist();
     this.prompt();
@@ -465,6 +560,15 @@ export class LuaSimulator {
       return [{ label: "Choose decks", slot: "primary", run: () => this.route("sandbox") }];
     const seat = h.viewerSeat;
     const p = v.phase;
+    if (this.pendingRareCandy)
+      return [
+        {
+          label: "Cancel Rare Candy",
+          colour: "orange",
+          slot: "primary",
+          run: () => this.cancelRareCandy(),
+        },
+      ];
     if (p.kind === "setup:chooseFirst")
       return [
         {
@@ -549,9 +653,14 @@ export class LuaSimulator {
     if (cmd === "close") {
       this.active = false;
       this.menu = null;
+      this.pendingRareCandy = null;
       return;
     }
     if (!this.active) return;
+    if (cmd === "cancelRareCandy") {
+      this.cancelRareCandy();
+      return;
+    }
     if (cmd === "invoke") {
       if (Number(args[0]) === this.revision) this.handlers.get(args[1] ?? "")?.();
       return;
@@ -636,7 +745,8 @@ export class LuaSimulator {
     if (cmd === "pile" && this.host && !this.menu) {
       const v = this.view();
       if (!v) return;
-      const side = args[0] === "opponent" ? v.board.opponent : v.board.you;
+      const piles = this.tablePiles(v);
+      const side = args[0] === "opponent" ? piles.opponent : piles.you;
       this.choose(
         args[0] === "opponent" ? "Opponent's discard pile" : "Your discard pile",
         side.discard
@@ -663,6 +773,53 @@ export class LuaSimulator {
       )
         return;
       const h = this.host;
+      const phase = this.view()?.phase;
+      if (this.pendingRareCandy) {
+        const target: PokemonTarget | null =
+          zone === "active"
+            ? { spot: "active" }
+            : zone === "bench" && Number.isInteger(Number(index))
+              ? { spot: "bench", index: Number(index) }
+              : null;
+        if (
+          fromZone === "hand" &&
+          target &&
+          phase?.kind === "turn:action" &&
+          phase.rareCandy.some(
+            (option) =>
+              option.target.spot === target.spot &&
+              (option.target.spot !== "bench" ||
+                (target.spot === "bench" && option.target.index === target.index)) &&
+              option.stage2.some((e) => e.uid === uid),
+          )
+        ) {
+          this.dispatch({
+            type: "rareCandy",
+            seat: h.viewerSeat,
+            uid: this.pendingRareCandy,
+            target,
+            evolutionUid: uid,
+          });
+        } else {
+          this.message = "Drag a matching Stage 2 onto its Basic Pokemon, or cancel Rare Candy.";
+          this.emit();
+        }
+        return;
+      }
+      const candy =
+        phase?.kind === "turn:action"
+          ? phase.trainers.find((t) => t.uid === uid && t.rareCandy)
+          : undefined;
+      if (fromZone === "hand" && zone === "playmat" && candy) {
+        if (candy.disabled)
+          this.message = candy.reason ?? "No valid Rare Candy evolution right now.";
+        else {
+          this.pendingRareCandy = uid;
+          this.message = "";
+        }
+        this.emit();
+        return;
+      }
       const action = moveToAction(
         {
           cardId: uid,
@@ -788,6 +945,8 @@ export class LuaSimulator {
     if (v?.phase.kind === "effect:choose" && v.phase.prompt?.note) hint = v.phase.prompt.note;
     if (v?.phase.kind === "gameOver" && v.outcome?.result === "win")
       hint = GAME_OVER_DETAIL[v.outcome.reason];
+    if (this.pendingRareCandy)
+      hint = "Drag a Stage 2 onto its Basic Pokemon. Escape cancels Rare Candy.";
     const allow = h?.game.allowances;
     row(
       ++this.revision,
@@ -816,19 +975,27 @@ export class LuaSimulator {
       this.shuffled,
     );
     this.shuffled = "";
+    if (this.pendingRareCandy) row("R", this.pendingRareCandy);
     if (v && h) {
+      const piles = this.tablePiles(v);
       const isViewerTurn =
         h.game.phase.kind === "turn:action" && h.game.phase.seat === h.viewerSeat;
       const canDragHand = v.phase.kind === "setup:place" || isViewerTurn;
+      const candyEvolutions = new Set(
+        v.phase.kind === "turn:action" && this.pendingRareCandy
+          ? v.phase.rareCandy.flatMap((option) => option.stage2.map((e) => e.uid))
+          : [],
+      );
       for (const owner of ["you", "opponent"] as const) {
         const side = v.board[owner];
+        const hand = side.hand.filter((c) => owner !== "you" || c.id !== this.pendingRareCandy);
         row(
           "S",
           owner,
           side.deckCount,
           side.prizesRemaining,
-          side.hand.length,
-          side.discard.length,
+          hand.length,
+          piles[owner].discard.length,
           side.mulliganCount ?? 0,
         );
         const cardRow = (c: RedactedCard, zone: string, index: number) => {
@@ -858,6 +1025,7 @@ export class LuaSimulator {
           const draggable =
             owner === "you" &&
             c.cardId !== "hidden" &&
+            (!this.pendingRareCandy || (zone === "hand" && candyEvolutions.has(c.id))) &&
             ((zone === "hand" && canDragHand) ||
               (zone === "bench" && (v.phase.kind === "setup:place" || isViewerTurn)) ||
               (zone === "active" && isViewerTurn));
@@ -885,12 +1053,14 @@ export class LuaSimulator {
           for (const e of a?.energies ?? []) noteArt(e);
           for (const t of a?.tools ?? []) noteArt(t);
         };
-        side.hand.forEach((c, i) => cardRow(c, "hand", i));
+        hand.forEach((c, i) => cardRow(c, "hand", i));
         if (side.active) cardRow(side.active, "active", 0);
         side.bench.forEach((c, i) => cardRow(c, "bench", i));
         for (const prize of side.faceUpPrizes) cardRow(prize.card, "prize", prize.index);
-        const topDiscard = side.discard.at(-1);
-        if (topDiscard) cardRow(topDiscard, "discard", 0);
+        piles[owner].played.forEach((c, i) => cardRow(c, "played", i));
+        // Send every public discard in its authoritative order so simultaneous
+        // cost discards and turn cleanup can animate without guessing the top.
+        piles[owner].discard.forEach((c, i) => cardRow(c, "discard", i));
       }
       if (v.board.stadium) {
         const c = v.board.stadium;

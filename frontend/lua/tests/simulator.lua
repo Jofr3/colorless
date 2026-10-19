@@ -260,4 +260,139 @@ sim:update(1/60,0.1,0,0,false)
 assert(rebuilt>=1,'Discard pile repainted when its top card art arrives, got '..rebuilt)
 love.filesystem.getInfo=function() return nil end
 Card.rebuild=baseRebuild
-print('PASS: Lua simulator parsing, fan layout, drags, targeting, prompts, hot-seat flips, options, game over and portrait layout')
+-- Played Trainers wait on the table. Cost discards arrive immediately; turn
+-- cleanup keeps the authoritative top card even across a hot-seat flip.
+for _,size in ipairs({{1280,800},{390,844}}) do
+  sim:layout(size[1],size[2]);sim:open(false)
+  local function playedScene(rev,mode)
+    local flipped=mode=='ended'
+    local owner=flipped and 'opponent' or 'you'
+    local other=flipped and 'you' or 'opponent'
+    local zone=mode=='hand' and 'hand' or mode=='ended' and 'discard' or 'played'
+    local costZone=mode=='hand' and 'hand' or 'discard'
+    return table.concat({
+      row(rev,'ready','Player 1','Player 2',flipped and 2 or 1,'turn:action','','Your turn','',0,1,'you','you',flipped and 'p2' or 'p1',0,0,0,'',''),
+      row('S',owner,40,6,mode=='hand' and 4 or 0,mode=='hand' and 1 or flipped and 5 or 3,0),row('S',other,40,6,0,0,0),
+      row('C','old','sv01-194','Switch',owner,'discard',0,'false','Trainer','Item','','',0,'',0,'','','false'),
+      row('C','used1','sv01-196','Ultra Ball',owner,zone,mode=='ended' and 1 or 0,'false','Trainer','Item','','',0,'',0,'','','false'),
+      row('C','cost1','sv03-230','Fire Energy',owner,costZone,2,'false','Energy','','','',0,'',0,'','','false'),
+      row('C','used2','sv01-181','Nest Ball',owner,zone,mode=='ended' and 3 or 1,'false','Trainer','Item','','',0,'',0,'','','false'),
+      row('C','cost2','sv01-188','Potion',owner,costZone,mode=='hand' and 3 or 4,'false','Trainer','Item','','',0,'',0,'','','false'),
+    },'\n')
+  end
+  local function settle() for _=1,90 do sim:update(1/60,sim.time+1/60,-100,-100,false) end end
+  sim:sync(playedScene(80,'hand'));settle()
+  local used=sim.byUid['you:used1']
+  local startX,startY=used.x,used.y
+  sim:sync(playedScene(81,'played'))
+  assert(sim.byUid['you:used1']==used,'Played card keeps its motion from the hand')
+  assert(math.abs(used.x-startX)<1 and math.abs(used.y-startY)<1,'Played card starts at the hand')
+  assert(#sim.ghosts==2,'Both cost cards go directly to discard')
+  for _,c in ipairs(sim.ghosts) do assert(c.item.id=='cost1' or c.item.id=='cost2','Played cards stay out of discard') end
+  settle()
+  local z=sim.L.zones.played
+  assert(used.x>=z.well.x and used.x<=z.well.x+z.well.w,'Played card fits its section')
+  assert(sim:dropZoneAt(z.x,z.y,{item={zone='hand'}}).zone=='playmat','New section accepts Trainer plays')
+  local p
+  for _,pile in ipairs(sim.piles) do if pile.item.kind=='discard' then p=pile end end
+  assert(p.count==3 and p.topItem.id=='cost2','Costs set discard count and top immediately')
+  sim:sync(playedScene(82,'ended'))
+  assert(#sim.cards==0 and #sim.ghosts==2,'End turn sends both staged Trainers to discard')
+  for _,c in ipairs(sim.ghosts) do
+    assert(c.item.owner=='opponent' and c.ghost.target==sim.L.zones.opp_discard,'Cleanup follows the owner after hot-seat flips')
+    assert(c.item.id=='used1' or c.item.id=='used2','Already discarded costs do not move again')
+  end
+  sim:sync(playedScene(83,'played'))
+  assert(#sim.ghosts==0 and sim.byUid['you:used1'],'Undo during cleanup reclaims flying cards')
+  sim:sync(playedScene(84,'ended'))
+  settle()
+  for _,pile in ipairs(sim.piles) do if pile.item.kind=='discard' then p=pile end end
+  assert(p.count==5 and p.topItem.id=='cost2','Landing order does not overwrite the true discard top')
+  sim:sync(playedScene(85,'played'));settle()
+  assert(sim.byUid['you:used1'] and sim.byUid['you:used2'],'Undo turn restores staged cards')
+  sim:sync(playedScene(86,'hand'));settle()
+  assert(sim.byUid['you:used1'].item.zone=='hand','Undo play returns the Trainer to hand')
+  sim.reduced=true
+  sim:sync(playedScene(87,'played'))
+  sim:sync(playedScene(88,'ended'))
+  assert(#sim.ghosts==0,'Reduced motion completes cleanup immediately')
+  for _,pile in ipairs(sim.piles) do if pile.item.kind=='discard' then p=pile end end
+  assert(p.count==5 and p.topItem.id=='cost2','Reduced motion preserves discard order')
+end
+-- Items use the normal play command anywhere on either bench, occupied or empty.
+for _,size in ipairs({{1280,800},{390,844}}) do
+  for _,zone in ipairs({'you_bench','opp_bench'}) do
+    for _,fraction in ipairs({0.05,0.5,0.95}) do
+      sim:layout(size[1],size[2]);sim:open(false)
+      sim:sync(snapshot(95,{
+        row('C','item','sv01-191','Rare Candy','you','hand',2,'false','Trainer','Item','','',0,'',0,'','','true'),
+      }))
+      for _=1,90 do sim:update(1/60,sim.time+1/60,-100,-100,true) end
+      local c=cardOf('item')
+      local well=sim.L.zones[zone].well
+      local sx,sy=c.x*sim.zoom+sim.ox,c.y*sim.zoom+sim.oy
+      local tx,ty=(well.x+well.w*fraction)*sim.zoom+sim.ox,(well.y+well.h/2)*sim.zoom+sim.oy
+      sim:mousepressed(sx,sy);sim:update(1/60,sim.time+1/60,tx,ty,false)
+      assert(c.dragging,'Item can be dragged onto the bench')
+      sim:mousereleased(tx,ty)
+      assert(commands[#commands]=='move\titem\thand\t2\tplaymat\t0','Bench Item drop uses the normal Trainer play flow')
+    end
+  end
+end
+-- Rare Candy waits on the table while the matching Stage 2 remains draggable.
+for _,size in ipairs({{1280,800},{390,844}}) do
+  for _,target in ipairs({'active','bench'}) do
+    sim:layout(size[1],size[2]);sim:open(false)
+    sim:sync(snapshot(100,{
+      row('R','candy'),
+      row('C','candy','sv01-191','Rare Candy','you','played',0,'false','Trainer','Item','','',0,'',0,'','','false'),
+      row('C','stage2','stage2','Stage 2','you','hand',2,'false','Pokemon','','Stage2',180,0,'',0,'','Fire','true'),
+    }))
+    assert(sim.rareCandy=='candy' and sim.byUid['you:candy'].item.zone=='played','Pending Candy is on the table')
+    for _=1,90 do sim:update(1/60,sim.time+1/60,-100,-100,true) end
+    local c=cardOf('stage2')
+    local destination=target=='active' and cardOf('active1') or cardOf('bench1')
+    local sx,sy=c.x*sim.zoom+sim.ox,c.y*sim.zoom+sim.oy
+    local tx,ty=destination.x*sim.zoom+sim.ox,destination.y*sim.zoom+sim.oy
+    sim:mousepressed(sx,sy);sim:update(1/60,sim.time+1/60,tx,ty,false)
+    assert(c.dragging,'Stage 2 can be dragged while Candy waits')
+    sim:mousereleased(tx,ty)
+    assert(commands[#commands]=='move\tstage2\thand\t2\t'..target..'\t0','Stage 2 drop identifies its Basic slot')
+    sim.luaTargeting={actions={}}
+    sim:keypressed('escape')
+    assert(commands[#commands]=='cancelRareCandy','Escape cancels the pending Candy')
+    sim:sync(snapshot(101))
+    assert(not sim.rareCandy and not sim.luaTargeting,'Cancellation clears Rare Candy and its target selection')
+  end
+end
+-- Rare Candy starts the actual motion immediately, before picking up a Stage 2.
+for _,size in ipairs({{1280,800},{390,844}}) do
+  sim:layout(size[1],size[2]);sim:open(false)
+  sim:sync(snapshot(110,{
+    row('R','candy'),
+    row('C','stage2','stage2','Stage 2','you','hand',2,'false','Pokemon','','Stage2',180,0,'',0,'','Fire','true'),
+    row('K','c1','stage2','Evolve Houndour','green','false','active1','evolve',''),
+    row('K','c2','otherStage2','Evolve Growlithe','green','false','bench1','evolve',''),
+    row('K','c3','stage2','Evolve Growlithe','green','true','bench1','evolve',''),
+  }))
+  for _=1,90 do sim:update(1/60,sim.time+1/60,-100,-100,true) end
+  local active,bench=cardOf('active1'),cardOf('bench1')
+  assert(not active.motion.juice and not bench.motion.juice,'Reduced motion suppresses Candy shakes')
+  sim:update(1/60,sim.time+1/60,-100,-100,false)
+  assert(active.motion.juice and bench.motion.juice,'All eligible Basics shake immediately while Candy waits')
+  sim:update(1/60,sim.time+1/60,-100,-100,false)
+  assert(math.abs(active.angle)>0.01 and math.abs(bench.angle)>0.01,'Candy shake visibly rotates both Basics')
+  local c=cardOf('stage2')
+  local sx,sy=c.x*sim.zoom+sim.ox,c.y*sim.zoom+sim.oy
+  sim:mousepressed(sx,sy)
+  sim:update(1/60,sim.time+1/60,sx,sy-25,false)
+  assert(c.dragging and active.candyTarget and not bench.candyTarget,'Dragging narrows the shake to valid matches')
+  assert(not sim:isCandidate(active),'Shake does not add a targeting outline')
+  for _=1,60 do sim:update(1/60,sim.time+1/60,sx,sy-25,false) end
+  assert(active.motion.juice and not bench.motion.juice,'Only matching Basics keep shaking')
+  sim:mousereleased(sx,sy-25)
+  sim:sync(snapshot(111))
+  for _=1,60 do sim:update(1/60,sim.time+1/60,-100,-100,false) end
+  assert(not active.motion.juice and not bench.motion.juice,'Shake ends when Candy is no longer pending')
+end
+print('PASS: Lua simulator parsing, fan layout, drags, targeting, prompts, hot-seat flips, options, game over, played Trainers, ordered cleanup and Rare Candy drags and shakes in both layouts')
