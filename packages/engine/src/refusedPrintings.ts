@@ -123,7 +123,10 @@ export type RefusedPrinting = {
     precedent; its cited doc block in registry.ts carries the dated correction.) (🆕🆕🆕 D568:
     TWO — D568 built Briar (`sv07-132`/`-163`/`-171`, `sv08.5-100`, registry.ts `BRIAR`) and
     deleted all four rows together, as the `sv07-163` row's own reason demanded; the cited
-    effects.ts doc block carries the dated correction.) */
+    effects.ts doc block carries the dated correction.) (🆕 CARD REVISION B08: ONE — Reversal
+    Energy `sv02-192`, the table's only POPULATION refusal, became `legal_standard_effective = 1`
+    at 714256b3 and B08 made the one-line id-table addition its row named; the cited registry.ts
+    comment carries the dated correction.) */
 export const REFUSED_PRINTINGS: readonly RefusedPrinting[] = [
   {
     id: "sv01-127",
@@ -134,17 +137,6 @@ export const REFUSED_PRINTINGS: readonly RefusedPrinting[] = [
     cite: {
       file: "packages/engine/src/effects.ts",
       excerpt: '// Muk sv01-127 "Poison Sacs": "Your opponent\'s Poisoned Pokémon don\'t recover',
-    },
-  },
-  {
-    id: "sv02-192",
-    card: "Reversal Energy (the second printing)",
-    surface: "specialEnergy",
-    why: "NOT a mechanism refusal: `sv04-266` IS built (D302, `REVERSAL_ENERGY`) and this is the same card's other printing at `legal_standard = 0`. It is here because a POPULATION refusal and a MECHANISM refusal read identically in prose, and only this one is settled by the catalog rather than by the engine — the day it becomes Standard-legal the row is a one-line addition to the id table and nothing else.",
-    since: "D302",
-    cite: {
-      file: "packages/engine/src/registry.ts",
-      excerpt: "  // more Prizes remaining). 2 printings, 1 legal — `sv02-192` is not Standard.",
     },
   },
 ];

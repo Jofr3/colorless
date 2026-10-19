@@ -446,7 +446,7 @@ describe("D600 §9 — Shadowy Whip: +70 with Shadowy {D} Energy on one of your 
 });
 
 describe("D600 §10 — the version", () => {
-  it("is built at engine 0.536.0", () => {
-    expect(engineVersion).toBe("0.536.0");
+  it("is built at engine 0.537.0", () => {
+    expect(engineVersion).toBe("0.537.0");
   });
 });

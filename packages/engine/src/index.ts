@@ -20274,6 +20274,13 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕 engineVersion 0.536.0 → **0.537.0** (card revision B08 — TOOLS + SPECIAL ENERGY: THREE AUDIT FINDINGS FIXED;
+    `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B08")). flow.ts
+    `attachedPrizeReductions` refuses a `knockOutDefender` doom (`lethalByEffect`, D414's marker), completing
+    `koByOpponentAttack`'s three clauses: Lillie's Pearl `sv09-151` and Legacy Energy `sv06-167` ("Knocked Out by damage
+    from an attack") no longer take 1 fewer Prize — nor spend Legacy Energy's once-per-game latch — off Mega Absol ex
+    `me01-086` "Terminal Period". registry.ts: Reversal Energy `sv02-192` (`legal_standard_effective = 1` since
+    714256b3) runs `REVERSAL_ENERGY`; its `REFUSED_PRINTINGS` row is deleted. `revisionB08.test.ts`.)
     🆕 engineVersion 0.535.0 → **0.536.0** (card revision B07 — TOOLS + SPECIAL ENERGY: ONE AUDIT FINDING FIXED;
     `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B07")). flow.ts `runKoToolTrigger`
     asks the `knockOutDefender` doom refusal (`lethalByEffect`, D414's marker) for EVERY entry of the KO-moment scan,
@@ -25871,7 +25878,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.536.0";
+export const engineVersion = "0.537.0";
 
 export type {
   ApplyResult,

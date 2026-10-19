@@ -2161,6 +2161,15 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕 **STAYS 49 AT CARD REVISION B08 — ONE RUN-TIME GATE IN AN EXISTING PRIZE STEP AND ONE REGISTRY ROW. NO PHASE, PROMPT
+    KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR KEY, OR EVENT MEMBER.** (Placed ABOVE the B07
+    block.) flow.ts `attachedPrizeReductions` now refuses a `knockOutDefender` doom (Lillie's Pearl `sv09-151`, Legacy
+    Energy `sv06-167`); the gate reads the existing `koByEffect:<turn>` marker when the Prize plan is computed, so a v49
+    record resolves under the new reading, and `oncePerGameSpent` keeps its shape and meaning (it is simply not written on
+    a damage-free Knock Out). Reversal Energy `sv02-192` gains the `REVERSAL_ENERGY` row (programs are keyed by id; the
+    provision is computed, never persisted). ROLLBACK READING (0.536): the two cards take 1 fewer Prize off a damage-free
+    Knock Out again and `sv02-192` provides one {C}. Nothing a v49 record holds changes shape or meaning.
+
     🆕 **STAYS 49 AT CARD REVISION B07 — ONE RUN-TIME GATE IN AN EXISTING STAGE RUNNER. NO PHASE, PROMPT KIND, STAGE SHAPE,
     SIDE KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR KEY, OR EVENT MEMBER.** (Placed ABOVE the B06 block.) flow.ts
     `runKoToolTrigger` now refuses a `knockOutDefender` doom for a Tool entry (Heavy Baton `sv05-151`) as it already did

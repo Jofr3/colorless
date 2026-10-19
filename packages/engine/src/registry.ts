@@ -11601,7 +11601,8 @@ const PRISM_ENERGY: CardProgram = {
     is BEHIND on Prizes taken, and a board with equal prizes promotes NOTHING
     either way — so the natural single-board test passes under an inverted
     operator. `reversalEnergy.test.ts` drives ahead, behind AND level.
-    2 printings, **1 legal** (`sv02-192` is `legal_standard = 0`); 1 of 1. */
+    2 printings, **1 legal** (`sv02-192` is `legal_standard = 0`); 1 of 1. (🆕 CARD REVISION B08:
+    both legal — `sv02-192` is `legal_standard_effective = 1` since 714256b3 and runs this row too.) */
 const REVERSAL_ENERGY: CardProgram = {
   energy: {
     provides: ["Colorless"],
@@ -21159,7 +21160,11 @@ const REGISTRY: Record<string, CardProgram> = {
   // 🆕 D302 — Reversal Energy `sv04-266`, the family's LAST unbuilt printing and
   // the same shape behind a THREE-TERM antecedent (Evolution + no Rule Box +
   // more Prizes remaining). 2 printings, 1 legal — `sv02-192` is not Standard.
+  // 🆕 CARD REVISION B08: WITHDRAWN — `sv02-192` is `legal_standard_effective = 1` since 714256b3
+  // (print_key `c22445438109bc4e`, shared with `sv04-266`, identical text), so both printings run
+  // the row; it was the unauthored Special Energy branch's one {C}. `revisionB08.test.ts` §3.
   "sv04-266": REVERSAL_ENERGY,
+  "sv02-192": REVERSAL_ENERGY,
   "fix-reversal-energy": REVERSAL_ENERGY,
   // 🆕 D298 — the SAME PRINTED SENTENCE on two attach classes, and the column's
   // FIRST movement since D262. `instr(effect,'fewer Prize') > 0 AND

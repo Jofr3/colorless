@@ -682,6 +682,13 @@ function attachedPrizeReductions(
     (pokemon) => topUid(pokemon) === ref.uid,
   );
   if (body === undefined) return unchanged;
+  // 🆕 CARD REVISION B08 — "Knocked Out BY DAMAGE from an attack": a `knockOutDefender` doom (D414's
+  // marker — Mega Absol ex "Terminal Period", no damage) reduces nothing and spends no latch. The
+  // two seat refusals above plus this line are `koByOpponentAttack`'s three clauses, the predicate
+  // Shadowy Concealment (`seatPrizeReduction`) and Amulet of Hope (R-AH) already read; Lillie's
+  // Pearl took 1 fewer and Legacy Energy spent its once-per-game cap without it.
+  // `revisionB08.test.ts` §1–§2.
+  if (lethalByEffect(body, state.turn)) return unchanged;
   const entries = passivesOf(state, body).koPrizeReductions;
   if (entries.length === 0) return unchanged;
   const holderName = topCardOf(state, body)?.name;

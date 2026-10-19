@@ -6252,7 +6252,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.536.0";',
+    find: 'export const engineVersion = "0.537.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -26635,8 +26635,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D480",
     what: "🛑 **THE CENTRAL ROW, AND IT IS THE NEAREST WRONG SIBLING RATHER THAN A CONSTRUCTION**: the refused printing `sv02-192` becomes `sv04-266` — THE SAME CARD'S OTHER PRINTING, one set-legality apart, and the one D302 actually BUILT as `REVERSAL_ENERGY`. Every structural rung stays green: the table is still nine rows (🆕🆕🆕 D562: six at this head — the count is D480's, kept), the ids are still unique and still disjoint from `RESOLVED_REFUSALS`, the citation still occurs exactly once, the excerpt still names the id (the doc block spells both printings on that line), the surface is still `specialEnergy` and the reason still reads true. What changes is the only thing that matters — the table now asserts that a SHIPPED program does not exist, which is precisely the claim D270, D330, D343 and D479 each made and nothing checked. ⚠ **AND IT REDDENS A SUITE THAT IS NOT A CENSUS**: `refusedPrintings.test.ts` §2, naming the id.",
     file: "packages/engine/src/refusedPrintings.ts",
-    find: "    id: \"sv02-192\",",
-    replace: "    id: \"sv04-266\",",
+    // 🆕 RE-ANCHORED AT CARD REVISION B08 (D540 — the same mutation, a new witness): B08 BUILT
+    //    `sv02-192` (Standard-legal since 714256b3) and deleted its row, so this row's `find`
+    //    vanished. The refused printing is now Muk `sv01-127`, and the shipped program it is made to
+    //    name is `sv02-192` itself — the printing this table used to refuse. §2 kills it
+    //    (`sv02-192` has a program) and §4 too (the Muk citation does not name it).
+    find: "    id: \"sv01-127\",",
+    replace: "    id: \"sv02-192\",",
     expectKilledBy: ["packages/engine/src/refusedPrintings.test.ts"],
   },
   {
@@ -26649,8 +26654,12 @@ export const MUTANTS: Mutant[] = [
     //    printing `sv02-192` (refused) and its BUILT set-neighbour `sv02-193`, the pair §5's
     //    oracle-is-wired case now drives. §2 kills it (`sv02-193` has a program) and §4 too (the
     //    citation names `sv02-192`, not `-193`).
-    find: "    id: \"sv02-192\",",
-    replace: "    id: \"sv02-193\",",
+    // 🆕 RE-ANCHORED AT CARD REVISION B08 (D540): B08 BUILT `sv02-192` and deleted its row; the
+    //    refused/built pair is now Muk `sv01-127` (refused) and Koraidon ex `sv01-125` (BUILT) in
+    //    the same set, the pair §5's oracle-is-wired case now drives. §2 kills it (`sv01-125` has a
+    //    program) and §4 too (the citation names `sv01-127`, not `-125`).
+    find: "    id: \"sv01-127\",",
+    replace: "    id: \"sv01-125\",",
     expectKilledBy: ["packages/engine/src/refusedPrintings.test.ts"],
   },
   {
@@ -60790,5 +60799,24 @@ export const MUTANTS: Mutant[] = [
     find: '  trainer: [{ op: "healChosen", amount: 150 }],\n  discardPileLocked: true,\n',
     replace: '  trainer: [{ op: "healChosen", amount: 150 }],\n',
     expectKilledBy: ["packages/engine/src/revisionB06.test.ts", "packages/engine/src/simpleTrainersD555.test.ts"],
+  },
+  // ── Card revision B08 (Tools + Special Energy) — the attached reduction's "by damage", and one reprint row. ──
+  {
+    id: "B08-attached-reduction-doom-counts",
+    decision: "B08",
+    what: "`attachedPrizeReductions` stops asking `lethalByEffect`, so Mega Absol ex \"Terminal Period\" (no damage) Knocking Out a Pearl Lillie's Clefairy ex or a Legacy Darkrai ex takes 1 fewer Prize again, and the Legacy Energy latch is spent. Killed by revisionB08 §1–§2.",
+    file: "packages/engine/src/flow.ts",
+    find: "  if (lethalByEffect(body, state.turn)) return unchanged;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/revisionB08.test.ts"],
+  },
+  {
+    id: "B08-reversal-sv02-row-dropped",
+    decision: "B08",
+    what: "the `sv02-192` Reversal Energy row is dropped again, so the effective-legal printing falls into the unauthored Special Energy branch and provides one {C}: {P}{W}{F} is unpayable on a Kadabra behind on Prizes. Killed by revisionB08 §3.",
+    file: "packages/engine/src/registry.ts",
+    find: '  "sv02-192": REVERSAL_ENERGY,\n',
+    replace: "",
+    expectKilledBy: ["packages/engine/src/revisionB08.test.ts"],
   },
 ];

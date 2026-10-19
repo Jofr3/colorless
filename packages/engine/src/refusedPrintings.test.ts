@@ -363,7 +363,7 @@ describe("the guard cannot pass by being empty or by being unwired", () => {
     // (4) in the header. §2 is trivially green on an empty table and §3 is trivially
     // green on an empty one; the two guard each other only if neither can be emptied
     // without a red line.
-    expect(REFUSED_PRINTINGS.length).toBeGreaterThanOrEqual(2); // 🆕🆕🆕 D568 — 6 -> 2, Briar ×4 built and deleted together; // 🆕🆕🆕 D555 — 9 -> 7, the Samurott pair built and deleted; 🆕🆕🆕 D562 — 7 -> 6, Survival Brace built and deleted
+    expect(REFUSED_PRINTINGS.length).toBeGreaterThanOrEqual(1); // 🆕 CARD REVISION B08 — 2 -> 1, Reversal Energy sv02-192 built (Standard-legal) and deleted; // 🆕🆕🆕 D568 — 6 -> 2, Briar ×4 built and deleted together; // 🆕🆕🆕 D555 — 9 -> 7, the Samurott pair built and deleted; 🆕🆕🆕 D562 — 7 -> 6, Survival Brace built and deleted
     expect(RESOLVED_REFUSALS.length).toBe(3);
     const refusedIds = REFUSED_PRINTINGS.map((r) => r.id);
     const resolvedIds = RESOLVED_REFUSALS.map((r) => r.id);
@@ -389,13 +389,18 @@ describe("the guard cannot pass by being empty or by being unwired", () => {
     // built/built. The new pair, MEASURED at this head, keeps the shape — neighbouring printings
     // in ONE set, one built and one refused: `sv02-193` is BUILT and Reversal Energy's second
     // printing `sv02-192` is REFUSED (a `REFUSED_PRINTINGS` row).
-    expect(programFor("sv02-193")).toBeDefined();
-    expect(programFor("sv02-192")).toBeUndefined();
+    // 🆕 CARD REVISION B08 — RE-POINTED AGAIN: B08 BUILT `sv02-192` (Standard-legal since
+    // 714256b3, a `REVERSAL_ENERGY` row) and deleted its row, so `sv02-193`/`sv02-192` is
+    // built/built. The new pair, MEASURED at this head, keeps the shape — printings in ONE set,
+    // one built and one refused: Koraidon ex `sv01-125` is BUILT and Muk `sv01-127` is REFUSED
+    // (the table's last row).
+    expect(programFor("sv01-125")).toBeDefined();
+    expect(programFor("sv01-127")).toBeUndefined();
     // Sharper still: the two are neighbouring printings in the SAME set, one built
     // and one refused, so a `programFor` keyed on anything coarser than the id fails
     // here rather than passing quietly.
-    expect(REFUSED_PRINTINGS.some((r) => r.id === "sv02-192")).toBe(true);
-    expect(REFUSED_PRINTINGS.some((r) => r.id === "sv02-193")).toBe(false);
+    expect(REFUSED_PRINTINGS.some((r) => r.id === "sv01-127")).toBe(true);
+    expect(REFUSED_PRINTINGS.some((r) => r.id === "sv01-125")).toBe(false);
   });
 
   it("the refused set really is drawn from live doc blocks, not invented", () => {
