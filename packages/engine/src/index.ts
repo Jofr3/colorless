@@ -20274,6 +20274,12 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕 engineVersion 0.553.0 → **0.554.0** (card revision B47 — ATTACKS: ONE AUDIT FINDING FIXED;
+    `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B47")). Mega Skarmory
+    ex "Sonic Ripper" `me03-055` / `me03-106` and Wellspring Mask Ogerpon ex "Torrential Pump" `sv06-064`
+    (and reprints) print *"shuffle … Energy attached to this Pokémon into your deck"*; the board was right,
+    but log.ts rendered their `ENERGY_DISCARDED { to: "deck" }` (D383) with the pile row ("discarded …
+    from …"). It now reads "shuffled … from <owner>'s <host> into <owner>'s deck". `revisionB47.test.ts`.)
     🆕 engineVersion 0.552.0 → **0.553.0** (card revision B45 — ATTACKS: ONE AUDIT FINDING FIXED;
     `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B45")). Sizzlipede
     "Bug Out" `me05-009`: the printed *"Reveal the bottom 7 cards of your deck"* was never shown — the
@@ -26003,7 +26009,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.553.0";
+export const engineVersion = "0.554.0";
 
 export type {
   ApplyResult,

@@ -620,7 +620,7 @@ describe("D625 §8 — Strange Timepiece: devolve your evolved {P} Pokémon; it 
 });
 
 describe("D625 §9 — the version", () => {
-  it("is built at engine 0.553.0", () => {
-    expect(engineVersion).toBe("0.553.0");
+  it("is built at engine 0.554.0", () => {
+    expect(engineVersion).toBe("0.554.0");
   });
 });

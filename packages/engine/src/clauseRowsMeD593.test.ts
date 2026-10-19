@@ -677,7 +677,7 @@ describe("D593 §11 — \"Fade Out\" under three printed names", () => {
 });
 
 describe("D593 §12 — the version", () => {
-  it("is built at engine 0.553.0", () => {
-    expect(engineVersion).toBe("0.553.0");
+  it("is built at engine 0.554.0", () => {
+    expect(engineVersion).toBe("0.554.0");
   });
 });

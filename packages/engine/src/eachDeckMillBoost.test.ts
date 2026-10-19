@@ -1221,7 +1221,7 @@ describe("D490 §9 — `MATCH_RECORD_VERSION` stays 29: reachability, driven", (
     ).toBe(false);
   });
 
-  it("engineVersion is 0.553.0 and `manifest.version` agrees — the bump is for BEHAVIOUR", () => {
+  it("engineVersion is 0.554.0 and `manifest.version` agrees — the bump is for BEHAVIOUR", () => {
     // 🆕🆕🆕 D490 — 0.384.0 → **0.385.0**. A card can reach it: one printed sentence that
     // derived to `null` on all thirteen readers and fell to the loud
     // `ATTACK_EFFECT_SKIPPED` path now mills BOTH decks and deals a number proportional to
@@ -1234,7 +1234,7 @@ describe("D490 §9 — `MATCH_RECORD_VERSION` stays 29: reachability, driven", (
     // changelog entry and missed the entry's actual `0.383.0 → 0.384.0` heading, which is
     // D488's rule fired a second time: *a prose census of exceptions is self-referential
     // the moment it is written down, and the count is taken before the sentence exists.*
-    expect(engineVersion).toBe("0.553.0");
+    expect(engineVersion).toBe("0.554.0");
     expect(manifest.version).toBe(engineVersion);
     expect(deriveAttackDiscardScaledBoost(MILL_BOTH)).not.toBeNull();
   });

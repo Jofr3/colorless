@@ -2423,6 +2423,21 @@ function formatEvent(
           plain(` into ${names[event.seat]}'s hand`),
         ]);
       }
+      // 🆕 CARD REVISION B47 — `"deck"` (D383) gets its own verb as well. It fell through to the
+      // pile row, so Mega Skarmory ex "Sonic Ripper" (`me03-055`) and Wellspring Mask Ogerpon ex
+      // "Torrential Pump" (`sv06-064`) — both printing *"shuffle … Energy attached to this Pokémon
+      // into your deck"* — logged "discarded … from …" while the cards went to the deck. The
+      // owner is named in the tail for the hand arm's reason; the trailing `shuffleDeck` op still
+      // files its own SHUFFLE row.
+      if (event.to === "deck") {
+        return row(event.actor, [
+          plain("shuffled "),
+          { text: countedNames(cards), tone: "energy" },
+          plain(" from "),
+          strong(`${names[event.seat]}'s ${cardName(state, event.host)}`),
+          plain(` into ${names[event.seat]}'s deck`),
+        ]);
+      }
       return row(event.actor, [
         plain("discarded "),
         { text: countedNames(cards), tone: "energy" },

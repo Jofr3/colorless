@@ -402,7 +402,7 @@ describe("D639 §6 — Soul Destroyer: each opponent body at 50 HP or less remai
 });
 
 describe("D639 §7 — the version", () => {
-  it("is built at engine 0.553.0", () => {
-    expect(engineVersion).toBe("0.553.0");
+  it("is built at engine 0.554.0", () => {
+    expect(engineVersion).toBe("0.554.0");
   });
 });

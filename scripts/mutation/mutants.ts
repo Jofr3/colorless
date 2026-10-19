@@ -6255,7 +6255,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.553.0";',
+    find: 'export const engineVersion = "0.554.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -57932,8 +57932,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D634",
     what: "the shuffle row names the actor's deck. Killed by coinRestMeD634 §8.",
     file: "packages/engine/src/log.ts",
-    find: "        plain(` into ${names[event.seat]}'s deck`),",
-    replace: "        plain(` into ${names[event.actor]}'s deck`),",
+    // B47 — the find carries the `strong(cardName(state, event.uid))` line above it: the
+    // ENERGY_DISCARDED `to: "deck"` arm prints the same tail, ten spaces in.
+    find: "        strong(cardName(state, event.uid)),\n        plain(` into ${names[event.seat]}'s deck`),",
+    replace: "        strong(cardName(state, event.uid)),\n        plain(` into ${names[event.actor]}'s deck`),",
     expectKilledBy: ["packages/engine/src/coinRestMeD634.test.ts"],
   },
   {
@@ -61165,5 +61167,14 @@ export const MUTANTS: Mutant[] = [
     find: "        const owner = event.actor === undefined || event.actor === event.seat ? \"their\" : `${names[event.seat]}'s`;",
     replace: "        const owner = `${names[event.seat]}'s`;",
     expectKilledBy: ["packages/engine/src/opponentAnsweredMeD641.test.ts"],
+  },
+  {
+    id: "B47-energy-to-deck-logged-as-discard",
+    decision: "B47",
+    what: "an Energy shuffled into its owner's deck (Mega Skarmory ex me03-055 \"Sonic Ripper\", Wellspring Mask Ogerpon ex sv06-064 \"Torrential Pump\") falls through to the pile row and logs \"discarded … from …\". Killed by revisionB47 §1.",
+    file: "packages/engine/src/log.ts",
+    find: "      if (event.to === \"deck\") {\n        return row(event.actor, [\n          plain(\"shuffled \"),",
+    replace: "      if (event.to === (\"never\" as string)) {\n        return row(event.actor, [\n          plain(\"shuffled \"),",
+    expectKilledBy: ["packages/engine/src/revisionB47.test.ts"],
   },
 ];

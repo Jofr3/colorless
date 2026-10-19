@@ -354,7 +354,7 @@ function laterTurn(state: GameState): GameState {
 
 describe("§1 — five objects on eleven ids, no `attack` key, and the right SEAM for each", () => {
   it("Noivern and Kyurem carry ONE `passive.attackCostClause` each, D545's two shapes", () => {
-    expect(engineVersion).toBe("0.553.0");
+    expect(engineVersion).toBe("0.554.0");
     expect(programFor(NOIVERN)).toEqual({
       passive: {
         attackCostClause: {
