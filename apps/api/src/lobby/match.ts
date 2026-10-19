@@ -2161,6 +2161,17 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕 **STAYS 49 AT CARD REVISION B12 — ONE OPTIONAL `EffectOp` KEY (`attachEnergyFrom.atLeastOne`) AND A LOG-ONLY
+    HOST FALLBACK. NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR EVENT
+    MEMBER.** (Placed ABOVE the B10 block.) ⑴ Infernape "Pyro Dance" (`sv06-033` / `sv06-173` / `svp-116`) authors
+    `atLeastOne: true` + `recordAs: "moved"` on its two `attachEnergyFrom` ops; `runProgram` writes the EXISTING
+    `declinable: true` onto the op it is about to run when the disjunction allows a decline, so a park carries only
+    keys a v49 record already holds plus the new optional one (D125's test: its absence means what it meant). ROLLBACK
+    READING (0.539): the key is ignored, so a parked Pyro Dance resumes with both picks mandatory as before; a park
+    already rewritten to `declinable` still accepts its decline there (0.539 reads `declinable`). ⑵ log.ts names an
+    attach host Knocked Out in the same batch from that batch's `KNOCKED_OUT` — a rendering read; the persisted `log`
+    rows keep their shape. Nothing a v49 record holds changes shape or meaning.
+
     🆕 **STAYS 49 AT CARD REVISION B10 — ONE RUN-TIME WRITE IN TWO EXISTING COUNTER MOVERS. NO PHASE, PROMPT KIND, STAGE
     SHAPE, SIDE KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR KEY, OR EVENT MEMBER.** (Placed ABOVE the B09 block.)
     interpreter.ts `moveOneOwnCounter` (Rocket Brain) and `moveCountersToOpponent` (Adrena-Brain) remove the source's

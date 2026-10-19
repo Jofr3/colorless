@@ -10537,7 +10537,10 @@ const INVITING_WINK: CardProgram = {
     and two ops with two `energyType`s spell the disjunction AND its cap at once.
     The three printed outcomes are exactly the three the pair produces, because
     each attach PARKS and a park is declinable: `{R}` alone, `{F}` alone, or one of
-    each. `attachFromHand` is the wrong op here for the reason its own doc gives —
+    each. (🆕 Card revision B12: *"a park is declinable"* was false — both picks were
+    mandatory, so a hand of one of each always attached both. The two ops now carry
+    `atLeastOne` over one `recordAs` slot — effects.ts — and the three printed answers
+    are reachable while the empty one is not.) `attachFromHand` is the wrong op here for the reason its own doc gives —
     it is deliberately UNBOUNDED, and under it a hand of four Basic {R} attaches
     four. **A CELL CAN BE RIGHT ABOUT THE OBSTACLE AND WRONG ABOUT THE ROAD**
     (D249's finding), and this is that at its second instance on this very row.
@@ -10580,9 +10583,11 @@ const PYRO_DANCE: CardProgram = {
       name: "Pyro Dance",
       oncePerTurn: true,
       activeOnly: false,
+      // 🆕 Card revision B12 — `atLeastOne` over one `recordAs` slot: {R}, {F} or 1 of each are
+      // all reachable (the decline of one pick is computed per board), and the empty answer is not.
       program: [
-        { op: "attachEnergyFrom", source: "hand", energyType: "Fire" },
-        { op: "attachEnergyFrom", source: "hand", energyType: "Fighting" },
+        { op: "attachEnergyFrom", source: "hand", energyType: "Fire", recordAs: "moved", atLeastOne: true },
+        { op: "attachEnergyFrom", source: "hand", energyType: "Fighting", recordAs: "moved", atLeastOne: true },
       ],
     },
   ],

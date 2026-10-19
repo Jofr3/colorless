@@ -1372,7 +1372,10 @@ export function runProgram(
       queue.unshift(...(recordGateHolds(next, ctx, op, record) ? op.then : (op.otherwise ?? [])));
       continue;
     }
-    const stepped = stepOp(next, op, ctx, events, record);
+    // 🆕 Card revision B12 — an `atLeastOne` attach learns here whether it may be declined: the
+    // queue (the ops still to run) and the running record are both only visible at this level.
+    const live = atLeastOneDecline(next, op, queue, ctx, record);
+    const stepped = stepOp(next, live, ctx, events, record);
     if ("park" in stepped) {
       // rest = the queue as it stands after shifting `op` — a plain EffectOp[].
       return {
@@ -1382,8 +1385,8 @@ export function runProgram(
         // something the op cannot see. `queue` is the only place that is
         // knowable, which is why this is folded in here and not in the note.
         // 🆕🆕🆕 D611 — and so does a later `countersOnRecordedBody` on the same slot.
-        prompt: withCountersConsequence(withConsequence(stepped.park, op, queue), op, queue),
-        cont: { pendingOp: op, rest: [...queue], ctx, ...carriedRecord(record) },
+        prompt: withCountersConsequence(withConsequence(stepped.park, live, queue), live, queue),
+        cont: { pendingOp: live, rest: [...queue], ctx, ...carriedRecord(record) },
         ...(stepped.decider === undefined ? {} : { decider: stepped.decider }),
       };
     }
@@ -1398,6 +1401,41 @@ export function runProgram(
     if (stepped.schedule !== undefined) queue.unshift(...stepped.schedule);
   }
   return { kind: "done", state: next };
+}
+
+/** 🆕 Card revision B12 — `attachEnergyFrom.atLeastOne` (effects.ts): the printed *"a Basic {R}
+    Energy card, a Basic {F} Energy card, or 1 of each"* (Infernape "Pyro Dance"). The op becomes
+    declinable when an earlier op of its disjunction (same `recordAs` slot) already attached, or a
+    later one still queued can attach on this board; otherwise it is returned unchanged and its
+    pick stays mandatory, which is what keeps the empty answer unreachable. Every other op, and an
+    op already declinable, is returned as is (the identity on every program before B12). */
+function atLeastOneDecline(
+  state: GameState,
+  op: EffectOp,
+  queue: readonly EffectOp[],
+  ctx: EffectContext,
+  record: EffectRecord,
+): EffectOp {
+  if (op.op !== "attachEnergyFrom" || op.atLeastOne !== true || op.declinable === true) return op;
+  const slot = op.recordAs;
+  if (slot === undefined) return op;
+  const earlierLanded = recorded(record, slot).length > 0;
+  const laterCanLand = queue.some(
+    (later) =>
+      later.op === "attachEnergyFrom" &&
+      later.atLeastOne === true &&
+      later.recordAs === slot &&
+      firstAttachableEnergy(
+        state,
+        attachSeat(later, ctx.seat),
+        later.source,
+        later.energyType,
+        later.anyEnergy,
+        later.energyName,
+      ) !== undefined &&
+      (later.toSelf === true ? sourceRef(state, ctx) : attachEnergyTargets(state, ctx.seat, later)).length > 0,
+  );
+  return earlierLanded || laterCanLand ? { ...op, declinable: true } : op;
 }
 
 /** The uids filed under `slot`, or none. */

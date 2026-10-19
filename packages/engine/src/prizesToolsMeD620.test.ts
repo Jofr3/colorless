@@ -560,7 +560,7 @@ describe("D620 §8 — Tremendous Bomb: 240+ from an opposing Mega ex on a non-M
 });
 
 describe("D620 §9 — the version", () => {
-  it("is built at engine 0.539.0", () => {
-    expect(engineVersion).toBe("0.539.0");
+  it("is built at engine 0.540.0", () => {
+    expect(engineVersion).toBe("0.540.0");
   });
 });

@@ -38,7 +38,9 @@ export interface LogContext {
   /** The state AFTER the events applied — resolves uids to card names.
       Safe for every event below: nothing it names has left play when the
       reduction settles (attach hosts stay put, KO'd names come off the
-      event's own uid, not the state). */
+      event's own uid, not the state). 🆕 Card revision B12: "attach hosts stay put" is false of
+      an attach whose host is Knocked Out in the same batch (Magneton "Overvolt Discharge"); that
+      row is named through the batch's KNOCKED_OUT (`knockedOutHosts`). */
   state: GameState;
   /** Wall-clock stamp for the action rows, e.g. "+02:14". */
   elapsed: string;
@@ -54,8 +56,9 @@ export function formatElapsed(ms: number): string {
 
 export function logFromEvents(events: readonly GameEvent[], ctx: LogContext): SeatLogEntry[] {
   const entries: SeatLogEntry[] = [];
+  const koHosts = knockedOutHosts(events);
   for (const event of events) {
-    const formatted = formatEvent(event, ctx);
+    const formatted = formatEvent(event, ctx, koHosts);
     if (formatted === null) continue;
     if (event.type === "TRAINER_PLAYED" || event.type === "TOOL_ATTACHED") {
       const card = cardOfUid(ctx.state, event.uid);
@@ -175,7 +178,28 @@ function countedNames(cardNames: readonly string[]): string {
     attach target's slot — robust to an on-attach move (Jet Energy switches its
     benched host to the Active Spot in the SAME batch, compacting the bench, so
     the target index no longer names the host). Reads the post-state. */
-function energyHostName(state: GameState, seat: Seat, energyUid: string): string {
+/** 🆕 Card revision B12 — the Energy each KNOCKED_OUT in this batch took out of play, mapped to the
+    KO'd body's top uid. `LogContext.state` is the state AFTER the batch, and an attach that resolves
+    in the same reduction as its host's Knock Out (Magneton "Overvolt Discharge": the last attach and
+    the printed self-KO) leaves the Energy on no body, so `energyHostName` could only say "a Pokémon".
+    The KO row names the body by its own uid (`cardIdByUid` outlives the KO), and this map lets the
+    attach row above it do the same. Read only when the board has no carrier, so every row whose
+    host is still in play is byte-identical. */
+function knockedOutHosts(events: readonly GameEvent[]): ReadonlyMap<string, string> {
+  const hosts = new Map<string, string>();
+  for (const event of events) {
+    if (event.type !== "KNOCKED_OUT") continue;
+    for (const uid of [...event.discarded, ...(event.toHand ?? [])]) hosts.set(uid, event.uid);
+  }
+  return hosts;
+}
+
+function energyHostName(
+  state: GameState,
+  seat: Seat,
+  energyUid: string,
+  koHosts: ReadonlyMap<string, string> = new Map(),
+): string {
   const carrierOf = (owner: Seat) => {
     const side = state.players[owner];
     const carriers = side.active === null ? side.bench : [side.active, ...side.bench];
@@ -186,7 +210,10 @@ function energyHostName(state: GameState, seat: Seat, energyUid: string): string
   // back to the bare noun. The actor's board is read FIRST, so every pre-D532 row is
   // byte-identical.
   const host = carrierOf(seat) ?? carrierOf(otherSeat(seat));
-  return host === undefined ? "a Pokémon" : (topCardOf(state, host)?.name ?? "a Pokémon");
+  if (host !== undefined) return topCardOf(state, host)?.name ?? "a Pokémon";
+  // 🆕 Card revision B12 — no body carries it: the host left play in this same batch (above).
+  const knockedOut = koHosts.get(energyUid);
+  return knockedOut === undefined ? "a Pokémon" : (cardOfUid(state, knockedOut)?.name ?? "a Pokémon");
 }
 
 function modifierText(kind: "weakness" | "resistance", modifier: DamageModifier): string {
@@ -227,7 +254,11 @@ const GAME_OVER_REASONS: Record<GameOverReason, string> = {
 /** One event → its log rows (usually one), or null to skip it. The switch is
     deliberately NOT exhaustive-checked: a future engine event must fall out
     as "skipped", never as a crash (coverage doctrine, simulator.md). */
-function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
+function formatEvent(
+  event: GameEvent,
+  ctx: LogContext,
+  koHosts: ReadonlyMap<string, string> = new Map(),
+): SeatLogEntry[] | null {
   const { names, state, elapsed } = ctx;
   const row = (who: Seat | "system", segments: LogSegment[]): SeatLogEntry[] => [
     { kind: "action", who, elapsed, segments },
@@ -356,7 +387,7 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         plain("attached "),
         { text: cardName(state, event.uid), tone: "energy" },
         plain(" → "),
-        strong(energyHostName(state, event.seat, event.uid)),
+        strong(energyHostName(state, event.seat, event.uid, koHosts)),
       ]);
     case "RETREATED": {
       const segments: LogSegment[] = [

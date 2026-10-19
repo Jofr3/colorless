@@ -10335,8 +10335,29 @@ export type EffectOp =
             two ops: `count` exists precisely to pin the batch to the one body
             the print names, so two ops would legalise splitting Ho-Oh's two
             Energy across two benched bodies against *"to **1 of** your Benched
-            Ethan's Pokémon"*. Recorded, priced and refused — not overlooked. */
+            Ethan's Pokémon"*. Recorded, priced and refused — not overlooked.
+          🆕 Card revision B12 — the Infernape bullet above is SUPERSEDED, not by this field but
+          by `atLeastOne` below: its two ops still carry no `declinable`, and the right to decline
+          one of them is computed per board instead. */
       declinable?: true;
+      /** 🆕 **Card revision B12 — THE PRINTED *"a Basic {R} Energy card, a Basic {F} Energy card,
+          or 1 of each"*** (Infernape `sv06-033` / `sv06-173` / `svp-116` "Pyro Dance"): a
+          disjunction over N one-card ops whose printed answers are every NON-EMPTY subset. The ops
+          of one disjunction carry `atLeastOne` and the SAME `recordAs` slot (the record is how a
+          later op learns an earlier one landed). When one of them is about to run, `runProgram`
+          (interpreter.ts `atLeastOneDecline`) gives it `declinable` iff
+            • an earlier op of the disjunction already filed an attach under the slot, OR
+            • a later op of it, still queued, can attach on this board (an attachable card in its
+              pile AND a target).
+          Otherwise the op stays MANDATORY — it is the last answer that keeps the result non-empty.
+          So with {R} and {F} both in hand: decline {R} → the {F} pick is mandatory; take {R} → the
+          {F} pick may be declined. With {R} alone: the {R} pick is mandatory (and still forced when
+          the one Pokémon in play is the only target). D358's objection to `declinable` on these ops
+          — it would also reach the unprinted empty answer — is exactly what the second bullet
+          answers. Absent = no coupling, every program before B12. Persisted inside
+          `EffectContinuation.pendingOp`/`rest` like every op key; a rolled-back build ignores it
+          and runs the two mandatory picks it ran before. */
+      atLeastOne?: true;
       /** ⚠️⚠️ D246 — THE PRINTED BARE NOUN, *"attach **an Energy card** from your
           hand/discard pile to this Pokémon"* (Snorlax `sv06-136` "But First,
           Food"; Landorus `sv08-110` "Fist of Focus" — **2 legal attack printings,

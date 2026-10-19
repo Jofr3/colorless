@@ -6252,7 +6252,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.539.0";',
+    find: 'export const engineVersion = "0.540.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -14007,8 +14007,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D351",
     what: '🛑 THE REGISTRY ROW BECOMES **HOMOGENEOUS** — the {F} half is rewritten as a second {R} half — and with it Infernape stops printing a disjunction at all: a hand of two Basic {R} attaches both, a hand of one {R} and one {F} attaches only the {R}, and the card can never reach the printed *"a Basic {F} Energy card"* outcome. ⚠️ **AND IT IS THE MUTANT THAT MAKES THE ENGINE FIX UNREACHABLE, WHICH IS THE POINT OF PUTTING IT HERE**: under it this row joins Koraidon in the homogeneous class, `.some` and `.every` agree again, and `D351-attach-alternatives-collapse-to-per-op` above would go from killed to SURVIVING. Two mutants that hide each other are two mutants that must both be run. **MEASURED INDIVIDUALLY: 7 of 7,382, ALL in `pyroDance.test.ts`**',
     file: "packages/engine/src/registry.ts",
-    find: '        { op: "attachEnergyFrom", source: "hand", energyType: "Fighting" },',
-    replace: '        { op: "attachEnergyFrom", source: "hand", energyType: "Fire" },',
+    // 🆕 Card revision B12 — re-anchored on the row's `recordAs` / `atLeastOne` keys.
+    find: '        { op: "attachEnergyFrom", source: "hand", energyType: "Fighting", recordAs: "moved", atLeastOne: true },',
+    replace: '        { op: "attachEnergyFrom", source: "hand", energyType: "Fire", recordAs: "moved", atLeastOne: true },',
     expectKilledBy: ["packages/engine/src/pyroDance.test.ts"],
   },
   // ── D352 · the leftovers DESTINATION on the attach op, and the record it broke ──
@@ -60849,5 +60850,42 @@ export const MUTANTS: Mutant[] = [
     find: "  const relieved = withBodyAt(state, sourceRef, healedBody(source, moved, state.turn));",
     replace: "  events.pop();\n  const relieved = healChosen(state, sourceRef, moved, ctx, events);",
     expectKilledBy: ["packages/engine/src/revisionB10.test.ts"],
+  },
+  // ── Card revision B12 (Abilities) — Pyro Dance's "or 1 of each", Overvolt Discharge's last attach row. ──
+  {
+    id: "B12-at-least-one-forgets-the-earlier-attach",
+    decision: "B12",
+    what: "`atLeastOneDecline` stops reading the record: after Pyro Dance's {R} lands, the {F} pick is mandatory again whenever no later op could attach, so the printed '{R}' answer is unreachable with one of each in hand. Killed by revisionB12 §1.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const earlierLanded = recorded(record, slot).length > 0;",
+    replace: "  const earlierLanded = false;",
+    expectKilledBy: ["packages/engine/src/revisionB12.test.ts", "packages/engine/src/pyroDance.test.ts"],
+  },
+  {
+    id: "B12-at-least-one-ignores-the-later-attach",
+    decision: "B12",
+    what: "`atLeastOneDecline` stops looking down the queue: Pyro Dance's {R} pick is mandatory again with one of each in hand, so the printed '{F}' answer is unreachable (and a lone Infernape is forced both Energy). Killed by revisionB12 §1.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return earlierLanded || laterCanLand ? { ...op, declinable: true } : op;",
+    replace: "  return earlierLanded ? { ...op, declinable: true } : op;",
+    expectKilledBy: ["packages/engine/src/revisionB12.test.ts"],
+  },
+  {
+    id: "B12-at-least-one-always-declinable",
+    decision: "B12",
+    what: "`atLeastOneDecline` makes every op of the disjunction declinable: the unprinted EMPTY answer (decline {R}, then decline {F}) is accepted, D358's objection to `declinable` on these ops. Killed by revisionB12 §1.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return earlierLanded || laterCanLand ? { ...op, declinable: true } : op;",
+    replace: "  return { ...op, declinable: true };",
+    expectKilledBy: ["packages/engine/src/revisionB12.test.ts"],
+  },
+  {
+    id: "B12-attach-row-ignores-the-batch-knock-out",
+    decision: "B12",
+    what: "log.ts stops naming an attach host Knocked Out in the same batch: Magneton 'Overvolt Discharge''s last attach row reads '→ a Pokémon' again. Killed by revisionB12 §2.",
+    file: "packages/engine/src/log.ts",
+    find: "  const knockedOut = koHosts.get(energyUid);",
+    replace: "  const knockedOut: string | undefined = undefined;",
+    expectKilledBy: ["packages/engine/src/revisionB12.test.ts"],
   },
 ];

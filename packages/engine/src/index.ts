@@ -20274,6 +20274,15 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕 engineVersion 0.539.0 → **0.540.0** (card revision B12 — ABILITIES: TWO AUDIT FINDINGS FIXED;
+    `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B12")). ⑴ Infernape
+    "Pyro Dance" `sv06-033` / `sv06-173` / `svp-116`: ONE optional `EffectOp` key, `attachEnergyFrom.atLeastOne`
+    (effects.ts), read by interpreter.ts `atLeastOneDecline` in `runProgram` — an op of the disjunction is
+    declinable while another of it already attached (its shared `recordAs` slot) or a later one can still attach,
+    so the printed {R} / {F} / {R,F} answers are all reachable and the empty one is not (both picks were
+    mandatory). ⑵ log.ts: an ENERGY_ATTACHED whose host is Knocked Out in the same batch (Magneton "Overvolt
+    Discharge" `sv08-059` / `svp-153` / `svp-159`, the last attach and the printed self-KO) names the host through
+    that batch's KNOCKED_OUT instead of "a Pokémon". `revisionB12.test.ts`; `pyroDance.test.ts` §5 flipped.)
     🆕 engineVersion 0.538.0 → **0.539.0** (card revision B10 — ABILITIES: ONE AUDIT FINDING FIXED;
     `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B10")). interpreter.ts
     `moveOneOwnCounter` (Rocket Brain `sv10-089` / `-198`) and `moveCountersToOpponent` (Adrena-Brain
@@ -25890,7 +25899,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.539.0";
+export const engineVersion = "0.540.0";
 
 export type {
   ApplyResult,

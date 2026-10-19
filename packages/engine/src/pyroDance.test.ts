@@ -110,6 +110,14 @@ import { FIXTURE_POOL, battler, deckOf, typedEnergy } from "./testFixtures";
 // pins the REFUSAL by id so a slice that flags these ops has to come here and
 // say why.
 //
+// 🆕 Card revision B12 — THE COUPLING IS BOUGHT, AND THE OPS ARE STILL NOT FLAGGED.
+// `attachEnergyFrom.atLeastOne` + a shared `recordAs` slot: `runProgram`
+// (`atLeastOneDecline`) makes an op of the pair declinable only while the other
+// one already attached or can still attach, so {R}, {F} and {R,F} are reachable
+// and the empty answer is not. The authored ops carry no `declinable`, so
+// `attachDecline.test.ts` §5's refusal-by-id stays true as written; §5 below is
+// the measurement that flipped. Driven per printing in `revisionB12.test.ts` §1.
+//
 // ── THE ENGINE DIFF, AND WHY IT IS NOT ZERO ─────────────────────────────────
 // The no-new-vocabulary refutation was RUN FROM SOURCE and four spellings were
 // tried before one was paid for:
@@ -324,9 +332,11 @@ describe("D351 §1 — the registry row is TWO ops, and the shape is the print",
   });
 
   it("the program is exactly two attachEnergyFrom ops, {R} then {F}, from the HAND", () => {
+    // 🆕 Card revision B12 — both ops gained `recordAs: "moved"` + `atLeastOne` (the printed
+    // "or 1 of each" as a coupling: `revisionB12.test.ts` §1 drives the three answers).
     expect(pyroProgram()).toEqual([
-      { op: "attachEnergyFrom", source: "hand", energyType: "Fire" },
-      { op: "attachEnergyFrom", source: "hand", energyType: "Fighting" },
+      { op: "attachEnergyFrom", source: "hand", energyType: "Fire", recordAs: "moved", atLeastOne: true },
+      { op: "attachEnergyFrom", source: "hand", energyType: "Fighting", recordAs: "moved", atLeastOne: true },
     ]);
   });
 
@@ -336,8 +346,10 @@ describe("D351 §1 — the registry row is TWO ops, and the shape is the print",
     // would pin the batch to one body (D205) and deny "in any way you like";
     // `targetType`/`benchOnly`/`ownerPokemon` would narrow a target the print
     // leaves bare; `anyEnergy` would make the printed word "Basic" false.
+    // 🆕 Card revision B12 — plus the disjunction's two keys (`atLeastOne`, `recordAs`); the
+    // absences this rung is about are unchanged.
     for (const op of pyroProgram()) {
-      expect(Object.keys(op).sort()).toEqual(["energyType", "op", "source"]);
+      expect(Object.keys(op).sort()).toEqual(["atLeastOne", "energyType", "op", "recordAs", "source"]);
     }
   });
 
@@ -535,32 +547,35 @@ describe("D351 §4 — the three printed outcomes, driven end to end", () => {
 });
 
 describe("D351 §5 — 'you may' and 'once during your turn'", () => {
-  it("🛑 THE PARK IS **NOT** DECLINABLE — D263's prose claim, driven and falsified", () => {
-    // `ASSEMBLE_ALLOY`'s doc says "a park is declinable by construction, so nothing
-    // is forced on the controller". It is not: `choosePokemon` has no optional
-    // member and `resolveEffect` refuses everything but a `pokemon` choice. So the
-    // controller holding one of each CANNOT take the printed "a Basic {R} Energy
-    // card" outcome alone — the {F} follows whether they want it or not.
-    // ⚠️ THIS IS THE ONE PLACE THE BUILD DIVERGES FROM THE PRINT, and it is pinned
-    // as a MEASUREMENT so that buying a declinable park reddens this line by name.
-    // The divergence is inherited, not introduced: it has been the behaviour of
-    // `ASSEMBLE_ALLOY`'s *"up to 2"* since D263, on the identical grammar.
+  it("🆕 B12 — AFTER {R} LANDS, THE {F} PARK IS DECLINABLE: the printed '{R}' answer, reached", () => {
+    // 🆕 Card revision B12 FLIPPED THIS MEASUREMENT. It was pinned as *"🛑 THE PARK IS **NOT**
+    // DECLINABLE"* — *"THE ONE PLACE THE BUILD DIVERGES FROM THE PRINT … pinned as a MEASUREMENT so
+    // that buying a declinable park reddens this line by name"*: holding one of each, the {F}
+    // followed the {R} whether the controller wanted it or not. `attachEnergyFrom.atLeastOne`
+    // (effects.ts) now makes an op of the disjunction declinable once another of it attached, so
+    // the decline — the `pokemon` choice with no `ref`, the one wire spelling of it — is accepted
+    // and the {F} stays in hand. A wrong-KIND answer is still refused, as before.
     const state = board([FIRE, FIGHTING]);
     const afterFirst = resolve(usePyro(state).state, ACTIVE_REF).state;
     expect(afterFirst.phase.kind).toBe("effect:choose");
-    const declined = applyAction(afterFirst, {
+    const wrongKind = applyAction(afterFirst, {
       type: "resolveEffect",
       seat: "p1",
       choice: { kind: "cards", uids: [] },
     });
-    expect(declined.ok).toBe(false);
-    if (declined.ok) throw new Error("the park accepted a skip");
-    expect(declined.error.code).toBe("BAD_EFFECT_CHOICE");
-    // …and the only way out of the phase attaches the second Energy.
-    const forced = resolve(afterFirst, BENCH_REF).state;
-    expect(forced.phase.kind).toBe("turn:action");
-    expect(attachedTypes(forced, BENCH_REF)).toEqual(["Fighting Energy"]);
-    expect(forced.players.p1.hand).toHaveLength(0);
+    expect(wrongKind.ok).toBe(false);
+    if (wrongKind.ok) throw new Error("the park accepted a cards answer");
+    expect(wrongKind.error.code).toBe("BAD_EFFECT_CHOICE");
+    const declined = must(applyAction(afterFirst, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon" } }));
+    expect(declined.phase.kind).toBe("turn:action");
+    expect(attachedTypes(declined, ACTIVE_REF)).toEqual(["Fire Energy"]);
+    expect(attachedTypes(declined, BENCH_REF)).toEqual([]);
+    expect(declined.players.p1.hand).toHaveLength(1);
+    // …and taking it is still the "1 of each" answer.
+    const both = resolve(afterFirst, BENCH_REF).state;
+    expect(both.phase.kind).toBe("turn:action");
+    expect(attachedTypes(both, BENCH_REF)).toEqual(["Fighting Energy"]);
+    expect(both.players.p1.hand).toHaveLength(0);
   });
 
   it("the Ability is once per turn", () => {
