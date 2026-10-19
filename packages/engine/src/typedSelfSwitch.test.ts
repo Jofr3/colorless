@@ -709,8 +709,8 @@ describe("§7 — the gain is the RAW reader summand alone", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — the engine version", () => {
-  it("engineVersion is 0.543.0", () => {
-    expect(engineVersion).toBe("0.543.0");
+  it("engineVersion is 0.544.0", () => {
+    expect(engineVersion).toBe("0.544.0");
   });
 });
 

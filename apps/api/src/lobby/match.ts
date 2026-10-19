@@ -2161,6 +2161,13 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕 **STAYS 49 AT CARD REVISION B20 — ONE RUN-TIME GATE IN AN EXISTING PRIZE STEP. NO PHASE, PROMPT KIND, STAGE
+    SHAPE, SIDE KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR KEY, OR EVENT MEMBER.** (Placed ABOVE the B19 block.)
+    flow.ts `koPrizeReduction` (Munkidori ex "Oh No You Don't") now refuses a `knockOutDefender` doom, reading the
+    existing `koByEffect:<turn>` marker when the Prize plan is computed, so a v49 record resolves under the new
+    reading. ROLLBACK READING (0.543): a damage-free Knock Out of Munkidori ex with Pecharunt ex in play takes 1 fewer
+    Prize again. Nothing a v49 record holds changes shape or meaning.
+
     🆕 **STAYS 49 AT CARD REVISION B19 — ONE OPTIONAL `EffectOp` KEY (`gust.optional`) AND TWO RE-ORDERED / WIDENED
     TRIGGER SITES. NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD OR EVENT MEMBER.** (Placed
     ABOVE the B17 block.) An optional gust (Defiant Horn, Heave-Ho Catcher, Glittering Star Pattern) parks the

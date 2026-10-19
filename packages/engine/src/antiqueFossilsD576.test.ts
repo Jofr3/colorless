@@ -1093,7 +1093,7 @@ describe("D576 §7 — the persisted position: a fossil's Trainer uid in `InPlay
     expect(isLethallyDamaged(s, { ...fossil, damage: 50 })).toBe(false);
   });
 
-  it("the engine is 0.543.0", () => {
-    expect(engineVersion).toBe("0.543.0");
+  it("the engine is 0.544.0", () => {
+    expect(engineVersion).toBe("0.544.0");
   });
 });

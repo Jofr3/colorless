@@ -6253,7 +6253,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.543.0";',
+    find: 'export const engineVersion = "0.544.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -60969,5 +60969,15 @@ export const MUTANTS: Mutant[] = [
     find: "    if (seat === attackerSeat) return 0;",
     replace: "    if (seat === attackerSeat && scope === \"othersOnly\") return 0;",
     expectKilledBy: ["packages/engine/src/revisionB19.test.ts", "packages/engine/src/seatReductionAura.test.ts"],
+  },
+  // ── Card revision B20 (Abilities) — Munkidori ex's "by damage". ──
+  {
+    id: "B20-munkidori-doom-reduces",
+    decision: "B20",
+    what: "`koPrizeReduction` asks only the two seat clauses again, so Mega Absol ex \"Terminal Period\" (no damage) Knocking Out a Munkidori ex with Pecharunt ex in play takes 1 fewer Prize. Killed by revisionB20 §1.",
+    file: "packages/engine/src/flow.ts",
+    find: "  if (!koByOpponentAttack(state, ref, attackerSeat)) return null;\n",
+    replace: "  if (attackerSeat === undefined || attackerSeat === ref.seat) return null;\n",
+    expectKilledBy: ["packages/engine/src/revisionB20.test.ts"],
   },
 ];

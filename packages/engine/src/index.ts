@@ -20274,6 +20274,12 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕 engineVersion 0.543.0 → **0.544.0** (card revision B20 — ABILITIES: ONE FIX, TWO AUDIT FINDINGS
+    DEFERRED AS R-PD1; `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B20")).
+    Munkidori ex "Oh No You Don't" `sv06.5-037` / `-083` / `-091`: flow.ts `koPrizeReduction` now asks
+    `koByOpponentAttack`, so a `knockOutDefender` doom (Mega Absol ex "Terminal Period", no damage) takes
+    the full 2 Prizes. A Knock Out from counters an attack placed still counts as "by damage" for it and for
+    Miraidon "Photon Cord" (R-PD1 ⚠️ UNRULED, unchanged). `revisionB20.test.ts`.)
     🆕 engineVersion 0.542.0 → **0.543.0** (card revision B19 — ABILITIES: THREE AUDIT FINDINGS FIXED;
     `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B19")). (1) Magearna "Auto
     Heal" `sv09-107` / Gengar ex "Gnawing Curse" `sv05-104` / `-193`: an EFFECT's attach from the hand
@@ -25923,7 +25929,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.543.0";
+export const engineVersion = "0.544.0";
 
 export type {
   ApplyResult,

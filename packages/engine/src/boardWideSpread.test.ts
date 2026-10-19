@@ -767,14 +767,14 @@ describe("D482 §9 — the surface, the version and what does NOT move", () => {
     expect(READERS).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
-  it("engineVersion is 0.543.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.544.0 and the bump is owed for BEHAVIOUR", () => {
     // A sentence that derived to `null` derives to a program: `packages/engine`
     // behaviour moved, so the version steps. ⚠️ THE VERSION TAX, RE-MEASURED AT THIS
     // HEAD RATHER THAN INHERITED — 57 assertions / 73 sites across 57 files, against the
     // "37 assertions / 41 sites" index.ts still forecast from D459. See the 0.378.0
     // block, which records the class the old count did not have at all: 13 `it(…)`
     // TITLES that spell the version.
-    expect(engineVersion).toBe("0.543.0");
+    expect(engineVersion).toBe("0.544.0");
   });
 
   it("🛑 `MATCH_RECORD_VERSION` does NOT move, and the argument is BOTH of D463's tests", () => {

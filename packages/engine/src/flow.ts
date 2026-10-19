@@ -519,7 +519,8 @@ function stampSeatAttacker(state: GameState, seat: Seat, uid: string): GameState
     The three clauses, each a separate refusal and each driven:
 
       • "by damage from an attack" — `attackerSeat === undefined` means this batch
-        was not swept by the attack epilogue. Refused.
+        was not swept by the attack epilogue. Refused. 🆕 B20: and a body doomed by
+        `knockOutDefender` (D414's marker, `lethalByEffect`) is refused too.
       • "from your OPPONENT'S Pokémon" — `attackerSeat === ref.seat` means the
         holder died on the ATTACKER's own board (its own `damageSelf` recoil, its
         own confusion self-hit, or a defender's Rocky Helmet), which `finishAttack`
@@ -546,7 +547,12 @@ function koPrizeReduction(
   attackerSeat: Seat | undefined,
   baseCount: number,
 ): number | null {
-  if (attackerSeat === undefined || attackerSeat === ref.seat) return null;
+  // 🆕 CARD REVISION B20 — the two seat refusals PLUS "BY DAMAGE": `koByOpponentAttack` also refuses
+  // a `knockOutDefender` doom (D414's marker — Mega Absol ex "Terminal Period", no damage), which
+  // took 1 fewer Prize here while Shadowy Concealment, Amulet of Hope and (B08) Lillie's Pearl /
+  // Legacy Energy already refused it. Counters an attack placed still count (R-PD1 ⚠️ UNRULED,
+  // unchanged). `revisionB20.test.ts` §1–§2.
+  if (!koByOpponentAttack(state, ref, attackerSeat)) return null;
   const side = state.players[ref.seat];
   const inPlay = side.active === null ? side.bench : [side.active, ...side.bench];
   // 🆕 D298 — the board clause became OPTIONAL when the type was extracted for the
