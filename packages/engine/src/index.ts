@@ -20274,6 +20274,11 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕 engineVersion 0.535.0 → **0.536.0** (card revision B07 — TOOLS + SPECIAL ENERGY: ONE AUDIT FINDING FIXED;
+    `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B07")). flow.ts `runKoToolTrigger`
+    asks the `knockOutDefender` doom refusal (`lethalByEffect`, D414's marker) for EVERY entry of the KO-moment scan,
+    not only the Ability arm (D626 R-PHC1): Heavy Baton `sv05-151` ("Knocked Out by damage from an attack") no longer
+    moves its Energy off Mega Absol ex `me01-086` "Terminal Period". `revisionB07.test.ts`.)
     🆕 engineVersion 0.534.0 → **0.535.0** (card revision B06 — ITEMS: ONE AUDIT FINDING FIXED; `MATCH_RECORD_VERSION`
     STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B06")). registry.ts: the card-borne
     `CardProgram.discardPileLocked` (*"This card can't be put into your hand or deck from the discard pile."*) on
@@ -25866,7 +25871,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.535.0";
+export const engineVersion = "0.536.0";
 
 export type {
   ApplyResult,

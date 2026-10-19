@@ -2065,10 +2065,17 @@ function runDamagedTrigger(
     the prompt and the ENERGY_MOVED row are the whole of what a reader is told.
     🆕🆕🆕 D626 (D539): for a TOOL entry only — the scan's Ability arm (Miraidon "Photon Cord",
     `fromAbility`) files `ABILITY_TRIGGERED`, runs with the body's own uid and `invokedBy: "ability"`,
-    and refuses a `knockOutDefender` doom (R-PHC1). */
+    and refuses a `knockOutDefender` doom (R-PHC1). 🆕 CARD REVISION B07: that refusal is now asked for
+    EVERY entry, before the scan (Heavy Baton fired on a damage-free "is Knocked Out"). */
 function runKoToolTrigger(state: GameState, koedSeat: Seat, events: GameEvent[]): ApplyResult {
   const active = state.players[koedSeat].active;
   if (active === null || !isLethallyDamaged(state, active)) return advance(state, events);
+  // 🆕 CARD REVISION B07 — EVERY entry of this scan prints "Knocked Out BY DAMAGE from an attack"
+  // (Heavy Baton `sv05-151`, Exp. Share, Miraidon "Photon Cord"), so a `knockOutDefender` doom
+  // (D414's marker — Mega Absol ex "Terminal Period") fires none of them. Was asked for the Ability
+  // arm only (D626, R-PHC1), and Heavy Baton moved its Energy off a damage-free KO; Amulet of Hope
+  // (R-AH) and `koRecoilOf` (D414) already read it this way. `revisionB07.test.ts` §1.
+  if (lethalByEffect(active, state.turn)) return advance(state, events);
   const uid = topUid(active);
   if (uid === undefined) return advance(state, events);
   // 🆕🆕🆕 D566 — HEAVY BATON's *"has a Retreat Cost of exactly 4"*, asked HERE (the scan is
@@ -2082,9 +2089,9 @@ function runKoToolTrigger(state: GameState, koedSeat: Seat, events: GameEvent[])
   );
   if (entry === undefined || entry.ability.program.length === 0) return advance(state, events);
   // 🆕🆕🆕 D626 — Miraidon "Photon Cord", the scan's Ability arm: "by damage" refuses a `knockOutDefender`
-  // doom (D414's marker, R-PHC1), and the Ability announces itself and runs as an Ability (`invokedBy`).
+  // doom (D414's marker, R-PHC1) [🆕 B07: now asked above, for every entry], and the Ability announces
+  // itself and runs as an Ability (`invokedBy`).
   if (entry.fromAbility === true) {
-    if (lethalByEffect(active, state.turn)) return advance(state, events);
     events.push({ type: "ABILITY_TRIGGERED", seat: koedSeat, uid, ability: entry.ability.name });
     return settleProgram(
       runProgram(state, entry.ability.program, { seat: koedSeat, sourceUid: uid, invokedBy: "ability" }, events),

@@ -2161,6 +2161,14 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕 **STAYS 49 AT CARD REVISION B07 — ONE RUN-TIME GATE IN AN EXISTING STAGE RUNNER. NO PHASE, PROMPT KIND, STAGE SHAPE,
+    SIDE KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR KEY, OR EVENT MEMBER.** (Placed ABOVE the B06 block.) flow.ts
+    `runKoToolTrigger` now refuses a `knockOutDefender` doom for a Tool entry (Heavy Baton `sv05-151`) as it already did
+    for the Ability arm. The gate reads the existing `koByEffect:<turn>` marker when the `koToolTrigger` stage RUNS, so a
+    v49 record with that stage queued resolves under the new reading; a Heavy Baton move ALREADY parked keeps its
+    `phase.cont` and resolves as offered. ROLLBACK READING (0.535): Heavy Baton offers its move on a damage-free KO again.
+    Nothing a v49 record holds changes shape or meaning.
+
     🆕 **STAYS 49 AT CARD REVISION B06 — ONE CATALOG-ONLY `CardProgram` KEY AND ONE CANDIDATE FILTER. NO PHASE, PROMPT KIND,
     STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR KEY, OR EVENT MEMBER.** (Placed ABOVE the B05 block.)
     `CardProgram.discardPileLocked` (Poké Vital A `sv06.5-062`, Neutralization Zone `sv06.5-060`) is keyed by id and never

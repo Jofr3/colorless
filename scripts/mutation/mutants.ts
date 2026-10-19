@@ -6252,7 +6252,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.535.0";',
+    find: 'export const engineVersion = "0.536.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -56002,11 +56002,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D626-photon-doom-counts",
     decision: "D626",
-    what: "`runKoToolTrigger`'s Ability arm runs on a `knockOutDefender` doom. Killed by koTriggerRestMeD626 §4 R-PHC1 (Doom: no trigger).",
+    what: "`runKoToolTrigger` runs on a `knockOutDefender` doom (🆕 B07: the refusal is hoisted above the scan, so dropping it fires the Ability arm AND Heavy Baton). Killed by koTriggerRestMeD626 §4 R-PHC1 (Doom: no trigger) and revisionB07 §1 (Terminal Period: no Baton move).",
     file: "packages/engine/src/flow.ts",
-    find: "    if (lethalByEffect(active, state.turn)) return advance(state, events);\n    events.push({ type: \"ABILITY_TRIGGERED\", seat: koedSeat, uid, ability: entry.ability.name });",
-    replace: "    events.push({ type: \"ABILITY_TRIGGERED\", seat: koedSeat, uid, ability: entry.ability.name });",
-    expectKilledBy: ["packages/engine/src/koTriggerRestMeD626.test.ts"],
+    find: "  if (lethalByEffect(active, state.turn)) return advance(state, events);\n  const uid = topUid(active);\n",
+    replace: "  const uid = topUid(active);\n",
+    expectKilledBy: ["packages/engine/src/koTriggerRestMeD626.test.ts", "packages/engine/src/revisionB07.test.ts"],
   },
   {
     id: "D626-photon-no-ability-row",

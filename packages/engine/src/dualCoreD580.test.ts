@@ -212,8 +212,8 @@ const BARE: Spot = { id: IRON_TREADS };
 const active = (state: GameState, seat: Seat) => state.players[seat].active as InPlayPokemon;
 
 describe("D580 Dual Core §0 — the version and the registry row", () => {
-  it("is built at engine 0.535.0", () => {
-    expect(engineVersion).toBe("0.535.0");
+  it("is built at engine 0.536.0", () => {
+    expect(engineVersion).toBe("0.536.0");
   });
 
   it("sv05-118 carries `typesInPlay` [Fighting, Metal] behind the Tool NAME, no attack key (Wheel Pass keeps deriving)", () => {
