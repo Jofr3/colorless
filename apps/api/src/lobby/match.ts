@@ -2161,6 +2161,18 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕 **STAYS 49 AT CARD REVISION B21 — ONE OPTIONAL `EffectContext` KEY (`attackerUid`), ONE OPTIONAL `EffectOp`
+    KEY (`heal.discardEnergyFromHealed`) AND TWO UNION MEMBERS (`discardEnergy.from` / `applyStatus.target`
+    `"attacker"`). NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD OR EVENT MEMBER.** (Placed ABOVE
+    the B20 block.) All widenings (D125): flow.ts `runDamagedTrigger` reads the attacker's uid off the SHIPPED
+    `attackEpilogue.uid` and puts it on the trigger's ctx, which rides `phase.cont.ctx` when Shell Spikes /
+    Counterattacking Pincer park the defender's pick (the parked `pendingOp` then carries `from: "attacker"`). A v49
+    record parked under 0.544 resolves as 0.544 wrote it: a Klawf ex pick already offers the attacker seat's Active,
+    and a Wafting Heal confirm carries the old `[heal, discardEnergy]` rest. ROLLBACK READING (0.544): a parked
+    `"attacker"` discard resumes against the prompt it already carries (the pick is validated against the parked
+    candidates); a parked Wafting Heal confirm heals and, ignoring the unknown key, keeps the Energy. Nothing a v49
+    record holds changes shape or meaning.
+
     🆕 **STAYS 49 AT CARD REVISION B20 — ONE RUN-TIME GATE IN AN EXISTING PRIZE STEP. NO PHASE, PROMPT KIND, STAGE
     SHAPE, SIDE KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR KEY, OR EVENT MEMBER.** (Placed ABOVE the B19 block.)
     flow.ts `koPrizeReduction` (Munkidori ex "Oh No You Don't") now refuses a `knockOutDefender` doom, reading the

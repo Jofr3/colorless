@@ -71,7 +71,7 @@ describe("Counterattacking Pincer — the REGISTRY trigger (onDamagedByAttack)",
         name: "Counterattacking Pincer",
         trigger: "onDamagedByAttack",
         activeOnly: true,
-        program: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+        program: [{ op: "discardEnergy", from: "attacker", filter: { kind: "anyEnergy" } }],
       },
     ]);
   });

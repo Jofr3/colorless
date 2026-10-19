@@ -453,7 +453,8 @@ describe("the pool sweep, structurally", () => {
       // conditionGate → optional { then: [heal "all", discardEnergy "all"] }`. The walk
       // descends both gates and SEES the `optional`, never its `then`: two rows per id.
       // With Dachsbun ex ×3 and Cradily below: MEASURED, `missed` 69 → 80 (+11).
-      "sv05-015 trigger :: discardEnergy",
+      // 🆕 Card revision B21: ONE row per id now — the discard rides the heal
+      // (`heal { discardEnergyFromHealed }`), so `discardEnergy` left the `then` (113 → 111).
       "sv05-015 trigger :: heal",
       "sv05-025 trigger :: moveEnergy",
       "sv05-025 trigger :: recordGate",
@@ -521,7 +522,6 @@ describe("the pool sweep, structurally", () => {
       "sv08-171 trainer :: bottomDeckTop",
       "sv08-173 trainer :: handRefresh",
       "sv08-231 trainer :: handRefresh",
-      "sv08.5-008 trigger :: discardEnergy", // 🆕🆕🆕 D560 — Whimsicott (reprint)
       "sv08.5-008 trigger :: heal", // 🆕🆕🆕 D560 — Whimsicott (reprint)
       "sv08.5-113 trainer :: boostSideAttacksThisTurn", // 🆕🆕🆕 D557 — Kieran (reprint)
       "sv08.5-113 trainer :: switchActive", // 🆕🆕🆕 D557 — Kieran (reprint)

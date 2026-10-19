@@ -501,7 +501,10 @@ export function runCheckupTriggers(
     through settleProgram, so a PARKING discard (Klawf) survives the opponent's
     turn. It runs under the DAMAGED seat, so `discardEnergy from:"opponentActive"`
     (or `applyStatus target:"defender"`) reaches the ATTACKER's Active (`otherSeat`),
-    matching "… from the Attacking Pokémon". */
+    matching "… from the Attacking Pokémon". 🆕 Card revision B21: ~~matching~~ — not when
+    the attack's own program switched the attacker to its Bench. The programs now read
+    `from` / `target: "attacker"`, the attacker's uid that flow.ts `runDamagedTrigger` takes
+    off the queued `attackEpilogue` (`EffectContext.attackerUid`). */
 export function damagedByAttackAbility(
   state: GameState,
   seat: Seat,

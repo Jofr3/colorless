@@ -406,7 +406,7 @@ describe("D190 — the registry-only programs that LANDED", () => {
         name: "Poison Point",
         trigger: "onDamagedByAttack",
         activeOnly: true,
-        program: [{ op: "applyStatus", target: "defender", status: "poisoned" }],
+        program: [{ op: "applyStatus", target: "attacker", status: "poisoned" }],
       },
     ]);
     expect(programFor("sv09-098")?.abilities).toEqual([

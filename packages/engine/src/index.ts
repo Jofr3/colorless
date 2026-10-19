@@ -20274,6 +20274,16 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕 engineVersion 0.544.0 → **0.545.0** (card revision B21 — ABILITIES: TWO AUDIT FINDINGS FIXED;
+    `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B21")). (1) Turtonator
+    "Shell Spikes" `me03-017` / Klawf ex "Counterattacking Pincer" `sv03-120`, and the status twins
+    (Scorching Armor `sv03-044`, Incandescent Body `sv06-123` / `me02.5-027` / `me02.5-223`, Poison Point
+    ×5, Team Rocket's Hypnotizer `me02.5-206`): flow.ts `runDamagedTrigger` hands over the attacker's uid
+    off the queued `attackEpilogue` (`EffectContext.attackerUid`), read by the NEW `discardEnergy from:
+    "attacker"` and `applyStatus target: "attacker"`, so an attacker its own attack switched to the Bench
+    loses the Energy and the promoted Pokémon takes nothing. Handheld Fan `sv06-150` is unchanged. (2)
+    Whimsicott "Wafting Heal" `sv05-015` / `sv08.5-008`: the NEW `heal.discardEnergyFromHealed` discards
+    only after a real heal, so a Life-Locked Active keeps its Energy. `revisionB21.test.ts`.)
     🆕 engineVersion 0.543.0 → **0.544.0** (card revision B20 — ABILITIES: ONE FIX, TWO AUDIT FINDINGS
     DEFERRED AS R-PD1; `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B20")).
     Munkidori ex "Oh No You Don't" `sv06.5-037` / `-083` / `-091`: flow.ts `koPrizeReduction` now asks
@@ -25929,7 +25939,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.544.0";
+export const engineVersion = "0.545.0";
 
 export type {
   ApplyResult,

@@ -823,7 +823,7 @@ describe("§8 — the population, the log row, and the version", () => {
   });
 
   it("engineVersion", () => {
-    expect(engineVersion).toBe("0.544.0");
+    expect(engineVersion).toBe("0.545.0");
   });
 
   it("the interpreter keeps the op OUT of `recordSlotOf`, and says so", () => {

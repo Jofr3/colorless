@@ -344,8 +344,8 @@ describe("D642 §1 — the prints and the registry rows", () => {
     expect(normalizeCardText(SWIRL_TEXT)).toBe(SWIRL_TEXT);
   });
 
-  it("is built at engine 0.544.0", () => {
-    expect(engineVersion).toBe("0.544.0");
+  it("is built at engine 0.545.0", () => {
+    expect(engineVersion).toBe("0.545.0");
   });
 });
 

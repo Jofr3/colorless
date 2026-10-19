@@ -376,8 +376,8 @@ describe("D632 §5 — Damp in the stratified lock pass (R-LK2)", () => {
 });
 
 describe("D632 §6 — the version", () => {
-  it("is built at engine 0.544.0, in BOTH places", () => {
-    expect(engineVersion).toBe("0.544.0");
-    expect(manifest.version).toBe("0.544.0");
+  it("is built at engine 0.545.0, in BOTH places", () => {
+    expect(engineVersion).toBe("0.545.0");
+    expect(manifest.version).toBe("0.545.0");
   });
 });

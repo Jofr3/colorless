@@ -6112,14 +6112,18 @@ const FREEZING_SHROUD: CardProgram = {
     the recoil, gated on `dealt > 0`, BEFORE the §8.1 sweep — so "even if Knocked
     Out" is free (a lethally-damaged Armarouge still Burns the attacker). This is
     the SV-era Armarouge WITH the ability; sv01-041/-203 (`ARMAROUGE`, "Fire
-    Off") is a different print with a different Ability. */
+    Off") is a different print with a different Ability.
+    🆕 Card revision B21: ~~`target: "defender"`~~ → `target: "attacker"`. The stage runs AFTER
+    the attack's own program, so the attacker seat's Active can be a Pokémon promoted in place
+    of an attacker that switched itself out (Croconaw "Reverse Thrust"); `"attacker"` Burns the
+    Active only while it is the body that attacked (`EffectContext.attackerUid`). */
 const SCORCHING_ARMOR: CardProgram = {
   triggered: [
     {
       name: "Scorching Armor",
       trigger: "onDamagedByAttack",
       activeOnly: true,
-      program: [{ op: "applyStatus", target: "defender", status: "burned" }],
+      program: [{ op: "applyStatus", target: "attacker", status: "burned" }],
     },
   ],
 };
@@ -6139,14 +6143,18 @@ const SCORCHING_ARMOR: CardProgram = {
     Special (that would be `specialEnergy`, Mawile's "Special Eater"). `activeOnly`
     carries the "in the Active Spot" clause; mandatory ("discard an Energy"), so no
     `optional`. "Even if Knocked Out" is free — the stage runs before finishAttack's
-    §8.1 sweep, and Klawf ex being a rule-box ex prizes 2 to the attacker (§8.1). */
+    §8.1 sweep, and Klawf ex being a rule-box ex prizes 2 to the attacker (§8.1).
+    🆕 Card revision B21: ~~`from: "opponentActive"`~~ → `from: "attacker"`, the Attacking Pokémon
+    by uid (`EffectContext.attackerUid`, set by flow.ts `runDamagedTrigger`) in whichever spot it
+    now sits — an attack that switched its attacker to the Bench (Croconaw "Reverse Thrust") used
+    to strip the Pokémon promoted in its place. */
 const COUNTERATTACKING_PINCER: CardProgram = {
   triggered: [
     {
       name: "Counterattacking Pincer",
       trigger: "onDamagedByAttack",
       activeOnly: true,
-      program: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+      program: [{ op: "discardEnergy", from: "attacker", filter: { kind: "anyEnergy" } }],
     },
   ],
 };
@@ -9389,14 +9397,14 @@ const SAGUARO: CardProgram = {
     because the sentences are NOT byte-identical: sharing would be the Tier-0
     idiom applied where Tier 0 does not hold, and a later edit to the Burn
     program would silently move the Poison one. 4 legal printings of 4 in the
-    catalog. */
+    catalog. 🆕 Card revision B21: `target: "attacker"`, as Scorching Armor's. */
 const POISON_POINT: CardProgram = {
   triggered: [
     {
       name: "Poison Point",
       trigger: "onDamagedByAttack",
       activeOnly: true,
-      program: [{ op: "applyStatus", target: "defender", status: "poisoned" }],
+      program: [{ op: "applyStatus", target: "attacker", status: "poisoned" }],
     },
   ],
 };
@@ -15727,7 +15735,11 @@ const WAFTING_HEAL_TEXT =
     `conditionGate`s are the printed noun (*"your Active {G} Pokémon"*) and the
     antecedent (*"If you healed any damage"*): behind them the heal is of a DAMAGED
     Active, so "healed any" is exactly true whenever the confirm is offered, and a
-    non-{G} or undamaged Active is never asked (R-DB). The heal is V5's `amount "all"`. */
+    non-{G} or undamaged Active is never asked (R-DB). The heal is V5's `amount "all"`.
+    🆕 Card revision B21: ~~"exactly true whenever the confirm is offered"~~ — false since D631:
+    under Yveltal `30th-100` "Life-Locked" a damaged Active heals 0, and the trailing
+    `discardEnergy` still stripped it. The discard now rides the heal
+    (`discardEnergyFromHealed`, `healEach`'s key and helper), so it runs only on a real heal. */
 const WAFTING_HEAL: CardProgram = {
   triggered: [
     {
@@ -15750,13 +15762,7 @@ const WAFTING_HEAL: CardProgram = {
                   note: WAFTING_HEAL_TEXT,
                   // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
                   then: [
-                    { op: "heal", target: "self", amount: "all" },
-                    {
-                      op: "discardEnergy",
-                      from: "yourActive",
-                      filter: { kind: "anyEnergy" },
-                      count: "all",
-                    },
+                    { op: "heal", target: "self", amount: "all", discardEnergyFromHealed: true },
                   ],
                 },
               ],
@@ -16134,7 +16140,11 @@ const LUCKY_HELMET: CardProgram = {
     its standing decline (D229/D443's named approximation), so the holder may take none.
     Whiffs on an attacker with no Energy or no Bench. ⚠️ And, inherited from Klawf ex (D101):
     the stage runs after the attack's own program, so `side: "opponent"` reads the
-    opponent's CURRENT Active, not "the Attacking Pokémon" if that attack switched it out. */
+    opponent's CURRENT Active, not "the Attacking Pokémon" if that attack switched it out.
+    🆕 Card revision B21: still so. The Ability twins and Team Rocket's Hypnotizer now read
+    `EffectContext.attackerUid` (`from` / `target: "attacker"`), which this stage also carries,
+    but `moveEnergy`'s `selfToBench` route has no attacker-by-uid source yet; recorded in
+    docs/reference/card-revision.md B21, not built here. */
 const HANDHELD_FAN: CardProgram = {
   triggered: [
     {
@@ -17076,21 +17086,23 @@ const SMOOTH_COAT: CardProgram = {
 };
 
 /** Turtonator `me03-017` — "Shell Spikes": Klawf ex `sv03-120` "Counterattacking Pincer"'s
-    sentence word for word; `COUNTERATTACKING_PINCER`'s trigger under the printed name. */
+    sentence word for word; `COUNTERATTACKING_PINCER`'s trigger under the printed name (`from:
+    "attacker"` since card revision B21: the Energy comes off the Attacking Pokémon, not the
+    Pokémon an attack's own switch promoted). */
 const SHELL_SPIKES: CardProgram = {
   triggered: [
     {
       name: "Shell Spikes",
       trigger: "onDamagedByAttack",
       activeOnly: true,
-      program: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+      program: [{ op: "discardEnergy", from: "attacker", filter: { kind: "anyEnergy" } }],
     },
   ],
 };
 
 /** Heatran `sv06-123` and Numel `me02.5-027` / `-223` — "Incandescent Body": Armarouge
     `sv03-044` "Scorching Armor"'s sentence word for word; `SCORCHING_ARMOR`'s trigger under the
-    printed name. Heatran was a D190 alias of `SCORCHING_ARMOR` and logged "Scorching Armor"
+    printed name (`target: "attacker"` since card revision B21). Heatran was a D190 alias of `SCORCHING_ARMOR` and logged "Scorching Armor"
     until D584 (the D582-named wrong-name defect); it moves here with the two Numel. */
 const INCANDESCENT_BODY: CardProgram = {
   triggered: [
@@ -17098,7 +17110,7 @@ const INCANDESCENT_BODY: CardProgram = {
       name: "Incandescent Body",
       trigger: "onDamagedByAttack",
       activeOnly: true,
-      program: [{ op: "applyStatus", target: "defender", status: "burned" }],
+      program: [{ op: "applyStatus", target: "attacker", status: "burned" }],
     },
   ],
 };
@@ -18710,9 +18722,10 @@ const PUNK_HELMET: CardProgram = { passive: { damageAttacker: { amount: 40, hold
     attached to is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this
     Team Rocket's Pokémon is Knocked Out), the Attacking Pokémon is now Asleep."* Lucky Helmet's stage
     (`damagedToolTriggersOf`; the runner re-asks the holder is the Active) with Scorching Armor's program
-    behind `yourActiveOwner` — at run time the Active IS the holder. ⚠️ Inherited from Klawf ex (D101), as
+    behind `yourActiveOwner` — at run time the Active IS the holder. ~~⚠️ Inherited from Klawf ex (D101), as
     Handheld Fan names it (D562): the stage runs after the attack's own program, so `target: "defender"` is
-    the attacker seat's CURRENT Active, not "the Attacking Pokémon" if that attack switched it out. */
+    the attacker seat's CURRENT Active, not "the Attacking Pokémon" if that attack switched it out.~~
+    🆕 Card revision B21: `target: "attacker"` — only the body that attacked, and only while it is Active. */
 const TEAM_ROCKETS_HYPNOTIZER: CardProgram = {
   triggered: [
     {
@@ -18723,7 +18736,7 @@ const TEAM_ROCKETS_HYPNOTIZER: CardProgram = {
           op: "conditionGate",
           cond: { kind: "yourActiveOwner", owner: "Team Rocket" },
           // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-          then: [{ op: "applyStatus", target: "defender", status: "asleep" }],
+          then: [{ op: "applyStatus", target: "attacker", status: "asleep" }],
         },
       ],
     },

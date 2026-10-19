@@ -578,7 +578,7 @@ describe("§3 — `target` is a union now, and the record version does not move"
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.544.0");
+    expect(engineVersion).toBe("0.545.0");
   });
 });
 

@@ -63,7 +63,7 @@ describe("Scorching Armor — the REGISTRY trigger (onDamagedByAttack)", () => {
         name: "Scorching Armor",
         trigger: "onDamagedByAttack",
         activeOnly: true,
-        program: [{ op: "applyStatus", target: "defender", status: "burned" }],
+        program: [{ op: "applyStatus", target: "attacker", status: "burned" }],
       },
     ]);
   });

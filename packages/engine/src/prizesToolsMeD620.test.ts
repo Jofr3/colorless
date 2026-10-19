@@ -319,7 +319,7 @@ describe("D620 §1 — the prints, the registry rows and the readings", () => {
               op: "conditionGate",
               cond: { kind: "yourActiveOwner", owner: "Team Rocket" },
               // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
-              then: [{ op: "applyStatus", target: "defender", status: "asleep" }],
+              then: [{ op: "applyStatus", target: "attacker", status: "asleep" }],
             },
           ],
         },
@@ -560,7 +560,7 @@ describe("D620 §8 — Tremendous Bomb: 240+ from an opposing Mega ex on a non-M
 });
 
 describe("D620 §9 — the version", () => {
-  it("is built at engine 0.544.0", () => {
-    expect(engineVersion).toBe("0.544.0");
+  it("is built at engine 0.545.0", () => {
+    expect(engineVersion).toBe("0.545.0");
   });
 });

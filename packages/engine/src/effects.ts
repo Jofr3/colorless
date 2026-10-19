@@ -4300,7 +4300,13 @@ export type EffectOp =
   // — Attack ops (M3), attacker-relative. —
   | {
       op: "applyStatus";
-      target: "defender" | "self";
+      /** 🆕 Card revision B21 — `attacker` is the printed *"the Attacking Pokémon is now …"* of an
+          `onDamagedByAttack` reaction (Scorching Armor, Incandescent Body, Poison Point, Team
+          Rocket's Hypnotizer): the opponent's Active ONLY while it is still the body
+          `EffectContext.attackerUid` names. An attacker its own attack switched to the Bench is
+          not affected (a Benched Pokémon has no Special Conditions), and the Pokémon promoted in
+          its place did not attack. */
+      target: "defender" | "self" | "attacker";
       status: StatusName;
       /** Only for "poisoned": HP placed per Checkup when raised above 10. */
       poisonDamage?: number;
@@ -5544,7 +5550,18 @@ export type EffectOp =
       a revival from JSON). ⚠️ The 0.443 ROLLBACK reading is named, not hidden: a
       0.443 reader resolving a parked `"all"` passes the string to `Math.min` and heals
       `NaN` — no schema validates parked ops (docs/decisions.md D560). */
-  | { op: "heal"; target: "self"; amount: number | "dealt" | "all" }
+  | {
+      op: "heal";
+      target: "self";
+      amount: number | "dealt" | "all";
+      /** 🆕 Card revision B21 — Whimsicott "Wafting Heal"'s consequent *"If you healed any damage
+          in this way, discard all Energy from that Pokémon."*, as `healEach`'s key of the same name
+          (D560 R-DB): the Energy comes off only when this heal actually healed something. A
+          separate trailing `discardEnergy` ran whatever the heal did, and Yveltal `30th-100`
+          "Life-Locked" (D631, later than D560) makes a damaged Active heal 0. Absent = heal only,
+          every other program. */
+      discardEnergyFromHealed?: true;
+    }
   /** Heal `amount` HP from EACH of the controller's own in-play Pokémon — the
       ACTIVE and the whole Bench, which is what the printed "each of your
       Pokémon" means (the Active is one of your Pokémon; only the printed word
@@ -12141,8 +12158,16 @@ export type EffectOp =
           caption does not compile. **THAT EXHAUSTIVENESS IS THE COMPILER BEHIND THE
           WIDENING D222 SAID A NEGATED CONJUNCTION DOES NOT HAVE**, and both
           hand-spelled reads of these members were re-checked by name before the
-          member was added rather than after. */
-      from: "opponentActive" | "opponentChosen" | "yourActive" | "yours" | "yourBench" | "self";
+          member was added rather than after.
+
+          🆕 **Card revision B21 — `attacker` IS THE PRINTED *"the Attacking Pokémon"*, A BODY ON
+          THE OPPONENT'S BOARD** (Turtonator `me03-017` "Shell Spikes", Klawf ex `sv03-120`
+          "Counterattacking Pincer"). It reads `EffectContext.attackerUid`, which only flow.ts
+          `runDamagedTrigger` sets, and offers that body's Energy in either spot: the reaction runs
+          after the attack's own program, which may have benched the attacker (Croconaw "Reverse
+          Thrust"), so `opponentActive` would strip the Pokémon promoted in its place. No uid, or a
+          uid no longer on that board: an empty offer, the whiff. */
+      from: "opponentActive" | "opponentChosen" | "yourActive" | "yours" | "yourBench" | "self" | "attacker";
       filter: CardFilter;
       /** 🆕🆕🆕 **D561 (V5) — THE BODY `"self"` NAMES, WHEN IT IS NOT THE PROGRAM'S OWN
           CARD.** [🆕🆕🆕 D625 (D539): a second engine writer — Wally's Compassion's `healedEnergyToHandAnswered`

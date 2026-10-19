@@ -223,7 +223,7 @@ describe("D190 — the 22 STANDARD-LEGAL reprint aliases", () => {
         name: "Incandescent Body",
         trigger: "onDamagedByAttack",
         activeOnly: true,
-        program: [{ op: "applyStatus", target: "defender", status: "burned" }],
+        program: [{ op: "applyStatus", target: "attacker", status: "burned" }],
       },
     ]);
     expect(programFor("sv08.5-067")?.passive).toEqual({

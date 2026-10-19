@@ -472,7 +472,7 @@ describe("D641 §6 — Lt. Surge's Bargain: the opponent answers (R-LSB1)", () =
 });
 
 describe("D641 §7 — the version", () => {
-  it("is built at engine 0.544.0", () => {
-    expect(engineVersion).toBe("0.544.0");
+  it("is built at engine 0.545.0", () => {
+    expect(engineVersion).toBe("0.545.0");
   });
 });

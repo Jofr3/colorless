@@ -407,6 +407,24 @@ export interface EffectContext {
       persisted. OPTIONAL, a widening (D125 / D427): `ctx` rides `EffectContinuation` into a
       parked `phase.cont`; an older continuation lacks it and reads as "a printed row". */
   borrowedAttack?: string;
+  /** 🆕 **Card revision B21 — THE PRINTED *"the Attacking Pokémon"*.** The top-card uid of the
+      Pokémon whose attack damaged this program's holder, set by flow.ts `runDamagedTrigger` alone
+      (an `onDamagedByAttack` Ability or Tool) from the `attackEpilogue` stage queued behind it,
+      which attack.ts writes with the attacker AS OF DECLARATION. ABSENT everywhere else.
+
+      🛑 **NOT "the attacker seat's Active".** The reaction runs AFTER the attack's own effect
+      program, and that program can switch the attacker to its Bench (Croconaw `sv05-040`
+      "Reverse Thrust"), so the spot names a Pokémon that never attacked. Read by
+      `discardEnergy from: "attacker"` (Shell Spikes, Counterattacking Pincer: the Energy comes
+      off that body wherever it now is) and `applyStatus target: "attacker"` (Scorching Armor,
+      Incandescent Body, Poison Point, Team Rocket's Hypnotizer: the condition lands only while
+      that body is still the Active, since a Benched Pokémon has no Special Conditions).
+
+      OPTIONAL, a widening (D125): `ctx` rides `EffectContinuation` into a parked `phase.cont`
+      (Shell Spikes' pick between two different Energy parks for the defender). A continuation
+      written before B21 lacks it, but no such continuation can hold a reader of it: both readers
+      are B21 members of their unions. */
+  attackerUid?: string;
 }
 
 /** A specific in-play Pokémon, addressed by the board it sits on and the spot.
@@ -2753,7 +2771,7 @@ function stepOp(
       // context reachable from this line has ever heard of; resolving it here would
       // stamp the trap with the damage of the attack that ARMED it.
       return { done: installRecoil(state, op.amount, ctx, events) };
-    case "heal":
+    case "heal": {
       // 🆕🆕 D427 — `amount` IS `number | "dealt"`, and this line is the whole of the
       // resolution. `"dealt"` is the printed *"the same amount of damage you did to
       // your opponent's Active Pokémon."*, which §8.5 fixed before this program's
@@ -2771,9 +2789,13 @@ function stepOp(
       // 🆕🆕🆕 D560 — `"all"` (Whimsicott "Wafting Heal") passes STRAIGHT THROUGH to
       // `healSelf`, which resolves it against the very body it heals (one read of the
       // Active, not two); its clamp and silent whiff are unchanged.
+      // 🆕 Card revision B21 — Wafting Heal's "if you healed any damage in this way" rides the
+      // heal itself (healEach's per-healed-body helper), so a Life-Locked heal of 0 discards nothing.
+      const healed = healSelf(state, op.amount === "dealt" ? (ctx.dealt ?? 0) : op.amount, ctx, events);
       return {
-        done: healSelf(state, op.amount === "dealt" ? (ctx.dealt ?? 0) : op.amount, ctx, events),
+        done: op.discardEnergyFromHealed === true ? discardEnergyFromHealed(state, healed, ctx, events) : healed,
       };
+    }
     case "healEach": {
       // 🆕🆕🆕 D560 — Dachsbun ex's per-healed-body discard rides AFTER the walk.
       const healed = healEach(state, op, ctx, events);
@@ -4763,7 +4785,12 @@ function stepOp(
         state,
         ctx.seat,
         op,
-        op.from === "self" && op.bodyUid !== undefined ? op.bodyUid : ctx.sourceUid,
+        // 🆕 Card revision B21 — `"attacker"` (Shell Spikes) names the Attacking Pokémon.
+        op.from === "attacker"
+          ? ctx.attackerUid
+          : op.from === "self" && op.bodyUid !== undefined
+            ? op.bodyUid
+            : ctx.sourceUid,
       );
       const bodies: PokemonRef[] = [];
       for (const entry of allDiscardable) {
@@ -9486,6 +9513,10 @@ export function applyStatus(
   if (active === null) return state;
   const uid = topUid(active);
   if (uid === undefined) return state;
+  // 🆕 Card revision B21 — "the Attacking Pokémon is now Burned": only while the body that
+  // attacked is still the Active. Its own attack may have benched it (no Special Conditions on
+  // the Bench), and the Pokémon promoted in its place did not attack. No uid: the whiff.
+  if (op.target === "attacker" && uid !== ctx.attackerUid) return state;
   // §11 (D142) — a §12 Special Condition is an EFFECT of the attack, so a body
   // carrying the wider block takes none. Checked on the RESOLVED seat rather
   // than on the "defender" arm, so it is total over both targets.
@@ -20648,6 +20679,16 @@ export function discardableEnergies(
       .filter((uid) => matchesAttached(state, host, uid, op.filter))
       .map((uid) => ({ uid, from: ref }));
   }
+  // 🆕 Card revision B21 — `"attacker"`: the ONE opponent body `sourceUid` names here (the
+  // caller hands over `ctx.attackerUid`), in whichever spot it now sits. Empty when no uid was
+  // handed over or that body has left the board.
+  if (op.from === "attacker") {
+    if (sourceUid === undefined) return [];
+    return attachedEnergies(state, discardVictimSeat(seat, op), op.filter).filter((entry) => {
+      const host = refPokemon(state, entry.from);
+      return host !== undefined && topUid(host) === sourceUid;
+    });
+  }
   // 🆕🆕 D403 — THREE SCOPES WHERE THERE WERE TWO, and the third costs nothing:
   // `attachedEnergies` has taken a `"bench"` argument since it was written and no
   // producer had ever asked for it. The printed *"from your Benched Pokémon"* is the
@@ -22360,6 +22401,9 @@ function discardNote(op: Extract<EffectOp, { op: "discardEnergy" }>): string {
       return putBack
         ? `Put ${what} attached to 1 of your opponent's Pokémon into their hand.`
         : `Discard ${what} from 1 of your opponent's Pokémon.`;
+    case "attacker":
+      // 🆕 Card revision B21 — the printed noun verbatim (Shell Spikes, Counterattacking Pincer).
+      return `Discard ${what} from the Attacking Pokémon.`;
     case "opponentEach":
       return `Discard ${what} from each of your opponent's Pokémon.`;
     case "yourActive":

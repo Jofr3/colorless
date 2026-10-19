@@ -1998,13 +1998,21 @@ function runDamagedTrigger(
 ): ApplyResult {
   const holder = state.players[damagedSeat].active;
   const holderUid = holder === null ? undefined : topUid(holder);
+  // 🆕 Card revision B21 — "the Attacking Pokémon" is the attacker AS OF DECLARATION, which the
+  // `attackEpilogue` queued behind this stage carries (attack.ts, D189). Not the attacker seat's
+  // Active: the attack's own program ran first and may have switched the attacker to its Bench.
+  const epilogue = state.pending.find(
+    (stage) => stage.kind === "attackEpilogue" && stage.seat === otherSeat(damagedSeat),
+  );
+  const attackerUid = epilogue?.kind === "attackEpilogue" ? epilogue.uid : undefined;
+  const attackerCtx = attackerUid === undefined ? {} : { attackerUid };
   const tool =
     holderUid === undefined
       ? undefined
       : damagedToolTriggersOf(state, damagedSeat, holderUid).find((entry) => entry.toolUid === uid);
   if (tool !== undefined) {
     return settleProgram(
-      runProgram(state, tool.ability.program, { seat: damagedSeat, sourceUid: uid }, events),
+      runProgram(state, tool.ability.program, { seat: damagedSeat, sourceUid: uid, ...attackerCtx }, events),
       damagedSeat,
       events,
       { resumeTail: true },
@@ -2014,7 +2022,12 @@ function runDamagedTrigger(
   if (ability === undefined || ability.program.length === 0) return advance(state, events);
   events.push({ type: "ABILITY_TRIGGERED", seat: damagedSeat, uid, ability: ability.name });
   return settleProgram(
-    runProgram(state, ability.program, { seat: damagedSeat, sourceUid: uid, invokedBy: "ability" }, events),
+    runProgram(
+      state,
+      ability.program,
+      { seat: damagedSeat, sourceUid: uid, invokedBy: "ability", ...attackerCtx },
+      events,
+    ),
     damagedSeat,
     events,
     { resumeTail: true },
