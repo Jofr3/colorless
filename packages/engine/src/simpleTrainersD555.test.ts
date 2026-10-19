@@ -207,7 +207,10 @@ describe("D555 A §1 — the print, and the registry rows that map it", () => {
       ids: VITAL,
       text: VITAL_TEXT,
       trainerType: "Item",
-      program: { trainer: [{ op: "healChosen", amount: 150 }] },
+      // 🆕 Card revision B06 — the second sentence ("This card can't be put into your hand or deck
+      // from the discard pile.") is the card-borne `discardPileLocked` (D555 R3 closed;
+      // `revisionB06.test.ts` drives it).
+      program: { trainer: [{ op: "healChosen", amount: 150 }], discardPileLocked: true },
     },
     {
       name: "Iris's Fighting Spirit",
@@ -242,10 +245,12 @@ describe("D555 A §1 — the print, and the registry rows that map it", () => {
   ];
 
   for (const row of ROWS) {
-    it(`${row.name}: the program is pinned by toEqual, reprints share ONE object, and only a \`trainer\` key`, () => {
+    it(`${row.name}: the program is pinned by toEqual, reprints share ONE object, and only a \`trainer\` key (+ B06's pile lock)`, () => {
       const first = programFor(row.ids[0] as string);
       expect(first).toEqual(row.program);
-      expect(Object.keys(first ?? {})).toEqual(["trainer"]);
+      expect(Object.keys(first ?? {})).toEqual(
+        row.name === "Poké Vital A" ? ["trainer", "discardPileLocked"] : ["trainer"],
+      );
       for (const id of row.ids) {
         expect(programFor(id)).toBe(first);
         expect(POOL[id]?.name).toBe(row.name);

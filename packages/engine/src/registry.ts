@@ -3544,13 +3544,11 @@ export interface StadiumEffects {
       shared zone and on no Pokémon at all. Both are the sharpest lines between
       this field and the two `PassiveEffects` preventions it sits beside.
 
-      ⚠️ THE CARD'S SECOND SENTENCE STAYS LOUD. "This card can't be put into your
-      hand or deck from the discard pile." is a DISCARD-PILE RETRIEVAL restriction
-      with one sibling in the pool (Poké Vital A sv06.5-062) and no reader anywhere
-      in the engine: no op, no filter and no search path consults a card's own
-      retrievability. Naming it here would be inventing a mechanism. (🆕🆕🆕 D555:
-      Poké Vital A's HEAL is built, `POKE_VITAL_A`; its retrieval clause is still
-      unread — D555 R3, the same named gap.) */
+      ⚠️ THE CARD'S SECOND SENTENCE IS NOT THIS FIELD. "This card can't be put into your
+      hand or deck from the discard pile." is a DISCARD-PILE RETRIEVAL restriction; it
+      had no reader until card revision B06, and is now the card-borne
+      `CardProgram.discardPileLocked` (shared with Poké Vital A sv06.5-062), not a
+      Stadium field. */
   preventDamageToNoRuleBoxFromExV?: true;
   /** §7.3/§8.1 (D324) — the in-play Stadium's ± to the max HP of every Pokémon of
       ONE STAGE, on BOTH sides: *"Each Basic Pokémon in play (both yours and your
@@ -4243,6 +4241,26 @@ export interface CardProgram {
       Palafin ex evolve from Finizen out of the hand, which the card forbids. Nothing is
       persisted; no `MATCH_RECORD_VERSION` bump. */
   intoPlayOnlyVia?: "Zero to Hero";
+  /** 🆕 **Card revision B06 — A CARD-BORNE DISCARD-PILE LOCK**: *"This card can't be put into
+      your hand or deck from the discard pile."* Two legal printings print it, word for word:
+      Poké Vital A `sv06.5-062` (Item) and Neutralization Zone `sv06.5-060` (Stadium, ACE SPEC).
+      Before B06 the sentence had no reader (D555 R3's named gap), and Dedenne `sv08-087`
+      "Electromagnetic Sonar" (*"Put a Trainer card from your discard pile into your hand."*)
+      handed Poké Vital A back.
+
+      `intoPlayOnlyVia`'s argument one key up: the rule is about the CARD's own movement out of
+      a zone no `passivesOf` fold reaches, so it is a `CardProgram` key read off
+      `programFor(card.id)` (continuous.ts `discardPileLockedOf`). The ONE reader is
+      interpreter.ts `discardRetrievalCandidates`, the offer every `discardPileRetrieval`
+      shares (the park, the `max: "all"` forced move, and `trainerProgramPlayable`'s whiff
+      refusal), and `resolveEffect` checks a pick against that offer, so a crafted uid is
+      refused too. It drops a locked card for `dest` hand and deck. A Bench destination is
+      unaffected (the print names hand and deck only, and a Bench put takes Basic Pokémon).
+      Measured over the pool on 2026-10-19: no other engine path moves a Trainer card from
+      the discard pile to the hand or deck (the Boomerang / Nitro Fire returns move Energy
+      only, and `shufflePlayedCardIntoDeck` moves Caretaker itself). Catalog-only; never
+      persisted. */
+  discardPileLocked?: true;
   /** 🆕🆕🆕 **§9 (D572) — THE FIRST IN-HAND ABILITY: put this (non-Basic) Pokémon from the hand
       onto the Bench.** Klinklang `sv07-101` "Emergency Rotation" (1 legal) — *"Once during
       your turn, if this Pokémon is in your hand and your opponent has any Stage 2 Pokémon in
@@ -5537,15 +5555,20 @@ const CALAMITOUS_WASTELAND: CardProgram = {
     filter and Mimikyu's Safeguard), so this row introduces no new reading of what
     a Rule Box is.
 
-    ⚠️ ITS SECOND SENTENCE STAYS LOUD, exactly as Dachsbun's first does. "This card
+    ~~⚠️ ITS SECOND SENTENCE STAYS LOUD, exactly as Dachsbun's first does. "This card
     can't be put into your hand or deck from the discard pile." restricts DISCARD-
     PILE RETRIEVAL — one sibling in the pool (Poké Vital A sv06.5-062) and no
     reader anywhere: no search filter, no op and no zone rule consults a card's own
     retrievability, so authoring it would be inventing a mechanism rather than
     reading one. (🆕🆕🆕 D555: the sibling's HEAL is built, `POKE_VITAL_A`; its
-    retrieval clause is still unread — D555 R3.) */
+    retrieval clause is still unread — D555 R3.)~~ 🆕 **Card revision B06: the second
+    sentence is now READ**, as the card-borne `discardPileLocked` beside the Stadium field
+    (the same key Poké Vital A carries; `CardProgram`'s doc). A Trainer retrieval (Dedenne
+    `sv08-087`) no longer offers this card once it is in the discard pile.
+    `revisionB06.test.ts`. */
 const NEUTRALIZATION_ZONE: CardProgram = {
   stadium: { preventDamageToNoRuleBoxFromExV: true },
+  discardPileLocked: true,
 };
 
 /** Lively Stadium `sv08-180` — "Each Basic Pokémon in play (both yours and your
@@ -6800,13 +6823,18 @@ const COOK: CardProgram = {
     UNDAMAGED BOARD** — the D555 brief predicted `healChosenTargets` would refuse it;
     MEASURED, that funnel narrows only on `remainingHpAtMost` (D349), so the offer is
     every own body and an undamaged pick heals 0 and files no `HEALED`: Potion's
-    no-whiff doctrine (`picnicBasket.test.ts`), pinned, not changed (D555 R4). 🛑 **THE
+    no-whiff doctrine (`picnicBasket.test.ts`), pinned, not changed (D555 R4). ~~🛑 **THE
     SECOND SENTENCE IS NOT ENFORCED (D555 R3, a NAMED FIDELITY GAP)**: it is a rule
     about the card's OWN movement out of the discard pile, and no reader exists for
     a per-card pile lock — `NEUTRALIZATION_ZONE`'s precedent for a printed clause
-    with no reader. The heal is BUILT; the retrieval clause is still unread. */
+    with no reader. The heal is BUILT; the retrieval clause is still unread.~~ 🆕 **Card
+    revision B06 — D555 R3 IS CLOSED: the second sentence is the card-borne
+    `discardPileLocked`** (`CardProgram`'s doc), which every discard → hand / deck retrieval
+    offer drops (Dedenne `sv08-087` "Electromagnetic Sonar" no longer takes it back).
+    `revisionB06.test.ts`. */
 const POKE_VITAL_A: CardProgram = {
   trainer: [{ op: "healChosen", amount: 150 }],
+  discardPileLocked: true,
 };
 
 /** 🆕🆕🆕 **D555 — Iris's Fighting Spirit `sv09-149`/`-180` (Supporter, 2 legal)** —

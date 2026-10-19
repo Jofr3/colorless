@@ -1023,9 +1023,9 @@ describe("D492 §9 — the widened quantifier over a v29 record", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D492 §10 — the residue this slice moved, and the engine version", () => {
-  it("engineVersion is 0.534.0 and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.534.0");
-    expect(manifest.version).toBe("0.534.0");
+  it("engineVersion is 0.535.0 and `manifest.version` agrees", () => {
+    expect(engineVersion).toBe("0.535.0");
+    expect(manifest.version).toBe("0.535.0");
   });
 
   it("🛑 the reader surface is still THIRTEEN, derived from the module", () => {

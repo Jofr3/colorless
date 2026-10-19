@@ -1014,6 +1014,16 @@ export function intoPlayOnlyViaOf(card: Card): string | undefined {
   return programFor(card.id)?.intoPlayOnlyVia;
 }
 
+/** 🆕 Card revision B06 — does this card print *"This card can't be put into your hand or deck
+    from the discard pile."* (`CardProgram.discardPileLocked`: Poké Vital A `sv06.5-062`,
+    Neutralization Zone `sv06.5-060`)? Off the CARD's own program, `intoPlayOnlyViaOf`'s reason
+    one function up (the card is in the discard pile, and interpreter.ts takes no runtime edge
+    to registry.ts). An unresolvable card is not locked. Read by interpreter.ts
+    `discardRetrievalCandidates`. */
+export function discardPileLockedOf(card: Card | undefined): boolean {
+  return card !== undefined && programFor(card.id)?.discardPileLocked === true;
+}
+
 /** 🆕🆕🆕 §7.4 (D565) — does this Pokémon Tool card DO anything while attached? The ONE
     predicate for "is this Tool simulated", EXTRACTED from `attachTool` (cardplay.ts), which
     spelled it inline since D171 (a `passive`, or a `triggered` list that is non-empty), so

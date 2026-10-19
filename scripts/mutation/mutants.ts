@@ -6252,7 +6252,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.534.0";',
+    find: 'export const engineVersion = "0.535.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -60771,5 +60771,24 @@ export const MUTANTS: Mutant[] = [
     find: '  "mfb-33": POTION, // Potion — twin `sv01-188`\n',
     replace: "",
     expectKilledBy: ["packages/engine/src/revisionB05.test.ts", "packages/engine/src/reprintAliasLegal.test.ts"],
+  },
+  // ── Card revision B06 (Items) — the card-borne discard-pile lock. ──
+  {
+    id: "B06-pile-lock-reader-dropped",
+    decision: "B06",
+    what: "`discardRetrievalCandidates` stops asking `discardPileLockedOf`, so Dedenne's \"Put a Trainer card from your discard pile into your hand.\" offers Poké Vital A and Neutralization Zone again and a pick of Poké Vital A lands in the hand. Killed by revisionB06 §1.",
+    file: "packages/engine/src/interpreter.ts",
+    find: '      (op.dest === "bench" || !discardPileLockedOf(cardOf(state, uid))) &&\n',
+    replace: "",
+    expectKilledBy: ["packages/engine/src/revisionB06.test.ts"],
+  },
+  {
+    id: "B06-poke-vital-lock-dropped",
+    decision: "B06",
+    what: "Poké Vital A's row loses `discardPileLocked`, so the heal stays and its second sentence is unread again: the Trainer retrieval offers it. Killed by revisionB06 §1 and D555 A §1.",
+    file: "packages/engine/src/registry.ts",
+    find: '  trainer: [{ op: "healChosen", amount: 150 }],\n  discardPileLocked: true,\n',
+    replace: '  trainer: [{ op: "healChosen", amount: 150 }],\n',
+    expectKilledBy: ["packages/engine/src/revisionB06.test.ts", "packages/engine/src/simpleTrainersD555.test.ts"],
   },
 ];

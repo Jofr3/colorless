@@ -696,7 +696,7 @@ describe("§3 — a new PRODUCER of a shipped literal, and the record version do
   });
 
   it("the engine version moved", () => {
-    expect(engineVersion).toBe("0.534.0");
+    expect(engineVersion).toBe("0.535.0");
   });
 });
 

@@ -107,6 +107,8 @@ import {
   // 🆕🆕🆕 D563 — Palafin ex's card-borne "only via Zero to Hero", at the deck-evolve filter
   // (🆕🆕🆕 D565: a refusal still — the licensed route, `switchWithDeckNamed`, is built).
   intoPlayOnlyViaOf,
+  // 🆕 Card revision B06 — Poké Vital A / Neutralization Zone's card-borne discard-pile lock.
+  discardPileLockedOf,
   // 🆕🆕🆕 D565 — the ONE "is this Tool simulated" predicate, shared with `attachTool`.
   toolCardSimulated,
   // 🆕🆕🆕 D572 — Milotic "Mentally Calm": the in-play → hand lock, at every hand writer.
@@ -1413,10 +1415,14 @@ export function discardRetrievalCandidates(
   const barred = new Set(op.exclude === undefined ? [] : recorded(record, op.exclude));
   // 🆕🆕🆕 D613 — a Bench destination asks `benchMatches`: Kingdra ex "King's Order" and Salamence ex
   // "Booming Call" ("{W}" / "{N} Pokémon") and Rabsca "Revival Blessing" bench Basic Pokémon only.
+  // 🆕 Card revision B06 — *"This card can't be put into your hand or deck from the discard pile."*
+  // (Poké Vital A, Neutralization Zone): a locked card is never offered for a hand or deck `dest`, so
+  // `resolveEffect` refuses it as a pick as well.
   return state.players[seat].discard.filter(
     (uid) =>
       !barred.has(uid) &&
       matchesFilter(cardOf(state, uid), op.filter) &&
+      (op.dest === "bench" || !discardPileLockedOf(cardOf(state, uid))) &&
       (op.dest !== "bench" || benchMatches(cardOf(state, uid), op.filter)),
   );
 }

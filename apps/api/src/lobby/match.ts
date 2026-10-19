@@ -2161,6 +2161,14 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕 **STAYS 49 AT CARD REVISION B06 — ONE CATALOG-ONLY `CardProgram` KEY AND ONE CANDIDATE FILTER. NO PHASE, PROMPT KIND,
+    STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR KEY, OR EVENT MEMBER.** (Placed ABOVE the B05 block.)
+    `CardProgram.discardPileLocked` (Poké Vital A `sv06.5-062`, Neutralization Zone `sv06.5-060`) is keyed by id and never
+    persisted; `discardRetrievalCandidates` now drops those cards from a hand / deck retrieval offer. A `chooseCards` prompt
+    a v49 record already parked carries its own candidate list, which `resolveEffect` validates against, so a park taken
+    before the deploy still accepts the card it offered; every new park omits it. ROLLBACK READING (0.534): the two cards
+    are offered again from the next retrieval. Nothing a v49 record holds changes shape or meaning.
+
     🆕 **STAYS 49 AT CARD REVISION B05 — ONE REGISTRY ROW ON A SHIPPED OBJECT. NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE
     KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR KEY, OR EVENT MEMBER.** (Placed ABOVE the B04 block.) Potion `mfb-33`
     now resolves to `sv01-188`'s `POTION` program. Programs are keyed by id, so no `cardPool` face is read differently: a

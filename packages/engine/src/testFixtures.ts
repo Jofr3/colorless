@@ -9080,7 +9080,9 @@ export const FIXTURE_POOL: Record<string, Card> = {
       deck from the discard pile."*) is a discard-pile retrieval restriction with
       one sibling in the pool (Poké Vital A sv06.5-062) and no reader anywhere, so
       it stays LOUD and is carried here so a sweep can see it. `programFor` keys on
-      the id and reads neither paragraph; the text is what a future slice greps. */
+      the id and reads neither paragraph; the text is what a future slice greps.
+      (🆕 Card revision B06: the second paragraph is now READ, as the card-borne
+      `CardProgram.discardPileLocked`; `revisionB06.test.ts`.) */
   "sv06.5-060": {
     ...blank,
     id: "sv06.5-060",
