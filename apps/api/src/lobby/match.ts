@@ -2162,6 +2162,12 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕 **STAYS 49 AT CARD REVISION B37 — NO SHAPE CHANGE; A LIVE `koBounty` IS KEPT WHEN THE MARKED BODY IS
+    ALREADY LETHAL.** (Placed ABOVE the B36 block.) `bountyDefender` (Ribombee "Plentiful Pollen") no longer
+    overwrites this turn's record with the next window when the body it marks is about to be Knocked Out at the
+    same attack's sweep. The `{ turn, amount }` record keeps its shape and meaning; the op never parks, so no
+    in-flight v49 record reads differently.
+
     🆕 **STAYS 49 AT CARD REVISION B36 — ONE OPTIONAL KEY ON AN UNPERSISTED EVENT (`HAND_COST_PAID.effect`).
     NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD OR `EffectOp` MEMBER OR KEY.** (Placed
     ABOVE the B35 block.) `GameEvent` is not in `MatchRecord`; the key is set when an attack's program pays

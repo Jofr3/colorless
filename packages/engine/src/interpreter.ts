@@ -11364,6 +11364,15 @@ function bountyDefender(
   if (effectRefused(state, markedSeat, ctx, events)) return state;
   const bountyTurn = state.turn + 2;
   const prior = marked.koBounty;
+  // 🆕 Card revision B37 — a LIVE record (this turn's, from the installer's previous attack) is
+  // KEPT when the marked body is already lethally damaged or doomed: that record still pays at
+  // THIS attack's own sweep (Pollen on turn 3, then the turn-5 Pollen that Knocks it Out — 1 + 2),
+  // and the body leaves play there, so the `bountyTurn` window could never open on it. On a body
+  // that survives, the live record can no longer pay (an attack ends the turn and the Checkup is
+  // excluded), so replacing it with the new window loses nothing — one slot holds both cases.
+  const leavesAtSweep =
+    isLethallyDamaged(state, marked) || marked.markers.includes(koByEffectMarker(state.turn));
+  if (prior !== null && prior.turn === state.turn && leavesAtSweep) return state;
   const sameWindow = prior !== null && prior.turn === bountyTurn;
   const payout = sameWindow ? Math.max(prior.amount, amount) : amount;
   if (sameWindow && payout === prior.amount) return state;

@@ -6255,7 +6255,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.550.0";',
+    find: 'export const engineVersion = "0.551.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -61120,5 +61120,23 @@ export const MUTANTS: Mutant[] = [
     find: '  const asEffect = ctx.invokedBy === "attack" ? { effect: true as const } : {};',
     replace: "  const asEffect = { effect: true as const };",
     expectKilledBy: ["packages/engine/src/revisionB36.test.ts"],
+  },
+  {
+    id: "B37-live-bounty-overwritten",
+    decision: "B37",
+    what: "`bountyDefender` overwrites a LIVE `koBounty` on a body that is already lethal, so Ribombee's (sv05-076) turn-5 Pollen that Knocks Out the turn-3-marked body pays the face value instead of 1 + 2. Killed by revisionB37 §1.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (prior !== null && prior.turn === state.turn && leavesAtSweep) return state;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/revisionB37.test.ts"],
+  },
+  {
+    id: "B37-live-bounty-kept-on-survivor",
+    decision: "B37",
+    what: "`bountyDefender` keeps a live `koBounty` even when the marked body survives, so a non-lethal turn-5 Pollen (sv05-076) never re-marks it for turn 7. Killed by revisionB37 §2.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (prior !== null && prior.turn === state.turn && leavesAtSweep) return state;\n",
+    replace: "  if (prior !== null && prior.turn === state.turn) return state;\n",
+    expectKilledBy: ["packages/engine/src/revisionB37.test.ts"],
   },
 ];

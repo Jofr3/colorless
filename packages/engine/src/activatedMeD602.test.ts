@@ -510,7 +510,7 @@ describe("D602 §8 — the two dropped texts stay unkeyed, and the version (🆕
     expect(programFor("me02.5-175")?.abilities?.[0]?.name).toBe("Lethargic Charge");
   });
 
-  it("is built at engine 0.550.0", () => {
-    expect(engineVersion).toBe("0.550.0");
+  it("is built at engine 0.551.0", () => {
+    expect(engineVersion).toBe("0.551.0");
   });
 });
