@@ -542,7 +542,7 @@ describe("D534 §5 — §11 and the describer: a deck is not a body, and no bran
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D534 §6 — the version steps and the bytes this suite drove are the bytes that shipped", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
-    expect(engineVersion).toBe("0.551.0");
+    expect(engineVersion).toBe("0.552.0");
     expect(manifest.version).toBe(engineVersion);
     expect(raw("/index.ts")).toContain("engineVersion 0.418.0 → **0.419.0** (D534");
   });

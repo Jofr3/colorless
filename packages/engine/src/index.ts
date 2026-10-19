@@ -20274,6 +20274,13 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕 engineVersion 0.551.0 → **0.552.0** (card revision B42 — ATTACKS: ONE AUDIT FINDING FIXED;
+    `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B42")). Ditto
+    "Surprisingly Transform" `30th-115` / `mep-106`: the heads deck offer admitted Palafin ex
+    (`sv06-061` / `sv06-193` / `sv08.5-151` / `svp-126`), whose Hero's Spirit prints *"Put this
+    Pokémon into play only with the effect of Palafin's Zero to Hero Ability."*, and the swap put it
+    into play. interpreter.ts `deckSwapCandidates` now drops a card whose program carries
+    `intoPlayOnlyVia` — `evolveFromDeckOffer`'s and the hand evolve's refusal. `revisionB42.test.ts`.)
     🆕 engineVersion 0.550.0 → **0.551.0** (card revision B37 — ATTACKS: ONE AUDIT FINDING FIXED;
     `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B37")). Ribombee
     "Plentiful Pollen" `sv05-076`: a turn-5 Pollen that Knocks Out the body a turn-3 Pollen marked
@@ -25989,7 +25996,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.551.0";
+export const engineVersion = "0.552.0";
 
 export type {
   ApplyResult,

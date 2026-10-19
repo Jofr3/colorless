@@ -748,6 +748,6 @@ describe("D621 §8 — the ids and the version", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.551.0");
+    expect(engineVersion).toBe("0.552.0");
   });
 });

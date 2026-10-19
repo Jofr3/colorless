@@ -2162,6 +2162,11 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕 **STAYS 49 AT CARD REVISION B42 — NO SHAPE CHANGE; DITTO'S DECK OFFER DROPS A HERO'S SPIRIT CARD.**
+    (Placed ABOVE the B37 block.) `switchWithDeckChosen` (Ditto "Surprisingly Transform") no longer lists a
+    deck card whose program carries `intoPlayOnlyVia` (Palafin ex) among its `chooseCards` candidates. The
+    prompt keeps its shape; a v49 record parked before the change keeps the candidates it was written with.
+
     🆕 **STAYS 49 AT CARD REVISION B37 — NO SHAPE CHANGE; A LIVE `koBounty` IS KEPT WHEN THE MARKED BODY IS
     ALREADY LETHAL.** (Placed ABOVE the B36 block.) `bountyDefender` (Ribombee "Plentiful Pollen") no longer
     overwrites this turn's record with the next window when the body it marks is about to be Knocked Out at the

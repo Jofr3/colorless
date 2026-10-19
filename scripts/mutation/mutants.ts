@@ -6255,7 +6255,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.551.0";',
+    find: 'export const engineVersion = "0.552.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -61138,5 +61138,14 @@ export const MUTANTS: Mutant[] = [
     find: "  if (prior !== null && prior.turn === state.turn && leavesAtSweep) return state;\n",
     replace: "  if (prior !== null && prior.turn === state.turn) return state;\n",
     expectKilledBy: ["packages/engine/src/revisionB37.test.ts"],
+  },
+  {
+    id: "B42-ditto-offers-heros-spirit",
+    decision: "B42",
+    what: "`deckSwapCandidates` forgets `intoPlayOnlyViaOf`, so Ditto's (30th-115 / mep-106) Surprisingly Transform offers Palafin ex and switches it into play past Hero's Spirit. Killed by revisionB42 §1 and §2.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    if (card === undefined || !matchesFilter(card, filter) || seen.has(card.id)) return false;\n    if (intoPlayOnlyViaOf(card) !== undefined) return false;\n",
+    replace: "    if (card === undefined || !matchesFilter(card, filter) || seen.has(card.id)) return false;\n",
+    expectKilledBy: ["packages/engine/src/revisionB42.test.ts"],
   },
 ];

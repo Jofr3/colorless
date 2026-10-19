@@ -528,7 +528,7 @@ describe("D597 §7 — Shooting Moons: up to 4 Energy cards from the hand, 40 mo
 });
 
 describe("D597 §8 — the version", () => {
-  it("is built at engine 0.551.0", () => {
-    expect(engineVersion).toBe("0.551.0");
+  it("is built at engine 0.552.0", () => {
+    expect(engineVersion).toBe("0.552.0");
   });
 });

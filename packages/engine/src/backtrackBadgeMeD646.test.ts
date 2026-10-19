@@ -257,8 +257,8 @@ describe("D646 §1 — the print and the registry row", () => {
     expect(deriveAttackEffect(T.zero)?.[0]?.op).toBe("damageChosen");
   });
 
-  it("is built at engine 0.551.0", () => {
-    expect(engineVersion).toBe("0.551.0");
+  it("is built at engine 0.552.0", () => {
+    expect(engineVersion).toBe("0.552.0");
   });
 });
 

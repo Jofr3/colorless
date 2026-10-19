@@ -14837,12 +14837,16 @@ function swappedUid(uid: string, emitted: readonly GameEvent[]): string {
 }
 
 /** 🆕🆕🆕 D641 — Ditto "Surprisingly Transform"'s offer: the controller's deck cards passing `filter`, in deck
-    order, one representative per catalog card (D42 — two copies of one print are one answer). */
+    order, one representative per catalog card (D42 — two copies of one print are one answer). 🆕 Card revision
+    B42: a card whose program carries `intoPlayOnlyVia` (Palafin ex "Hero's Spirit": *"Put this Pokémon into play
+    only with the effect of Palafin's Zero to Hero Ability."*) is never offered — the switch would put it into
+    play — the refusal `evolveFromDeckOffer` and the hand evolve make, read off the CARD's program. */
 function deckSwapCandidates(state: GameState, seat: Seat, filter: CardFilter): string[] {
   const seen = new Set<string>();
   return state.players[seat].deck.filter((uid) => {
     const card = cardOf(state, uid);
     if (card === undefined || !matchesFilter(card, filter) || seen.has(card.id)) return false;
+    if (intoPlayOnlyViaOf(card) !== undefined) return false;
     seen.add(card.id);
     return true;
   });

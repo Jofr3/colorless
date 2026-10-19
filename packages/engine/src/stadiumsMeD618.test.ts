@@ -628,7 +628,7 @@ describe("D618 §6 — Forest of Vitality: {G} into {G} the turn it is played, n
 });
 
 describe("D618 §7 — the version", () => {
-  it("is built at engine 0.551.0", () => {
-    expect(engineVersion).toBe("0.551.0");
+  it("is built at engine 0.552.0", () => {
+    expect(engineVersion).toBe("0.552.0");
   });
 });
