@@ -531,7 +531,7 @@ describe("D595 §5 — the `programPerHeads` arms on a board", () => {
 });
 
 describe("D595 §6 — the version", () => {
-  it("is built at engine 0.554.0", () => {
-    expect(engineVersion).toBe("0.554.0");
+  it("is built at engine 0.555.0", () => {
+    expect(engineVersion).toBe("0.555.0");
   });
 });

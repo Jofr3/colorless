@@ -8,6 +8,7 @@ import type { GameEvent } from "./events";
 import { applyAction, createGame, engineVersion, providedEnergy } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
+import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import type { EffectRecord } from "./interpreter";
 import { programFor } from "./registry";
 import {
@@ -622,7 +623,8 @@ describe("D571 §4 — Destructo-Press: reveal 5, 70× each Future card, discard
     );
     expect(result.kind).toBe("done");
     expect(record.discarded).toEqual([]);
-    expect(events).toEqual([]); // an empty deck: nothing revealed, nothing shuffled
+    // an empty deck: nothing shuffled, but the (empty) reveal is announced — card revision B55, §4b
+    expect(events).toEqual([{ type: "DECK_TOP_REVEALED", seat: "p1", dest: "deck", uids: [], reveal: true }]);
   });
 
   it("the op files the MATCHES, not the window", () => {
@@ -637,6 +639,77 @@ describe("D571 §4 — Destructo-Press: reveal 5, 70× each Future card, discard
     );
     expect(result.kind).toBe("done");
     expect(record.discarded).toEqual([state.players.p1.deck[1]]);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────────────
+// 🆕 Card revision B55 — the printed *"Reveal the top 5 cards of your deck"* was never shown: the op
+// emitted only the DECK_TOP_DISCARDED row for the Future cards and the SHUFFLE, so the opponent never
+// saw the window that set the damage, and a whiff logged only "shuffled their deck". It now names the
+// whole window on one public DECK_TOP_REVEALED { dest: "deck", reveal: true } row (Bug Out's B45
+// row, top end) before anything moves — the empty deck too (D241).
+describe("D571 §4b — Destructo-Press names every revealed card to both players (card revision B55)", () => {
+  const armed = (s: GameState) => energize(s, "p1", "active", [L, C]);
+  const line = (events: GameEvent[], state: GameState): string[] => {
+    const ctx: LogContext = { names: { p1: "Ember", p2: "Tide" }, state, elapsed: formatElapsed(0) };
+    return logFromEvents(events, ctx).flatMap((entry) =>
+      entry.kind === "turn" ? [] : [`${entry.who}: ${entry.segments.map((s) => s.text).join("")}`],
+    );
+  };
+  const name = (id: string) => POOL[id]?.name as string;
+
+  it("🛑 the whole top-5 window is one public reveal row, in deck order, before the discard and the shuffle", () => {
+    let state = armed(table({ p1: THORNS[0] }));
+    state = stackTop(state, "p1", [THORNS_EX[0], FILLER, POD, GUIDANCE, THORNS[0], THORNS_EX[0]]);
+    const top5 = state.players.p1.deck.slice(0, 5);
+    const { state: done, events } = run(state, { type: "attack", seat: "p1", index: 0 });
+    expect(dealt(events)).toBe(210);
+    expect(all(events, "DECK_TOP_REVEALED")).toEqual([
+      { type: "DECK_TOP_REVEALED", seat: "p1", dest: "deck", uids: top5, reveal: true },
+    ]);
+    const order = events.map((e) => e.type);
+    expect(order.indexOf("DECK_TOP_REVEALED")).toBeLessThan(order.indexOf("DECK_TOP_DISCARDED"));
+    expect(order.indexOf("DECK_TOP_DISCARDED")).toBeLessThan(order.indexOf("SHUFFLE"));
+    expect(line(events, done)).toContain(
+      `p1: revealed the top 5 cards of their deck: ${name(THORNS_EX[0])}, ${name(FILLER)}, ${name(POD)}, ${name(GUIDANCE)}, ${name(THORNS[0])}`,
+    );
+  });
+
+  it("🛑 a whiff (no Future card) still shows the window, then only the shuffle", () => {
+    let state = armed(table({ p1: THORNS[0] }));
+    state = stackTop(state, "p1", [FILLER, GUIDANCE, C, FILLER, L, THORNS_EX[0]]);
+    const top5 = state.players.p1.deck.slice(0, 5);
+    const { state: done, events } = run(state, { type: "attack", seat: "p1", index: 0 });
+    expect(dealt(events) ?? 0).toBe(0);
+    expect(all(events, "DECK_TOP_REVEALED")).toEqual([
+      { type: "DECK_TOP_REVEALED", seat: "p1", dest: "deck", uids: top5, reveal: true },
+    ]);
+    expect(all(events, "DECK_TOP_DISCARDED")).toEqual([]);
+    expect(line(events, done)).toContain(
+      `p1: revealed the top 5 cards of their deck: ${name(FILLER)} ×2, ${name(GUIDANCE)}, ${name(C)}, ${name(L)}`,
+    );
+  });
+
+  it("a short deck reveals what it has, and the row says how many", () => {
+    const state = deckExactly(armed(table({ p1: THORNS[0] })), "p1", [POD, FILLER]);
+    const { state: done, events } = run(state, { type: "attack", seat: "p1", index: 0 });
+    expect(dealt(events)).toBe(70);
+    expect(line(events, done)).toContain(`p1: revealed the top 2 cards of their deck: ${name(POD)}, ${name(FILLER)}`);
+  });
+
+  it("an empty deck still announces the reveal, and nothing else happens", () => {
+    const state = deckExactly(table({ p1: THORNS[0] }), "p1", []);
+    const events: GameEvent[] = [];
+    const result = runProgram(
+      state,
+      [{ op: "revealTopDiscardMatching", n: 5, filter: { kind: "bannerCard", banner: "Future" }, recordAs: "discarded" }],
+      { seat: "p1" },
+      events,
+      {},
+    );
+    expect(result.kind).toBe("done");
+    expect(events).toEqual([{ type: "DECK_TOP_REVEALED", seat: "p1", dest: "deck", uids: [], reveal: true }]);
+    expect(line(events, state)).toContain("p1: revealed the top of their deck — it was empty");
   });
 });
 
@@ -707,8 +780,8 @@ describe("D571 §5 — Ignition Energy", () => {
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D571 §6 — the version", () => {
-  it("the engine is 0.554.0", () => {
-    expect(engineVersion).toBe("0.554.0");
-    expect(manifest.version).toBe("0.554.0");
+  it("the engine is 0.555.0", () => {
+    expect(engineVersion).toBe("0.555.0");
+    expect(manifest.version).toBe("0.555.0");
   });
 });

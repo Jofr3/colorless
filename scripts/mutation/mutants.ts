@@ -6255,7 +6255,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.554.0";',
+    find: 'export const engineVersion = "0.555.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -43685,8 +43685,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D571",
     what: "the filing moves BEHIND the zero-card return: an empty deck leaves a STALE `discarded` slot standing, and the trailing count answers for an earlier op (`discardDeckTop`'s overwrite rule). Killed by §4's runProgram rung.",
     file: "packages/engine/src/interpreter.ts",
-    find: "      recordMoved(record, op.recordAs, matched);\n      if (window.length === 0) return { done: state };",
-    replace: "      if (window.length === 0) return { done: state };\n      recordMoved(record, op.recordAs, matched);",
+    // B55 — the find spans the reveal push the fix put between the filing and the return.
+    find: "      recordMoved(record, op.recordAs, matched);\n      // 🆕 Card revision B55 — the printed \"Reveal\": the whole top window is named to both players before\n      // anything moves, the whiff and the empty deck too (D241) — Bug Out's B45 row at the top end.\n      events.push({ type: \"DECK_TOP_REVEALED\", seat: ctx.seat, dest: \"deck\", uids: [...window], reveal: true });\n      if (window.length === 0) return { done: state };",
+    replace: "      // 🆕 Card revision B55 — the printed \"Reveal\": the whole top window is named to both players before\n      // anything moves, the whiff and the empty deck too (D241) — Bug Out's B45 row at the top end.\n      events.push({ type: \"DECK_TOP_REVEALED\", seat: ctx.seat, dest: \"deck\", uids: [...window], reveal: true });\n      if (window.length === 0) return { done: state };\n      recordMoved(record, op.recordAs, matched);",
     expectKilledBy: ["packages/engine/src/ironThornsD571.test.ts"],
   },
   {
@@ -61176,5 +61177,14 @@ export const MUTANTS: Mutant[] = [
     find: "      if (event.to === \"deck\") {\n        return row(event.actor, [\n          plain(\"shuffled \"),",
     replace: "      if (event.to === (\"never\" as string)) {\n        return row(event.actor, [\n          plain(\"shuffled \"),",
     expectKilledBy: ["packages/engine/src/revisionB47.test.ts"],
+  },
+  {
+    id: "B55-destructo-press-reveal-silent",
+    decision: "B55",
+    what: "Iron Thorns sv05-062 \"Destructo-Press\" never shows the printed \"Reveal the top 5 cards of your deck\": the op emits only the Future discard and the shuffle. Killed by ironThornsD571 §4b.",
+    file: "packages/engine/src/interpreter.ts",
+    find: '      events.push({ type: "DECK_TOP_REVEALED", seat: ctx.seat, dest: "deck", uids: [...window], reveal: true });',
+    replace: "      // (mutant) the reveal row is not pushed",
+    expectKilledBy: ["packages/engine/src/ironThornsD571.test.ts"],
   },
 ];

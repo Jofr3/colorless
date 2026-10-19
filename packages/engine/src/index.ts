@@ -20274,6 +20274,13 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕 engineVersion 0.554.0 → **0.555.0** (card revision B55 — ATTACKS: ONE AUDIT FINDING FIXED;
+    `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B55")). Iron Thorns
+    "Destructo-Press" `sv05-062` / `svp-098`: the printed *"Reveal the top 5 cards of your deck"* was never
+    shown — `revealTopDiscardMatching` emitted only the DECK_TOP_DISCARDED row for the Future cards and the
+    SHUFFLE. It now pushes one public `DECK_TOP_REVEALED { dest: "deck", reveal: true }` naming the whole
+    top window before anything moves, the whiff and the empty deck too (D241; Bug Out's B45 row at the top
+    end). `ironThornsD571.test.ts` §4b.)
     🆕 engineVersion 0.553.0 → **0.554.0** (card revision B47 — ATTACKS: ONE AUDIT FINDING FIXED;
     `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B47")). Mega Skarmory
     ex "Sonic Ripper" `me03-055` / `me03-106` and Wellspring Mask Ogerpon ex "Torrential Pump" `sv06-064`
@@ -26009,7 +26016,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.554.0";
+export const engineVersion = "0.555.0";
 
 export type {
   ApplyResult,

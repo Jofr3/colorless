@@ -1709,7 +1709,10 @@ export type GameEvent =
           🆕 Card revision B45 — Sizzlipede "Bug Out" (`revealDeckBottomCount`) reveals its OWN bottom 7 on
           this row (`from: "bottom"`, no `actor`); the revealed Pokémon are shuffled back, and the rest leave
           on the `DECK_BOTTOM_DISCARDED` row that follows — so "stayed in the deck" is the reveal's own
-          claim, not every card's fate. Not persisted — no bump. */
+          claim, not every card's fate. Not persisted — no bump.
+          🆕 Card revision B55 — Iron Thorns "Destructo-Press" (`revealTopDiscardMatching`) reveals its OWN
+          top 5 on this row (no `from`, no `actor`); the Future cards then leave on DECK_TOP_DISCARDED and
+          the rest are shuffled back. Not persisted — no bump. */
       dest?: "bench" | "discard" | "deck";
       uids: string[];
       reveal?: true;

@@ -4403,6 +4403,9 @@ function stepOp(
       const window = side.deck.slice(0, Math.max(0, op.n));
       const matched = window.filter((uid) => matchesFilter(cardOfUid(state, uid), op.filter));
       recordMoved(record, op.recordAs, matched);
+      // 🆕 Card revision B55 — the printed "Reveal": the whole top window is named to both players before
+      // anything moves, the whiff and the empty deck too (D241) — Bug Out's B45 row at the top end.
+      events.push({ type: "DECK_TOP_REVEALED", seat: ctx.seat, dest: "deck", uids: [...window], reveal: true });
       if (window.length === 0) return { done: state };
       const taken = new Set(matched);
       const [deck, rngState] = shuffle(

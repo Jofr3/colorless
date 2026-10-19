@@ -625,8 +625,8 @@ describe("§11 — the v33 bytes round-trip, and a v32-shaped state is why the v
     expect(() => redactGame(revived, "p2")).toThrow(TypeError);
   });
 
-  it("the engine version stepped to 0.554.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.554.0");
-    expect(manifest.version).toBe("0.554.0");
+  it("the engine version stepped to 0.555.0 in BOTH places", () => {
+    expect(engineVersion).toBe("0.555.0");
+    expect(manifest.version).toBe("0.555.0");
   });
 });
