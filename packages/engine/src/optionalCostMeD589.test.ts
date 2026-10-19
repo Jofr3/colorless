@@ -500,7 +500,7 @@ describe("D589 §7 — Mortal Shuriken: discard a Basic {W} from hand, 6 counter
 });
 
 describe("D589 §8 — the version", () => {
-  it("is built at engine 0.547.0", () => {
-    expect(engineVersion).toBe("0.547.0");
+  it("is built at engine 0.548.0", () => {
+    expect(engineVersion).toBe("0.548.0");
   });
 });

@@ -653,7 +653,7 @@ describe("D626 §6 — Adversity Policy: a holder Weak to the opponent's Active,
 });
 
 describe("D626 §7 — the version", () => {
-  it("is built at engine 0.547.0", () => {
-    expect(engineVersion).toBe("0.547.0");
+  it("is built at engine 0.548.0", () => {
+    expect(engineVersion).toBe("0.548.0");
   });
 });

@@ -444,6 +444,6 @@ describe("§5 — the persisted shape: a v29 record still means what it meant", 
     // `engineVersion` and `manifest.version`: **25 assertions across 25 files**
     // before this line, **26** with it, over 27 sites once `index.ts`'s declaration
     // and `packages/engine/package.json` are counted.
-    expect(engineVersion).toBe("0.547.0");
+    expect(engineVersion).toBe("0.548.0");
   });
 });

@@ -1004,22 +1004,38 @@ describe("end to end — an ATTACK pulling Energy out of the discard pile", () =
 
   it("✅ D248 — the pile running dry mid-spread feeds as many as it can", () => {
     // The printed "do as much as you can": ONE {F} in the pile and THREE Benched
-    // bodies. The first body is fed and the other two get nothing — no throw, no
-    // park, no all-or-nothing refusal. A fold that resolved its Energy ONCE up
-    // front and reused it would attach the same card three times and pass a
-    // naive "was something attached" assertion while doing it.
+    // bodies. One body is fed and the other two get nothing — no throw, no
+    // all-or-nothing refusal. A fold that resolved its Energy ONCE up front and
+    // reused it would attach the same card three times and pass a naive "was
+    // something attached" assertion while doing it.
+    // 🆕 Card revision B33 — "no park … the FIRST body is fed" IS CORRECTED: which body
+    // is the controller's decision, so a pile SHORTER than the target set parks a
+    // `choosePokemonMulti` of exactly the pile size (revisionB33.test.ts drives both
+    // printings). The answer here names the LAST body, which the old Bench-order fold
+    // could never reach.
     const state = ready(15, {
       bench: ["fix-basic-1", "fix-basic-1", "fix-basic-1"],
       discard: { "fix-fighting-energy": 1 },
     });
     deepFreeze(state);
-    const { state: done, events } = mustApply(state, {
+    const { state: parked, events } = mustApply(state, {
       type: "attack",
       seat: "p1",
       index: MUD_STOCK,
     });
-    expect(all(events, "ENERGY_ATTACHED")).toHaveLength(1);
-    expect(done.players.p1.bench.map((p) => p.energy.length)).toEqual([1, 0, 0]);
+    expect(all(events, "ENERGY_ATTACHED")).toHaveLength(0);
+    if (parked.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${parked.phase.kind}`);
+    const prompt = parked.phase.prompt;
+    if (prompt.kind !== "choosePokemonMulti") throw new Error(`expected choosePokemonMulti, got ${prompt.kind}`);
+    expect([prompt.min, prompt.max]).toEqual([1, 1]);
+    expect(prompt.candidates).toEqual([benchRef(0), benchRef(1), benchRef(2)]);
+    const { state: done, events: fed } = mustApply(parked, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "pokemonMulti", refs: [benchRef(2)] },
+    });
+    expect(all(fed, "ENERGY_ATTACHED")).toHaveLength(1);
+    expect(done.players.p1.bench.map((p) => p.energy.length)).toEqual([0, 0, 1]);
     expect(done.players.p1.discard).toHaveLength(0);
   });
 
@@ -1160,6 +1176,7 @@ describe("D248 — the distribution axis has THREE members and a print is exactl
     //   · "to 1 of your Benched Pokémon"        → ONE park, batch pinned (`count`)
     //   · "to your Benched Pokémon in any way"  → N ops, N parks (`anyWay`)
     //   · "to each of your Benched Pokémon"     → NO park at all (`toEach`)
+    //     [🆕 card revision B33: unless the pile is SHORT — then one park, exactly the pile size]
     expect(deriveAttackEffect(CLAUSES[FAULT_LINE_TEXT].text)).toEqual([
       { op: "attachEnergyFrom", source: "discard", benchOnly: true, count: 2 },
     ]);

@@ -20274,6 +20274,13 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕 engineVersion 0.547.0 → **0.548.0** (card revision B33 — ATTACKS: ONE AUDIT FINDING FIXED;
+    `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B33")). Mudsdale
+    "Mud Stock" `sv05-092` / `sv05-175`: the `attachEnergyFrom.toEach` fold fed the Benched Pokémon
+    in Bench order until the pile ran dry, so with fewer Basic {F} Energy than Benched Pokémon the
+    player never chose which bodies were fed. A pile SHORTER than the target set now parks a
+    `choosePokemonMulti` of exactly the pile size over the targets, and `applyChoice` folds the
+    chosen refs; a pile that covers every body still asks nothing. `revisionB33.test.ts`.)
     🆕 engineVersion 0.546.0 → **0.547.0** (card revision B26 — ATTACKS: ONE AUDIT FINDING FIXED;
     `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B26")). flow.ts
     `knockOut` stamps `lastKoTurn` / `lastKoMarks` only for a Knock Out on the losing seat's
@@ -25959,7 +25966,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.547.0";
+export const engineVersion = "0.548.0";
 
 export type {
   ApplyResult,

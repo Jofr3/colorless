@@ -5982,6 +5982,34 @@ function stepOp(
       // map spells them as disjoint rows, so no op can carry both, and a
       // `toSelf` arm here would be a comparison no authored row can reach.
       if (op.toEach === true) {
+        // 🆕 Card revision B33 — "A PILE THAT RUNS DRY … THE REMAINING BODIES GET NOTHING" (above) IS
+        // CORRECTED: which bodies those are was the fold's Bench order, so Mud Stock with one {F} over
+        // three Benched Pokémon always fed bench[0] and never asked. A pile SHORTER than the target set
+        // is "do as much as you can" and WHICH bodies get a card is the controller's: park exactly the
+        // pile size over the targets (`applyChoice` folds the chosen refs). A pile that covers every
+        // body still asks nothing — the fold below, unchanged.
+        const spreadTargets = attachEnergyTargets(state, ctx.seat, op);
+        const spreadPile = attachableEnergies(
+          state,
+          attachSeat(op, ctx.seat),
+          op.source,
+          op.energyType,
+          spreadTargets.length,
+          op.anyEnergy,
+          op.energyName,
+        ).length;
+        if (spreadPile < spreadTargets.length) {
+          return {
+            park: {
+              kind: "choosePokemonMulti",
+              candidates: spreadTargets,
+              min: spreadPile,
+              max: spreadPile,
+              declinable: false,
+              note: `Not enough Energy for all your ${attachTargetNoun(op)} — attach ${spreadPile === 1 ? "it to which one" : `1 each to which ${spreadPile}`}?`,
+            },
+          };
+        }
         return {
           done: attachEnergyTargets(state, ctx.seat, op).reduce(
             (soFar, ref) => attachEnergyFrom(soFar, op, ref, ctx, events, record),
@@ -9322,6 +9350,12 @@ export function applyChoice(
       // 🆕 Card revision B01 — the CARD answer (`pickOnto`'s park): exactly the uids picked land on
       // the pinned target. And a TARGET answer whose cards are still a decision moves nothing here:
       // `continuationOps` schedules the card question with the target pinned.
+      // 🆕 Card revision B33 — the SHORT-PILE spread's answer (`toEach`'s park): one card onto each
+      // chosen body, in the order named, re-finding each card against the evolving board.
+      // (Any other answer kind falls through to the arms below, which move nothing for it.)
+      if (op.toEach === true && choice.kind === "pokemonMulti") {
+        return choice.refs.reduce((board, ref) => attachEnergyFrom(board, op, ref, ctx, events, record), state);
+      }
       if (op.pickOnto !== undefined) {
         return choice.kind === "cards"
           ? attachEnergyFrom(state, op, op.pickOnto.ref, ctx, events, record, op.pickOnto.take, choice.uids)

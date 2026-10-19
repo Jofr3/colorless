@@ -6253,7 +6253,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.547.0";',
+    find: 'export const engineVersion = "0.548.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -61052,5 +61052,33 @@ export const MUTANTS: Mutant[] = [
     find: "    if (ownTurn) return state;\n",
     replace: "",
     expectKilledBy: ["packages/engine/src/revisionB26.test.ts"],
+  },
+  {
+    id: "B33-short-pile-spread-never-parks",
+    decision: "B33",
+    what: "the short-pile park goes and the `toEach` fold runs again on a pile smaller than the Bench, so Mud Stock (sv05-092 / sv05-175) with one {F} over three Benched Pokémon always feeds bench[0] and the player is never asked which body gets it. Killed by revisionB33.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        if (spreadPile < spreadTargets.length) {",
+    replace: "        if (false as boolean) {",
+    expectKilledBy: ["packages/engine/src/revisionB33.test.ts"],
+  },
+  {
+    id: "B33-short-pile-spread-floor-dropped",
+    decision: "B33",
+    what: "the short-pile park's floor goes to 0, so a player may feed fewer Benched Pokémon than the pile allows (or none) where \"each of\" makes it \"as much as you can\". Killed by revisionB33's under-pick refusal.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "              min: spreadPile,",
+    replace: "              min: 0,",
+    expectKilledBy: ["packages/engine/src/revisionB33.test.ts"],
+  },
+  {
+    id: "B33-short-pile-answer-ignored-for-bench-order",
+    decision: "B33",
+    what: "the answered short-pile spread feeds the first N Benched Pokémon in Bench order instead of the N the player chose, so the park asks a question whose answer moves nothing. Killed by revisionB33 (the answer names bench[2]).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        return choice.refs.reduce((board, ref) => attachEnergyFrom(board, op, ref, ctx, events, record), state);",
+    replace:
+      "        return attachEnergyTargets(state, ctx.seat, op).slice(0, choice.refs.length).reduce((board, ref) => attachEnergyFrom(board, op, ref, ctx, events, record), state);",
+    expectKilledBy: ["packages/engine/src/revisionB33.test.ts"],
   },
 ];

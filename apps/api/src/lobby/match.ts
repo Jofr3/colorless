@@ -531,7 +531,8 @@ export interface MatchRecord {
         never wrote. Refusing that design for FIDELITY reasons kept the record
         shape still as a side effect.
       · D248's `attachEnergyFrom.toEach` is the SIXTH reading and the FIRST that
-        cannot reach a continuation AT ALL, which is a stronger argument than the
+        cannot reach a continuation AT ALL [🆕 card revision B33: WITHDRAWN — a short pile
+        now parks it; see "STAYS 49 AT CARD REVISION B33"], which is a stronger argument than the
         five above rather than the same one again. Those are optional riders on a
         PARKING op, so the reasoning has to be about what an absent key reads back
         as; this field's whole meaning is that the op does NOT park, so no
@@ -2160,6 +2161,14 @@ export interface MatchRecord {
     `opponentActiveAttackCostSurchargeBasicOnly`, and the REQUIRED wire key
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
+
+    🆕 **STAYS 49 AT CARD REVISION B33 — NO SHAPE CHANGE; `attachEnergyFrom.toEach` CAN NOW BE A PARKED
+    `pendingOp`.** (Placed ABOVE the B26 block.) Mud Stock with a discard pile SHORTER than the Bench parks a
+    `choosePokemonMulti` (an existing prompt kind) over the Benched targets, and `applyChoice` folds the chosen
+    refs. That withdraws D248's "no `EffectContinuation` can contain it" (the note further down): a continuation
+    can now hold a `toEach` op. No v49 record written before this deploy holds one (no earlier build parked it),
+    so every old byte string still means what it meant — a widening of what a record may contain, not a change
+    of meaning.
 
     🆕 **STAYS 49 AT CARD REVISION B26 — NO SHAPE CHANGE; `knockOut` WRITES `lastKoTurn` / `lastKoMarks` FOR FEWER
     KNOCK OUTS.** (Placed ABOVE the B22 block.) A Knock Out of a seat's own Pokémon on its OWN turn is no longer

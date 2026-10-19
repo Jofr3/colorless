@@ -992,7 +992,7 @@ const RAW: Record<string, string> = (
 describe("D532 §6 — the version steps and the bytes this suite drove are the bytes that shipped", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.547.0");
+    expect(engineVersion).toBe("0.548.0");
     expect(manifest.version).toBe(engineVersion);
   });
 
@@ -1022,7 +1022,7 @@ describe("D532 §6 — the version steps and the bytes this suite drove are the 
     expect(effectsSrc).toContain('const SOURCE_ZONE_PHRASE = " from your discard pile";');
     const interpreter = Object.entries(RAW).find(([k]) => k.endsWith("/interpreter.ts"))?.[1] ?? "";
     expect(interpreter).toContain('export function attachSeat(op: { readonly whose?: "opponent" }, seat: Seat): Seat {\n  return op.whose === "opponent" ? otherSeat(seat) : seat;\n}');
-    expect(interpreter.split("attachSeat(").length - 1).toBe(6); // the declaration + three reads + card revision B01's `energyPickOffer` (the pile the card question offers is the OWNER's, the same resolver) + card revision B12's `atLeastOneDecline` (whether a later attach of the disjunction can land asks the OWNER's pile, the same resolver)
+    expect(interpreter.split("attachSeat(").length - 1).toBe(7); // the declaration + three reads + card revision B01's `energyPickOffer` (the pile the card question offers is the OWNER's, the same resolver) + card revision B12's `atLeastOneDecline` (whether a later attach of the disjunction can land asks the OWNER's pile, the same resolver) + card revision B33's short-pile spread (the pile the `toEach` park counts is the OWNER's, the same resolver)
     expect(interpreter).toContain("  const owner = attachSeat(riders, seat);\n  const side = state.players[owner];");
     expect(interpreter).toContain("    refs.push({ seat: owner, spot: { spot: \"active\" } });");
     expect(interpreter).toContain("    if (eligible(pokemon)) refs.push({ seat: owner, spot: { spot: \"bench\", index } });");
