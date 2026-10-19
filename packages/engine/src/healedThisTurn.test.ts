@@ -617,7 +617,10 @@ describe("§8 — the STAMP SITES: one helper, and the count is the guard", () =
     expect(declarations).toBe(1);
     // 🆕🆕🆕 D574 — 7 → 8: `moveCountersBetweenOpponents` (Sableye / Alakazam) files a `HEALED` on the
     // SOURCE body and writes it through `healedBody` — the mover precedent (Cofagrigus, Munkidori).
-    expect(pushes).toBe(8);
+    // 🆕 Card revision B10 — 8 → 10: `moveOneOwnCounter` (Rocket Brain) and `moveCountersToOpponent`
+    // (Adrena-Brain) no longer borrow `healChosen`'s push (it asks the Life-Locked heal lock, R-LL1);
+    // each files its own `HEALED` on the SOURCE and writes it through `healedBody`, as the other movers do.
+    expect(pushes).toBe(10);
     expect(calls).toBe(pushes);
   });
 

@@ -20274,6 +20274,13 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕 engineVersion 0.538.0 → **0.539.0** (card revision B10 — ABILITIES: ONE AUDIT FINDING FIXED;
+    `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B10")). interpreter.ts
+    `moveOneOwnCounter` (Rocket Brain `sv10-089` / `-198`) and `moveCountersToOpponent` (Adrena-Brain
+    `me02.5-099` / `sv06-095` / `sv06.5-072` / `sv08.5-044`) take the source's counters off with a direct
+    `healedBody` write instead of `healChosen`: under an opposing Yveltal `30th-100` "Life-Locked" the locked
+    source kept its counters while the destination still gained them. R-LL1 (D631) unchanged — a move is not a
+    heal, now at all four movers. `revisionB10.test.ts`.)
     🆕 engineVersion 0.537.0 → **0.538.0** (card revision B09 — STADIUMS: ONE AUDIT FINDING FIXED, ONE DEFERRED;
     `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B09")). registry.ts: Paradise
     Resort `svp-045` (mark G, `legal_standard_effective = 1` since 714256b3, print_key shared with `svp-150` /
@@ -25883,7 +25890,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.538.0";
+export const engineVersion = "0.539.0";
 
 export type {
   ApplyResult,

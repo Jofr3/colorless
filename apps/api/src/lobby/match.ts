@@ -2161,6 +2161,15 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕 **STAYS 49 AT CARD REVISION B10 — ONE RUN-TIME WRITE IN TWO EXISTING COUNTER MOVERS. NO PHASE, PROMPT KIND, STAGE
+    SHAPE, SIDE KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR KEY, OR EVENT MEMBER.** (Placed ABOVE the B09 block.)
+    interpreter.ts `moveOneOwnCounter` (Rocket Brain) and `moveCountersToOpponent` (Adrena-Brain) remove the source's
+    counters with a direct `healedBody` write rather than through `healChosen`, so a Life-Locked source (Yveltal
+    `30th-100`) loses what the destination gains (R-LL1). The same `HEALED` / `COUNTERS_PLACED` rows and the same
+    `damage` / `healedTurn` fields are written; a v49 record replays the same on every unlocked board. ROLLBACK READING
+    (0.538): a move off a Life-Locked Active again leaves the source's counters in place while the destination gains
+    them. Nothing a v49 record holds changes shape or meaning.
+
     🆕 **STAYS 49 AT CARD REVISION B09 — ONE REGISTRY ROW ON A SHIPPED OBJECT. NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE
     KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR KEY, OR EVENT MEMBER.** (Placed ABOVE the B08 block.) Paradise
     Resort `svp-045` now resolves to `svp-150`'s `PARADISE_RESORT` program. Programs are keyed by id and the Retreat

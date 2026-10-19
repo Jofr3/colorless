@@ -5522,7 +5522,9 @@ export function seatShieldedFromLowEnergyAttacker(
 /** 🆕🆕🆕 §8 (D631) — Yveltal "Life-Locked" (`opponentActiveCantBeHealed`): is `pokemon` its side's Active
     while the OTHER side has such a holder in play (any spot), not §9-locked? Asked by every heal site in
     interpreter.ts before it heals; a locked heal heals 0 and files no `HEALED`. Moving damage counters is not
-    a heal (R-LL1 ⚠️ UNRULED): the two counter movers do not ask. */
+    a heal (R-LL1 ⚠️ UNRULED): the two counter movers do not ask. [🆕 Card revision B10 (D539): nor do the two
+    own-board movers (`moveOneOwnCounter`, Rocket Brain; `moveCountersToOpponent`, Adrena-Brain), which reached
+    this lock through `healChosen` and so placed counters they never removed.] */
 export function healLocked(state: GameState, pokemon: InPlayPokemon): boolean {
   const uid = topUid(pokemon);
   if (uid === undefined) return false;

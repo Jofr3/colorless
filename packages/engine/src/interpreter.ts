@@ -14393,7 +14393,9 @@ export function counterOwnDestinations(
 }
 
 /** 🆕🆕🆕 D565 — MOVE ONE DAMAGE COUNTER from the controller's own `from` body to their own
-    `dest` body (Rocket Brain). The heal half is `healChosen` (10 HP — one counter — clamped
+    `dest` body (Rocket Brain). The heal half is ~~`healChosen`~~ a direct `healedBody` write
+    [🆕 Card revision B10 (D539): `healChosen` asks `healLocked` and refused a Life-Locked source
+    while the placement still landed; a move is not a heal (R-LL1)] (10 HP — one counter — clamped
     to the source's damage; it files `HEALED` and the D386 stamp through `healedBody`), and
     the placement is `COUNTERS_PLACED { source: "moved" }` on the destination, re-read off
     the healed board. Silent endings, all wire belts: a destination off the controller's
@@ -14418,9 +14420,14 @@ function moveOneOwnCounter(
   const target = refPokemon(state, dest);
   if (source === undefined || target === undefined) return state;
   const targetUid = topUid(target);
+  const sourceUid = topUid(source);
   const moved = Math.min(10, source.damage);
-  if (targetUid === undefined || moved <= 0) return state;
-  const healed = healChosen(state, sourceRef, moved, ctx, events);
+  if (targetUid === undefined || sourceUid === undefined || moved <= 0) return state;
+  // 🆕 Card revision B10 (D539) — the source half is a direct write, NOT `healChosen`: a move off a
+  // Life-Locked Active is not a heal (R-LL1, the `moveCountersFromBench` precedent), and `healChosen`
+  // would refuse it silently while the placement below still landed — counters created, not moved.
+  events.push({ type: "HEALED", seat: ctx.seat, uid: sourceUid, amount: moved });
+  const healed = withBodyAt(state, sourceRef, healedBody(source, moved, state.turn));
   events.push({
     type: "COUNTERS_PLACED",
     seat: ctx.seat,
@@ -14451,7 +14458,8 @@ export function counterToOpponentSources(state: GameState, seat: Seat): PokemonR
 /** 🆕🆕🆕 D572 — MOVE `count` DAMAGE COUNTERS from the controller's own `from` body onto the
     OPPONENT's `dest` body (Adrena-Brain). `moveOneOwnCounter`'s two halves with the count
     clamped to what the source carries (*"up to 3"* over a body holding 2 moves 2): the heal is
-    `healChosen` (`HEALED` + the D386 stamp), the placement `COUNTERS_PLACED { source: "moved" }`
+    ~~`healChosen`~~ a direct `healedBody` write (`HEALED` + the D386 stamp) [🆕 Card revision B10
+    (D539): R-LL1 — a Life-Locked source still loses the counters], the placement `COUNTERS_PLACED { source: "moved" }`
     on the destination's seat, written off the healed board. Silent endings, all wire belts: a
     destination on the controller's own board, an empty spot, nothing to move. No §11 question
     (an Ability, not an attack) [🆕🆕🆕 D618 (D539): and since D618 a Benched destination under Battle
@@ -14471,11 +14479,14 @@ function moveCountersToOpponent(
   const target = refPokemon(state, dest);
   if (source === undefined || target === undefined) return state;
   const targetUid = topUid(target);
+  const sourceUid = topUid(source);
   const moved = Math.min(count * 10, source.damage);
-  if (targetUid === undefined || moved <= 0) return state;
+  if (targetUid === undefined || sourceUid === undefined || moved <= 0) return state;
   // 🆕🆕🆕 D618 — Battle Cage: a move onto a Benched body is refused whole (R-BCG1).
   if (dest.spot.spot === "bench" && benchCountersCaged(state, dest.seat, ctx)) return state;
-  const relieved = healChosen(state, sourceRef, moved, ctx, events);
+  // 🆕 Card revision B10 (D539) — a direct write, not `healChosen` (R-LL1; see `moveOneOwnCounter`).
+  events.push({ type: "HEALED", seat: ctx.seat, uid: sourceUid, amount: moved });
+  const relieved = withBodyAt(state, sourceRef, healedBody(source, moved, state.turn));
   events.push({ type: "COUNTERS_PLACED", seat: dest.seat, uid: targetUid, amount: moved, source: "moved" });
   const landing = refPokemon(relieved, dest) ?? target;
   const loaded: InPlayPokemon = { ...landing, damage: landing.damage + moved };

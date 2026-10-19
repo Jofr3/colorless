@@ -6252,7 +6252,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.538.0";',
+    find: 'export const engineVersion = "0.539.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -40987,7 +40987,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D565",
     what: "the counter is placed but never removed — damage is created. Killed by §3.",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const healed = healChosen(state, sourceRef, moved, ctx, events);",
+    // 🆕 RE-ANCHORED AT CARD REVISION B10 (the same mutation, the new spelling): the source half is a
+    //    direct `healedBody` write now (R-LL1 — a Life-Locked source still loses the counter).
+    find: "  const healed = withBodyAt(state, sourceRef, healedBody(source, moved, state.turn));",
     replace: "  const healed = state;",
     expectKilledBy: ["packages/engine/src/abilityBundleD565.test.ts"],
   },
@@ -60828,5 +60830,24 @@ export const MUTANTS: Mutant[] = [
     find: '  "svp-045": PARADISE_RESORT, // Paradise Resort — twin `svp-150`\n',
     replace: "",
     expectKilledBy: ["packages/engine/src/revisionB09.test.ts"],
+  },
+  // ── Card revision B10 (Abilities) — the two own-board counter movers under Life-Locked (R-LL1). ──
+  {
+    id: "B10-rocket-brain-source-asks-heal-lock",
+    decision: "B10",
+    what: "Rocket Brain's source half goes back through `healChosen`, which asks `healLocked`: under an opposing Yveltal `30th-100` the locked Active keeps its counter while the destination still gains one — a counter created, not moved. Killed by revisionB10 §2.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const healed = withBodyAt(state, sourceRef, healedBody(source, moved, state.turn));",
+    replace: "  events.pop();\n  const healed = healChosen(state, sourceRef, moved, ctx, events);",
+    expectKilledBy: ["packages/engine/src/revisionB10.test.ts"],
+  },
+  {
+    id: "B10-adrena-brain-source-asks-heal-lock",
+    decision: "B10",
+    what: "Adrena-Brain's source half goes back through `healChosen`, which asks `healLocked`: under an opposing Yveltal `30th-100` the locked Active keeps its counters while the opponent's Pokémon still gains them. Killed by revisionB10 §1.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const relieved = withBodyAt(state, sourceRef, healedBody(source, moved, state.turn));",
+    replace: "  events.pop();\n  const relieved = healChosen(state, sourceRef, moved, ctx, events);",
+    expectKilledBy: ["packages/engine/src/revisionB10.test.ts"],
   },
 ];

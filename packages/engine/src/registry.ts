@@ -2139,7 +2139,8 @@ export interface PassiveEffects {
       healed."* No spot clause, so a holder anywhere in play locks the opponent's Active. Read by
       continuous.ts `healLocked` at every heal site in interpreter.ts (`healEach`, `healEachAll`,
       `healSubject`'s Active arm, `healSelf`, `healChosen`): a locked heal heals 0 and files nothing. Moving damage
-      counters off the body is not a heal (R-LL1 ⚠️ UNRULED). §9 per source. */
+      counters off the body is not a heal (R-LL1 ⚠️ UNRULED) [🆕 Card revision B10 (D539): at all four movers —
+      Adrena-Brain's and Rocket Brain's no longer route their source half through `healChosen`]. §9 per source. */
   opponentActiveCantBeHealed?: true;
   /** §12 RECOVERY (D174): the printed Special Conditions this body is CLEARED of
       while this effect is live — Therapeutic Energy sv02-193's first clause, "The
