@@ -11,6 +11,49 @@ local FRAME={0.5+191/255*0.5,0.5+199/255*0.5,0.5+213/255*0.5,1} -- lighten(JOKER
 local BODY={55/255*0.9,66/255*0.9,68/255*0.9,0.8}                -- darken(BLACK,0.1) at 0.8
 local TEXT_DARK={79/255,99/255,103/255,1}
 local WHITE_BOX={1,1,1,1}
+-- name_from_rows / desc_from_rows: white, pixel-rounded panels with 0.05 emboss.
+local function whiteSection(x,y,w,h)
+  Button.panel(x,y+3,w,h,{0.7,0.7,0.7,1},1.2)
+  Button.panel(x,y,w,h,WHITE_BOX,1.2)
+end
+function Popup.frame(x,y,w,h)
+  Button.panel(x,y+4,w,h,{FRAME[1]*0.7,FRAME[2]*0.7,FRAME[3]*0.7,1},1.5)
+  Button.panel(x,y,w,h,FRAME,1.5)
+  Button.panel(x+3,y+3,w-6,h-6,BODY,1.5)
+end
+function Popup.action(button,active,pressed,roomWidth)
+  local x,y,w,h=button.x,button.y,button.w,button.h
+  local scale=0.28
+  local colour=button.disabled and {0.55,0.59,0.6,1} or TEXT_DARK
+  if pressed and not button.disabled then y=y+2 end
+  if button.ability then
+    local red=button.disabled and {0.6,0.3,0.28,1} or Button.hoverColour(T.red,active)
+    Button.panel(x,y+3,w,h,{red[1]*0.7,red[2]*0.7,red[3]*0.7,1},1.2)
+    Button.panel(x,y,w,h,red,1.2)
+    colour=button.disabled and {0.78,0.78,0.78,1} or T.white
+  else
+    whiteSection(x,y,w,h)
+    if active and not button.disabled then Button.panel(x,y,w,h,{0.88,0.94,0.97,1},1.2) end
+  end
+  local cost=button.cost or {}
+  local damage=button.damage or ''
+  if button.hasCost or #cost>0 or damage~='' then
+    local inset=8
+    local nameH=select(2,Dyna.measure('Hg',scale))
+    local detailY=y+6+nameH+4
+    local detailH=h-12-nameH-4
+    Dyna.static(button.label,scale,x+inset,y+6,w-2*inset,nameH,colour,{fit=true,shadow=false,roomWidth=roomWidth})
+    -- Include the pip's outer rim in the shared content inset.
+    if #cost>0 then Energy.row(cost,x+inset+1.6,detailY+detailH/2,6,6,button.disabled and 0.4 or 1,'left') end
+    if button.hasCost and #cost==0 then
+      Energy.row({'Free'},x+inset+1.6,detailY+detailH/2,6,6,button.disabled and 0.4 or 1,'left')
+    end
+    local damageW=damage~='' and Dyna.measure(damage,scale)+8 or 0
+    if damageW>0 then Dyna.static(damage,scale,x+w-inset-damageW,detailY,damageW,detailH,button.disabled and colour or T.red,{align='right',shadow=false,roomWidth=roomWidth}) end
+  else
+    Dyna.static(button.label,scale,x+6,y,w-12,h,colour,{fit=true,shadow=false,roomWidth=roomWidth})
+  end
+end
 local RS,US='\30','\31'
 Popup.badgeColours={Item=T.blue,Supporter=T.orange,Stadium=T.green,Tool={136/255,103/255,165/255,1},['Pokémon Tool']={136/255,103/255,165/255,1},Special={136/255,103/255,165/255,1}}
 local function split(text,sep)
@@ -45,10 +88,13 @@ local function stageLabel(stage)
 end
 -- Build a layout for `info` (the I row) and the live card item (damage, status).
 -- Returns a table with w,h and a draw(x,y) closure; x,y is the top-left.
-function Popup.build(info,item,maxWidth,roomWidth)
+function Popup.build(info,item,maxWidth,roomWidth,compact)
   local scale={name=0.42,body=0.3,small=0.27,badge=0.33}
+  if compact then scale.name=0.28;scale.body=0.26;scale.badge=0.28 end
   local width=math.min(maxWidth or 270,270)
   local outer,inner,pad=3,4.2,4
+  local spacing=6
+  if compact then inner=spacing-outer end
   local boxW=width-2*(outer+inner)
   local textW=boxW-2*pad-4
   local rows={}
@@ -56,18 +102,28 @@ function Popup.build(info,item,maxWidth,roomWidth)
   local lh=select(2,Dyna.measure('Hg',scale.body))
   local sh=select(2,Dyna.measure('Hg',scale.small))
   -- Name row (white text; HP at the right for Pokémon).
-  local nameH=select(2,Dyna.measure('Hg',scale.name))+6
+  local nameH=select(2,Dyna.measure('Hg',scale.name))+(compact and 2*spacing or 6)
   -- In play, the HP readout is "remaining/max HP", red once damaged (the
   -- card itself carries no tag); in hand or the catalogue, the printed HP.
   local inPlay=item and item.hp and (item.zone=='active' or item.zone=='bench')
-  row(nameH,function(x,y)
-    local hp
-    if inPlay then hp=tostring(math.max(0,item.hp-(item.damage or 0)))..'/'..tostring(item.hp)
-    elseif info.category=='Pokemon' and info.hp~='' then hp=info.hp end
-    local hpW=hp and (Dyna.measure(hp..' HP',scale.body)+8) or 0
-    Dyna.static(info.name or '',scale.name,x+4,y,boxW-8-hpW,nameH,T.white,{align='left',fit=true,roomWidth=roomWidth})
-    if hp then Dyna.static(hp..' HP',scale.body,x+boxW-4-hpW,y,hpW,nameH,(inPlay and (item.damage or 0)>0) and T.red or T.white,{align='right',roomWidth=roomWidth}) end
+  local hp
+  if inPlay then
+    local remaining=math.max(0,item.hp-(item.damage or 0))
+    hp=compact and remaining==item.hp and tostring(item.hp) or tostring(remaining)..'/'..tostring(item.hp)
+  elseif info.category=='Pokemon' and info.hp~='' then hp=info.hp end
+  local hpText=hp and (compact and tostring(hp) or hp..' HP')
+  local hpScale=compact and scale.name or scale.body
+  local hpW=hpText and (Dyna.measure(hpText,hpScale)+8) or 0
+  row(nameH+(compact and spacing or 0),function(x,y)
+    if compact then whiteSection(x,y,boxW,nameH) end
+    local inset=compact and spacing or 4
+    local colour=compact and TEXT_DARK or T.white
+    Dyna.static(info.name or '',scale.name,x+inset,y,boxW-2*inset-hpW,nameH,colour,{align='left',fit=true,shadow=not compact,roomWidth=roomWidth})
+    if hpText then Dyna.static(hpText,hpScale,x+boxW-inset-hpW,y,hpW,nameH,(inPlay and (item.damage or 0)>0) and T.red or colour,{align='right',shadow=not compact,roomWidth=roomWidth}) end
   end)
+  -- Hover summaries use only the name/HP and type/stage badges. The explicit
+  -- card inspector retains the full rules and live status description.
+  if not compact then
   -- Description box contents.
   local lines={}
   local function text(str,s,colour,opts)
@@ -139,6 +195,7 @@ function Popup.build(info,item,maxWidth,roomWidth)
       cy=cy+l.h
     end
   end)
+  end
   -- Badges: type (and stage) for Pokémon, Trainer subtype, Energy type.
   local badges={}
   if info.category=='Pokemon' then
@@ -153,26 +210,51 @@ function Popup.build(info,item,maxWidth,roomWidth)
     local t=Energy.split(info.types)[1]
     badges[#badges+1]={text=special and 'SPECIAL ENERGY' or ((t and t:upper() or 'BASIC')..' ENERGY'),colour=special and Popup.badgeColours.Special or Energy.colour(t or 'Colorless')}
   end
+  local inlineBadges=compact
+  local badgeGap,badgeWidth=spacing,0
+  if inlineBadges then
+    for _,b in ipairs(badges) do
+      b.w=Dyna.measure(b.text,scale.badge)
+      badgeWidth=badgeWidth+b.w
+    end
+    badgeWidth=badgeWidth+math.max(0,#badges-1)*badgeGap
+    local nameWidth=Dyna.measure(info.name or '',scale.name)+hpW+2*spacing+4
+    width=math.min(width,math.max(nameWidth,badgeWidth+2*spacing)+2*(outer+inner))
+    boxW=width-2*(outer+inner)
+  end
   if #badges>0 then
-    local bh=24
-    row(#badges*(bh+3)+2,function(x,y)
+    local bh=compact and nameH or 24
+    local fit=inlineBadges and math.min(1,(boxW-2*spacing)/badgeWidth) or 1
+    row(compact and bh or #badges*(bh+3)+2,function(x,y)
+      if compact then whiteSection(x,y,boxW,bh) end
+      local nextX=compact and #badges>1 and x+spacing or x+(boxW-badgeWidth*fit)/2
+      local gap=badgeGap*fit
+      if compact and #badges>1 then
+        local textWidth=(badgeWidth-(#badges-1)*badgeGap)*fit
+        gap=(boxW-2*spacing-textWidth)/(#badges-1)
+      end
       for i,b in ipairs(badges) do
-        local by=y+(i-1)*(bh+3)
-        local bw=math.max(120,Dyna.measure(b.text,scale.badge)+24)
-        local bx=x+(boxW-bw)/2
-        Button.panel(bx,by+3,bw,bh,{b.colour[1]*0.7,b.colour[2]*0.7,b.colour[3]*0.7,1},1.2)
-        Button.panel(bx,by,bw,bh,b.colour,1.2)
-        Dyna.static(b.text,scale.badge,bx,by-1,bw,bh,T.white,{roomWidth=roomWidth})
+        local by=y+(inlineBadges and 0 or (i-1)*(bh+3))
+        local bw=inlineBadges and b.w*fit or math.max(120,Dyna.measure(b.text,scale.badge)+24)
+        local bx=inlineBadges and nextX or x+(boxW-bw)/2
+        local colour=T.white
+        if compact then
+          colour=(b.colour[1]+b.colour[2]+b.colour[3])/3>0.65 and TEXT_DARK or b.colour
+        else
+          Button.panel(bx,by+3,bw,bh,{b.colour[1]*0.7,b.colour[2]*0.7,b.colour[3]*0.7,1},1.2)
+          Button.panel(bx,by,bw,bh,b.colour,1.2)
+        end
+        Dyna.static(b.text,scale.badge*fit,bx,compact and by or by-1,bw,bh,colour,{shadow=not compact,roomWidth=roomWidth})
+        nextX=nextX+bw+gap
       end
     end)
   end
-  local h=2*(outer+inner)+4
+  -- The lower white panel's emboss extends 3px below its face.
+  local h=2*(outer+inner)+(compact and 3 or 4)
   for _,r in ipairs(rows) do h=h+r.h end
   return {w=width,h=h,draw=function(x,y)
-    Button.panel(x,y+4,width,h,{FRAME[1]*0.7,FRAME[2]*0.7,FRAME[3]*0.7,1},1.5)
-    Button.panel(x,y,width,h,FRAME,1.5)
-    Button.panel(x+outer,y+outer,width-2*outer,h-2*outer,BODY,1.5)
-    local cy=y+outer+inner+2
+    Popup.frame(x,y,width,h)
+    local cy=y+outer+inner+(compact and 0 or 2)
     for _,r in ipairs(rows) do r.draw(x+outer+inner,cy);cy=cy+r.h end
   end}
 end

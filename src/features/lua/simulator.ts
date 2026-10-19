@@ -34,6 +34,8 @@ export interface SimOption {
   label: string;
   run: () => void;
   disabled?: boolean;
+  /** Visual de-emphasis without blocking selection replacement. */
+  dimmed?: boolean;
   selected?: boolean;
   card?: RedactedCard;
   colour?: string;
@@ -430,26 +432,12 @@ export class LuaSimulator {
     if (p.kind === "turn:action") {
       for (const { card, target } of this.targets()) {
         const uid = card.id;
-        if (target.spot === "active") {
-          for (const a of p.attacks)
-            act(uid, a.name, { type: "attack", seat, index: a.index }, "red", {
-              cost: a.effectiveCost ?? a.cost,
-              damage: a.damage ?? "",
-            });
-          if (p.retreat)
-            push(uid, {
-              label: "Retreat",
-              colour: "blue",
-              disabled: !p.retreat.can,
-              cost: Array.from({ length: p.retreat.cost }, () => "Colorless"),
-              run: () => this.retreat(),
-            });
-        }
         for (const a of p.abilities)
           if (JSON.stringify(a.target) === JSON.stringify(target))
             push(uid, {
               label: a.abilityName,
-              colour: "green",
+              colour: "red",
+              group: "ability",
               disabled: a.disabled,
               run: () =>
                 this.dispatch({
@@ -459,6 +447,13 @@ export class LuaSimulator {
                   abilityName: a.abilityName,
                 }),
             });
+        if (target.spot === "active") {
+          for (const a of p.attacks)
+            act(uid, a.name, { type: "attack", seat, index: a.index }, "red", {
+              cost: a.effectiveCost ?? a.cost,
+              damage: a.damage ?? "",
+            });
+        }
         for (const a of p.discardable ?? [])
           if (JSON.stringify(a.target) === JSON.stringify(target))
             act(uid, a.label, { type: "discardFromPlay", seat, target: a.target }, "red");
@@ -466,7 +461,8 @@ export class LuaSimulator {
       if (v.board.stadium && p.stadiumAbility)
         push(v.board.stadium.id, {
           label: p.stadiumAbility.label,
-          colour: "green",
+          colour: "red",
+          group: "ability",
           disabled: p.stadiumAbility.disabled,
           run: () => this.dispatch({ type: "useStadiumAbility", seat }),
         });
@@ -795,6 +791,7 @@ export class LuaSimulator {
         card.key,
         Number(index),
       );
+      this.message = "";
       this.emit();
       return;
     }
@@ -950,6 +947,7 @@ export class LuaSimulator {
         !!o.selected,
         o.card?.cardId ?? "",
         o.uid ?? "",
+        !!o.dimmed,
       );
       noteArt(o.card);
     };
@@ -1148,6 +1146,7 @@ export class LuaSimulator {
               a.group ?? "",
               (a.cost ?? []).join(","),
               a.damage ?? "",
+              a.cost !== undefined,
             );
       }
     }

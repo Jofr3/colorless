@@ -341,11 +341,11 @@ function Simulator:sync(raw,finishKo)
     elseif r[1]=='A' then self.actions[#self.actions+1]={token=r[2],label=r[3],colour=T[r[4]] or T.blue,disabled=r[5]=='true',slot=r[6] or 'minor'}
     elseif r[1]=='K' then
       local list=self.cardActions[r[3]] or {};self.cardActions[r[3]]=list
-      list[#list+1]={token=r[2],uid=r[3],label=r[4],colour=T[r[5]] or T.blue,disabled=r[6]=='true',targetUid=r[7] or '',group=r[8] or '',cost=Energy.split(r[9]),damage=r[10] or ''}
+      list[#list+1]={token=r[2],uid=r[3],label=r[4],colour=T[r[5]] or T.blue,disabled=r[6]=='true',targetUid=r[7] or '',group=r[8] or '',cost=Energy.split(r[9]),damage=r[10] or '',hasCost=r[11]=='true'}
     elseif r[1]=='M' then menu={kind=r[2],title=r[3],note=r[4],mandatory=r[5]=='true',id=r[6] or r[3],hideTargetOutline=r[7]=='true',options={},footer={}}
     elseif (r[1]=='O' or r[1]=='F') and menu then
       local list=r[1]=='O' and menu.options or menu.footer
-      list[#list+1]={token=r[2],label=r[3],colour=T[r[4]] or T.blue,disabled=r[5]=='true',selected=r[6]=='true',cardId=r[7] or '',uid=r[8] or ''}
+      list[#list+1]={token=r[2],label=r[3],colour=T[r[4]] or T.blue,disabled=r[5]=='true',selected=r[6]=='true',cardId=r[7] or '',uid=r[8] or '',dimmed=r[9]=='true'}
     end
   end
   self.menu=menu
@@ -652,6 +652,9 @@ end
 function Simulator:overOwnRow(card,x,y)
   local item=card.item
   if item.owner~='you' or item.hidden then return false end
+  -- Classify the held card's centre, not the grabbed edge. Highlighted cards
+  -- lift above the row, so their top edge can overlap a playable board zone.
+  if self.drag and self.drag.card==card then x,y=x-self.drag.dx,y-self.drag.dy end
   if item.zone=='hand' then
     local zone=self.L.zones.you_hand
     return x>=self.L.table.x and x<=self.boardW and y>=zone.y-95*zone.scale-18 and y<=self.boardH+30
@@ -841,6 +844,7 @@ function Simulator:add(label,x,y,w,h,action,colour,extra)
 end
 function Simulator:build()
   self.controls={}
+  self.attachedPopup=nil
   if not self.L then return end
   local L=self.L
   -- HUD buttons: Run Info -> Game log, Options.
@@ -921,28 +925,42 @@ function Simulator:buildAttached(card)
       if not groups[gk] then groups[gk]={label=groupLabel(gk),colour=a.colour,actions={},disabled=true};buttons[#buttons+1]=groups[gk] end
       groups[gk].actions[#groups[gk].actions+1]=a
       if not a.disabled then groups[gk].disabled=false end
-    else buttons[#buttons+1]={label=a.label,colour=a.colour,token=a.token,disabled=a.disabled,cost=a.cost,damage=a.damage} end
+    else buttons[#buttons+1]={label=a.label,colour=a.colour,token=a.token,disabled=a.disabled,cost=a.cost,damage=a.damage,hasCost=a.hasCost,ability=a.group=='ability'} end
   end
   if not item.hidden and item.cardId~='' then buttons[#buttons+1]={label='View',colour=T.profile,view=true} end
+  if #buttons==0 then return end
   local scale=card.baseScale
   local cw,ch=142*scale,190*scale
-  local bw,bh=math.max(cw+20,120),36
-  for _,b in ipairs(buttons) do if (b.cost and #b.cost>0) or (b.damage and b.damage~='') then bw=math.max(bw,200) end end
+  local pad,gap=6,6
+  local bw,bh=100,select(2,Dyna.measure('Hg',0.28))+12
+  local totalHeight=0
+  for _,b in ipairs(buttons) do
+    local costW=(b.cost and #b.cost>0) and #b.cost*18-6+3.2 or 0
+    if b.hasCost and costW==0 then costW=15.2 end
+    local damageW=(b.damage and b.damage~='') and Dyna.measure(b.damage,0.28)+8 or 0
+    bw=math.max(bw,Dyna.measure(b.label,0.28)+16,costW+damageW+16)
+    b.height=bh+((b.hasCost or costW>0 or damageW>0) and math.max(16,bh-12)+4 or 0)
+    totalHeight=totalHeight+b.height
+  end
+  bw=math.min(bw,260)
+  local pw,ph=bw+2*pad,2*pad+totalHeight+(#buttons-1)*gap+3
   local above=item.zone=='hand' or (self.portrait and item.owner=='you')
   local x,y
-  -- The highlighted card lifts 0.2 card heights once update runs; lay the
-  -- column out above that lifted position.
+  -- Anchor both button layouts to the highlighted card's lifted position.
   local lift=0.2*190*scale
-  if above then x=card.homeX-bw/2;y=card.homeY-lift-ch/2-10-#buttons*(bh+6)
+  if above then x=card.homeX-pw/2;y=card.homeY-lift-ch/2-10-ph
   else
-    x=card.homeX+cw/2+10;y=card.homeY-ch/2
-    if x+bw>self.boardW-8 then x=card.homeX-cw/2-10-bw end
+    x=card.homeX+cw/2+10;y=card.homeY-lift-ch/2
+    if x+pw>self.boardW-8 then x=card.homeX-cw/2-10-pw end
   end
-  x=math.max(4,math.min(self.boardW-bw-4,x))
-  if y<4 then y=4 end
-  for i,b in ipairs(buttons) do
+  x=math.max(4,math.min(self.boardW-pw-4,x))
+  y=math.max(4,math.min(self.boardH-ph-8,y))
+  self.attachedPopup={x=x,y=y,w=pw,h=ph}
+  local buttonY=y+pad
+  for _,b in ipairs(buttons) do
     local action=b.view and 'inspect' or (b.actions and 'target' or 'cardAction')
-    local added=self:add(b.label,x,y+(i-1)*(bh+6),bw,bh,action,b.colour,{token=b.token,disabled=b.disabled,fontSize=21,attached=true,card=card,group=b,cost=b.cost,damage=b.damage})
+    local added=self:add(b.label,x+pad,buttonY,bw,b.height,action,b.colour,{token=b.token,disabled=b.disabled,fontSize=21,attached=true,card=card,group=b,cost=b.cost,damage=b.damage,hasCost=b.hasCost,ability=b.ability})
+    buttonY=buttonY+b.height+gap
     if b.disabled then added.colour={95/255,115/255,119/255,1} end -- G.C.GREY, not the panel black
   end
 end
@@ -955,6 +973,7 @@ function Simulator:hit(x,y)
 end
 function Simulator:cardHit(x,y)
   if self.overlay then return nil end
+  if self.attachedPopup and Button.hit(self.attachedPopup,x,y) then return nil end
   -- Raised cards are painted last, so they also receive the pointer first.
   if self.hoverCard and self.hoverCard:hit(x,y) then return self.hoverCard end
   if self.highlight and self.highlight:hit(x,y) then return self.highlight end
@@ -1155,7 +1174,7 @@ function Simulator:update(dt,time,mx,my,reduced)
   local assigningCounters=self.targeting and self.targeting.menu.hideTargetOutline
   if hovered and hovered~=self.highlight and not hovered.item.hidden and not self.drag and self.info[hovered.item.cardId] and not blocked and not assigningCounters then
     local key=hovered.item.owner..':'..hovered.item.id..':'..(hovered.item.damage or 0)..':'..(hovered.item.status or '')
-    if self.popupKey~=key then self.popupKey=key;self.popupBox=Popup.build(self.info[hovered.item.cardId],hovered.item,self.portrait and 236 or 270,self.boardW) end
+    if self.popupKey~=key then self.popupKey=key;self.popupBox=Popup.build(self.info[hovered.item.cardId],hovered.item,self.portrait and 236 or 270,self.boardW,true) end
     self.popup=hovered
   end
   self:updateKoPresentation(dt,time,reduced)
@@ -1166,7 +1185,7 @@ function Simulator:dropZoneAt(x,y,card)
   if self:overOwnRow(card,x,y) then return {zone='reorder',index=item.displayIndex} end
   if not item.draggable then return nil end
   if item.zone=='hand' then
-    if item.category=='Trainer' and item.trainerType=='Item' then
+    if item.category=='Trainer' and (item.trainerType=='Item' or item.trainerType=='Supporter') then
       for _,zone in ipairs({Z.you_bench,Z.opp_bench}) do
         if Layout.inside(zone.well,x,y) then return {zone='playmat',index=0,well=zone.well} end
       end
@@ -1251,7 +1270,10 @@ function Simulator:mousepressed(x,y)
   if self.koPresentation then return end
   x,y=self:point(x,y);self.focus=0;self.focusCard=nil
   if self.peek then self.peek=false;return end
-  if self.overlay then self.pressedOverlay=self.overlay:hit(x,y);return end
+  if self.overlay then
+    if self.overlay:mousepressed(x,y) then self.pressedOverlay=nil;return end
+    self.pressedOverlay=self.overlay:hit(x,y);return
+  end
   self.pressed=self:hit(x,y)
   if self.pressed>0 then return end
   local c=self:cardHit(x,y)
@@ -1270,6 +1292,7 @@ function Simulator:mousereleased(x,y)
   if self.koPresentation then return end
   x,y=self:point(x,y)
   if self.overlay then
+    if self.overlay.scrollDrag then self.overlay.scrollDrag=nil;self.pressedOverlay=nil;return end
     if self.pressedOverlay and self.pressedOverlay>0 and self.pressedOverlay==self.overlay:hit(x,y) then self.overlay:activate(self.pressedOverlay) end
     self.pressedOverlay=nil;return
   end
@@ -1516,10 +1539,16 @@ function Simulator:draw(shaders)
   -- HUD.
   self.hud:draw(self,L,self.time,self.reduced,self.hover)
   -- Controls.
+  if self.attachedPopup then
+    local p=self.attachedPopup
+    Popup.frame(p.x,p.y,p.w,p.h)
+  end
   for i,b in ipairs(self.controls) do
     if not b.invisible then
       local active=not self.overlay and (self.hover==i or self.focus==i)
-      if b.lines then
+      if b.attached then
+        Popup.action(b,active,self.pressed==i and self.hover==i,rw)
+      elseif b.lines then
         local label=b.label;b.displayLabel=' '
         Button.draw(b,active and not b.disabled,self.pressed==i and self.hover==i,self.focus==i,rw)
         b.displayLabel=nil;b.label=label

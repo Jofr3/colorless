@@ -43,12 +43,24 @@ function Overlay:release()
 end
 -- Keep the overlay when the same menu re-emits (selection toggles).
 function Overlay:refresh(data)
+  local cardGrid=self.kind=='cards' or self.kind=='pile'
+  local keepCards=cardGrid and #self.cards==#data.options
+  if keepCards then
+    for i,o in ipairs(data.options) do
+      local previous=self.data.options[i]
+      if not previous or previous.uid~=o.uid or previous.cardId~=o.cardId then keepCards=false;break end
+    end
+  end
   self.data=data
   self.titleText:set(data.title or '',self.sim.time)
-  if self.kind=='cards' or self.kind=='pile' then
-    for i,c in ipairs(self.cards) do local o=data.options[c.option];if o then c.item.selected=o.selected;c.item.disabled=o.disabled end end
+  if keepCards then
+    for _,c in ipairs(self.cards) do
+      local o=data.options[c.option]
+      c.item.selected=o.selected;c.item.disabled=o.disabled;c.item.name=o.label
+      c.greyed=self.kind=='cards' and (o.disabled or o.dimmed) or false
+    end
   end
-  self:build()
+  if cardGrid and not keepCards then self:layout() else self:build(keepCards) end
 end
 function Overlay:layout()
   local sim=self.sim
@@ -56,13 +68,15 @@ function Overlay:layout()
   local W,H=sim.boardW,sim.boardH
   local w,h
   if self.kind=='cards' or self.kind=='pile' then
-    -- Sized to the rows actually shown (one or two), like a booster pack.
-    local perRow=(self.kind=='pile') and (p and 4 or 9) or (p and 3 or 8)
-    local scale=(self.kind=='pile') and (p and 0.5 or 0.58) or 0.62
-    local rows=math.max(1,math.min(2,math.ceil(#(self.data.options or {})/perRow)))
-    w=p and 456 or 1040
-    h=(self.kind=='pile' and 100 or 110)+rows*(190*scale+58)+8+(#(self.data.footer or {})>0 and 56 or 0)+(self.data.mandatory and 0 or 50)+28
-    h=math.min(p and 760 or 700,h)
+    self.cardGap=16
+    -- Keep room for lift, held-card zoom and shadows outside the tight grid.
+    self.cardPadding=32
+    w=p and 456 or (4*142*sim.L.zones.you_hand.scale+3*self.cardGap+2*self.cardPadding+48)
+    self.cardScale=math.min(sim.L.zones.you_hand.scale,(w-48-3*self.cardGap-2*self.cardPadding)/(4*142))
+    local rows=math.max(1,math.ceil(#(self.data.options or {})/4))
+    self.contentHeight=rows*190*self.cardScale+(rows-1)*self.cardGap+2*self.cardPadding
+    h=110+self.contentHeight+(#(self.data.footer or {})>0 and 64 or 0)+(self.data.mandatory and 0 or 64)+24
+    h=math.min(H-40,p and 760 or 700,h)
   elseif self.kind=='inspect' then w,h=p and 456 or 900,p and 780 or 640
   elseif self.kind=='gameover' then w,h=p and 456 or 720,p and 620 or 560
   elseif self.kind=='log' then w,h=p and 456 or 760,p and 760 or 640
@@ -79,6 +93,12 @@ function Overlay:layout()
     h=math.min(p and 780 or 700,h)
   end
   self.x,self.y,self.w,self.h=(W-w)/2,(H-h)/2,w,h
+  -- Fit the heading inside the same padded content area as the description.
+  local titleWidth=math.min(self.kind=='gameover' and 520 or 600,w-64)
+  if self.titleText.cfg.maxw~=titleWidth then
+    self.titleText.cfg.maxw=titleWidth
+    self.titleText:set(self.data.title or '',sim.time,true)
+  end
   self:build()
 end
 function Overlay:add(label,x,y,w,h,action,colour,extra)
@@ -89,31 +109,27 @@ function Overlay:add(label,x,y,w,h,action,colour,extra)
   self.controls[#self.controls+1]=b
   return b
 end
-function Overlay:makeCards(options,perRow,rows,scale,top)
+function Overlay:makeCards(options,scale,top)
   self:release()
   local sim=self.sim
-  self.perPage=perRow*rows
-  self.pages=math.max(1,math.ceil(#options/self.perPage))
-  self.page=math.min(self.page,self.pages)
-  local spacing=math.min(142*scale+18,(self.w-60)/perRow)
-  local first=(self.page-1)*self.perPage
-  for i=first+1,math.min(#options,first+self.perPage) do
-    local o=options[i]
-    local k=i-first-1
-    local row=math.floor(k/perRow)
-    local inRow=math.min(perRow,#options-first-row*perRow)
-    local col=k%perRow
-    local x=self.x+self.w/2+(col-(inRow-1)/2)*spacing
-    local y=top+95*scale+row*(190*scale+58)
+  self.pages,self.page=1,1
+  local spacing=142*scale+self.cardGap
+  for i,o in ipairs(options) do
+    local k=i-1
+    local row=math.floor(k/4)
+    local col=k%4
+    local x=self.x+self.w/2+(col-1.5)*spacing
+    local y=top+95*scale+row*(190*scale+self.cardGap)
     local item={id=o.uid~='' and o.uid or ('opt'..i),cardId=o.cardId,name=o.label,hidden=o.cardId=='' or o.cardId=='hidden',selected=o.selected,disabled=o.disabled,edition='dissolve',resolution=2}
     local card=sim:newCard(item,i,x,y,scale)
-    if not sim.reduced then card.motion.VT.x=(self.x+self.w/2)/card.unit;card.motion.VT.y=(top+95*scale+row*(190*scale+58))/card.unit end
+    card.greyed=self.kind=='cards' and (o.disabled or o.dimmed) or false
+    if not sim.reduced then card.motion.VT.x=(self.x+self.w/2)/card.unit;card.motion.VT.y=y/card.unit end
     card.option=i
     card.optionIndex=i
     self.cards[#self.cards+1]=card
   end
 end
-function Overlay:build()
+function Overlay:build(keepCards)
   self.controls={}
   local sim=self.sim
   local p=sim.portrait
@@ -121,9 +137,10 @@ function Overlay:build()
   local d=self.data
   local kind=self.kind
   local bw=w-48
-  local bottom=y+h-54
+  local cardGrid=kind=='cards' or kind=='pile'
+  local bottom=y+h-(cardGrid and 64 or 54)
   local function back(label,action)
-    self:add(label or 'Back',x+24,bottom,bw,38,action or 'back',T.orange,{fontSize=26})
+    self:add(label or 'Back',x+24,bottom,bw,cardGrid and 40 or 38,action or 'back',T.orange,{fontSize=26})
   end
   local function footer(items,yy)
     if not items or #items==0 then return end
@@ -151,22 +168,17 @@ function Overlay:build()
     footer(d.footer,fy)
     if not d.mandatory then back() end
   elseif kind=='cards' or kind=='pile' then
-    local top=y+(kind=='pile' and 100 or 110)
-    local perRow=p and 3 or 8
-    local rows=p and 2 or 2
-    local scale=p and 0.62 or 0.62
-    if kind=='pile' then perRow=p and 4 or 9;scale=p and 0.5 or 0.58 end
-    self.cardTop=top
-    self.cardScale=scale
-    self:makeCards(d.options,perRow,rows,scale,top)
+    local fy=bottom-(d.mandatory and 0 or 64)
+    local gridBottom=#(d.footer or {})>0 and fy-24 or (d.mandatory and y+h-24 or bottom-24)
+    self.viewport={x=x+24,y=y+110,w=w-48,h=gridBottom-(y+110)}
+    self.cardTop=self.viewport.y+self.cardPadding
+    self.maxScroll=math.max(0,self.contentHeight-self.viewport.h)
+    if self.maxScroll<1 then self.maxScroll=0 end
+    self.scroll=math.max(0,math.min(self.scroll,self.maxScroll))
+    if not keepCards then self:makeCards(d.options,self.cardScale,self.cardTop) end
     if d.note and d.note~='' then self.noteLines=Dyna.wrap(d.note,0.28,bw-16) else self.noteLines={} end
     for _,c in ipairs(self.cards) do
       self.controls[#self.controls+1]={label=c.item.name,x=c.homeX-71*c.baseScale,y=c.homeY-95*c.baseScale,w=142*c.baseScale,h=190*c.baseScale,action='card',card=c,disabled=c.item.disabled and kind=='cards',fontSize=20,token=d.options[c.option].token}
-    end
-    local fy=bottom-(d.mandatory and 0 or 50)
-    if self.pages>1 then
-      self.pageText:set('Page '..self.page..'/'..self.pages,sim.time)
-      self:add('<',x+w/2-150,fy-48,34,36,'prev',T.red);self:add('>',x+w/2+116,fy-48,34,36,'next',T.red)
     end
     footer(d.footer,fy)
     if not d.mandatory then back() end
@@ -255,21 +267,55 @@ function Overlay:build()
     end
   end
 end
+local function cardLayer(card)
+  return (card.hovered or card.held) and 2 or (card.item.selected and 1 or 0)
+end
 function Overlay:hit(x,y)
   y=y-self:offset()
+  local v=self.viewport
+  local inGrid=not v or (x>=v.x and x<=v.x+v.w and y>=v.y and y<=v.y+v.h)
+  if v and inGrid then
+    for layer=2,0,-1 do
+      for i=#self.controls,1,-1 do
+        local b=self.controls[i]
+        if b.card and not b.disabled and cardLayer(b.card)==layer and b.card:hit(x,y+self.scroll) then return i end
+      end
+    end
+  end
   for i=#self.controls,1,-1 do
     local b=self.controls[i]
     if not b.disabled then
-      if b.card then if b.card:hit(x,y) then return i end
+      if b.card then if not v and b.card:hit(x,y) then return i end
       elseif Button.hit(b,x,y) then return i end
     end
   end
   return 0
 end
+function Overlay:scrollbar()
+  if not self.viewport or self.maxScroll<=0 then return nil end
+  local v=self.viewport
+  local h=math.max(32,v.h*v.h/self.contentHeight)
+  return {x=v.x+v.w+8,y=v.y,w=8,h=v.h,thumbH=h,thumbY=v.y+(v.h-h)*self.scroll/self.maxScroll}
+end
+function Overlay:mousepressed(x,y)
+  y=y-self:offset()
+  local bar=self:scrollbar()
+  if not bar or x<bar.x-5 or x>bar.x+bar.w+5 or y<bar.y or y>bar.y+bar.h then return false end
+  self.scrollDrag=(y>=bar.thumbY and y<=bar.thumbY+bar.thumbH) and y-bar.thumbY or bar.thumbH/2
+  self:dragScrollbar(y)
+  return true
+end
+function Overlay:dragScrollbar(y)
+  local bar=self:scrollbar()
+  if bar and self.scrollDrag then
+    self.scroll=math.max(0,math.min(self.maxScroll,(y-bar.y-self.scrollDrag)/(bar.h-bar.thumbH)*self.maxScroll))
+  end
+end
 function Overlay:update(dt,time,mx,my,reduced)
   self.time=time
   self.motion:update(dt,time,false,false,reduced)
   self.titleText:update(time,reduced)
+  self:dragScrollbar(my-self:offset())
   self.hover=self:hit(mx,my)
   local ly=my-self:offset()
   for i,c in ipairs(self.cards) do
@@ -280,6 +326,7 @@ function Overlay:update(dt,time,mx,my,reduced)
     c.held=held
     if active and not c.hovered then c:juiceUp(time,0.05,0.03,reduced);self.sim.callbacks.feedback('paper1',0.9+love.math.random()*0.2) end
     c.lift=c.item.selected and 0.2*190*c.baseScale or 0
+    if self.viewport then c.lift=math.min(c.lift,self.cardGap-4) end
     c:update(dt,time,active,reduced)
   end
   if self.kind=='coin' then
@@ -328,13 +375,24 @@ function Overlay:keypressed(key)
     local total=#self.controls;if total==0 then return true end
     local delta=(key=='left' or key=='up' or (key=='tab' and love.keyboard.isDown('lshift','rshift'))) and -1 or 1
     for _=1,total do self.focus=(self.focus-1+delta+total)%total+1;if not self.controls[self.focus].disabled then break end end
-    local b=self.controls[self.focus];if b then sim.callbacks.announce(b.label) end
+    local b=self.controls[self.focus]
+    if b then
+      if b.card and self.viewport then
+        local top=b.card.homeY-95*b.card.baseScale-self.cardPadding
+        local bottom=b.card.homeY+95*b.card.baseScale+self.cardPadding
+        if top-self.scroll<self.viewport.y then self.scroll=top-self.viewport.y
+        elseif bottom-self.scroll>self.viewport.y+self.viewport.h then self.scroll=bottom-self.viewport.y-self.viewport.h end
+        self.scroll=math.max(0,math.min(self.maxScroll,self.scroll))
+      end
+      sim.callbacks.announce(b.label)
+    end
     return true
   elseif key=='return' or key=='space' then self:activate(self.focus);return true
   elseif key=='pageup' or key=='pagedown' then self:wheelmoved(key=='pageup' and 1 or -1);return true end
   return false
 end
 function Overlay:wheelmoved(y)
+  if self.viewport then self.scroll=math.max(0,math.min(self.maxScroll,self.scroll-y*60));return end
   if (self.pages or 1)>1 then self.page=(self.page-1+(y>0 and -1 or 1)+self.pages)%self.pages+1;self:build() end
 end
 local function cycle(self,x,y,w,h)
@@ -360,18 +418,29 @@ function Overlay:draw(shaders)
     local top=y+(kind=='pile' and 64 or 66)
     for i=1,math.min(2,#(self.noteLines or {})) do Dyna.static(self.noteLines[i],0.28,x+32,top+(i-1)*16,w-64,16,JOKER_GREY,{roomWidth=rw}) end
     -- The pack tray: G.C.BLACK inset with a 0.05 emboss, like the collection.
-    local shownRows=math.max(1,math.min(2,math.ceil(#(d.options or {})/(self.perPage/2))))
-    local tx,ty,tw,th=x+20,self.cardTop-4,w-40,(190*self.cardScale+58)*shownRows-20
+    local v=self.viewport
+    local tx,ty,tw,th=v.x,v.y,v.w,v.h
     Button.panel(tx,ty+3,tw,th,{T.panel[1]*0.7,T.panel[2]*0.7,T.panel[3]*0.7,1})
     Button.panel(tx,ty,tw,th,T.panel)
-    for _,c in ipairs(self.cards) do
-      -- Selected cards lift (c.lift) rather than taking an outline, as in Balatro's hand.
-      c:draw(shaders,self.time or 0,sim.mx or 0,(sim.my or 0)-self:offset(),sim.reduced,rw)
-      if c.item.disabled and kind=='cards' then g.setColor(0,0,0,0.35);g.rectangle('fill',c.x-71*c.baseScale,c.y-95*c.baseScale,142*c.baseScale,190*c.baseScale) end
-      local o=d.options[c.option]
-      Dyna.static(o and o.label or c.item.name,0.26,c.homeX-80,c.homeY+95*c.baseScale+6,160,16,c.item.selected and T.white or JOKER_GREY,{roomWidth=rw,fit=true,shadow=c.item.selected})
+    local sx,sy,sw,sh=g.getScissor()
+    local vx,vy=g.transformPoint(v.x,v.y)
+    local ex,ey=g.transformPoint(v.x+v.w,v.y+v.h)
+    g.intersectScissor(vx,vy,ex-vx,ey-vy)
+    g.push();g.translate(0,-self.scroll)
+    for layer=0,2 do
+      for _,c in ipairs(self.cards) do
+        if cardLayer(c)==layer then
+          c:draw(shaders,self.time or 0,sim.mx or 0,(sim.my or 0)-self:offset()+self.scroll,sim.reduced,rw)
+        end
+      end
     end
-    if self.pages>1 then cycle(self,x+w/2-112,y+h-54-(d.mandatory and 0 or 50)-48,224,36) end
+    g.pop()
+    if sx then g.setScissor(sx,sy,sw,sh) else g.setScissor() end
+    local bar=self:scrollbar()
+    if bar then
+      Button.panel(bar.x,bar.y,bar.w,bar.h,T.tray)
+      Button.panel(bar.x,bar.thumbY,bar.w,bar.thumbH,JOKER_GREY)
+    end
   elseif kind=='coin' then
     local n=#self.flips
     local spacing=math.min(130,(w-60)/math.max(n,1))

@@ -133,8 +133,16 @@ sim.overlay:activate(picked)
 assert(commands[#commands]=='invoke\t3\t10','Clicking a prompt card toggles it, got '..tostring(commands[#commands]))
 -- Same menu id refreshes in place; a new id replaces the overlay.
 local keep=sim.overlay
-sim:sync(snapshot(4,{row('M','cards','Choose cards (1/1)','Pick','true','m2'),row('O','13','Fuecoco','blue','false','true','sv01-036','x1'),row('O','14','Growlithe','blue','false','false','sv01-030','x2'),row('F','15','Confirm','blue','false','false','','')}))
+local keptCards={keep.cards[1],keep.cards[2]}
+local keptX,keptY=keptCards[2].motion.VT.x,keptCards[2].motion.VT.y
+sim:sync(snapshot(4,{row('M','cards','Choose cards (1/1)','Pick','true','m2'),row('O','13','Fuecoco','blue','false','true','sv01-036','x1'),row('O','14','Growlithe','blue','false','false','sv01-030','x2','true'),row('F','15','Confirm','blue','false','false','','')}))
 assert(sim.overlay==keep and sim.overlay.cards[1].item.selected,'Refreshed menu keeps its cards')
+assert(keep.cards[1]==keptCards[1] and keep.cards[2]==keptCards[2],'Selection refresh preserves the card objects')
+assert(keep.cards[2].motion.VT.x==keptX and keep.cards[2].motion.VT.y==keptY,'Selection refresh does not restart the card entrance animation')
+assert(keep.controls[1].token=='13' and not keep.cards[2].item.selected,'Refreshed controls and selections stay current')
+assert(keep.cards[2].greyed and not keep.controls[2].disabled,'Dimmed replacement candidates stay clickable')
+keep:activate(2)
+assert(commands[#commands]=='invoke\t4\t14','Dimmed cards can replace the current selection')
 sim:sync(snapshot(5,{row('M','coin','Coin flip','Player 1: Heads\nPlayer 2: Tails','true','m3'),row('O','16','Continue','blue','false','false','','')}))
 assert(sim.overlay~=keep and sim.overlay.kind=='coin' and #sim.overlay.flips==2 and sim.overlay.flips[1].heads and not sim.overlay.flips[2].heads,'Coin overlay parses flips')
 -- Menu cleared -> overlay closes; damage delta queues juice; a viewer change
@@ -588,5 +596,16 @@ for _,size in ipairs({{1280,800},{390,844}}) do
   local count=#commands
   press(trainer);drag(sim.L.zones.you_active.x,sim.L.zones.you_active.y);release(sim.L.zones.you_active.x,sim.L.zones.you_active.y)
   assert(#commands==count,'Reordering permission does not allow playing an unavailable card')
+  -- The host permits dragging first-turn Supporters even though Play is
+  -- disabled. A selected card's top edge can sit above the hand hit area.
+  trainer.item.draggable=true
+  sim.highlight=trainer;settle()
+  local top=trainer.y-85*trainer.baseScale
+  sim.hoverCard=nil
+  sim:mousepressed(trainer.x*sim.zoom+sim.ox,top*sim.zoom+sim.oy)
+  assert(sim.drag and sim.drag.card==trainer,'Grab the selected Supporter by its top edge')
+  x=energy.homeX+50
+  drag(x,top);release(x,top)
+  assert(commands[#commands]=='reorder\thand\ttrainer\t2','Dragging a lifted Supporter sideways only reorders, even from its top edge')
 end
 print('PASS: Lua simulator interactions, live hand/Bench reordering, KO animations and delayed handoffs in both layouts')

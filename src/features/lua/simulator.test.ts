@@ -16,8 +16,10 @@ import {
   handUid,
   COUNTER_SPREAD_DECK,
   clearBench,
+  ROTO_STICK_DECK,
 } from "../../../packages/engine/src/testFixtures";
 import { LuaSimulator } from "./simulator";
+import { effectMenu } from "./simulatorChoices";
 import { loadSimulatorSave } from "../playmat/simulatorSave";
 import { applyAction, cardOfUid, isBasicPokemon, otherSeat } from "@luminous/engine";
 
@@ -89,6 +91,110 @@ function rareCandySetup(turn = 3) {
   return { sim, publish, state, candy, stage2, cardRow };
 }
 describe("Lua simulator", () => {
+  it.each([0, 1, 2])("replaces the oldest selection at a maximum of %s", (max) => {
+    const { sim, publish } = setup();
+    const candidates = ["a", "b", "c"].map((id) => ({
+      id,
+      cardId: "sv01-181",
+      name: "Nest Ball",
+      category: "Trainer" as const,
+      trainerType: "Item" as const,
+      hasImage: false,
+    }));
+    sim.menu = effectMenu(sim, {
+      kind: "chooseCards",
+      candidates,
+      min: 0,
+      max,
+      dest: "hand",
+      note: "Pick cards",
+    });
+    const originalOptions = [...sim.menu.options];
+    // Select out of grid order to verify age, rather than card position.
+    for (const index of [2, 0, 1]) originalOptions[index]?.run();
+    expect(sim.menu.options.filter((o) => o.selected)).toHaveLength(max);
+    expect(sim.menu.options.filter((o) => !o.selected).every((o) => o.dimmed)).toBe(true);
+    expect(sim.menu.options.filter((o) => o.selected).every((o) => !o.dimmed)).toBe(true);
+    expect(sim.menu.options.filter((o) => o.selected).map((o) => o.uid)).toEqual(
+      max === 0 ? [] : max === 1 ? ["b"] : ["a", "b"],
+    );
+    expect(
+      sim.menu.options.filter((o) => !o.selected).every((o) => !!o.disabled === (max === 0)),
+    ).toBe(true);
+    expect(sim.menu.options.filter((o) => o.selected).every((o) => !o.disabled)).toBe(true);
+    sim.emit();
+    const offered = rows(publish).filter((r: string[]) => r[0] === "O");
+    expect(
+      offered.filter((r: string[]) => r[5] === "false").every((r: string[]) => r[8] === "true"),
+    ).toBe(true);
+    expect(
+      offered
+        .filter((r: string[]) => r[5] === "false")
+        .every((r: string[]) => r[4] === (max === 0 ? "true" : "false")),
+    ).toBe(true);
+    if (max > 0) {
+      sim.menu.options[1]?.run();
+      expect(sim.menu.options.filter((o) => o.selected)).toHaveLength(max - 1);
+      expect(sim.menu.options.every((o) => !o.dimmed)).toBe(true);
+      expect(sim.menu.options[1]?.disabled).toBe(false);
+      sim.menu.options[1]?.run();
+      expect(sim.menu.options.filter((o) => o.selected)).toHaveLength(max);
+      sim.menu.options[2]?.run();
+      expect(sim.menu.options.filter((o) => o.selected).map((o) => o.uid)).toEqual(
+        max === 1 ? ["c"] : ["b", "c"],
+      );
+    }
+  });
+  it("enforces category caps while leaving other card categories selectable", () => {
+    const { sim } = setup();
+    const candidates = ["a", "b", "c"].map((id) => ({
+      id,
+      cardId: "sv01-181",
+      name: "Nest Ball",
+      category: "Trainer" as const,
+      trainerType: "Item" as const,
+      hasImage: false,
+    }));
+    sim.menu = effectMenu(sim, {
+      kind: "chooseCards",
+      candidates,
+      min: 0,
+      max: 2,
+      dest: "hand",
+      note: "Pick cards",
+      caps: [{ uids: ["a", "b"], max: 1 }],
+    });
+    sim.menu.options[0]?.run();
+    expect(sim.menu.options[1]?.disabled).toBe(true);
+    expect(sim.menu.options[2]?.disabled).toBe(false);
+    sim.menu.options[1]?.run();
+    expect(sim.menu.options.filter((o) => o.selected)).toHaveLength(1);
+    sim.menu.options[2]?.run();
+    expect(sim.menu.options.filter((o) => o.selected)).toHaveLength(2);
+  });
+  it("reorders a first-turn Supporter without replaying an earlier play rejection", () => {
+    let state = driveSetup(7, { p1: ROTO_STICK_DECK, p2: ROTO_STICK_DECK }, { first: "p1" });
+    if (!state.players.p1.hand.some((uid) => state.cardIdByUid[uid] === "sv01-189"))
+      state = handFromDeck(state, "p1", "sv01-189", 1);
+    const uid = handUid(state, "p1", "sv01-189");
+    const publish = vi.fn();
+    const sim = new LuaSimulator(publish, vi.fn());
+    sim.open({ state, events: [], names: { p1: "One", p2: "Two" }, startedAt: 100 });
+    const play = rows(publish).find(
+      (r: string[]) => r[0] === "K" && r[2] === uid && r[3] === "Play",
+    );
+    expect(play?.[5]).toBe("true");
+    const steps = sim.host?.steps;
+    sim.command(`move\t${uid}\thand\t0\tplaymat\t0`);
+    expect(sim.message).not.toBe("");
+    expect(sim.host?.game).toBe(state);
+    sim.command(`reorder\thand\t${uid}\t0`);
+    expect(sim.message).toBe("");
+    expect(rows(publish)[0]?.[6]).toBe("");
+    expect(rows(publish).find((r: string[]) => r[0] === "C" && r[1] === uid)?.[18]).toBe("0");
+    expect(sim.host?.game).toBe(state);
+    expect(sim.host?.steps).toBe(steps);
+  });
   it("saves cosmetic hand and Bench order without changing engine targets or history", () => {
     const { sim, state, publish, candy, stage2, cardRow } = rareCandySetup();
     sim.persist();
