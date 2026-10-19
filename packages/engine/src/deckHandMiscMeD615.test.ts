@@ -715,6 +715,6 @@ describe("D615 §9 — Cold Cyclone: a {W} Energy from this Pokémon to a Benche
 
 describe("D615 §10 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.533.0");
+    expect(engineVersion).toBe("0.534.0");
   });
 });

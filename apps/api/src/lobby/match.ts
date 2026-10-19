@@ -2161,6 +2161,13 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕 **STAYS 49 AT CARD REVISION B05 — ONE REGISTRY ROW ON A SHIPPED OBJECT. NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE
+    KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR KEY, OR EVENT MEMBER.** (Placed ABOVE the B04 block.) Potion `mfb-33`
+    now resolves to `sv01-188`'s `POTION` program. Programs are keyed by id, so no `cardPool` face is read differently: a
+    v49 pool holding `mfb-33` plays it on deploy. ROLLBACK READING (0.533): `mfb-33` is refused again as
+    `TRAINER_NOT_SIMULATED` from the next play; a prompt already parked by it carries its ops in `phase.cont` and resumes
+    as before. Nothing a v49 record holds changes shape or meaning.
+
     🆕 **STAYS 49 AT CARD REVISION B04 — SEVEN REGISTRY ROWS ON SHIPPED OBJECTS AND ONE PLAYABILITY REFUSAL. NO PHASE,
     PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR KEY, OR EVENT MEMBER.** (Placed ABOVE
     the B02 block.) ⑴ Rare Candy `sv04.5-089`, Switch `sv03.5-206` / `mfb-34` / `30th-127`, Ultra Ball `sv04.5-091` /

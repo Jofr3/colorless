@@ -20274,6 +20274,10 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕 engineVersion 0.533.0 → **0.534.0** (card revision B05 — ITEMS: ONE AUDIT FINDING FIXED; `MATCH_RECORD_VERSION`
+    STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B05")). registry.ts: Potion `mfb-33` (D290 census row, no
+    regulation mark, `legal_standard_effective = 1` since 714256b3, print_key shared with `sv01-188` / `me03-083`) on the
+    shipped `POTION`, beside B04's `mfb-34` Switch. `revisionB05.test.ts`.)
     🆕 engineVersion 0.532.0 → **0.533.0** (card revision B04 — ITEMS: THREE AUDIT FINDINGS FIXED (ONE IN PART), ONE DEFERRED;
     `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B04")). registry.ts: Rare Candy
     `sv04.5-089`, Switch `sv03.5-206` / `mfb-34`, Ultra Ball `sv04.5-091` (D290 census rows, `legal_standard_effective = 1`
@@ -25856,7 +25860,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.533.0";
+export const engineVersion = "0.534.0";
 
 export type {
   ApplyResult,

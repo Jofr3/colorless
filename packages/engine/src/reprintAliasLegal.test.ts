@@ -379,7 +379,7 @@ describe("the SKIPPED candidates — correct aliases with ZERO Standard-legal pa
     `legal_standard = 0`, regulation mark G. 🆕 Card revision B01: ~~44~~ 43 rows / ~~81~~ 78 ids —
     Judge's three moved to `LANDED_SINCE_EFFECTIVE_LEGALITY` (`legal_standard_effective = 1`).
     🆕 Card revision B04: ~~43~~ 40 rows / ~~78~~ 74 ids — Rare Candy, Switch and Ultra Ball's four moved
-    there too. */
+    there too. 🆕 Card revision B05: ~~40~~ 39 rows / ~~74~~ 73 ids — Potion's `mfb-33` too. */
 const PRINTING_ALIAS_CENSUS = [
   { card: "Arboliva", authored: "sv01-023", unauthored: ["sv04.5-104"] },
   { card: "Armarouge", authored: "sv01-041", unauthored: ["sv04.5-015", "sv04.5-115"] },
@@ -414,7 +414,7 @@ const PRINTING_ALIAS_CENSUS = [
   { card: "Ortega", authored: "sv03-190", unauthored: ["sv08.5-141"] },
   { card: "Pachirisu", authored: "sv01-068", unauthored: ["sv04.5-138"] },
   { card: "Pawmot", authored: "sv01-076", unauthored: ["svp-006", "sv04.5-144"] },
-  { card: "Potion", authored: "sv01-188", unauthored: ["mfb-33"] },
+  // Potion (sv01-188; mfb-33) LEFT THIS TABLE at card revision B05.
   { card: "Professor's Research", authored: "sv01-189", unauthored: ["svp-221", "svp-222", "svp-223", "sv04.5-087", "sv04.5-088", "sv08.5-122", "sv08.5-123", "sv08.5-124", "sv08.5-125", "sv09-155", "sv10.5b-085"] },
   { card: "Quaquaval", authored: "sv01-054", unauthored: ["svp-005"] },
   // 🛑 THE ROW THE SLICE WAS SENT TO FOLD IN. The four printings' `effect` bytes
@@ -444,10 +444,12 @@ const PRINTING_ALIAS_CENSUS = [
     owed to the revision batches that own them, not folded in here. 🆕 Card revision B04 (Items): Rare
     Candy, Switch and Ultra Ball, measured the same way — print_key `6716a9667c036c52` (Rare Candy),
     `dcb764a74f0f46dc` (Switch; `mfb-34` has no regulation mark), `9be1d8a4deedc7f9` (Ultra Ball).
-    40 rows remain. */
+    40 rows remain. 🆕 Card revision B05 (Items): Potion `mfb-33`, print_key `1a6334c9d86eec4e` (shared
+    with `sv01-188` / `me03-083`; no regulation mark, like `mfb-34`). 39 rows remain. */
 const LANDED_SINCE_EFFECTIVE_LEGALITY = [
   { card: "Judge", authored: "sv01-176", landed: ["sv04.5-228", "sv10-167", "sv10-222"] },
   { card: "Rare Candy", authored: "sv01-191", landed: ["sv04.5-089"] },
+  { card: "Potion", authored: "sv01-188", landed: ["mfb-33"] },
   { card: "Switch", authored: "sv01-194", landed: ["sv03.5-206", "mfb-34"] },
   { card: "Ultra Ball", authored: "sv01-196", landed: ["sv04.5-091"] },
 ] as const;
@@ -467,16 +469,16 @@ const SENTENCE_ONLY_SKIPS = [
 describe("D290 — the COMPLETE per-printing reprint census", () => {
   const flat = PRINTING_ALIAS_CENSUS.flatMap((r) => r.unauthored as readonly string[]);
 
-  it("is ~~44~~ ~~43~~ 40 incomplete identities over ~~81~~ ~~78~~ 74 unauthored printings, with no id counted twice (B01: Judge's 3 landed; B04: Rare Candy / Switch / Ultra Ball's 4)", () => {
-    expect(PRINTING_ALIAS_CENSUS).toHaveLength(40);
-    expect(flat).toHaveLength(74);
-    // A duplicated id would inflate the 74 while leaving every other assertion
+  it("is ~~44~~ ~~43~~ ~~40~~ 39 incomplete identities over ~~81~~ ~~78~~ ~~74~~ 73 unauthored printings, with no id counted twice (B01: Judge's 3 landed; B04: Rare Candy / Switch / Ultra Ball's 4; B05: Potion's 1)", () => {
+    expect(PRINTING_ALIAS_CENSUS).toHaveLength(39);
+    expect(flat).toHaveLength(73);
+    // A duplicated id would inflate the 73 while leaving every other assertion
     // in this block green — the census's own transcription control.
-    expect(new Set(flat).size).toBe(74);
+    expect(new Set(flat).size).toBe(73);
     // …and no identity may be listed twice under two names, which is the other
     // way the table could double-count.
-    expect(new Set(PRINTING_ALIAS_CENSUS.map((r) => r.authored)).size).toBe(40);
-    // 40 + the 4 identities B01 / B04 landed = the measured 44; 74 + 7 = the measured 81.
+    expect(new Set(PRINTING_ALIAS_CENSUS.map((r) => r.authored)).size).toBe(39);
+    // 39 + the 5 identities B01 / B04 / B05 landed = the measured 44; 73 + 8 = the measured 81.
     const landed = LANDED_SINCE_EFFECTIVE_LEGALITY.flatMap((r) => r.landed as readonly string[]);
     expect(PRINTING_ALIAS_CENSUS.length + LANDED_SINCE_EFFECTIVE_LEGALITY.length).toBe(44);
     expect(flat.length + landed.length).toBe(81);
@@ -491,7 +493,7 @@ describe("D290 — the COMPLETE per-printing reprint census", () => {
     }
   });
 
-  it("leaves every one of the ~~81~~ ~~78~~ 74 UNAUTHORED — the standing refusal, complete rather than sampled (B01: Judge's 3 landed; B04: 4 more)", () => {
+  it("leaves every one of the ~~81~~ ~~78~~ ~~74~~ 73 UNAUTHORED — the standing refusal, complete rather than sampled (B01: Judge's 3 landed; B04: 4 more; B05: 1 more)", () => {
     // 🛑 THE LOAD-BEARING ASSERTION OF THE SLICE. `SKIPPED_ZERO_LEGAL` above makes
     // this claim for 25 ids that a SENTENCE sweep happened to surface; this makes
     // it for the complete measured PRINTING population, ~~`sv04.5-089` included~~ (B04: landed).
@@ -532,9 +534,10 @@ describe("D290 — the COMPLETE per-printing reprint census", () => {
     expect(sampled.filter((id) => !here.has(id)).sort()).toEqual([...SENTENCE_ONLY_SKIPS].sort());
     // B01: ~~65~~ 62 and ~~90~~ 87 — Judge's 3 ids were in this census only, not in D190's sample.
     // B04: ~~62~~ 58 and ~~87~~ 83 — the same for Rare Candy / Switch / Ultra Ball's 4.
-    expect(flat.filter((id) => !sampled.includes(id))).toHaveLength(58);
+    // B05: ~~58~~ 57 and ~~83~~ 82 — the same for Potion's `mfb-33`.
+    expect(flat.filter((id) => !sampled.includes(id))).toHaveLength(57);
     // The union is the real cost of "the registry is not printing-complete".
-    expect(new Set([...sampled, ...flat]).size).toBe(83);
+    expect(new Set([...sampled, ...flat]).size).toBe(82);
     // The nine sentence-only ids stay unbuilt too — this block does not license
     // them by describing them.
     for (const id of SENTENCE_ONLY_SKIPS) expect(programFor(id)).toBeUndefined();

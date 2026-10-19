@@ -6252,7 +6252,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.533.0";',
+    find: 'export const engineVersion = "0.534.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -60761,5 +60761,15 @@ export const MUTANTS: Mutant[] = [
     find: "    if (state.players[milled].deck.length === 0) return false;\n",
     replace: "",
     expectKilledBy: ["packages/engine/src/revisionB04.test.ts"],
+  },
+  // ── Card revision B05 (Items) — the one registry row. ──
+  {
+    id: "B05-potion-mfb-row-dropped",
+    decision: "B05",
+    what: "the `mfb-33` Potion row is dropped again, so the effective-legal printing is refused as TRAINER_NOT_SIMULATED and stays in hand. Killed by revisionB05 §1 and the D290 census.",
+    file: "packages/engine/src/registry.ts",
+    find: '  "mfb-33": POTION, // Potion — twin `sv01-188`\n',
+    replace: "",
+    expectKilledBy: ["packages/engine/src/revisionB05.test.ts", "packages/engine/src/reprintAliasLegal.test.ts"],
   },
 ];

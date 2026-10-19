@@ -806,7 +806,7 @@ describe("D631 §7 — Good Sleep: still Asleep at the Checkup, heal all damage"
 });
 
 describe("D631 §8 — the version", () => {
-  it("is built at engine 0.533.0", () => {
-    expect(engineVersion).toBe("0.533.0");
+  it("is built at engine 0.534.0", () => {
+    expect(engineVersion).toBe("0.534.0");
   });
 });

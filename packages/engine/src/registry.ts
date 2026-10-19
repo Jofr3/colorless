@@ -20471,6 +20471,9 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv04.5-089": RARE_CANDY, // Rare Candy — twin `sv01-191`
   "sv03.5-206": SWITCH, // Switch — twin `sv01-194`
   "mfb-34": SWITCH, // Switch — twin `sv01-194`
+  // Card revision B05: `mfb-34`'s neighbour, the same defect — print_key `1a6334c9d86eec4e` with
+  // `sv01-188` / `me03-083`, `legal_standard_effective = 1`, no regulation mark.
+  "mfb-33": POTION, // Potion — twin `sv01-188`
   "sv04.5-091": ULTRA_BALL, // Ultra Ball — twin `sv01-196`
   // …and the three `30th` Items, `legal_standard = 1`, whose catalog row has `effect = NULL` (tcgdex
   // prints no text, so their print_key matches no twin and no census reached them). Keyed by NAME on the
