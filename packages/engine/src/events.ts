@@ -1603,8 +1603,15 @@ export type GameEvent =
       rendered into `record.log` rows and are not themselves persisted, and the
       parked `chooseCards` prompt that produces one has spelled `"bench"` since
       `searchDeck`. A version-12 record can hold every inhabitant it could hold
-      before. */
-  | { type: "DISCARD_RETRIEVED"; seat: Seat; dest: "hand" | "deck" | "bench"; uids: string[] }
+      before.
+
+      🆕 CARD REVISION B02 — `played: true` marks the one move that is NOT a retrieval: Caretaker's
+      *"shuffle this Caretaker into your deck instead of discarding it"* (interpreter.ts
+      `shufflePlayedCardIntoDeck`). `playTrainer` parked the card in the discard pile before the
+      program ran, so the board move is discard → deck, but the printed event is the played card going
+      into the deck instead of the discard, and log.ts names it that way. Optional and absent on every
+      other producer; events are not persisted (no bump). */
+  | { type: "DISCARD_RETRIEVED"; seat: Seat; dest: "hand" | "deck" | "bench"; uids: string[]; played?: true }
   /** A look-at-the-top-N resolved: `uids` moved deck → `dest`. The other
       looked-at cards are shuffled back — a trailing SHUFFLE in the same batch
       hides the deck order.

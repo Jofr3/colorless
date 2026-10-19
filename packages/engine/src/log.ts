@@ -2022,6 +2022,15 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // from their discard pile into their deck"* — a log row stating the
       // opposite of what the board shows. A ternary whose false branch names one
       // specific outcome is a total function only until the union widens.
+      // 🆕 CARD REVISION B02 — Caretaker's "shuffle this Caretaker into your deck instead of
+      // discarding it": the played card never belonged to the discard pile, so the row names it.
+      if (event.played === true) {
+        return row(event.seat, [
+          plain("shuffled "),
+          strong(countedNames(event.uids.map((uid) => cardName(state, uid)))),
+          plain(" into their deck instead of discarding it"),
+        ]);
+      }
       const n = event.uids.length;
       const cards = `${n} card${n === 1 ? "" : "s"} from their discard pile`;
       return row(

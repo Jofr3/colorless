@@ -10283,7 +10283,9 @@ function scheduleEndOfTurnHandDiscard(
 /** 🆕🆕🆕 §7.2 (D564) — Caretaker's *"shuffle this Caretaker into your deck instead of
     discarding it"*. `playTrainer` put the card in the discard pile BEFORE the program ran,
     so "instead of discarding it" is a MOVE discard → deck, then a shuffle — Super Rod's
-    two shipped rows (`DISCARD_RETRIEVED { dest: "deck" }`, `SHUFFLE`). The card is named
+    two shipped rows (`DISCARD_RETRIEVED { dest: "deck" }`, `SHUFFLE`) [🆕 card revision B02: the
+    first now carries `played: true`, so the log names the played card going into the deck instead
+    of announcing a retrieval from the discard pile]. The card is named
     by `ctx.playedUid` (NOT `sourceUid`, D222). No played card, or a played card no longer
     in the controller's discard: a silent no-op. */
 function shufflePlayedCardIntoDeck(
@@ -10295,7 +10297,9 @@ function shufflePlayedCardIntoDeck(
   const side = state.players[ctx.seat];
   if (uid === undefined || !side.discard.includes(uid)) return state;
   const [deck, rngState] = shuffle([...side.deck, uid], state.rngState);
-  events.push({ type: "DISCARD_RETRIEVED", seat: ctx.seat, dest: "deck", uids: [uid] });
+  // 🆕 CARD REVISION B02 — `played: true`: the row names the played card going into the deck
+  // "instead of discarding it", not a discard-pile retrieval (log.ts).
+  events.push({ type: "DISCARD_RETRIEVED", seat: ctx.seat, dest: "deck", uids: [uid], played: true });
   events.push({ type: "SHUFFLE", seat: ctx.seat });
   return {
     ...withSide(state, ctx.seat, { ...side, discard: without(side.discard, uid), deck }),

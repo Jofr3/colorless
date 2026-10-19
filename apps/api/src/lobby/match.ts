@@ -2161,6 +2161,12 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕 **STAYS 49 AT CARD REVISION B02 — ONE OPTIONAL EVENT KEY (`DISCARD_RETRIEVED.played`) AND A RETREAT-REFUSAL
+    MESSAGE. NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR EVENT MEMBER.**
+    (Placed ABOVE the B01 block.) Events are rendered into `record.log` and are not persisted themselves; a stored
+    log row keeps whatever text it was rendered with. The `RETREAT_PREVENTED` message is a refusal string, never
+    stored. Nothing a v49 record holds changes shape or meaning.
+
     🆕 **STAYS 49 AT CARD REVISION B01 — ONE OPTIONAL `EffectOp` KEY (`attachEnergyFrom.pickOnto`) AND A BENCH CLAMP AT
     THE `lookAtTopN` OFFER. NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR
     EVENT MEMBER.** (Placed ABOVE the D647 block.) ⑴ `pickOnto` is written by the engine (never authored) when an

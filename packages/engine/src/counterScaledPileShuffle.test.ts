@@ -1030,9 +1030,9 @@ describe("D538 §7 — two literals GROW the serialized alphabet and `MATCH_RECO
     expect(raw("/match.ts")).toContain("export const MATCH_RECORD_VERSION = 49;");
   });
 
-  it("🛑 the engine version stepped to 0.531.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.531.0");
-    expect(manifest.version).toBe("0.531.0");
+  it("🛑 the engine version stepped to 0.532.0 in BOTH places", () => {
+    expect(engineVersion).toBe("0.532.0");
+    expect(manifest.version).toBe("0.532.0");
   });
 });
 

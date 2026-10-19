@@ -20274,6 +20274,13 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕 engineVersion 0.531.0 → **0.532.0** (card revision B02 — SUPPORTERS: TWO AUDIT FINDINGS FIXED, BOTH
+    WORDING-ONLY; `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B02")). events.ts:
+    the optional `DISCARD_RETRIEVED.played: true`, written by interpreter.ts `shufflePlayedCardIntoDeck` alone, so
+    log.ts renders Caretaker's shuffle-in as "shuffled Caretaker into their deck instead of discarding it" rather than
+    a discard-pile retrieval. turn.ts: the §11 `RETREAT_PREVENTED` refusal names a Trainer effect when the lock is
+    Roxie's Performance's side lock (continuous.ts `sideRetreatLocked`, now exported) and no attack lock also holds
+    the body. No board outcome changes. `revisionB02.test.ts`.)
     🆕 engineVersion 0.530.0 → **0.531.0** (card revision B01 — SUPPORTERS: THREE AUDIT FINDINGS FIXED;
     `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B01")). registry.ts: Judge
     `sv04.5-228` / `sv10-167` / `sv10-222` on the shipped `JUDGE` (mark G, `legal_standard_effective = 1` since 714256b3;
@@ -25841,7 +25848,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.531.0";
+export const engineVersion = "0.532.0";
 
 export type {
   ApplyResult,

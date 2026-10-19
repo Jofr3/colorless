@@ -3566,8 +3566,9 @@ export function retreatLocked(state: GameState, pokemon: InPlayPokemon): boolean
 
 /** 🆕🆕🆕 §11 (D621) — is `pokemon` locked by its SIDE's live `sideRetreatLock` (Roxie's Performance)?
     The side is the one holding the body (by top uid); the record's stamp must be the current turn and
-    the body must have the printed Special Condition NOW (`poisonDamage > 0` is Poisoned, types.ts). */
-function sideRetreatLocked(state: GameState, pokemon: InPlayPokemon): boolean {
+    the body must have the printed Special Condition NOW (`poisonDamage > 0` is Poisoned, types.ts).
+    🆕 Card revision B02: exported so turn.ts's §11 gate can say WHY (a Trainer effect, not an attack). */
+export function sideRetreatLocked(state: GameState, pokemon: InPlayPokemon): boolean {
   const uid = topUid(pokemon);
   if (uid === undefined || pokemon.conditions.poisonDamage <= 0) return false;
   for (const seat of SEATS) {

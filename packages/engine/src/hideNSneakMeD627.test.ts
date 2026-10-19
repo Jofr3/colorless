@@ -522,6 +522,6 @@ describe("D627 §7 — Spiritual End: quadruple the counters on 2 of the opponen
 
 describe("D627 §8 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.531.0");
+    expect(engineVersion).toBe("0.532.0");
   });
 });

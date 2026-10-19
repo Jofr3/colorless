@@ -35,6 +35,7 @@ import {
   retreatCoinFlipSource,
   pokemonPlayBarred,
   retreatLocked,
+  sideRetreatLocked,
   // 🆕🆕🆕 D618 — Forest of Vitality's same-turn evolution, at the §10 ban.
   stadiumLicensesSameTurnEvolve,
   // 🆕🆕🆕 D642 — Dizzying Valley's kept Confusion, at the hand evolve.
@@ -1071,11 +1072,17 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
   if (retreatLocked(state, active)) {
     // 🆕🆕🆕 D576 — `retreatLocked` now also answers an Antique Fossil's printed "can't retreat"
     // (R-FO4), which is a card rule and not an attack effect, so the message names it.
+    // 🆕 CARD REVISION B02 — and Roxie's Performance's SIDE lock (`sideRetreatLocked`) is a
+    // Supporter's effect, so it gets its own message too — unless an attack lock also holds the
+    // body, in which case the attack message stays true. Same error code either way.
+    const attackHeld = active.retreatBlocked || active.retreatLockedTurn === state.turn;
     return err(
       "RETREAT_PREVENTED",
       isFossilTop(state, active)
         ? "this card can't retreat (its own printed rule)"
-        : "an attack effect prevents this Pokémon from retreating (§11)",
+        : !attackHeld && sideRetreatLocked(state, active)
+          ? "a Trainer effect prevents Poisoned Pokémon from retreating this turn (§11)"
+          : "an attack effect prevents this Pokémon from retreating (§11)",
     );
   }
   // §11 — an opposing CONTINUOUS Ability holding it in place (Snorlax "Block").

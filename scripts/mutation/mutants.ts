@@ -6252,7 +6252,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.531.0";',
+    find: 'export const engineVersion = "0.532.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -40539,7 +40539,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D564",
     what: "No DISCARD_RETRIEVED row for the move. Killed by §6's event rung.",
     file: "packages/engine/src/interpreter.ts",
-    find: "  events.push({ type: \"DISCARD_RETRIEVED\", seat: ctx.seat, dest: \"deck\", uids: [uid] });\n  events.push({ type: \"SHUFFLE\", seat: ctx.seat });\n",
+    find: "  events.push({ type: \"DISCARD_RETRIEVED\", seat: ctx.seat, dest: \"deck\", uids: [uid], played: true });\n  events.push({ type: \"SHUFFLE\", seat: ctx.seat });\n",
     replace: "  events.push({ type: \"SHUFFLE\", seat: ctx.seat });\n",
     expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
   },
@@ -60743,5 +60743,23 @@ export const MUTANTS: Mutant[] = [
     find: "    .filter((uid) => chosenUids === undefined || chosenUids.includes(uid))\n",
     replace: "    .filter(() => true)\n",
     expectKilledBy: ["packages/engine/src/revisionB01.test.ts"],
+  },
+  {
+    id: "B02-caretaker-row-as-retrieval",
+    decision: "B02",
+    what: "Caretaker's shuffle-in loses its `played` mark, so the log announces a discard-pile retrieval (\"shuffled 1 card from their discard pile into their deck\") for a card the print says was never discarded. Killed by revisionB02 §1.",
+    file: "packages/engine/src/interpreter.ts",
+    find: '  events.push({ type: "DISCARD_RETRIEVED", seat: ctx.seat, dest: "deck", uids: [uid], played: true });\n',
+    replace: '  events.push({ type: "DISCARD_RETRIEVED", seat: ctx.seat, dest: "deck", uids: [uid] });\n',
+    expectKilledBy: ["packages/engine/src/revisionB02.test.ts"],
+  },
+  {
+    id: "B02-side-lock-message-blames-attack",
+    decision: "B02",
+    what: "the §11 gate stops asking which source locked the body, so Roxie's Performance's side lock is refused as \"an attack effect\". Killed by revisionB02 §2.",
+    file: "packages/engine/src/turn.ts",
+    find: "        : !attackHeld && sideRetreatLocked(state, active)\n",
+    replace: "        : false\n",
+    expectKilledBy: ["packages/engine/src/revisionB02.test.ts"],
   },
 ];

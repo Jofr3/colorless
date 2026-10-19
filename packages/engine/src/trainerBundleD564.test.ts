@@ -639,7 +639,10 @@ describe("§6 — Caretaker's rider: drew any cards AND Community Center in play
     expect(state.players.p1.deck).toContain(uid);
     // −1 Caretaker into the hand, −2 drawn, +1 Caretaker shuffled back.
     expect(state.players.p1.deck).toHaveLength(deckBefore - 1 - 2 + 1);
-    expect(all(events, "DISCARD_RETRIEVED")).toEqual([{ type: "DISCARD_RETRIEVED", seat: "p1", dest: "deck", uids: [uid] }]);
+    // 🆕 Card revision B02: `played: true` — the log names the played Caretaker going into the deck.
+    expect(all(events, "DISCARD_RETRIEVED")).toEqual([
+      { type: "DISCARD_RETRIEVED", seat: "p1", dest: "deck", uids: [uid], played: true },
+    ]);
     expect(events.map((e) => e.type).slice(-2)).toEqual(["DISCARD_RETRIEVED", "SHUFFLE"]);
   });
 
@@ -831,7 +834,7 @@ describe("§9 — the bytes, and THE NINTH POSITION (`MATCH_RECORD_VERSION` 35 �
     expect(endTurn(amarys).state.players.p1.hand).toHaveLength(5);
   });
 
-  it("the engine is 0.531.0", () => {
-    expect(engineVersion).toBe("0.531.0");
+  it("the engine is 0.532.0", () => {
+    expect(engineVersion).toBe("0.532.0");
   });
 });
