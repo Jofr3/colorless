@@ -349,7 +349,9 @@ describe("the mutation harness rejects a command line it does not understand (D5
     for (const m of MUTANTS_TS.matchAll(/decision:\s*"([^"]*)"/g)) declared.add(m[1] ?? "");
     expect(declared.size, "no `decision:` fields parsed out of mutants.ts").toBeGreaterThan(100);
 
-    const compound = [...declared].filter((d) => !/^D\d+$/.test(d)).sort();
+    // 🆕 Card revision batches label their rows by the BATCH id (`B01`, …): a bare id like `D648`,
+    // reachable by an exact match on itself, so not a compound string.
+    const compound = [...declared].filter((d) => !/^(D|B)\d+$/.test(d)).sort();
     expect(
       compound,
       "the compound `decision` strings changed. They are the whole reason `includes` is load-bearing; if the corpus no longer holds any, the substring match has become a pure hazard and is worth revisiting.",

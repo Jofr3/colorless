@@ -904,7 +904,7 @@ describe("D561 §9 — `MATCH_RECORD_VERSION` holds at 35: JSON revivals, and ev
     expect(p.max).toBe(2);
   });
 
-  it("Crispin: the scheduled optional revives identically and resolves with its labels STRIPPED; ⚠️ stripped of `oneOfRecorded` the attach takes the first Basic Energy in hand, unasked", () => {
+  it("Crispin: the scheduled optional revives identically and resolves with its labels STRIPPED; ⚠️ stripped of `oneOfRecorded` the attach ~~takes the first Basic Energy in hand, unasked~~ asks which (card revision B01)", () => {
     const { state: searching } = play(table(), CRISPIN[0]);
     const p = prompt(searching);
     if (p.kind !== "chooseCards") throw new Error("expected chooseCards");
@@ -921,8 +921,17 @@ describe("D561 §9 — `MATCH_RECORD_VERSION` holds at 35: JSON revivals, and ev
     expect(JSON.stringify(cont(searching).rest)).toContain('"oneOfRecorded":"moved"');
     const rolled = reviveWith(searching, (j) => j.split(',"oneOfRecorded":"moved"').join(""));
     const { state } = mustApply(rolled, cards([water, fire]));
-    expect(state.phase.kind).toBe("turn:action");
-    expect(state.players.p1.active?.energy).toEqual([water]);
+    // 🆕 Card revision B01 — the record stripped of the key is now read by an engine whose untyped
+    // attach ASKS when the hand holds unlike Energy, so this proxy no longer shows "unasked": the
+    // card question parks over the {W} and the {R}. The 0.444 build itself still behaves as named
+    // (the first Basic Energy in hand); only this in-tree proxy of it moved.
+    const q = prompt(state);
+    if (q.kind !== "chooseCards") throw new Error("expected the B01 card question");
+    expect(q).toMatchObject({ min: 1, max: 1, dest: "attach" });
+    expect(new Set(q.candidates)).toEqual(new Set([water, fire]));
+    const done = mustApply(state, cards([water])).state;
+    expect(done.phase.kind).toBe("turn:action");
+    expect(done.players.p1.active?.energy).toEqual([water]);
   });
 
   it("Super Potion: the parked pick revives identically; ⚠️ stripped of `discardEnergyFromHealed` it heals and discards NOTHING", () => {

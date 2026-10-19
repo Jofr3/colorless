@@ -2296,6 +2296,15 @@ function continuationOps(
   if (op.op === "reflipCoins") {
     return [choice.kind === "confirm" && choice.yes ? op.retry : withKeptFaces(op.retry, op.faces)];
   }
+  // 🆕 Card revision B01 — an answered attach TARGET whose cards are not interchangeable buys the
+  // card question: the op again, with the target and the take pinned (`pickOnto`); `applyChoice`
+  // moved nothing for it. Asked of `before`, the board `applyChoice` saw, so the two cannot disagree.
+  if (op.op === "attachEnergyFrom" && op.pickOnto === undefined && pickedPokemon(choice)) {
+    const take = attachTake(op, choice.take);
+    return energyPickOffer(before, op, cont.ctx.seat, take) === undefined
+      ? []
+      : [{ ...op, pickOnto: { ref: { seat: choice.ref.seat, spot: { ...choice.ref.spot } }, take } }];
+  }
   // 🆕🆕🆕 D646 — Target Together's resumed pick: the op again, with the targets, so `stepOp` flips its coins.
   if (op.op === "damageChosen" && op.perHeadsInPlay !== undefined && op.hitRefs === undefined) {
     return choice.kind === "pokemonMulti" ? [{ ...op, hitRefs: [...choice.refs] }] : [];
@@ -4013,7 +4022,15 @@ function stepOp(
       // file's rule for an ABSENT key (D135): `caps: undefined` is not the same
       // wire value as no key at all, and these prompts are compared by value.
       const totalMax = firstMax + (also === undefined ? 0 : also.max);
-      if (candidates.length === 0 || totalMax <= 0) {
+      // 🆕 Card revision B01 — A BENCH DESTINATION IS CLAMPED TO THE BENCH SPACE AT THE OFFER, `searchDeck`'s
+      // rule (its `Math.min(op.max, benchSpace(...))`), on `lookOwner`'s Bench. Grimsley's Move on a full
+      // Bench used to offer the {D} Basic in the window, accept the pick and bench nothing
+      // (`revealFromTop`'s clamp, which stays as the belt for a stale answer); now a full Bench takes the
+      // whiff path below — the look is announced and the window goes to `restTo` (R-AF3's outcome on the
+      // Flute, with no prompt). `exact`'s floor below still reads `totalMax`: no printing pairs `exact`
+      // with a Bench destination.
+      const offerMax = op.dest === "bench" ? Math.min(totalMax, benchSpace(state, lookOwner(op, ctx))) : totalMax;
+      if (candidates.length === 0 || offerMax <= 0) {
         // 🛑 D241 — THE WHIFF ANNOUNCES THE LOOK. This used to be a bare
         // `return { done: state }`, which is exactly the leak the backlog's
         // `DECK_TOP_REVEALED` fidelity row named: the controller learned the top
@@ -4049,7 +4066,7 @@ function stepOp(
           // ceiling and `totalMax` the wrong one too — the day one does, the floor
           // becomes per-group and it belongs beside `caps`, not here.
           min: op.exact === true ? Math.min(totalMax, candidates.length) : 0,
-          max: totalMax,
+          max: offerMax,
           // The op's ABSENT `dest` is the HAND (D135); the prompt's is REQUIRED,
           // so the default is spelled once, here, at the one site that must say
           // it out loud.
@@ -5796,9 +5813,31 @@ function stepOp(
       if (op.oneOfRecorded !== undefined) {
         return { done: state, schedule: oneOfRecordedChoice(state, op, record, ctx.seat) };
       }
+      // 🆕 Card revision B01 — THE SECOND QUESTION: the target is known (`pickOnto`, written by the
+      // forced arm below or by `continuationOps` off the answered target), so ask WHICH cards. A
+      // board that moved since and no longer makes it a decision attaches inline, as before B01.
+      if (op.pickOnto !== undefined) {
+        const offer = energyPickOffer(state, op, ctx.seat, op.pickOnto.take);
+        if (offer === undefined) {
+          return { done: attachEnergyFrom(state, op, op.pickOnto.ref, ctx, events, record, op.pickOnto.take) };
+        }
+        return {
+          park: {
+            kind: "chooseCards",
+            candidates: offer.candidates,
+            min: offer.take,
+            max: offer.take,
+            dest: "attach",
+            note: energyPickNote(state, op.pickOnto.ref, offer.take),
+          },
+        };
+      }
       // Same-type Basic Energy is fungible, so the ONLY decision is the target;
       // a source with no matching Energy is a no-op (nothing to attach). The
       // candidates are the eligible targets (targetType + notIfKO riders).
+      // 🆕 Card revision B01 (D539): "the ONLY decision is the target" is SCOPED to a pile of one
+      // `cardIdentity` (a typed or named noun, or a pile no bigger than the take) — otherwise the
+      // target answer buys the card question (`pickOnto`, above).
       if (
         firstAttachableEnergy(
           state,
@@ -5880,6 +5919,17 @@ function stepOp(
       // (`attachDecline.test.ts` §1), so the `??` refereeing nothing is a
       // statement about the catalog rather than a precedence rule.
       const upTo = op.count ?? (op.declinable === true ? 1 : undefined);
+      // 🆕 Card revision B01 — `parkOrForce`'s FORCED arm (one target, no ceiling) with a pile whose
+      // cards are not interchangeable: the target needs no question, the cards do, so the op is
+      // scheduled again with the target pinned (`pickOnto`) and parks the card pick above. The
+      // targets are the SAME expression `parkOrForce` is handed below.
+      if (upTo === undefined && energyPickOffer(state, op, ctx.seat, 1) !== undefined) {
+        const targets = op.toSelf === true ? sourceRef(state, ctx) : attachEnergyTargets(state, ctx.seat, op);
+        const [onlyTarget] = targets;
+        if (targets.length === 1 && onlyTarget !== undefined) {
+          return { done: state, schedule: [{ ...op, pickOnto: { ref: onlyTarget, take: 1 } }] };
+        }
+      }
       return parkOrForce(
         state,
         op.toSelf === true ? sourceRef(state, ctx) : attachEnergyTargets(state, ctx.seat, op),
@@ -8888,7 +8938,7 @@ export function applyChoice(
         const attach = (choice.yes ? op.then : op.otherwise)?.[0];
         const uid = choice.yes ? op.cards.yes : op.cards.no;
         if (attach?.op === "attachEnergyFrom" && uid !== undefined) {
-          return attachEnergyFrom(state, attach, choice.target, ctx, events, record, undefined, uid);
+          return attachEnergyFrom(state, attach, choice.target, ctx, events, record, undefined, [uid]);
         }
       }
       // Other optional prompts splice their branch through continuationOps.
@@ -9189,6 +9239,17 @@ export function applyChoice(
       // 🆕🆕🆕 D572 (D539) — "the ONLY arm in this switch that reads it" IS WITHDRAWN: Adrena-Brain's
       // `moveCountersToOpponentChosen` arm reads `choice.take` too (a countable batch of DAMAGE
       // COUNTERS moved onto one body), with the same absent = `upTo` reading.
+      // 🆕 Card revision B01 — the CARD answer (`pickOnto`'s park): exactly the uids picked land on
+      // the pinned target. And a TARGET answer whose cards are still a decision moves nothing here:
+      // `continuationOps` schedules the card question with the target pinned.
+      if (op.pickOnto !== undefined) {
+        return choice.kind === "cards"
+          ? attachEnergyFrom(state, op, op.pickOnto.ref, ctx, events, record, op.pickOnto.take, choice.uids)
+          : state;
+      }
+      if (pickedPokemon(choice) && energyPickOffer(state, op, ctx.seat, attachTake(op, choice.take)) !== undefined) {
+        return state;
+      }
       return pickedPokemon(choice)
         ? attachEnergyFrom(state, op, choice.ref, ctx, events, record, choice.take)
         : state;
@@ -18902,7 +18963,9 @@ function healChosen(
     matching `energyType` (any Basic Energy when undefined), in zone order — what
     `attachEnergyFrom` moves onto a Pokémon. Same-type Basic Energy cards are
     fungible, so WHICH ones is not a decision and the leading matches are as good
-    as any (the whole reason the op's only park is on the TARGET).
+    as any (the whole reason the op's only park is on the TARGET). (🆕 Card revision B01 (D539):
+    true of a pile of ONE identity only; an unlike pile is offered whole by `energyPickOffer` and
+    the apply takes the PICKED uids.)
 
     ⚠️ FEWER THAN `max` IS NORMAL, NOT A FAILURE (D205). The printed clause is
     "attach UP TO N", so a hand holding one {R} against a `count: 2` op attaches
@@ -18965,6 +19028,56 @@ function attachableEnergies(
     }
   }
   return found;
+}
+
+/** 🆕 Card revision B01 — how many cards an attach whose target is answered moves: the answered
+    `take` clamped to the printed count, or the whole printed batch when no take was sent
+    (`attachEnergyFrom`'s own reading of the two fields). */
+function attachTake(op: Extract<EffectOp, { op: "attachEnergyFrom" }>, take: number | undefined): number {
+  const printed = op.count ?? 1;
+  return take === undefined ? printed : Math.min(take, printed);
+}
+
+/** 🆕 Card revision B01 — the card question an attach owes once its target is known, or undefined
+    when there is none. D32's "same-type Basic Energy is fungible, so the ONLY decision is the
+    TARGET" holds for a typed or named noun and fails for the bare *"Basic Energy cards"* /
+    *"an Energy card"*: Rosa's Encouragement over {R} {W} {P} {P} attached {R} + {W}, the pile's
+    first two, whatever the player wanted. The pick IS a decision exactly when the pile holds more
+    attachable cards than the take AND more than one `cardIdentity` among them — otherwise every
+    answer attaches the same cards. `take` is clamped to the pile (the printed "up to"). The
+    candidates are EVERY attachable card in pile order (two {P} are both offered, so "both {P}" is
+    an answer); `seat` is the actor, the pile's owner is `attachSeat`'s. */
+function energyPickOffer(
+  state: GameState,
+  op: Extract<EffectOp, { op: "attachEnergyFrom" }>,
+  seat: Seat,
+  take: number,
+): { candidates: string[]; take: number } | undefined {
+  const owner = attachSeat(op, seat);
+  const candidates = attachableEnergies(
+    state,
+    owner,
+    op.source,
+    op.energyType,
+    state.players[owner][op.source].length,
+    op.anyEnergy,
+    op.energyName,
+  );
+  const n = Math.min(take, candidates.length);
+  if (n <= 0 || n >= candidates.length) return undefined;
+  // `cardIdentity` — the interchangeability key the mandatory discards already ask (a Basic by its
+  // type, anything else by its print), so "would picking this one rather than that one differ?" has
+  // ONE answer across the attach and the discard families.
+  return new Set(candidates.map((uid) => cardIdentity(state, uid))).size > 1 ? { candidates, take: n } : undefined;
+}
+
+/** 🆕 Card revision B01 — the card question's caption, naming the body the cards go onto. */
+function energyPickNote(state: GameState, ref: PokemonRef, take: number): string {
+  const body = refPokemon(state, ref);
+  const top = body === undefined ? undefined : topUid(body);
+  const name = top === undefined ? undefined : cardOf(state, top)?.name;
+  const what = take === 1 ? "Which Energy card do you want to attach" : `Which ${take} Energy cards do you want to attach`;
+  return name === undefined ? `${what}?` : `${what} to ${name}?`;
 }
 
 /** The first matching Basic Energy uid, or undefined — `attachableEnergies` at
@@ -19662,7 +19775,8 @@ function attachFromZoneApply(
     onto the chosen own Pokémon `ref` (§6 energy acceleration) — ONE by default,
     `op.count` of them onto that SAME body when the print pins a batch. Re-finds
     the energy at apply time — fungible, so the parked decision was only the
-    TARGET. Moves the cards OUT of their source zone and onto the Pokémon's
+    TARGET (🆕 card revision B01: unless the pile is unlike, when `chosenUids` carries the card
+    answer). Moves the cards OUT of their source zone and onto the Pokémon's
     energy, emitting one ENERGY_ATTACHED each (each host resolves by its own
     energy uid, robust to any same-batch move). This is not the §6.3 one-per-turn
     manual attach — no allowance is touched; it is the Ability's own effect. The
@@ -19710,7 +19824,11 @@ function attachEnergyFrom(
       function is reachable from `applyChoice` with a wire-supplied number — the
       validator refuses an over-take first, and this is the belt behind it. */
   take?: number,
-  chosenUid?: string,
+  /** The Energy cards the controller PICKED: Crispin's one (`optional.cards`) or, 🆕 since card
+      revision B01, the `pickOnto` card answer. Absent = the leading matches in pile order, which
+      is only ever reached when they are interchangeable (`energyPickOffer`). A picked uid no
+      longer attachable is skipped (the wire belt), and the batch is still capped at the take. */
+  chosenUids?: readonly string[],
 ): GameState {
   // 🆕🆕🆕 D532 — THE SEAT IS RESOLVED ONCE, HERE, AND EVERY READ BELOW IS ITS: the pile the
   // Energy leaves, the board the ref is validated against and the side that is rewritten
@@ -19724,12 +19842,16 @@ function attachEnergyFrom(
     seat, // D532 — the printed pile's owner
     op.source,
     op.energyType,
-    chosenUid === undefined
+    chosenUids === undefined
       ? take === undefined ? printed : Math.min(take, printed)
       : state.players[seat][op.source].length,
     op.anyEnergy, // D246 — absent = the printed "a BASIC Energy card"
     op.energyName, // D353 — absent = the printed noun is a CATEGORY, not a NAME
-  ).filter((uid) => chosenUid === undefined || uid === chosenUid);
+  )
+    .filter((uid) => chosenUids === undefined || chosenUids.includes(uid))
+    // 🆕 Card revision B01 — a PICKED list is capped at the printed count (the belt behind the
+    // validator's `max`); the unpicked path is already capped by the ternary above.
+    .slice(0, chosenUids === undefined ? undefined : printed);
   if (energyUids.length === 0) return state;
   const side = state.players[seat]; // D532 — the OWNER's side (the actor's unless `whose`)
   const pokemon = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
@@ -20477,7 +20599,8 @@ function reservedDiscards(
     would treat three interchangeable Fire Energy in one real deck as three
     separate answers. This is exactly the fungibility `attachEnergyFrom` already
     asserts ("same-type Basic Energy is fungible, so the only decision is the
-    TARGET"), read from the other end.
+    TARGET"), read from the other end. (🆕 Card revision B01: and `attachEnergyFrom` now asks THIS
+    key — `energyPickOffer` — so its "only the target" holds exactly when the pile is one identity.)
 
     Everything else keys on the catalog **id**: two Special Energy prints carry
     different rules text, so only two copies of the SAME print are interchangeable.

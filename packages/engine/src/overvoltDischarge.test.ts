@@ -481,8 +481,17 @@ describe("D346 §3 — the two printed NOUNS, each narrowing a different thing",
     state = discardFromDeck(state, "p1", ENERGY_W, 1);
     let cur = discharge(state, { spot: "active" }).state;
     cur = attachTo(cur, benchRef(0)).state;
+    // 🆕 Card revision B01 — {F} and {W} are not interchangeable, so the first attach asks WHICH
+    // card (both are offered — the absent `energyType` again); the {W} is picked.
+    if (cur.phase.kind !== "effect:choose" || cur.phase.prompt.kind !== "chooseCards") {
+      throw new Error("expected the card question");
+    }
+    const offered = cur.phase.prompt.candidates;
+    expect(offered.map((u) => cur.cardIdByUid[u])).toEqual([ENERGY_F, ENERGY_W]);
+    cur = step(cur, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [offered[1] as string] } }).state;
     const { state: after } = attachTo(cur, benchRef(0));
     expect(energyCount(after, benchRef(0))).toBe(2);
+    expect(after.players.p1.bench[0]?.energy).toEqual([offered[1], offered[0]]);
   });
 
   it("…but a SPECIAL Energy is out of reach — the printed word is \"Basic\"", () => {

@@ -2161,6 +2161,19 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕 **STAYS 49 AT CARD REVISION B01 — ONE OPTIONAL `EffectOp` KEY (`attachEnergyFrom.pickOnto`) AND A BENCH CLAMP AT
+    THE `lookAtTopN` OFFER. NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR
+    EVENT MEMBER.** (Placed ABOVE the D647 block.) ⑴ `pickOnto` is written by the engine (never authored) when an
+    untyped attach's pile holds unlike Energy, and rides `phase.cont.pendingOp` of the NEW card question (a plain
+    `chooseCards`, `dest: "attach"`). No v49 record written by 0.530 carries it, and its absence means what it meant
+    (D125's test). ROLLBACK READING: a 0.530 build resuming such a park validates the card answer against the
+    `chooseCards` prompt and then attaches NOTHING (its `attachEnergyFrom` arm reads only a `pokemon` answer) — a silent
+    whiff of that one attach; the rest of the program runs. Forward: a 0.530 record parked on an attach TARGET resumes
+    here and, on an unlike pile, asks the card question it never asked. ⑵ `lookAtTopN` with `dest: "bench"` now offers
+    at most the free Bench space (Grimsley's Move, Accompanying Flute, Summoning Gate): a v49 record parked with a wider
+    `max` still resumes, and the apply's own clamp lands what fits, as before. ⑶ Judge `sv04.5-228` / `sv10-167` /
+    `sv10-222` are id-keyed catalog rows on the shipped `JUDGE` (`handRefresh`, which never parks).
+
     🆕🆕🆕 **STAYS 49 AT D647 — THE MERGE OF `main`: ONE NEW `GameAction`, ONE OPTIONAL LOG KEY, WIRE-ONLY PROMPT AND
     CARD KEYS, AND THIRTEEN ROTATED REGISTRY KEYS. NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD,
     `EffectOp` MEMBER OR EVENT MEMBER.** (Placed ABOVE the D646 block.) The addresses, named first (D456's rule):

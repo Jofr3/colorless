@@ -23,6 +23,9 @@ import {
 //   • fix-attacher "Recharge" — FIXTURE for the DISCARD-source + type-filter branch.
 // Same-type Basic Energy is fungible, so the only decision is the TARGET (parks
 // on choosePokemon); a source with no matching Energy blocks the Ability (whiff).
+// 🆕 Card revision B01: "fungible" holds for a TYPED noun only. Quaquaval's bare "a Basic Energy
+// card" over a dealt hand holding several types now asks WHICH card after the target (a
+// `chooseCards`, `dest: "attach"`); `useAttach` answers it with the {W} these rungs stage.
 
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -39,9 +42,21 @@ function attachBoard(seed: number): GameState {
   return mustApply(state, { type: "endTurn", seat: "p2" }).state;
 }
 
+/** 🆕 Card revision B01 — answer the card question if one is parked: the first offered
+    `fix-water-energy` (the card these rungs stage), else the first candidate. */
+function answerEnergyPick(state: GameState): { state: GameState; events: GameEvent[] } {
+  const phase = state.phase;
+  if (phase.kind !== "effect:choose" || phase.prompt.kind !== "chooseCards") return { state, events: [] };
+  expect(phase.prompt).toMatchObject({ dest: "attach", min: 1, max: 1 });
+  const water = phase.prompt.candidates.find((u) => state.cardIdByUid[u] === "fix-water-energy");
+  const uid = water ?? (phase.prompt.candidates[0] as string);
+  return mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: [uid] } });
+}
+
 /** Use an Ability, then (if it parked on the target choice) attach to the ref.
     Returns the resulting state AND the attached Energy uid (from ENERGY_ATTACHED)
-    — the energy is fungible, so the op picks the first match, not a pre-chosen one. */
+    — ~~the energy is fungible, so the op picks the first match, not a pre-chosen one~~ (card
+    revision B01: a typed noun still picks the first match; an untyped one asks, `answerEnergyPick`). */
 function useAttach(
   state: GameState,
   abilityName: string,
@@ -51,8 +66,13 @@ function useAttach(
   if (first.state.phase.kind !== "effect:choose") {
     return { state: first.state, uid: find(first.events, "ENERGY_ATTACHED")?.uid }; // forced
   }
-  const res = mustApply(first.state, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref } });
-  return { state: res.state, uid: find(res.events, "ENERGY_ATTACHED")?.uid };
+  const atTarget =
+    first.state.phase.prompt.kind === "choosePokemon"
+      ? mustApply(first.state, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref } })
+      : first;
+  const res = answerEnergyPick(atTarget.state);
+  const events = [...atTarget.events, ...res.events];
+  return { state: res.state, uid: find(events, "ENERGY_ATTACHED")?.uid };
 }
 
 describe("attachEnergyFrom — the §6 energy-acceleration op", () => {
@@ -73,12 +93,14 @@ describe("attachEnergyFrom — the §6 energy-acceleration op", () => {
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     expect(parked.phase.prompt.kind).toBe("choosePokemon");
 
-    const { state: done, events } = mustApply(parked, {
+    const targeted = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",
       choice: { kind: "pokemon", ref: ACTIVE_REF },
     });
-    // Any Basic Energy is fungible — the op picks the first in hand; read it back.
+    // ~~Any Basic Energy is fungible — the op picks the first in hand; read it back.~~ Card revision
+    // B01: the dealt hand holds more than one Basic type, so the card is asked; the {W} is answered.
+    const { state: done, events } = answerEnergyPick(targeted.state);
     const attached = find(events, "ENERGY_ATTACHED");
     expect(attached).toMatchObject({ seat: "p1" });
     const uid = attached?.uid;

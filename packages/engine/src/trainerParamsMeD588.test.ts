@@ -426,10 +426,17 @@ describe("D588 §6 — Rosa's Encouragement: behind on Prizes, up to 2 Basic Ene
     expect(p.candidates).toEqual([bench(1)]);
     expect(p.upTo).toBe(2);
     expect(p.note).toBe("Attach up to 2 Energy to which of your Stage 2 Pokémon?");
-    const done = mustApply(parked, pick(bench(1))).state;
-    expect(done.players.p1.bench[1]?.energy).toHaveLength(2);
+    // 🆕 Card revision B01 — {R} + {W} {W} are unlike Energy, so the target answer asks WHICH cards
+    // (min = max = the take); the answer is what lands. `revisionB01.test.ts` §2 drives the rest.
+    const asked = mustApply(parked, pick(bench(1))).state;
+    expect(prompt(asked)).toMatchObject({ kind: "chooseCards", min: 2, max: 2, dest: "attach" });
+    const waters = asked.players.p1.discard.filter((u) => idOf(asked, u) === "fix-water-energy");
+    const done = mustApply(asked, cards(waters)).state;
+    expect(done.players.p1.bench[1]?.energy).toEqual(waters);
     expect(done.players.p1.discard.filter((u) => /energy/.test(idOf(done, u) ?? ""))).toHaveLength(1);
-    const one = mustApply(parked, pick(bench(1), 1)).state;
+    const askedOne = mustApply(parked, pick(bench(1), 1)).state;
+    expect(prompt(askedOne)).toMatchObject({ kind: "chooseCards", min: 1, max: 1 });
+    const one = mustApply(askedOne, cards(waters.slice(0, 1))).state;
     expect(one.players.p1.bench[1]?.energy).toHaveLength(1);
   });
 

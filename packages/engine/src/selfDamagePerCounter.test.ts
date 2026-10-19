@@ -435,6 +435,6 @@ describe("§6 — the span probe's tail repair, which is why this row was visibl
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.530.0");
+    expect(engineVersion).toBe("0.531.0");
   });
 });

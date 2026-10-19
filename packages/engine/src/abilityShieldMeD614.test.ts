@@ -393,7 +393,7 @@ describe("D614 §9 — the log row, the attack, and the version", () => {
     expect(LOCAL[CLEF]?.attacks?.[0]?.effect).toBe(SHOOTING_MOONS);
   });
 
-  it("is built at engine 0.530.0", () => {
-    expect(engineVersion).toBe("0.530.0");
+  it("is built at engine 0.531.0", () => {
+    expect(engineVersion).toBe("0.531.0");
   });
 });

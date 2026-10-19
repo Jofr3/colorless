@@ -11979,7 +11979,9 @@ const IONOS_BELLIBOLT_EX: CardProgram = {
 
     `energyType` is ABSENT on purpose. The print says "a Basic Energy card",
     unqualified, so any Basic Energy in the discard is a legal source — and
-    because same-type Basic Energy is fungible the op's only decision is still
+    because same-type Basic Energy is fungible the op's only decision is still [🆕 card revision B01
+    (D539): WITHDRAWN for an unlike pile — {R} and {W} in the discard are a card question after the
+    target, `attachEnergyFrom.pickOnto`]
     the target. (It is `basicEnergy`-shaped and never `providesEnergy`: the card
     sits in a pile attached to nothing and provides nothing — §6.5.)
 
@@ -19356,7 +19358,7 @@ const TYRANNICALLY_GUTSY: CardProgram = {
 //    `countersOnRecordedBody` (Spiteful Evolution; Sinister Surge reuses the op), the NEW
 //    `BoardCondition` `notYourFirstTurn` and `requiresEnergyType: "any"` (Evolutionary Guidance).
 //    Dropped and named: Larry's Komala `me02.5-175` "Lethargic Charge" [🆕🆕🆕 D628 (D539): Lethargic Charge BUILT at D628 (A1)] — an Active-only attach target
-//    AND a choice of WHICH Energy card (`attachEnergyFrom` `anyEnergy` attaches the first one in the
+//    AND a choice of WHICH Energy card (`attachEnergyFrom` `anyEnergy` attaches the first one in the [🆕 card revision B01 (D539): no longer — an unlike pile is asked, `pickOnto`]
 //    hand, D246's attack reading): two pieces, not one. The printed "Larry's" filter is not a third:
 //    `attachEnergyFrom` carries it as `ownerPokemon`; `attachFromHand`, which does choose the card,
 //    has neither an Active nor a name rider. `activatedMeD611.test.ts` drives each one. ──
@@ -20459,6 +20461,11 @@ const REGISTRY: Record<string, CardProgram> = {
   "me03-071": CRUSHING_HAMMER, // Crushing Hammer — twin `sv01-168`
   "me03-072": ENERGY_SEARCH, // Energy Search — twin `sv01-172`
   "me03-076": JUDGE, // Judge — twin `sv01-176`
+  // Card revision B01: the three mark-G Judge printings, refused by D290 while `legal_standard = 0`, are
+  // `legal_standard_effective = 1` since 714256b3 (same print_key as `me03-076`), so they get the twin's row.
+  "sv04.5-228": JUDGE, // Judge — twin `sv01-176`
+  "sv10-167": JUDGE, // Judge — twin `sv01-176`
+  "sv10-222": JUDGE, // Judge — twin `sv01-176`
   "me03-080": POKE_BALL, // Poké Ball — twin `sv01-185`
   "me03-082": POKEMON_CATCHER, // Pokémon Catcher — twin `sv01-187`
   "me03-083": POTION, // Potion — twin `sv01-188`

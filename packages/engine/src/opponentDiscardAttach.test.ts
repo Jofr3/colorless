@@ -343,6 +343,16 @@ const pick = (state: GameState, seat: Seat, ref?: PokemonRef) =>
     choice: ref === undefined ? { kind: "pokemon" } : { kind: "pokemon", ref },
   });
 
+/** 🆕 Card revision B01 — the card question a target answer buys when the OPPONENT's pile holds
+    unlike Energy ({R} and the Special): a `chooseCards` over that pile, answered by the ATTACKER. */
+function cardPrompt(state: GameState): Extract<EffectPrompt, { kind: "chooseCards" }> {
+  if (state.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${state.phase.kind}`);
+  if (state.phase.prompt.kind !== "chooseCards") throw new Error(`expected chooseCards, got ${state.phase.prompt.kind}`);
+  return state.phase.prompt;
+}
+const pickCard = (state: GameState, seat: Seat, uid: string) =>
+  mustApply(state, { type: "resolveEffect", seat, choice: { kind: "cards", uids: [uid] } });
+
 const NAMES = { p1: "P1", p2: "P2" } as const;
 const rows = (events: readonly GameEvent[], state: GameState): string[] =>
   logFromEvents(events, { names: NAMES, state, elapsed: "+00:09" }).map((entry) =>
@@ -702,7 +712,7 @@ describe("D532 §4 — the park offers EXACTLY the opponent's in-play Pokémon, 
     }
   });
 
-  it("🛑 (ii) THREE sequential parks, from EITHER seat: each answer moves the FIRST matching uid of the OPPONENT's pile (pile order: {R}, {R}, then the Special — `anyEnergy`) onto the chosen OPPONENT body; `ENERGY_ATTACHED { seat: attacker, uid, target: chosen spot }`; the Item stays; the attacker's own pile UNTOUCHED; the third answer ends the turn", () => {
+  it("🛑 (ii) THREE sequential parks, from EITHER seat: ~~each answer moves the FIRST matching uid of the OPPONENT's pile~~ (card revision B01: while the OPPONENT's pile holds unlike Energy the ATTACKER picks the card — {R}, {R}, then the Special, `anyEnergy`) onto the chosen OPPONENT body; `ENERGY_ATTACHED { seat: attacker, uid, target: chosen spot }`; the Item stays; the attacker's own pile UNTOUCHED; the third answer ends the turn", () => {
     for (const attacker of SEATS) {
       const defender = other(attacker);
       const { before, after } = swing({ attacker });
@@ -710,16 +720,21 @@ describe("D532 §4 — the park offers EXACTLY the opponent's in-play Pokémon, 
       const refs = pokemonPrompt(after).candidates;
       const [first, second, third] = refs;
       if (first === undefined || second === undefined || third === undefined) throw new Error("fewer than three refs");
-      // Park 1 → the Active.
-      const a = pick(after, attacker, first);
+      // Park 1 → the Active. 🆕 B01: {R} {R} and the Special are not interchangeable, so the target
+      // answer moves nothing and asks WHICH card, offering the whole Energy part of the pile.
+      const asked = pick(after, attacker, first);
+      expect(types(asked.events)).toEqual(["EFFECT_PENDING"]);
+      expect(cardPrompt(asked.state)).toMatchObject({ candidates: pile.slice(0, 3), min: 1, max: 1, dest: "attach" });
+      expect(asked.state.phase.kind === "effect:choose" && asked.state.phase.answerer).toBeFalsy();
+      const a = pickCard(asked.state, attacker, pile[0] as string);
       expect(types(a.events)).toEqual(["ENERGY_ATTACHED", "EFFECT_PENDING"]);
       expect(attachedRows(a.events)).toEqual([{ type: "ENERGY_ATTACHED", seat: attacker, uid: pile[0], target: { spot: "active" } }]);
       expect(ids(a.state, a.state.players[defender].active?.energy ?? [])).toEqual([R_ENERGY]);
       expect(ids(a.state, a.state.players[defender].discard)).toEqual([R_ENERGY, SPECIAL, ITEM]);
       expect(a.state.players[attacker].discard).toEqual(before.players[attacker].discard);
       expect(pokemonPrompt(a.state).candidates).toEqual(refs); // the offer is re-derived and identical
-      // Park 2 → bench 0.
-      const b = pick(a.state, attacker, second);
+      // Park 2 → bench 0 (B01: {R} and the Special are still unlike, so the card is asked again).
+      const b = pickCard(pick(a.state, attacker, second).state, attacker, pile[1] as string);
       expect(types(b.events)).toEqual(["ENERGY_ATTACHED", "EFFECT_PENDING"]);
       expect(attachedRows(b.events)).toEqual([{ type: "ENERGY_ATTACHED", seat: attacker, uid: pile[1], target: { spot: "bench", index: 0 } }]);
       expect(ids(b.state, b.state.players[defender].bench[0]?.energy ?? [])).toEqual([R_ENERGY]);
@@ -742,7 +757,9 @@ describe("D532 §4 — the park offers EXACTLY the opponent's in-play Pokémon, 
       const { after } = swing({ attacker });
       const [first] = pokemonPrompt(after).candidates;
       if (first === undefined) throw new Error("no ref");
-      const { state, events } = pick(after, attacker, first);
+      // 🆕 B01: the target answer asks the card; the {R} is picked, and THAT answer's events log the row.
+      const asked = pick(after, attacker, first).state;
+      const { state, events } = pickCard(asked, attacker, cardPrompt(asked).candidates[0] as string);
       const entries = logFromEvents(events, { names: NAMES, state, elapsed: "+00:09" });
       const attached = entries.find((e) => e.kind !== "turn" && e.segments.some((s) => s.text === "attached "));
       if (attached === undefined || attached.kind === "turn") throw new Error(`no attach row in ${JSON.stringify(entries)}`);
@@ -849,7 +866,9 @@ describe("D532 §4 — the park offers EXACTLY the opponent's in-play Pokémon, 
     expect(wrongSeat.ok).toBe(false);
     // …and the legal answer against the OPPONENT's Active is accepted and MOVES the Energy — the
     // apply's guard compares the ref against the RESOLVED seat, not the actor's.
-    const legal = pick(after, "p1", { seat: "p2", spot: { spot: "active" } });
+    // 🆕 B01: the card is asked (unlike Energy), and its answer is the one that moves the {R}.
+    const asked = pick(after, "p1", { seat: "p2", spot: { spot: "active" } }).state;
+    const legal = pickCard(asked, "p1", cardPrompt(asked).candidates[0] as string);
     expect(attachedRows(legal.events)).toHaveLength(1);
     expect(ids(legal.state, legal.state.players.p2.active?.energy ?? [])).toEqual([R_ENERGY]);
   });
@@ -874,7 +893,13 @@ describe("D532 §4 — the park offers EXACTLY the opponent's in-play Pokémon, 
     const { before, after } = swing();
     expect(after.rngState).toBe(before.rngState);
     let state = after;
-    for (const ref of pokemonPrompt(after).candidates) state = pick(state, "p1", ref).state;
+    for (const ref of pokemonPrompt(after).candidates) {
+      state = pick(state, "p1", ref).state;
+      // 🆕 B01: answer the card question where the pile still holds unlike Energy.
+      if (state.phase.kind === "effect:choose" && state.phase.prompt.kind === "chooseCards") {
+        state = pickCard(state, "p1", state.phase.prompt.candidates[0] as string).state;
+      }
+    }
     expect(state.phase).toEqual({ kind: "turn:action", seat: "p2" });
     expect(state.rngState).toBe(before.rngState);
   });
@@ -967,7 +992,7 @@ const RAW: Record<string, string> = (
 describe("D532 §6 — the version steps and the bytes this suite drove are the bytes that shipped", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.530.0");
+    expect(engineVersion).toBe("0.531.0");
     expect(manifest.version).toBe(engineVersion);
   });
 
@@ -997,7 +1022,7 @@ describe("D532 §6 — the version steps and the bytes this suite drove are the 
     expect(effectsSrc).toContain('const SOURCE_ZONE_PHRASE = " from your discard pile";');
     const interpreter = Object.entries(RAW).find(([k]) => k.endsWith("/interpreter.ts"))?.[1] ?? "";
     expect(interpreter).toContain('export function attachSeat(op: { readonly whose?: "opponent" }, seat: Seat): Seat {\n  return op.whose === "opponent" ? otherSeat(seat) : seat;\n}');
-    expect(interpreter.split("attachSeat(").length - 1).toBe(4); // the declaration + three reads
+    expect(interpreter.split("attachSeat(").length - 1).toBe(5); // the declaration + three reads + card revision B01's `energyPickOffer` (the pile the card question offers is the OWNER's, the same resolver)
     expect(interpreter).toContain("  const owner = attachSeat(riders, seat);\n  const side = state.players[owner];");
     expect(interpreter).toContain("    refs.push({ seat: owner, spot: { spot: \"active\" } });");
     expect(interpreter).toContain("    if (eligible(pokemon)) refs.push({ seat: owner, spot: { spot: \"bench\", index } });");

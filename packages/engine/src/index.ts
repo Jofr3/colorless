@@ -20274,6 +20274,16 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕 engineVersion 0.530.0 → **0.531.0** (card revision B01 — SUPPORTERS: THREE AUDIT FINDINGS FIXED;
+    `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B01")). registry.ts: Judge
+    `sv04.5-228` / `sv10-167` / `sv10-222` on the shipped `JUDGE` (mark G, `legal_standard_effective = 1` since 714256b3;
+    they left `reprintAliasLegal.test.ts`'s D290 census). interpreter.ts: an untyped `attachEnergyFrom` whose pile holds
+    unlike Energy (`energyPickOffer`, keyed by `cardIdentity`) asks WHICH cards after the target — the op is scheduled
+    again with the NEW optional key `pickOnto { ref, take }` and parks a `chooseCards` (`dest: "attach"`, `min = max =`
+    the take); the forced-target arm schedules it too (Rosa's Encouragement, N's PP Up, Seething Spirit, Energizing
+    Sketch, Overvolt Discharge, Mischievous Painting, …). `lookAtTopN` with `dest: "bench"` clamps its offer to the free
+    Bench space (Grimsley's Move; a full Bench takes the whiff path; R-AF3's outcome unchanged, now with no prompt).
+    `revisionB01.test.ts`.)
     🆕🆕🆕 engineVersion 0.529.0 → **0.530.0** (D647 — THE MERGE OF `main` INTO `mega-ingest`: SIX ENGINE / API COMMITS
     THAT NEVER BUMPED THE ENGINE (main stayed at 0.464.0); `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49
     AT D647")). bench.ts: the NEW `GameAction` member `reorderBench { seat, uid, index }` (drag-reorder during
@@ -25831,7 +25841,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.530.0";
+export const engineVersion = "0.531.0";
 
 export type {
   ApplyResult,

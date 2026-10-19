@@ -6252,7 +6252,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.530.0";',
+    find: 'export const engineVersion = "0.531.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -60715,5 +60715,33 @@ export const MUTANTS: Mutant[] = [
     find: "    version !== TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION &&\n    version !== COIN_REDO_MIGRATABLE_MATCH_RECORD_VERSION\n  )",
     replace: "    version !== TOOL_TRIM_MIGRATABLE_MATCH_RECORD_VERSION\n  )",
     expectKilledBy: ["apps/api/src/lobby/coinRedoMigrationD646.test.ts"],
+  },
+  // ── Card revision B01 (Supporters) — the two behaviour fixes, one row per claim. ──
+  {
+    id: "B01-look-bench-offer-unclamped",
+    decision: "B01",
+    what: "`lookAtTopN` with `dest: \"bench\"` offers the printed ceiling again on a full Bench: Grimsley's Move parks a {D} Basic that cannot be benched, and the pick lands nothing. Killed by revisionB01 §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: '      const offerMax = op.dest === "bench" ? Math.min(totalMax, benchSpace(state, lookOwner(op, ctx))) : totalMax;\n',
+    replace: "      const offerMax = totalMax;\n",
+    expectKilledBy: ["packages/engine/src/revisionB01.test.ts"],
+  },
+  {
+    id: "B01-attach-card-never-asked",
+    decision: "B01",
+    what: "`energyPickOffer` never owes a card question, so an untyped attach takes the pile's leading cards again (Rosa's Encouragement over {R} {W} {P} {P} attaches {R} + {W}). Killed by revisionB01 §2.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return new Set(candidates.map((uid) => cardIdentity(state, uid))).size > 1 ? { candidates, take: n } : undefined;",
+    replace: "  return undefined;",
+    expectKilledBy: ["packages/engine/src/revisionB01.test.ts"],
+  },
+  {
+    id: "B01-attach-card-answer-ignored",
+    decision: "B01",
+    what: "the card answer is asked and then ignored: the apply attaches the pile's leading cards, not the picked ones. Killed by revisionB01 §2.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    .filter((uid) => chosenUids === undefined || chosenUids.includes(uid))\n",
+    replace: "    .filter(() => true)\n",
+    expectKilledBy: ["packages/engine/src/revisionB01.test.ts"],
   },
 ];

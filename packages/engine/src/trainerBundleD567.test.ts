@@ -424,8 +424,8 @@ describe("§1 — the prints, the registry rows and the new vocabulary's key set
     });
   });
 
-  it("the engine is 0.530.0", () => {
-    expect(engineVersion).toBe("0.530.0");
+  it("the engine is 0.531.0", () => {
+    expect(engineVersion).toBe("0.531.0");
   });
 });
 
@@ -572,13 +572,17 @@ describe("§3 — Accompanying Flute: the opponent's top 5, onto THEIR Bench", (
     expect(state.players.p2.bench).toHaveLength(3);
   });
 
-  it("🛑 PARTIAL: one free slot on p2's Bench — three picked, the FIRST lands, the others stay in p2's deck", () => {
+  it("🛑 PARTIAL: one free slot on p2's Bench — ~~three picked, the FIRST lands~~ the offer is capped at ONE (card revision B01), the others stay in p2's deck", () => {
     let board = topFive(table());
     for (let i = 0; i < 4; i++) board = benchFromDeck(ensureCopies(board, "p2", FILLER), "p2", FILLER);
     const window = board.players.p2.deck.slice(0, 5);
     const parked = play(board, FLUTE).state;
     const picks = [window[0] as string, window[2] as string, window[4] as string];
-    const { state, events } = run(parked, cards(picks));
+    // 🆕 Card revision B01 — the Bench clamp binds at the OFFER (`lookOwner`'s Bench): `max` is the one
+    // free slot, so the three-card answer is refused; the apply's clamp stays as the belt.
+    expect(parked.phase.kind === "effect:choose" && parked.phase.prompt.kind === "chooseCards" && parked.phase.prompt.max).toBe(1);
+    expect(applyAction(parked, cards(picks)).ok).toBe(false);
+    const { state, events } = run(parked, cards(picks.slice(0, 1)));
     expect(state.players.p2.bench).toHaveLength(5);
     expect(topOf(bodyAt(state, "p2", 4))).toBe(picks[0]);
     expect(state.players.p2.deck).toContain(picks[1]);
@@ -586,12 +590,14 @@ describe("§3 — Accompanying Flute: the opponent's top 5, onto THEIR Bench", (
     expect(all(events, "DECK_TOP_REVEALED")[0]?.uids).toEqual([picks[0]]);
   });
 
-  it("🛑 R-AF3 — FULL: the look still happens and is announced, NONE is taken, and p2's deck is still shuffled", () => {
+  it("🛑 R-AF3 — FULL: the look still happens and is announced, NONE is taken, and p2's deck is still shuffled (card revision B01: and nothing is OFFERED — no park)", () => {
     let board = topFive(table());
     for (let i = 0; i < 5; i++) board = benchFromDeck(ensureCopies(board, "p2", FILLER), "p2", FILLER);
-    const window = board.players.p2.deck.slice(0, 5);
-    const parked = play(board, FLUTE).state;
-    const { state, events } = run(parked, cards([window[0] as string]));
+    // 🆕 Card revision B01 — R-AF3's outcome is unchanged; its parenthetical "the park is still
+    // offered" is retired: a full Bench clamps the offer to 0 and takes the whiff path (the look row,
+    // then the shuffle), so there is no pick that could land nothing.
+    const { state, events } = play(board, FLUTE);
+    expect(state.phase.kind).toBe("turn:action");
     expect(state.players.p2.bench.map(topOf)).toEqual(board.players.p2.bench.map(topOf));
     expect(state.players.p2.deck).toHaveLength(board.players.p2.deck.length);
     expect(all(events, "DECK_TOP_REVEALED")).toEqual([

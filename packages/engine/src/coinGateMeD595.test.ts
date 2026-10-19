@@ -484,7 +484,19 @@ describe("D595 §5 — the `programPerHeads` arms on a board", () => {
     state = discardFromDeck(state, "p1", WATER, 1);
     const first = attack(state);
     expect(promptOf(first.state)).toMatchObject({ kind: "choosePokemon" });
-    const second = pickBody(first.state, { seat: "p1", spot: { spot: "bench", index: 0 } });
+    const targeted = pickBody(first.state, { seat: "p1", spot: { spot: "bench", index: 0 } });
+    // 🆕 Card revision B01 — {R} and {W} are not interchangeable, so the card is asked (the Special
+    // is never offered); the {R} is picked, and the second heads' pile is the {W} alone.
+    const ask = promptOf(targeted.state);
+    expect(ask).toMatchObject({ kind: "chooseCards", min: 1, max: 1, dest: "attach" });
+    const offered = (ask as { candidates: string[] }).candidates;
+    expect(idsOf(targeted.state, offered)).toEqual([FIRE, WATER]);
+    const second = mustApply(targeted.state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: [offered[0] as string] },
+    });
+    expect(idsOf(second.state, second.state.players.p1.bench[0]?.energy ?? [])).toEqual([FIRE]);
     expect(promptOf(second.state)).toMatchObject({ kind: "choosePokemon" });
     const done = pickBody(second.state, { seat: "p1", spot: { spot: "bench", index: 1 } });
     const bench = done.state.players.p1.bench.map((b) => idsOf(done.state, b.energy));
@@ -497,20 +509,29 @@ describe("D595 §5 — the `programPerHeads` arms on a board", () => {
     expect(promptOf(declined.state)).toMatchObject({ kind: "choosePokemon" });
   });
 
-  it("KNOWN LIMITATION (inherited from the five `sv` discard-attach sentences): the ENERGY is not chosen", () => {
-    // `attachEnergyFrom` with no type takes the first Basic Energy in pile order (interpreter.ts
-    // `attachableEnergies`, "fungible"); the only park is the target. The print lets the player pick.
+  it("~~KNOWN LIMITATION (inherited from the five `sv` discard-attach sentences): the ENERGY is not chosen~~ (card revision B01: RETIRED — the ENERGY is chosen)", () => {
+    // ~~`attachEnergyFrom` with no type takes the first Basic Energy in pile order (interpreter.ts
+    // `attachableEnergies`, "fungible"); the only park is the target. The print lets the player pick.~~
+    // 🆕 Card revision B01: the target answer now buys the card question (`pickOnto`), and the
+    // player's pick — here the SECOND card in pile order — is the one that lands.
     let state = table(SMEARGLE, [H, X, X], 0, 1);
     state = discardFromDeck(state, "p1", FIRE, 1);
     state = discardFromDeck(state, "p1", WATER, 1);
-    const pile = idsOf(state, state.players.p1.discard);
-    const done = pickBody(attack(state).state, { seat: "p1", spot: { spot: "bench", index: 0 } });
-    expect(idsOf(done.state, done.state.players.p1.bench[0]?.energy ?? [])).toEqual([pile[0]]);
+    const pile = state.players.p1.discard.slice();
+    const targeted = pickBody(attack(state).state, { seat: "p1", spot: { spot: "bench", index: 0 } });
+    expect(promptOf(targeted.state)).toMatchObject({ kind: "chooseCards", candidates: pile, dest: "attach" });
+    const done = mustApply(targeted.state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: [pile[1] as string] },
+    });
+    expect(done.state.players.p1.bench[0]?.energy).toEqual([pile[1]]);
+    expect(idsOf(done.state, done.state.players.p1.discard)).toEqual([FIRE]);
   });
 });
 
 describe("D595 §6 — the version", () => {
-  it("is built at engine 0.530.0", () => {
-    expect(engineVersion).toBe("0.530.0");
+  it("is built at engine 0.531.0", () => {
+    expect(engineVersion).toBe("0.531.0");
   });
 });

@@ -826,7 +826,7 @@ describe("§7 — the structural answers", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.530.0");
+    expect(engineVersion).toBe("0.531.0");
   });
 });
 

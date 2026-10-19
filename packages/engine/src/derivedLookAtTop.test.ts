@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
+import { applyAction } from "./index";
 import { logFromEvents } from "./log";
 import {
   DERIVED_LOOK_TOP_DECK,
@@ -530,12 +531,19 @@ describe("Summoning Gate — the look that BENCHES", () => {
     expect(picks).toHaveLength(4);
 
     const parked = attack(state, SUMMONING_GATE).state;
-    const { state: done } = resolveCards(parked, picks);
+    // 🆕 Card revision B01 — the clamp now binds at the OFFER too (`searchDeck`'s rule): the prompt's
+    // ceiling is the ONE free slot, so the four-card answer this rung used to send is refused by the
+    // validator, and the apply's own clamp stays as the belt behind it (a stale answer).
+    expect(cardsPrompt(parked).max).toBe(1);
+    expect(applyAction(parked, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids: picks } }).ok).toBe(
+      false,
+    );
+    const { state: done } = resolveCards(parked, picks.slice(0, 1));
     expect(done.players.p1.bench).toHaveLength(5); // §4's cap
     // Exactly ONE left the deck; the other three are still in it. Card
     // conservation, asserted card by card rather than by a total.
     const landed = picks.filter((uid) => !done.players.p1.deck.includes(uid));
-    expect(landed).toHaveLength(1);
+    expect(landed).toEqual(picks.slice(0, 1));
     for (const uid of picks) {
       const inDeck = done.players.p1.deck.includes(uid);
       const inPlay = done.players.p1.bench.some((p) => p.stack.includes(uid));

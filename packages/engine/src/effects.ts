@@ -10222,7 +10222,8 @@ export type EffectOp =
       family (Quaquaval "Energy Carnival" from hand; Baxcalibur "Super Cold" a
       {W} from hand). `energyType` restricts it to a Basic Energy of that type
       (undefined = any Basic Energy). Same-type Basic Energy cards are fungible,
-      so the ONLY decision is the TARGET: this PARKS on a choosePokemon unless
+      so the ONLY decision is the TARGET [🆕 card revision B01 (D539): SCOPED — an unlike pile asks
+      WHICH cards after the target, `pickOnto` below]: this PARKS on a choosePokemon unless
       exactly one Pokémon is in play, and a source holding no matching Energy is
       a no-op (programPlayable also blocks activating an Ability that could only
       whiff). The deck-search / look-at-top-N sources layer later ops on this
@@ -10601,6 +10602,26 @@ export type EffectOp =
           DERIVER path today; the number arm is driven at the op level, where its
           consumer will be. */
       healTarget?: number | "all";
+      /** 🆕 **Card revision B01 — WHICH Energy cards, the second question of an unfungible attach.**
+          The op's first design (D32) assumed "same-type Basic Energy is fungible, so the ONLY
+          decision is the target" and attached the leading matches in pile order. That holds for a
+          typed noun (*"a Basic {L} Energy card"*) and for a proper name, and is FALSE for the bare
+          *"Basic Energy cards"* / *"an Energy card"*: Rosa's Encouragement over a discard pile of
+          {R} {W} {P} {P} attached {R} + {W} whatever the player wanted.
+
+          Never authored. `stepOp` / `continuationOps` write it after the TARGET is known (forced
+          or answered) when `energyPickNeeded` says the pick is a decision — the pile holds more
+          candidates than the take AND more than one card identity (`energyIdentity`: the Basic
+          type, or a Special Energy's name). The op is then scheduled again with the target and the
+          take, and `stepOp` parks a `chooseCards` (`dest: "attach"`, `min = max = take` clamped
+          to the pile) over every candidate card; the answer is applied by `attachEnergyFrom`
+          with those uids. Absent = every program and every pre-B01 park (D125): a pile that is one
+          identity, or no bigger than the take, still attaches inline with no second prompt.
+          The key rides `phase.cont.pendingOp` only (the scheduled op parks on the step it is
+          scheduled). A 0.530 reader resuming such a park accepts the card answer (the prompt is a
+          plain `chooseCards`) and attaches NOTHING — its arm reads only a `pokemon` answer — a
+          silent whiff, named in apps/api match.ts ("STAYS 49 AT CARD REVISION B01"). */
+      pickOnto?: { ref: PokemonRef; take: number };
       /** 🆕🆕🆕 **D532 — THE CROSS-SEAT DISCARD-PILE ATTACH.** Grafaiai `sv08-121` *"Attach
           up to 3 Energy cards from your **opponent's** discard pile to **their** Pokémon in
           any way you like."* — corpus FILE LINE 70, **1 sentence / 1 legal printing**,
@@ -11081,7 +11102,8 @@ export type EffectOp =
             over; the benched route here is `revealFromTop`'s, which calls no on-play hook).
           • **R-AF3**: with the opponent's Bench FULL the look still happens and is announced
             (the empty `DECK_TOP_REVEALED` row), nothing is taken, and the program's shuffle
-            still runs.
+            still runs. (🆕 Card revision B01: and nothing is OFFERED — the offer's `max` is clamped
+            to the Bench space at the park, so a full Bench takes the whiff path with no prompt.)
           ⚠️ The printed *"Reveal"* is to both players; the row names the PLACED cards, which
           are public on the Bench anyway (the unplaced ones go back under a shuffle, D241's
           rule for what a look row owes). OPTIONAL (D135): absent is the controller's own
