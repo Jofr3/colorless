@@ -6252,7 +6252,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.541.0";',
+    find: 'export const engineVersion = "0.542.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -34402,7 +34402,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D545",
     what: "⚠️ **THE ALTERNATE ESCAPES THE CONTINUOUS SURCHARGES** — `{F}` is charged bare under League HQ / Quaking Zone, where the decision (surcharges apply ON TOP of the alternate) charges `{F}{C}`. Killed by §6's League HQ and Quaking Zone `{F}`-alone rungs.",
     file: "packages/engine/src/attack.ts",
-    find: "    const alt = effectiveAttackCost(state, pokemon, gate.cost);",
+    find: "    const alt = effectiveAttackCost(state, pokemon, gate.cost, attackName);",
     replace: "    const alt = gate.cost;",
     expectKilledBy: ["packages/engine/src/attackCostClause.test.ts"],
   },
@@ -39767,7 +39767,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D563",
     what: "🛑 **ALTERNATE-BEFORE-SURCHARGE** — the {C} alternate escapes the D549 tax: one {C} pays a taxed Trifrost. Killed by §3's tax rungs.",
     file: "packages/engine/src/attack.ts",
-    find: "    const clauseCost = effectiveAttackCost(state, pokemon, clause.gate.cost);",
+    find: "    const clauseCost = effectiveAttackCost(state, pokemon, clause.gate.cost, attackName);",
     replace: "    const clauseCost = clause.gate.cost;",
     expectKilledBy: ["packages/engine/src/abilityCostEvolveD563.test.ts"],
   },
@@ -60906,5 +60906,24 @@ export const MUTANTS: Mutant[] = [
     find: '  const noun = !byClass && aceSpecPlayBarred(state, seat, card) ? "ACE SPEC" : HAND_PLAY_NOUN[klass];',
     replace: '  const noun = byClass !== undefined && aceSpecPlayBarred(state, seat, card) ? "ACE SPEC" : HAND_PLAY_NOUN[klass];',
     expectKilledBy: ["packages/engine/src/aceSpecBar.test.ts"],
+  },
+  // ── Card revision B17 (Abilities) — Bloodmoon Ursaluna ex "Seasoned Skill" discounts Blood Moon only. ──
+  {
+    id: "B17-seasoned-skill-scope-dropped",
+    decision: "B17",
+    what: "`selfAttackCostDiscount` ignores `attackCostDiscountAttack`: the per-Prize {C} reaches every attack again, so under Antique Root Fossil a TM: Fluorite on Bloodmoon Ursaluna ex costs its bare {G}{W}{P} once the opponent has taken a Prize. Killed by revisionB17 §1.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (scope !== undefined && scope !== attackName) return tools;",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/revisionB17.test.ts"],
+  },
+  {
+    id: "B17-menu-row-name-not-handed-to-the-cost",
+    decision: "B17",
+    what: "`attackCostAt` charges the printed cost without the menu row's name, so a scoped discount never matches: Blood Moon pays its full {C}{C}{C}{C}{C} whatever the Prize count. Killed by revisionB17 §1.",
+    file: "packages/engine/src/attack.ts",
+    find: "  const printedEff = effectiveAttackCost(state, pokemon, printed, attackName);",
+    replace: "  const printedEff = effectiveAttackCost(state, pokemon, printed);",
+    expectKilledBy: ["packages/engine/src/revisionB17.test.ts"],
   },
 ];

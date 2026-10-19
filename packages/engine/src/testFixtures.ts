@@ -9922,7 +9922,9 @@ export const FIXTURE_POOL: Record<string, Card> = {
       `attackCostDiscountPerOpponentPrize` may serve a sentence that NAMES one
       attack. The suite asserts the discount reaches the SECOND attack too, so the
       day a two-attack printing of this sentence is ingested the assumption's cost
-      is already written down and red. */
+      is already written down and red. 🆕🆕🆕 B17 — flipped: the term is scoped to
+      "Blood Moon" (a TM attack made the second attack real), and the suite now
+      asserts Rough Swing pays its printed {C}{C}. */
   "fix-seasoned": battler("fix-seasoned", {
     name: "Bloodmoon Ursaluna",
     types: ["Fighting"],

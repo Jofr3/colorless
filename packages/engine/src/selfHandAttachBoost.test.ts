@@ -566,7 +566,7 @@ describe("D552 §5 — the parked record round-trips byte-equal, and a rollback 
     const done = resolve(rollback, phase.prompt.kind === "attachCards" ? phase.prompt.candidates : []);
     expect(done.state.players.p1.active?.energy).toHaveLength(7);
     expect(dealtTo(done.state, "p2")).toBe(60);
-    expect(engineVersion).toBe("0.541.0");
+    expect(engineVersion).toBe("0.542.0");
   });
 
   it("the dead end FILES AN EMPTY ANSWER — no source body means no target, and the slot is overwritten", () => {

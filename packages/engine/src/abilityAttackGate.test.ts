@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { attackCostAt } from "./attack";
 import { effectiveAttackCost, passivesOf, selfAttackCostDiscount } from "./continuous";
 import type { GameState, InPlayPokemon, Seat } from "./index";
 import { applyAction, conditionNote, programFor, redactGame } from "./index";
@@ -201,14 +202,20 @@ describe("D242 — the twelve registry rows", () => {
 
   it("authors all SIX Seasoned Skill printings as D218's discount, at rate 1", () => {
     for (const id of SEASONED_IDS) {
-      expect(programFor(id)).toEqual({ passive: { attackCostDiscountPerOpponentPrize: 1 } });
+      // 🆕🆕🆕 B17 — scoped to the printed attack name ("Blood Moon used by this Pokémon").
+      expect(programFor(id)).toEqual({
+        passive: { attackCostDiscountPerOpponentPrize: 1, attackCostDiscountAttack: "Blood Moon" },
+      });
       expect(programFor(id)?.attack).toBeUndefined();
     }
     expect(new Set(SEASONED_IDS.map((id) => programFor(id))).size).toBe(1);
-    // ⚠️ THE SAME SHAPE AS RADIANT CHARIZARD'S AND A SEPARATE OBJECT (D199's
-    // near-twin rule): equal by value, distinct by identity, so a future edit to
-    // one printing's rate cannot silently move the other card.
-    expect(programFor("svp-177")).toEqual(programFor("swsh10.5-011"));
+    // ⚠️ RADIANT CHARIZARD'S RATE AND A SEPARATE OBJECT (D199's near-twin rule), so a
+    // future edit to one printing's rate cannot silently move the other card. 🆕🆕🆕 B17 —
+    // no longer equal by value: Excited Heart prints "This Pokémon's attacks" (unscoped).
+    expect(programFor("svp-177")?.passive?.attackCostDiscountPerOpponentPrize).toBe(
+      programFor("swsh10.5-011")?.passive?.attackCostDiscountPerOpponentPrize,
+    );
+    expect(programFor("swsh10.5-011")?.passive?.attackCostDiscountAttack).toBeUndefined();
     expect(programFor("svp-177")).not.toBe(programFor("swsh10.5-011"));
   });
 
@@ -422,15 +429,17 @@ describe("D242 — Power Saver, the always-on attack gate", () => {
 describe("D242 — Seasoned Skill, the six printings that cost nothing", () => {
   it("takes one {C} off Blood Moon per Prize the opponent has taken", () => {
     let state = setActiveFromDeck(board(), "p1", "fix-seasoned");
-    expect(selfAttackCostDiscount(state, activeOf(state, "p1"))).toBe(0);
+    expect(selfAttackCostDiscount(state, activeOf(state, "p1"), "Blood Moon")).toBe(0);
     state = opponentTook(state, "p2", 2);
-    expect(selfAttackCostDiscount(state, activeOf(state, "p1"))).toBe(2);
-    expect(effectiveAttackCost(state, activeOf(state, "p1"), ["Colorless", "Colorless", "Colorless"])).toEqual([
-      "Colorless",
-    ]);
+    expect(selfAttackCostDiscount(state, activeOf(state, "p1"), "Blood Moon")).toBe(2);
+    expect(
+      effectiveAttackCost(state, activeOf(state, "p1"), ["Colorless", "Colorless", "Colorless"], "Blood Moon"),
+    ).toEqual(["Colorless"]);
+    // …and through the attack menu: row 0 is Blood Moon, {C}{C}{C} − 2.
+    expect(attackCostAt(state, "p1", activeOf(state, "p1"), 0, [])).toEqual(["Colorless"]);
   });
 
-  it("🛑 FLAGGED ASSUMPTION, PINNED: the UNSCOPED field reaches the SECOND attack too", () => {
+  it("🆕🆕🆕 B17 — the FLAGGED ASSUMPTION is retired: the discount does NOT reach the SECOND attack", () => {
     // The printed sentence NAMES one attack ("**Blood Moon** used by this
     // Pokémon"); `attackCostDiscountPerOpponentPrize` is a property of the HOLDER
     // and discounts everything it has. The two readings coincide only while the
@@ -445,11 +454,17 @@ describe("D242 — Seasoned Skill, the six printings that cost nothing", () => {
     // ingested, this expectation is the thing that has to change, and the cost of
     // the assumption is already written down beside it. Scoping the field today
     // would add an `attack?: string` no printing in the pool can read (D135).
+    //
+    // 🆕🆕🆕 B17 — CHANGED, and not by a new printing: D578's attack menu puts a Technical
+    // Machine's attack on every printing, so the unscoped term was reachable on a real card
+    // (`revisionB17.test.ts`). The term is scoped to "Blood Moon"; Rough Swing pays its print.
     let state = setActiveFromDeck(board(), "p1", "fix-seasoned");
     state = opponentTook(state, "p2", 1);
-    expect(effectiveAttackCost(state, activeOf(state, "p1"), ["Colorless", "Colorless"])).toEqual([
-      "Colorless",
-    ]);
+    expect(attackCostAt(state, "p1", activeOf(state, "p1"), 1, [])).toEqual(["Colorless", "Colorless"]);
+    expect(
+      effectiveAttackCost(state, activeOf(state, "p1"), ["Colorless", "Colorless"], "Rough Swing"),
+    ).toEqual(["Colorless", "Colorless"]);
+    expect(attackCostAt(state, "p1", activeOf(state, "p1"), 0, [])).toEqual(["Colorless", "Colorless"]);
   });
 
   it("is §9-suppressible and BENCH-INERT, like every other printed-Ability passive", () => {
@@ -458,14 +473,14 @@ describe("D242 — Seasoned Skill, the six printings that cost nothing", () => {
     let state = clearBench(board(), "p1");
     state = benchFromDeck(state, "p1", "fix-seasoned");
     state = opponentTook(state, "p2", 3);
-    expect(selfAttackCostDiscount(state, activeOf(state, "p1"))).toBe(0);
+    expect(selfAttackCostDiscount(state, activeOf(state, "p1"), "Blood Moon")).toBe(0);
     // …and the benched body DOES still carry it, which is the finding rather than
     // an aside: `selfAttackCostDiscount` scans both seats' Active AND Bench,
     // because the printed sentence has no Active clause on either end. What makes
     // it inert is that a benched Pokémon never declares an attack, not the scan.
     const benched = state.players.p1.bench[0];
     if (benched === undefined) throw new Error("no benched body");
-    expect(selfAttackCostDiscount(state, benched)).toBe(3);
+    expect(selfAttackCostDiscount(state, benched, "Blood Moon")).toBe(3);
   });
 });
 

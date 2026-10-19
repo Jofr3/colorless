@@ -287,10 +287,13 @@ export function attackCostAt(
 ): readonly string[] {
   const entry = attackMenuOf(state, seat, pokemon)[index];
   const printed = entry?.attack.cost ?? [];
-  const printedEff = effectiveAttackCost(state, pokemon, printed);
+  // 🆕🆕🆕 B17 — the menu row's printed NAME rides every `effectiveAttackCost` call below, so a
+  // discount scoped to one attack (Seasoned Skill's "Blood Moon") reaches that attack only.
+  const attackName = entry?.attack.name;
+  const printedEff = effectiveAttackCost(state, pokemon, printed, attackName);
   const gate = attackGateOf(state, pokemon, index);
   if (gate?.kind === "alternateCostIf" && conditionHolds(state, seat, gate.condition)) {
-    const alt = effectiveAttackCost(state, pokemon, gate.cost);
+    const alt = effectiveAttackCost(state, pokemon, gate.cost, attackName);
     return costMet(alt, provided) ? alt : printedEff;
   }
   if (gate?.kind === "costWaivedIf" && conditionHolds(state, seat, gate.condition)) {
@@ -299,11 +302,10 @@ export function attackCostAt(
   // 🆕🆕🆕 D563 — the Ability-printed clause, reached only when the attack-level gate did
   // not fire. Named by the printed attack NAME, so it cannot reach the holder's other
   // attack; through `passivesOf`, so a §9 lock on the holder drops it (the printed cost).
-  const attackName = entry?.attack.name;
   for (const clause of passivesOf(state, pokemon).attackCostClauses) {
     if (clause.attack !== attackName || !conditionHolds(state, seat, clause.gate.condition)) continue;
     if (clause.gate.kind === "costWaivedIf") return [];
-    const clauseCost = effectiveAttackCost(state, pokemon, clause.gate.cost);
+    const clauseCost = effectiveAttackCost(state, pokemon, clause.gate.cost, attackName);
     if (costMet(clauseCost, provided)) return clauseCost;
   }
   return printedEff;

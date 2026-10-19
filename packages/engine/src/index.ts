@@ -20274,6 +20274,14 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕 engineVersion 0.541.0 → **0.542.0** (card revision B17 — ABILITIES: ONE AUDIT FINDING FIXED;
+    `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B17")). Bloodmoon
+    Ursaluna ex "Seasoned Skill" (`sv06-141` / `-202` / `-216` / `-222` / `sv08.5-168` / `svp-177`): the
+    per-Prize {C} discount is scoped to the printed attack, "Blood Moon" — one optional `PassiveProgram`
+    field, `attackCostDiscountAttack`, read by continuous.ts `selfAttackCostDiscount`, and `attackCostAt`
+    hands the attack-menu row's name to `effectiveAttackCost` (optional 4th parameter). A Technical
+    Machine attack on the holder (D578's menu) no longer has a {C} surcharge cancelled by the discount.
+    `revisionB17.test.ts`.)
     🆕 engineVersion 0.540.0 → **0.541.0** (card revision B14 — ABILITIES: ONE AUDIT FINDING FIXED;
     `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B14")). Genesect
     "ACE Nullifier" `sv06.5-040`: the `HAND_PLAY_BLOCKED` refusal at cardplay.ts's five Trainer gates
@@ -25906,7 +25914,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.541.0";
+export const engineVersion = "0.542.0";
 
 export type {
   ApplyResult,

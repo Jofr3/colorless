@@ -2161,6 +2161,12 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕 **STAYS 49 AT CARD REVISION B17 — ONE OPTIONAL `PassiveProgram` FIELD (`attackCostDiscountAttack`), A CATALOG
+    FACT RE-READ ON EVERY COST QUERY. NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD, `EffectOp`
+    MEMBER OR KEY, OR EVENT MEMBER.** (Placed ABOVE the B14 block.) Bloodmoon Ursaluna ex "Seasoned Skill" discounts
+    "Blood Moon" only; a Technical Machine attack on the holder is charged its own cost. Nothing persisted changes shape
+    or meaning — the charged cost is derived from the board on every read.
+
     🆕 **STAYS 49 AT CARD REVISION B14 — A REFUSAL MESSAGE ONLY. NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY,
     `InPlayPokemon` FIELD, `EffectOp` MEMBER OR KEY, OR EVENT MEMBER.** (Placed ABOVE the B12 block.) cardplay.ts's
     `HAND_PLAY_BLOCKED` message names "ACE SPEC cards" when Genesect "ACE Nullifier" (`sv06.5-040`) is the only bar

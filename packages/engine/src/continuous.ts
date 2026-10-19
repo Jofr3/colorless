@@ -6777,7 +6777,11 @@ export function opposingAttackCostSurcharge(state: GameState, pokemon: InPlayPok
     predicted — `toolAttackCostDiscount`, summed AHEAD of both early returns, so only
     the top card's own three terms take the §9 gate and a lock over the holder leaves
     the Tool's {C} standing, R-T1.) */
-export function selfAttackCostDiscount(state: GameState, pokemon: InPlayPokemon): number {
+export function selfAttackCostDiscount(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  attackName?: string,
+): number {
   const top = topCardOf(state, pokemon);
   const uid = topUid(pokemon);
   if (top === undefined || uid === undefined) return 0;
@@ -6791,6 +6795,11 @@ export function selfAttackCostDiscount(state: GameState, pokemon: InPlayPokemon)
   const perBenched = passive?.attackCostDiscountPerOpponentBenched;
   if (perPrize === undefined && perNamed === undefined && perBenched === undefined) return tools;
   if (disabledAbilityUids(state).has(uid)) return tools; // §9 — the top card's terms only
+  // 🆕🆕🆕 B17 — a printed ATTACK-NAME scope on the top card's terms (Bloodmoon Ursaluna ex "Seasoned
+  // Skill": *"**Blood Moon** used by this Pokémon costs {C} less…"*). Any other attack on the menu —
+  // a Technical Machine's since D578 — and a caller that names no attack get the Tools' sum only.
+  const scope = passive?.attackCostDiscountAttack;
+  if (scope !== undefined && scope !== attackName) return tools;
   for (const seat of SEATS) {
     const side = state.players[seat];
     const holders = side.active === null ? side.bench : [side.active, ...side.bench];
@@ -7027,6 +7036,7 @@ export function effectiveAttackCost(
   state: GameState,
   pokemon: InPlayPokemon,
   cost: readonly string[],
+  attackName?: string,
 ): readonly string[] {
   const top = topCardOf(state, pokemon);
   if (top === undefined) return cost;
@@ -7040,7 +7050,9 @@ export function effectiveAttackCost(
   // source netted against the discount like the other two.
   const added =
     stadium + opposingAttackCostSurcharge(state, pokemon) + installedCostTaxOf(state, pokemon);
-  const net = added - selfAttackCostDiscount(state, pokemon);
+  // 🆕🆕🆕 B17 — `attackName` (the menu row's printed name, `attackCostAt`) reaches the discount's
+  // attack-name scope; an unscoped discount ignores it.
+  const net = added - selfAttackCostDiscount(state, pokemon, attackName);
   // 🆕🆕🆕 D568 — Sparkling Crystal's ANY-TYPE Energy, applied LAST, on the {C}-adjusted
   // array, against the holder's attached Energy (`anyTypeCostRemoval`). Zero on every
   // board without a Crystal on a Tera body, which then returns `colorlessNetCost`'s own

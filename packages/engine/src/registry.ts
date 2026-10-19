@@ -3030,6 +3030,14 @@ export interface PassiveEffects {
       Bench discounts nothing, which is the arm that separates this field from a
       count of "Pokémon in play". */
   attackCostDiscountPerOpponentBenched?: number;
+  /** 🆕🆕🆕 §8.2 (B17) — the printed ATTACK NAME the three self-only discounts above are scoped
+      to (Bloodmoon Ursaluna ex "Seasoned Skill": *"**Blood Moon** used by this Pokémon costs {C}
+      less for each Prize card your opponent has taken."*). Absent, the discounts reach every attack
+      the holder uses (Radiant Charizard's *"This Pokémon's attacks"*); present, only the menu row
+      of that printed name (`attackCostAt` hands the row's name to `effectiveAttackCost`) — so a
+      Technical Machine attack on the holder (D578's menu) pays its own cost, surcharges included.
+      Read by continuous.ts `selfAttackCostDiscount`; never scopes an attached Tool's term. */
+  attackCostDiscountAttack?: string;
   /** 🆕🆕🆕 §8.2 (D631) — Decidueye ex `me03-012` / `-100` "Sniper's Eye": *"If your opponent has exactly 4
       cards in their hand, ignore all {C} Energy in the costs of attacks used by this Pokémon."* The number is
       the printed hand size, read on the holder's opponent (the seat derived from the body). When it holds,
@@ -13049,9 +13057,16 @@ const STIMULATED_EVOLUTION_SHELMET: CardProgram = {
     drives a FIXTURE with a SECOND attack and asserts the discount reaches it, so
     the day a two-attack printing of this sentence is ingested the control fails
     loudly and the field earns an `attack?: string` scope. A `{ amount, attack }`
-    retype today would be an unread field on every printing in the pool (D135). */
+    retype today would be an unread field on every printing in the pool (D135).
+
+    🆕🆕🆕 **B17 — THE SCOPE IS EARNED, AND NOT BY A NEW PRINTING.** D578's attack menu
+    put a Technical Machine's attack on the holder (TM: Fluorite `sv08-188`, {G}{W}{P}),
+    and the unscoped term cancelled a {C} surcharge on it (Antique Root Fossil "Primal
+    Root": Fluorite cost {G}{W}{P} with 2 Prizes taken). The term now carries
+    `attackCostDiscountAttack: "Blood Moon"`; the pin above is flipped
+    (`revisionB17.test.ts`). */
 const SEASONED_SKILL: CardProgram = {
-  passive: { attackCostDiscountPerOpponentPrize: 1 },
+  passive: { attackCostDiscountPerOpponentPrize: 1, attackCostDiscountAttack: "Blood Moon" },
 };
 
 /** 🆕 **D327 — "Food Prep"**: *"Attacks used by this Pokémon cost {C} less for

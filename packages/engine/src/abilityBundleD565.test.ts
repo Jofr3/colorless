@@ -507,8 +507,8 @@ describe("§1 — the prints and the registry rows", () => {
     expect(abilityUsedKey("p1#7", zero)).toBe("p1#7:Zero to Hero");
   });
 
-  it("the engine is 0.541.0", () => {
-    expect(engineVersion).toBe("0.541.0");
+  it("the engine is 0.542.0", () => {
+    expect(engineVersion).toBe("0.542.0");
   });
 });
 
