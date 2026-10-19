@@ -2,6 +2,87 @@
 
 A sequential, batch-by-batch revision of every implemented card text in the Standard-legal pool (Scarlet & Violet + Mega Evolution). Each batch's printed texts were audited against the engine's behaviour on a real board (smoke harness plus targeted probes), and the verified findings were then fixed, rejected or deferred on branch `card-revision`. A fix is accepted only when a test drives the real mechanism, asserts the printed text, fails before the change and passes after it. Recorded readings (R-xxx, UNRULED notes) are left as they are: the user deferred all rulings. Each section below lists the batch's findings, what happened to each one, and the test that covers it.
 
+## Summary
+
+The revision is complete: 56 batches (B01–B56) cover every implemented text unit in the Standard-legal pool. Each was audited and then fixed, deferred or pinned. Engine 0.530.0 → 0.555.0 over 25 engine commits, plus 5 commits that change only docs or add pinning tests (B29, B39, B48, B51, B52). `MATCH_RECORD_VERSION` stayed 49 throughout: every change either widens a shape or touches only events, which are not persisted. The 26 batches with no finding to fix have no section below (B03, B11, B13, B15, B16, B18, B23, B24, B25, B27, B28, B30, B31, B32, B34, B38, B40, B41, B43, B44, B46, B49, B50, B53, B54, B56); their ruling notes are in the table at the end of this summary.
+
+**Scope.** 1985 units (78 Supporter, 86 Item, 35 Tool, 18 Special Energy, 31 Stadium, 288 Ability, 1449 attack), 3888 unit-printing pairs over 2896 distinct printing ids. Every printing id was resolved on its own (its registry row, an alias, or the attack text reader on its own face), not only the first printing.
+
+**Findings.** The audits reported 56 findings and 23 ruling notes. Two more defects turned up while reproducing (B10 Rocket Brain, B20's damage-free Knock Out), so the batch tables hold 58 rows. No batch found a crash, and the smoke corpus never threw or got stuck.
+
+| Severity (as finally classified) | Rows | Fixed | Deferred | Rejected |
+|---|---|---|---|---|
+| crash | 0 | 0 | 0 | 0 |
+| bug | 27 | 25 (one only in part) | 2 | 0 |
+| minor | 20 | 13 | 7 | 0 |
+| ruling (a recorded reading, reclassified at fix time) | 11 | 0 | 11 | 0 |
+| **all** | **58** | **38** | **20** | **0** |
+
+Nothing was rejected: every audited finding reproduced. The 11 "ruling" rows are B48's nine switch-out units (D227) and B20's two counter-Knock-Out units (R-PD1). The auditors filed them as defects; the fix pass found they are recorded readings.
+
+**Final checks (HEAD of `card-revision`).** `bun run check` passes typecheck coverage (1035 files), `tsc -b` and lint coverage (1040 files). It stops at `biome lint . --error-on-warnings` on 3 errors, all `lint/style/useSingleVarDeclarator` in `frontend/lua/web/host.js` (lines 585, 624, 625). These predate the revision: no `card-revision` commit touches `frontend/`, and the file was last changed in 2a5798a7, before the branch point 714256b3. So the remaining step was run on its own: `bunx vitest run --pool=forks --maxWorkers=3` over the whole repo gives 737 files / 17101 tests, all passed. The pre-revision engine baseline was 541 files / 14905 tests, all passed. `bun scripts/mutation/precheck.ts` reports the same 4 broken rows it reported before B01 (`D455-optional-apply-arm-deleted`, plus the three `apps/api` `cache.ts` rows `D581` / `D612` / `D628`, which still anchor `CACHE_VERSION = "v9"`). No revision commit added a broken row.
+
+**Smoke corpus (`bun tmp/revision/smoke.ts`, seed 7).** 1985 units, 8028 runs. First run, before B01: 7964 ok, 22 unsimulated, 42 refused, 0 stuck, 0 threw. Final run: 7984 ok, 2 unsimulated, 42 refused, 0 stuck, 0 threw. The 20 runs that moved from unsimulated to ok are the 10 reprint printings that were missing a registry row: Judge `sv04.5-228` / `sv10-167` / `sv10-222`, Rare Candy `sv04.5-089`, Switch `sv03.5-206` / `mfb-34`, Ultra Ball `sv04.5-091`, Potion `mfb-33`, Paradise Resort `svp-045` and Reversal Energy `sv02-192`. The 2 runs still unsimulated are Explosiveness (`me01-028`), which the harness cannot place because it is a setup-time Ability; `ruleHooksMeD644.test.ts` covers it. All 42 refusals are correct for the smoke board, and they are the same runs as before: Erasure Ball / Power Saver with fewer than 4 Team Rocket's Pokémon (32), Anthea & Concordia without N's Darmanitan (4), Boom Boom Groove without a Festival Lead Active (4), and Moomoo Rolling without a Rollout last turn (2). In 101 ok runs over 45 units the log changed, which matches the log-only fixes (B02, B12, B22, B36, B45, B47, B55, and others).
+
+### Deferred: what each one needs
+
+Data. These need the user's go-ahead to change the ingest and re-ingest the local and remote D1; the D1 was read-only for this work.
+
+1. **B04 U0257 / U0258 / U0548 — `30th-126` / `-127` / `-128` (Poké Pad, Switch, Ultra Ball) show no card text.** They now play, through registry rows, but the catalog `effect` is empty. Needed: an ingest backfill that copies `effect` and `print_key` from the unique same-name, same-subtype twin, then a re-ingest.
+2. **B29 U0083 — every Standard-legal `30th` Stage 1 / Stage 2 (33 rows) has `evolve_from` NULL.** Nothing can evolve into them, and they are refused on the Bench. Needed: an `evolve_from` backfill at ingest, a re-ingest, and a drift guard that fails on a legal non-Basic with NULL `evolve_from`. 25 rows can copy a same-name, same-stage printing. 8 rows need hand-authored values: Cherrim -007 ← Cherubi, Cosmoem -079 ← Cosmog, Lunala -080 / Solgaleo -105 ← Cosmoem, Hakamo-o -111 ← Jangmo-o, Kommo-o -112 / -143 ← Hakamo-o, Hisuian Zoroark -123 ← Hisuian Zorua.
+3. **B39 U1926 (+ U1857 / U1898 / U1946) — no Pokémon in `sv10.5w` (163), `sv10.5b` (162) or `mfb` (28) has a Weakness or Resistance.** tcgdex returns NULL for them. Needed: `weaknesses_json` / `resistances_json` for those 353 rows, from another source or by hand, then a re-ingest and a drift guard.
+
+Design. Each needs a new mechanism, or a choice the repo has not made.
+
+4. **B04 U0252 — Rare Candy refuses a legal Stage 2 when neither deck holds a copy of the Stage 1.** The match pool holds only the decks' faces. Option A: `createGame` keeps the bridge Stage 1 faces, and the three pool builders (apps/api `lobby/cardPool.ts`, `src/features/game/cardPool.ts`, `src/features/playmat/prepareSandbox.ts`) load the `evolveFrom` face of every Stage 2. Option B: an engine table mapping each Stage 1 to its Basic (479 entries), with a generator and a drift guard. `revisionB04.test.ts` §3 pins the gap.
+5. **B47 U0004 (+ U0600 / U1313 / U1841 / U0966) and B51 U0697 / U1740 — a shielded Benched Pokémon nobody chose still gets the log row "X prevented the effect of the attack" when an offer is built** (gusts, moving the opponent's Energy). This is D259's recorded "announce in the filter" design, shared by about 20 `unshieldedRefs` offer sites. Needed: one decision for all of them. Either drop the offer-time row (filter with a scratch event array, as `anyWayDestinations` does), or add a separate "can't be chosen" event and wording.
+6. **B52 U0264 / U0356 / U0367 — "is now Asleep and Poisoned" into Mist Energy logs two identical prevention rows.** This is D142's recorded rule of one row per refused op. Needed: either the collapse (the reversal recipe is in B52), or a status descriptor on `ATTACK_EFFECT_PREVENTED` that log.ts renders, on every channel.
+7. **B51 U0217 / U0294 / U0462 / U0693 / U1155 / U1513 — a "You may draw …" attack asks even when yes would draw nothing** (full hand or empty deck). D186 / D202 record that the confirm always parks. The skip (`optionalDrawMoot`) and its measured reversal are written up in B51.
+8. **B36 U0064 — Morpeko "Select a Snack" is captioned and logged as a look, not as a discard and then a take** (R-SAS1, UNRULED). The board is right. Reversal: mill 3 with `discardDeckTop`, then a mandatory 1-card `discardPileRetrieval` limited to the milled uids.
+
+Recorded readings. These are rulings; the table below has the full set.
+
+9. **B09 U0649 — Lumiose City on a full Bench is accepted, finds nothing, shuffles and ends the turn** (R-LC1). Reversing it is an engine-wide policy: one `programPlayable` gate (`searchDeck` with `dest: "bench"` and no free Bench space makes the card unplayable). That gate also reaches Nest Ball, Buddy-Buddy Poffin, Artazon and Fossil Quarry.
+10. **B20 U1230 / U0777 — a Knock Out caused only by damage counters an attack places counts as "Knocked Out by damage from an attack"** (R-PD1). Reversal: mark the lethality of counter placement the way `knockOutDefender`'s `koByEffect` marker does, for every reader at once (`byAttackFor`, `koByOpponentAttack`, `koRecoilOf`, `faintingSpells`, `briarPrizeBonus`, `runKoToolTrigger`). `revisionB20.test.ts` §2 pins the current reading.
+11. **B48 U0137 / U0480 / U0720 / U1334 / U1687 / U1948 / U1314 / U1087 / U0025 — "Switch out your opponent's Active Pokémon" switches out an Active that has Mist Energy** (D227). Reversal: an `effectRefused` guard in `case "opponentSwitchOut"`, then flip `preventBlock.test.ts`'s CLASSIFIED verdict and invert `revisionB48.test.ts` §2 / §3.
+
+Not a revision item, recorded for completeness: the 39 identities / 73 printings left in `reprintAliasLegal.test.ts`'s D290 census are `legal_standard_effective = 0` on the local D1, so they are outside the Standard pool. B01's comment there calls them "equally effective-legal", which is not what the D1 says.
+
+### Ruling notes for the future rulings review
+
+Each was left as it is, following "review rulings in the future, leave as is". The auditors reported these with severity "ruling": the code contradicts the printed text, but the reading is recorded. The batch and card point to the details.
+
+| # | Batch | Card(s) | Recorded reading | What the printed text seems to say |
+|---|---|---|---|---|
+| 1 | B04 | Energy Switch `me01-115` / `me05-107` / `sv01-173` | `moveFloor` is 0, so an empty move is accepted | the move is mandatory once the card is played |
+| 2 | B07, B44, B45, B46 | Handheld Fan (R-HF); Jet Cyclone, Void Gale, Reflect Energy, Hurricane, Cold Cyclone, Slight Shift, Wheel Pass, Volt Cyclone, Scorching Cyclone, Inviting Kiss | the same `moveFloor` 0 (D37 / D441 / D443): every numeric `moveEnergy` is read as "up to" | "Move an Energy" / "Move 3 Energy" is exact, and a single possible destination should resolve without a prompt |
+| 3 | B45 | Tea Server, Dangle Tail, Beckon, Electromagnetic Sonar | an article-form discard-pile retrieval parks with `min: 0` (D538) | "Put a … card from your discard pile into your hand" is mandatory when a matching card exists |
+| 4 | B08, B16, B19, B20 (B15, B26 in notes) | Lillie's Pearl, Legacy Energy, Infinite Shadow, Fragile Husk, Final Chain, Oh No You Don't, Photon Cord, Shadowy Concealment, Briar, the revenge attacks | R-PD1 / R-BR1 / D164 / D434: for the Knock Out readers, counters an attack places count as "damage from an attack". Durable Body and Sturdy (D138) read them the other way | placing damage counters is not damage |
+| 5 | B12 | Rocket Brain, and every mover of counters on its own board | moving a counter files HEALED and stamps `healedTurn` (D138 / D386) | moving counters is not healing |
+| 6 | B15 | Shaymin "Flower Curtain" `sv10-010` / `sv10-185` | the bench shield ignores which side attacks (D425; a D558 debt), so it also prevents your own spread damage | the shield covers only "attacks from your opponent's Pokémon". (Curly Wall U1332, reported in the same batch, was fixed by B19's own-side change to `seatDamageReduction`.) |
+| 7 | B17 | Orthworm ex "Pummeling Payback" | a benched Orthworm ex that is damaged puts no counters on the attacker (R-O1) | the card prints no Active Spot clause |
+| 8 | B19 | Pecharunt "Final Chain", and every on-KO Ability | on-KO triggers ignore Ability locks (D100), unlike `koPrizeBonus` and Shadowy Concealment in the same sweep | a Pokémon that has no Abilities cannot use one |
+| 9 | B20 | Meowth ex "Last-Ditch Catch" | declining the first confirm still spends the shared "Last-Ditch" lock (R-LDC1) | a declined Ability was not used |
+| 10 | B21 | Turtonator "Shell Spikes", Koffing "Smog Signals" | nothing triggers when the attack's effect switches the damaged holder out (`damagedByAttackAbility` requires it to still be Active) | the "in the Active Spot" clause describes the moment of damage |
+| 11 | B21 | Durant ex "Sudden Shearing" | the "you may" mill fires automatically (compare Sandy Flapping's confirm, D626) | a real yes/no |
+| 12 | B21 | Palafin "Zero to Hero" | the swap is forced (R-ZH1) | "you may" |
+| 13 | B21 | Dragapult "Wicked Tail" | fires automatically; logged as two single flips instead of one 2-coin flip (D555 R1) | optional, and one grouped flip |
+| 14 | B25 | Haughty Order | the revealed cards are shuffled back before the copied attack resolves (R-HO1) | the shuffle is printed last |
+| 15 | B25 | Try to Imitate | the copied attack is chosen before the coin flip (R-CP8); no outcome difference was found | flip first |
+| 16 | B28, B31 | Charged Web, Fighting Fist, Superalloy Hands, Fighting Wings, Illusory Hijacking | "Pokémon V" excludes VSTAR and VMAX (D92) | they are Pokémon V. This cannot come up in Standard, which has no legal V |
+| 17 | B30 (B26, B29, B31, B32, B39 in notes) | every "for each Energy attached" / "Energy in play" count, and "same amount" / "more Energy" | Energy CARDS are counted, not the Energy they provide (D121 / D372 / D106 / D549 R4); the extra-Energy family counts units (D436) | older official rulings count the Energy provided |
+| 18 | B45 | Cofagrigus "Law of the Underworld" | "has an Ability" reads the printed card (`hasPrintedAbility`), so Pokémon under Initialization still take counters | Pokémon that "have no Abilities" do not have one |
+| 19 | B48 | the nine switch-out attacks (deferred item 11) | D227: being switched out is not an effect done to the Active | the Active is the printed object of the sentence |
+| 20 | B09 | Lumiose City (deferred item 9) | R-LC1: a search that takes nothing still ends the turn | — |
+
+The auditors also noted these in passing without reporting them. They belong to the same review:
+
+- **"You may" that runs without asking, and whiffs.** Triggers with no downside run without a confirm (the triggers.ts doctrine, B20). Diver's Catch fires automatically (D27, B15). A search of an empty deck, or one that finds nothing, does nothing silently and still uses up the play (B05; B09 Grand Tree). On a tails first flip, R-UTH1 also skips the printed shuffle (B24).
+- **Playability.** Naveen can be played with a hand of 6 or more and draws 0 (R-NV2, B01). Heal Items can be played on an undamaged board (D555 R4; B04, B05, B06). Buddy-Buddy Poffin can be played into a full Bench (D45, B04). Look for Prey is refused on a full opponent Bench (B12). Boss's Orders with only a shielded Benched target is played and does nothing (B14, B18).
+- **Shields and reductions.** The Intimidating Jaw / Intimidating Fang / Pressure reductions also cut damage to the holder's Bench (D149 / D151; B04, B13, B16). Phantom Dive offers a shielded Benched Pokémon, and the counters placed there are wasted (D621; B14, B18). Attacks that ignore "any effects on your opponent's Active Pokémon" are still stopped by Survival Brace, by coin-flip survival Abilities and by the Stadium's ex/V shield (B32). An attacker's own damage reductions do not reduce its self-damage (B49).
+- **Evolution timing.** Evolving from the deck (Emergency Evolution, Dark Awakening, Evo-Powder, Cellular Ascension, Ascension, Spiteful Evolution) skips the first-turn and played-this-turn bans (R-SV1 / D307 / R-SE1). Rare Candy "puts" a Stage 2 rather than playing it, so Evolution Jammer and Potent Glare do not stop it (D285; B17, B40). Once-per-turn Abilities are keyed by card uid, so a Pokémon that leaves play and comes back stays spent (R-FL, B11).
+- **Gusts that find no target.** Drag Off and Invite and Strike still deal their damage to the unchanged Active (D228; B47, B48).
+
 ## B01 — Supporters
 
 Engine 0.530.0 → 0.531.0. `MATCH_RECORD_VERSION` stays 49 (apps/api `match.ts`, "STAYS 49 AT CARD REVISION B01"). Suite: `packages/engine/src/revisionB01.test.ts`.
