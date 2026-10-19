@@ -2964,7 +2964,18 @@ export interface GameState {
       PUBLIC — both players watched the Knock Out happen and both can count
       turns, so a `BoardCondition` reading it keeps that union's public-state
       invariant. It is per-SEAT and names the side that LOST the Pokémon (the
-      sentence's "your Pokémon"), not the side that scored the KO. */
+      sentence's "your Pokémon"), not the side that scored the KO.
+
+      🆕 CARD REVISION B26 — **ONLY A KNOCK OUT ON THE LOSING SEAT's OPPONENT's
+      TURN IS STAMPED.** The window is always the opponent's turn, so a seat's own
+      Pokémon Knocked Out on its OWN turn (Dusclops / Dusknoir "Cursed Blast",
+      Overvolt Discharge, a Checkup at the end of its own turn) is never in it —
+      and stamping it REPLACED the opponent's-turn stamp a turn earlier, which is
+      how Avenging Edge / Retaliate / Unfair Stamp / Flip the Script lost their
+      Knock Out after a Cursed Blast. Ownership is the turn number's parity, the
+      same reading `prizesTakenOnTurn` (D630) takes for the same Cursed Blast
+      reason. An older record stamped on its own turn reads exactly as it did
+      before, so no `MATCH_RECORD_VERSION` change. */
   lastKoTurn: Record<Seat, number | null>;
   /** 🆕 §8.1 (D326) — WHICH Pokémon this seat lost on the turn `lastKoTurn`
       stamps, and HOW. `lastKoTurn` answers *when* a seat last lost a Pokémon and

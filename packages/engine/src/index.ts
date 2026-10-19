@@ -20274,6 +20274,18 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕 engineVersion 0.546.0 → **0.547.0** (card revision B26 — ATTACKS: ONE AUDIT FINDING FIXED;
+    `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B26")). flow.ts
+    `knockOut` stamps `lastKoTurn` / `lastKoMarks` only for a Knock Out on the losing seat's
+    OPPONENT's turn (turn-number parity, D630's `prizesTakenOnTurn` reading): a seat's own Pokémon
+    Knocked Out on its own turn (Dusclops / Dusknoir "Cursed Blast") used to REPLACE the
+    opponent's-turn stamp, so every "Knocked Out (by damage from an attack) during your opponent's
+    last turn" reader lost it — Umbreon "Retaliate" `30th-091`, Koraidon ex "Orichalcum Fang"
+    `me02.5-121`, Krookodile "Vengeful Fang" `me02-066`, Iron Leaves "Avenging Edge" `sv06-019`,
+    Terrakion "Retaliate" `sv10.5w-054` / `-135`, Tropius / Revavroom "Rally Back" `30th-005` /
+    `sv06-125`, Alolan Marowak "Retaliate" `sv09-057`, and the bare / owner gates (Unfair Stamp,
+    Hassel, Fezandipiti ex "Flip the Script", Team Rocket's Archer, Ethan's Pinsir).
+    `revisionB26.test.ts`.)
     🆕 engineVersion 0.545.0 → **0.546.0** (card revision B22 — ATTACKS: ONE AUDIT FINDING FIXED;
     `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B22")).
     `STADIUM_DISCARDED` gains a REQUIRED `cause: "replaced" | "effect"`: cardplay.ts `playStadium`'s
@@ -25947,7 +25959,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.546.0";
+export const engineVersion = "0.547.0";
 
 export type {
   ApplyResult,

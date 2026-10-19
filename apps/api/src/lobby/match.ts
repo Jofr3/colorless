@@ -2161,6 +2161,12 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕 **STAYS 49 AT CARD REVISION B26 — NO SHAPE CHANGE; `knockOut` WRITES `lastKoTurn` / `lastKoMarks` FOR FEWER
+    KNOCK OUTS.** (Placed ABOVE the B22 block.) A Knock Out of a seat's own Pokémon on its OWN turn is no longer
+    stamped (it is outside every "during your opponent's last turn" window, and stamping it replaced the
+    opponent's-turn stamp). A v49 record that already holds such a stamp is read by the same unchanged readers
+    exactly as before, so nothing it holds changes meaning.
+
     🆕 **STAYS 49 AT CARD REVISION B22 — ONE REQUIRED KEY ON AN UNPERSISTED EVENT (`STADIUM_DISCARDED.cause`).
     NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD OR `EffectOp` MEMBER OR KEY.** (Placed ABOVE
     the B21 block.) `GameEvent` is not in `MatchRecord`; the key only picks the log wording ("left play — replaced"

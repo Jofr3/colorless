@@ -1114,16 +1114,19 @@ describe("D329 §10 — a cascade Knock Out is not 'by damage from an attack'", 
     // passes no `attackerSeat` on any pass, so a build that handed every pass the
     // attack cause is indistinguishable from the right one HERE. Kept because it
     // is what makes the row above the separating board rather than the only board.
+    // 🆕 CARD REVISION B26 — the cascade is on P2's side (P1 plays the Stadium): `knockOut`
+    // stamps only a Knock Out on the losing seat's OPPONENT's turn, the one window any
+    // reader asks about, so a self-cascade on P1's own turn would leave no marks to read.
     let state = board(SEEDS[0], {
-      p1Active: LUDICOLO,
-      p1Bench: [TEAMMATE, TEAMMATE],
-      p2Active: TEAMMATE,
+      p1Active: TEAMMATE,
+      p2Active: LUDICOLO,
+      p2Bench: [TEAMMATE, TEAMMATE],
     });
-    state = setDamage(state, "p1", 160);
-    state = setBenchDamage(state, "p1", 0, 70);
+    state = setDamage(state, "p2", 160);
+    state = setBenchDamage(state, "p2", 0, 70);
     const played = playStadiumWith(state, "p1", GRAVITY);
     expect(played.events.filter((e) => e.type === "KNOCKED_OUT")).toHaveLength(2);
-    expect(marks(played.state, "p1")).toEqual([
+    expect(marks(played.state, "p2")).toEqual([
       { name: "Ludicolo", byAttack: false },
       { name: "fix-basic-1", byAttack: false },
     ]);

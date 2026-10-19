@@ -6253,7 +6253,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.546.0";',
+    find: 'export const engineVersion = "0.547.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -61043,5 +61043,14 @@ export const MUTANTS: Mutant[] = [
     find: 'uid: current.uid, cause: "replaced" });',
     replace: 'uid: current.uid, cause: "effect" });',
     expectKilledBy: ["packages/engine/src/revisionB22.test.ts"],
+  },
+  {
+    id: "B26-own-turn-ko-overwrites-opponents-turn-stamp",
+    decision: "B26",
+    what: "`knockOut` stamps a Knock Out on the losing seat's OWN turn again, so a Cursed Blast self-Knock-Out replaces the opponent's-turn stamp and Avenging Edge / Retaliate / Unfair Stamp / Flip the Script lose it. Killed by revisionB26.",
+    file: "packages/engine/src/flow.ts",
+    find: "    if (ownTurn) return state;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/revisionB26.test.ts"],
   },
 ];

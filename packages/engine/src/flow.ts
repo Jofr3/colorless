@@ -168,7 +168,19 @@ export function knockOut(
   // append is keyed on `uid`, so the §14 tie probe's speculative call and the
   // real one that follows agree — D271's stamp was idempotent for free and a
   // list has to be made so on purpose.
+  //
+  // 🆕 CARD REVISION B26 — ONLY A KNOCK OUT ON THE OPPONENT'S TURN IS STAMPED. Every reader asks
+  // `lastKoTurn[seat] === state.turn - 1` from `seat`'s own turn, i.e. about the OPPONENT's turn, so
+  // a Knock Out of `seat`'s Pokémon on `seat`'s OWN turn (Dusclops / Dusknoir "Cursed Blast",
+  // Overvolt Discharge) is never in the window — and stamping it REPLACED the opponent's-turn stamp
+  // and restarted the marks, so Avenging Edge / Retaliate / Unfair Stamp / Flip the Script forgot the
+  // Knock Out the opponent had scored a turn earlier. Ownership is the turn NUMBER's parity (odd
+  // turns belong to `firstPlayer`), exactly as `resolveTakePrizes`'s D630 record reads it and for the
+  // same reason (`phaseViewOf` owns no turn at a Checkup park, where `state.turn` is still the
+  // ended turn — so the opponent's Checkup Knock Out still stamps, R-STS1).
+  const ownTurn = (state.turn % 2 === 1) === (koedSeat === state.firstPlayer);
   const stampFor = (card: Card | undefined): GameState => {
+    if (ownTurn) return state;
     const carried = state.lastKoTurn[koedSeat] === state.turn ? state.lastKoMarks[koedSeat] : [];
     // `card` is undefined only when a stack outruns the catalog. An empty name
     // matches no owner prefix, so the narrowed gate reads FALSE rather than

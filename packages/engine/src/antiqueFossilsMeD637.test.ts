@@ -393,7 +393,7 @@ describe("D637 §7 — Fossil Quarry and Fossil Beatdown reach the new fossils",
     expect(hit(charged).state.players.p2.active?.damage).toBe(70);
   });
 
-  it("the engine is 0.546.0", () => {
-    expect(engineVersion).toBe("0.546.0");
+  it("the engine is 0.547.0", () => {
+    expect(engineVersion).toBe("0.547.0");
   });
 });

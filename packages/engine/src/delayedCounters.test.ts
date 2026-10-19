@@ -316,6 +316,16 @@ function endVictimTurn(state: GameState, victimSeat: Seat) {
   return mustApply(state, { type: "endTurn", seat: victimSeat });
 }
 
+/** 🆕 CARD REVISION B26 — the attack-applied Poison precedent, driven where a Knock Out IS
+    stamped. Every schedule in this suite fires at the end of the VICTIM's own turn, and since B26
+    `knockOut` (flow.ts) stamps `lastKoTurn` / `lastKoMarks` only for a Knock Out on the losing
+    seat's OPPONENT's turn (the only window any reader asks about). So the cause rungs read the
+    Poison precedent here instead: P2's 90 HP Active, carrying 80, is Poisoned by P1's turn-2
+    attack and Knocked Out at the Checkup that ends P1's turn. */
+function poisonKoOnInstallersTurn() {
+  return mustApply(setDamage(armed("p1"), "p2", 80), { type: "attack", seat: "p1", index: POISON });
+}
+
 /** Rendered log rows as `{ who, text }`, the idiom every sibling suite uses. */
 function render(events: GameEvent[], state: GameState): { who: string; text: string }[] {
   const ctx: LogContext = { names: { p1: "Ana", p2: "Ben" }, state, elapsed: "+00:14" };
@@ -722,10 +732,12 @@ describe("§6 — 90 counters onto a 90 HP body, between turns", () => {
 
   it("🛑 THE CAUSE — `byAttack` is FALSE, which is attack-applied POISON's shipped answer", () => {
     const { victim, fired } = killed();
-    const marks = fired.state.lastKoMarks[victim];
-    expect(marks).toHaveLength(1);
-    expect(marks[0]?.byAttack).toBe(false);
-    expect(fired.state.lastKoTurn[victim]).toBe(3);
+    // 🆕 B26 — the Knock Out lands at the end of the VICTIM's own turn 3, which no "during your
+    // opponent's last turn" window ever covers, so nothing is stamped for it at all (and so no
+    // reader can see it, by attack or otherwise).
+    expect(count(fired.events, "KNOCKED_OUT")).toBe(1);
+    expect(fired.state.lastKoMarks[victim]).toEqual([]);
+    expect(fired.state.lastKoTurn[victim]).toBeNull();
 
     // ⚠️ THE PRECEDENT IS DRIVEN, NOT CITED (D422). A Poison applied by an attack
     // produces a Checkup Knock Out of exactly this shape, and it has answered
@@ -733,10 +745,11 @@ describe("§6 — 90 counters onto a 90 HP body, between turns", () => {
     // rather than making a second one. `collectKnockOuts` takes an `attackerSeat`
     // only from `finishAttack`; the Checkup passes none, and that is the whole
     // mechanism for both.
-    const poisoned = install("p1", POISON).state;
-    const dying = setDamage(poisoned, "p2", 80);
-    const byPoison = mustApply(dying, { type: "endTurn", seat: "p2" });
+    // 🆕 B26 — driven on the installer's turn, where the Knock Out is stamped.
+    const byPoison = poisonKoOnInstallersTurn();
     expect(find(byPoison.events, "KNOCKED_OUT")?.seat).toBe("p2");
+    expect(byPoison.state.lastKoTurn.p2).toBe(2);
+    expect(byPoison.state.lastKoMarks.p2).toHaveLength(1);
     expect(byPoison.state.lastKoMarks.p2[0]?.byAttack).toBe(false);
   });
 
@@ -1123,7 +1136,7 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.546.0");
+    expect(engineVersion).toBe("0.547.0");
   });
 });
 
@@ -1384,10 +1397,15 @@ describe("§12 — a discard takes NO Prize and a Knock Out takes ONE, on one ax
     expect(discarded.state.lastKoTurn.p2).toBeNull();
     expect(discarded.state.lastKoMarks.p2).toEqual([]);
     // …and the CONTROL on the same axis, so the rung cannot pass on a build where
-    // nothing ever stamps.
+    // nothing ever stamps. 🆕 B26 — both payloads fire at the end of the VICTIM's own
+    // turn, which `knockOut` no longer stamps (no "opponent's last turn" window covers
+    // it), so the two stamps cannot tell them apart any more; `knockOut` is the stamp's
+    // one writer, and the separating fact is whether the body went through it.
     const doomed = endVictimTurn(install("p1", DOOM).state, "p2");
-    expect(doomed.state.lastKoTurn.p2).toBe(3);
-    expect(doomed.state.lastKoMarks.p2).toHaveLength(1);
+    expect(count(discarded.events, "KNOCKED_OUT")).toBe(0);
+    expect(count(doomed.events, "KNOCKED_OUT")).toBe(1);
+    expect(doomed.state.lastKoTurn.p2).toBeNull();
+    expect(doomed.state.lastKoMarks.p2).toEqual([]);
   });
 
   it("🛑 the two LOG rows do not read alike — the arming row names which one it is", () => {
@@ -1664,19 +1682,19 @@ describe("§14 — §8.1 in full, Prize included, and the cause re-derived", () 
 
   it("🛑 THE CAUSE — `byAttack` is FALSE, and the KO-by-damage readers see nothing", () => {
     const fired = endVictimTurn(install("p1", DOOM).state, "p2");
-    const marks = fired.state.lastKoMarks.p2;
-    expect(marks).toHaveLength(1);
-    expect(marks[0]?.byAttack).toBe(false);
-    expect(fired.state.lastKoTurn.p2).toBe(3);
+    // 🆕 B26 — the end of the VICTIM's own turn is outside every "opponent's last turn"
+    // window, so the Knock Out leaves no stamp and no mark: the readers see nothing.
+    expect(count(fired.events, "KNOCKED_OUT")).toBe(1);
+    expect(fired.state.lastKoMarks.p2).toEqual([]);
+    expect(fired.state.lastKoTurn.p2).toBeNull();
     // ⚠️ THE MECHANISM, NAMED: `collectKnockOuts` takes an `attackerSeat` from
     // `finishAttack` ALONE, and the Checkup passes none — so `byAttackFor` answers
     // false before it ever looks at the body. That is the SAME line D434's payload
     // and an attack-applied Poison both answer on, which is why the answer agrees
     // while the reasoning behind the MARKER does not.
-    const poisonKo = endVictimTurn(
-      setDamage(install("p1", POISON).state, "p2", 80),
-      "p2",
-    );
+    // (🆕 B26 — driven on the installer's turn, where the Knock Out is stamped.)
+    const poisonKo = poisonKoOnInstallersTurn();
+    expect(poisonKo.state.lastKoMarks.p2).toHaveLength(1);
     expect(poisonKo.state.lastKoMarks.p2[0]?.byAttack).toBe(false);
   });
 
@@ -1728,7 +1746,8 @@ describe("§14 — §8.1 in full, Prize included, and the cause re-derived", () 
     const fired = endVictimTurn(dying, "p2");
     expect(count(fired.events, "KNOCKED_OUT")).toBe(1);
     expect(fired.state.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
-    expect(fired.state.lastKoMarks.p2[0]?.byAttack).toBe(false);
+    // 🆕 B26 — on the victim's own turn, so no mark (no "opponent's last turn" reader looks).
+    expect(fired.state.lastKoMarks.p2).toEqual([]);
   });
 
   /** 🛑 **THIS ENGINE MARKS; §8.1 KILLS — AND THE ORDERING SHOWS IT.** The doomed body

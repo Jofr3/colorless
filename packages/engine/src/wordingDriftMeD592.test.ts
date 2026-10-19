@@ -505,7 +505,7 @@ describe("D592 §6 — Claw of Darkness and Thunder on a board", () => {
 });
 
 describe("D592 §7 — the version", () => {
-  it("is built at engine 0.546.0", () => {
-    expect(engineVersion).toBe("0.546.0");
+  it("is built at engine 0.547.0", () => {
+    expect(engineVersion).toBe("0.547.0");
   });
 });
