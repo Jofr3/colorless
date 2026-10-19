@@ -14,6 +14,8 @@ import {
   RARE_CANDY_DECK,
   handFromDeck,
   handUid,
+  COUNTER_SPREAD_DECK,
+  clearBench,
 } from "../../../packages/engine/src/testFixtures";
 import { LuaSimulator } from "./simulator";
 import { loadSimulatorSave } from "../playmat/simulatorSave";
@@ -87,6 +89,70 @@ function rareCandySetup(turn = 3) {
   return { sim, publish, state, candy, stage2, cardRow };
 }
 describe("Lua simulator", () => {
+  it("saves cosmetic hand and Bench order without changing engine targets or history", () => {
+    const { sim, state, publish, candy, stage2, cardRow } = rareCandySetup();
+    sim.persist();
+    const steps = sim.host?.steps;
+    const benchUid = state.players.p1.bench[1]?.stack.at(-1) ?? "";
+    sim.command(`reorder\thand\t${stage2}\t0`);
+    sim.command(`reorder\tbench\t${benchUid}\t0`);
+    expect(cardRow(stage2)?.[18]).toBe("0");
+    expect(cardRow(benchUid)?.[18]).toBe("0");
+    expect(cardRow(benchUid)?.[6]).toBe("1");
+    expect(sim.host?.game).toBe(state);
+    expect(sim.host?.steps).toBe(steps);
+    expect(sim.menu).toBeNull();
+    sim.command("close");
+    sim.command("open");
+    expect(cardRow(stage2)?.[18]).toBe("0");
+    expect(cardRow(benchUid)?.[18]).toBe("0");
+    expect(sim.host?.game).toEqual(state);
+    const order = rows(publish).filter((r: string[]) => r[0] === "C");
+    sim.command("reorder\tbench\tnot-your-card\t0");
+    sim.command(`reorder\tbench\t${benchUid}\t99`);
+    expect(rows(publish).filter((r: string[]) => r[0] === "C")).toEqual(order);
+    // An evolved body keeps the cosmetic position of its Basic stack.
+    const basic = state.players.p1.bench[0]?.stack.at(-1) ?? "";
+    sim.command(`reorder\tbench\t${basic}\t1`);
+    sim.command(`move\t${candy}\thand\t0\tplaymat\t0`);
+    sim.command(`move\t${stage2}\thand\t0\tbench\t0`);
+    expect(cardRow(stage2)?.[5]).toBe("bench");
+    expect(cardRow(stage2)?.[18]).toBe("1");
+    sim.dispatch({ type: "endTurn", seat: "p1" });
+    const opponentBench = rows(publish).filter(
+      (r: string[]) => r[0] === "C" && r[4] === "opponent" && r[5] === "bench",
+    );
+    expect(opponentBench.find((r: string[]) => r[1] === benchUid)?.[18]).toBe("0");
+  });
+  it.each([0, 1])("places counters immediately on click, with second target %s", (secondTarget) => {
+    let state = driveSetup(
+      11,
+      { p1: COUNTER_SPREAD_DECK, p2: COUNTER_SPREAD_DECK },
+      { first: "p2" },
+    );
+    state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
+    state = setActiveFromDeck(state, "p1", "fix-spread-bench");
+    state = attachFromDeck(state, "p1", "fix-grass-energy", 3);
+    state = clearBench(setActiveFromDeck(state, "p2", "fix-titan"), "p2");
+    state = benchFromDeck(state, "p2", "fix-titan");
+    state = benchFromDeck(state, "p2", "fix-titan");
+    const publish = vi.fn();
+    const sim = new LuaSimulator(publish, vi.fn());
+    sim.open({ state, events: [], names: { p1: "One", p2: "Two" }, startedAt: 100 });
+    sim.dispatch({ type: "attack", seat: "p1", index: 0 });
+    for (const index of [0, secondTarget]) {
+      expect(sim.menu?.kind).toBe("board");
+      expect(rows(publish).find((r: string[]) => r[0] === "M")?.[6]).toBe("true");
+      expect(rows(publish).filter((r: string[]) => r[0] === "F")).toHaveLength(0);
+      const before = sim.host?.game.players.p2.bench[index]?.damage ?? 0;
+      sim.menu?.options[index]?.run();
+      expect(sim.host?.game.players.p2.bench[index]?.damage).toBe(before + 10);
+    }
+    expect(sim.host?.game.phase.kind).toBe("turn:action");
+    expect(sim.host?.game.players.p2.bench.map((p) => p.damage)).toEqual(
+      secondTarget === 0 ? [20, 0] : [10, 10],
+    );
+  });
   it.each(["active", "bench"] as const)(
     "stages Rare Candy then evolves the %s Basic with a Stage 2 drag",
     (zone) => {
@@ -168,10 +234,13 @@ describe("Lua simulator", () => {
       sim.dispatch({ type: "attack", seat: "p1", index: 0 });
       const after = sim.host?.game;
       expect(sim.message).toBe("");
-      expect(after?.players.p1.prizes).toEqual(state.players.p1.prizes.slice(count));
+      expect(rows(publish).filter((r: string[]) => r[0] === "D")).toEqual([
+        ["D", state.players.p2.active?.stack.at(-1)],
+      ]);
+      expect(after?.players.p1.prizes).toEqual(state.players.p1.prizes.slice(0, -count));
       expect(after?.players.p1.hand).toEqual([
         ...state.players.p1.hand,
-        ...state.players.p1.prizes.slice(0, count),
+        ...state.players.p1.prizes.slice(-count).reverse(),
       ]);
       expect(after?.phase.kind).toBe("ko:promote");
       expect(sim.menu?.kind).toBe("board");
@@ -182,8 +251,10 @@ describe("Lua simulator", () => {
       sim.command("close");
       sim.command("open");
       expect(sim.host?.game).toEqual(after);
+      expect(rows(publish).some((r: string[]) => r[0] === "D")).toBe(false);
       sim.history("undoAction");
       expect(sim.host?.game).toEqual(state);
+      expect(rows(publish).some((r: string[]) => r[0] === "D")).toBe(false);
       expect(sim.menu).toBeNull();
       sim.history("redoAction");
       expect(sim.host?.game).toEqual(after);

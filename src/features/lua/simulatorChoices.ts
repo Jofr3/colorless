@@ -9,6 +9,9 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
   const host = sim.host;
   if (!host) return { kind: "list", title: "No game", options: [] };
   const seat = host.viewerSeat;
+  const pendingOp =
+    host.game.phase.kind === "effect:choose" ? host.game.phase.cont.pendingOp : null;
+  const placingCounters = pendingOp?.op === "damageChosen" && pendingOp.deals !== true;
   const selected: string[] = [];
   const assignments = new Map<string, number>();
   let amount = prompt.kind === "choosePokemon" ? (prompt.upTo ?? 1) : 100;
@@ -63,6 +66,8 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
       note: prompt.note,
       options: [],
       mandatory: true,
+      hideTargetOutline:
+        placingCounters || (prompt.kind === "choosePokemon" && !!prompt.counterTransfer),
     };
     switch (prompt.kind) {
       case "mayDraw":
@@ -139,7 +144,10 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
         menu.kind = "board";
         menu.title = "Choose a Pokémon";
         menu.options = prompt.candidates.map((ref) => ({
-          ...confirm({ kind: "pokemon", ref, ...(prompt.upTo ? { take: amount } : {}) }, refName(ref)),
+          ...confirm(
+            { kind: "pokemon", ref, ...(prompt.upTo ? { take: amount } : {}) },
+            refName(ref),
+          ),
           uid: refUid(ref),
         }));
         if (prompt.upTo)
@@ -156,6 +164,16 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
         break;
       case "choosePokemonMulti":
         menu.kind = "board";
+        if (placingCounters && prompt.max === 1) {
+          menu.title = "Place damage counters";
+          menu.options = prompt.candidates.map((ref) => ({
+            ...confirm({ kind: "pokemonMulti", refs: [ref] }, refName(ref)),
+            uid: refUid(ref),
+          }));
+          if (prompt.declinable)
+            menu.footer = [confirm({ kind: "pokemonMulti", refs: [] }, "Skip", "red")];
+          break;
+        }
         menu.title = `Choose Pokémon (${selected.length}/${prompt.max})`;
         menu.options = prompt.candidates.map((ref, i) => ({
           ...pick(String(i), refName(ref)),

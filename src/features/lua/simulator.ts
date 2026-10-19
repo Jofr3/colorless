@@ -28,6 +28,7 @@ import { cardImageUrl } from "../../lib/api";
 import { effectMenu } from "./simulatorChoices";
 import { viewLogEntries } from "../game/viewLog";
 import { usedTrainersForTurn } from "../playmat/utils/usedTrainers";
+import { SimulatorOrder } from "./simulatorOrder";
 
 export interface SimOption {
   label: string;
@@ -49,6 +50,7 @@ export interface SimMenu {
   options: SimOption[];
   footer?: SimOption[];
   mandatory?: boolean;
+  hideTargetOutline?: boolean;
 }
 /** An action attached to a card (Balatro's use/sell buttons). Targeted actions
  * share a `group` and name their `targetUid`; Lua collapses them into one
@@ -85,6 +87,8 @@ export class LuaSimulator {
   private active = false;
   private handlers = new Map<string, () => void>();
   private pendingRareCandy: string | null = null;
+  private knockedOut: readonly string[] = [];
+  private cardOrder = new SimulatorOrder(0);
   constructor(
     private publish: (raw: string) => void,
     private route: (page: string) => void,
@@ -134,6 +138,7 @@ export class LuaSimulator {
     }
     const before = this.host.log.length;
     this.host = hostReducer(this.host, { action, at: Date.now() });
+    this.knockedOut = this.host.knockedOut;
     const seats = new Set<string>();
     for (const e of this.host.log.slice(before)) {
       if (e.kind !== "action" || e.who === "system") continue;
@@ -207,10 +212,12 @@ export class LuaSimulator {
   }
   open(setup = loadSimulatorSave()) {
     this.active = true;
+    this.knockedOut = [];
     this.pendingRareCandy = null;
     this.menu = null;
     this.message = "";
     this.host = setup ? initHost(setup) : null;
+    this.cardOrder = new SimulatorOrder(this.host?.startedAt ?? 0);
     if (this.host) this.prompt();
     this.emit();
   }
@@ -244,7 +251,10 @@ export class LuaSimulator {
         action: {
           type: "takePrizes",
           seat: phase.seat,
-          prizeIndices: Array.from({ length: phase.count }, (_, i) => i),
+          prizeIndices: Array.from(
+            { length: phase.count },
+            (_, i) => h.game.players[phase.seat].prizes.length - 1 - i,
+          ),
         },
         at: Date.now(),
       });
@@ -547,6 +557,7 @@ export class LuaSimulator {
       return;
     }
     this.host = hostReducer(this.host, { type });
+    this.knockedOut = [];
     this.menu = null;
     this.message = "";
     this.persist();
@@ -764,6 +775,29 @@ export class LuaSimulator {
       this.retreat(Number.isInteger(index) && index >= 0 ? index : undefined);
       return;
     }
+    if (cmd === "reorder" && this.host && !this.menu) {
+      const [zone, uid, index] = args;
+      if (zone !== "hand" && zone !== "bench") return;
+      const seat = this.host.viewerSeat;
+      const side = this.host.game.players[seat];
+      const cards =
+        zone === "hand"
+          ? side.hand
+              .filter((id) => id !== this.pendingRareCandy)
+              .map((id) => ({ uid: id, key: id }))
+          : side.bench.map((body) => ({ uid: body.stack.at(-1), key: body.stack[0] ?? "" }));
+      const card = cards.find((c) => c.uid === uid);
+      if (!card) return;
+      this.cardOrder.move(
+        seat,
+        zone,
+        cards.map((c) => c.key),
+        card.key,
+        Number(index),
+      );
+      this.emit();
+      return;
+    }
     if (cmd === "move" && this.host && !this.menu) {
       const [uid, fromZone, fromIndex, zone, index] = args;
       if (
@@ -976,6 +1010,7 @@ export class LuaSimulator {
     );
     this.shuffled = "";
     if (this.pendingRareCandy) row("R", this.pendingRareCandy);
+    for (const uid of this.knockedOut) row("D", uid);
     if (v && h) {
       const piles = this.tablePiles(v);
       const isViewerTurn =
@@ -989,6 +1024,14 @@ export class LuaSimulator {
       for (const owner of ["you", "opponent"] as const) {
         const side = v.board[owner];
         const hand = side.hand.filter((c) => owner !== "you" || c.id !== this.pendingRareCandy);
+        const seat = owner === "you" ? h.viewerSeat : otherSeat(h.viewerSeat);
+        const benchKeys = side.bench.map((c, i) => h.game.players[seat].bench[i]?.stack[0] ?? c.id);
+        const handOrder = this.cardOrder.sorted(
+          seat,
+          "hand",
+          hand.map((c) => c.id),
+        );
+        const benchOrder = this.cardOrder.sorted(seat, "bench", benchKeys);
         row(
           "S",
           owner,
@@ -1048,6 +1091,11 @@ export class LuaSimulator {
             status.join(","),
             (full?.types ?? []).join(","),
             draggable,
+            zone === "hand"
+              ? handOrder.indexOf(c.id)
+              : zone === "bench"
+                ? benchOrder.indexOf(benchKeys[index] ?? c.id)
+                : index,
           );
           noteArt(c);
           for (const e of a?.energies ?? []) noteArt(e);
@@ -1114,6 +1162,7 @@ export class LuaSimulator {
         this.menu.note ?? "",
         !!this.menu.mandatory,
         this.menuId,
+        !!this.menu.hideTargetOutline,
       );
       for (const o of this.menu.options) option("O", o);
       for (const o of this.menu.footer ?? []) option("F", o);

@@ -138,6 +138,22 @@ function Layout.played(zone,count,index)
   local spacing=math.min(zone.spacing,(zone.well.w-16-142*zone.scale)/math.max(1,count-1))
   return zone.x+(index-(count-1)/2)*spacing,zone.y
 end
+-- Preserve the room needed for attached Energy and Tools while sorting a Bench.
+function Layout.benchPositions(zone,items)
+  local cardW=142*zone.scale
+  local total,gaps=#items*cardW,{}
+  for i=2,#items do
+    local gap=8+(#(items[i-1].energyCards or {})>0 and 26 or 0)+(#(items[i].toolCards or {})>0 and 26 or 0)
+    gaps[i]=gap;total=total+gap
+  end
+  local x=zone.x-total/2+cardW/2
+  local positions={}
+  for i,item in ipairs(items) do
+    if i>1 then x=x+cardW+gaps[i] end
+    positions[item.index]=x
+  end
+  return positions
+end
 function Layout.inside(rect,x,y)
   return rect and x>=rect.x and x<=rect.x+rect.w and y>=rect.y and y<=rect.y+rect.h
 end

@@ -66,8 +66,10 @@ function Library:face(item,w,h)
     self.backs=g.newImage('assets/textures/2x/Enhancers.png')
     self.backs:setFilter('nearest','nearest')
     self.backQuad=g.newQuad(0,0,142,190,self.backs:getDimensions())
+    self.blueBackQuad=g.newQuad(0,380,142,190,self.backs:getDimensions())
   end
-  g.setColor(1,1,1); g.draw(self.backs,self.backQuad,0,0,0,w/142,h/190)
+  local quad=item.backColour=='blue' and self.blueBackQuad or self.backQuad
+  g.setColor(1,1,1); g.draw(self.backs,quad,0,0,0,w/142,h/190)
 end
 function Library:makeCards(entering)
   if not self.width then return end

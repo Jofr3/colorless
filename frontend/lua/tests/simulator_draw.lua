@@ -31,7 +31,7 @@ local base={
   row('C','tr1','sv01-189','Professor\'s Research','you','hand',2,'false','Trainer','Supporter','','',0,'',0,'','','true'),
   row('C','active1','sv01-033','Houndour','you','active',0,'false','Pokemon','','Basic',70,20,'Fire,Fire',1,'burned,asleep','Fire','true'),
   row('C','bench1','sv01-030','Growlithe','you','bench',0,'false','Pokemon','','Basic',70,0,'',0,'','Fire','true'),
-  row('C','opp1','sv01-052','Quaxly','opponent','active',0,'false','Pokemon','','Basic',60,0,'Water',0,'','Water','false'),
+  row('C','opp1','sv01-052','Quaxly','opponent','active',0,'false','Pokemon','','Basic',60,0,'Water|opp-energy|sv03-230','opp-tool|sv01-191','','Water','false'),
   row('C','oppd','sv01-194','Switch','opponent','discard',0,'false','Trainer','Item','','',0,'',0,'','','false'),
   row('C','used','sv01-181','Nest Ball','you','played',0,'false','Trainer','Item','','',0,'',0,'','','false'),
   row('C','std','sv01-167','Beach Court','global','stadium',0,'false','Trainer','Stadium','','',0,'',0,'','','false'),
@@ -60,6 +60,22 @@ for _,size in ipairs({{1280,800},{480,850}}) do
   sim:layout(size[1],size[2]);sim:open(false)
   sim:draw(shaders)                              -- empty table
   sim:sync(snapshot(1));frames(30,1)
+  local knocked=snapshot(101,{row('D','opp1')})
+    :gsub('C\topp1\tsv01%-052\tQuaxly\topponent\tactive','C\topp1\tsv01-052\tQuaxly\topponent\tdiscard')
+    :gsub('S\tyou\t46\t6\t2','S\tyou\t46\t4\t4')
+  sim:sync(knocked);frames(12,sim.time)
+  local burn=sim.koPresentation and sim.koPresentation.cards[sim.koPresentation.index]
+  assert(burn and burn.disintegration and #burn.disintegration.particles>0,'KO shader, shadow and particle draw paths run')
+  assert(#burn.koAttachments==2,'Energy and Tool shader, shadow and particle draw paths run')
+  for _,a in ipairs(burn.koAttachments) do
+    local values=a:shaderValues(sim.time,0,0,false)
+    assert(values.dissolve>0 and values.burn_colour_1[4]==1 and values.texture_details[3]==71,'Attachments render the same Balatro burn shader')
+  end
+  local values=burn:shaderValues(sim.time,0,0,false)
+  assert(values.texture_details[3]==71 and values.texture_details[4]==95,'Burn uses the original logical atlas resolution')
+  frames(45,sim.time)
+  assert(sim.koPresentation and sim.koPresentation.prizes.you.count==2,'Prize flight renders during the handoff pause')
+  sim:sync(snapshot(1));frames(30,sim.time)
   local c=sim.byUid['you:active1'];at(c.x,c.y)   -- hover popup over an in-play card with status
   assert(sim.popup==c and sim.popupBox,'Popup built for hovered card')
   local h=sim.byUid['you:tr1'];at(h.x,h.y)       -- trainer popup, hand card drawn on top
@@ -80,6 +96,18 @@ for _,size in ipairs({{1280,800},{480,850}}) do
   sim:sync(snapshot(5,{row('M','log','Game log','Turn 1\n0:01 Player 1 drew 7 cards.\n0:02 Player 1 attached Fire Energy.','false','m4')}));frames(5,12)
   sim:sync(snapshot(6,{row('M','pile','Your discard pile','3 cards.','false','m5'),row('O','16','Switch','blue','true','false','sv01-194','d1'),row('O','17','Potion','blue','true','false','sv01-188','d2')}));frames(5,13)
   sim:sync(snapshot(7,{row('M','board','Choose a Pokémon','Pick one','false','m6'),row('O','18','Houndour','blue','false','true','sv01-033','active1'),row('F','19','Confirm','blue','false','false','','')}));frames(5,14)
+  local Button=require('ui.button')
+  local outline=Button.outline
+  local outlines=0
+  Button.outline=function(...) outlines=outlines+1;return outline(...) end
+  sim:drawCard(sim.byUid['you:active1'],shaders,1)
+  assert(outlines==1,'Normal board targets retain their outline')
+  sim:sync(snapshot(71,{row('M','board','Place damage counters','Click a Pokémon','true','counters','true'),row('O','18','Quaxly','blue','false','false','sv01-052','opp1')}))
+  assert(sim:isCandidate(sim.byUid['opponent:opp1']),'Enemy Pokémon remains clickable for counter placement')
+  outlines=0
+  sim:drawCard(sim.byUid['opponent:opp1'],shaders,1)
+  assert(outlines==0,'Damage-counter targets render without an outline')
+  Button.outline=outline
   sim:sync(snapshot(8,{row('M','prizes','Take 1 Prize card','Click a prize.','true','m7'),row('O','20','Prize 1','blue','false','true','','prize:0'),row('O','21','Prize 2','blue','false','false','','prize:1'),row('F','22','Take','blue','false','false','','')}));frames(5,15)
   local Layout=require('ui.sim_layout');local px,py=Layout.prize(sim.L.zones.you_prizes,1)
   sim:mousepressed(px,py);sim:mousereleased(px,py)
