@@ -20466,6 +20466,18 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv04.5-228": JUDGE, // Judge — twin `sv01-176`
   "sv10-167": JUDGE, // Judge — twin `sv01-176`
   "sv10-222": JUDGE, // Judge — twin `sv01-176`
+  // Card revision B04: the same defect for four more D290 census reprints (mark G, and `mfb-34` with no
+  // mark), `legal_standard_effective = 1` since 714256b3 (each shares its twin's print_key)…
+  "sv04.5-089": RARE_CANDY, // Rare Candy — twin `sv01-191`
+  "sv03.5-206": SWITCH, // Switch — twin `sv01-194`
+  "mfb-34": SWITCH, // Switch — twin `sv01-194`
+  "sv04.5-091": ULTRA_BALL, // Ultra Ball — twin `sv01-196`
+  // …and the three `30th` Items, `legal_standard = 1`, whose catalog row has `effect = NULL` (tcgdex
+  // prints no text, so their print_key matches no twin and no census reached them). Keyed by NAME on the
+  // shipped object: each is the reprint of that card. The missing face text is catalog debt (card-revision.md B04).
+  "30th-126": POKE_PAD, // Poké Pad — twin `me02.5-198`
+  "30th-127": SWITCH, // Switch — twin `sv01-194`
+  "30th-128": ULTRA_BALL, // Ultra Ball — twin `sv01-196`
   "me03-080": POKE_BALL, // Poké Ball — twin `sv01-185`
   "me03-082": POKEMON_CATCHER, // Pokémon Catcher — twin `sv01-187`
   "me03-083": POTION, // Potion — twin `sv01-188`

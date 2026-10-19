@@ -6252,7 +6252,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.532.0";',
+    find: 'export const engineVersion = "0.533.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -7726,31 +7726,12 @@ export const MUTANTS: Mutant[] = [
     replace: '      handPlayBarred(game, seat, "Item", card);',
     expectKilledBy: ["src/features/game/GameHud.handPlayBar.dom.test.tsx"],
   },
-  {
-    id: "D290-registry-folds-the-fourth-rare-candy",
-    decision: "D290",
-    what: '🛑 THE FOLD D289 SENT THE SLICE TO SHIP, MADE RE-RUNNABLE AS THE THING THAT MUST NOT HAPPEN SILENTLY. `"sv04.5-089": RARE_CANDY` joins the map, so the FOURTH Rare Candy printing starts resolving — a correct-looking one-liner whose measured Standard-legal payoff is ZERO (81 of 81 census printings are `legal_standard = 0`, regulation mark G) and which D190\'s rule refuses: a registry row\'s price is its LEGAL count, not its catalog count. ⚠️ IT IS A REAL BEHAVIOUR CHANGE, not a decision-only edit — `programFor("sv04.5-089")` goes from `undefined` to the shared `RARE_CANDY` marker and a deck holding that printing starts evolving. MEASURED: it moves **4** `it`s — 2 in `reprintAliasLegal.test.ts` (the 81-id refusal and the Rare Candy relation; the disjointness one stays GREEN, which is right) and 2 in `censusAtHead.test.ts` (`raw.length` 569 and the partition, which names the id). ⚠️ **AND THE TWO SAY DIFFERENT THINGS**: `censusAtHead` reddens on ANY new registry id and is fixed by classifying it, so it makes the fold NOISY; only this file says the fold is REFUSED, and why. ⚠️ ANCHORED ON THE LAST LINE OF THE RARE CANDY FAMILY rather than on the first, so a fifth printing appended above it does not move the anchor',
-    file: "packages/engine/src/registry.ts",
-    find: '  "swsh10.5-069": RARE_CANDY,',
-    replace: '  "swsh10.5-069": RARE_CANDY,\n  "sv04.5-089": RARE_CANDY,',
-    expectKilledBy: [
-      "packages/engine/src/reprintAliasLegal.test.ts",
-      "packages/engine/src/censusAtHead.test.ts",
-    ],
-  },
-  {
-    id: "D290-registry-folds-a-printing-D190-never-sampled",
-    decision: "D290",
-    what: '🛑 THE ROW THAT PROVES THE WIDENING IS NOT REDUNDANT WITH D190. `"sv04.5-091": ULTRA_BALL` joins the map — Ultra Ball\'s Paldean Fates reprint, one of the **65** census printings `SKIPPED_ZERO_LEGAL` never recorded, so BEFORE D290 nothing in the tree would have gone red. It is the same mark-G, zero-legal shape as the Rare Candy row above; kept as its own row because that row is covered by BOTH tables and this one is covered only by the new census, and a single row would have reported one number for two different guarantees. MEASURED: it moves **3** `it`s — 1 in `reprintAliasLegal.test.ts` (the 81-id refusal) and 2 in `censusAtHead.test.ts`. ⚠️ ANCHORED ON THE FULL LINE INCLUDING ITS TRAILING COMMENT, which is what makes the string unique in a map of 569 near-identical entries',
-    file: "packages/engine/src/registry.ts",
-    find: '  "sv01-196": ULTRA_BALL, // Ultra Ball — discard 2 other cards, search a Pokémon → hand',
-    replace:
-      '  "sv01-196": ULTRA_BALL, // Ultra Ball — discard 2 other cards, search a Pokémon → hand\n  "sv04.5-091": ULTRA_BALL,',
-    expectKilledBy: [
-      "packages/engine/src/reprintAliasLegal.test.ts",
-      "packages/engine/src/censusAtHead.test.ts",
-    ],
-  },
+  // 🆕 Card revision B04 — RETIRED: `D290-registry-folds-the-fourth-rare-candy` and
+  //    `D290-registry-folds-a-printing-D190-never-sampled` added `"sv04.5-089": RARE_CANDY` /
+  //    `"sv04.5-091": ULTRA_BALL` as the fold that must not happen while those printings had 0
+  //    Standard-legal copies. Since 714256b3 they are `legal_standard_effective = 1`, and B04 keys both
+  //    (registry.ts, after Judge's rows). The premise is gone; the mutants would now add duplicate keys.
+  //    `B04-reprint-row-dropped` below is the inverse experiment.
   // ── D291 — THE ACE SPEC BAR (the RARITY axis of the seat-wide hand-play bar) ──
   //
   // 🛑 **ONE ROW WAS CONSIDERED, MEASURED UNKILLABLE AND DELIBERATELY NOT
@@ -60761,5 +60742,24 @@ export const MUTANTS: Mutant[] = [
     find: "        : !attackHeld && sideRetreatLocked(state, active)\n",
     replace: "        : false\n",
     expectKilledBy: ["packages/engine/src/revisionB02.test.ts"],
+  },
+  // ── Card revision B04 (Items) — the two behaviour fixes, one row per claim. ──
+  {
+    id: "B04-reprint-row-dropped",
+    decision: "B04",
+    what: "the Paldean Fates Rare Candy row is dropped again, so `sv04.5-089` (`legal_standard_effective = 1`) is refused as TRAINER_NOT_SIMULATED (\"is not Rare Candy\"). Killed by revisionB04 §1/§2 and the D290 census.",
+    file: "packages/engine/src/registry.ts",
+    find: '  "sv04.5-089": RARE_CANDY, // Rare Candy — twin `sv01-191`\n',
+    replace: "",
+    expectKilledBy: ["packages/engine/src/revisionB04.test.ts", "packages/engine/src/reprintAliasLegal.test.ts"],
+  },
+  {
+    id: "B04-shovel-empty-deck-playable",
+    decision: "B04",
+    what: "the bare deck-mill gate is dropped: Hole-Digging Shovel is played into an empty deck and discarded for no effect. Killed by revisionB04 §4.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "    if (state.players[milled].deck.length === 0) return false;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/revisionB04.test.ts"],
   },
 ];

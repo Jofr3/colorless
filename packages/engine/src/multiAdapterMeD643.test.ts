@@ -192,8 +192,8 @@ describe("D643 §1 — the print and the registry rows", () => {
     expect(programFor(ROTOM_EX[2])).toBe(programFor(ROTOM_EX[0]));
   });
 
-  it("the engine is 0.532.0", () => {
-    expect(engineVersion).toBe("0.532.0");
+  it("the engine is 0.533.0", () => {
+    expect(engineVersion).toBe("0.533.0");
   });
 });
 

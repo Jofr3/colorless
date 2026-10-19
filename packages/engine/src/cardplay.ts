@@ -1791,6 +1791,14 @@ export function trainerProgramPlayable(
   ) {
     return false;
   }
+  // 🆕 Card revision B04 — Hole-Digging Shovel `me03-074` ("Discard the top 2 cards of your deck."),
+  // the only Trainer whose program is a bare deck mill: an empty deck leaves it nothing to do, and deck
+  // size is public, so the game state itself rules out any effect (ruling/284, as above). The deck of
+  // the side the op names is read, so a bare opponent mill would refuse the same way.
+  if (onlyOp?.op === "discardDeckTop") {
+    const milled = onlyOp.whose === "self" ? seat : otherSeat(seat);
+    if (state.players[milled].deck.length === 0) return false;
+  }
   return programPlayable(state, program, seat);
 }
 

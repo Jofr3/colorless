@@ -377,7 +377,9 @@ describe("the SKIPPED candidates — correct aliases with ZERO Standard-legal pa
     that this is a real registry family and not a phantom; `unauthored` are the
     printings of that same card the registry map does not name. All 81 are
     `legal_standard = 0`, regulation mark G. 🆕 Card revision B01: ~~44~~ 43 rows / ~~81~~ 78 ids —
-    Judge's three moved to `LANDED_SINCE_EFFECTIVE_LEGALITY` (`legal_standard_effective = 1`). */
+    Judge's three moved to `LANDED_SINCE_EFFECTIVE_LEGALITY` (`legal_standard_effective = 1`).
+    🆕 Card revision B04: ~~43~~ 40 rows / ~~78~~ 74 ids — Rare Candy, Switch and Ultra Ball's four moved
+    there too. */
 const PRINTING_ALIAS_CENSUS = [
   { card: "Arboliva", authored: "sv01-023", unauthored: ["sv04.5-104"] },
   { card: "Armarouge", authored: "sv01-041", unauthored: ["sv04.5-015", "sv04.5-115"] },
@@ -419,16 +421,17 @@ const PRINTING_ALIAS_CENSUS = [
   // were RE-READ against remote D1 on 2026-08-08 rather than inherited: all four
   // are `trainer_type = "Item"`, `length(effect) = 287`, and the string is
   // character-identical — D286's claim HELD. It is still not built, and now for a
-  // stated reason instead of for want of a slice.
-  { card: "Rare Candy", authored: "sv01-191", unauthored: ["sv04.5-089"] },
+  // stated reason instead of for want of a slice. [🆕 Card revision B04: BUILT — the
+  // reason (0 Standard-legal) stopped holding at 714256b3; the row moved to
+  // `LANDED_SINCE_EFFECTIVE_LEGALITY` below.]
   { card: "Revavroom", authored: "sv01-142", unauthored: ["svp-008", "sv04.5-065", "sv04.5-193"] },
   { card: "Skwovet", authored: "sv01-151", unauthored: ["sv04.5-205"] },
   { card: "Spiritomb", authored: "sv02-089", unauthored: ["sv04.5-158"] },
-  { card: "Switch", authored: "sv01-194", unauthored: ["sv03.5-206", "mfb-34"] },
+  // Switch (sv01-194; sv03.5-206 / mfb-34) LEFT THIS TABLE at card revision B04.
   { card: "Thundurus", authored: "sv03-070", unauthored: ["sv04.5-139"] },
   { card: "Ting-Lu ex", authored: "sv02-127", unauthored: ["sv04.5-244"] },
   { card: "Tinkaton", authored: "sv02-105", unauthored: ["svp-020", "sv04.5-167"] },
-  { card: "Ultra Ball", authored: "sv01-196", unauthored: ["sv04.5-091"] },
+  // Ultra Ball (sv01-196; sv04.5-091) LEFT THIS TABLE at card revision B04.
 ] as const;
 
 /** 🆕 Card revision B01 — rows that LEFT the census above because the premise "all are
@@ -438,9 +441,15 @@ const PRINTING_ALIAS_CENSUS = [
     card (TRAINER_NOT_SIMULATED). Measured on the LOCAL D1, 2026-10-19: `legal_standard = 0`,
     `legal_standard_effective = 1`, print_key `d6670ceb9af03a08` on all five Judge printings. The
     other 43 rows still hold `legal_standard = 0` too and are equally effective-legal; they are
-    owed to the revision batches that own them, not folded in here. */
+    owed to the revision batches that own them, not folded in here. 🆕 Card revision B04 (Items): Rare
+    Candy, Switch and Ultra Ball, measured the same way — print_key `6716a9667c036c52` (Rare Candy),
+    `dcb764a74f0f46dc` (Switch; `mfb-34` has no regulation mark), `9be1d8a4deedc7f9` (Ultra Ball).
+    40 rows remain. */
 const LANDED_SINCE_EFFECTIVE_LEGALITY = [
   { card: "Judge", authored: "sv01-176", landed: ["sv04.5-228", "sv10-167", "sv10-222"] },
+  { card: "Rare Candy", authored: "sv01-191", landed: ["sv04.5-089"] },
+  { card: "Switch", authored: "sv01-194", landed: ["sv03.5-206", "mfb-34"] },
+  { card: "Ultra Ball", authored: "sv01-196", landed: ["sv04.5-091"] },
 ] as const;
 
 /** The nine ids `SKIPPED_ZERO_LEGAL` holds that a PRINTING-keyed census cannot
@@ -458,16 +467,16 @@ const SENTENCE_ONLY_SKIPS = [
 describe("D290 — the COMPLETE per-printing reprint census", () => {
   const flat = PRINTING_ALIAS_CENSUS.flatMap((r) => r.unauthored as readonly string[]);
 
-  it("is ~~44~~ 43 incomplete identities over ~~81~~ 78 unauthored printings, with no id counted twice (B01: Judge's 3 landed)", () => {
-    expect(PRINTING_ALIAS_CENSUS).toHaveLength(43);
-    expect(flat).toHaveLength(78);
-    // A duplicated id would inflate the 78 while leaving every other assertion
+  it("is ~~44~~ ~~43~~ 40 incomplete identities over ~~81~~ ~~78~~ 74 unauthored printings, with no id counted twice (B01: Judge's 3 landed; B04: Rare Candy / Switch / Ultra Ball's 4)", () => {
+    expect(PRINTING_ALIAS_CENSUS).toHaveLength(40);
+    expect(flat).toHaveLength(74);
+    // A duplicated id would inflate the 74 while leaving every other assertion
     // in this block green — the census's own transcription control.
-    expect(new Set(flat).size).toBe(78);
+    expect(new Set(flat).size).toBe(74);
     // …and no identity may be listed twice under two names, which is the other
     // way the table could double-count.
-    expect(new Set(PRINTING_ALIAS_CENSUS.map((r) => r.authored)).size).toBe(43);
-    // 43 + the 1 identity B01 landed = the measured 44; 78 + 3 = the measured 81.
+    expect(new Set(PRINTING_ALIAS_CENSUS.map((r) => r.authored)).size).toBe(40);
+    // 40 + the 4 identities B01 / B04 landed = the measured 44; 74 + 7 = the measured 81.
     const landed = LANDED_SINCE_EFFECTIVE_LEGALITY.flatMap((r) => r.landed as readonly string[]);
     expect(PRINTING_ALIAS_CENSUS.length + LANDED_SINCE_EFFECTIVE_LEGALITY.length).toBe(44);
     expect(flat.length + landed.length).toBe(81);
@@ -482,10 +491,10 @@ describe("D290 — the COMPLETE per-printing reprint census", () => {
     }
   });
 
-  it("leaves every one of the ~~81~~ 78 UNAUTHORED — the standing refusal, complete rather than sampled (B01: Judge's 3 landed)", () => {
+  it("leaves every one of the ~~81~~ ~~78~~ 74 UNAUTHORED — the standing refusal, complete rather than sampled (B01: Judge's 3 landed; B04: 4 more)", () => {
     // 🛑 THE LOAD-BEARING ASSERTION OF THE SLICE. `SKIPPED_ZERO_LEGAL` above makes
     // this claim for 25 ids that a SENTENCE sweep happened to surface; this makes
-    // it for the complete measured PRINTING population, `sv04.5-089` included.
+    // it for the complete measured PRINTING population, ~~`sv04.5-089` included~~ (B04: landed).
     // Adding any of these to `REGISTRY` reddens here with the id in the message.
     for (const { card, unauthored } of PRINTING_ALIAS_CENSUS) {
       for (const id of unauthored) {
@@ -522,9 +531,10 @@ describe("D290 — the COMPLETE per-printing reprint census", () => {
     expect(sampled.filter((id) => here.has(id))).toHaveLength(16);
     expect(sampled.filter((id) => !here.has(id)).sort()).toEqual([...SENTENCE_ONLY_SKIPS].sort());
     // B01: ~~65~~ 62 and ~~90~~ 87 — Judge's 3 ids were in this census only, not in D190's sample.
-    expect(flat.filter((id) => !sampled.includes(id))).toHaveLength(62);
+    // B04: ~~62~~ 58 and ~~87~~ 83 — the same for Rare Candy / Switch / Ultra Ball's 4.
+    expect(flat.filter((id) => !sampled.includes(id))).toHaveLength(58);
     // The union is the real cost of "the registry is not printing-complete".
-    expect(new Set([...sampled, ...flat]).size).toBe(87);
+    expect(new Set([...sampled, ...flat]).size).toBe(83);
     // The nine sentence-only ids stay unbuilt too — this block does not license
     // them by describing them.
     for (const id of SENTENCE_ONLY_SKIPS) expect(programFor(id)).toBeUndefined();
@@ -541,17 +551,17 @@ describe("D290 — the COMPLETE per-printing reprint census", () => {
     for (const id of SENTENCE_ONLY_SKIPS) expect(landed.has(id)).toBe(false);
   });
 
-  it("Rare Candy's THREE authored printings still share ONE program while the fourth stays unbuilt", () => {
-    // The named row, driven as a relation rather than as a comment: the census's
-    // claim about `sv04.5-089` is only meaningful if the other three really are
-    // one family. `toBe`, not `toEqual`, for the reason the alias block gives.
+  it("Rare Candy's ~~THREE~~ FOUR printings share ONE program (B04: the fourth, `sv04.5-089`, landed)", () => {
+    // The named row, driven as a relation rather than as a comment. Until card revision B04 this
+    // pinned `sv04.5-089` UNBUILT (0 Standard-legal); since 714256b3 it is
+    // `legal_standard_effective = 1`, and B04 gave it the shared marker. `toBe`, not `toEqual`, for
+    // the reason the alias block gives.
     const first = programFor("sv01-191");
     expect(first?.rareCandy).toBe(true);
-    for (const id of ["sv01-256", "swsh10.5-069"]) expect(programFor(id)).toBe(first);
-    expect(programFor("sv04.5-089")).toBeUndefined();
-    // And it is a census row, by name — so deleting the row to make the line above
-    // pass costs a red in the count assertion at the top of this block.
-    expect(PRINTING_ALIAS_CENSUS.find((r) => r.card === "Rare Candy")?.unauthored).toEqual([
+    for (const id of ["sv01-256", "swsh10.5-069", "sv04.5-089"]) expect(programFor(id)).toBe(first);
+    // And it LEFT the census by name, into the landed table — not by deleting the row.
+    expect(PRINTING_ALIAS_CENSUS.map((r): string => r.card)).not.toContain("Rare Candy");
+    expect(LANDED_SINCE_EFFECTIVE_LEGALITY.find((r) => r.card === "Rare Candy")?.landed).toEqual([
       "sv04.5-089",
     ]);
   });

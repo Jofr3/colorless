@@ -20274,6 +20274,14 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕 engineVersion 0.532.0 → **0.533.0** (card revision B04 — ITEMS: THREE AUDIT FINDINGS FIXED (ONE IN PART), ONE DEFERRED;
+    `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B04")). registry.ts: Rare Candy
+    `sv04.5-089`, Switch `sv03.5-206` / `mfb-34`, Ultra Ball `sv04.5-091` (D290 census rows, `legal_standard_effective = 1`
+    since 714256b3) and the text-less `30th` Items Poké Pad `30th-126`, Switch `30th-127`, Ultra Ball `30th-128`
+    (`legal_standard = 1`, catalog `effect = NULL`) on the shipped `RARE_CANDY` / `SWITCH` / `ULTRA_BALL` / `POKE_PAD`.
+    cardplay.ts `trainerProgramPlayable`: a bare `discardDeckTop` over an empty deck is refused (Hole-Digging Shovel
+    `me03-074`, ruling/284's public-state line). Deferred: the `30th` face text (catalog) and Rare Candy with no Stage 1
+    in either deck (the pool builders + setup.ts's pool prune). `revisionB04.test.ts`.)
     🆕 engineVersion 0.531.0 → **0.532.0** (card revision B02 — SUPPORTERS: TWO AUDIT FINDINGS FIXED, BOTH
     WORDING-ONLY; `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B02")). events.ts:
     the optional `DISCARD_RETRIEVED.played: true`, written by interpreter.ts `shufflePlayedCardIntoDeck` alone, so
@@ -25848,7 +25856,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.532.0";
+export const engineVersion = "0.533.0";
 
 export type {
   ApplyResult,

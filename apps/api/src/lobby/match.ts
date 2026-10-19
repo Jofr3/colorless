@@ -2161,6 +2161,17 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕 **STAYS 49 AT CARD REVISION B04 — SEVEN REGISTRY ROWS ON SHIPPED OBJECTS AND ONE PLAYABILITY REFUSAL. NO PHASE,
+    PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR KEY, OR EVENT MEMBER.** (Placed ABOVE
+    the B02 block.) ⑴ Rare Candy `sv04.5-089`, Switch `sv03.5-206` / `mfb-34` / `30th-127`, Ultra Ball `sv04.5-091` /
+    `30th-128` and Poké Pad `30th-126` now resolve to their twins' programs. Every program is keyed by id, so no `cardPool`
+    face is read differently: a v49 pool holding these ids (the `30th` faces with their catalog `effect = NULL`) plays
+    them on deploy. ⑵ `trainerProgramPlayable` refuses a Trainer whose only op is `discardDeckTop` while the milled
+    deck is empty (Hole-Digging Shovel `me03-074`); a refusal is never stored. ROLLBACK READING (0.532): the seven ids
+    are refused again as `TRAINER_NOT_SIMULATED` from the next play; a prompt already parked by one of them carries its
+    ops in `phase.cont` and resumes as before; the Shovel becomes playable into an empty deck again. Nothing a v49
+    record holds changes shape or meaning.
+
     🆕 **STAYS 49 AT CARD REVISION B02 — ONE OPTIONAL EVENT KEY (`DISCARD_RETRIEVED.played`) AND A RETREAT-REFUSAL
     MESSAGE. NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR EVENT MEMBER.**
     (Placed ABOVE the B01 block.) Events are rendered into `record.log` and are not persisted themselves; a stored
