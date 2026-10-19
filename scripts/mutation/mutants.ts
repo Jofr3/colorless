@@ -2205,9 +2205,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D236",
     what: "the heal is applied to the state BEFORE the attach was written, so the Energy silently un-attaches while the damage still clears. ⚠️ THE ASSERTION THAT CATCHES IT IS THE ENERGY COUNT ON THE HEALED BODY, not the HEALED row — a suite that only checked that the damage went would pass",
     file: "packages/engine/src/interpreter.ts",
-    find: "  return op.healTarget === undefined ? next : healChosen(next, ref, op.healTarget, ctx, events);",
+    find: "  const fed = op.healTarget === undefined ? next : healChosen(next, ref, op.healTarget, ctx, events);",
     replace:
-      "  return op.healTarget === undefined ? next : healChosen(state, ref, op.healTarget, ctx, events);",
+      "  const fed = op.healTarget === undefined ? next : healChosen(state, ref, op.healTarget, ctx, events);",
     expectKilledBy: ["packages/engine/src/derivedHandAttach.test.ts"],
   },
   {
@@ -2215,8 +2215,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D236",
     what: 'the field guard is dropped, so `healChosen` runs at "all" on EVERY `attachEnergyFrom` — the six registry Abilities that have carried the op since M5, and the six of this row\'s nine printings that print no heal, all silently clear every damage counter off the body they feed. ⚠️ IT SURVIVED ITS FIRST RUN AND THE SUITE GAINED A CASE RATHER THAN THE ROW GAINING AN EXCUSE: every heal assertion in the slice ran on the ONE sentence that prints the clause, so nothing was watching a DAMAGED board under a tail-less sentence. That control is now the first case in section 3',
     file: "packages/engine/src/interpreter.ts",
-    find: "  return op.healTarget === undefined ? next : healChosen(next, ref, op.healTarget, ctx, events);",
-    replace: '  return healChosen(next, ref, op.healTarget ?? "all", ctx, events);',
+    find: "  const fed = op.healTarget === undefined ? next : healChosen(next, ref, op.healTarget, ctx, events);",
+    replace: '  const fed = healChosen(next, ref, op.healTarget ?? "all", ctx, events);',
     expectKilledBy: [
       "packages/engine/src/derivedHandAttach.test.ts",
       "packages/engine/src/attachEnergyFrom.test.ts",
@@ -3205,8 +3205,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D247",
     what: "🛑 the widened mover's `zone` is ignored on the REMOVAL side, so the cards land on the board and stay in the hand as well — a card is DUPLICATED. This is the drift a second hand-written copy of `attachFromDeckApply` would have invited, and the reason the zone is a parameter",
     file: "packages/engine/src/interpreter.ts",
-    find: "      [zone]: side[zone].filter((uid) => !attached.has(uid)),",
-    replace: "      [zone]: side[zone],",
+    // Card revision B19 — re-anchored: the side rewrite moved into a `const moved` (two spaces less).
+    find: "    [zone]: side[zone].filter((uid) => !attached.has(uid)),",
+    replace: "    [zone]: side[zone],",
     expectKilledBy: [
       "packages/engine/src/derivedAnyNumberAttach.test.ts",
       "packages/engine/src/attachFromDeck.test.ts",
@@ -6252,7 +6253,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.542.0";',
+    find: 'export const engineVersion = "0.543.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -37787,8 +37788,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D558",
     what: "R-ST3 reversed (the landing review's REFUTED finding): the attacker-seat gate is dropped, so Full Metal Lab / Granite Cave reduce the attacker's OWN spread or snipe onto its own benched {M} / Steven's Pokémon, against the printed \"from attacks from the opponent's Pokémon\". Killed by §8's own-bench spread and own-bench snipe rungs, §8's both-sides own-seat rung and §9's own-spread rung.",
     file: "packages/engine/src/continuous.ts",
-    find: "    if (seat === attackerSeat) return taken; // an own-side hit: the Stadium's \"the opponent's\" fails",
-    replace: "    void attackerSeat; // an own-side hit: the Stadium's \"the opponent's\" fails",
+    // Card revision B19 — re-anchored: the own-side return moved to the top of the seat block and now
+    // returns 0 for every term (D558's aura debt paid); dropping it pays the Stadium on an own-side hit again.
+    find: "    if (seat === attackerSeat) return 0;",
+    replace: "    void attackerSeat;",
     expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
   },
   {
@@ -40559,8 +40562,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D564",
     what: "🛑 R-JG2 PLACEMENT: the term moves ABOVE the own-side return, so p1's OWN hit on its own shielded body is reduced too. Killed by §5's own-side rung.",
     file: "packages/engine/src/continuous.ts",
-    find: "    if (seat === attackerSeat) return taken; // an own-side hit: the Stadium's \"the opponent's\" fails\n    // 🆕🆕🆕 D564",
-    replace: "    if (scope === \"all\") taken += sideDamageReductionOf(state, side);\n    if (seat === attackerSeat) return taken; // an own-side hit: the Stadium's \"the opponent's\" fails\n    // 🆕🆕🆕 D564",
+    // Card revision B19 — re-anchored: the own-side return is at the top of the seat block now; the
+    // mutation pays Jasmine's Gaze on an own-side hit, as the original did.
+    find: "    if (seat === attackerSeat) return 0;",
+    replace: "    if (seat === attackerSeat) return scope === \"all\" ? sideDamageReductionOf(state, side, damagedCard) : 0;",
     expectKilledBy: ["packages/engine/src/sideDamageNextTurnD564.test.ts"],
   },
   {
@@ -48287,8 +48292,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D590",
     what: "Heave-Ho Catcher fires on a play to the Bench instead of on the evolve. Killed by onEvolveMeD590 §1's timing pin and §6's board.",
     file: "packages/engine/src/registry.ts",
-    find: "  triggered: [{ name: \"Heave-Ho Catcher\", trigger: \"onEvolve\", optional: true, program: [{ op: \"gust\" }] }],",
-    replace: "  triggered: [{ name: \"Heave-Ho Catcher\", trigger: \"onPlayToBench\", optional: true, program: [{ op: \"gust\" }] }],",
+    // Card revision B19 — re-anchored: the row's gust carries `optional` and the row wraps.
+    find: "    { name: \"Heave-Ho Catcher\", trigger: \"onEvolve\", optional: true, program: [{ op: \"gust\", optional: true }] },",
+    replace: "    { name: \"Heave-Ho Catcher\", trigger: \"onPlayToBench\", optional: true, program: [{ op: \"gust\", optional: true }] },",
     expectKilledBy: ["packages/engine/src/onEvolveMeD590.test.ts"],
   },
   {
@@ -58136,9 +58142,9 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D636-effect-hand-attach-unshocked",
     decision: "D636",
-    what: "an effect's hand attach onto the marked body places nothing. Killed by nextTurnLocksD636 §3.",
+    what: "an effect's hand attach onto the marked body places nothing. Killed by nextTurnLocksD636 §3. [Card revision B19: re-anchored on `handAttachWatched`'s per-card placement, where the effect path's shock moved so it lands after the watched triggers (R-EIC1's order).]",
     file: "packages/engine/src/interpreter.ts",
-    find: "  if (op.source === \"hand\") updated = shockHandAttach(state, ctx.seat, updated, energyUids.length, events);\n",
+    find: "    next = shockHandAttachHost(next, actor, subject, events);\n",
     replace: "",
     expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
   },
@@ -58390,10 +58396,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D636-attach-from-hand-unshocked",
     decision: "D636",
-    what: "an `attachFromHand` answer onto the marked body places nothing (R-EIC1's effect path). Killed by nextTurnLocksD636 §3.",
+    what: "an `attachFromHand` answer onto the marked body places nothing (R-EIC1's effect path). Killed by nextTurnLocksD636 §3. [Card revision B19: re-anchored — the zone apply now hands its HAND attaches to `handAttachWatched` (the watched triggers, then the shock), so dropping that call is the same defect and more.]",
     file: "packages/engine/src/interpreter.ts",
-    find: "    if (zone === \"hand\") {\n      if (to.spot.spot === \"active\") {\n        if (active !== null) active = shockHandAttach(",
-    replace: "    if (zone === \"discard\") {\n      if (to.spot.spot === \"active\") {\n        if (active !== null) active = shockHandAttach(",
+    find: "  return { state: zone === \"hand\" ? handAttachWatched(moved, ctx.seat, [...attached], events) : moved, attached: [...attached] };",
+    replace: "  return { state: moved, attached: [...attached] };",
     expectKilledBy: ["packages/engine/src/nextTurnLocksD636.test.ts"],
   },
   {
@@ -60925,5 +60931,43 @@ export const MUTANTS: Mutant[] = [
     find: "  const printedEff = effectiveAttackCost(state, pokemon, printed, attackName);",
     replace: "  const printedEff = effectiveAttackCost(state, pokemon, printed);",
     expectKilledBy: ["packages/engine/src/revisionB17.test.ts"],
+  },
+  // ── Card revision B19 (Abilities) — the effect path of the watched hand attach, the declinable
+  //    "you may switch in" gust, and Tundra Wall's "from your opponent's Pokémon". ──
+  {
+    id: "B19-effect-hand-attach-self-sweep-dropped",
+    decision: "B19",
+    what: "an effect's attach from the hand runs only the opponent-direction sweep: Teal Dance onto a damaged benched Ogerpon ex under an Active Magearna heals nothing (Auto Heal answered the §6.2 action alone). Killed by revisionB19 §1.",
+    file: "packages/engine/src/interpreter.ts",
+    find: '    next = runSelfWatchedTriggers(next, actor, subject, "onEnergyAttach", events, atMoment);\n',
+    replace: "",
+    expectKilledBy: ["packages/engine/src/revisionB19.test.ts"],
+  },
+  {
+    id: "B19-energy-from-op-unwatched",
+    decision: "B19",
+    what: "`attachEnergyFrom`'s hand attach skips the watched moment: Teal Dance neither heals under Magearna nor takes Gengar ex's 2 counters. Killed by revisionB19 §1.",
+    file: "packages/engine/src/interpreter.ts",
+    find: '  return op.source === "hand" && seat === ctx.seat ? handAttachWatched(fed, seat, energyUids, events) : fed;',
+    replace: "  return fed;",
+    expectKilledBy: ["packages/engine/src/revisionB19.test.ts"],
+  },
+  {
+    id: "B19-gust-decline-dropped",
+    decision: "B19",
+    what: "`gust.optional` is ignored: Defiant Horn / Heave-Ho Catcher / Glittering Star Pattern gust a lone opposing Benched Pokémon unasked and refuse the ref-less decline. Killed by revisionB19 §2 and remainingHpWindow.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        op.optional === true ? 1 : undefined,",
+    replace: "        undefined,",
+    expectKilledBy: ["packages/engine/src/revisionB19.test.ts", "packages/engine/src/remainingHpWindow.test.ts"],
+  },
+  {
+    id: "B19-own-side-aura-paid",
+    decision: "B19",
+    what: "`seatDamageReduction` pays an OWN-side hit again under the `\"all\"` scope (D558's debt): Centiskorch's Billowing Heat Wave deals 0 to its own benched {W} bodies beside Aurorus. Killed by revisionB19 §3.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (seat === attackerSeat) return 0;",
+    replace: "    if (seat === attackerSeat && scope === \"othersOnly\") return 0;",
+    expectKilledBy: ["packages/engine/src/revisionB19.test.ts", "packages/engine/src/seatReductionAura.test.ts"],
   },
 ];

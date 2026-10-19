@@ -8949,8 +8949,15 @@ export type EffectOp =
       ⚠️ **BEHAVIOUR-PRESERVING WHEN ABSENT**, `basicOnly`'s contract verbatim:
       the funnel returns `oppBenchRefs` unfiltered, so Boss's Orders, Pokémon
       Catcher, Prime Catcher, Giovanni's consequent, Florges' coin-gated gust and
-      Lisia's Appeal all keep their exact candidate sets. */
-  | { op: "gust"; recordAs?: EffectSlot; basicOnly?: true; remainingHpAtMost?: number }
+      Lisia's Appeal all keep their exact candidate sets.
+
+      🆕 **Card revision B19 — `optional`, the printed *"you may switch in"*** on a TRIGGERED row (Hop's
+      Dubwool "Defiant Horn", Ledian "Glittering Star Pattern", Hariyama "Heave-Ho Catcher"'s *"you may
+      use this Ability"*). A trigger's own `optional` auto-fires, so the decline lives on the pick: the
+      park carries `upTo: 1` (D358's decline, spelled through `parkOrForce`), it is ASKED at one
+      candidate too, and the ref-less answer switches nothing. No candidate still resolves silently.
+      Absent = the mandatory pick every Trainer and attack gust prints. */
+  | { op: "gust"; recordAs?: EffectSlot; basicOnly?: true; remainingHpAtMost?: number; optional?: true }
   /** D227 — the OPPONENT-CHOSEN switch-out: *"Switch out your opponent's Active
       Pokémon to the Bench. **(Your opponent chooses the new Active Pokémon.)**"*
       — **10 Standard-legal bare printings**, 13 across the whole family

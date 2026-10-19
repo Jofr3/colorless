@@ -6067,6 +6067,15 @@ export function seatDamageReduction(
     // The TARGET clause: "ALL of your Pokémon" — every body on this side, Active
     // and Bench alike, so membership is the whole of it.
     if (!holders.some((holder) => topUid(holder) === uid)) continue;
+    // 🆕 Card revision B19 — AN OWN-SIDE HIT IS PAID NOTHING, BY EVERY TERM BELOW. Every
+    // `seatDamageReductionAfterWR` row prints *"take N less damage from attacks from your opponent's
+    // Pokémon"* (Arm Thrust Practice / Protective Bell, Stone Palace, Curly Wall, Gear Coating,
+    // Protective Armor, Tundra Wall — pinned by id in `revisionB19.test.ts` §3), the Stadium term's
+    // print says the same (R-ST3) and so does Jasmine's Gaze (R-JG2). D558's named debt (the Ability
+    // auras paid on the holder's own spread / snipe, e.g. Centiskorch's Billowing Heat Wave onto a
+    // {W} body beside Aurorus) is paid here. A future aura with no source clause would need its own
+    // flag before it could join this field.
+    if (seat === attackerSeat) return 0;
     let taken = 0;
     // D321 — the `noStack` ledger, `seatPreWRDamageBonus`'s `capped` Map verbatim:
     // printed Ability name → the largest single contribution seen for it, summed
@@ -6133,10 +6142,9 @@ export function seatDamageReduction(
     // when the attacker sits across the table from the damaged body. An own-side hit
     // (D425's `spreadDamage` `"yourBench"` arm, D447's `placeSnipe` own-bench arm)
     // reaches this function with `seat === attackerSeat`, and the print gives it
-    // nothing. ⚠️ The Ability auras summed above are NOT gated here — D425's reading
-    // (every protection read off the damaged body) still governs them; that is a
-    // named debt (docs/decisions.md D558), not an oversight.
-    if (seat === attackerSeat) return taken; // an own-side hit: the Stadium's "the opponent's" fails
+    // nothing. [🆕 Card revision B19: the Ability auras summed above are now gated too, by the
+    // own-side return at the top of this block — D558's named debt is paid; the line that stood
+    // here returned the aura total for an own-side hit.]
     // 🆕🆕🆕 D564 — Jasmine's Gaze, the damaged side's OWN next-turn record (types.ts
     // `SideDamageReduction`), added ONCE here and AFTER the own-side return above: the print
     // is *"from attacks from your opponent's Pokémon"*, so an own-side hit is never paid

@@ -2161,6 +2161,15 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕 **STAYS 49 AT CARD REVISION B19 — ONE OPTIONAL `EffectOp` KEY (`gust.optional`) AND TWO RE-ORDERED / WIDENED
+    TRIGGER SITES. NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD OR EVENT MEMBER.** (Placed
+    ABOVE the B17 block.) An optional gust (Defiant Horn, Heave-Ho Catcher, Glittering Star Pattern) parks the
+    shipped `choosePokemon` with `upTo: 1`, a value every reader since D359 validates and applies (a ref-less
+    answer switches nothing); the key is read only at the op's step, and each such op is a trigger's first and
+    only op, so no persisted `rest` carries it. An effect's hand attach now fires Auto Heal / Gnawing Curse, and
+    Tundra Wall-style auras no longer pay an own-side hit — board results, nothing persisted changes shape or
+    meaning.
+
     🆕 **STAYS 49 AT CARD REVISION B17 — ONE OPTIONAL `PassiveProgram` FIELD (`attackCostDiscountAttack`), A CATALOG
     FACT RE-READ ON EVERY COST QUERY. NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD, `EffectOp`
     MEMBER OR KEY, OR EVENT MEMBER.** (Placed ABOVE the B14 block.) Bloodmoon Ursaluna ex "Seasoned Skill" discounts

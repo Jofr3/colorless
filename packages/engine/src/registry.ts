@@ -814,8 +814,9 @@ export interface PassiveEffects {
         beside it in `seatDamageReduction` through `hasAttachedEnergy` (provision,
         D118). Not a `CardFilter` member: a filter reads a CARD, and this reads the
         body's ATTACHMENTS. No `noStack` — the print has none — so two Klinklang pay
-        40. ⚠️ Like every Ability aura on this seam it pays on an OWN-side hit too
-        (D558's ⑶-bis, inherited, not re-ruled here). */
+        40. [🆕 Card revision B19: no row on this seam pays an OWN-side hit any more — every one
+        prints "from attacks from your opponent's Pokémon", and D558's ⑶-bis debt is paid in
+        `seatDamageReduction`.] */
     beneficiaryHasEnergy?: BasicEnergyType;
     sourceOnBench?: true;
     /** 🆕🆕🆕 D637 — Antique Armor Fossil `me05-072` "Protective Armor": *"As long as this Pokémon is in the
@@ -9722,10 +9723,14 @@ const SUDDEN_SHEARING: CardProgram = {
     of your opponent's Benched Pokémon to the Active Spot."
 
     A bare `gust` on the `onEvolve` trigger — Boss's Orders' one op, fired by
-    Arboliva's timing. 1 legal printing. */
+    Arboliva's timing. 1 legal printing.
+
+    🆕 Card revision B19 — `gust.optional`: the trigger auto-fires, so the printed "you may" is the
+    pick's decline (`upTo: 1`, asked at one candidate too). Before B19 a lone opposing Benched
+    Pokémon was gusted unasked and a ref-less answer was refused. */
 const DEFIANT_HORN: CardProgram = {
   triggered: [
-    { name: "Defiant Horn", trigger: "onEvolve", optional: true, program: [{ op: "gust" }] },
+    { name: "Defiant Horn", trigger: "onEvolve", optional: true, program: [{ op: "gust", optional: true }] },
   ],
 };
 
@@ -14179,7 +14184,8 @@ const GLITTERING_STAR_PATTERN: CardProgram = {
       name: "Glittering Star Pattern",
       trigger: "onEvolve",
       optional: true,
-      program: [{ op: "gust", remainingHpAtMost: 90 }],
+      // 🆕 Card revision B19 — `optional`: the printed "you may" is the pick's decline (DEFIANT_HORN's fix).
+      program: [{ op: "gust", remainingHpAtMost: 90, optional: true }],
     },
   ],
 };
@@ -17701,7 +17707,8 @@ const MORTAL_SHURIKEN: CardProgram = {
 //    Confused would replace an Asleep or Paralyzed Defending Pokémon's condition). The rest auto-fire,
 //    with two NAMED deviations: Heave-Ho Catcher's forced `gust` cannot be declined, and switching a
 //    Defending Pokémon to the Bench clears its Special Conditions (Defiant Horn's shipped row shares
-//    it); and the three "Then, shuffle" / "Shuffle the other cards back" programs shuffle the deck
+//    it) [🆕 Card revision B19: PAID — `gust.optional` makes both picks declinable]; and the three
+//    "Then, shuffle" / "Shuffle the other cards back" programs shuffle the deck
 //    even when the "up to" pick takes nothing (Jewel Seeker's precedent). Each consequent is the
 //    op `deriveAttackEffect` reads off the same sentence on an attack, or a shipped row's. 9 objects,
 //    13 printings. Flygon ×3 "Sandy Flapping" is NOT here: its KO half fires only "if this Pokémon
@@ -17802,12 +17809,14 @@ const ENERGIZED_STEPS: CardProgram = {
 };
 
 /** 🆕🆕🆕 **D590 — Hariyama `me01-073` (1 legal) "Heave-Ho Catcher"**: a bare `gust`, Defiant Horn's
-    row under another name. Its attack "Wild Press" keeps deriving. ⚠️ A NAMED DEVIATION, shared with
-    Defiant Horn: the "you may" auto-fires and `gust` has no decline, so a player cannot keep a
-    Poisoned, Burned, Asleep or Paralyzed Defending Pokémon in the Active Spot (the switch clears its
-    Special Conditions) when the opponent has a Benched Pokémon. */
+    row under another name. Its attack "Wild Press" keeps deriving. [🆕 Card revision B19: the NAMED
+    DEVIATION that stood here — the "you may" auto-fired and `gust` had no decline, so a Poisoned,
+    Burned, Asleep or Paralyzed Defending Pokémon could not be kept in the Active Spot — is PAID:
+    `gust.optional` makes the pick declinable (`upTo: 1`), shared with Defiant Horn.] */
 const HEAVE_HO_CATCHER: CardProgram = {
-  triggered: [{ name: "Heave-Ho Catcher", trigger: "onEvolve", optional: true, program: [{ op: "gust" }] }],
+  triggered: [
+    { name: "Heave-Ho Catcher", trigger: "onEvolve", optional: true, program: [{ op: "gust", optional: true }] },
+  ],
 };
 
 /** 🆕🆕🆕 **D590 — Ninjask `me01-017` / `me01-137` (2 legal) "Cast-Off Shell"**: *"Search your deck

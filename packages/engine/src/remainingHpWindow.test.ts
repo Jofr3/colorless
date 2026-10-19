@@ -199,6 +199,25 @@ function apply(
   return { state: result.state, events: result.events };
 }
 
+/** 🆕 Card revision B19 — Ledian's printed "you may switch in" is the pick's decline (`gust.optional`,
+    `upTo: 1`), so a LONE in-window body is ASKED rather than forced. This takes it: the park must offer
+    exactly that one body (an unfiltered or empty window fails here), and the events of both steps are
+    returned together. */
+function takeLoneGust(parked: { state: GameState; events: readonly GameEvent[] }): {
+  state: GameState;
+  events: readonly GameEvent[];
+} {
+  const { phase } = parked.state;
+  if (phase.kind !== "effect:choose" || phase.prompt.kind !== "choosePokemon") {
+    throw new Error(`expected the declinable gust park, got ${phase.kind}`);
+  }
+  expect(phase.prompt.upTo).toBe(1);
+  expect(phase.prompt.candidates).toHaveLength(1);
+  const ref = phase.prompt.candidates[0];
+  const taken = apply(parked.state, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref } });
+  return { state: taken.state, events: [...parked.events, ...taken.events] };
+}
+
 function firstBasicInHand(state: GameState, seat: Seat): string {
   const uid = state.players[seat].hand.find((h) => {
     const card = POOL[state.cardIdByUid[h] ?? ""];
@@ -364,10 +383,11 @@ describe("D349 §1 — the two registry rows, read off the LIVE registry", () =>
     expect(program?.triggered).toHaveLength(1);
     expect(ability?.name).toBe("Glittering Star Pattern");
     expect(ability?.trigger).toBe("onEvolve");
-    // The printed "you may" — on the TRIGGER, because `gust` has no decline of
-    // its own and the sentence offers the whole switch or nothing.
+    // The printed "you may" — on the TRIGGER (which auto-fires) and, 🆕 since card revision B19,
+    // on the pick: `gust.optional` is its decline, so the sentence still offers the whole
+    // switch or nothing.
     expect(ability?.optional).toBe(true);
-    expect(ability?.program).toEqual([{ op: "gust", remainingHpAtMost: 90 }]);
+    expect(ability?.program).toEqual([{ op: "gust", remainingHpAtMost: 90, optional: true }]);
   });
 
   it("Bianca's Devotion is ONE healChosen — no zone, no upTo, amount `all`", () => {
@@ -402,8 +422,10 @@ describe("D349 §2 — Ledian: the window narrows the GUST candidates", () => {
     //     and nothing switches at all.
     //   • the rider dropped entirely — with two candidates `parkOrForce` PARKS,
     //     so an unfiltered gust never reaches `turn:action` here.
+    //     [🆕 Card revision B19: the lone body is now ASKED (`gust.optional`); `takeLoneGust`
+    //     asserts the park offers exactly one candidate, which kills both mutants the same way.]
     const start = board({ p1: [LEDYBA], p2: [AT_130, AT_90, AT_130] });
-    const { state: done, events } = evolveIntoLedian(start);
+    const { state: done, events } = takeLoneGust(evolveIntoLedian(start));
     expect(done.phase.kind).toBe("turn:action");
     expect(events.map((e) => e.type)).toContain("POKEMON_SWITCHED");
     expect(cardIdAt(done, "p2", 0)).toBe(AT_90);
@@ -414,7 +436,7 @@ describe("D349 §2 — Ledian: the window narrows the GUST candidates", () => {
     // (D181's `basicPokemon.maxHp`, the half that DID ship) cannot see this move
     // at all, which is the whole reason this rider is not a `CardFilter`.
     const start = damage(board({ p1: [LEDYBA], p2: [AT_130, AT_130, AT_130] }), "p2", 1, 50);
-    const { state: done } = evolveIntoLedian(start);
+    const { state: done } = takeLoneGust(evolveIntoLedian(start));
     expect(done.phase.kind).toBe("turn:action");
     expect(cardIdAt(done, "p2", 0)).toBe(AT_130);
     // …and it is the DAMAGED one that came up: the body that was on bench[0] is
@@ -527,14 +549,16 @@ describe("D349 §4 — the shared predicate, asserted as shared", () => {
     expect(healed.state.players.p1.bench[0]?.damage).toBe(0);
 
     // (b) the GUST side, off the SAME board: p2's bench[0] has 20 remaining and
-    // bench[1] has 130, so the trigger forces onto the damaged one.
+    // bench[1] has 130, so the trigger offers the damaged one alone (🆕 B19: asked, then taken).
     const withLedian = toHand(both, LEDIAN);
-    const gusted = apply(withLedian.state, {
-      type: "evolve",
-      seat: "p1",
-      uid: withLedian.uid,
-      target: { spot: "active" },
-    });
+    const gusted = takeLoneGust(
+      apply(withLedian.state, {
+        type: "evolve",
+        seat: "p1",
+        uid: withLedian.uid,
+        target: { spot: "active" },
+      }),
+    );
     expect(gusted.state.phase.kind).toBe("turn:action");
     expect(gusted.events.map((e) => e.type)).toContain("POKEMON_SWITCHED");
     expect(gusted.state.players.p2.active?.damage).toBe(110);

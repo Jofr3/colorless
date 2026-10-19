@@ -430,11 +430,13 @@ describe("D559 §4 — Gear Coating: {M}-Energy bodies take 20 less (after W/R),
     expect(dealtTo(events, "p2", topOf(body(state, "p2", 1)))).toBe(10);
     expect(dealtTo(events, "p2", topOf(body(state, "p2", 2)))).toBe(30);
   });
-  it("⚠️ D558 ⑶-bis INHERITED: an OWN-side spread onto a benched {M} body is reduced too → 10", () => {
+  it("🆕 B19 (was ⚠️ D558 ⑶-bis INHERITED): an OWN-side spread onto a benched {M} body is NOT reduced → 30", () => {
+    // *"…take 20 less damage from attacks from your opponent's Pokémon"*: the holder's own spread
+    // is not one. Card revision B19 paid D558's debt in `seatDamageReduction`.
     let state = table([KLINKLANG[0], WALL], WALL);
     state = energize(state, "p1", 1, METAL, 1);
     const { events } = swing(state, BACKFIRE);
-    expect(dealtTo(events, "p1", topOf(body(state, "p1", 1)))).toBe(10);
+    expect(dealtTo(events, "p1", topOf(body(state, "p1", 1)))).toBe(30);
   });
 });
 

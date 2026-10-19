@@ -20274,6 +20274,15 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕 engineVersion 0.542.0 → **0.543.0** (card revision B19 — ABILITIES: THREE AUDIT FINDINGS FIXED;
+    `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B19")). (1) Magearna "Auto
+    Heal" `sv09-107` / Gengar ex "Gnawing Curse" `sv05-104` / `-193`: an EFFECT's attach from the hand
+    (`attachEnergyFrom` source "hand", `attachFromHand`) now runs the `onEnergyAttach` self and opponent
+    sweeps per card (interpreter.ts `handAttachWatched`), and Electrified Incisors' effect-path counters
+    move after them (R-EIC1's order). (2) Hop's Dubwool "Defiant Horn" `sv09-136`, Hariyama "Heave-Ho
+    Catcher" `me01-073`, Ledian "Glittering Star Pattern" ×3: the new `gust.optional` key parks the pick
+    with `upTo: 1` (the decline). (3) Aurorus "Tundra Wall" `me03-024` / `-092` and every other
+    `seatDamageReductionAfterWR` row: an own-side hit is paid nothing (D558's debt). `revisionB19.test.ts`.)
     🆕 engineVersion 0.541.0 → **0.542.0** (card revision B17 — ABILITIES: ONE AUDIT FINDING FIXED;
     `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B17")). Bloodmoon
     Ursaluna ex "Seasoned Skill" (`sv06-141` / `-202` / `-216` / `-222` / `sv08.5-168` / `svp-177`): the
@@ -25914,7 +25923,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.542.0";
+export const engineVersion = "0.543.0";
 
 export type {
   ApplyResult,

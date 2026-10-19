@@ -620,17 +620,17 @@ describe("D321 §4 — the field", () => {
     expect(seatDamageReduction(locked, stillShielded, "all", "p2")).toBe(0);
   });
 
-  it("⚠️ DEBT (D558) — the ABILITY aura still ignores `attackerSeat`: an OWN-side hit is shielded", () => {
+  it("🆕 B19 (was ⚠️ DEBT D558) — the ABILITY aura reads `attackerSeat`: an OWN-side hit is NOT shielded", () => {
     // D558 gated only the STADIUM term on *"from attacks from the opponent's Pokémon"*
-    // (R-ST3). Stone Palace prints the same clause ("…from your opponent's Pokémon"), but
-    // D425's reading — every protection is read off the DAMAGED body — still governs this
-    // scan, so a p1 own-bench spread/snipe onto a Steven's body is still paid 30. A NAMED
-    // debt (docs/decisions.md D558), pinned so its reversal is a visible red rung and not
-    // a silent drift: flip this to 0 in the slice that re-rules D425 for the aura family.
+    // (R-ST3) and pinned the Ability auras' own-side payment here as a NAMED debt, to be
+    // flipped to 0 in the slice that paid it. Card revision B19 paid it (continuous.ts
+    // `seatDamageReduction`'s own-side return, every row of the field printing the clause):
+    // a p1 own-bench spread/snipe onto a Steven's body is paid nothing, and p2's hit still 30.
     const state = board(SEEDS[0], STEVEN_ALLY, [CARBINK]);
     const shielded = state.players.p1.active;
     if (shielded === null) throw new Error("expected a p1 Active");
-    expect(seatDamageReduction(state, shielded, "all", "p1")).toBe(30);
+    expect(seatDamageReduction(state, shielded, "all", "p1")).toBe(0);
+    expect(seatDamageReduction(state, shielded, "all", "p2")).toBe(30);
   });
 
   it.each(SEEDS)("the damage EVENT reports the reduced number, not the printed one (seed %i)", (seed) => {

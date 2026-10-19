@@ -361,6 +361,9 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
   // same way the evolve half answers it — by WHERE the scan sits. This is the
   // §6.2 hand attach and nothing else; `attachFromDeck`, `attachFromTop` and
   // `moveEnergy` are ops in the interpreter and never reach this line.
+  // [🆕 Card revision B19: "the §6.2 hand attach and nothing else" was too narrow — an EFFECT's
+  // attach from the hand (Teal Dance, Lethargic Charge) is the same moment, and interpreter.ts
+  // `handAttachWatched` runs the same two sweeps for it. The deck / top / move ops still never do.]
   //
   // ⚠️ THE SUBJECT IS A UID AND NOT `action.target`, which is what makes it
   // survive the Jet Energy switch above: that clause can move the body out of

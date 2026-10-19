@@ -171,7 +171,13 @@ import { flipCoin, randomIndex, shuffle } from "./rng";
 // shape flow.ts ↔ triggers.ts has carried since M4: both ends are hoisted
 // function DECLARATIONS called only at run time, so neither module reads the
 // other's binding while it is still initialising.
-import { damagedByAttackAbility, damagedToolTriggersOf, runActiveBenchedTriggers } from "./triggers";
+import {
+  damagedByAttackAbility,
+  damagedToolTriggersOf,
+  runActiveBenchedTriggers,
+  runSelfWatchedTriggers,
+  runWatchedTriggers,
+} from "./triggers";
 import type {
   AttackBlock,
   BoostedAttack,
@@ -5436,6 +5442,9 @@ function stepOp(
         unshieldedRefs(state, gustTargets(state, ctx.seat, op), ctx, events),
         (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),
         gustTargetNoun(op),
+        undefined,
+        // 🆕 Card revision B19 — the printed "you may switch in": a ceiling of one is the decline.
+        op.optional === true ? 1 : undefined,
       );
     case "opponentSwitchOut":
       // D227 — the case DIRECTLY ABOVE with a `decider`, and that is the whole
@@ -19735,6 +19744,59 @@ export function shockHandAttach(
   return { ...body, damage: body.damage + amount };
 }
 
+/** 🆕 Card revision B19 — THE EFFECT PATH OF THE WATCHED HAND ATTACH. Magearna `sv09-107` "Auto Heal"
+    (*"whenever you attach an Energy card from your hand to 1 of your Pokémon, heal 90 damage from that
+    Pokémon"*) and Gengar ex `sv05-104` / `-193` "Gnawing Curse" (*"Whenever your opponent attaches an
+    Energy card from their hand to 1 of their Pokémon, put 2 damage counters on that Pokémon"*) name the
+    SOURCE ZONE, not the §6.2 action: an Ability or attack that attaches out of the hand (Teal Dance,
+    Lethargic Charge, Tropical Frenzy) is the same moment. Before B19 only turn.ts `attachEnergy` fired it.
+
+    `actor` has just attached each of `energyUids` from their own hand. ONE moment PER CARD (the print's
+    "whenever … an Energy card"), each with the body now holding it as the subject, and the same two
+    sweeps in turn.ts's order: the actor's own (Auto Heal) first, then the opponent's (Gnawing Curse).
+    `atMoment` is the board right after the attach, which is what the `activeOnly` gate reads (D357).
+    Pachirisu "Electrified Incisors"' counters (R-EIC1 ⚠️ UNRULED: after the attach riders AND the
+    watched triggers, Gnawing Curse first) are placed LAST for each card, on the same host — moved
+    here from the two applies, where they had landed before any watched trigger could run. Both
+    sweeps are non-parking; a Knock Out the counters cause is the caller's settle (the program's
+    `settleProgram`, or the attack's own sweep). */
+function handAttachWatched(
+  state: GameState,
+  actor: Seat,
+  energyUids: readonly string[],
+  events: GameEvent[],
+): GameState {
+  const atMoment = state;
+  let next = state;
+  for (const energyUid of energyUids) {
+    const side = next.players[actor];
+    const host = [side.active, ...side.bench].find((body) => body?.energy.includes(energyUid) === true);
+    const subject = host == null ? undefined : topUid(host);
+    if (subject === undefined) continue;
+    next = runSelfWatchedTriggers(next, actor, subject, "onEnergyAttach", events, atMoment);
+    next = runWatchedTriggers(next, actor, subject, "onEnergyAttach", events, atMoment);
+    next = shockHandAttachHost(next, actor, subject, events);
+  }
+  return next;
+}
+
+/** 🆕 Card revision B19 — `shockHandAttach` (one Energy card) on `actor`'s body whose top is `subject`,
+    re-found on the live board; the board unchanged when nothing is placed. */
+function shockHandAttachHost(state: GameState, actor: Seat, subject: string, events: GameEvent[]): GameState {
+  const side = state.players[actor];
+  if (side.active !== null && topUid(side.active) === subject) {
+    const shocked = shockHandAttach(state, actor, side.active, 1, events);
+    return shocked === side.active ? state : withSide(state, actor, { ...side, active: shocked });
+  }
+  const index = side.bench.findIndex((body) => topUid(body) === subject);
+  const benched = side.bench[index];
+  if (benched === undefined) return state;
+  const shocked = shockHandAttach(state, actor, benched, 1, events);
+  return shocked === benched
+    ? state
+    : withSide(state, actor, { ...side, bench: side.bench.map((body, i) => (i === index ? shocked : body)) });
+}
+
 /** Apply a deck-search attach (Charizard ex "Infernal Reign" / Janine's Secret
     Art): move each assigned card out of the deck onto the Pokémon it was assigned
     to, and hand back the uids that ACTUALLY moved (§9.2 — the record).
@@ -19809,25 +19871,18 @@ function attachFromZoneApply(
         to.spot.spot === "active" ? { spot: "active" } : { spot: "bench", index: to.spot.index },
     });
     // 🆕🆕🆕 D636 — Electrified Incisors on the effect path (R-EIC1): each HAND card onto a marked body.
-    if (zone === "hand") {
-      if (to.spot.spot === "active") {
-        if (active !== null) active = shockHandAttach(state, ctx.seat, active, 1, events);
-      } else {
-        const index = to.spot.index;
-        bench = bench.map((p, i) => (i === index ? shockHandAttach(state, ctx.seat, p, 1, events) : p));
-      }
-    }
+    // [🆕 Card revision B19: placed by `handAttachWatched` below, AFTER the watched triggers — R-EIC1's
+    // recorded order, which the effect path can honour now that it runs those triggers at all.]
   }
   if (attached.size === 0) return { state, attached: [] };
-  return {
-    state: withSide(state, ctx.seat, {
-      ...side,
-      active,
-      bench,
-      [zone]: side[zone].filter((uid) => !attached.has(uid)),
-    }),
-    attached: [...attached],
-  };
+  const moved = withSide(state, ctx.seat, {
+    ...side,
+    active,
+    bench,
+    [zone]: side[zone].filter((uid) => !attached.has(uid)),
+  });
+  // 🆕 Card revision B19 — a HAND attach is the moment `onEnergyAttach` watches (Auto Heal, Gnawing Curse).
+  return { state: zone === "hand" ? handAttachWatched(moved, ctx.seat, [...attached], events) : moved, attached: [...attached] };
 }
 
 /** Attach the first matching Basic Energy cards from `op.source` (hand/discard)
@@ -19940,7 +19995,8 @@ function attachEnergyFrom(
     });
   }
   // 🆕🆕🆕 D636 — Electrified Incisors on the effect path (R-EIC1): one placement per Energy card from hand.
-  if (op.source === "hand") updated = shockHandAttach(state, ctx.seat, updated, energyUids.length, events);
+  // [🆕 Card revision B19: placed by `handAttachWatched` at the end of this function, after the op's
+  // riders and the watched triggers — R-EIC1's recorded order, turn.ts's order.]
   if (op.bonusCounters !== undefined && op.bonusCounters > 0) {
     updated = { ...updated, damage: updated.damage + op.bonusCounters };
     events.push({
@@ -19983,7 +20039,11 @@ function attachEnergyFrom(
   // ⚠️ ONCE PER OP, NOT ONCE PER CARD — `bonusCounters`' rule, on `bonusCounters`'
   // mirror, so a `count: 2` attach heals once rather than twice. The two riders
   // still do not co-occur on any printing.
-  return op.healTarget === undefined ? next : healChosen(next, ref, op.healTarget, ctx, events);
+  const fed = op.healTarget === undefined ? next : healChosen(next, ref, op.healTarget, ctx, events);
+  // 🆕 Card revision B19 — the watched attach moment, AFTER the op's own riders (turn.ts's order: the
+  // attach and its riders, then the watched triggers). Only an attach out of the ATTACHING player's own
+  // hand is *"attach an Energy card from your hand"*; `whose` never names a hand today.
+  return op.source === "hand" && seat === ctx.seat ? handAttachWatched(fed, seat, energyUids, events) : fed;
 }
 
 /** Apply a from-the-top attach (Electric Generator / Hydreigon "Tri Howl"): move

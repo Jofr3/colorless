@@ -141,7 +141,12 @@ describe("D590 §1 — the programs: nine `onEvolve` objects over 13 printings, 
     // The four whose printed consequent `deriveAttackEffect` reads: the same program.
     for (const id of [HARIYAMA, NINJASK[0], PRIMARINA[0], TINKATUFF]) {
       const text = ABILITIES.find(([, , ids]) => ids.includes(id))?.[1] as string;
-      expect(triggerOf(id)?.program, id).toEqual(deriveAttackEffect(consequent(text)));
+      // 🆕 Card revision B19 — Hariyama's gust carries `optional` (the printed "you may use this
+      // Ability" on an auto-fired trigger is the pick's decline); the derived op is otherwise the same.
+      const derived = deriveAttackEffect(consequent(text));
+      expect(triggerOf(id)?.program, id).toEqual(
+        id === HARIYAMA ? derived?.map((op) => ({ ...op, optional: true })) : derived,
+      );
     }
     // Heave-Ho Catcher is Defiant Horn's program, Enriching Melody is Enriching Oil's.
     expect(triggerOf(HARIYAMA)?.program).toEqual(programFor("sv09-136")?.triggered?.[0]?.program);
@@ -807,7 +812,7 @@ describe("D590 §10b — Aqua Return over an evolution stack", () => {
 });
 
 describe("D590 §11 — the version", () => {
-  it("is built at engine 0.542.0", () => {
-    expect(engineVersion).toBe("0.542.0");
+  it("is built at engine 0.543.0", () => {
+    expect(engineVersion).toBe("0.543.0");
   });
 });
