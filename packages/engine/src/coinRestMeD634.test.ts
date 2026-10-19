@@ -544,7 +544,7 @@ describe("D634 §8 — Snap Inspection on a board: per heads, a revealed card is
 });
 
 describe("D634 §9 — the version", () => {
-  it("is built at engine 0.549.0", () => {
-    expect(engineVersion).toBe("0.549.0");
+  it("is built at engine 0.550.0", () => {
+    expect(engineVersion).toBe("0.550.0");
   });
 });

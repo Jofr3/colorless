@@ -2162,6 +2162,12 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕 **STAYS 49 AT CARD REVISION B36 — ONE OPTIONAL KEY ON AN UNPERSISTED EVENT (`HAND_COST_PAID.effect`).
+    NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD OR `EffectOp` MEMBER OR KEY.** (Placed
+    ABOVE the B35 block.) `GameEvent` is not in `MatchRecord`; the key is set when an attack's program pays
+    `payFromHand` (Steel Cutter, Double Eater, Stick 'n' Draw …) and only drops "to pay a cost" from the log
+    row. Nothing a v49 record holds changes shape or meaning.
+
     🆕 **STAYS 49 AT CARD REVISION B35 — NO SHAPE CHANGE; AN ATTACK'S `discardEnergy` SWEEP IS NO LONGER
     REFUSED WHOLE BY A SHIELDED ACTIVE.** (Placed ABOVE the B33 block.) Cursed Edge / Corrosive Liquid
     (`from: "opponentEach"`) now skip the Active-defaulted §11 guard and filter each body through

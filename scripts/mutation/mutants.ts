@@ -6255,7 +6255,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.549.0";',
+    find: 'export const engineVersion = "0.550.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -52672,8 +52672,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D611",
     what: "`HAND_COST_PAID` loses `took`, so the log reads a plain top-of-deck payment. Killed by activatedMeD611 §6.",
     file: "packages/engine/src/interpreter.ts",
-    find: "    events.push({ type: \"HAND_COST_PAID\", seat: ctx.seat, uids: [...paid], to: op.to, took });",
-    replace: "    events.push({ type: \"HAND_COST_PAID\", seat: ctx.seat, uids: [...paid], to: op.to });",
+    // 🆕 Card revision B36 — re-anchored: the push now also spreads `asEffect` (absent on this
+    // Ability path). The mutation still drops `took` alone.
+    find: "    events.push({ type: \"HAND_COST_PAID\", seat: ctx.seat, uids: [...paid], to: op.to, took, ...asEffect });",
+    replace: "    events.push({ type: \"HAND_COST_PAID\", seat: ctx.seat, uids: [...paid], to: op.to, ...asEffect });",
     expectKilledBy: ["packages/engine/src/activatedMeD611.test.ts"],
   },
   {
@@ -61091,5 +61093,32 @@ export const MUTANTS: Mutant[] = [
     find: '        op.from !== "opponentEach" &&\n',
     replace: "",
     expectKilledBy: ["packages/engine/src/revisionB35.test.ts"],
+  },
+  {
+    id: "B36-attack-hand-discard-not-marked-effect",
+    decision: "B36",
+    what: "an attack's `payFromHand` stops marking its `HAND_COST_PAID` as an effect, so Steel Cutter (me05-060), Double Eater (me03-032) and Stick 'n' Draw (sv08-128) log \"… from their hand to pay a cost\" again. Killed by revisionB36.",
+    file: "packages/engine/src/interpreter.ts",
+    find: '  const asEffect = ctx.invokedBy === "attack" ? { effect: true as const } : {};',
+    replace: "  const asEffect = {};",
+    expectKilledBy: ["packages/engine/src/revisionB36.test.ts"],
+  },
+  {
+    id: "B36-log-ignores-hand-discard-effect",
+    decision: "B36",
+    what: "log.ts ignores `HAND_COST_PAID.effect` and words an attack's hand discard as a cost. Killed by revisionB36.",
+    file: "packages/engine/src/log.ts",
+    find: "              event.effect === true\n",
+    replace: "              event.effect === undefined\n",
+    expectKilledBy: ["packages/engine/src/revisionB36.test.ts"],
+  },
+  {
+    id: "B36-trainer-hand-cost-marked-effect",
+    decision: "B36",
+    what: "every `payFromHand` is marked an effect, so Ultra Ball's printed cost (sv01-196) loses \"to pay a cost\". Killed by revisionB36 §2.",
+    file: "packages/engine/src/interpreter.ts",
+    find: '  const asEffect = ctx.invokedBy === "attack" ? { effect: true as const } : {};',
+    replace: "  const asEffect = { effect: true as const };",
+    expectKilledBy: ["packages/engine/src/revisionB36.test.ts"],
   },
 ];

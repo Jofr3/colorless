@@ -1779,7 +1779,11 @@ function formatEvent(
         plain(
           event.to === "deckBottom"
             ? `put ${cards} from their hand on the bottom of their deck`
-            : `discarded ${cards} from their hand to pay a cost`,
+            : // 🆕 Card revision B36 — an attack's discard (Steel Cutter, Double Eater, Stick 'n'
+              // Draw) is the attack's EFFECT, and no attack prints a cost.
+              event.effect === true
+              ? `discarded ${cards} from their hand`
+              : `discarded ${cards} from their hand to pay a cost`,
         ),
       ]);
     }

@@ -1388,6 +1388,13 @@ export type GameEvent =
           deck, which went into the hand as the paid card went on top. Hidden → hidden like the
           payment, so the log counts it. Absent on every other payment. */
       took?: string[];
+      /** 🆕 Card revision B36 — an ATTACK's program paid it (`ctx.invokedBy === "attack"`): Skarmory
+          "Steel Cutter" / Mawile "Double Eater" *"Discard up to 2 … Energy cards from your hand, and
+          this attack does …"*, Klefki "Stick 'n' Draw" *"Discard a card from your hand. If you do, …"*.
+          No attack sentence prints a cost — the discard is the attack's EFFECT — so the log drops
+          "to pay a cost" on this row. Absent (D135) on every Trainer / Ability payment, which IS the
+          printed cost. Events are not persisted (no record bump). */
+      effect?: true;
     }
   /** A TRIGGERED Ability fired automatically (§9): `seat`'s in-play `uid`
       reached its trigger condition — played to the Bench / evolved (during

@@ -15935,12 +15935,15 @@ function payFromHandApply(
   }
   if (paid.length === 0) return { state, paid };
   const hand = side.hand.filter((uid) => !spent.has(uid));
+  // 🆕 Card revision B36 — an ATTACK's hand discard is its effect, not a cost (no attack sentence
+  // prints one): the event says so and the log drops "to pay a cost". Absent otherwise (D135).
+  const asEffect = ctx.invokedBy === "attack" ? { effect: true as const } : {};
   // 🆕🆕🆕 D611 — Evidence Gathering's *"Switch a card from your hand with the top card of your
   // deck"*: the OLD top card goes into the hand first, then the paid card goes on top. An empty
   // deck is refused before the use (`handCostUnmet`, R-EG1), so `took` is never empty here.
   if (op.swapWithTop === true) {
     const took = side.deck.slice(0, 1);
-    events.push({ type: "HAND_COST_PAID", seat: ctx.seat, uids: [...paid], to: op.to, took });
+    events.push({ type: "HAND_COST_PAID", seat: ctx.seat, uids: [...paid], to: op.to, took, ...asEffect });
     return {
       state: withSide(state, ctx.seat, {
         ...side,
@@ -15950,7 +15953,7 @@ function payFromHandApply(
       paid,
     };
   }
-  events.push({ type: "HAND_COST_PAID", seat: ctx.seat, uids: [...paid], to: op.to });
+  events.push({ type: "HAND_COST_PAID", seat: ctx.seat, uids: [...paid], to: op.to, ...asEffect });
   // 🆕🆕🆕 D561 (V1) — Academy at Night's *"on top of their deck"*: the paid card(s) go
   // IN FRONT of the deck, in the order picked. Taken ahead of the two-arm spread below
   // so its bytes are D455's, unchanged.

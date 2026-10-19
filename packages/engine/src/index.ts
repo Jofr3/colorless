@@ -20274,6 +20274,14 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕 engineVersion 0.549.0 → **0.550.0** (card revision B36 — ATTACKS: ONE AUDIT FINDING FIXED,
+    ONE DEFERRED TO ITS RECORDED READING; `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS
+    49 AT CARD REVISION B36")). Skarmory "Steel Cutter" `me05-060` and Mawile "Double Eater"
+    `me03-032` (and every attack that reaches `payFromHand`): the attack's hand discard is its EFFECT,
+    but `HAND_COST_PAID` rendered "… from their hand to pay a cost". The event gains an optional
+    `effect: true` when `ctx.invokedBy === "attack"`, and log.ts drops "to pay a cost" on that row.
+    Morpeko "Select a Snack" `30th-061` / `-135` is R-SAS1's recorded caption and log, left as is.
+    `revisionB36.test.ts`.)
     🆕 engineVersion 0.548.0 → **0.549.0** (card revision B35 — ATTACKS: TWO AUDIT FINDINGS FIXED
     AT ONE SHARED GUARD; `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD
     REVISION B35")). Ceruledge "Cursed Edge" `sv08-035` / `sv08-197` and Mega Dragalge ex
@@ -25974,7 +25982,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.549.0";
+export const engineVersion = "0.550.0";
 
 export type {
   ApplyResult,
