@@ -20274,6 +20274,14 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕 engineVersion 0.548.0 → **0.549.0** (card revision B35 — ATTACKS: TWO AUDIT FINDINGS FIXED
+    AT ONE SHARED GUARD; `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD
+    REVISION B35")). Ceruledge "Cursed Edge" `sv08-035` / `sv08-197` and Mega Dragalge ex
+    "Corrosive Liquid" `me04-065` / `-104` / `-118`: `discardEnergy`'s ATTACK-channel §11 guard
+    refused the op WHOLE when the opponent's ACTIVE was shielded (Mist Energy), so an
+    `opponentEach` sweep left every Benched Pokémon's Special Energy in place. The whole-op guard
+    now runs only for a one-body arm; `opponentEach` / `opponentChosen` are answered per body by
+    `unshieldedRefs`. `revisionB35.test.ts`.)
     🆕 engineVersion 0.547.0 → **0.548.0** (card revision B33 — ATTACKS: ONE AUDIT FINDING FIXED;
     `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B33")). Mudsdale
     "Mud Stock" `sv05-092` / `sv05-175`: the `attachEnergyFrom.toEach` fold fed the Benched Pokémon
@@ -25966,7 +25974,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.548.0";
+export const engineVersion = "0.549.0";
 
 export type {
   ApplyResult,

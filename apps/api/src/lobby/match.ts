@@ -2162,6 +2162,12 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕 **STAYS 49 AT CARD REVISION B35 — NO SHAPE CHANGE; AN ATTACK'S `discardEnergy` SWEEP IS NO LONGER
+    REFUSED WHOLE BY A SHIELDED ACTIVE.** (Placed ABOVE the B33 block.) Cursed Edge / Corrosive Liquid
+    (`from: "opponentEach"`) now skip the Active-defaulted §11 guard and filter each body through
+    `unshieldedRefs`, so Mist Energy on the Active keeps only that Pokémon's Special Energy. The sweep
+    resolves inline and never parks, so no record holds a continuation whose meaning moved.
+
     🆕 **STAYS 49 AT CARD REVISION B33 — NO SHAPE CHANGE; `attachEnergyFrom.toEach` CAN NOW BE A PARKED
     `pendingOp`.** (Placed ABOVE the B26 block.) Mud Stock with a discard pile SHORTER than the Bench parks a
     `choosePokemonMulti` (an existing prompt kind) over the Benched targets, and `applyChoice` folds the chosen

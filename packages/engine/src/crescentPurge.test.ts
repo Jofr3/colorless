@@ -569,10 +569,10 @@ describe("§11 — MATCH_RECORD_VERSION 31 → 32: a v31 state without the key t
     );
   });
 
-  it("the constant is 49 (🆕🆕🆕 D646 stepped it 48 → 49; D643 stepped it 47 → 48; D640 stepped it 46 → 47; D637 stepped it 45 → 46; D636 stepped it 44 → 45; D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; this slice's own bump was 31 → 32) and the engine is 0.548.0", () => {
+  it("the constant is 49 (🆕🆕🆕 D646 stepped it 48 → 49; D643 stepped it 47 → 48; D640 stepped it 46 → 47; D637 stepped it 45 → 46; D636 stepped it 44 → 45; D630 stepped it 43 → 44; D621 stepped it 42 → 43; D583 stepped it 41 → 42; D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; this slice's own bump was 31 → 32) and the engine is 0.549.0", () => {
     expect(raw("/match.ts")).toContain("export const MATCH_RECORD_VERSION = 49;");
-    expect(engineVersion).toBe("0.548.0");
-    expect(manifest.version).toBe("0.548.0");
+    expect(engineVersion).toBe("0.549.0");
+    expect(manifest.version).toBe("0.549.0");
   });
 });
 

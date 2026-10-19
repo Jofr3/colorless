@@ -711,7 +711,7 @@ describe("D598 §7 — Final Chain: an on-KO search behind the printed cause", (
 });
 
 describe("D598 §8 — the version", () => {
-  it("is built at engine 0.548.0", () => {
-    expect(engineVersion).toBe("0.548.0");
+  it("is built at engine 0.549.0", () => {
+    expect(engineVersion).toBe("0.549.0");
   });
 });

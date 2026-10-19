@@ -807,9 +807,11 @@ export const MUTANTS: Mutant[] = [
     // a whole-op guard), which moved the line the mutant anchors to. The CLAIM is
     // untouched — the conjunction still falls out of a third own-board member — so
     // the anchor moves with it rather than the row being dropped.
-    find: '      if (ctx.invokedBy === "attack" && discardVictimSeat(ctx.seat, op) !== ctx.seat) {',
-    replace:
-      '      if (ctx.invokedBy === "attack" && op.from !== "yourActive" && op.from !== "yours") {',
+    // 🆕 Card revision B35 — re-homed once more: the guard now also skips the multi-body
+    // arms (`opponentEach` / `opponentChosen`, left to the per-body filter), so the
+    // condition spans lines. The mutant still swaps only the victim-seat test.
+    find: '        op.from !== "opponentChosen" &&\n        discardVictimSeat(ctx.seat, op) !== ctx.seat\n',
+    replace: '        op.from !== "opponentChosen" &&\n        op.from !== "yourActive" && op.from !== "yours"\n',
     expectKilledBy: ["packages/engine/src/flashingDraw.test.ts"],
     survives: {
       kind: "equivalent",
@@ -6253,7 +6255,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.548.0";',
+    find: 'export const engineVersion = "0.549.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -61080,5 +61082,14 @@ export const MUTANTS: Mutant[] = [
     replace:
       "        return attachEnergyTargets(state, ctx.seat, op).slice(0, choice.refs.length).reduce((board, ref) => attachEnergyFrom(board, op, ref, ctx, events, record), state);",
     expectKilledBy: ["packages/engine/src/revisionB33.test.ts"],
+  },
+  {
+    id: "B35-sweep-refused-whole-by-shielded-active",
+    decision: "B35",
+    what: "the `opponentEach` arm goes back through the Active-defaulted whole-op §11 guard, so Mist Energy on the opponent's Active refuses Cursed Edge (sv08-035 / sv08-197) and Corrosive Liquid's Energy half (me04-065 / -104 / -118) for every Benched Pokémon too. Killed by revisionB35.",
+    file: "packages/engine/src/interpreter.ts",
+    find: '        op.from !== "opponentEach" &&\n',
+    replace: "",
+    expectKilledBy: ["packages/engine/src/revisionB35.test.ts"],
   },
 ];

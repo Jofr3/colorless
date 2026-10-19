@@ -4755,7 +4755,19 @@ function stepOp(
       // says "this Pokémon". The trainer channel is served by the FILTER below
       // instead, which subsumes this guard for it — when the op does name only the
       // Active, that Active is the only candidate and the filter empties the set.
-      if (ctx.invokedBy === "attack" && discardVictimSeat(ctx.seat, op) !== ctx.seat) {
+      //
+      // 🆕 Card revision B35 — AND THE GUARD IS FOR THE ONE-BODY ARM ONLY. Ceruledge
+      // "Cursed Edge" / Mega Dragalge ex "Corrosive Liquid" (*"Discard all Special
+      // Energy from all of your opponent's Pokémon."*) reach this op as an ATTACK with
+      // `from: "opponentEach"`, and the Active-defaulted refusal let one Mist Energy on
+      // the Active shield every Benched Pokémon's Special Energy. A multi-body arm
+      // (`opponentEach`, `opponentChosen`) is left to the per-body filter below.
+      if (
+        ctx.invokedBy === "attack" &&
+        op.from !== "opponentEach" &&
+        op.from !== "opponentChosen" &&
+        discardVictimSeat(ctx.seat, op) !== ctx.seat
+      ) {
         if (effectRefused(state, discardVictimSeat(ctx.seat, op), ctx, events)) {
           recordMoved(record, op.recordAs, []);
           return { done: state };
