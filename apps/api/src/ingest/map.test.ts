@@ -13,7 +13,7 @@ import cardTrainer from "../../../../packages/schema/src/tcgdex/__fixtures__/car
 import cardTrainerTm from "../../../../packages/schema/src/tcgdex/__fixtures__/card-trainer-tm-sv08-188.json";
 import serieFull from "../../../../packages/schema/src/tcgdex/__fixtures__/serie-full-sv.json";
 import setFull from "../../../../packages/schema/src/tcgdex/__fixtures__/set-full-sv01.json";
-import { energyTypeOf, mapCard, mapSerie, mapSet } from "./map";
+import { energyTypeOf, mapCard, mapSerie, mapSet, printKey } from "./map";
 
 describe("mapSerie", () => {
   it("maps the full sv serie, keeping the extensionless origin logo URL", () => {
@@ -52,6 +52,7 @@ describe("mapSet", () => {
       legalStandard: false,
       legalExpanded: true,
       tcgOnline: null,
+      abbreviation: "SVI",
     });
   });
 });
@@ -101,6 +102,9 @@ describe("mapCard", () => {
       effect: null,
       legalStandard: false,
       legalExpanded: true,
+      printKey: expect.any(String),
+      legalStandardEffective: false,
+      legalExpandedEffective: true,
       variantsJson: {
         firstEdition: false,
         holo: false,
@@ -307,5 +311,37 @@ describe("mapCard", () => {
     const row = mapCard(card);
     expect(row.legalStandard).toBe(false);
     expect(row.legalExpanded).toBe(false);
+  });
+});
+
+describe("printKey", () => {
+  const base = mapCard(tcgdexCardSchema.parse(cardPokemonAbility));
+  it("ignores everything that differs between reprints", () => {
+    const reprint = {
+      ...base,
+      id: "sv08.5-999",
+      setId: "sv08.5",
+      localId: "999",
+      rarity: "Rare",
+      illustrator: "Someone Else",
+      regulationMark: "I",
+      legalStandard: true,
+      legalExpanded: true,
+      imageUrl: null,
+      updated: null,
+      variantsJson: null,
+      name: `  ${base.name.toUpperCase()}  `,
+    };
+    expect(printKey(reprint)).toBe(printKey(base));
+  });
+  it("separates prints whose rules differ", () => {
+    expect(printKey({ ...base, hp: (base.hp ?? 0) + 10 })).not.toBe(printKey(base));
+    expect(printKey({ ...base, attacksJson: [] })).not.toBe(printKey(base));
+    expect(printKey({ ...base, category: "Trainer" })).not.toBe(printKey(base));
+  });
+  it("is 16 hex characters and seeds the effective flags with the print's own", () => {
+    expect(base.printKey).toMatch(/^[0-9a-f]{16}$/);
+    expect(base.legalStandardEffective).toBe(base.legalStandard);
+    expect(base.legalExpandedEffective).toBe(base.legalExpanded);
   });
 });

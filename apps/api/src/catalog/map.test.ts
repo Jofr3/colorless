@@ -40,6 +40,9 @@ const joltikRow: CardRow = {
   effect: null,
   legalStandard: true,
   legalExpanded: true,
+  printKey: null,
+  legalStandardEffective: null,
+  legalExpandedEffective: null,
   variantsJson: { normal: true, reverse: true, holo: false, firstEdition: false, wPromo: false },
   imageUrl: "https://assets.tcgdex.net/en/sv/sv06.5/001",
   updated: "2026-07-01T21:27:44+02:00",
@@ -70,6 +73,9 @@ const fireEnergyRow: CardRow = {
   effect: null,
   legalStandard: true,
   legalExpanded: true,
+  printKey: null,
+  legalStandardEffective: null,
+  legalExpandedEffective: null,
   variantsJson: { normal: true, reverse: false, holo: true, firstEdition: false, wPromo: false },
   imageUrl: null,
   updated: "2025-01-04T15:52:24+01:00",
@@ -104,6 +110,9 @@ const potionSentinelRow: CardRow = {
   effect: "Heal 30 damage from 1 of your Pokémon.",
   legalStandard: false,
   legalExpanded: true,
+  printKey: null,
+  legalStandardEffective: null,
+  legalExpandedEffective: null,
   variantsJson: { normal: true, reverse: false, holo: false, firstEdition: false, wPromo: false },
   imageUrl: null,
   updated: "2026-04-14T22:39:39+01:00",
@@ -121,6 +130,7 @@ const shroudedFableRow: SetRow = {
   legalStandard: false,
   legalExpanded: true,
   tcgOnline: null,
+  abbreviation: "SFA",
 };
 
 const svSerieRow: SerieRow = {
@@ -267,5 +277,19 @@ describe("mapSerieRow", () => {
     expect(serie.releaseDate).toBe("2023-03-31");
     expect(serie.sets.map((set) => set.id)).toEqual(["sv06.5"]);
     expect("logo" in serie).toBe(false);
+  });
+});
+
+describe("legalOf (the reprint rule's served verdict)", () => {
+  it("prefers the post-pass flags and falls back to the print's own", () => {
+    const rotated = { ...joltikRow, legalStandard: false, legalExpanded: true };
+    expect(mapCardBriefRow(rotated).legal).toEqual({ standard: false, expanded: true });
+    expect(
+      mapCardBriefRow({ ...rotated, legalStandardEffective: true, legalExpandedEffective: true })
+        .legal,
+    ).toEqual({ standard: true, expanded: true });
+    expect(
+      mapCardRow({ ...rotated, legalStandardEffective: true, legalExpandedEffective: true }).legal,
+    ).toEqual({ standard: true, expanded: true });
   });
 });

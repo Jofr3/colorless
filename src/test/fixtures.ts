@@ -111,6 +111,7 @@ export const SETS: SetBrief[] = [
     symbol: null,
     releaseDate: "2020-02-07",
     cardCount: { total: 216, official: 202 },
+    abbreviation: "SSH",
   },
   {
     id: "sv06",
@@ -120,6 +121,7 @@ export const SETS: SetBrief[] = [
     symbol: null,
     releaseDate: "2024-05-24",
     cardCount: { total: 226, official: 167 },
+    abbreviation: "TWM",
   },
 ];
 

@@ -7,6 +7,7 @@ import { validateDeck } from "./deckMath";
 import {
   filtersToCardsQuery,
   findCardByName,
+  findCardsByName,
   kindOptions,
   suffixOptions,
   toBuilderCard,
@@ -288,7 +289,8 @@ describe("findCardByName", () => {
   });
 
   it("asks for the exact name (normalized key) and keeps only an exact-key match", async () => {
-    const mock = vi.fn().mockResolvedValue(json(cardsPage([brief({ name: "Joltik" })])));
+    // A fresh Response per call: the raw "Basic JOLTIK" form is asked for too.
+    const mock = vi.fn().mockImplementation(async () => json(cardsPage([brief({ name: "Joltik" })])));
     vi.stubGlobal("fetch", mock);
 
     const card = await findCardByName("Basic  JOLTIK"); // prefix + case + spacing noise
@@ -298,18 +300,20 @@ describe("findCardByName", () => {
     );
   });
 
-  it("retries nameExact with the unstripped name — a print STORED as 'Basic …' has no plain match", async () => {
+  it("unions an Energy's plain and 'Basic …' prints — both forms share the key", async () => {
     const mock = vi
       .fn()
-      .mockResolvedValueOnce(json(cardsPage([]))) // layer 1: the stripped key misses
-      .mockResolvedValueOnce(json(cardsPage([brief({ name: "Basic Grass Energy" })])));
+      .mockResolvedValueOnce(json(cardsPage([brief({ id: "sve-001", name: "Grass Energy" })])))
+      .mockResolvedValueOnce(
+        json(cardsPage([brief({ id: "sv02-278", name: "Basic Grass Energy" })])),
+      );
     vi.stubGlobal("fetch", mock);
 
-    const card = await findCardByName("Basic Grass Energy");
-    expect(card?.name).toBe("Basic Grass Energy");
+    const cards = await findCardsByName("Basic Grass Energy");
+    expect(cards.map((card) => card.cardId)).toEqual(["sve-001", "sv02-278"]);
     expect(mock.mock.calls.map((call) => String(call[0]))).toEqual([
       "http://localhost:8787/cards?nameExact=grass+energy&pageSize=100",
-      "http://localhost:8787/cards?nameExact=Basic+Grass+Energy&pageSize=100",
+      "http://localhost:8787/cards?nameExact=basic+grass+energy&pageSize=100",
     ]);
   });
 

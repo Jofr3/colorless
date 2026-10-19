@@ -79,8 +79,16 @@ const CACHE_TTL_SECONDS = 3600;
     so the 14 "Normal"-tagged Special Energies serve "Special" on `/cards` and `/sets/:id`
     lists. A v8 body would keep serving "Normal" and the deck builder's 4-copy rule would go on
     exempting them for up to a TTL. `/facets` and the `?energyType=` filter still read the
-    stored column (a re-ingest through D583's map.ts closes those). */
-const CACHE_VERSION = "v9";
+    stored column (a re-ingest through D583's map.ts closes those).
+    v9→v10: set briefs grew `abbreviation` (the official decklist set code, e.g. "PRE"),
+    on `/sets`, `/sets/:id` and `/series` — a real shape change; the deck-list import
+    reads it to pick the right print. A v9 body would serve briefs without the field.
+    v10→v11: the reprint rule — same shape, different bytes. `legal` on every card
+    body is now the verdict across functionally identical prints (catalog/map.ts
+    `legalOf`), so a rotated Ultra Ball print serves `standard: true`. A v10 body
+    would keep flagging it, and `?legal=standard` lists would omit it, for up to
+    a TTL. Closes only once the re-ingest (its post-pass) has run before the deploy. */
+const CACHE_VERSION = "v11";
 
 /**
  * KV key for a request URL: version + path + query, with the query keys

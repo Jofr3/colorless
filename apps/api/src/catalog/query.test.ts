@@ -226,8 +226,12 @@ describe("buildCardsWhere", () => {
   });
 
   it("maps legal to the matching boolean flag column", () => {
-    expect(render(defaults({ legal: "standard" })).sql).toContain('"cards"."legal_standard" = ?');
-    expect(render(defaults({ legal: "expanded" })).sql).toContain('"cards"."legal_expanded" = ?');
+    expect(render(defaults({ legal: "standard" })).sql).toContain(
+      'COALESCE("cards"."legal_standard_effective", "cards"."legal_standard") = 1',
+    );
+    expect(render(defaults({ legal: "expanded" })).sql).toContain(
+      'COALESCE("cards"."legal_expanded_effective", "cards"."legal_expanded") = 1',
+    );
   });
 
   it("filters regulationMark exactly", () => {
@@ -339,8 +343,10 @@ describe("buildCardsWhere", () => {
   it("composes id with the other filters instead of replacing them", () => {
     const { sql, params } = render(defaults({ id: ["sv01-196"], legal: "standard" }));
     expect(sql).toContain("json_each(?)");
-    expect(sql).toContain('"cards"."legal_standard" = ?');
-    expect(params).toEqual(['["sv01-196"]', 1]); // drizzle binds the boolean as 1
+    expect(sql).toContain(
+      'COALESCE("cards"."legal_standard_effective", "cards"."legal_standard") = 1',
+    );
+    expect(params).toEqual(['["sv01-196"]']); // drizzle binds the boolean as 1
   });
 });
 

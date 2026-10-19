@@ -47,6 +47,9 @@ const BODY_CARD: Card = {
   effect: null,
   legalStandard: true,
   legalExpanded: true,
+  printKey: null,
+  legalStandardEffective: null,
+  legalExpandedEffective: null,
   imageUrl: null,
   suffix: null,
 } as unknown as Card;

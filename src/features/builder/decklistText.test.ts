@@ -4,10 +4,14 @@ import type { BuilderCard } from "./cards";
 import type { Deck } from "./deckMath";
 import {
   cardSetLabel,
+  choosePrint,
   formatDecklist,
   nameKey,
+  numberKey,
   parseDecklist,
+  preferArt,
   resolveDecklist,
+  splitCardId,
 } from "./decklistText";
 
 const charizard = builderCard({
@@ -36,6 +40,18 @@ const fireEnergy = builderCard({
   supertype: "Energy",
   subtype: "Basic Energy",
   types: ["Fire"],
+  hasImage: false, // tcgdex has no art for the energy-only sets
+});
+// The sv full-art print of the same basic Energy — the one with art.
+const fireEnergyArt = builderCard({
+  cardId: "sv03-230",
+  name: "Basic Fire Energy",
+  supertype: "Energy",
+  subtype: "Basic Energy",
+  types: ["Fire"],
+  number: "230",
+  rarity: "Hyper rare",
+  hasImage: true,
 });
 // A three-word name ending in "ex" — the trailing "Hands ex" must not be peeled
 // off as a set+number on import.
@@ -47,15 +63,21 @@ const ironHands = builderCard({
   types: ["Lightning"],
 });
 
-const pool = [charizard, charmander, research, fireEnergy, ironHands];
+// A reprint of Charmander in a later set: the same name, a different print.
+const charmanderReprint: BuilderCard = { ...charmander, cardId: "sv08.5-109", number: "109" };
+
+const pool = [charizard, charmander, charmanderReprint, research, fireEnergy, fireEnergyArt, ironHands];
 const deckOf = (...entries: [BuilderCard, number][]): Deck =>
   entries.map(([card, quantity]) => ({ card, quantity }));
 
 /** A catalog-shaped async lookup over the fixture pool — exact match on the
     normalized name, like catalog.ts's findCardByName. Tests never touch the
     network. */
-const findInPool = (name: string): Promise<BuilderCard | undefined> =>
-  Promise.resolve(pool.find((card) => nameKey(card.name) === nameKey(name)));
+const findInPool = (name: string): Promise<BuilderCard[]> =>
+  Promise.resolve(pool.filter((card) => nameKey(card.name) === nameKey(name)));
+/** PTCGL-style set codes for the fixture sets, like catalog.ts's setIdsByCode. */
+const codes: Record<string, string> = { OBF: "sv03", PRE: "sv08.5", SVI: "sv01", SVE: "sve" };
+const setIdForCode = (code: string) => codes[code.toUpperCase()];
 
 describe("cardSetLabel", () => {
   it("derives set code + number from the tcgdex id", () => {
@@ -132,7 +154,23 @@ describe("resolveDecklist", () => {
     const { entries, unmatched } = await resolveDecklist(parseDecklist(text), findInPool);
     expect(unmatched).toHaveLength(0);
     const byId = Object.fromEntries(entries.map((e) => [e.card.cardId, e.quantity]));
-    expect(byId).toEqual({ "sv03-125": 4, "sv03-026": 4, "sv01-189": 1, "sve-002": 5 });
+    expect(byId).toEqual({ "sv03-125": 4, "sv03-026": 4, "sv01-189": 1, "sv03-230": 5 });
+  });
+
+  it("stands a basic Energy print with art in for a named print without", async () => {
+    const named = await resolveDecklist(parseDecklist("5 Fire Energy SVE 2"), findInPool, {
+      setIdForCode,
+    });
+    expect(named.entries).toEqual([{ card: fireEnergyArt, quantity: 5 }]);
+    const plain = await resolveDecklist(parseDecklist("5 Fire Energy"), findInPool);
+    expect(plain.entries).toEqual([{ card: fireEnergyArt, quantity: 5 }]);
+    // Only basic Energy swaps; and only when the named print lacks art.
+    const artless = [fireEnergy];
+    expect(preferArt(artless, fireEnergy)).toBe(fireEnergy);
+    expect(preferArt([charmander, charmanderReprint], { ...charmander, hasImage: false })).toEqual({
+      ...charmander,
+      hasImage: false,
+    });
   });
 
   it("parses names with no set/number and sums duplicates", async () => {
@@ -151,6 +189,37 @@ describe("resolveDecklist", () => {
     const withSet = await resolveDecklist(parseDecklist("3 Iron Hands ex PAR 70"), findInPool);
     expect(withSet.unmatched).toHaveLength(0);
     expect(withSet.entries).toEqual([{ card: ironHands, quantity: 3 }]);
+  });
+
+  it("picks the print a set code and number name, across reprints", async () => {
+    const text = ["2 Charmander PRE 109", "2 Charmander OBF 26"].join("\n");
+    const { entries, unmatched } = await resolveDecklist(parseDecklist(text), findInPool, {
+      setIdForCode,
+    });
+    expect(unmatched).toHaveLength(0);
+    expect(entries).toEqual([
+      { card: charmanderReprint, quantity: 2 },
+      { card: charmander, quantity: 2 },
+    ]);
+  });
+
+  it("matches our own export's upper-cased set ids without a code map", async () => {
+    const { entries } = await resolveDecklist(
+      parseDecklist("3 Charmander SV08.5 109"),
+      findInPool,
+    );
+    expect(entries).toEqual([{ card: charmanderReprint, quantity: 3 }]);
+  });
+
+  it("falls back to the named set, then to the first print", async () => {
+    const inSet = await resolveDecklist(parseDecklist("1 Charmander PRE 999"), findInPool, {
+      setIdForCode,
+    });
+    expect(inSet.entries).toEqual([{ card: charmanderReprint, quantity: 1 }]);
+    const unknownSet = await resolveDecklist(parseDecklist("1 Charmander XYZ 1"), findInPool, {
+      setIdForCode,
+    });
+    expect(unknownSet.entries).toEqual([{ card: charmander, quantity: 1 }]);
   });
 
   it("reports lines it can't resolve", async () => {
@@ -186,13 +255,29 @@ describe("resolveDecklist", () => {
   });
 
   it("round-trips a deck through format → parse → resolve", async () => {
-    const deck = deckOf([charizard, 4], [charmander, 4], [research, 2], [fireEnergy, 6]);
+    const deck = deckOf([charizard, 4], [charmander, 4], [research, 2], [fireEnergyArt, 6]);
     const { entries, unmatched } = await resolveDecklist(
       parseDecklist(formatDecklist(deck)),
       findInPool,
     );
     expect(unmatched).toHaveLength(0);
     const byId = Object.fromEntries(entries.map((e) => [e.card.cardId, e.quantity]));
-    expect(byId).toEqual({ "sv03-125": 4, "sv03-026": 4, "sv01-189": 2, "sve-002": 6 });
+    expect(byId).toEqual({ "sv03-125": 4, "sv03-026": 4, "sv01-189": 2, "sv03-230": 6 });
+  });
+});
+
+describe("choosePrint / numberKey / splitCardId", () => {
+  it("compares collector numbers without leading zeros or case", () => {
+    expect(numberKey("080")).toBe("80");
+    expect(numberKey("tg01")).toBe("TG01");
+    expect(numberKey("0")).toBe("0");
+  });
+  it("splits hyphenated set ids at the last hyphen", () => {
+    expect(splitCardId("30th-c-005")).toEqual({ set: "30th-c", number: "005" });
+    expect(splitCardId("sv06.5-001")).toEqual({ set: "sv06.5", number: "001" });
+  });
+  it("returns the only print without consulting the reference", () => {
+    expect(choosePrint([charizard], { set: "XYZ", number: "1" })).toBe(charizard);
+    expect(choosePrint([], { set: "XYZ", number: "1" })).toBeUndefined();
   });
 });

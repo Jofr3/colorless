@@ -26,6 +26,7 @@ import type { SqlColumnSpec } from "./sql";
 import {
   CARDS_COLUMNS,
   cardsUpsertSql,
+  reprintLegalitySql,
   SERIES_COLUMNS,
   seriesUpsertSql,
   SETS_COLUMNS,
@@ -142,6 +143,9 @@ const hostileCard: CardRow = {
   effect: null,
   legalStandard: true,
   legalExpanded: false,
+  printKey: null,
+  legalStandardEffective: null,
+  legalExpandedEffective: null,
   variantsJson: { normal: true, reverse: false },
   imageUrl: "https://assets.tcgdex.net/en/test/test/666",
   updated: "2026-07-09T00:00:00Z",
@@ -227,5 +231,19 @@ describe("generated upsert SQL round-trips through the escaping rules", () => {
     const setRow = mapSet(tcgdexSetSchema.parse(setFull));
     expect(setsUpsertSql([setRow])).toContain('ON CONFLICT("id") DO UPDATE SET');
     expect(cardsUpsertSql([hostileCard]).startsWith('INSERT INTO "cards" ')).toBe(true);
+  });
+});
+
+describe("reprintLegalitySql", () => {
+  it("OR's each legality flag across every print sharing the key, whole-table", () => {
+    const sql = reprintLegalitySql();
+    expect(sql).toContain("UPDATE cards SET");
+    expect(sql).toContain(
+      "legal_standard_effective = EXISTS (SELECT 1 FROM cards AS twin WHERE twin.print_key = cards.print_key AND twin.legal_standard = 1)",
+    );
+    expect(sql).toContain(
+      "legal_expanded_effective = EXISTS (SELECT 1 FROM cards AS twin WHERE twin.print_key = cards.print_key AND twin.legal_expanded = 1)",
+    );
+    expect(sql).toContain("WHERE print_key IS NOT NULL");
   });
 });

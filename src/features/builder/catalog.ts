@@ -7,7 +7,7 @@
 
 import { isBasicEnergy, isSpecialEnergy } from "@luminous/engine";
 import type { Card, CardBrief, CardCategory, CatalogFacets } from "@luminous/schema";
-import { type CardsQuery, getCards } from "../../lib/api";
+import { type CardsQuery, getCards, getSets } from "../../lib/api";
 import {
   type BuilderCard,
   ENERGY_TYPES,
@@ -209,24 +209,53 @@ export function filtersToCardsQuery(filters: Filters, format: Format): CardsQuer
        stored name).
     Every layer keeps only a normalized-key match, so a substring over-match
     can't smuggle in the wrong card. */
-export async function findCardByName(name: string): Promise<BuilderCard | undefined> {
+export async function findCardsByName(name: string): Promise<BuilderCard[]> {
   const key = nameKey(name);
-  if (key === "") return undefined;
+  if (key === "") return [];
   const raw = name.replace(/\s+/g, " ").trim();
-  const queries: CardsQuery[] = [{ nameExact: key, pageSize: 100 }];
-  if (raw.toLowerCase() !== key) queries.push({ nameExact: raw, pageSize: 100 });
-  queries.push({ name: key, pageSize: 100 });
-  for (const query of queries) {
-    const { items } = await getCards(query);
-    const exact = items.find((item) => nameKey(item.name) === key);
-    if (exact !== undefined) return toBuilderCard(exact);
+  // The exact layers are UNIONED: a name's prints can be stored under forms
+  // that share one key — the energy-only sets print "Fire Energy", the sv
+  // full-art energies "Basic Fire Energy" — and the import wants them all.
+  const terms = [key];
+  if (key.endsWith(" energy")) terms.push(`basic ${key}`);
+  if (!terms.includes(raw.toLowerCase())) terms.push(raw);
+  const found = new Map<string, BuilderCard>();
+  for (const term of terms) {
+    const { items } = await getCards({ nameExact: term, pageSize: 100 });
+    for (const item of items) {
+      if (nameKey(item.name) === key) found.set(item.id, toBuilderCard(item));
+    }
   }
-  return undefined;
+  if (found.size > 0) return [...found.values()];
+  const { items } = await getCards({ name: key, pageSize: 100 });
+  return items.filter((item) => nameKey(item.name) === key).map(toBuilderCard);
+}
+
+/** The first print of a name, in catalog order; undefined when none matches. */
+export async function findCardByName(name: string): Promise<BuilderCard | undefined> {
+  return (await findCardsByName(name))[0];
+}
+
+/** Decklist set code → set id, from GET /sets: the official abbreviation
+    ("PRE") and the upper-cased id our own export writes ("SV08.5"). */
+export async function setIdsByCode(): Promise<(code: string) => string | undefined> {
+  const byCode = new Map<string, string>();
+  for (const set of await getSets()) {
+    if (set.abbreviation) byCode.set(set.abbreviation.toUpperCase(), set.id);
+    byCode.set(set.id.toUpperCase(), set.id);
+  }
+  return (code) => byCode.get(code.toUpperCase());
 }
 
 /** Parse + resolve a pasted decklist against the live catalog. Rejects on an
     api/network failure (the dialog reports it); mere unknown names come back
     as `unmatched`. */
 export function importDecklist(text: string): Promise<ImportResult> {
-  return resolveDecklist(parseDecklist(text), findCardByName);
+  // The set map loads alongside the name lookups and is only awaited for a
+  // line that names a set among reprints; its failure still rejects there.
+  const codes = setIdsByCode();
+  codes.catch(() => {});
+  return resolveDecklist(parseDecklist(text), findCardsByName, {
+    setIdForCode: async (code) => (await codes)(code),
+  });
 }

@@ -245,10 +245,16 @@ export function buildCardsWhere(query: CardsQuery): SQL | undefined {
   if (query.hpMax !== undefined) {
     conditions.push(lte(pokemonHp(), query.hpMax));
   }
+  // The reprint rule's verdict where the ingest post-pass wrote it, else the
+  // print's own flag (catalog/map.ts `legalOf` reads the same way).
   if (query.legal === "standard") {
-    conditions.push(eq(cards.legalStandard, true));
+    conditions.push(
+      sql`COALESCE(${cards.legalStandardEffective}, ${cards.legalStandard}) = ${sql.raw("1")}`,
+    );
   } else if (query.legal === "expanded") {
-    conditions.push(eq(cards.legalExpanded, true));
+    conditions.push(
+      sql`COALESCE(${cards.legalExpandedEffective}, ${cards.legalExpanded}) = ${sql.raw("1")}`,
+    );
   }
   return and(...conditions);
 }

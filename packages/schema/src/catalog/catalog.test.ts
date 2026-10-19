@@ -59,6 +59,7 @@ describe("catalog set/serie schemas", () => {
     symbol: "/assets/sets/sv06.5",
     releaseDate: "2024-08-02",
     cardCount: { total: 99, official: 64 },
+    abbreviation: "SFA",
   };
 
   it("parses a full set with its card briefs", () => {

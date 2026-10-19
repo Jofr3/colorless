@@ -48,6 +48,7 @@ import {
   mapCard,
   mapSerie,
   mapSet,
+  reprintLegalitySql,
   seriesUpsertSql,
   setsUpsertSql,
 } from "../src/ingest";
@@ -264,6 +265,10 @@ for (const setId of setIds) {
     });
   }
 }
+
+// Phase D — the reprint rule over the whole table (see reprintLegalitySql).
+console.log("\nreprint legality:");
+applySqlFile(writeSqlFile("reprint-legality", reprintLegalitySql()));
 
 // --- summary -------------------------------------------------------------------
 

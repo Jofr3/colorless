@@ -63,6 +63,8 @@ export const cardBriefColumns = {
   effect: sql<string | null>`CASE WHEN ${cards.category} = 'Energy' THEN ${cards.effect} END`,
   legalStandard: cards.legalStandard,
   legalExpanded: cards.legalExpanded,
+  legalStandardEffective: cards.legalStandardEffective,
+  legalExpandedEffective: cards.legalExpandedEffective,
 };
 export type CardBriefRow = Pick<CardRow, keyof typeof cardBriefColumns>;
 
@@ -87,6 +89,15 @@ function setAssetPath(setId: string): string {
   return `/assets/sets/${setId}`;
 }
 
+/** A print's served legality: the reprint-rule verdict when the ingest
+    post-pass has written it, else its own tcgdex flags (db/catalog.ts). */
+function legalOf(row: Pick<CardRow, "legalStandard" | "legalExpanded" | "legalStandardEffective" | "legalExpandedEffective">) {
+  return {
+    standard: row.legalStandardEffective ?? row.legalStandard,
+    expanded: row.legalExpandedEffective ?? row.legalExpanded,
+  };
+}
+
 export function mapCardBriefRow(row: CardBriefRow): CardBrief {
   return {
     id: row.id,
@@ -102,7 +113,7 @@ export function mapCardBriefRow(row: CardBriefRow): CardBrief {
     stage: normalizeSentinel(row.stage),
     trainerType: normalizeSentinel(row.trainerType),
     energyType: briefEnergyType(row),
-    legal: { standard: row.legalStandard, expanded: row.legalExpanded },
+    legal: legalOf(row),
   };
 }
 
@@ -129,7 +140,7 @@ export function mapCardRow(row: CardRow): Card {
     trainerType: normalizeSentinel(row.trainerType),
     energyType: normalizeSentinel(row.energyType),
     effect: row.effect,
-    legal: { standard: row.legalStandard, expanded: row.legalExpanded },
+    legal: legalOf(row),
     variants: row.variantsJson,
   };
 }
@@ -143,6 +154,7 @@ export function mapSetBriefRow(row: SetRow): SetBrief {
     symbol: row.symbolUrl !== null ? setAssetPath(row.id) : null,
     releaseDate: row.releaseDate,
     cardCount: { total: row.countTotal, official: row.countOfficial },
+    abbreviation: row.abbreviation,
   };
 }
 

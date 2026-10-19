@@ -514,13 +514,18 @@ Full-history-capable; SV-era rows only, for now. Implemented with Drizzle in
 series(id PK, name, release_date, logo_url)
 sets(id PK, serie_id FK, name, logo_url, symbol_url,
      release_date, count_total, count_official, legal_standard, legal_expanded,
-     tcg_online)
+     tcg_online, abbreviation)              -- abbreviation: tcgdex abbreviation.official
 cards(id PK, set_id FK, local_id, name, category,        -- Pokemon|Trainer|Energy
       illustrator, rarity, regulation_mark,
       hp, stage, suffix, evolve_from, types_json, retreat, -- Pokémon fields (nullable)
       abilities_json, attacks_json, weaknesses_json, resistances_json,
       trainer_type, energy_type, effect,                 -- Trainer/Energy fields
-      legal_standard, legal_expanded,
+      legal_standard, legal_expanded,                    -- tcgdex, per print
+      print_key, legal_standard_effective, legal_expanded_effective,
+        -- the reprint rule: print_key = the card's functional identity (ingest
+        -- map.ts printKey); *_effective = legality OR'd across prints sharing
+        -- it (ingest post-pass reprintLegalitySql). Readers coalesce onto the
+        -- per-print flags.
       variants_json, image_url, updated)
 
 -- User data (read-write)

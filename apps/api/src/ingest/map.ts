@@ -60,10 +60,71 @@ export function mapSet(set: TcgdexSet): SetRow {
     legalStandard: set.legal.standard,
     legalExpanded: set.legal.expanded,
     tcgOnline: set.tcgOnline ?? null,
+    abbreviation: set.abbreviation?.official ?? null,
   };
 }
 
+/** FNV-1a over UTF-16 code units, two independent 32-bit lanes → 16 hex chars.
+    Pure JS so the Worker bundle needs no crypto import for a column it only reads. */
+function fnv64(text: string): string {
+  let a = 0x811c9dc5;
+  let b = 0x050c5d1f;
+  for (let i = 0; i < text.length; i++) {
+    const c = text.charCodeAt(i);
+    a = Math.imul(a ^ c, 0x01000193) >>> 0;
+    b = Math.imul(b ^ (c + 1), 0x01000193) >>> 0;
+  }
+  return a.toString(16).padStart(8, "0") + b.toString(16).padStart(8, "0");
+}
+
+/** The functional identity of a print: everything the reprint rule compares.
+    A Trainer or Energy is its name, subtype and rules text; a Pokémon also
+    its HP, stage, suffix, evolution, types, retreat, abilities, attacks,
+    weakness and resistance. Set, number, rarity, art, regulation mark and
+    legality are NOT part of it — those are what differ between reprints.
+    Strings compare whitespace-collapsed and case-insensitively. */
+export function printKey(row: CardRow): string {
+  const parts: unknown[] = [row.category, row.name];
+  switch (row.category) {
+    case "Pokemon":
+      parts.push(
+        row.hp,
+        row.stage,
+        row.suffix,
+        row.evolveFrom,
+        row.typesJson,
+        row.retreat,
+        row.abilitiesJson,
+        row.attacksJson,
+        row.weaknessesJson,
+        row.resistancesJson,
+      );
+      break;
+    case "Trainer":
+      parts.push(row.trainerType, row.effect, row.hp, row.abilitiesJson, row.attacksJson);
+      break;
+    case "Energy":
+      parts.push(row.energyType, row.effect);
+      break;
+  }
+  const text = JSON.stringify(parts, (_key, value: unknown) =>
+    typeof value === "string" ? value.replace(/\s+/g, " ").trim().toLowerCase() : value,
+  );
+  return fnv64(text);
+}
+
 export function mapCard(card: TcgdexCard): CardRow {
+  const row = mapCardFields(card);
+  // The post-pass OR's these across the key; until it runs they are this print's own.
+  return {
+    ...row,
+    printKey: printKey(row),
+    legalStandardEffective: row.legalStandard,
+    legalExpandedEffective: row.legalExpanded,
+  };
+}
+
+function mapCardFields(card: TcgdexCard): CardRow {
   // Every category-specific column defaults to null; each branch fills its own.
   const base: CardRow = {
     id: card.id,
@@ -89,6 +150,9 @@ export function mapCard(card: TcgdexCard): CardRow {
     effect: null,
     legalStandard: card.legal?.standard ?? false,
     legalExpanded: card.legal?.expanded ?? false,
+    printKey: null,
+    legalStandardEffective: null,
+    legalExpandedEffective: null,
     variantsJson: card.variants ?? null,
     imageUrl: card.image ?? null,
     updated: card.updated ?? null,

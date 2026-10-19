@@ -55,6 +55,9 @@ export const sets = sqliteTable(
     legalExpanded: integer("legal_expanded", { mode: "boolean" }).notNull(),
     /** PTCGO set code (e.g. swsh3 → "DAA"); only PTCGO-era sets have one. */
     tcgOnline: text("tcg_online"),
+    /** The official set abbreviation printed on decklists (tcgdex
+        `abbreviation.official`, e.g. sv08.5 → "PRE"); null when tcgdex has none. */
+    abbreviation: text("abbreviation"),
   },
   (t) => [index("sets_serie_id_idx").on(t.serieId)],
 );
@@ -115,6 +118,16 @@ export const cards = sqliteTable(
     // `legal` is optional upstream; ingest maps a missing block to false/false.
     legalStandard: integer("legal_standard", { mode: "boolean" }).notNull(),
     legalExpanded: integer("legal_expanded", { mode: "boolean" }).notNull(),
+    /** The reprint rule (Play! Pokémon: a print is legal wherever a print with
+        the same name and text is legal). `print_key` is the card's functional
+        identity (../ingest/map.ts `printKey`: name plus everything the rules
+        compare); the `*_effective` flags are this print's legality OR'd across
+        every print sharing its key, written by the ingest post-pass
+        (../ingest/upserts.ts `reprintLegalitySql`). Null on rows ingested
+        before the pass; readers fall back to the per-print flags. */
+    printKey: text("print_key"),
+    legalStandardEffective: integer("legal_standard_effective", { mode: "boolean" }),
+    legalExpandedEffective: integer("legal_expanded_effective", { mode: "boolean" }),
     /** The 5 print-run flags {normal, reverse, holo, firstEdition, wPromo}. */
     variantsJson: text("variants_json", { mode: "json" }).$type<TcgdexVariants>(),
     /** tcgdex origin image base URL, extensionless (§4.4: append `/high.webp` etc.). */
@@ -122,5 +135,9 @@ export const cards = sqliteTable(
     /** tcgdex `updated` ISO timestamp, verbatim — ingest skips unchanged rows. */
     updated: text("updated"),
   },
-  (t) => [index("cards_set_id_idx").on(t.setId), index("cards_name_idx").on(t.name)],
+  (t) => [
+    index("cards_set_id_idx").on(t.setId),
+    index("cards_name_idx").on(t.name),
+    index("cards_print_key_idx").on(t.printKey),
+  ],
 );

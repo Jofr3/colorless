@@ -21,6 +21,8 @@ export const setBriefSchema = z.object({
   /** "YYYY-MM-DD". */
   releaseDate: z.iso.date(),
   cardCount: cardCountSchema,
+  /** The official set abbreviation decklists print (e.g. "PRE"), or null. */
+  abbreviation: z.string().nullable(),
 });
 export type SetBrief = z.infer<typeof setBriefSchema>;
 

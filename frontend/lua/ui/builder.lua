@@ -5,6 +5,7 @@ local DeckLabels=require('ui.deck_labels')
 local DeckStats=require('ui.deck_stats')
 local DeckRow=require('ui.deck_row')
 local Alert=require('ui.card_alert')
+local Energy=require('ui.energy')
 local PageText=require('ui.page_text')
 local Modal=require('ui.modal')
 local Codec=require('ui.account')
@@ -105,9 +106,28 @@ function Builder:face(item,w,h)
     local ok,img=pcall(g.newImage,path)
     if ok then img:setFilter('linear','linear');g.setColor(1,1,1);g.draw(img,0,0,0,w/img:getWidth(),h/img:getHeight());img:release();return end
   end
+  if item.kind=='Energy' then return Builder.energyFace(item,w,h) end
   T.box(0,0,w,h,T.paper,4);T.box(4,4,w-8,h-8,T.ink,4)
   T.text(item.name,18,10,36,w-20,T.paper)
   T.text(item.kind or '',16,10,h-40,w-20,T.profile)
+end
+-- tcgdex ships no art for basic Energy (sve, mee, mfb), so an Energy without
+-- art gets a generated face in its type's colour: the name across the top,
+-- the pixel pip large in the middle, and the subtype at the foot.
+function Builder.energyFace(item,w,h)
+  local kind=Energy.normalise((item.name or ''):gsub('%s*Energy%s*$',''))
+  local c=Energy.colour(kind)
+  local light=kind=='Colorless' or kind=='Metal' or kind=='Lightning' or kind=='Special'
+  local text=light and T.ink or T.white
+  T.box(0,0,w,h,T.paper,4)
+  T.box(4,4,w-8,h-8,c,4)
+  -- A darker inner field, stippled like the generated card faces.
+  g.setColor(0,0,0,0.18);T.box(10,30,w-20,h-66,{0,0,0,0.18},3)
+  g.setColor(0,0,0,0.12)
+  for x=16,w-20,8 do for y=36,h-44,8 do g.rectangle('fill',x,y,2,2) end end
+  T.text(item.name,17,8,8,w-16,text)
+  Energy.pip(w/2,h/2-4,34,kind)
+  T.text(item.subtype~='' and item.subtype or 'Basic Energy',14,8,h-28,w-16,text)
 end
 function Builder:newCard(item,index,x,y,scale,entering)
   item.colour=T.blue;item.edition='dissolve';item.resolution=2;item.drawFace=function(w,h)self:face(item,w,h)end
