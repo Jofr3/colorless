@@ -1630,7 +1630,12 @@ function formatEvent(
     case "STADIUM_DISCARDED":
       // Follows the replacing Stadium's TRAINER_PLAYED row (§7.3); `seat` is
       // the OWNER whose discard pile gained the old card.
-      return row("system", [strong(cardName(state, event.uid)), plain(" left play — replaced")]);
+      // 🆕🆕🆕 Card revision B22 — an EFFECT discard (Wreck, World Ender, …) left the zone
+      // empty; it follows the attack's own rows and claims no replacement.
+      return row("system", [
+        strong(cardName(state, event.uid)),
+        plain(event.cause === "replaced" ? " left play — replaced" : " was discarded"),
+      ]);
     case "POKEMON_NAMED":
       // 🆕🆕🆕 D577 — Tyme: the told name only (the card is face down — no HP here).
       return row(event.seat, [plain("named "), strong(event.name), plain(" — the opponent guesses its HP")]);

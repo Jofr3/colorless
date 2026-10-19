@@ -435,7 +435,7 @@ describe("D629 §7 — Assassin's Magic on a board", () => {
 });
 
 describe("D629 §8 — the version", () => {
-  it("is built at engine 0.545.0", () => {
-    expect(engineVersion).toBe("0.545.0");
+  it("is built at engine 0.546.0", () => {
+    expect(engineVersion).toBe("0.546.0");
   });
 });

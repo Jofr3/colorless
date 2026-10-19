@@ -524,7 +524,7 @@ describe("D522 §2 — Stadium PRESENT: the base lands first, the Bench takes 30
     const { before, after, events } = swing();
     const stadium = before.stadium;
     if (stadium === null) throw new Error("expected P2's Stadium in the zone");
-    expect(stadiumRows(events)).toEqual([{ type: "STADIUM_DISCARDED", seat: "p2", uid: stadium.uid }]);
+    expect(stadiumRows(events)).toEqual([{ type: "STADIUM_DISCARDED", seat: "p2", uid: stadium.uid, cause: "effect" }]);
     expect(after.stadium).toBeNull();
     expect(after.players.p2.discard).toEqual([...before.players.p2.discard, stadium.uid]);
     expect(after.players.p1.discard).toEqual(before.players.p1.discard);
@@ -613,7 +613,7 @@ describe("D522 §2b — Stadium ABSENT, an EMPTY Bench, and the Knock Out the sp
     expect(before.players.p2.bench).toHaveLength(0);
     expect(damageRows(events)).toHaveLength(1);
     expect(after.players.p2.active?.damage).toBe(BASE);
-    expect(stadiumRows(events)).toEqual([{ type: "STADIUM_DISCARDED", seat: "p2", uid: stadium.uid }]);
+    expect(stadiumRows(events)).toEqual([{ type: "STADIUM_DISCARDED", seat: "p2", uid: stadium.uid, cause: "effect" }]);
     expect(after.stadium).toBeNull();
     expect(after.players.p2.discard).toContain(stadium.uid);
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
@@ -738,7 +738,7 @@ const RAW: Record<string, string> = (
 describe("D522 §4 — the version steps, the heading is written, the prose is corrected, and what stands still", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.545.0");
+    expect(engineVersion).toBe("0.546.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

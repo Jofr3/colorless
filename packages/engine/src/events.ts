@@ -1326,8 +1326,14 @@ export type GameEvent =
     }
   /** §7.3 — the Stadium `uid` left play for its OWNER `seat`'s discard pile,
       replaced by a different-named Stadium (whose own TRAINER_PLAYED rides in
-      the same batch). */
-  | { type: "STADIUM_DISCARDED"; seat: Seat; uid: string }
+      the same batch).
+      🆕🆕🆕 Card revision B22 — `cause`, because that is no longer the only way out:
+      `"replaced"` is `playStadium`'s replace path (cardplay.ts), `"effect"` is the
+      `discardStadium` op (interpreter.ts — Wreck, Somersault Dive, Ground Melter,
+      World Ender, Blazing Destruction, …), which leaves the zone EMPTY. The log read
+      every row as "replaced" before. Unpersisted (`GameEvent` is not in
+      `MatchRecord`), so no record version moves for it. */
+  | { type: "STADIUM_DISCARDED"; seat: Seat; uid: string; cause: "replaced" | "effect" }
   /** 🆕🆕🆕 §7.3 (D577) — Area Zero Underdepths' TRIM: `seat` discarded the Benched Pokémon
       `uids` (their TOP cards, in Bench order) with every attached card (`discarded`, the
       whole pile that went to `seat`'s discard pile) to get back to 5 — no Knock Out, no Prize

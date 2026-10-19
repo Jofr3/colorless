@@ -357,7 +357,7 @@ describe("D613 §7 — the predicate, and the version", () => {
     expect(namesItsCard({ kind: "anyPokemon" })).toBe(false);
   });
 
-  it("is built at engine 0.545.0", () => {
-    expect(engineVersion).toBe("0.545.0");
+  it("is built at engine 0.546.0", () => {
+    expect(engineVersion).toBe("0.546.0");
   });
 });

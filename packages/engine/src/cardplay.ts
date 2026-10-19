@@ -430,7 +430,7 @@ function playStadium(state: GameState, action: PlayTrainerAction, card: Card): A
       ...ownerSide,
       discard: [...ownerSide.discard, current.uid],
     });
-    events.push({ type: "STADIUM_DISCARDED", seat: current.owner, uid: current.uid });
+    events.push({ type: "STADIUM_DISCARDED", seat: current.owner, uid: current.uid, cause: "replaced" });
   }
   next = {
     ...next,

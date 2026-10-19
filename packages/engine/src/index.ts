@@ -20274,6 +20274,14 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕 engineVersion 0.545.0 → **0.546.0** (card revision B22 — ATTACKS: ONE AUDIT FINDING FIXED;
+    `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B22")).
+    `STADIUM_DISCARDED` gains a REQUIRED `cause: "replaced" | "effect"`: cardplay.ts `playStadium`'s
+    replace path says `"replaced"`, interpreter.ts `discardStadium` (Mamoswine "Wreck" `me02-025`,
+    Mega Hawlucha ex "Somersault Dive" `me02.5-116` / `-268` / `-283`, Chi-Yu "Ground Melter"
+    `sv06-039`, Eternatus "World Ender" `sv08-141`, and every other op user) says `"effect"`, and
+    log.ts words the effect row "<Stadium> was discarded" instead of "left play — replaced" on an
+    emptied zone. The board was already right. `revisionB22.test.ts`.)
     🆕 engineVersion 0.544.0 → **0.545.0** (card revision B21 — ABILITIES: TWO AUDIT FINDINGS FIXED;
     `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B21")). (1) Turtonator
     "Shell Spikes" `me03-017` / Klawf ex "Counterattacking Pincer" `sv03-120`, and the status twins
@@ -25939,7 +25947,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.545.0";
+export const engineVersion = "0.546.0";
 
 export type {
   ApplyResult,

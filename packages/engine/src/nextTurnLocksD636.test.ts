@@ -778,7 +778,9 @@ describe("D636 §6 — Scorching Earth: the opponent's Stadium discarded, then n
     const start = withStadium(board(CHIYU), "p2", ARTAZON);
     const stadiumUid = start.stadium?.uid as string;
     const { state, events } = attack(start, "p1");
-    expect(all(events, "STADIUM_DISCARDED")).toEqual([{ type: "STADIUM_DISCARDED", seat: "p2", uid: stadiumUid }]);
+    expect(all(events, "STADIUM_DISCARDED")).toEqual([
+      { type: "STADIUM_DISCARDED", seat: "p2", uid: stadiumUid, cause: "effect" },
+    ]);
     expect(state.stadium).toBeNull();
     expect(state.players.p2.discard).toContain(stadiumUid);
     expect(state.handPlayLockedTurn.p2.Stadium).toBe(state.turn);
@@ -932,6 +934,6 @@ describe("D636 §8 — the log rows, the fresh keys and the version", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.545.0");
+    expect(engineVersion).toBe("0.546.0");
   });
 });

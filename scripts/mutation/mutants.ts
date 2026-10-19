@@ -6253,7 +6253,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.545.0";',
+    find: 'export const engineVersion = "0.546.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -61016,5 +61016,32 @@ export const MUTANTS: Mutant[] = [
     find: "        done: op.discardEnergyFromHealed === true ? discardEnergyFromHealed(state, healed, ctx, events) : healed,\n",
     replace: "        done: healed,\n",
     expectKilledBy: ["packages/engine/src/revisionB21.test.ts"],
+  },
+  {
+    id: "B22-effect-stadium-discard-says-replaced",
+    decision: "B22",
+    what: "The `discardStadium` op files its `STADIUM_DISCARDED` as `cause: \"replaced\"`, so Wreck / Somersault Dive / Ground Melter / World Ender log \"<Stadium> left play — replaced\" on an emptied zone again. Killed by revisionB22 §1.",
+    file: "packages/engine/src/interpreter.ts",
+    find: 'uid: stadium.uid, cause: "effect" });',
+    replace: 'uid: stadium.uid, cause: "replaced" });',
+    expectKilledBy: ["packages/engine/src/revisionB22.test.ts"],
+  },
+  {
+    id: "B22-log-ignores-stadium-discard-cause",
+    decision: "B22",
+    what: "log.ts stops reading `STADIUM_DISCARDED.cause` and words every row \"left play — replaced\" (the pre-B22 row). The event stays right, so only the rendered-row rungs can see it. Killed by revisionB22 §1.",
+    file: "packages/engine/src/log.ts",
+    find: 'plain(event.cause === "replaced" ? " left play — replaced" : " was discarded"),',
+    replace: 'plain(" left play — replaced"),',
+    expectKilledBy: ["packages/engine/src/revisionB22.test.ts"],
+  },
+  {
+    id: "B22-replaced-stadium-says-effect",
+    decision: "B22",
+    what: "`playStadium`'s replace path files `cause: \"effect\"`, so a Stadium replaced from hand logs \"was discarded\" and loses its replacement row. Killed by revisionB22 §2 and stadiumTool.",
+    file: "packages/engine/src/cardplay.ts",
+    find: 'uid: current.uid, cause: "replaced" });',
+    replace: 'uid: current.uid, cause: "effect" });',
+    expectKilledBy: ["packages/engine/src/revisionB22.test.ts"],
   },
 ];

@@ -360,7 +360,7 @@ describe("D635 §4 — Relicanth \"Fossil Beatdown\": +30 per benched Antique", 
     expect(beat(state)).toBe(40);
   });
 
-  it("the engine is 0.545.0", () => {
-    expect(engineVersion).toBe("0.545.0");
+  it("the engine is 0.546.0", () => {
+    expect(engineVersion).toBe("0.546.0");
   });
 });

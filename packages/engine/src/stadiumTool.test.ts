@@ -108,7 +108,7 @@ describe("playTrainer — Stadiums (§7.3)", () => {
     expect(next.players.p1.discard).toContain(beachCourt);
     expect(next.players.p2.discard).not.toContain(beachCourt);
     const discarded = find(events, "STADIUM_DISCARDED");
-    expect(discarded).toEqual({ type: "STADIUM_DISCARDED", seat: "p1", uid: beachCourt });
+    expect(discarded).toEqual({ type: "STADIUM_DISCARDED", seat: "p1", uid: beachCourt, cause: "replaced" });
     expect(types(events)).toEqual(["TRAINER_PLAYED", "STADIUM_DISCARDED"]);
   });
 });

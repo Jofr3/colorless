@@ -17578,7 +17578,8 @@ function discardStadium(state: GameState, events: GameEvent[]): GameState {
     ...ownerSide,
     discard: [...ownerSide.discard, stadium.uid],
   });
-  events.push({ type: "STADIUM_DISCARDED", seat: stadium.owner, uid: stadium.uid });
+  // Card revision B22 — `cause: "effect"`: nothing replaced it, the zone is now empty.
+  events.push({ type: "STADIUM_DISCARDED", seat: stadium.owner, uid: stadium.uid, cause: "effect" });
   // The zone is cleared LAST, off `next`, so the pile update and the vacancy are one
   // reduction — nothing can observe a Stadium that is in neither place.
   return { ...next, stadium: null };

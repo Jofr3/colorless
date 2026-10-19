@@ -587,11 +587,13 @@ describe("§3 — the board: the OWNER's pile, and a zone that is genuinely vaca
       ...before.players.p1.active,
       usedAttack: { name: "Blazing Destruction", turn: before.turn },
     });
-    // The EXISTING event, under the OWNER's seat — `playStadium`'s row verbatim.
+    // The EXISTING event, under the OWNER's seat — `playStadium`'s row, with the cause
+    // card revision B22 added: `"effect"`, since nothing replaced it (the log reads it).
     expect(find(result.events, "STADIUM_DISCARDED")).toEqual({
       type: "STADIUM_DISCARDED",
       seat: "p2",
       uid: stadium.uid,
+      cause: "effect",
     });
     // …and the attack was not skipped, which is what a dropped op would look like.
     expect(types(result.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
@@ -865,7 +867,10 @@ describe("§6 — what this slice did NOT buy", () => {
     const attacked = attack(blazingDestruction(board(SEEDS[0], "p2")));
     const row = find(attacked.events, "STADIUM_DISCARDED");
     if (row === undefined) throw new Error("expected the discard row");
-    expect(Object.keys(row).sort()).toEqual(["seat", "type", "uid"]);
+    // Card revision B22 — the row gained `cause` (the replace path says "replaced", this op
+    // says "effect"), so the log stops calling an emptied zone a replacement. Still ONE type.
+    expect(Object.keys(row).sort()).toEqual(["cause", "seat", "type", "uid"]);
+    expect(row.cause).toBe("effect");
   });
 
   it("bought no play GATE and no registry row — the op reaches the board through attack text only", () => {

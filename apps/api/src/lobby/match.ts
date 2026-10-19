@@ -2161,6 +2161,12 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕 **STAYS 49 AT CARD REVISION B22 — ONE REQUIRED KEY ON AN UNPERSISTED EVENT (`STADIUM_DISCARDED.cause`).
+    NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD OR `EffectOp` MEMBER OR KEY.** (Placed ABOVE
+    the B21 block.) `GameEvent` is not in `MatchRecord`; the key only picks the log wording ("left play — replaced"
+    for `playStadium`'s replace path, "was discarded" for the `discardStadium` op). Nothing a v49 record holds
+    changes shape or meaning.
+
     🆕 **STAYS 49 AT CARD REVISION B21 — ONE OPTIONAL `EffectContext` KEY (`attackerUid`), ONE OPTIONAL `EffectOp`
     KEY (`heal.discardEnergyFromHealed`) AND TWO UNION MEMBERS (`discardEnergy.from` / `applyStatus.target`
     `"attacker"`). NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD OR EVENT MEMBER.** (Placed ABOVE
