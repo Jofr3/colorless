@@ -49,7 +49,7 @@
     },
     "packages/engine": {
       "name": "@luminous/engine",
-      "version": "0.537.0",
+      "version": "0.538.0",
       "dependencies": {
         "@luminous/schema": "workspace:*",
       },

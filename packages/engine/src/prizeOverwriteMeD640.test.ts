@@ -431,7 +431,7 @@ describe("D640 §5 — Celebration: 2 Prizes at exactly 30 in hand, then the han
 });
 
 describe("D640 §6 — the version", () => {
-  it("is built at engine 0.537.0", () => {
-    expect(engineVersion).toBe("0.537.0");
+  it("is built at engine 0.538.0", () => {
+    expect(engineVersion).toBe("0.538.0");
   });
 });

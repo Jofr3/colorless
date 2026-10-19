@@ -992,7 +992,7 @@ const RAW: Record<string, string> = (
 describe("D532 §6 — the version steps and the bytes this suite drove are the bytes that shipped", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.537.0");
+    expect(engineVersion).toBe("0.538.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

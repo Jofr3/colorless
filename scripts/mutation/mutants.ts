@@ -6252,7 +6252,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.537.0";',
+    find: 'export const engineVersion = "0.538.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -60818,5 +60818,15 @@ export const MUTANTS: Mutant[] = [
     find: '  "sv02-192": REVERSAL_ENERGY,\n',
     replace: "",
     expectKilledBy: ["packages/engine/src/revisionB08.test.ts"],
+  },
+  // ── Card revision B09 (Stadiums) — the one registry row. ──
+  {
+    id: "B09-paradise-svp045-row-dropped",
+    decision: "B09",
+    what: "the `svp-045` Paradise Resort row is dropped again, so the effective-legal printing is refused as TRAINER_NOT_SIMULATED and no Psyduck's Retreat Cost drops. Killed by revisionB09 §1.",
+    file: "packages/engine/src/registry.ts",
+    find: '  "svp-045": PARADISE_RESORT, // Paradise Resort — twin `svp-150`\n',
+    replace: "",
+    expectKilledBy: ["packages/engine/src/revisionB09.test.ts"],
   },
 ];

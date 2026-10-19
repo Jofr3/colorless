@@ -20274,6 +20274,11 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕 engineVersion 0.537.0 → **0.538.0** (card revision B09 — STADIUMS: ONE AUDIT FINDING FIXED, ONE DEFERRED;
+    `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B09")). registry.ts: Paradise
+    Resort `svp-045` (mark G, `legal_standard_effective = 1` since 714256b3, print_key shared with `svp-150` /
+    `svp-224` / `mep-092`) on the shipped `PARADISE_RESORT`, beside B05's `mfb-33` Potion. Lumiose City on a full
+    Bench is deferred (R-LC1 / the engine-wide full-Bench search policy). `revisionB09.test.ts`.)
     🆕 engineVersion 0.536.0 → **0.537.0** (card revision B08 — TOOLS + SPECIAL ENERGY: THREE AUDIT FINDINGS FIXED;
     `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B08")). flow.ts
     `attachedPrizeReductions` refuses a `knockOutDefender` doom (`lethalByEffect`, D414's marker), completing
@@ -25878,7 +25883,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.537.0";
+export const engineVersion = "0.538.0";
 
 export type {
   ApplyResult,

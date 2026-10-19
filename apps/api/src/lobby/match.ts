@@ -2161,6 +2161,14 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕 **STAYS 49 AT CARD REVISION B09 — ONE REGISTRY ROW ON A SHIPPED OBJECT. NO PHASE, PROMPT KIND, STAGE SHAPE, SIDE
+    KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR KEY, OR EVENT MEMBER.** (Placed ABOVE the B08 block.) Paradise
+    Resort `svp-045` now resolves to `svp-150`'s `PARADISE_RESORT` program. Programs are keyed by id and the Retreat
+    Cost is computed, never persisted, so a v49 pool holding `svp-045` plays it on deploy and a `svp-045` already in the
+    Stadium zone (it cannot be there today: the play was refused) would discount each Psyduck from the next read.
+    ROLLBACK READING (0.537): `svp-045` is refused again as `TRAINER_NOT_SIMULATED` from the next play. Nothing a v49
+    record holds changes shape or meaning.
+
     🆕 **STAYS 49 AT CARD REVISION B08 — ONE RUN-TIME GATE IN AN EXISTING PRIZE STEP AND ONE REGISTRY ROW. NO PHASE, PROMPT
     KIND, STAGE SHAPE, SIDE KEY, `InPlayPokemon` FIELD, `EffectOp` MEMBER OR KEY, OR EVENT MEMBER.** (Placed ABOVE the B07
     block.) flow.ts `attachedPrizeReductions` now refuses a `knockOutDefender` doom (Lillie's Pearl `sv09-151`, Legacy

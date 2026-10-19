@@ -15329,6 +15329,9 @@ const TOOL_SCRAPPER: CardProgram = {
 //    Salvatore (`noAbilities` on the evolve-from-deck ops). Texts, subtypes and
 //    legality off tcgdex (the ingest's own upstream), 2026-09-26 — all eighteen
 //    `legal.standard: true`; Paradise Resort `svp-045` (mark G) is NOT and is not keyed.
+//    (🆕 CARD REVISION B09: WITHDRAWN — `svp-045` is `legal_standard_effective = 1` since
+//    714256b3, print_key `f6d5263097478251` shared with `svp-150` / `svp-224` / `mep-092`, and is
+//    keyed on `PARADISE_RESORT` beside B05's `mfb-33` Potion.)
 //    One object per printed TEXT (D199), reprints share it. Keyed MID-MAP after D557's
 //    last row (D395/D396). Every addition is an optional key: `MATCH_RECORD_VERSION`
 //    HOLDS at 35 (D125/D344). docs/decisions.md D558. ──
@@ -15457,7 +15460,10 @@ const NS_CASTLE: CardProgram = {
 /** 🆕🆕🆕 **D558 — Paradise Resort `svp-150`/`svp-224` (Stadium, 2 legal)** — *"The Retreat
     Cost of each Psyduck in play (both yours and your opponent's) is {C} less."*
     `retreat { byName "Psyduck", discount 1 }` — a filtered term in `stadiumRetreatDelta`.
-    `svp-045` prints the same text but is mark G, NOT Standard-legal, and is not keyed. */
+    `svp-045` prints the same text but is mark G, NOT Standard-legal, and is not keyed.
+    (🆕 CARD REVISION B09: WITHDRAWN — `svp-045` is `legal_standard_effective = 1` since 714256b3
+    (print_key `f6d5263097478251`, shared with `svp-150` / `svp-224` / `mep-092`) and runs this
+    row too. `revisionB09.test.ts` §1.) */
 const PARADISE_RESORT: CardProgram = {
   stadium: { retreat: { filter: { kind: "byName", name: "Psyduck" }, discount: 1 } },
 };
@@ -20503,6 +20509,9 @@ const REGISTRY: Record<string, CardProgram> = {
   // Card revision B05: `mfb-34`'s neighbour, the same defect — print_key `1a6334c9d86eec4e` with
   // `sv01-188` / `me03-083`, `legal_standard_effective = 1`, no regulation mark.
   "mfb-33": POTION, // Potion — twin `sv01-188`
+  // Card revision B09: the same defect on a Stadium — print_key `f6d5263097478251` with `svp-150` /
+  // `svp-224` / `mep-092`, `legal_standard_effective = 1`, mark G.
+  "svp-045": PARADISE_RESORT, // Paradise Resort — twin `svp-150`
   "sv04.5-091": ULTRA_BALL, // Ultra Ball — twin `sv01-196`
   // …and the three `30th` Items, `legal_standard = 1`, whose catalog row has `effect = NULL` (tcgdex
   // prints no text, so their print_key matches no twin and no census reached them). Keyed by NAME on the
