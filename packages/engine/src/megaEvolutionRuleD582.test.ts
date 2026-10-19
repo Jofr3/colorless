@@ -260,9 +260,9 @@ const strike = (index: number): GameAction => ({ type: "attack", seat: "p1", ind
 const prizesOwed = (state: GameState) => (state.phase.kind === "ko:takePrizes" ? state.phase.count : null);
 
 describe("D582 §0 — the version", () => {
-  it("is built at engine 0.552.0, in BOTH places", () => {
-    expect(engineVersion).toBe("0.552.0");
-    expect(manifest.version).toBe("0.552.0");
+  it("is built at engine 0.553.0, in BOTH places", () => {
+    expect(engineVersion).toBe("0.553.0");
+    expect(manifest.version).toBe("0.553.0");
   });
 });
 

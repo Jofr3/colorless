@@ -424,8 +424,8 @@ describe("§1 — the prints, the registry rows and the new vocabulary's key set
     });
   });
 
-  it("the engine is 0.552.0", () => {
-    expect(engineVersion).toBe("0.552.0");
+  it("the engine is 0.553.0", () => {
+    expect(engineVersion).toBe("0.553.0");
   });
 });
 

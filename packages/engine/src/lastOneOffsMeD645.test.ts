@@ -223,8 +223,8 @@ describe("D645 §1 — the prints and the registry rows", () => {
     ]);
   });
 
-  it("is built at engine 0.552.0", () => {
-    expect(engineVersion).toBe("0.552.0");
+  it("is built at engine 0.553.0", () => {
+    expect(engineVersion).toBe("0.553.0");
   });
 });
 

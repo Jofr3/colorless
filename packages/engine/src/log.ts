@@ -2125,11 +2125,13 @@ function formatEvent(
       // 🆕🆕🆕 D574 — Haughty Order: the cards were REVEALED and STAY in the deck (a SHUFFLE row
       // follows). Public — both players saw them — so they are named.
       if (event.dest === "deck") {
-        const owner = names[event.seat];
+        // 🆕 Card revision B45 — Bug Out reveals its OWN deck (no `actor`): "their deck", as every
+        // own-deck row reads; Haughty Order's seat-crossing row still names the owner.
+        const owner = event.actor === undefined || event.actor === event.seat ? "their" : `${names[event.seat]}'s`;
         const who = event.actor ?? event.seat;
-        if (n === 0) return row(who, [plain(`revealed the ${end} of ${owner}'s deck — it was empty`)]);
+        if (n === 0) return row(who, [plain(`revealed the ${end} of ${owner} deck — it was empty`)]);
         return row(who, [
-          plain(`revealed the ${end} ${n} card${n === 1 ? "" : "s"} of ${owner}'s deck: `),
+          plain(`revealed the ${end} ${n} card${n === 1 ? "" : "s"} of ${owner} deck: `),
           strong(countedNames(event.uids.map((uid) => cardName(state, uid)))),
         ]);
       }

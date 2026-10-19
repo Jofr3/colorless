@@ -20274,6 +20274,13 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕 engineVersion 0.552.0 → **0.553.0** (card revision B45 — ATTACKS: ONE AUDIT FINDING FIXED;
+    `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B45")). Sizzlipede
+    "Bug Out" `me05-009`: the printed *"Reveal the bottom 7 cards of your deck"* was never shown — the
+    `revealDeckBottomCount` op emitted only the non-Pokémon discard and the shuffle. It now pushes one
+    public `DECK_TOP_REVEALED { dest: "deck", from: "bottom", reveal: true }` row naming the whole window
+    first (the empty deck too, D241); log.ts reads an own-deck `dest: "deck"` row as "their deck".
+    `opponentAnsweredMeD641.test.ts` §4b.)
     🆕 engineVersion 0.551.0 → **0.552.0** (card revision B42 — ATTACKS: ONE AUDIT FINDING FIXED;
     `MATCH_RECORD_VERSION` STAYS 49 (apps/api match.ts "STAYS 49 AT CARD REVISION B42")). Ditto
     "Surprisingly Transform" `30th-115` / `mep-106`: the heads deck offer admitted Palafin ex
@@ -25996,7 +26003,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.552.0";
+export const engineVersion = "0.553.0";
 
 export type {
   ApplyResult,

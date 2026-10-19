@@ -4430,6 +4430,10 @@ function stepOp(
         op.recordAs,
         window.filter((uid) => matchesFilter(cardOfUid(state, uid), op.filter)),
       );
+      // 🆕 Card revision B45 — the printed "Reveal": the whole window is named to both players before
+      // anything moves (D241: the look is announced even when it finds nothing, the empty deck too), on
+      // Haughty Order's public row (D574 `dest: "deck"`) at the end the window took (D557 `from`).
+      events.push({ type: "DECK_TOP_REVEALED", seat: ctx.seat, dest: "deck", from: "bottom", uids: [...window], reveal: true });
       if (window.length === 0) return { done: state };
       const shed = window.filter((uid) => !matchesFilter(cardOfUid(state, uid), { kind: "anyPokemon" }));
       const gone = new Set(shed);

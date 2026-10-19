@@ -2162,6 +2162,11 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕 **STAYS 49 AT CARD REVISION B45 — NO SHAPE CHANGE; BUG OUT NAMES ITS REVEALED CARDS.**
+    (Placed ABOVE the B42 block.) `revealDeckBottomCount` (Sizzlipede "Bug Out") now emits a
+    `DECK_TOP_REVEALED` event for the bottom window. Events are not persisted (D141), so nothing a record
+    holds changes shape or meaning.
+
     🆕 **STAYS 49 AT CARD REVISION B42 — NO SHAPE CHANGE; DITTO'S DECK OFFER DROPS A HERO'S SPIRIT CARD.**
     (Placed ABOVE the B37 block.) `switchWithDeckChosen` (Ditto "Surprisingly Transform") no longer lists a
     deck card whose program carries `intoPlayOnlyVia` (Palafin ex) among its `chooseCards` candidates. The

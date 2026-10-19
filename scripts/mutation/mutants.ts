@@ -6255,7 +6255,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.552.0";',
+    find: 'export const engineVersion = "0.553.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -61147,5 +61147,23 @@ export const MUTANTS: Mutant[] = [
     find: "    if (card === undefined || !matchesFilter(card, filter) || seen.has(card.id)) return false;\n    if (intoPlayOnlyViaOf(card) !== undefined) return false;\n",
     replace: "    if (card === undefined || !matchesFilter(card, filter) || seen.has(card.id)) return false;\n",
     expectKilledBy: ["packages/engine/src/revisionB42.test.ts"],
+  },
+  {
+    id: "B45-bug-out-reveal-silent",
+    decision: "B45",
+    what: "Sizzlipede's (me05-009) Bug Out reveals the bottom 7 without a reveal row: the opponent never sees which Pokémon set the damage. Killed by opponentAnsweredMeD641 §4b.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      events.push({ type: \"DECK_TOP_REVEALED\", seat: ctx.seat, dest: \"deck\", from: \"bottom\", uids: [...window], reveal: true });\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/opponentAnsweredMeD641.test.ts"],
+  },
+  {
+    id: "B45-own-deck-reveal-names-owner",
+    decision: "B45",
+    what: "an own-deck `dest: \"deck\"` reveal row names its owner as if another player had looked (\"of Ember's deck\"). Killed by opponentAnsweredMeD641 §4b.",
+    file: "packages/engine/src/log.ts",
+    find: "        const owner = event.actor === undefined || event.actor === event.seat ? \"their\" : `${names[event.seat]}'s`;",
+    replace: "        const owner = `${names[event.seat]}'s`;",
+    expectKilledBy: ["packages/engine/src/opponentAnsweredMeD641.test.ts"],
   },
 ];

@@ -1705,7 +1705,11 @@ export type GameEvent =
           🆕🆕🆕 D574 — `"deck"`: the cards were REVEALED and STAYED in the deck (Team Rocket's
           Persian ex "Haughty Order" reveals the opponent's top 10, then shuffles them back —
           attack.ts `copyAtResolution`); `seat` the deck's owner, `actor` the attacker, `reveal`
-          true. A D125 widening; not persisted — no bump. */
+          true. A D125 widening; not persisted — no bump.
+          🆕 Card revision B45 — Sizzlipede "Bug Out" (`revealDeckBottomCount`) reveals its OWN bottom 7 on
+          this row (`from: "bottom"`, no `actor`); the revealed Pokémon are shuffled back, and the rest leave
+          on the `DECK_BOTTOM_DISCARDED` row that follows — so "stayed in the deck" is the reveal's own
+          claim, not every card's fate. Not persisted — no bump. */
       dest?: "bench" | "discard" | "deck";
       uids: string[];
       reveal?: true;

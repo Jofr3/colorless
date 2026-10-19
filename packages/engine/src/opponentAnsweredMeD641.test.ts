@@ -6,6 +6,7 @@ import { deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
 import { applyAction, createGame, engineVersion } from "./index";
 import { programFor } from "./registry";
+import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { flipCoin } from "./rng";
 import {
   FIXTURE_POOL,
@@ -338,6 +339,59 @@ describe("D641 §4 — Bug Out: 50 per Bug Out Pokémon in the bottom 7; Pokémo
   });
 });
 
+// 🆕 Card revision B45 (U0759) — the printed "Reveal the bottom 7 cards of your deck" was never shown: the
+// op emitted only the discard of the non-Pokémon and the shuffle, so the opponent could not check the
+// count (the Bug Out Pokémon that set the damage were never named). D241's rule — a look is announced
+// even when nothing moves — and Haughty Order's public `DECK_TOP_REVEALED { dest: "deck" }` row (D574),
+// with `from: "bottom"` (D557).
+describe("D641 §4b — Bug Out names every revealed card to both players (card revision B45)", () => {
+  const line = (events: GameEvent[], state: GameState): string[] => {
+    const ctx: LogContext = { names: { p1: "Ember", p2: "Tide" }, state, elapsed: formatElapsed(0) };
+    return logFromEvents(events, ctx).flatMap((entry) =>
+      entry.kind === "turn" ? [] : [`${entry.who}: ${entry.segments.map((s) => s.text).join("")}`],
+    );
+  };
+  const name = (id: string) => POOL[id]?.name as string;
+
+  it("the whole bottom-7 window is one public reveal row, in deck order, before the discard and the shuffle", () => {
+    const window = [BUG, W, FILLER, "fix-energy", BUG, "fix-tool", W];
+    const start = bottomOf(table(SIZZ, 3), window);
+    const shown = start.players.p1.deck.slice(-7);
+    const done = mustApply(start, attack(1));
+    expect(done.state.players.p2.active?.damage).toBe(100);
+    expect(of(done.events, "DECK_TOP_REVEALED")).toEqual([
+      { type: "DECK_TOP_REVEALED", seat: "p1", dest: "deck", from: "bottom", uids: shown, reveal: true },
+    ]);
+    const order = done.events.map((e) => e.type);
+    expect(order.indexOf("DECK_TOP_REVEALED")).toBeLessThan(order.indexOf("DECK_BOTTOM_DISCARDED"));
+    expect(order.indexOf("DECK_BOTTOM_DISCARDED")).toBeLessThan(order.indexOf("SHUFFLE"));
+    expect(line(done.events, done.state)).toContain(
+      `p1: revealed the bottom 7 cards of their deck: ${name(BUG)} ×2, ${name(W)} ×2, ${name(FILLER)}, ${name("fix-energy")}, ${name("fix-tool")}`,
+    );
+  });
+
+  it("a short deck reveals what it has, and the row says how many", () => {
+    let start = bottomOf(table(SIZZ, 3), [W, BUG]);
+    const side = start.players.p1;
+    start = { ...start, players: { ...start.players, p1: { ...side, deck: side.deck.slice(-2) } } };
+    const done = mustApply(start, attack(1));
+    expect(done.state.players.p2.active?.damage).toBe(50);
+    expect(line(done.events, done.state)).toContain(`p1: revealed the bottom 2 cards of their deck: ${name(W)}, ${name(BUG)}`);
+  });
+
+  it("an empty deck still announces the reveal, and nothing else happens", () => {
+    const start = table(SIZZ, 3);
+    const side = start.players.p1;
+    const empty = { ...start, players: { ...start.players, p1: { ...side, deck: [] } } };
+    const done = mustApply(empty, attack(1));
+    expect(of(done.events, "DECK_TOP_REVEALED")).toEqual([
+      { type: "DECK_TOP_REVEALED", seat: "p1", dest: "deck", from: "bottom", uids: [], reveal: true },
+    ]);
+    expect(of(done.events, "SHUFFLE").filter((e) => e.seat === "p1")).toEqual([]);
+    expect(line(done.events, done.state)).toContain("p1: revealed the bottom of their deck — it was empty");
+  });
+});
+
 describe("D641 §5 — Pleasing Present: the opponent attaches first, then you, each up to 3 Basic Energy (R-PP1)", () => {
   const present = () => {
     let state = handFromDeck(handFromDeck(table(DELI, 1, [FILLER]), "p2", W, 4), "p2", "fix-tool", 1);
@@ -472,7 +526,7 @@ describe("D641 §6 — Lt. Surge's Bargain: the opponent answers (R-LSB1)", () =
 });
 
 describe("D641 §7 — the version", () => {
-  it("is built at engine 0.552.0", () => {
-    expect(engineVersion).toBe("0.552.0");
+  it("is built at engine 0.553.0", () => {
+    expect(engineVersion).toBe("0.553.0");
   });
 });

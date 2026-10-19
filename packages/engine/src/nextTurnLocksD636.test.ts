@@ -934,6 +934,6 @@ describe("D636 §8 — the log rows, the fresh keys and the version", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.552.0");
+    expect(engineVersion).toBe("0.553.0");
   });
 });
