@@ -19,7 +19,7 @@ local T=require('ui.theme');T.font=function() return font() end
 local Card=require('ui.card');Card.rebuild=function(self) self.texture={release=function() end} end
 local Simulator=require('ui.simulator')
 local shader={hasUniform=function() return true end,send=function() end}
-local shaders={dissolve=shader,foil=shader,holo=shader,polychrome=shader}
+local shaders={dissolve=shader,played=shader,foil=shader,holo=shader,polychrome=shader}
 local sim=Simulator.new({command=function() end,announce=function() end,feedback=function() end,settings=function() end,jiggle=function() end})
 local RS,US='\30','\31'
 local function enc(s) return (tostring(s):gsub('[^%w%-_%.~]',function(c) return string.format('%%%02X',c:byte()) end)) end
@@ -31,8 +31,9 @@ local base={
   row('C','tr1','sv01-189','Professor\'s Research','you','hand',2,'false','Trainer','Supporter','','',0,'',0,'','','true'),
   row('C','active1','sv01-033','Houndour','you','active',0,'false','Pokemon','','Basic',70,20,'Fire,Fire',1,'burned,asleep','Fire','true'),
   row('C','bench1','sv01-030','Growlithe','you','bench',0,'false','Pokemon','','Basic',70,0,'',0,'','Fire','true'),
-  row('C','opp1','sv01-052','Quaxly','opponent','active',0,'false','Pokemon','','Basic',60,0,'Water',0,'','Water','false'),
+  row('C','opp1','sv01-052','Quaxly','opponent','active',0,'false','Pokemon','','Basic',60,0,'Water|opp-energy|sv03-230','opp-tool|sv01-191','','Water','false'),
   row('C','oppd','sv01-194','Switch','opponent','discard',0,'false','Trainer','Item','','',0,'',0,'','','false'),
+  row('C','used','sv01-181','Nest Ball','you','played',0,'false','Trainer','Item','','',0,'',0,'','','false'),
   row('C','std','sv01-167','Beach Court','global','stadium',0,'false','Trainer','Stadium','','',0,'',0,'','','false'),
   row('C','pz','sv01-030','Growlithe','you','prize',2,'false','Pokemon','','Basic','',0,'',0,'','Fire','false'),
   row('C','h1','hidden','Face-down card','opponent','hand',0,'true','','','','',0,'',0,'','','false'),
@@ -59,6 +60,22 @@ for _,size in ipairs({{1280,800},{480,850}}) do
   sim:layout(size[1],size[2]);sim:open(false)
   sim:draw(shaders)                              -- empty table
   sim:sync(snapshot(1));frames(30,1)
+  local knocked=snapshot(101,{row('D','opp1')})
+    :gsub('C\topp1\tsv01%-052\tQuaxly\topponent\tactive','C\topp1\tsv01-052\tQuaxly\topponent\tdiscard')
+    :gsub('S\tyou\t46\t6\t2','S\tyou\t46\t4\t4')
+  sim:sync(knocked);frames(12,sim.time)
+  local burn=sim.koPresentation and sim.koPresentation.cards[sim.koPresentation.index]
+  assert(burn and burn.disintegration and #burn.disintegration.particles>0,'KO shader, shadow and particle draw paths run')
+  assert(#burn.koAttachments==2,'Energy and Tool shader, shadow and particle draw paths run')
+  for _,a in ipairs(burn.koAttachments) do
+    local values=a:shaderValues(sim.time,0,0,false)
+    assert(values.dissolve>0 and values.burn_colour_1[4]==1 and values.texture_details[3]==71,'Attachments render the same Balatro burn shader')
+  end
+  local values=burn:shaderValues(sim.time,0,0,false)
+  assert(values.texture_details[3]==71 and values.texture_details[4]==95,'Burn uses the original logical atlas resolution')
+  frames(45,sim.time)
+  assert(sim.koPresentation and sim.koPresentation.prizes.you.count==2,'Prize flight renders during the handoff pause')
+  sim:sync(snapshot(1));frames(30,sim.time)
   local c=sim.byUid['you:active1'];at(c.x,c.y)   -- hover popup over an in-play card with status
   assert(sim.popup==c and sim.popupBox,'Popup built for hovered card')
   local h=sim.byUid['you:tr1'];at(h.x,h.y)       -- trainer popup, hand card drawn on top
@@ -75,10 +92,47 @@ for _,size in ipairs({{1280,800},{480,850}}) do
   sim:sync(snapshot(2,{row('M','list','Choose an attack','Pick one.','false','m1'),row('O','9','Bite · 10','red','false','false','',''),row('O','10','Flare · 30','red','true','false','',''),row('F','11','Confirm','blue','false','false','','')}));frames(5,8)
   sim:sync(snapshot(3,{row('M','cards','Choose cards (1/2)','Pick.','true','m2'),row('O','12','Fuecoco','blue','false','true','sv01-036','x1'),row('O','13','Growlithe','blue','true','false','sv01-030','x2'),row('F','14','Confirm','blue','false','false','','')}));frames(5,9)
   local oc=sim.overlay.cards[1];at(oc.homeX,oc.homeY)
+  assert(sim.overlay.maxScroll==0 and not sim.overlay:scrollbar(),'Short card lists need no scrollbar')
+  local gridRows={row('M','cards','Choose cards (0/1)','Pick a card.','true','grid'),row('F','99','Confirm','blue','false','false','','')}
+  for i=1,25 do gridRows[#gridRows+1]=row('O',100+i,'Fuecoco','blue','false','false','sv01-036','grid'..i) end
+  sim:sync(snapshot(31,gridRows));frames(90,9)
+  local grid=sim.overlay
+  assert(#grid.cards==25 and grid.pages==1,'All cards occupy one scrolling grid')
+  assert(grid.cards[1].homeY==grid.cards[4].homeY and grid.cards[5].homeY>grid.cards[4].homeY,'Four columns wrap into rows')
+  assert(grid.cards[1].homeX==grid.cards[5].homeX,'Rows share column alignment')
+  local confirm=grid.controls[#grid.controls]
+  local confirmY=confirm.y
+  grid:wheelmoved(-100)
+  assert(grid.scroll==grid.maxScroll and grid.scroll>0,'Wheel reaches the last row')
+  local last=grid.cards[25]
+  assert(grid:hit(last.x,last.y-grid.scroll+grid:offset())==25,'Scrolled card hitboxes follow the visible cards')
+  assert(grid:hit(grid.cards[1].x,grid.viewport.y-5+grid:offset())==0,'Clipped cards cannot intercept the title')
+  assert(confirm.y==confirmY,'Confirm stays fixed while scrolling')
+  local bar=grid:scrollbar()
+  assert(grid:mousepressed(bar.x+4,bar.thumbY+4+grid:offset()),'Scrollbar thumb can be grabbed')
+  grid:dragScrollbar(bar.y+4);grid.scrollDrag=nil
+  assert(grid.scroll==0,'Dragging the scrollbar reaches the first row')
+  grid.focus=24;grid:keypressed('tab')
+  assert(grid.focus==25 and grid.scroll>0,'Keyboard focus reveals offscreen cards')
+  local savedScroll=grid.scroll
+  sim:sync(snapshot(32,gridRows));frames(5,9)
+  assert(sim.overlay==grid and grid.scroll==savedScroll,'Selection refresh preserves scroll position')
   sim:sync(snapshot(4,{row('M','coin','Coin flip','Player 1: Heads\nPlayer 2: Tails','true','m3'),row('O','15','Continue','blue','false','false','','')}));frames(80,10)
   sim:sync(snapshot(5,{row('M','log','Game log','Turn 1\n0:01 Player 1 drew 7 cards.\n0:02 Player 1 attached Fire Energy.','false','m4')}));frames(5,12)
   sim:sync(snapshot(6,{row('M','pile','Your discard pile','3 cards.','false','m5'),row('O','16','Switch','blue','true','false','sv01-194','d1'),row('O','17','Potion','blue','true','false','sv01-188','d2')}));frames(5,13)
   sim:sync(snapshot(7,{row('M','board','Choose a Pokémon','Pick one','false','m6'),row('O','18','Houndour','blue','false','true','sv01-033','active1'),row('F','19','Confirm','blue','false','false','','')}));frames(5,14)
+  local Button=require('ui.button')
+  local outline=Button.outline
+  local outlines=0
+  Button.outline=function(...) outlines=outlines+1;return outline(...) end
+  sim:drawCard(sim.byUid['you:active1'],shaders,1)
+  assert(outlines==1,'Normal board targets retain their outline')
+  sim:sync(snapshot(71,{row('M','board','Place damage counters','Click a Pokémon','true','counters','true'),row('O','18','Quaxly','blue','false','false','sv01-052','opp1')}))
+  assert(sim:isCandidate(sim.byUid['opponent:opp1']),'Enemy Pokémon remains clickable for counter placement')
+  outlines=0
+  sim:drawCard(sim.byUid['opponent:opp1'],shaders,1)
+  assert(outlines==0,'Damage-counter targets render without an outline')
+  Button.outline=outline
   sim:sync(snapshot(8,{row('M','prizes','Take 1 Prize card','Click a prize.','true','m7'),row('O','20','Prize 1','blue','false','true','','prize:0'),row('O','21','Prize 2','blue','false','false','','prize:1'),row('F','22','Take','blue','false','false','','')}));frames(5,15)
   local Layout=require('ui.sim_layout');local px,py=Layout.prize(sim.L.zones.you_prizes,1)
   sim:mousepressed(px,py);sim:mousereleased(px,py)

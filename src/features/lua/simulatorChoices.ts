@@ -9,6 +9,9 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
   const host = sim.host;
   if (!host) return { kind: "list", title: "No game", options: [] };
   const seat = host.viewerSeat;
+  const continuation = host.game.phase.kind === "effect:choose" ? host.game.phase.cont : null;
+  const pendingOp = continuation?.pendingOp;
+  const placingCounters = pendingOp?.op === "damageChosen" && pendingOp.deals !== true;
   const selected: string[] = [];
   const assignments = new Map<string, number>();
   let amount = prompt.kind === "choosePokemon" ? (prompt.upTo ?? 1) : 100;
@@ -43,10 +46,50 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
     sim.menu = build();
     sim.emit();
   };
+  const nextSelection = (id: string): string[] | null => {
+    if (selected.includes(id)) return selected.filter((uid) => uid !== id);
+    let max = Number.POSITIVE_INFINITY;
+    if (prompt.kind === "chooseCards" || prompt.kind === "choosePokemonMulti") {
+      max = prompt.max;
+    }
+    if (prompt.kind === "discardEnergy" || prompt.kind === "discardTools") {
+      if (prompt.scope.kind === "total") max = prompt.scope.count;
+      if (prompt.scope.kind === "upTo") max = prompt.scope.max;
+    }
+    if (max <= 0) return null;
+    // Selection order is insertion order, independent of the grid's card order.
+    const next = [...selected];
+    while (next.length >= max) next.shift();
+    next.push(id);
+    if (prompt.kind === "chooseCards") {
+      if (prompt.caps?.some((cap) => next.filter((uid) => cap.uids.includes(uid)).length > cap.max))
+        return null;
+      if (
+        prompt.capsAnyOf &&
+        !prompt.capsAnyOf.some(
+          (cap) => next.length <= cap.max && next.every((uid) => cap.uids.includes(uid)),
+        )
+      )
+        return null;
+    }
+    if (prompt.kind === "discardEnergy" || prompt.kind === "discardTools") {
+      const scope = prompt.scope;
+      if (scope.kind === "each") {
+        const source = prompt.discardable.find((c) => c.uid === id)?.from;
+        if (source)
+          return next.filter(
+            (uid) =>
+              uid === id ||
+              !prompt.discardable.some((c) => c.uid === uid && refUid(c.from) === refUid(source)),
+          );
+      }
+    }
+    return next;
+  };
   const toggle = (id: string) => {
-    const i = selected.indexOf(id);
-    if (i >= 0) selected.splice(i, 1);
-    else selected.push(id);
+    const next = nextSelection(id);
+    if (!next) return;
+    selected.splice(0, selected.length, ...next);
     refresh();
   };
   const pick = (id: string, label: string, face?: RedactedCard, uid = ""): SimOption => ({
@@ -54,6 +97,8 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
     card: face,
     uid,
     selected: selected.includes(id),
+    disabled: nextSelection(id) === null,
+    dimmed: !selected.includes(id) && (nextSelection(id)?.length ?? 0) <= selected.length,
     run: () => toggle(id),
   });
   const build = (): SimMenu => {
@@ -63,6 +108,8 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
       note: prompt.note,
       options: [],
       mandatory: true,
+      hideTargetOutline:
+        placingCounters || (prompt.kind === "choosePokemon" && !!prompt.counterTransfer),
     };
     switch (prompt.kind) {
       case "mayDraw":
@@ -74,7 +121,15 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
         break;
       case "confirm": {
         const targets = prompt.targets ?? [];
-        menu.title = prompt.note || "Confirm";
+        const context = continuation?.ctx;
+        const abilities = context?.sourceUid
+          ? cardOfUid(host.game, context.sourceUid)?.abilities
+          : null;
+        const abilityName = abilities?.length === 1 ? abilities[0]?.name : undefined;
+        menu.title =
+          context?.invokedBy === "ability"
+            ? `Do you want to use ${abilityName ?? "this Ability"}?`
+            : prompt.note || "Confirm";
         menu.note = targets.length ? "Choose a Pokémon, then confirm." : prompt.note;
         menu.kind = targets.length ? "board" : "list";
         menu.options = targets.map((ref, i) => ({
@@ -139,7 +194,10 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
         menu.kind = "board";
         menu.title = "Choose a Pokémon";
         menu.options = prompt.candidates.map((ref) => ({
-          ...confirm({ kind: "pokemon", ref, ...(prompt.upTo ? { take: amount } : {}) }, refName(ref)),
+          ...confirm(
+            { kind: "pokemon", ref, ...(prompt.upTo ? { take: amount } : {}) },
+            refName(ref),
+          ),
           uid: refUid(ref),
         }));
         if (prompt.upTo)
@@ -156,6 +214,16 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
         break;
       case "choosePokemonMulti":
         menu.kind = "board";
+        if (placingCounters && prompt.max === 1) {
+          menu.title = "Place damage counters";
+          menu.options = prompt.candidates.map((ref) => ({
+            ...confirm({ kind: "pokemonMulti", refs: [ref] }, refName(ref)),
+            uid: refUid(ref),
+          }));
+          if (prompt.declinable)
+            menu.footer = [confirm({ kind: "pokemonMulti", refs: [] }, "Skip", "red")];
+          break;
+        }
         menu.title = `Choose Pokémon (${selected.length}/${prompt.max})`;
         menu.options = prompt.candidates.map((ref, i) => ({
           ...pick(String(i), refName(ref)),
@@ -217,7 +285,16 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
           card: c,
           uid: c.id,
           selected: assignments.has(c.id),
+          disabled: !assignments.has(c.id) && prompt.max <= 0,
+          dimmed: !assignments.has(c.id) && assignments.size >= prompt.max,
           run: () => {
+            if (!assignments.has(c.id)) {
+              if (prompt.max <= 0) return;
+              if (targets.length && assignments.size >= prompt.max) {
+                const oldest = assignments.keys().next().value;
+                if (oldest !== undefined) assignments.delete(oldest);
+              }
+            }
             const next = (assignments.get(c.id) ?? -1) + 1;
             if (next >= targets.length) assignments.delete(c.id);
             else assignments.set(c.id, next);

@@ -29,10 +29,11 @@ const assets = [
   "fonts/m6x11plus.ttf",
   "textures/2x/Enhancers.png",
   "textures/2x/chips.png",
-  ...["splash", "background", "CRT", "dissolve", "foil", "holo", "polychrome"].map((n) => `shaders/${n}.fs`),
+  ...["splash", "background", "CRT", "dissolve", "played", "foil", "holo", "polychrome"].map((n) => `shaders/${n}.fs`),
   ...[
     "button", "card1", "cardSlide1", "cardSlide2", "cardFan2", "highlight1", "paper1", "music1",
     "chips1", "multhit1", "multhit2", "cancel", "coin1", "coin3", "tarot2", "whoosh", "win", "glass2",
+    "whoosh2", "crumple1", "crumple2", "crumple3", "crumple4", "crumple5", "generic1",
   ].map((n) => `sounds/${n}.ogg`),
 ];
 try {

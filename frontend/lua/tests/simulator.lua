@@ -110,9 +110,13 @@ for _=1,40 do sim:update(1/60,10+_/60,0,0,false) end
 local benchCard=cardOf('bench1');local activeZone=sim.L.zones.you_active
 sim:mousepressed(benchCard.x,benchCard.y);sim:update(1/60,11,activeZone.x,activeZone.y,false);sim:mousereleased(activeZone.x,activeZone.y)
 assert(commands[#commands]=='retreat\t0','Benched Pokémon dropped on the Active spot retreats to it, got '..tostring(commands[#commands]))
--- Host board prompt: candidates highlighted on the table, footer in the banner.
+-- Host board prompt: candidates on the table, footer in the HUD action area.
 sim:sync(snapshot(2,{row('M','board','Choose a Pokémon','Pick one','true','m1'),row('O','8','Houndour','blue','false','false','sv01-033','active1'),row('F','9','Confirm','blue','true','false','','')}))
 assert(sim.targeting and sim.overlay==nil,'Board prompts do not open an overlay')
+assert(sim.targeting.panel==nil,'Target prompts do not cover the board with a banner')
+for _,b in ipairs(sim.controls) do
+  if b.token=='9' then assert(b.x<sim.L.table.x,'Prompt footer belongs in the sidebar') end
+end
 assert(sim:isCandidate(cardOf('active1')) and not sim:isCandidate(cardOf('bench1')),'Only listed uids are candidates')
 local hasCancel=false;for _,b in ipairs(sim.controls) do if b.action=='dismiss' then hasCancel=true end end
 assert(not hasCancel,'Mandatory prompt offers no cancel')
@@ -129,8 +133,16 @@ sim.overlay:activate(picked)
 assert(commands[#commands]=='invoke\t3\t10','Clicking a prompt card toggles it, got '..tostring(commands[#commands]))
 -- Same menu id refreshes in place; a new id replaces the overlay.
 local keep=sim.overlay
-sim:sync(snapshot(4,{row('M','cards','Choose cards (1/1)','Pick','true','m2'),row('O','13','Fuecoco','blue','false','true','sv01-036','x1'),row('O','14','Growlithe','blue','false','false','sv01-030','x2'),row('F','15','Confirm','blue','false','false','','')}))
+local keptCards={keep.cards[1],keep.cards[2]}
+local keptX,keptY=keptCards[2].motion.VT.x,keptCards[2].motion.VT.y
+sim:sync(snapshot(4,{row('M','cards','Choose cards (1/1)','Pick','true','m2'),row('O','13','Fuecoco','blue','false','true','sv01-036','x1'),row('O','14','Growlithe','blue','false','false','sv01-030','x2','true'),row('F','15','Confirm','blue','false','false','','')}))
 assert(sim.overlay==keep and sim.overlay.cards[1].item.selected,'Refreshed menu keeps its cards')
+assert(keep.cards[1]==keptCards[1] and keep.cards[2]==keptCards[2],'Selection refresh preserves the card objects')
+assert(keep.cards[2].motion.VT.x==keptX and keep.cards[2].motion.VT.y==keptY,'Selection refresh does not restart the card entrance animation')
+assert(keep.controls[1].token=='13' and not keep.cards[2].item.selected,'Refreshed controls and selections stay current')
+assert(keep.cards[2].greyed and not keep.controls[2].disabled,'Dimmed replacement candidates stay clickable')
+keep:activate(2)
+assert(commands[#commands]=='invoke\t4\t14','Dimmed cards can replace the current selection')
 sim:sync(snapshot(5,{row('M','coin','Coin flip','Player 1: Heads\nPlayer 2: Tails','true','m3'),row('O','16','Continue','blue','false','false','','')}))
 assert(sim.overlay~=keep and sim.overlay.kind=='coin' and #sim.overlay.flips==2 and sim.overlay.flips[1].heads and not sim.overlay.flips[2].heads,'Coin overlay parses flips')
 -- Menu cleared -> overlay closes; damage delta queues juice; a viewer change
@@ -260,4 +272,340 @@ sim:update(1/60,0.1,0,0,false)
 assert(rebuilt>=1,'Discard pile repainted when its top card art arrives, got '..rebuilt)
 love.filesystem.getInfo=function() return nil end
 Card.rebuild=baseRebuild
-print('PASS: Lua simulator parsing, fan layout, drags, targeting, prompts, hot-seat flips, options, game over and portrait layout')
+-- Played Trainers wait on the table. Cost discards arrive immediately; turn
+-- cleanup keeps the authoritative top card even across a hot-seat flip.
+for _,size in ipairs({{1280,800},{390,844}}) do
+  sim:layout(size[1],size[2]);sim:open(false)
+  local function playedScene(rev,mode)
+    local flipped=mode=='ended'
+    local owner=flipped and 'opponent' or 'you'
+    local other=flipped and 'you' or 'opponent'
+    local zone=mode=='hand' and 'hand' or mode=='ended' and 'discard' or 'played'
+    local costZone=mode=='hand' and 'hand' or 'discard'
+    return table.concat({
+      row(rev,'ready','Player 1','Player 2',flipped and 2 or 1,'turn:action','','Your turn','',0,1,'you','you',flipped and 'p2' or 'p1',0,0,0,'',''),
+      row('S',owner,40,6,mode=='hand' and 4 or 0,mode=='hand' and 1 or flipped and 5 or 3,0),row('S',other,40,6,0,0,0),
+      row('C','old','sv01-194','Switch',owner,'discard',0,'false','Trainer','Item','','',0,'',0,'','','false'),
+      row('C','used1','sv01-196','Ultra Ball',owner,zone,mode=='ended' and 1 or 0,'false','Trainer','Item','','',0,'',0,'','','false'),
+      row('C','cost1','sv03-230','Fire Energy',owner,costZone,2,'false','Energy','','','',0,'',0,'','','false'),
+      row('C','used2','sv01-181','Nest Ball',owner,zone,mode=='ended' and 3 or 1,'false','Trainer','Item','','',0,'',0,'','','false'),
+      row('C','cost2','sv01-188','Potion',owner,costZone,mode=='hand' and 3 or 4,'false','Trainer','Item','','',0,'',0,'','','false'),
+    },'\n')
+  end
+  local function settle() for _=1,90 do sim:update(1/60,sim.time+1/60,-100,-100,false) end end
+  sim:sync(playedScene(80,'hand'));settle()
+  local used=sim.byUid['you:used1']
+  local startX,startY=used.x,used.y
+  sim:sync(playedScene(81,'played'))
+  assert(sim.byUid['you:used1']==used,'Played card keeps its motion from the hand')
+  assert(math.abs(used.x-startX)<1 and math.abs(used.y-startY)<1,'Played card starts at the hand')
+  assert(#sim.ghosts==2,'Both cost cards go directly to discard')
+  for _,c in ipairs(sim.ghosts) do assert(c.item.id=='cost1' or c.item.id=='cost2','Played cards stay out of discard') end
+  settle()
+  local z=sim.L.zones.played
+  assert(used.x>=z.well.x and used.x<=z.well.x+z.well.w,'Played card fits its section')
+  assert(sim:dropZoneAt(z.x,z.y,{item={zone='hand',draggable=true}}).zone=='playmat','New section accepts Trainer plays')
+  local p
+  for _,pile in ipairs(sim.piles) do if pile.item.kind=='discard' then p=pile end end
+  assert(p.count==3 and p.topItem.id=='cost2','Costs set discard count and top immediately')
+  sim:sync(playedScene(82,'ended'))
+  assert(#sim.cards==0 and #sim.ghosts==2,'End turn sends both staged Trainers to discard')
+  for _,c in ipairs(sim.ghosts) do
+    assert(c.item.owner=='opponent' and c.ghost.target==sim.L.zones.opp_discard,'Cleanup follows the owner after hot-seat flips')
+    assert(c.item.id=='used1' or c.item.id=='used2','Already discarded costs do not move again')
+  end
+  sim:sync(playedScene(83,'played'))
+  assert(#sim.ghosts==0 and sim.byUid['you:used1'],'Undo during cleanup reclaims flying cards')
+  sim:sync(playedScene(84,'ended'))
+  settle()
+  for _,pile in ipairs(sim.piles) do if pile.item.kind=='discard' then p=pile end end
+  assert(p.count==5 and p.topItem.id=='cost2','Landing order does not overwrite the true discard top')
+  sim:sync(playedScene(85,'played'));settle()
+  assert(sim.byUid['you:used1'] and sim.byUid['you:used2'],'Undo turn restores staged cards')
+  sim:sync(playedScene(86,'hand'));settle()
+  assert(sim.byUid['you:used1'].item.zone=='hand','Undo play returns the Trainer to hand')
+  sim.reduced=true
+  sim:sync(playedScene(87,'played'))
+  sim:sync(playedScene(88,'ended'))
+  assert(#sim.ghosts==0,'Reduced motion completes cleanup immediately')
+  for _,pile in ipairs(sim.piles) do if pile.item.kind=='discard' then p=pile end end
+  assert(p.count==5 and p.topItem.id=='cost2','Reduced motion preserves discard order')
+end
+-- Items use the normal play command anywhere on either bench, occupied or empty.
+for _,size in ipairs({{1280,800},{390,844}}) do
+  for _,zone in ipairs({'you_bench','opp_bench'}) do
+    for _,fraction in ipairs({0.05,0.5,0.95}) do
+      sim:layout(size[1],size[2]);sim:open(false)
+      sim:sync(snapshot(95,{
+        row('C','item','sv01-191','Rare Candy','you','hand',2,'false','Trainer','Item','','',0,'',0,'','','true'),
+      }))
+      for _=1,90 do sim:update(1/60,sim.time+1/60,-100,-100,true) end
+      local c=cardOf('item')
+      local well=sim.L.zones[zone].well
+      local sx,sy=c.x*sim.zoom+sim.ox,c.y*sim.zoom+sim.oy
+      local tx,ty=(well.x+well.w*fraction)*sim.zoom+sim.ox,(well.y+well.h/2)*sim.zoom+sim.oy
+      sim:mousepressed(sx,sy);sim:update(1/60,sim.time+1/60,tx,ty,false)
+      assert(c.dragging,'Item can be dragged onto the bench')
+      sim:mousereleased(tx,ty)
+      assert(commands[#commands]=='move\titem\thand\t2\tplaymat\t0','Bench Item drop uses the normal Trainer play flow')
+    end
+  end
+end
+-- Rare Candy waits on the table while the matching Stage 2 remains draggable.
+for _,size in ipairs({{1280,800},{390,844}}) do
+  for _,target in ipairs({'active','bench'}) do
+    sim:layout(size[1],size[2]);sim:open(false)
+    sim:sync(snapshot(100,{
+      row('R','candy'),
+      row('C','candy','sv01-191','Rare Candy','you','played',0,'false','Trainer','Item','','',0,'',0,'','','false'),
+      row('C','stage2','stage2','Stage 2','you','hand',2,'false','Pokemon','','Stage2',180,0,'',0,'','Fire','true'),
+    }))
+    assert(sim.rareCandy=='candy' and sim.byUid['you:candy'].item.zone=='played','Pending Candy is on the table')
+    for _=1,90 do sim:update(1/60,sim.time+1/60,-100,-100,true) end
+    local c=cardOf('stage2')
+    local destination=target=='active' and cardOf('active1') or cardOf('bench1')
+    local sx,sy=c.x*sim.zoom+sim.ox,c.y*sim.zoom+sim.oy
+    local tx,ty=destination.x*sim.zoom+sim.ox,destination.y*sim.zoom+sim.oy
+    sim:mousepressed(sx,sy);sim:update(1/60,sim.time+1/60,tx,ty,false)
+    assert(c.dragging,'Stage 2 can be dragged while Candy waits')
+    sim:mousereleased(tx,ty)
+    assert(commands[#commands]=='move\tstage2\thand\t2\t'..target..'\t0','Stage 2 drop identifies its Basic slot')
+    sim.luaTargeting={actions={}}
+    sim:keypressed('escape')
+    assert(commands[#commands]=='cancelRareCandy','Escape cancels the pending Candy')
+    sim:sync(snapshot(101))
+    assert(not sim.rareCandy and not sim.luaTargeting,'Cancellation clears Rare Candy and its target selection')
+  end
+end
+-- Rare Candy starts the actual motion immediately, before picking up a Stage 2.
+for _,size in ipairs({{1280,800},{390,844}}) do
+  sim:layout(size[1],size[2]);sim:open(false)
+  sim:sync(snapshot(110,{
+    row('R','candy'),
+    row('C','stage2','stage2','Stage 2','you','hand',2,'false','Pokemon','','Stage2',180,0,'',0,'','Fire','true'),
+    row('K','c1','stage2','Evolve Houndour','green','false','active1','evolve',''),
+    row('K','c2','otherStage2','Evolve Growlithe','green','false','bench1','evolve',''),
+    row('K','c3','stage2','Evolve Growlithe','green','true','bench1','evolve',''),
+  }))
+  for _=1,90 do sim:update(1/60,sim.time+1/60,-100,-100,true) end
+  local active,bench=cardOf('active1'),cardOf('bench1')
+  assert(not active.motion.juice and not bench.motion.juice,'Reduced motion suppresses Candy shakes')
+  sim:update(1/60,sim.time+1/60,-100,-100,false)
+  assert(active.motion.juice and bench.motion.juice,'All eligible Basics shake immediately while Candy waits')
+  sim:update(1/60,sim.time+1/60,-100,-100,false)
+  assert(math.abs(active.angle)>0.01 and math.abs(bench.angle)>0.01,'Candy shake visibly rotates both Basics')
+  local c=cardOf('stage2')
+  local sx,sy=c.x*sim.zoom+sim.ox,c.y*sim.zoom+sim.oy
+  sim:mousepressed(sx,sy)
+  sim:update(1/60,sim.time+1/60,sx,sy-25,false)
+  assert(c.dragging and active.candyTarget and not bench.candyTarget,'Dragging narrows the shake to valid matches')
+  assert(not sim:isCandidate(active),'Shake does not add a targeting outline')
+  for _=1,60 do sim:update(1/60,sim.time+1/60,sx,sy-25,false) end
+  assert(active.motion.juice and not bench.motion.juice,'Only matching Basics keep shaking')
+  sim:mousereleased(sx,sy-25)
+  sim:sync(snapshot(111))
+  for _=1,60 do sim:update(1/60,sim.time+1/60,-100,-100,false) end
+  assert(not active.motion.juice and not bench.motion.juice,'Shake ends when Candy is no longer pending')
+end
+-- KO events arrive with the final discard snapshot, never an intermediate
+-- lethal-damage card. Multiple victims burn in place even across a seat flip.
+local function koScene(rev,removed,flipped,ko)
+  local owner=flipped and 'opponent' or 'you'
+  local out={row(rev,'ready','One','Two',4,'turn:action','','Your turn','',0,1,'you','you',flipped and 'p2' or 'p1',0,0,0,'',''),
+    row('S',owner,40,6,0,removed and 6 or 0,0),
+    row('S',flipped and 'you' or 'opponent',40,6,0,0,0)}
+  for i,id in ipairs({'victim','benched'}) do
+    local energies=removed and '' or i==1 and 'Fire|attached|sv03-230,Fire|attached2|sv03-230' or 'Fire|bench-energy|sv03-230'
+    local tool=not removed and i==1 and 'tool|sv01-191' or ''
+    out[#out+1]=row('C',id,'sv01-033','Houndour',owner,removed and 'discard' or (i==1 and 'active' or 'bench'),removed and i-1 or 0,'false','Pokemon','','Basic',70,removed and 0 or 20,energies,tool,'','Fire','false')
+    if removed and ko then out[#out+1]=row('D',id) end
+  end
+  if removed then
+    for i,id in ipairs({'attached','attached2','bench-energy','tool'}) do
+      out[#out+1]=row('C',id,id=='tool' and 'sv01-191' or 'sv03-230','Attachment',owner,'discard',i+1,'false',id=='tool' and 'Trainer' or 'Energy',id=='tool' and 'Tool' or '','','',0,'',0,'','','false')
+    end
+  end
+  return table.concat(out,'\n')
+end
+for _,size in ipairs({{1280,800},{390,844}}) do
+  for _,flip in ipairs({false,true}) do
+    sim:layout(size[1],size[2]);sim:open(false)
+    sim:sync(koScene(120,false,false,true))
+    for _=1,90 do sim:update(1/60,sim.time+1/60,-100,-100,false) end
+    local victim,benched=cardOf('victim'),cardOf('benched');local x,y=victim.x,victim.y
+    local koRaw=koScene(121,true,flip,true)
+    sim:sync(koRaw,#koRaw) -- love.filesystem.read returns text AND byte count.
+    local presentation=sim.koPresentation
+    assert(presentation and #presentation.cards==2 and presentation.cards[1]==victim,'KO queue follows engine event order')
+    assert(victim.disintegration and victim.motion.juice and not benched.disintegration,'Only the first KO starts burning')
+    assert(#victim.koAttachments==3 and not sim.attached['bench-energy'].disintegration,'All Energy and Tools burn with their own Pokémon only')
+    for _,a in ipairs(victim.koAttachments) do
+      assert(a.disintegration.start==victim.disintegration.start,'Attachments start at the same time as their Pokémon')
+      assert(a.angle==(a.item.id=='tool' and -math.pi/2 or math.pi/2),'Attachments burn in their sideways table position')
+    end
+    assert(sim.viewerSeat=='p1' and sim.revision==120,'Keep the old table until every KO finishes')
+    assert(victim.x==x and victim.y==y,'KO begins at the last visible position')
+    sim:sync(koScene(122,true,flip,true))
+    assert(sim.koPresentation==presentation and presentation.index==1,'Repeated snapshots update the destination without restarting burns')
+    for _=1,21 do sim:update(1/60,sim.time+1/60,-100,-100,false) end
+    assert(math.abs(victim.dissolve-0.5)<0.001,'Balatro dissolve reaches halfway after 0.35 seconds')
+    for _,a in ipairs(victim.koAttachments) do
+      assert(math.abs(a.dissolve-victim.dissolve)<0.001 and #a.disintegration.particles>0,'Attachments share burn progress and emit their own particles')
+    end
+    assert(math.abs(victim.x-x)<0.01 and math.abs(victim.y-y)<0.01,'Burn stays in place instead of sliding to discard')
+    assert(#victim.disintegration.particles>0 and victim.disintegration.alpha==1,'Colored embers persist before their fade')
+    assert(victim.burn1[1]==55/255 and victim.burn2[1]==253/255,'Uses Balatro BLACK and ORANGE burn edges')
+    assert(not benched.disintegration and sim.sides.you.discard==0,'Second KO and discard update wait their turn')
+    local beforeCommands=#commands
+    sim:mousepressed(x*sim.zoom+sim.ox,y*sim.zoom+sim.oy);sim:keypressed('return');sim:activate(1)
+    assert(not sim.drag and #commands==beforeCommands,'Game actions cannot skip the KO queue')
+    -- Undo during disintegration must reclaim the same full, unburned card.
+    sim:sync(koScene(123,false,false,false))
+    assert(cardOf('victim')==victim and not victim.dissolve and not victim.disintegration,'Undo cancels burn and reuses the visible card')
+    assert(not sim.koPresentation and not benched.disintegration,'Undo clears the whole KO queue')
+    assert(not sim.attached.attached.disintegration and not sim.attached.tool.dissolve,'Undo restores unburned Energy and Tools')
+    sim:sync(koScene(124,true,flip,true))
+    for _=1,36 do sim:update(1/60,sim.time+1/60,-100,-100,false) end
+    assert(victim.disintegration.alpha>0 and victim.disintegration.alpha<0.5,'Particles fade during the final 0.21 seconds')
+    for _=1,9 do sim:update(1/60,sim.time+1/60,-100,-100,false) end
+    assert(victim.koHidden and benched.disintegration and not benched.koHidden,'First burn finishes before the second begins')
+    assert(#benched.koAttachments==1 and sim.attached['bench-energy'].disintegration,'Next Pokémon starts its own attached Energy burn')
+    assert(sim.viewerSeat=='p1' and sim.revision==123,'No handoff between KO animations')
+    for _=1,45 do sim:update(1/60,sim.time+1/60,-100,-100,false) end
+    assert(benched.koHidden and sim.koPresentation.waitUntil,'Last KO starts the handoff pause')
+    local deadline=sim.koPresentation.waitUntil
+    sim:update(0.49,deadline-0.01,-100,-100,false)
+    assert(sim.koPresentation and sim.viewerSeat=='p1' and sim.revision==123,'Handoff remains blocked for the full half second')
+    sim:update(0.01,deadline,-100,-100,false)
+    assert(not sim.koPresentation and sim.viewerSeat==(flip and 'p2' or 'p1') and sim.revision==124,'Apply the new table after the half-second pause')
+    assert(#sim.ghosts==0,'Neither KO Pokémon nor burned attachments slide to discard a second time')
+    assert(not next(sim.attached),'Completed KO attachment textures are released')
+    for _=1,45 do sim:update(1/60,sim.time+1/60,-100,-100,false) end
+    sim:sync(koScene(125,false,false,false));sim.reduced=true
+    sim:sync(koScene(126,true,false,true))
+    assert(not sim.koPresentation and #sim.ghosts==0 and not next(sim.pendingPiles),'Reduced motion applies the KO immediately')
+    sim:sync(koScene(127,false,false,false));sim.reduced=false
+    sim:sync(koScene(128,true,false,false))
+    assert(not sim.koPresentation,'Ordinary discards never start a KO queue')
+  end
+end
+-- Prize awards fly on the old table during the pause, even when the incoming
+-- snapshot swaps seats. Both players can take Prizes from simultaneous KOs.
+local Layout=require('ui.sim_layout')
+local function prizeScene(rev,removed,flipped)
+  local raw=koScene(rev,removed,flipped,true)
+  if removed then
+    raw=raw:gsub('S\tyou\t40\t6\t0',flipped and 'S\tyou\t40\t5\t1' or 'S\tyou\t40\t4\t2')
+    raw=raw:gsub('S\topponent\t40\t6\t0',flipped and 'S\topponent\t40\t4\t2' or 'S\topponent\t40\t5\t1')
+    for i=1,flipped and 1 or 2 do
+      raw=raw..'\n'..row('C','prize'..i,'sv03-230','Fire Energy','you','hand',i-1,'false','Energy','','','',0,'',0,'','Fire','true')
+    end
+  end
+  return raw
+end
+for _,size in ipairs({{1280,800},{390,844}}) do
+  for _,flip in ipairs({false,true}) do
+    sim:layout(size[1],size[2]);sim:open(false)
+    sim:sync(prizeScene(140,false,false));sim:sync(prizeScene(141,true,flip))
+    for _=1,90 do sim:update(1/60,sim.time+1/60,-100,-100,false) end
+    local p=sim.koPresentation
+    assert(p and p.prizes.you.count==2 and p.prizes.opponent.count==1,'Prize awards retain their original owners across seat flips')
+    assert(sim:koPrizeTaken('you',5) and sim:koPrizeTaken('you',4) and not sim:koPrizeTaken('you',3),'Only the awarded Prize slots are hidden')
+    local sx,sy=Layout.prize(sim.L.zones.you_prizes,5)
+    local x,y=sim:koPrizePosition('you',0)
+    assert(math.abs(x-sx)<0.01 and math.abs(y-sy)<0.01,'Prize flight begins at its actual slot')
+    sim:update(0.25,p.prizeStart+0.25,-100,-100,false)
+    x,y=sim:koPrizePosition('you',0)
+    assert(math.abs(y-sy)>10 and sim.viewerSeat=='p1','Prizes move during the pause before the table flips')
+    sim:update(0.24,p.waitUntil-0.01,-100,-100,false)
+    for _,owner in ipairs({'you','opponent'}) do
+      local hand=sim.L.zones[owner=='you' and 'you_hand' or 'opp_hand']
+      for i=0,p.prizes[owner].count-1 do
+        local tx,ty=Layout.hand(hand,p.prizes[owner].handCount,i)
+        if owner=='opponent' then ty=hand.y-(ty-hand.y) end
+        local px,py,scale=sim:koPrizePosition(owner,i)
+        assert(math.abs(px-tx)<1 and math.abs(py-ty)<1 and math.abs(scale-hand.scale)<0.01,'Every Prize reaches its hand before the half-second deadline')
+      end
+    end
+    sim:update(0.01,p.waitUntil,-100,-100,false)
+    assert(not sim.koPresentation and sim.viewerSeat==(flip and 'p2' or 'p1'),'Prize flight adds no extra delay')
+    local card=cardOf('prize1')
+    assert(math.abs(card.y-card.homeY)<0.01,'Received Prize does not fly into the hand a second time')
+    sim:sync(prizeScene(142,false,false));sim:sync(prizeScene(143,true,flip))
+    for _=1,90 do sim:update(1/60,sim.time+1/60,-100,-100,false) end
+    assert(sim:koPrizeTaken('you',5),'Prize flight restarted for undo check')
+    sim:sync(prizeScene(144,false,false))
+    assert(not sim.koPresentation and not sim:koPrizeTaken('you',5) and sim.sides.you.prizes==6,'Undo during flight restores the Prize grid')
+  end
+end
+-- A single KO has the same half-second handoff delay. Enabling reduced
+-- motion mid-queue completes presentation immediately without a stale timer.
+sim:open(false);sim:sync(koScene(130,false,false,false))
+local single=koScene(131,true,true,true):gsub('\nD\tbenched','')
+sim:sync(single)
+assert(#sim.koPresentation.cards==1,'Single KO queues just one card')
+for _=1,45 do sim:update(1/60,sim.time+1/60,-100,-100,false) end
+assert(sim.koPresentation.waitUntil and sim.viewerSeat=='p1','Single KO also waits before handoff')
+sim:update(0.01,sim.time+0.01,-100,-100,true)
+assert(not sim.koPresentation and sim.viewerSeat=='p2','Reduced motion flushes an active KO presentation')
+-- Balatro-style row sorting changes visible order live, while gameplay targets
+-- continue to use the engine's original indices.
+for _,size in ipairs({{1280,800},{390,844}}) do
+  sim:layout(size[1],size[2]);sim:open(false)
+  sim:sync(snapshot(150,{
+    row('C','trainer','sv01-189','Supporter','you','hand',2,'false','Trainer','Supporter','','',0,'',0,'','','false'),
+    row('C','bench2','sv01-030','Growlithe','you','bench',1,'false','Pokemon','','Basic',70,0,'Fire|attached|sv03-230',0,'','Fire','true'),
+    row('C','bench3','sv01-030','Growlithe','you','bench',2,'false','Pokemon','','Basic',70,0,'',0,'','Fire','true'),
+  }))
+  local function settle() for _=1,60 do sim:update(1/60,sim.time+1/60,-100,-100,false) end end
+  local function press(c) sim.hoverCard=nil;sim:mousepressed(c.x*sim.zoom+sim.ox,c.y*sim.zoom+sim.oy) end
+  local function drag(x,y) sim:update(1/60,sim.time+1/60,x*sim.zoom+sim.ox,y*sim.zoom+sim.oy,false) end
+  local function release(x,y) sim:mousereleased(x*sim.zoom+sim.ox,y*sim.zoom+sim.oy) end
+  settle()
+  local energy,trainer=cardOf('energy1'),cardOf('trainer')
+  local x,y=trainer.homeX+50,sim.L.zones.you_hand.y
+  local oldX=trainer.homeX
+  press(energy);drag(x,y)
+  assert(energy.item.displayIndex==2 and trainer.item.displayIndex==1,'Hand reorders before release')
+  assert(trainer.homeX<oldX and math.abs(trainer.x-trainer.homeX)>1,'Neighbor slides into the open slot using its existing motion')
+  assert(sim.dropZone.zone=='reorder' and not sim.dropZone.well,'Reordering has no drop outline')
+  release(x,y)
+  assert(commands[#commands]=='reorder\thand\tenergy1\t2','Hand release saves cosmetic order')
+  assert(energy.item.index==1,'Hand keeps its engine index')
+  settle()
+  local first,last=cardOf('bench1'),cardOf('bench3')
+  x,y=last.homeX+45,sim.L.zones.you_bench.y
+  press(first);drag(x,y)
+  assert(first.item.displayIndex==2 and cardOf('bench2').item.displayIndex==0,'Bench neighbors move aside while dragging')
+  release(x,y)
+  assert(commands[#commands]=='reorder\tbench\tbench1\t2','Bench release saves cosmetic order')
+  assert(cardOf('bench2').item.energyCards[1].id=='attached','Attachments stay with their Pokémon')
+  settle()
+  press(energy);drag(first.x,first.y);release(first.x,first.y)
+  assert(commands[#commands]=='move\tenergy1\thand\t1\tbench\t0','Attaching to a reordered Pokémon sends its engine index')
+  settle()
+  press(first);drag(sim.L.zones.you_active.x,sim.L.zones.you_active.y);release(sim.L.zones.you_active.x,sim.L.zones.you_active.y)
+  assert(commands[#commands]=='retreat\t0','Reordered Bench Pokémon retreats by its engine index')
+  settle()
+  -- Unplayable cards can still be arranged; Escape restores their row.
+  press(trainer);drag(energy.homeX+50,sim.L.zones.you_hand.y)
+  assert(sim.drag and trainer.item.displayIndex==2,'An unplayable Supporter can be reordered')
+  sim:keypressed('escape')
+  assert(not sim.drag and trainer.item.displayIndex==1 and energy.item.displayIndex==2,'Escape cancels the live reorder')
+  settle()
+  local count=#commands
+  press(trainer);drag(sim.L.zones.you_active.x,sim.L.zones.you_active.y);release(sim.L.zones.you_active.x,sim.L.zones.you_active.y)
+  assert(#commands==count,'Reordering permission does not allow playing an unavailable card')
+  -- The host permits dragging first-turn Supporters even though Play is
+  -- disabled. A selected card's top edge can sit above the hand hit area.
+  trainer.item.draggable=true
+  sim.highlight=trainer;settle()
+  local top=trainer.y-85*trainer.baseScale
+  sim.hoverCard=nil
+  sim:mousepressed(trainer.x*sim.zoom+sim.ox,top*sim.zoom+sim.oy)
+  assert(sim.drag and sim.drag.card==trainer,'Grab the selected Supporter by its top edge')
+  x=energy.homeX+50
+  drag(x,top);release(x,top)
+  assert(commands[#commands]=='reorder\thand\ttrainer\t2','Dragging a lifted Supporter sideways only reorders, even from its top edge')
+end
+print('PASS: Lua simulator interactions, live hand/Bench reordering, KO animations and delayed handoffs in both layouts')

@@ -55,7 +55,9 @@ Inside Settings, Tab/Shift+Tab or up/down move between controls. Left/right swit
 
 ## Visual source and new work
 
-The build copies **unmodified** `splash.fs`, `CRT.fs`, `dissolve.fs`, `foil.fs`, `holo.fs`, `polychrome.fs`, `m6x11plus.ttf`, and six audio files from the local Balatro resources. Generated `asset-manifest.json` records their SHA-256 hashes. These resources are not vendored into this repository.
+The build copies **unmodified** `splash.fs`, `CRT.fs`, `dissolve.fs`, `played.fs`, `foil.fs`, `holo.fs`, `polychrome.fs`, `m6x11plus.ttf`, and six audio files from the local Balatro resources. Generated `asset-manifest.json` records their SHA-256 hashes. These resources are not vendored into this repository.
+
+Unavailable cards in simulator pickers follow Balatro's `greyed` deck-view path (`functions/UI_definitions.lua`, `Card:draw`, and `played.fs`): saturation ×0.5, lightness ×0.8, alpha ×0.5, with the original card tilt and transparency and no shadow or normal face beneath the shader. Selection changes restore the normal rendering in place.
 
 The palette follows Balatro's `globals.lua`: red `#FE5F55`, blue `#009DFF`, green `#4BC292`, panel `#374244`, with gold `#F5B244` and card stock `#F0EAD6`. The title and buttons are drawn in Lua. The reusable card system and its four pixel card faces are retained, but are not loaded by the home scene. `ui/motion.lua` ports Balatro's separate target/visible transforms, position/rotation/scale velocities, and juice equations. `ui/card.lua` follows `Card:draw` and `Sprite:draw_shader` for ambient and pointer tilt, screen-space uniforms, shadow parallax, and edition passes; it does not import Balatro's entire game/UI object system. The composition, card emblems, controls and responsive layout are new Luminous UI, so this is a first visual milestone, not a claim of complete behavioral parity.
 

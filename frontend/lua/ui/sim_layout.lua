@@ -63,6 +63,7 @@ function Layout.desktop()
     opp_active=tight({x=midC,y=rowC(2),scale=CARD}),
     stadium=tight({x=541,y=(rowC(2)+rowC(3))/2,scale=CARD}),
     you_active=tight({x=midC,y=rowC(3),scale=CARD}),
+    played=tight({x=1000,y=rowC(3),scale=CARD,spacing=22},nil,176),
     you_deck=tight({x=rightC,y=rowC(3),scale=CARD}),
     you_prizes=tight({x=leftC-pdx/2,y=youPrizeTop+PAD+95*PRIZE,scale=PRIZE,cols=2,dx=pdx,dy=pdy}),
     you_bench=tight({x=midC,y=rowC(4),scale=CARD,spacing=benchSpacing,slots=5},5,benchW),
@@ -90,6 +91,7 @@ function Layout.portrait()
     stadium=tight({x=56,y=334,scale=CARD}),
     you_active=tight({x=300,y=334,scale=CARD}),
     opp_active=tight({x=170,y=334,scale=CARD}),
+    played=tight({x=422,y=334,scale=CARD,spacing=12},nil,96),
     you_prizes=tight({x=28,y=450,scale=0.135,cols=2,dx=24,dy=27}),
     you_bench=tight({x=240,y=480,scale=CARD,spacing=64,slots=5},5),
     you_deck=tight({x=430,y=480,scale=CARD}),
@@ -131,6 +133,26 @@ function Layout.benchIndex(zone,count,x)
 end
 function Layout.prize(zone,index)
   return zone.x+(index%zone.cols)*zone.dx,zone.y+math.floor(index/zone.cols)*zone.dy
+end
+function Layout.played(zone,count,index)
+  local spacing=math.min(zone.spacing,(zone.well.w-16-142*zone.scale)/math.max(1,count-1))
+  return zone.x+(index-(count-1)/2)*spacing,zone.y
+end
+-- Preserve the room needed for attached Energy and Tools while sorting a Bench.
+function Layout.benchPositions(zone,items)
+  local cardW=142*zone.scale
+  local total,gaps=#items*cardW,{}
+  for i=2,#items do
+    local gap=8+(#(items[i-1].energyCards or {})>0 and 26 or 0)+(#(items[i].toolCards or {})>0 and 26 or 0)
+    gaps[i]=gap;total=total+gap
+  end
+  local x=zone.x-total/2+cardW/2
+  local positions={}
+  for i,item in ipairs(items) do
+    if i>1 then x=x+cardW+gaps[i] end
+    positions[item.index]=x
+  end
+  return positions
 end
 function Layout.inside(rect,x,y)
   return rect and x>=rect.x and x<=rect.x+rect.w and y>=rect.y and y<=rect.y+rect.h

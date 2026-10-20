@@ -130,9 +130,12 @@ function Card:shaderValues(time,mx,my,reduced)
   local ux,uy=g.transformPoint(self.unit,0)
   local j=self.motion.juice
   local phase=math.min(self.angle*3,1)+time/28+(j and j.r*20 or 0)+tiltAmount
+  -- Balatro atlases use logical 71x95 pixels even with 2x artwork. Keep the
+  -- original burn-mask grain independent of our higher-resolution canvases.
+  local shaderResolution=self.disintegration and 0.5 or (self.item.resolution or 1)
   return {
     dissolve=self.dissolve or 0, time=(123.33412*(self.index/1.14212))%3000,
-    texture_details={0,0,W*(self.item.resolution or 1),H*(self.item.resolution or 1)},image_details={W*(self.item.resolution or 1),H*(self.item.resolution or 1)},shadow=false,
+    texture_details={0,0,W*shaderResolution,H*shaderResolution},image_details={W*shaderResolution,H*shaderResolution},shadow=false,
     burn_colour_1=self.burn1 or {1,1,1,0},burn_colour_2=self.burn2 or {1,1,1,0},
     mouse_screen_pos={px,py},hovering=reduced and 0 or 1,
     screen_scale=math.sqrt((ux-ox)^2+(uy-oy)^2),
@@ -150,6 +153,16 @@ function Card:draw(shaders,time,mx,my,reduced,roomWidth)
   local scale=self.motion.VT.scale
   local resolution=self.item.resolution or 1
   local sx,sy=CARD_W*self.unit/W*scale/resolution,CARD_H*self.unit/H*scale/resolution
+  -- Balatro Card:draw's greyed deck-view cards use played.fs directly, with
+  -- no shadow or ordinary face beneath its translucent, desaturated artwork.
+  if self.greyed then
+    values.played=edition
+    send(shaders.played,values)
+    g.setShader(shaders.played);g.setColor(self.tint or {1,1,1,1})
+    g.draw(self.texture,self.x,self.y,self.angle,sx,sy,W*resolution/2,H*resolution/2)
+    g.setShader()
+    return
+  end
   local dissolve=shaders.dissolve
   -- Sprite:draw_shader's shadow pass is un-tilted, scaled down, and projected
   -- away from the room centre. Dragging raises it from 0.1 to 0.35 tile units.

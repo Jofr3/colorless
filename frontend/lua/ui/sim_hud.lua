@@ -126,6 +126,30 @@ local function cell(x,y,w,h,label,text,roomWidth,time,reduced)
   Button.panel(x+6,y+22,w-12,h-28,BOSS_DARK,1.2)
   text:draw(x+w/2,y+22+(h-28)/2,roomWidth)
 end
+-- Wrap the entire prompt inside the HUD instead of covering board targets.
+function Hud:drawPrompt(sim,L,x,y,w,h)
+  local prompt=sim.targeting and sim.targeting.menu or sim.luaTargeting
+  if not prompt then return end
+  local title=prompt.title or ''
+  local note=prompt.note and prompt.note~='' and prompt.note or 'Click a highlighted card'
+  local scale=L.portrait and 0.27 or 0.4
+  local titles,notes,th,nh
+  repeat
+    titles,th=Dyna.wrap(title,scale,w)
+    notes,nh=Dyna.wrap(note,scale*0.8,w)
+    if #titles*(th+3)+8+#notes*(nh+3)<=h or scale<=0.16 then break end
+    scale=scale-0.01
+  until false
+  local height=#titles*(th+3)+8+#notes*(nh+3)
+  local yy=y+math.max(0,(h-height)/2)
+  for _,line in ipairs(titles) do
+    Dyna.static(line,scale,x,yy,w,th,LIGHT,{roomWidth=L.w,fit=true});yy=yy+th+3
+  end
+  yy=yy+8
+  for _,line in ipairs(notes) do
+    Dyna.static(line,scale*0.8,x,yy,w,nh,JOKER_GREY,{roomWidth=L.w,shadow=false,fit=true});yy=yy+nh+3
+  end
+end
 function Hud:draw(sim,L,time,reduced,hovered)
   local x,y,w,h=L.hud.x,L.hud.y,L.hud.w,L.hud.h
   local rw=L.w
@@ -146,10 +170,10 @@ function Hud:draw(sim,L,time,reduced,hovered)
   Button.panel(ix+3,cy,iw-6,42,self.dyn,2.4)
   self.turnText.cfg.maxw=230
   self.turnText:draw(ix+iw/2,cy+20,rw)
-  -- The body under the name (the blind's debuff text and score box) is
-  -- intentionally empty for now.
+  -- Prompt instructions occupy the blind's description area.
   local body=cy+48
   Button.panel(ix+3,body,iw-6,th-52,self.dynDark,2.4)
+  self:drawPrompt(sim,L,ix+14,body+10,iw-28,th-72)
   cy=cy+th+10
   -- 3. Action panel (hand_text_area's slot): the page draws the turn's
   -- Attack / End turn / Retreat / Abilities buttons inside this dark box.
@@ -206,5 +230,6 @@ function Hud:drawPortrait(sim,L,time,reduced,hovered)
   emboss(ix+166,y+10,70,42,BLACK,1.2)
   Dyna.static('Prizes',0.24,ix+166,y+12,70,12,LIGHT,{roomWidth=rw})
   local keep=self.prizeText.scale;self.prizeText.scale=0.5;self.prizeText:draw(ix+201,y+36,rw);self.prizeText.scale=keep
+  self:drawPrompt(sim,L,ix+246,y+58,w-266,h-64)
 end
 return Hud
