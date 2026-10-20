@@ -1,4 +1,5 @@
 package.path='frontend/lua/?.lua;'..package.path
+local D=require('ui.card_dimensions')
 love={math={random=function() return 0.5 end},graphics={},keyboard={isDown=function() return false end}}
 local Card=require('ui.card')
 Card.rebuild=function(self) self.texture={release=function() end} end
@@ -23,11 +24,11 @@ for _,view in ipairs({{1280,800,10},{480,850,4}}) do
   end
   assert(#chooser.cards==view[3])
   for _,card in ipairs(chooser.cards) do
-    assert(card.homeY-95*card.baseScale-32>=chooser.area.y,'Title outside tray')
-    assert(card.homeY+95*card.baseScale+24<=chooser.area.y+chooser.area.h,'Count outside tray')
+    assert(card.homeY-D.HALF_H*card.baseScale-32>=chooser.area.y,'Title outside tray')
+    assert(card.homeY+D.HALF_H*card.baseScale+24<=chooser.area.y+chooser.area.h,'Count outside tray')
     local _,top=card:target(1,view[1],require('ui.deck_pile').parallax())
-    assert(top-95*card.baseScale-32>=card.bounds.y,'Selection outline must enclose title')
-    assert(card.homeY+95*card.baseScale+24<=card.bounds.y+card.bounds.h,'Selection outline must enclose count')
+    assert(top-D.HALF_H*card.baseScale-32>=card.bounds.y,'Selection outline must enclose title')
+    assert(card.homeY+D.HALF_H*card.baseScale+24<=card.bounds.y+card.bounds.h,'Selection outline must enclose count')
   end
   assert(chooser:canStart())
   activate('tab2');activate('card');assert(calls[#calls][1]=='select' and calls[#calls][2]=='2' and calls[#calls][3]=='deck1')

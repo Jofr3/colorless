@@ -1,3 +1,4 @@
+local D=require('ui.card_dimensions')
 local T=require('ui.theme')
 local Button=require('ui.button')
 local Pile=require('ui.deck_pile')
@@ -155,7 +156,7 @@ function Library:build()
     self:add('Sort: '..(sortLabels[self.sort] or 'Name A-Z'),p and 24 or contentX+490,p and 102 or 48,p and 208 or 260,42,'sort',T.blue)
     self:add('New deck',p and 248 or contentX+764,p and 102 or 48,p and 208 or 236,42,'new-deck',T.red)
     for i,card in ipairs(self.cards) do
-      self.controls[#self.controls+1]={label=card.item.name,x=card.homeX-71*card.baseScale,y=card.homeY-95*card.baseScale,w=142*card.baseScale,h=190*card.baseScale,action='card',card=i}
+      self.controls[#self.controls+1]={label=card.item.name,x=card.homeX-D.HALF_W*card.baseScale,y=card.homeY-D.HALF_H*card.baseScale,w=D.W*card.baseScale,h=D.H*card.baseScale,action='card',card=i}
     end
     self:add('<',w/2-177,h-144,36,48,'previous',T.red).fontSize=30
     self:add('>',w/2+141,h-144,36,48,'next',T.red).fontSize=30
@@ -314,9 +315,9 @@ function Library:draw(shaders)
       DeckLabels.drawCounter(card)
       DeckLabels.drawHover(card)
       if card.item.illegal and not card.dragging then Alert.drawOnCard(card,self.time,self.reduced,w,Alert.pile) end
-      local labelWidth=142*card.baseScale+12
+      local labelWidth=D.W*card.baseScale+12
       local pileX,pileY=card:target(1,w,Pile.parallax())
-      caption(card.item.name,22,pileX-labelWidth/2,pileY-95*card.baseScale-40,labelWidth)
+      caption(card.item.name,22,pileX-labelWidth/2,pileY-D.HALF_H*card.baseScale-40,labelWidth)
     end
     if #self.cards==0 then
       T.text(self.query~='' and 'No matches' or 'Nothing here yet',p and 34 or 44,24,h/2-30,w-48)

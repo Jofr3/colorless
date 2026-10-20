@@ -1,6 +1,7 @@
 -- The card alert follows Card:draw's attachment: create_UIBox_card_alert with
 -- align 'tri' and offset (-0.1, 0.1), inside the card's top-right corner.
 package.path='frontend/lua/?.lua;'..package.path
+local D=require('ui.card_dimensions')
 local source=os.getenv('BALATRO_SOURCE') or '../balatro-source'
 local function read(path)local f=assert(io.open(source..path));local raw=f:read('*a');f:close();return raw end
 local noop=function()end
@@ -22,7 +23,7 @@ assert(math.abs(Alert.card.x-(0.21-0.1))<1e-9 and math.abs(Alert.card.y-(0.1-0.2
 -- moveable.lua 'tri': x = offset.x + major.w - self.w; y = offset.y (inner).
 local c=Card.new({id='x',name='X',illegal=true},1);c:place(400,300,0.84,false)
 local ox,oy=Alert.cardOffset(c)
-local unit=c.unit;local halfW,halfH=71*0.84,95*0.84
+local unit=c.unit;local halfW,halfH=D.HALF_W*0.84,D.HALF_H*0.84
 assert(math.abs(ox-(-halfW+(Alert.card.x+2*halfW/unit-0.42)*unit))<1e-9,'tri aligns the badge to the right edge plus the offset')
 assert(math.abs(oy-(-halfH+Alert.card.y*unit))<1e-9,'tri aligns the badge to the top edge plus the offset')
 -- Surface tuning: piles sit further in than the default, gallery cards further out.

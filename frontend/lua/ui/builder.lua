@@ -1,6 +1,8 @@
+local D=require('ui.card_dimensions')
 local T=require('ui.theme')
 local Button=require('ui.button')
 local Card=require('ui.card')
+local CardFrame=require('ui.card_frame')
 local DeckLabels=require('ui.deck_labels')
 local DeckStats=require('ui.deck_stats')
 local DeckRow=require('ui.deck_row')
@@ -101,6 +103,10 @@ function Builder:layout(w,h)
   self:makeCards(false);self:build()
 end
 function Builder:face(item,w,h)
+  CardFrame.draw(w,h,function(aw,ah) self:artwork(item,aw,ah) end,
+    CardFrame.border(self.art[item.id],T.paper))
+end
+function Builder:artwork(item,w,h)
   local path=self.art[item.id]
   if path and love.filesystem.getInfo(path) then
     local ok,img=pcall(g.newImage,path)
@@ -307,7 +313,7 @@ function Builder:build()
     self:add('Filters',p and 306 or 464,p and 98 or 38,p and 150 or 116,42,'filters',T.red)
     if not p then self:add('Sort: '..({name='Name',['hp-desc']='HP',set='Set'})[self.fields.sort or 'name'],594,38,170,42,'sort',T.blue).fontSize=22 end
     for i,c in ipairs(self.cards)do
-      self.controls[#self.controls+1]={action='card',card=i,label=c.item.name,x=c.homeX-71*c.baseScale,y=c.homeY-95*c.baseScale,w=142*c.baseScale,h=190*c.baseScale}
+      self.controls[#self.controls+1]={action='card',card=i,label=c.item.name,x=c.homeX-D.HALF_W*c.baseScale,y=c.homeY-D.HALF_H*c.baseScale,w=D.W*c.baseScale,h=D.H*c.baseScale}
     end
     local cx=p and w/2 or 408
     self:add('<',cx-177,h-132,36,44,'page',T.red,-1).fontSize=30
@@ -333,7 +339,7 @@ function Builder:build()
     end
     else
       for i,c in ipairs(self.deckCards)do
-        self.controls[#self.controls+1]={action='deck-card',deckCard=i,arg=c.item,label=c.item.quantity..' x '..c.item.name,x=c.homeX-71*c.baseScale,y=c.homeY-95*c.baseScale,w=142*c.baseScale,h=190*c.baseScale}
+        self.controls[#self.controls+1]={action='deck-card',deckCard=i,arg=c.item,label=c.item.quantity..' x '..c.item.name,x=c.homeX-D.HALF_W*c.baseScale,y=c.homeY-D.HALF_H*c.baseScale,w=D.W*c.baseScale,h=D.H*c.baseScale}
       end
     end
     local pagerX,pagerY=self:deckPager()
@@ -630,7 +636,7 @@ function Builder:draw(shaders)
     if not p or self.tab=='catalog'then
       Button.panel(p and 24 or 48,p and 155 or PANEL_Y,p and 432 or 716,p and 538 or PANEL_HEIGHT,T.panel)
       for _,c in ipairs(self.cards)do if not c.dragging then c:draw(shaders,self.time,self.mx,self.my,self.reduced,w)end end
-      for _,c in ipairs(self.cards)do caption(c.item.quantity>0 and c.item.quantity..' in deck' or '',19,c.homeX-65,c.homeY+95*c.baseScale+12,130,T.paper)end
+      for _,c in ipairs(self.cards)do caption(c.item.quantity>0 and c.item.quantity..' in deck' or '',19,c.homeX-65,c.homeY+D.HALF_H*c.baseScale+12,130,T.paper)end
       if #self.cards==0 then T.text(self.busy and 'Loading cards...' or 'No matching cards',28,p and 24 or 48,360,p and 432 or 716,T.paper)end
       local cx=p and w/2 or 408
       local hovered=not self.modal and Button.hit({x=cx-135,y=h-132,w=270,h=44},self.mx or -1,self.my or -1)

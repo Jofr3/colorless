@@ -1,6 +1,7 @@
 -- Headless checks for the table: snapshot parsing, hand drags and drops,
 -- targeting from attached actions, menus of every kind, and both layouts.
 package.path='frontend/lua/?.lua;'..package.path
+local D=require('ui.card_dimensions')
 local function font()
   return {getWidth=function(_,s) return #tostring(s)*8 end,getHeight=function() return 20 end,
     getWrap=function(_,s,w) local lines={};local line='';for word in tostring(s):gmatch('%S+') do
@@ -713,7 +714,7 @@ for _,size in ipairs({{1280,800},{480,900}}) do
   sim:sync(brainScene(401))
   for i=1,60 do sim:update(1/60,i/60,-100,-100,false) end
   local source,target,other=cardOf('active1'),sim.byUid['opponent:opp1'],cardOf('bench1')
-  assert(source.lift==0.2*190*source.baseScale and source.tint==nil,'Chosen source is raised normally and stays undimmed')
+  assert(source.lift==0.2*D.H*source.baseScale and source.tint==nil,'Chosen source is raised normally and stays undimmed')
   assert(target.lift==0 and other.lift==0,'Unselected Pokémon remain down')
   sim.focusCard=target
   local before=#commands

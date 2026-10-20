@@ -1,3 +1,4 @@
+local D=require('ui.card_dimensions')
 -- Balatro Card:start_dissolve (card.lua:2130), engine/particles.lua and
 -- globals.lua's default burn palette. The unmodified dissolve.fs is bundled
 -- by build.mjs; this supplies its animation, juice and attached square embers.
@@ -24,8 +25,8 @@ function Dissolve:update(card,dt,time)
   local added=0
   while self.alpha>0 and age>self.lastEmission+0.007 and added<20 do
     self.lastEmission=self.lastEmission+0.007;added=added+1
-    local x=(0.5-love.math.random())*142*card.baseScale/card.unit
-    local y=(0.5-love.math.random())*190*card.baseScale/card.unit
+    local x=(0.5-love.math.random())*D.W*card.baseScale/card.unit
+    local y=(0.5-love.math.random())*D.H*card.baseScale/card.unit
     local r=card.motion.T.r
     if math.abs(r)<0.1 then x,y=math.sin(r)*y+math.cos(r)*x,math.sin(r)*x+math.cos(r)*y end
     self.particles[#self.particles+1]={

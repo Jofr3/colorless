@@ -1,3 +1,4 @@
+local D=require('ui.card_dimensions')
 -- create_UIBox_card_alert (functions/UI_definitions.lua): a 0.42-tile red
 -- square (r=0.15, emboss 0.05) holding a white DynaText '!' that rotates and
 -- bumps (bump_rate 7, bump_amount 3, scale 0.48, spacing 3, text_rot 0.2).
@@ -48,7 +49,7 @@ end
 function Alert.cardOffset(card,offset)
   offset=offset or Alert.card
   local unit,scale=card.unit,card.motion.VT.scale
-  local halfW,halfH=71*card.baseScale*scale,95*card.baseScale*scale
+  local halfW,halfH=D.HALF_W*card.baseScale*scale,D.HALF_H*card.baseScale*scale
   return halfW+(offset.x-Alert.box.size)*unit,-halfH+offset.y*unit
 end
 -- The UIBox child follows the card's position and rotation.

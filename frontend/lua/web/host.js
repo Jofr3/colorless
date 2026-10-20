@@ -629,8 +629,10 @@ async function loadArt(card) {
   try {
     const response=await fetch(card.url);if(!response.ok)throw Error("art");
     const bitmap=await createImageBitmap(await response.blob());
-    const c=document.createElement("canvas");c.width=284;c.height=380;
-    c.getContext("2d").drawImage(bitmap,0,0,284,380);bitmap.close();
+    // Twice card_dimensions.lua's 136×187 artwork area (the scan's 8:11
+    // ratio), excluding the equal inset added by the Lua frame renderer.
+    const c=document.createElement("canvas");c.width=272;c.height=374;
+    c.getContext("2d").drawImage(bitmap,0,0,c.width,c.height);bitmap.close();
     const blob=await new Promise(resolve=>c.toBlob(resolve,"image/png"));
     if(!runtime||!blob)throw Error("art");
     const path=`__card_art_${++artSerial}.png`;

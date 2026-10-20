@@ -1,15 +1,16 @@
+local D=require('ui.card_dimensions')
 -- Table geometry in board pixels (one Balatro tile = 60px). Desktop keeps the
 -- run screen's proportions: a 4.5-tile HUD column, the hand along the bottom
 -- edge, the deck at the bottom right, and the opponent's hand peeking in from
 -- the top edge like Balatro's off-screen discard pile.
 local Layout={}
-local FULL=0.8655 -- card baseScale giving CARD_W = 2.049 tiles (123px)
+local FULL=60*D.TILE_W/D.W -- card baseScale giving CARD_W = 2.049 tiles (123px)
 Layout.FULL=FULL
 -- Wells hug their cards like a CardArea's area_uibox: the card bounds (or the
 -- bench's five slots / the prize grid) plus a 0.13-tile pad on every side.
 local PAD=8
 local function tight(z,slots,width)
-  local w,h=142*z.scale,190*z.scale
+  local w,h=D.W*z.scale,D.H*z.scale
   if width then
     z.well={x=z.x-width/2,y=z.y-h/2-PAD,w=width,h=h+2*PAD}
   elseif z.cols then
@@ -36,7 +37,7 @@ function Layout.desktop()
   -- so the four rows plus the hand fill the room's height.
   -- 0.74 is the largest card whose four rows and hand still fit 800px.
   local CARD=0.74
-  local cardH=190*CARD
+  local cardH=D.H*CARD
   local rowH=cardH+2*PAD
   local top,gap=4,6
   local function rowC(i) return top+(i-1)*(rowH+gap)+rowH/2 end
@@ -44,28 +45,28 @@ function Layout.desktop()
   local leftC,midC,rightC=376,786,1200
   -- Prize miniatures: the largest 2x3 grid that fits the side columns.
   local PRIZE=0.4
-  local pdx,pdy=142*PRIZE+8,190*PRIZE+8
+  local pdx,pdy=D.W*PRIZE+8,D.H*PRIZE+8
   -- Bench cards pack tightly at the centre of a wide well.
   -- 28px between bench cards leaves room for attached cards to peek out.
-  local benchSpacing=142*CARD+28
+  local benchSpacing=D.W*CARD+28
   local benchW=660
   -- Prize grids share an edge with their owner's bench: the opponent's top
   -- edge with the top bench, yours with the bottom bench's lower edge.
-  local prizeH=2*pdy+190*PRIZE+2*PAD
+  local prizeH=2*pdy+D.H*PRIZE+2*PAD
   local oppPrizeTop=rowC(1)-rowH/2
   local youPrizeTop=rowC(4)+rowH/2-prizeH
   L.zones={
     opp_hand={x=midC,y=-70,scale=CARD,span=420,hidden=true},
     opp_discard=tight({x=leftC,y=rowC(1),scale=CARD}),
     opp_bench=tight({x=midC,y=rowC(1),scale=CARD,spacing=benchSpacing,slots=5},5,benchW),
-    opp_prizes=tight({x=rightC-pdx/2,y=oppPrizeTop+PAD+95*PRIZE,scale=PRIZE,cols=2,dx=pdx,dy=pdy}),
+    opp_prizes=tight({x=rightC-pdx/2,y=oppPrizeTop+PAD+D.HALF_H*PRIZE,scale=PRIZE,cols=2,dx=pdx,dy=pdy}),
     opp_deck=tight({x=leftC,y=rowC(2),scale=CARD}),
     opp_active=tight({x=midC,y=rowC(2),scale=CARD}),
     stadium=tight({x=541,y=(rowC(2)+rowC(3))/2,scale=CARD}),
     you_active=tight({x=midC,y=rowC(3),scale=CARD}),
     played=tight({x=1000,y=rowC(3),scale=CARD,spacing=22},nil,176),
     you_deck=tight({x=rightC,y=rowC(3),scale=CARD}),
-    you_prizes=tight({x=leftC-pdx/2,y=youPrizeTop+PAD+95*PRIZE,scale=PRIZE,cols=2,dx=pdx,dy=pdy}),
+    you_prizes=tight({x=leftC-pdx/2,y=youPrizeTop+PAD+D.HALF_H*PRIZE,scale=PRIZE,cols=2,dx=pdx,dy=pdy}),
     you_bench=tight({x=midC,y=rowC(4),scale=CARD,spacing=benchSpacing,slots=5},5,benchW),
     you_discard=tight({x=rightC,y=rowC(4),scale=CARD}),
     you_hand={x=midC,y=rowsEnd+4+cardH/2,scale=CARD,span=520},
@@ -135,12 +136,12 @@ function Layout.prize(zone,index)
   return zone.x+(index%zone.cols)*zone.dx,zone.y+math.floor(index/zone.cols)*zone.dy
 end
 function Layout.played(zone,count,index)
-  local spacing=math.min(zone.spacing,(zone.well.w-16-142*zone.scale)/math.max(1,count-1))
+  local spacing=math.min(zone.spacing,(zone.well.w-16-D.W*zone.scale)/math.max(1,count-1))
   return zone.x+(index-(count-1)/2)*spacing,zone.y
 end
 -- Preserve the room needed for attached Energy and Tools while sorting a Bench.
 function Layout.benchPositions(zone,items)
-  local cardW=142*zone.scale
+  local cardW=D.W*zone.scale
   local total,gaps=#items*cardW,{}
   for i=2,#items do
     local gap=8+(#(items[i-1].energyCards or {})>0 and 26 or 0)+(#(items[i].toolCards or {})>0 and 26 or 0)

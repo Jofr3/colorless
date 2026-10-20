@@ -1,6 +1,7 @@
 -- Draw-path smoke test: every table state renders with a no-op LÖVE graphics
 -- stub, so nil fields and bad arithmetic in draw code fail here, not in WASM.
 package.path='frontend/lua/?.lua;'..package.path
+local D=require('ui.card_dimensions')
 local function font()
   return {getWidth=function(_,s) return #tostring(s)*8 end,getHeight=function() return 20 end,
     getWrap=function(_,s,w) local lines={};local line='';for word in tostring(s):gmatch('%S+') do
@@ -98,8 +99,8 @@ for _,size in ipairs({{1280,800},{480,850}}) do
   local left,right,top,bottom=math.huge,-math.huge,math.huge,-math.huge
   for _,c in ipairs(picker.cards) do
     local s=c.baseScale*c.motion.VT.scale
-    local hw=s*(142*math.abs(math.cos(c.angle))+190*math.abs(math.sin(c.angle)))/2
-    local hh=s*(190*math.abs(math.cos(c.angle))+142*math.abs(math.sin(c.angle)))/2
+    local hw=s*(D.W*math.abs(math.cos(c.angle))+D.H*math.abs(math.sin(c.angle)))/2
+    local hh=s*(D.H*math.abs(math.cos(c.angle))+D.W*math.abs(math.sin(c.angle)))/2
     left=math.min(left,c.x-hw);right=math.max(right,c.x+hw)
     top=math.min(top,c.y-hh);bottom=math.max(bottom,c.y+hh)
   end
@@ -125,7 +126,7 @@ for _,size in ipairs({{1280,800},{480,850}}) do
   for i,b in ipairs(grid.controls) do if b.action=='next' then nextButton=i end end
   assert(nextButton and grid.paginationY,'Existing arrow and page controls appear below the grid')
   grid:activate(nextButton)
-  local spawnX=grid.x+grid.w/2+71*grid.cardScale
+  local spawnX=grid.x+grid.w/2+D.HALF_W*grid.cardScale
   assert(math.abs(grid.cards[1].x-spawnX)<0.001 and grid.cards[5].x==grid.cards[1].x,'Each row starts at Balatro collection top-left spawn converted to card centres')
   assert(grid.cards[1].angle==0 and grid.cards[5].angle==0,'New collection cards start upright')
   assert(grid.cards[1].motion.T.r<0 and grid.cards[5].motion.T.r>0,'Collection cards settle into an outward fan')

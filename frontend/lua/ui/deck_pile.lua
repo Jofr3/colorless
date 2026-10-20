@@ -1,3 +1,4 @@
+local D=require('ui.card_dimensions')
 -- In-game G.deck behavior from CardArea:align_cards/draw/set_ranks and
 -- Card:hover/draw. Each visible rank has its own Moveable; only rank 1 reacts.
 local Card=require('ui.card')
@@ -7,7 +8,7 @@ Pile.__index=Pile
 local g=love.graphics
 -- Preserve G.deck's right-side perspective when displaying a grid of decks.
 -- game.lua: deck_W = 1.1 * CARD_W; set_screen_positions: x = TILE_W-w-0.5.
-Pile.referenceX=20-0.5-1.1*(2.4*35/41)/2
+Pile.referenceX=20-0.5-1.1*(D.TILE_W)/2
 function Pile.parallax(offset)
   return (Pile.referenceX+(offset or 0)-10)/10*1.5
 end
@@ -47,8 +48,8 @@ end
 -- (top-left x = area.x + area.w/2, y = area.y), then emplaces it.
 function Pile:enterCollection(rowCentre)
   for _,layer in ipairs(self.layers) do
-    layer.motion.VT.x=(rowCentre+71*self.baseScale)/self.unit
-    layer.motion.VT.y=(self.homeY+0.025*(2.4*47/41)*self.unit)/self.unit
+    layer.motion.VT.x=(rowCentre+D.HALF_W*self.baseScale)/self.unit
+    layer.motion.VT.y=(self.homeY+0.025*(D.TILE_H)*self.unit)/self.unit
     layer.motion.VT.r=0
   end
   self.x,self.y=self.motion.VT.x*self.unit,self.motion.VT.y*self.unit
@@ -94,7 +95,7 @@ local function face(self,layer)
   local v=layer.motion.VT
   local shade=Pile.grey(self.count,layer.rank)
   g.setColor(shade,shade,shade,1)
-  g.draw(self.texture,v.x*self.unit,v.y*self.unit,v.r,self.baseScale*v.scale,self.baseScale*v.scale,71,95)
+  g.draw(self.texture,v.x*self.unit,v.y*self.unit,v.r,self.baseScale*v.scale,self.baseScale*v.scale,D.HALF_W,D.HALF_H)
 end
 function Pile:draw()
   -- Deck backs use Sprite:draw(overlay), never the mouse-tilt dissolve pass.
@@ -113,7 +114,7 @@ function Pile:drawDragged(shaders,time,mx,my,reduced,roomWidth)
   local parallax=(self.motion.T.x*self.unit-roomWidth/2)/(roomWidth/2)*1.5
   local scale=self.baseScale*self.motion.VT.scale
   g.setShader(shader); g.setColor(1,1,1,1)
-  g.draw(self.texture,self.x-parallax*0.35*self.unit,self.y+1.5*0.35*self.unit,self.angle,scale*0.93,scale*0.93,71,95)
+  g.draw(self.texture,self.x-parallax*0.35*self.unit,self.y+1.5*0.35*self.unit,self.angle,scale*0.93,scale*0.93,D.HALF_W,D.HALF_H)
   g.setShader()
   face(self,self.layers[#self.layers])
 end

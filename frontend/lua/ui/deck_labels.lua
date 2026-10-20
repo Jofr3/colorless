@@ -1,3 +1,4 @@
+local D=require('ui.card_dimensions')
 -- CardArea:draw's area_uibox counter and view_deck badge. Coordinates below
 -- follow UIBox's tile layout, including the original 200px font rasterization.
 local T=require('ui.theme')
@@ -5,7 +6,7 @@ local Button=require('ui.button')
 local Pile=require('ui.deck_pile')
 local Labels={}
 local g=love.graphics
-local CARD_W,CARD_H=2.4*35/41,2.4*47/41
+local CARD_W,CARD_H=D.TILE_W,D.TILE_H
 local function metric(text,scale)
   local font=T.font(200)
   return font:getWidth(text)*scale*0.1/20,font:getHeight()*scale*0.1/20*0.83

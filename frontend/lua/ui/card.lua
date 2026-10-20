@@ -1,10 +1,11 @@
 local T = require('ui.theme')
 local Motion = require('ui.motion')
+local D = require('ui.card_dimensions')
 local Card = {}
 Card.__index = Card
 local g = love.graphics
-local W,H = 142,190
-local CARD_W,CARD_H = 2.4*35/41,2.4*47/41
+local W,H = D.W,D.H
+local CARD_W,CARD_H = D.TILE_W,D.TILE_H
 
 local function emblem(kind,colour)
   g.setColor(colour)
@@ -68,7 +69,7 @@ function Card:rebuild()
   g.pop(); g.setCanvas()
   self.texture:setFilter('nearest','nearest')
 end
--- Match the source card dimensions in tile units, independent of viewport/DPI.
+-- Shared card geometry in tile units, independent of viewport/DPI.
 function Card:place(x,y,baseScale,entering)
   self.homeX,self.homeY,self.baseScale = x,y,baseScale
   self.unit = W*baseScale/CARD_W
@@ -132,10 +133,12 @@ function Card:shaderValues(time,mx,my,reduced)
   local phase=math.min(self.angle*3,1)+time/28+(j and j.r*20 or 0)+tiltAmount
   -- Balatro atlases use logical 71x95 pixels even with 2x artwork. Keep the
   -- original burn-mask grain independent of our higher-resolution canvases.
-  local shaderResolution=self.disintegration and 0.5 or (self.item.resolution or 1)
+  local resolution=self.item.resolution or 1
+  local shaderW,shaderH=W*resolution,H*resolution
+  if self.disintegration then shaderW,shaderH=71,95 end
   return {
     dissolve=self.dissolve or 0, time=(123.33412*(self.index/1.14212))%3000,
-    texture_details={0,0,W*shaderResolution,H*shaderResolution},image_details={W*shaderResolution,H*shaderResolution},shadow=false,
+    texture_details={0,0,shaderW,shaderH},image_details={shaderW,shaderH},shadow=false,
     burn_colour_1=self.burn1 or {1,1,1,0},burn_colour_2=self.burn2 or {1,1,1,0},
     mouse_screen_pos={px,py},hovering=reduced and 0 or 1,
     screen_scale=math.sqrt((ux-ox)^2+(uy-oy)^2),

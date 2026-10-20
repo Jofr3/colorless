@@ -1,3 +1,4 @@
+local D=require('ui.card_dimensions')
 -- The sandbox table, built like Balatro's run screen: the HUD column on the
 -- left, transparent CardArea wells on the felt, the hand fanned along the
 -- bottom edge, the deck at the bottom right, hover popups, click-to-highlight
@@ -7,6 +8,7 @@
 local T=require('ui.theme')
 local Button=require('ui.button')
 local Card=require('ui.card')
+local CardFrame=require('ui.card_frame')
 local Motion=require('ui.motion')
 local Dissolve=require('ui.dissolve')
 local Pile=require('ui.deck_pile')
@@ -92,6 +94,10 @@ function Simulator:drawBack(owner,w,h)
 end
 function Simulator:face(item,w,h)
   if item.hidden or item.cardId=='' or item.cardId=='hidden' then self:drawBack(item.owner,w,h);return end
+  CardFrame.draw(w,h,function(aw,ah) self:artwork(item,aw,ah) end,
+    CardFrame.border(self.art[item.cardId],T.ink))
+end
+function Simulator:artwork(item,w,h)
   local path=self.art[item.cardId]
   if path and love.filesystem.getInfo(path) then
     local ok,img=pcall(g.newImage,path)
@@ -164,7 +170,7 @@ function Simulator:nextKo()
   c.disintegration=Dissolve.new(c,self.time)
   self.callbacks.feedback('whoosh2',0.9+love.math.random()*0.2,0.5)
   self.callbacks.feedback('crumple'..(math.floor(love.math.random()*5)+1),0.9+love.math.random()*0.2,0.5)
-  self.fx:attention({text='KNOCKED OUT',scale=0.75,colour=T.white,backdrop=T.red,x=c.x,y=c.y-0.6*190*c.baseScale,hold=0.4,jiggle=1.5})
+  self.fx:attention({text='KNOCKED OUT',scale=0.75,colour=T.white,backdrop=T.red,x=c.x,y=c.y-0.6*D.H*c.baseScale,hold=0.4,jiggle=1.5})
 end
 function Simulator:beginKoPrizes()
   local p=self.koPresentation
@@ -701,7 +707,7 @@ function Simulator:overOwnRow(card,x,y)
   if self.drag and self.drag.card==card then x,y=x-self.drag.dx,y-self.drag.dy end
   if item.zone=='hand' then
     local zone=self.L.zones.you_hand
-    return x>=self.L.table.x and x<=self.boardW and y>=zone.y-95*zone.scale-18 and y<=self.boardH+30
+    return x>=self.L.table.x and x<=self.boardW and y>=zone.y-D.HALF_H*zone.scale-18 and y<=self.boardH+30
   elseif item.zone=='bench' then
     local well=self.L.zones.you_bench.well
     return x>=well.x-30 and x<=well.x+well.w+30 and y>=well.y-12 and y<=well.y+well.h+12
@@ -754,14 +760,14 @@ function Simulator:react(previous)
       if item.damage>was.damage then
         local amount=item.damage-was.damage
         fx:after(delay,function()
-          fx:attention({text='-'..amount,scale=0.9,colour=T.white,backdrop=T.red,follow=function() return c.x,c.y end,offsetY=-0.15*190*c.baseScale,hold=0.8,sound='multhit1',pitch=0.9+math.min(amount,120)/400,jiggle=0.7})
+          fx:attention({text='-'..amount,scale=0.9,colour=T.white,backdrop=T.red,follow=function() return c.x,c.y end,offsetY=-0.15*D.H*c.baseScale,hold=0.8,sound='multhit1',pitch=0.9+math.min(amount,120)/400,jiggle=0.7})
           if not transferred then c:juiceUp(self.time,0.6,0.1,self.reduced) end
         end)
         delay=0.35
       elseif item.damage<was.damage then
         local amount=was.damage-item.damage
         fx:after(delay,function()
-          fx:attention({text='+'..amount,scale=0.8,colour=T.white,backdrop=CHANCE,follow=function() return c.x,c.y end,offsetY=-0.15*190*c.baseScale,hold=0.7,sound='chips1'})
+          fx:attention({text='+'..amount,scale=0.8,colour=T.white,backdrop=CHANCE,follow=function() return c.x,c.y end,offsetY=-0.15*D.H*c.baseScale,hold=0.7,sound='chips1'})
           if not transferred then c:juiceUp(self.time,0.3,0.05,self.reduced) end
         end)
         delay=0.3
@@ -769,7 +775,7 @@ function Simulator:react(previous)
       if item.status~=was.status and item.status~='' then
         local label=item.status:gsub('^%l',string.upper):gsub(',%s*',' + ')
         fx:after(delay,function()
-          fx:attention({text=label,scale=0.6,colour=T.white,backdrop=PURPLE,follow=function() return c.x,c.y end,offsetY=0.2*190*c.baseScale,hold=0.9,sound='tarot2',pitch=0.9})
+          fx:attention({text=label,scale=0.6,colour=T.white,backdrop=PURPLE,follow=function() return c.x,c.y end,offsetY=0.2*D.H*c.baseScale,hold=0.9,sound='tarot2',pitch=0.9})
         end)
         delay=0.3
       end
@@ -779,14 +785,14 @@ function Simulator:react(previous)
       end
       if item.cardId~=was.cardId then
         fx:after(delay,function()
-          fx:attention({text='Evolved',scale=0.6,colour=T.white,backdrop=T.blue,follow=function() return c.x,c.y end,offsetY=-0.15*190*c.baseScale,hold=0.8,sound='highlight1'})
+          fx:attention({text='Evolved',scale=0.6,colour=T.white,backdrop=T.blue,follow=function() return c.x,c.y end,offsetY=-0.15*D.H*c.baseScale,hold=0.8,sound='highlight1'})
           c:juiceUp(self.time,0.5,0.1,self.reduced)
         end)
         delay=0.3
       end
     elseif c and not was and item.evolvedFrom then
       fx:after(delay,function()
-        fx:attention({text='Evolved',scale=0.6,colour=T.white,backdrop=T.blue,follow=function() return c.x,c.y end,offsetY=-0.15*190*c.baseScale,hold=0.8,sound='highlight1'})
+        fx:attention({text='Evolved',scale=0.6,colour=T.white,backdrop=T.blue,follow=function() return c.x,c.y end,offsetY=-0.15*D.H*c.baseScale,hold=0.8,sound='highlight1'})
         c:juiceUp(self.time,0.5,0.1,self.reduced)
       end)
       delay=0.3
@@ -988,7 +994,7 @@ function Simulator:buildAttached(card)
   if not item.hidden and item.cardId~='' then buttons[#buttons+1]={label='View',colour=T.profile,view=true} end
   if #buttons==0 then return end
   local scale=card.baseScale
-  local cw,ch=142*scale,190*scale
+  local cw,ch=D.W*scale,D.H*scale
   local pad,gap=6,6
   local bw,bh=100,select(2,Dyna.measure('Hg',0.28))+12
   local totalHeight=0
@@ -1005,7 +1011,7 @@ function Simulator:buildAttached(card)
   local above=item.zone=='hand' or (self.portrait and item.owner=='you')
   local x,y
   -- Anchor both button layouts to the highlighted card's lifted position.
-  local lift=0.2*190*scale
+  local lift=0.2*D.H*scale
   local cardGap=16
   if above then x=card.homeX-pw/2;y=card.homeY-lift-ch/2-cardGap-ph
   else
@@ -1129,7 +1135,7 @@ function Simulator:prizeSlotHit(x,y)
   local side=self.sides.you or {prizes=0}
   for i=0,side.prizes-1 do
     local px,py=Layout.prize(z,i)
-    local w,h=142*z.scale,190*z.scale
+    local w,h=D.W*z.scale,D.H*z.scale
     if x>=px-w/2-4 and x<=px+w/2+4 and y>=py-h/2-4 and y<=py+h/2+4 then return i end
   end
   return nil
@@ -1140,7 +1146,7 @@ function Simulator:prizePosition(owner,index)
   if self.targeting and self.targeting.menu.kind=='prizes' and owner=='you' then
     if not self.reduced then y=y-math.sin(self.time*6+index)*2 end
     for _,o in ipairs(self.targeting.menu.options) do
-      if o.uid=='prize:'..index and o.selected then y=y-0.2*190*z.scale end
+      if o.uid=='prize:'..index and o.selected then y=y-0.2*D.H*z.scale end
     end
   end
   return x,y
@@ -1161,7 +1167,7 @@ function Simulator:updatePrizes(dt,time,mx,my,reduced,blocked)
         local p=previous[key] or {motion=Motion.new(0,0,0)}
         local x,y=self:prizePosition(owner,i)
         local active=not blocked and not self.drag and self.hover==0 and not self.hoverCard
-          and math.abs(mx-x)<=71*z.scale and math.abs(my-y)<=95*z.scale
+          and math.abs(mx-x)<=D.HALF_W*z.scale and math.abs(my-y)<=D.HALF_H*z.scale
         if active and not p.hovered then
           Card.juiceUp(p,time,0.05,0.03,reduced)
           self.callbacks.feedback('paper1',0.9+love.math.random()*0.2)
@@ -1249,7 +1255,7 @@ function Simulator:update(dt,time,mx,my,reduced)
     c.counterCandidate=counterCandidate and not reduced
     local counterSelected=self:isCounterSelected(c)
     local counterRaised=counterSelected and not (self.counterMotion and self.counterMotion.loweringAt)
-    c.lift=(c==self.highlight or counterRaised) and 0.2*190*c.baseScale or 0
+    c.lift=(c==self.highlight or counterRaised) and 0.2*D.H*c.baseScale or 0
     c.tint=nil
     if (self.targeting or self.luaTargeting) and not candidate and not counterSelected and c.item.owner~='global' and c.item.zone~='hand' and c.item.zone~='prize' then c.tint={0.6,0.6,0.6,1} end
     if c.drawAfterPromotion then
@@ -1514,7 +1520,7 @@ function Simulator:drawBadges(c,rw)
   local item=c.item
   if item.hidden or not (item.zone=='active' or item.zone=='bench') then return end
   local scale=c.baseScale*c.motion.VT.scale
-  local cw,ch=142*scale,190*scale
+  local cw,ch=D.W*scale,D.H*scale
   local bottom=c.y+ch/2
   if item.status~='' then
     local names={}
@@ -1532,9 +1538,9 @@ function Simulator:eachAttached(c,visit)
   local item=c.item
   if item.hidden or not (item.zone=='active' or item.zone=='bench') then return end
   local scale=c.baseScale*c.motion.VT.scale
-  local cw,ch=142*scale,190*scale
+  local cw,ch=D.W*scale,D.H*scale
   local s=scale*0.9
-  local aw,ah=142*s,190*s -- the attached card's own width/height
+  local aw,ah=D.W*s,D.H*s -- the attached card's own width/height
   local peek=item.zone=='bench' and 26 or 36
   -- Stacks climb the edge: each further Energy sits 18px higher (Tools 18px
   -- lower), all peeking out by the same amount, like cards slid under a
@@ -1572,9 +1578,9 @@ function Simulator:drawAttached(c,shaders,rw)
     local res=tex.item.resolution or 1
     local sx=scale/res
     g.setColor(0,0,0,0.3)
-    g.draw(tex.texture,x+side*3,y+(side>0 and -1 or 3),angle,sx,sx,142*res/2,190*res/2)
+    g.draw(tex.texture,x+side*3,y+(side>0 and -1 or 3),angle,sx,sx,D.W*res/2,D.H*res/2)
     g.setColor(1,1,1,1)
-    g.draw(tex.texture,x,y,angle,sx,sx,142*res/2,190*res/2)
+    g.draw(tex.texture,x,y,angle,sx,sx,D.W*res/2,D.H*res/2)
   end)
 end
 function Simulator:drawCard(c,shaders,rw)
@@ -1589,7 +1595,7 @@ function Simulator:drawCard(c,shaders,rw)
     local scale=c.baseScale*c.motion.VT.scale
     g.setLineWidth(2)
     g.push();g.translate(c.x,c.y);g.rotate(c.angle)
-    Button.outline(-71*scale-3,-95*scale-3,142*scale+6,190*scale+6,T.white,1.2)
+    Button.outline(-D.HALF_W*scale-3,-D.HALF_H*scale-3,D.W*scale+6,D.H*scale+6,T.white,1.2)
     g.pop()
   end
   self:drawBadges(c,rw)
@@ -1600,7 +1606,7 @@ function Simulator:drawPrizes(owner,rw)
   local side=self.sides[owner] or {prizes=0}
   local faceUp={}
   for _,c in ipairs(self.cards) do if c.item.owner==owner and c.item.zone=='prize' then faceUp[c.item.index]=c;c.prizeSlot=c.item.index end end
-  local w,h=142*z.scale,190*z.scale
+  local w,h=D.W*z.scale,D.H*z.scale
   for i=0,side.prizes-1 do
     local px,py=self:prizePosition(owner,i)
     if not faceUp[i] and not self:koPrizeTaken(owner,i) then
@@ -1714,7 +1720,7 @@ function Simulator:draw(shaders)
   if self.popup and self.popupBox and not self.overlay then
     local c=self.popup
     local box=self.popupBox
-    local ch=190*c.baseScale*c.motion.VT.scale
+    local ch=D.H*c.baseScale*c.motion.VT.scale
     local below=c.y<0.8*165 or (c.item.owner=='opponent' and c.item.zone=='hand')
     local px=c.x-box.w/2
     px=math.max(L.table.x+4,math.min(self.boardW-box.w-4,px))

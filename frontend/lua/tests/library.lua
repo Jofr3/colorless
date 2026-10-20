@@ -1,4 +1,5 @@
 package.path='frontend/lua/?.lua;'..package.path
+local D=require('ui.card_dimensions')
 love={math={random=function() return 0.5 end},graphics={},keyboard={isDown=function() return false end}}
 local Card=require('ui.card')
 Card.rebuild=function(self) self.texture={release=function() end} end
@@ -24,7 +25,7 @@ for _,view in ipairs({{1280,800,12},{480,850,4}}) do
   local cols=view[3]/2
   local rowEnd=library.cards[1].homeY+(view[1]<600 and 79 or 94)+24+28
   local nextRow=library.cards[cols+1]
-  assert(rowEnd<nextRow.homeY-95*nextRow.baseScale,'Rows overlap')
+  assert(rowEnd<nextRow.homeY-D.HALF_H*nextRow.baseScale,'Rows overlap')
   activate('new-deck'); assert(library.modal.mode=='create')
   assert(library.baseControls[1].action=='home','Underlying controls must remain visible')
   local before=#commands
@@ -83,7 +84,7 @@ print('PASS: settings-equivalent modal motion, animated hit testing, Escape, red
 library.reduced=false
 library:sync(snapshot(3001,12,nil,2))
 for _,card in ipairs(library.cards) do
-  assert(math.abs(card.x-(library.width/2+71*card.baseScale))<1e-9,'New page must start at the collection row origin')
+  assert(math.abs(card.x-(library.width/2+D.HALF_W*card.baseScale))<1e-9,'New page must start at the collection row origin')
 end
 library.reduced=true
 library:sync(snapshot(3002,12,nil,1))

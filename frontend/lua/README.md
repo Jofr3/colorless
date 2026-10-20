@@ -82,6 +82,26 @@ The palette follows Balatro's `globals.lua`: red `#FE5F55`, blue `#009DFF`, gree
 
 Card render textures are recreated after viewport changes because love.js clears canvas contents when resizing its WebGL backbuffer. Keep that behavior when adding future card artwork.
 
+`ui/card_dimensions.lua` defines every card's geometry: a 136×187 artwork
+area (matching the 600×825 source scans), with a one-pixel rim on
+every side, giving a 138×189 texture. The browser caches scans at 272×374.
+`ui/card_frame.lua` reproduces the ordinary `Enhancers.png` card's stepped
+corners at those dimensions, without a white mat. Each scan's added rim
+extends the nearby colours from each of its four outer edges, preserving
+silver gradients and full-art variation rather than choosing a single tint.
+Rounded/transparent corners use the nearest straight edge. Small edge profiles
+are cached for up to 64 artwork files; decoded pixels are released immediately.
+Generated faces use their own outer stock colour.
+The scan fits the inner rectangle. Corners copy both the alpha mask and the
+inner rim of Balatro's ordinary `Enhancers.png` card at its native 1× scale.
+The source's empty outer row/column are removed, so the straight borders
+reach the wrapper edges; only the stepped corners are transparent.
+The two-pixel rim joint at each shoulder preserves the source's inner contour.
+The thin rim and enlarged artwork are preserved. Cards,
+piles, attachments, previews, hit targets and outlines share the dimensions,
+and the draw scale is uniform so the border stays even on screen.
+Face-down cards fit their original back sprites to the same outer bounds.
+
 ## Card fidelity checks
 
 With LuaJIT installed, run from the repository root:

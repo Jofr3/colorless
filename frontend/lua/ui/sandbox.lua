@@ -1,3 +1,4 @@
+local D=require('ui.card_dimensions')
 -- Shared library elements: text input, collection tray, deck piles/counts and
 -- animated red pagination. Player tabs and the sandbox launch remain outside.
 local T=require('ui.theme')
@@ -65,13 +66,13 @@ function Sandbox:makeCards(entering)
   self.pageText:set('Page '..self.page..'/'..self.pages,self.time)
   local cols=self.portrait and 2 or 5
   local a=self.area
-  local scale=math.min(0.82,(a.h/2-84)/190)
+  local scale=math.min(0.82,(a.h/2-84)/D.H)
   for i=(self.page-1)*self.size+1,math.min(#matches,self.page*self.size) do
     local item=matches[i]
     item.drawFace=function(w,h) Library.face(self,item,w,h) end
     local card=Pile.new(item,i)
     local index=#self.cards
-    card:place(a.x+a.w/cols*(index%cols+0.5),a.y+50+95*scale+math.floor(index/cols)*a.h/2,scale,false,self.width)
+    card:place(a.x+a.w/cols*(index%cols+0.5),a.y+50+D.HALF_H*scale+math.floor(index/cols)*a.h/2,scale,false,self.width)
     card.bounds={x=a.x+(index%cols)*a.w/cols+6,y=a.y+math.floor(index/cols)*a.h/2+4,w=a.w/cols-12,h=a.h/2-8}
     if entering and not self.reduced then card:enterCollection(self.width/2) end
     self.cards[#self.cards+1]=card
@@ -210,10 +211,10 @@ function Sandbox:draw()
       card:draw()
       local bottom=Labels.drawCounter(card)
       local tx,ty=card:target(1,self.width,Pile.parallax())
-      local titleX,titleY=tx-71*card.baseScale-6,ty-95*card.baseScale-32
-      local titleWidth=142*card.baseScale+12
+      local titleX,titleY=tx-D.HALF_W*card.baseScale-6,ty-D.HALF_H*card.baseScale-32
+      local titleWidth=D.W*card.baseScale+12
       if card.item.id==self.selected[self.tab] then
-        local left=math.min(titleX,card.homeX-71*card.baseScale)-5
+        local left=math.min(titleX,card.homeX-D.HALF_W*card.baseScale)-5
         local right=math.max(titleX+titleWidth,card.homeX+78.1*card.baseScale)+5
         g.push('all');g.setLineWidth(1.5)
         Button.outline(left,titleY-5,right-left,bottom-titleY+10,T.white,1.2)

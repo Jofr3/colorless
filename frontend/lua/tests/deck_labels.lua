@@ -1,5 +1,6 @@
 -- Run Balatro's actual UI definition and layout functions as the reference.
 package.path='frontend/lua/?.lua;'..package.path
+local D=require('ui.card_dimensions')
 local prints={}
 local font={getWidth=function(_,s) return #s*100 end,getHeight=function() return 200 end,setFilter=function() end}
 love={graphics={newFont=function() return font end,setFont=function() end,setColor=function() end,
@@ -48,7 +49,7 @@ local function layout(def)
 end
 local function near(a,b) assert(math.abs(a-b)<1e-9,tostring(a)..' != '..tostring(b)) end
 for _,count in ipairs({0,9,52,60,120}) do
-  local area={T={w=1.1*(2.4*35/41),h=0.95*(2.4*47/41)},config={card_count=count,card_limit=count}}
+  local area={T={w=1.1*(D.TILE_W),h=0.95*(D.TILE_H)},config={card_count=count,card_limit=count}}
   G.deck=area
   local expected=layout(definition('self.children.area_uibox = UIBox',counterPrefix,area))
   local actual=Labels.counter(count)

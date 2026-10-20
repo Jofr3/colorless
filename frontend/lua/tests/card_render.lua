@@ -1,6 +1,7 @@
 -- Checks the LÖVE draw contract without a GPU: the screen-space inputs and the
 -- shared geometry of each card layer. Catches the original resize/tilt mismatch.
 package.path='frontend/lua/?.lua;'..package.path
+local D=require('ui.card_dimensions')
 local transform={scale=1,x=0,y=0}
 local draws,activeShader={},nil
 love={graphics={
@@ -72,7 +73,7 @@ assert(#draws==2 and draws[2].shader==shaders.dissolve,'Available cards restore 
 print('PASS: Balatro greyed-card pass, shared geometry, reduced motion and availability restore')
 c:place(310,437,1.36,false)
 c.hovered=false
-local edge=c.x+142*c.baseScale/2
+local edge=c.x+D.W*c.baseScale/2
 assert(c:hit(edge-0.01,c.y))
 assert(not c:hit(edge+0.01,c.y))
 c.hovered=true
@@ -81,3 +82,140 @@ assert(not c:hit(edge+0.06*c.unit,c.y))
 c.motion.VT.scale=0.95
 assert(c:hit(edge,c.y)) -- Hover's initial squash must not repeatedly retrigger entry.
 print('PASS: original hover hysteresis and zoom-independent hit bounds')
+
+-- Exercise texture creation through the final draw, so a second stretch in
+-- either the frame or tile-space renderer cannot reintroduce uneven padding.
+local Frame=require('ui.card_frame')
+local g=love.graphics
+local bake,stack={sx=1,sy=1,x=0,y=0},{}
+g.push=function() stack[#stack+1]={sx=bake.sx,sy=bake.sy,x=bake.x,y=bake.y} end
+g.pop=function() bake=table.remove(stack) end
+g.scale=function(x,y) bake.sx,bake.sy=bake.sx*x,bake.sy*(y or x) end
+g.translate=function(x,y) bake.x,bake.y=bake.x+x*bake.sx,bake.y+y*bake.sy end
+g.setBlendMode=function() end
+g.rectangle=function() end
+g.setCanvas=function() end
+g.clear=function() end
+g.newCanvas=function(w,h) return {w=w,h=h,setFilter=function() end,release=function() end} end
+for _,resolution in ipairs({1,2}) do
+  local art
+  local card=Card.new({resolution=resolution,edition='dissolve',drawFace=function(w,h)
+    Frame.draw(w,h,function(aw,ah)
+      art={x=bake.x,y=bake.y,w=aw*bake.sx,h=ah*bake.sy}
+    end)
+  end},1)
+  near(art.w/art.h,600/825)
+  for _,scale in ipairs({0.135,0.74,1.6}) do
+    card:place(310,437,scale,false)
+    draws={};card:draw(shaders,20,0,0,true,1280)
+    local face=draws[2]
+    near(face.sx,face.sy)
+    local left,top=art.x*face.sx,art.y*face.sy
+    local right=(card.texture.w-art.x-art.w)*face.sx
+    local bottom=(card.texture.h-art.y-art.h)*face.sy
+    near(left,scale);near(top,left);near(right,left);near(bottom,left)
+    near(card.texture.w*face.sx,D.W*scale)
+    near(card.texture.h*face.sy,D.H*scale)
+  end
+end
+print('PASS: original scan proportions, equal four-sided padding and uniform rendering at both texture resolutions and three display scales')
+
+-- Border gradients must remain local: a silver card can have different
+-- colours at the top, bottom and either side. Ignore interior art/corners.
+local decodes,releases=0,0
+local rims={yellow={1,0.82,0.05},dark={0.08,0.09,0.1}}
+love.filesystem={getInfo=function(path) return path~='missing' end}
+love.image={newImageData=function(path)
+  decodes=decodes+1
+  if path=='broken' then error('Invalid image') end
+  return {
+    getDimensions=function() return 256,352 end,
+    getPixel=function(_,x,y)
+      if path=='transparent' or (x<20 and y<20) then return 1,1,1,0 end
+      if x<6 or x>249 or y<8 or y>343 then
+        if path=='silver' then
+          local c=0.9-0.5*y/351
+          if x>249 then c=c*0.8 end
+          return c,c,c,1
+        end
+        local rim=rims[path]
+        return rim[1],rim[2],rim[3],1
+      end
+      return 1,0,0,1 -- bright interior must not influence the edge
+    end,
+    release=function() releases=releases+1 end,
+  }
+end}
+for _,name in ipairs({'yellow','dark'}) do
+  local border=Frame.border(name)
+  for _,side in ipairs({'top','bottom','left','right'}) do
+    for _,colour in ipairs(border[side]) do
+      for i=1,3 do near(colour[i],rims[name][i]) end
+    end
+  end
+  local count=decodes
+  assert(Frame.border(name)==border and decodes==count,'Reuse cached profile')
+end
+local silver=Frame.border('silver')
+assert(silver.top[64][1]>silver.bottom[64][1]+0.4,'Keep the top-to-bottom gradient')
+assert(silver.left[88][1]>silver.right[88][1]+0.1,'Sample the sides independently')
+assert(silver.left[30][1]>silver.left[145][1]+0.2,'Keep changes along each side')
+local painted,current={},nil
+g.setColor=function(r,g,b,a) current={r,g,b,a or 1} end
+g.rectangle=function(_,x,y,w,h) painted[#painted+1]={x=x,y=y,w=w,h=h,c=current} end
+Frame.draw(D.W,D.H,function() end,silver)
+local sideSeen,topSeen=false,false
+for _,rect in ipairs(painted) do
+  if rect.x==0 and rect.y==90 then near(rect.c[1],silver.left[90][1]);sideSeen=true end
+  if rect.x==68 and rect.y==0 then near(rect.c[1],silver.top[68][1]);topSeen=true end
+end
+assert(sideSeen and topSeen,'Draw the local profiles on their corresponding edges')
+-- The wrapper bounds must be opaque along all four straight sides.
+local pixels={}
+for _,rect in ipairs(painted) do
+  for y=rect.y,rect.y+rect.h-1 do
+    for x=rect.x,rect.x+rect.w-1 do pixels[x..':'..y]=rect.c[4] end
+  end
+end
+for x=3,D.W-4 do
+  assert(pixels[x..':0']==1 and pixels[x..':'..(D.H-1)]==1,'Top/bottom touch wrapper')
+end
+for y=3,D.H-4 do
+  assert(pixels['0:'..y]==1 and pixels[(D.W-1)..':'..y]==1,'Left/right touch wrapper')
+end
+local afterArt,cuts=false,{}
+local blend
+g.setBlendMode=function(mode) blend=mode end
+g.rectangle=function(_,x,y,w,h)
+  if afterArt then
+    for py=y,y+h-1 do
+      for px=x,x+w-1 do
+        cuts[px..':'..py]={alpha=current[4],blend=blend}
+      end
+    end
+  end
+end
+Frame.draw(D.W,D.H,function() afterArt=true end,silver)
+for _,corner in ipairs({{0,0,1,1},{D.W-1,0,-1,1},{0,D.H-1,1,-1},{D.W-1,D.H-1,-1,-1}}) do
+  local x,y,dx,dy=unpack(corner)
+  local function pixel(px,py) return cuts[(x+px*dx)..':'..(y+py*dy)] end
+  for _,p in ipairs({{1,0},{2,0},{0,2}}) do
+    local cut=pixel(unpack(p))
+    assert(cut and cut.alpha==0 and cut.blend=='replace','Match Balatro corner alpha')
+  end
+  for _,p in ipairs({{1,1},{2,1},{1,2}}) do
+    local rim=pixel(unpack(p))
+    assert(rim and rim.alpha==1,'Keep whole opaque rim pixels inside the steps')
+  end
+  for _,p in ipairs({{3,1},{2,2},{1,3}}) do
+    assert(not pixel(unpack(p)),'Preserve artwork inside the corner steps')
+  end
+end
+print('PASS: Balatro corner alpha and stepped inner rim at all four corners')
+assert(releases==3,'Decoded scan pixels must be released')
+local fallback={0.2,0.3,0.4}
+for _,path in ipairs({'missing','broken','transparent'}) do
+  assert(Frame.border(path,fallback)==fallback,'Missing profile uses the face stock')
+end
+assert(Frame.border(nil,fallback)==fallback)
+print('PASS: yellow/dark rims and local silver gradients; interior/corner rejection; cached profiles, released pixels and fallbacks')

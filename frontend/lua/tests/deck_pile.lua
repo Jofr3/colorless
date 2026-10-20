@@ -1,5 +1,6 @@
 -- Compare stack placement directly with the original in-game G.deck code.
 package.path='frontend/lua/?.lua;'..package.path
+local D=require('ui.card_dimensions')
 local draws,shader,colour={},nil,nil
 love={math={random=function() return 0.7 end},graphics={
   setShader=function(s) shader=s end,
@@ -16,7 +17,7 @@ local function near(a,b) assert(math.abs(a-b)<1e-9,tostring(a)..' != '..tostring
 for _,count in ipairs({1,9,18,52,60}) do
   for _,x in ipairs({220,640,1060}) do
     local p=Pile.new({count=count},1); p:place(x,300,0.82,false,1280)
-    local cw,ch=142*p.baseScale/p.unit,190*p.baseScale/p.unit
+    local cw,ch=D.W*p.baseScale/p.unit,D.H*p.baseScale/p.unit
     local parallax=(20-0.5-1.1*cw/2-10)/10*1.5
     local area={config={type='deck'},shuffle_amt=0,children={},cards={},
       T={x=x/p.unit-cw/2,y=300/p.unit-ch/2,w=cw,h=ch},shadow_parrallax={x=parallax,y=-1.5}}
@@ -77,7 +78,7 @@ _G.Card=function(x,y,w,h) spawned[#spawned+1]={x=x+w/2,y=y+h/2}; return {} end
 local firstPile
 for row=1,2 do
   local pile=Pile.new({count=60},1); pile:place(240,240+(row-1)*250,0.82,false,1280)
-  local cw,ch=2.4*35/41,2.4*47/41
+  local cw,ch=D.TILE_W,D.TILE_H
   G.CARD_W,G.CARD_H=cw,ch
   G.your_collection[row]={cards={},T={x=140/pile.unit,y=pile.homeY/pile.unit-0.95*ch/2,w=1000/pile.unit},emplace=function() end}
   if row==1 then firstPile=pile end

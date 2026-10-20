@@ -1,3 +1,4 @@
+local D=require('ui.card_dimensions')
 -- Overlay menus for the table: create_UIBox_generic_options (JOKER_GREY frame,
 -- 0.1 emboss, L_BLACK body, orange Back) holding engine prompts rendered as
 -- button lists or real card rows (the booster-pack picker), the coin flip,
@@ -76,7 +77,7 @@ function Overlay:layout()
     local maxColumns=5
     self.cardColumns=compact and math.max(1,math.min(maxColumns,#(self.data.options or {}))) or maxColumns
     self.cardHeader=compact and 24 or 110
-    w=p and 456 or math.min(W-40,maxColumns*142*sim.L.zones.you_hand.scale+(maxColumns-1)*self.cardGap+2*self.cardPadding+48)
+    w=p and 456 or math.min(W-40,maxColumns*D.W*sim.L.zones.you_hand.scale+(maxColumns-1)*self.cardGap+2*self.cardPadding+48)
     local unitBounds=CollectionMotion.bounds(maxColumns,1,0)
     self.cardScale=math.min(sim.L.zones.you_hand.scale,(w-48-(maxColumns-1)*self.cardGap-2*self.cardPadding)/unitBounds.width)
     local bounds=CollectionMotion.bounds(self.cardColumns,self.cardScale,self.cardGap)
@@ -131,7 +132,7 @@ end
 function Overlay:makeCards(options,scale,top)
   self:release()
   local sim=self.sim
-  local spacing=142*scale+self.cardGap
+  local spacing=D.W*scale+self.cardGap
   local first=(self.page-1)*self.perPage
   local count=math.min(self.perPage,#options-first)
   for i=first+1,math.min(first+self.perPage,#options) do
@@ -143,7 +144,7 @@ function Overlay:makeCards(options,scale,top)
     local x=self.x+self.w/2+(col-(rowCount-1)/2)*spacing
     local rowBounds=CollectionMotion.bounds(rowCount,scale,self.cardGap)
     local rowTop=top+row*(self.cardRowHeight+self.cardGap)-rowBounds.top
-    local y=rowTop+95*scale
+    local y=rowTop+D.HALF_H*scale
     local item={id=o.uid~='' and o.uid or ('opt'..i),cardId=o.cardId,name=o.label,hidden=o.cardId=='' or o.cardId=='hidden',selected=o.selected,disabled=o.disabled,edition='dissolve',resolution=2}
     local card=sim:newCard(item,i,x,y,scale)
     card.greyed=self.kind=='cards' and (o.disabled or o.dimmed) or false
@@ -200,7 +201,7 @@ function Overlay:build(keepCards)
     if not keepCards then self:makeCards(d.options,self.cardScale,self.cardTop) end
     if d.note and d.note~='' then self.noteLines=Dyna.wrap(d.note,0.28,bw-16) else self.noteLines={} end
     for _,c in ipairs(self.cards) do
-      self.controls[#self.controls+1]={label=c.item.name,x=c.homeX-71*c.baseScale,y=c.homeY-95*c.baseScale,w=142*c.baseScale,h=190*c.baseScale,action='card',card=c,disabled=c.item.disabled and kind=='cards',fontSize=20,token=d.options[c.option].token}
+      self.controls[#self.controls+1]={label=c.item.name,x=c.homeX-D.HALF_W*c.baseScale,y=c.homeY-D.HALF_H*c.baseScale,w=D.W*c.baseScale,h=D.H*c.baseScale,action='card',card=c,disabled=c.item.disabled and kind=='cards',fontSize=20,token=d.options[c.option].token}
     end
     if self.pages>1 then
       self.paginationY=gridBottom+12
@@ -264,18 +265,18 @@ function Overlay:build(keepCards)
     local actions=d.actions or {}
     local popupH=self.popup and self.popup.h or 0
     -- Size the frame to its contents: the scan beside the popup and action rows.
-    local contentH=p and (40+190*scale+popupH+24+#actions*46) or math.max(36+190*scale+12,36+popupH+16+#actions*46)
+    local contentH=p and (40+D.H*scale+popupH+24+#actions*46) or math.max(36+D.H*scale+12,36+popupH+16+#actions*46)
     h=math.min(sim.boardH-20,contentH+78)
     y=(sim.boardH-h)/2
     self.y,self.h=y,h
     bottom=y+h-54
-    local cx=p and x+w/2 or x+24+71*scale
-    local cy=p and y+40+95*scale or y+36+95*scale
+    local cx=p and x+w/2 or x+24+D.HALF_W*scale
+    local cy=p and y+40+D.HALF_H*scale or y+36+D.HALF_H*scale
     local card=sim:newCard({id=item.id,cardId=item.cardId,name=item.name,hidden=item.hidden,edition='dissolve',resolution=2},1,cx,cy,scale)
     card.motion.T.r=0;card.motion.VT.r=0
     self.cards[1]=card
-    local ax=p and x+24 or x+24+142*scale+24
-    local ay=p and (y+40+190*scale+popupH+24) or (y+36+popupH+16)
+    local ax=p and x+24 or x+24+D.W*scale+24
+    local ay=p and (y+40+D.H*scale+popupH+24) or (y+36+popupH+16)
     local aw=p and bw or w-(ax-x)-24
     for i,a in ipairs(actions) do
       self:add(a.label,ax,ay+(i-1)*46,aw,38,'cardAction',a.colour,{token=a.token,disabled=a.disabled,fontSize=22,cardAction=a})
@@ -332,7 +333,7 @@ function Overlay:update(dt,time,mx,my,reduced)
     if pressed and pressed.card==c then held=true end
     c.held=held
     if active and not c.hovered then c:juiceUp(time,0.05,0.03,reduced);self.sim.callbacks.feedback('paper1',0.9+love.math.random()*0.2) end
-    c.lift=c.item.selected and 0.2*190*c.baseScale or 0
+    c.lift=c.item.selected and 0.2*D.H*c.baseScale or 0
     if self.viewport then c.lift=math.min(c.lift,self.cardGap-4) end
     if c.collection then CollectionMotion.target(c,time,reduced,self.sim.boardW) end
     c:update(dt,time,active,reduced)
@@ -497,8 +498,8 @@ function Overlay:draw(shaders)
     local c=self.cards[1]
     if c then c:draw(shaders,self.time or 0,sim.mx or 0,(sim.my or 0)-self:offset(),sim.reduced,rw) end
     if self.popup then
-      local px=p and x+(w-self.popup.w)/2 or x+24+142*(c and c.baseScale or 1.6)+24
-      local py=p and y+40+190*(c and c.baseScale or 1.2)+12 or y+36
+      local px=p and x+(w-self.popup.w)/2 or x+24+D.W*(c and c.baseScale or 1.6)+24
+      local py=p and y+40+D.H*(c and c.baseScale or 1.2)+12 or y+36
       self.popup.draw(px,py)
     end
   elseif kind=='gameover' then
