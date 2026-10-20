@@ -33,6 +33,7 @@ import { normalizeCardText } from "@luminous/engine";
 import type { TcgdexCard, TcgdexSerie, TcgdexSet } from "@luminous/schema";
 import type { cards, series, sets } from "../db/schema";
 import { normalizeSentinel } from "../sentinel";
+import { WEAK_RES_SUPPLEMENT } from "./weakResSupplement";
 
 export type SeriesRow = Required<typeof series.$inferInsert>;
 export type SetRow = Required<typeof sets.$inferInsert>;
@@ -158,7 +159,13 @@ function mapCardFields(card: TcgdexCard): CardRow {
     updated: card.updated ?? null,
   };
   switch (card.category) {
-    case "Pokemon":
+    case "Pokemon": {
+      // A Pokémon tcgdex sends with neither field takes the supplement's
+      // (./weakResSupplement.ts); either upstream field present means upstream wins.
+      const supplement =
+        card.weaknesses === undefined && card.resistances === undefined
+          ? WEAK_RES_SUPPLEMENT[card.id]
+          : undefined;
       return {
         ...base,
         hp: card.hp ?? null,
@@ -173,9 +180,10 @@ function mapCardFields(card: TcgdexCard): CardRow {
         retreat: card.retreat ?? null,
         abilitiesJson: textBlocks(card.abilities),
         attacksJson: textBlocks(card.attacks),
-        weaknessesJson: card.weaknesses ?? null,
-        resistancesJson: card.resistances ?? null,
+        weaknessesJson: card.weaknesses ?? supplement?.weaknesses ?? null,
+        resistancesJson: card.resistances ?? supplement?.resistances ?? null,
       };
+    }
     case "Trainer":
       return {
         ...base,
@@ -194,6 +202,23 @@ function mapCardFields(card: TcgdexCard): CardRow {
         effect: rulesText(card.effect),
       };
   }
+}
+
+/** The rows the ingest refuses to call complete: a Standard-legal Pokémon with no
+    Weakness that is not Dragon-type (Dragon is the one type printed without one).
+    The ingest writes them anyway and exits non-zero naming them, so a new set
+    whose tcgdex payload drops the field is seen the day it lands rather than in
+    a match (card revision B39). */
+export function weaklessLegalPokemon(rows: readonly CardRow[]): string[] {
+  return rows
+    .filter(
+      (row) =>
+        row.category === "Pokemon" &&
+        row.legalStandard &&
+        (row.weaknessesJson === null || row.weaknessesJson.length === 0) &&
+        !(row.typesJson ?? []).includes("Dragon"),
+    )
+    .map((row) => row.id);
 }
 
 /** 🆕 D612 — a Trainer's / Energy's rules text, normalised (null when not printed). */

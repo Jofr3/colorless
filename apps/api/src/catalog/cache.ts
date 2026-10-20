@@ -87,8 +87,12 @@ const CACHE_TTL_SECONDS = 3600;
     body is now the verdict across functionally identical prints (catalog/map.ts
     `legalOf`), so a rotated Ultra Ball print serves `standard: true`. A v10 body
     would keep flagging it, and `?legal=standard` lists would omit it, for up to
-    a TTL. Closes only once the re-ingest (its post-pass) has run before the deploy. */
-const CACHE_VERSION = "v11";
+    a TTL. Closes only once the re-ingest (its post-pass) has run before the deploy.
+    v11→v12: card revision B39 — same shape, different bytes. 345 Pokémon tcgdex sends
+    with no Weakness / Resistance (sv10.5w, sv10.5b, svp-166 … -207) take them from
+    ingest/weakResSupplement.ts. A v11 `/cards/:id` body would keep serving them without,
+    and feed a LOCAL match a weakless face, for up to a TTL. */
+const CACHE_VERSION = "v12";
 
 /**
  * KV key for a request URL: version + path + query, with the query keys

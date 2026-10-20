@@ -13,7 +13,8 @@ import cardTrainer from "../../../../packages/schema/src/tcgdex/__fixtures__/car
 import cardTrainerTm from "../../../../packages/schema/src/tcgdex/__fixtures__/card-trainer-tm-sv08-188.json";
 import serieFull from "../../../../packages/schema/src/tcgdex/__fixtures__/serie-full-sv.json";
 import setFull from "../../../../packages/schema/src/tcgdex/__fixtures__/set-full-sv01.json";
-import { energyTypeOf, mapCard, mapSerie, mapSet, printKey } from "./map";
+import { energyTypeOf, mapCard, mapSerie, mapSet, printKey, weaklessLegalPokemon } from "./map";
+import { WEAK_RES_SUPPLEMENT } from "./weakResSupplement";
 
 describe("mapSerie", () => {
   it("maps the full sv serie, keeping the extensionless origin logo URL", () => {
@@ -343,5 +344,71 @@ describe("printKey", () => {
     expect(base.printKey).toMatch(/^[0-9a-f]{16}$/);
     expect(base.legalStandardEffective).toBe(base.legalStandard);
     expect(base.legalExpandedEffective).toBe(base.legalExpanded);
+  });
+});
+
+describe("Weakness / Resistance supplement (card revision B39)", () => {
+  // The Miraidon ex fixture with its id moved into White Flare and tcgdex's two
+  // fields dropped — the shape every sv10.5w / sv10.5b payload arrives in.
+  function bare(id: string, overrides: Record<string, unknown> = {}) {
+    const { weaknesses: _w, resistances: _r, ...rest } = cardPokemonAbility as Record<string, unknown>;
+    return tcgdexCardSchema.parse({ ...rest, id, legal: { standard: true, expanded: true }, ...overrides });
+  }
+
+  it("fills both fields from the table when tcgdex sends neither", () => {
+    const row = mapCard(bare("sv10.5w-063"));
+    expect(row.weaknessesJson).toEqual([{ type: "Lightning", value: "×2" }]);
+    expect(row.resistancesJson).toEqual([{ type: "Fighting", value: "-30" }]);
+  });
+
+  it("leaves resistance null for an entry that prints none", () => {
+    const row = mapCard(bare("sv10.5w-001"));
+    expect(row.weaknessesJson).toEqual([{ type: "Fire", value: "×2" }]);
+    expect(row.resistancesJson).toBeNull();
+  });
+
+  it("lets upstream win when tcgdex sends either field", () => {
+    const sent = [{ type: "Water", value: "×2" }];
+    expect(mapCard(bare("sv10.5w-063", { weaknesses: sent })).weaknessesJson).toEqual(sent);
+    expect(mapCard(bare("sv10.5w-063", { weaknesses: sent })).resistancesJson).toBeNull();
+  });
+
+  it("feeds the print key, so a patched print is not keyed as a weakless one", () => {
+    const patched = mapCard(bare("sv10.5w-063"));
+    expect(patched.printKey).not.toBe(printKey({ ...patched, weaknessesJson: null, resistancesJson: null }));
+  });
+
+  it("leaves an id outside the table null", () => {
+    const row = mapCard(bare("mfb-1"));
+    expect(row.weaknessesJson).toBeNull();
+    expect(row.resistancesJson).toBeNull();
+  });
+
+  it("flags a legal non-Dragon Pokémon with no Weakness, and nothing else", () => {
+    const flagged = mapCard(bare("mfb-1"));
+    const dragon = { ...flagged, id: "x-dragon", typesJson: ["Dragon"] };
+    const notLegal = { ...flagged, id: "x-rotated", legalStandard: false };
+    const patched = mapCard(bare("sv10.5w-063"));
+    const trainer = mapCard(tcgdexCardSchema.parse(cardTrainer));
+    expect(weaklessLegalPokemon([flagged, dragon, notLegal, patched, trainer])).toEqual(["mfb-1"]);
+  });
+
+  it("holds only well-formed entries", () => {
+    const types = new Set(["Grass", "Fire", "Water", "Lightning", "Psychic", "Fighting", "Darkness", "Metal", "Colorless"]);
+    const ids = Object.keys(WEAK_RES_SUPPLEMENT);
+    expect(ids).toHaveLength(345);
+    for (const [id, entry] of Object.entries(WEAK_RES_SUPPLEMENT)) {
+      expect(id, id).toMatch(/^(sv10\.5w|sv10\.5b|svp)-\d{3}$/);
+      expect(entry.weaknesses, id).toHaveLength(1);
+      for (const w of entry.weaknesses) {
+        expect(types.has(w.type), id).toBe(true);
+        expect(w.value, id).toBe("×2");
+      }
+      for (const r of entry.resistances ?? []) {
+        expect(types.has(r.type), id).toBe(true);
+        expect(r.value, id).toBe("-30");
+      }
+      expect(entry.from, id).toMatch(/^[PTJMXS]+$/);
+    }
   });
 });

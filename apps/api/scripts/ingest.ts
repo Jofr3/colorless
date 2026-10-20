@@ -51,6 +51,7 @@ import {
   reprintLegalitySql,
   seriesUpsertSql,
   setsUpsertSql,
+  weaklessLegalPokemon,
 } from "../src/ingest";
 import { createSource, parseTransport } from "../src/ingest/source";
 
@@ -203,6 +204,7 @@ applySqlFile(writeSqlFile("series", seriesUpsertSql(serieRowsSource.map(mapSerie
 // Phase C — one set at a time: fetch + validate every card, then write and
 // apply the set row followed by its card chunks.
 const outcomes: SetOutcome[] = [];
+const weakless: string[] = [];
 for (const setId of setIds) {
   const setStartedAt = Date.now();
   console.log(`\nset ${setId}:`);
@@ -241,7 +243,9 @@ for (const setId of setIds) {
     }
 
     applySqlFile(writeSqlFile(`set-${setId}`, setsUpsertSql([mapSet(set)])));
-    const chunks = chunk(cardPayloads.map(mapCard), CARDS_PER_CHUNK);
+    const rows = cardPayloads.map(mapCard);
+    weakless.push(...weaklessLegalPokemon(rows));
+    const chunks = chunk(rows, CARDS_PER_CHUNK);
     chunks.forEach((rows, index) => {
       const label = `cards-${setId}-${String(index).padStart(2, "0")}`;
       applySqlFile(writeSqlFile(label, cardsUpsertSql(rows)));
@@ -287,7 +291,16 @@ console.log(
     `${source.requestCount} tcgdex requests via ${source.transport}, ` +
     `${((Date.now() - startedAt) / 1000).toFixed(1)}s${dryRun ? " (dry-run: nothing applied)" : ""}`,
 );
+if (weakless.length > 0) {
+  // Written anyway (the rows are otherwise good); see weaklessLegalPokemon.
+  console.error(
+    `${weakless.length} Standard-legal non-Dragon Pokémon have no Weakness — add them to ` +
+      `src/ingest/weakResSupplement.ts: ${weakless.join(", ")}`,
+  );
+}
 if (failedSets.length > 0) {
   console.error(`${failedSets.length} set(s) failed: ${failedSets.map((o) => o.setId).join(", ")}`);
+}
+if (failedSets.length > 0 || weakless.length > 0) {
   process.exit(1);
 }

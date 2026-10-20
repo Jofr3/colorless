@@ -23,9 +23,9 @@ export const CATALOG_MANIFEST = {
       does not drift on its own, so the mtime is the honest provenance. */
   source: {
     path: "apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/8437d86672ef67002c76a06d8e29643de1a9c95e9422816cce0e554c6c5b7286.sqlite",
-    mtime: "2026-10-07T09:59:54.557Z",
-    bytes: 3207168,
-    generated: "2026-10-07",
+    mtime: "2026-10-20T05:54:34.918Z",
+    bytes: 3805184,
+    generated: "2026-10-20",
   },
   /** `select count(*) from cards`. */
   rows: 5084,
