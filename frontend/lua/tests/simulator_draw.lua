@@ -89,44 +89,82 @@ for _,size in ipairs({{1280,800},{480,850}}) do
   sim:mousepressed(e.x,e.y);sim:update(1/60,6,e.x+40,e.y-120,false);sim:draw(shaders);sim:mousereleased(-10,-10)
   frames(10,7)
   -- Every overlay kind.
+  sim:sync(snapshot(21,{row('M','cards','','','false','retreat'),row('O','12','Fire Energy','blue','false','false','sv03-230','e1'),row('O','13','Psychic Energy','blue','false','false','sve-005','e2'),row('F','14','Discard','blue','true','false','','')}));frames(5,8)
+  local picker=sim.overlay
+  assert(picker.cardColumns==2 and picker.viewport.y==picker.y+24,'Untitled Energy picker fits two columns without a heading band')
+  assert(math.abs((picker.cards[1].homeX+picker.cards[2].homeX)/2-(picker.x+picker.w/2))<0.01,'Energy cards are centered in the fitted modal')
+  assert(picker.controls[3].label=='Discard' and picker.controls[4].label=='Back','Compact picker keeps Discard and Back below the cards')
+  sim.reduced=true;picker:build()
+  local left,right,top,bottom=math.huge,-math.huge,math.huge,-math.huge
+  for _,c in ipairs(picker.cards) do
+    local s=c.baseScale*c.motion.VT.scale
+    local hw=s*(142*math.abs(math.cos(c.angle))+190*math.abs(math.sin(c.angle)))/2
+    local hh=s*(190*math.abs(math.cos(c.angle))+142*math.abs(math.sin(c.angle)))/2
+    left=math.min(left,c.x-hw);right=math.max(right,c.x+hw)
+    top=math.min(top,c.y-hh);bottom=math.max(bottom,c.y+hh)
+  end
+  local v=picker.viewport
+  for _,padding in ipairs({left-v.x,v.x+v.w-right,top-v.y,v.y+v.h-bottom}) do
+    assert(math.abs(padding-picker.cardPadding)<1,'Card face padding is equal on all four sides, including tilt and scale')
+  end
+  sim.reduced=false
   sim:sync(snapshot(2,{row('M','list','Choose an attack','Pick one.','false','m1'),row('O','9','Bite · 10','red','false','false','',''),row('O','10','Flare · 30','red','true','false','',''),row('F','11','Confirm','blue','false','false','','')}));frames(5,8)
   sim:sync(snapshot(3,{row('M','cards','Choose cards (1/2)','Pick.','true','m2'),row('O','12','Fuecoco','blue','false','true','sv01-036','x1'),row('O','13','Growlithe','blue','true','false','sv01-030','x2'),row('F','14','Confirm','blue','false','false','','')}));frames(5,9)
   local oc=sim.overlay.cards[1];at(oc.homeX,oc.homeY)
-  assert(sim.overlay.maxScroll==0 and not sim.overlay:scrollbar(),'Short card lists need no scrollbar')
+  assert(sim.overlay.pages==1 and not sim.overlay.paginationY,'Short card lists need no pagination')
   local gridRows={row('M','cards','Choose cards (0/1)','Pick a card.','true','grid'),row('F','99','Confirm','blue','false','false','','')}
-  for i=1,25 do gridRows[#gridRows+1]=row('O',100+i,'Fuecoco','blue','false','false','sv01-036','grid'..i) end
+  for i=1,41 do gridRows[#gridRows+1]=row('O',100+i,'Fuecoco','blue','false','false','sv01-036','grid'..i) end
   sim:sync(snapshot(31,gridRows));frames(90,9)
   local grid=sim.overlay
-  assert(#grid.cards==25 and grid.pages==1,'All cards occupy one scrolling grid')
-  assert(grid.cards[1].homeY==grid.cards[4].homeY and grid.cards[5].homeY>grid.cards[4].homeY,'Four columns wrap into rows')
-  assert(grid.cards[1].homeX==grid.cards[5].homeX,'Rows share column alignment')
+  assert(#grid.cards==grid.perPage and grid.pages>1,'Large grids create only the current page of cards')
+  assert(grid.cards[1].collection.y==grid.cards[5].collection.y and grid.cards[6].collection.y>grid.cards[5].collection.y,'Five columns wrap into rows')
+  assert(grid.cards[1].collection.x==grid.cards[6].collection.x,'Rows share column alignment')
   local confirm=grid.controls[#grid.controls]
   local confirmY=confirm.y
-  grid:wheelmoved(-100)
-  assert(grid.scroll==grid.maxScroll and grid.scroll>0,'Wheel reaches the last row')
-  local last=grid.cards[25]
-  assert(grid:hit(last.x,last.y-grid.scroll+grid:offset())==25,'Scrolled card hitboxes follow the visible cards')
+  local nextButton
+  for i,b in ipairs(grid.controls) do if b.action=='next' then nextButton=i end end
+  assert(nextButton and grid.paginationY,'Existing arrow and page controls appear below the grid')
+  grid:activate(nextButton)
+  local spawnX=grid.x+grid.w/2+71*grid.cardScale
+  assert(math.abs(grid.cards[1].x-spawnX)<0.001 and grid.cards[5].x==grid.cards[1].x,'Each row starts at Balatro collection top-left spawn converted to card centres')
+  assert(grid.cards[1].angle==0 and grid.cards[5].angle==0,'New collection cards start upright')
+  assert(grid.cards[1].motion.T.r<0 and grid.cards[5].motion.T.r>0,'Collection cards settle into an outward fan')
+  frames(90,9)
+  assert(math.abs(grid.cards[1].motion.VT.scale-0.95)<0.001,'Collection cards settle to the source scale')
+  assert(grid.page==2 and grid.cards[1].option==grid.perPage+1,'Next page maps cards to their original options')
+  local first=grid.cards[1]
+  assert(grid:hit(first.x,first.y+grid:offset())==1,'Page card hitboxes follow their visible positions')
+  assert(grid.controls[1].token==tostring(100+first.option),'Later page selections invoke the correct option token')
   assert(grid:hit(grid.cards[1].x,grid.viewport.y-5+grid:offset())==0,'Clipped cards cannot intercept the title')
-  assert(confirm.y==confirmY,'Confirm stays fixed while scrolling')
-  local bar=grid:scrollbar()
-  assert(grid:mousepressed(bar.x+4,bar.thumbY+4+grid:offset()),'Scrollbar thumb can be grabbed')
-  grid:dragScrollbar(bar.y+4);grid.scrollDrag=nil
-  assert(grid.scroll==0,'Dragging the scrollbar reaches the first row')
-  grid.focus=24;grid:keypressed('tab')
-  assert(grid.focus==25 and grid.scroll>0,'Keyboard focus reveals offscreen cards')
-  local savedScroll=grid.scroll
+  assert(grid.controls[#grid.controls].y==confirmY,'Confirm stays fixed across pages')
+  gridRows[first.option+2]=row('O',100+first.option,'Fuecoco','blue','false','true','sv01-036','grid'..first.option)
   sim:sync(snapshot(32,gridRows));frames(5,9)
-  assert(sim.overlay==grid and grid.scroll==savedScroll,'Selection refresh preserves scroll position')
+  assert(sim.overlay==grid and grid.page==2 and grid.cards[1]==first and first.item.selected,'Selection refresh preserves page and card motion')
+  grid:keypressed('pageup');assert(grid.page==1,'Page Up navigates backward')
+  grid:keypressed('pagedown');assert(grid.page==2 and grid.cards[1].item.selected,'Selection survives changing pages')
+  grid:changePage(grid.pages-grid.page);frames(90,9)
+  local finalCard=grid.cards[#grid.cards]
+  assert(finalCard.option==41,'Last page includes the final card')
+  assert(finalCard.collection.count==1 and finalCard.collection.x==grid.x+grid.w/2,'Partial collection rows are centred like Balatro')
+  sim.reduced=true;grid:build()
+  for _,c in ipairs(grid.cards) do
+    assert(math.abs(c.x-c.homeX)<0.001 and math.abs(c.y-c.homeY)<0.001 and c.motion.VT.scale==0.95,'Reduced motion shows the final collection layout without a page entrance')
+  end
+  sim.reduced=false
+  grid:wheelmoved(-1);assert(grid.page==1,'Wheel cycles from the last page to the first')
   sim:sync(snapshot(4,{row('M','coin','Coin flip','Player 1: Heads\nPlayer 2: Tails','true','m3'),row('O','15','Continue','blue','false','false','','')}));frames(80,10)
   sim:sync(snapshot(5,{row('M','log','Game log','Turn 1\n0:01 Player 1 drew 7 cards.\n0:02 Player 1 attached Fire Energy.','false','m4')}));frames(5,12)
   sim:sync(snapshot(6,{row('M','pile','Your discard pile','3 cards.','false','m5'),row('O','16','Switch','blue','true','false','sv01-194','d1'),row('O','17','Potion','blue','true','false','sv01-188','d2')}));frames(5,13)
+  sim.overlay:activate(1)
+  assert(not sim.overlay.cards[1].item.selected,'Discard pile cards cannot be selected')
   sim:sync(snapshot(7,{row('M','board','Choose a Pokémon','Pick one','false','m6'),row('O','18','Houndour','blue','false','true','sv01-033','active1'),row('F','19','Confirm','blue','false','false','','')}));frames(5,14)
   local Button=require('ui.button')
   local outline=Button.outline
   local outlines=0
   Button.outline=function(...) outlines=outlines+1;return outline(...) end
   sim:drawCard(sim.byUid['you:active1'],shaders,1)
-  assert(outlines==1,'Normal board targets retain their outline')
+  assert(outlines==0,'Board card effects render targets without an outline')
+  assert(sim:isCandidate(sim.byUid['you:active1']),'Board targets remain selectable without an outline')
   sim:sync(snapshot(71,{row('M','board','Place damage counters','Click a Pokémon','true','counters','true'),row('O','18','Quaxly','blue','false','false','sv01-052','opp1')}))
   assert(sim:isCandidate(sim.byUid['opponent:opp1']),'Enemy Pokémon remains clickable for counter placement')
   outlines=0

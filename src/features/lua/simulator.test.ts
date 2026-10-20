@@ -17,9 +17,12 @@ import {
   COUNTER_SPREAD_DECK,
   clearBench,
   ROTO_STICK_DECK,
+  battler,
+  typedEnergy,
 } from "../../../packages/engine/src/testFixtures";
 import { LuaSimulator } from "./simulator";
 import { effectMenu } from "./simulatorChoices";
+import { SimulatorOrder } from "./simulatorOrder";
 import { loadSimulatorSave } from "../playmat/simulatorSave";
 import { applyAction, cardOfUid, isBasicPokemon, otherSeat } from "@luminous/engine";
 
@@ -91,6 +94,70 @@ function rareCandySetup(turn = 3) {
   return { sim, publish, state, candy, stage2, cardRow };
 }
 describe("Lua simulator", () => {
+  it.each(["munkidori", "bench", "both"] as const)(
+    "targets only damaged Adrena-Brain sources (%s), then opposing destinations",
+    (damaged) => {
+      const state = driveSetup(
+        3,
+        { p1: ALL_BASIC_DECK, p2: ALL_BASIC_DECK },
+        { first: "p1", bench: { p1: ["fix-basic-1", "fix-basic-1"], p2: ["fix-basic-1"] } },
+      );
+      const own = state.players.p1;
+      const active = own.active;
+      const bench = own.bench[0];
+      const opponent = state.players.p2.active;
+      const uid = active?.stack.at(-1);
+      const energy = own.hand.shift();
+      if (!active || !bench || !opponent || !uid || !energy)
+        throw Error("Expected a complete board");
+      state.cardIdByUid[uid] = "sv06-095";
+      state.cardPool["sv06-095"] = battler("sv06-095", {
+        name: "Munkidori",
+        hp: 110,
+        abilities: [
+          {
+            type: "Ability",
+            name: "Adrena-Brain",
+            effect:
+              "Once during your turn, if this Pokémon has any {D} Energy attached, you may move up to 3 damage counters from 1 of your Pokémon to 1 of your opponent's Pokémon.",
+          },
+        ],
+      });
+      state.cardIdByUid[energy] = "adrena-dark";
+      state.cardPool["adrena-dark"] = typedEnergy("adrena-dark", "Darkness");
+      active.energy.push(energy);
+      active.damage = damaged === "bench" ? 0 : 30;
+      bench.damage = damaged === "munkidori" ? 0 : 40;
+      const publish = vi.fn();
+      const sim = new LuaSimulator(publish, vi.fn());
+      sim.open({ state, events: [], names: { p1: "One", p2: "Two" }, startedAt: 100 });
+      sim.dispatch({
+        type: "useAbility",
+        seat: "p1",
+        target: { spot: "active" },
+        abilityName: "Adrena-Brain",
+      });
+      const targets = () =>
+        rows(publish)
+          .filter((r: string[]) => r[0] === "O" && r[4] !== "true")
+          .map((r: string[]) => r[7]);
+      const sources = [active, ...own.bench].filter((p) => p.damage > 0).map((p) => p.stack.at(-1));
+      expect(targets()).toEqual(sources);
+      expect(rows(publish).find((r: string[]) => r[0] === "M")?.[8]).toBe("true");
+      expect(sim.menu?.hideTargetOutline).toBe(true);
+      sim.menu?.options[0]?.run();
+      expect(rows(publish).find((r: string[]) => r[0] === "M")?.[7]).toBe(sources[0]);
+      expect(rows(publish).find((r: string[]) => r[0] === "M")?.[8]).toBe("true");
+      expect(targets()).toEqual([opponent, ...state.players.p2.bench].map((p) => p.stack.at(-1)));
+      sim.menu?.options[0]?.run();
+      expect(sim.menu?.counterSourceUid).toBeUndefined();
+      expect(sim.host?.game.players.p2.active?.damage).toBe(30);
+      expect(sim.host?.game.players.p1.active?.damage).toBe(0);
+      expect(sim.host?.game.players.p1.bench[0]?.damage).toBe(
+        damaged === "bench" ? 10 : damaged === "both" ? 40 : 0,
+      );
+    },
+  );
   it.each([0, 1, 2])("replaces the oldest selection at a maximum of %s", (max) => {
     const { sim, publish } = setup();
     const candidates = ["a", "b", "c"].map((id) => ({
@@ -110,9 +177,13 @@ describe("Lua simulator", () => {
       note: "Pick cards",
     });
     const originalOptions = [...sim.menu.options];
+    expect(sim.menu.title).toBe("");
+    expect(sim.menu.note).toBeUndefined();
+    expect(sim.menu.footer?.[0]?.label).toBe(`0/${max}`);
     // Select out of grid order to verify age, rather than card position.
     for (const index of [2, 0, 1]) originalOptions[index]?.run();
     expect(sim.menu.options.filter((o) => o.selected)).toHaveLength(max);
+    expect(sim.menu.footer?.[0]?.label).toBe(`${max}/${max}`);
     expect(sim.menu.options.filter((o) => !o.selected).every((o) => o.dimmed)).toBe(true);
     expect(sim.menu.options.filter((o) => o.selected).every((o) => !o.dimmed)).toBe(true);
     expect(sim.menu.options.filter((o) => o.selected).map((o) => o.uid)).toEqual(
@@ -135,6 +206,7 @@ describe("Lua simulator", () => {
     if (max > 0) {
       sim.menu.options[1]?.run();
       expect(sim.menu.options.filter((o) => o.selected)).toHaveLength(max - 1);
+      expect(sim.menu.footer?.[0]?.label).toBe(`${max - 1}/${max}`);
       expect(sim.menu.options.every((o) => !o.dimmed)).toBe(true);
       expect(sim.menu.options[1]?.disabled).toBe(false);
       sim.menu.options[1]?.run();
@@ -194,6 +266,29 @@ describe("Lua simulator", () => {
     expect(rows(publish).find((r: string[]) => r[0] === "C" && r[1] === uid)?.[18]).toBe("0");
     expect(sim.host?.game).toBe(state);
     expect(sim.host?.steps).toBe(steps);
+  });
+  it("appends the turn draw after the existing hand despite a stale saved position", () => {
+    const { sim, publish } = setup();
+    const h = sim.host;
+    if (!h) throw Error("Missing host");
+    const seat = otherSeat(h.viewerSeat);
+    const side = h.game.players[seat];
+    const drawn = side.deck[0];
+    if (!drawn) throw Error("Missing draw card");
+    const order = new SimulatorOrder(h.startedAt);
+    const keys = [...side.hand, drawn];
+    order.move(seat, "hand", keys, drawn, 0);
+    const last = side.hand.at(-1);
+    if (!last) throw Error("Missing hand card");
+    order.move(seat, "hand", keys, last, 1);
+    const expected = order.sorted(seat, "hand", side.hand);
+    sim.open({ state: h.game, events: [], names: h.names, startedAt: h.startedAt });
+    sim.dispatch({ type: "endTurn", seat: h.viewerSeat });
+    expect(sim.host?.lastError).toBeNull();
+    const handRows = rows(publish)
+      .filter((r: string[]) => r[0] === "C" && r[4] === "you" && r[5] === "hand")
+      .sort((a: string[], b: string[]) => Number(a[18]) - Number(b[18]));
+    expect(handRows.map((r: string[]) => r[1])).toEqual([...expected, drawn]);
   });
   it("saves cosmetic hand and Bench order without changing engine targets or history", () => {
     const { sim, state, publish, candy, stage2, cardRow } = rareCandySetup();
@@ -374,6 +469,7 @@ describe("Lua simulator", () => {
     sim.open({ state: pending, events: [], names: { p1: "One", p2: "Two" }, startedAt: 100 });
     expect(sim.host?.game.players.p1.prizes).toHaveLength(4);
     expect(sim.host?.game.phase.kind).toBe("ko:promote");
+    expect(sim.menu?.hideTargetOutline).toBe(true);
     expect(loadSimulatorSave()?.state).toEqual(sim.host?.game);
   });
   it("finishes a last-prize KO without an extra prize prompt", () => {
@@ -625,6 +721,9 @@ describe("Lua simulator", () => {
     const original = [...(sim.host?.game.players[seat].discard ?? [])];
     expect(original).toHaveLength(4);
     sim.command("pile\tyou");
+    expect(sim.menu?.title).toBe("");
+    expect(sim.menu?.note).toBe("");
+    expect(sim.menu?.options.every((o) => o.disabled)).toBe(true);
     expect(sim.menu?.options.map((o) => o.uid)).toEqual(["costTrainer", cost]);
     sim.command("dismiss");
     sim.command("close");

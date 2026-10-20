@@ -59,6 +59,8 @@ The build copies **unmodified** `splash.fs`, `CRT.fs`, `dissolve.fs`, `played.fs
 
 Unavailable cards in simulator pickers follow Balatro's `greyed` deck-view path (`functions/UI_definitions.lua`, `Card:draw`, and `played.fs`): saturation ×0.5, lightness ×0.8, alpha ×0.5, with the original card tilt and transparency and no shadow or normal face beneath the shader. Selection changes restore the normal rendering in place.
 
+Card-grid page changes follow `your_collection_joker_page` in `functions/button_callbacks.lua` and the `title` branch of `CardArea:align_cards` in `cardarea.lua`. Cards are replaced immediately and each row spreads from the collection area's centre (converted from top-left to centre coordinates), using the existing `Moveable` velocity equations. `ui/collection_motion.lua` preserves the row fan, vertical bow, ambient sway, parallax offset, centred partial rows and 0.95 scale from the source. Selection refreshes preserve the current cards instead of replaying the entrance; reduced motion skips the spread and ambient sway.
+
 The palette follows Balatro's `globals.lua`: red `#FE5F55`, blue `#009DFF`, green `#4BC292`, panel `#374244`, with gold `#F5B244` and card stock `#F0EAD6`. The title and buttons are drawn in Lua. The reusable card system and its four pixel card faces are retained, but are not loaded by the home scene. `ui/motion.lua` ports Balatro's separate target/visible transforms, position/rotation/scale velocities, and juice equations. `ui/card.lua` follows `Card:draw` and `Sprite:draw_shader` for ambient and pointer tilt, screen-space uniforms, shadow parallax, and edition passes; it does not import Balatro's entire game/UI object system. The composition, card emblems, controls and responsive layout are new Luminous UI, so this is a first visual milestone, not a claim of complete behavioral parity.
 
 ## Files
@@ -285,6 +287,14 @@ actions (`A`) with their slot, and menus (`M`/`O`/`F`) with a kind. Action
 tokens carry a snapshot revision, so stale clicks cannot apply a different
 action. Coin results come from the engine. Artwork uses the builder's browser
 cache; cards without a scan draw a pixel placeholder in their type colour.
+Adrena-Brain menus carry the selected source UID in the eighth `M` field and
+a counter-transfer flag in the ninth. Valid targets shake immediately when
+each selection step begins, then repeat at the normal interval.
+The source stays raised while choosing a destination; both selected cards rise
+for 0.5 seconds, shake together once for 0.4 seconds, then lower together.
+The action resolves after at least 0.35 seconds and once both cards have settled.
+This replaces their separate damage/heal shakes. New snapshots cancel pending
+answers, and reduced motion resolves immediately.
 `build.mjs` additionally copies `chips.png` and the chips, mult, coin, cancel,
 whoosh, win and glass sounds.
 

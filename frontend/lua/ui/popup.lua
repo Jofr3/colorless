@@ -42,7 +42,7 @@ function Popup.action(button,active,pressed,roomWidth)
     local nameH=select(2,Dyna.measure('Hg',scale))
     local detailY=y+6+nameH+4
     local detailH=h-12-nameH-4
-    Dyna.static(button.label,scale,x+inset,y+6,w-2*inset,nameH,colour,{fit=true,shadow=false,roomWidth=roomWidth})
+    Dyna.static(button.label,scale,x+inset,y+6,w-2*inset,nameH,colour,{align='left',fit=true,shadow=false,roomWidth=roomWidth})
     -- Include the pip's outer rim in the shared content inset.
     if #cost>0 then Energy.row(cost,x+inset+1.6,detailY+detailH/2,6,6,button.disabled and 0.4 or 1,'left') end
     if button.hasCost and #cost==0 then

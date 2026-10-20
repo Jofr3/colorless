@@ -5,7 +5,11 @@ import type { LuaSimulator, SimMenu, SimOption } from "./simulator";
 /** Shared engine prompt shapes, rendered by Lua as button lists, real card
  * rows (the pack picker), board targets or prize slots. Board/prize menus name
  * the top-card uid / prize slot so the table itself becomes the picker. */
-export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): SimMenu {
+export function effectMenu(
+  sim: LuaSimulator,
+  prompt: RedactedEffectPrompt,
+  selectedCounterSource?: PokemonRef,
+): SimMenu {
   const host = sim.host;
   if (!host) return { kind: "list", title: "No game", options: [] };
   const seat = host.viewerSeat;
@@ -27,6 +31,12 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
     const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
     return (body && topUid(body)) || "";
   };
+  const transfer = prompt.kind === "choosePokemon" ? prompt.counterTransfer : undefined;
+  // The engine forces a lone damaged source. Still let the player identify it
+  // before presenting destinations, just as when several sources are eligible.
+  let sourceSelected =
+    !transfer?.from ||
+    (!!selectedCounterSource && refUid(selectedCounterSource) === refUid(transfer.from));
   const card = (uid: string): RedactedCard | undefined => {
     const c = cardOfUid(host.game, uid);
     return (
@@ -193,6 +203,26 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
       case "choosePokemon":
         menu.kind = "board";
         menu.title = "Choose a Pokémon";
+        if (transfer) {
+          menu.counterTransfer = true;
+          if (sourceSelected && transfer.from) menu.counterSourceUid = refUid(transfer.from);
+          menu.title =
+            sourceSelected && transfer.from ? "Move damage counters" : "Choose a damaged Pokémon";
+          if (!sourceSelected && transfer.from) {
+            menu.note = `Choose your Pokémon to move up to ${transfer.upTo} damage counters from.`;
+            menu.options = [
+              {
+                label: refName(transfer.from),
+                uid: refUid(transfer.from),
+                run: () => {
+                  sourceSelected = true;
+                  refresh();
+                },
+              },
+            ];
+            break;
+          }
+        }
         menu.options = prompt.candidates.map((ref) => ({
           ...confirm(
             { kind: "pokemon", ref, ...(prompt.upTo ? { take: amount } : {}) },
@@ -242,10 +272,8 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
       case "chooseCards":
       case "orderCards":
         menu.kind = "cards";
-        menu.title =
-          prompt.kind === "orderCards"
-            ? "Choose card order"
-            : `Choose cards (${selected.length}/${prompt.max})`;
+        menu.title = prompt.kind === "orderCards" ? "Choose card order" : "";
+        if (prompt.kind === "chooseCards") menu.note = undefined;
         menu.options = prompt.candidates.map((c) =>
           pick(
             c.id,
@@ -255,10 +283,13 @@ export function effectMenu(sim: LuaSimulator, prompt: RedactedEffectPrompt): Sim
           ),
         );
         menu.footer = [
-          confirm({
-            kind: prompt.kind === "orderCards" ? "orderCards" : "cards",
-            uids: [...selected],
-          }),
+          confirm(
+            {
+              kind: prompt.kind === "orderCards" ? "orderCards" : "cards",
+              uids: [...selected],
+            },
+            prompt.kind === "chooseCards" ? `${selected.length}/${prompt.max}` : "Confirm",
+          ),
         ];
         break;
       case "discardEnergy":

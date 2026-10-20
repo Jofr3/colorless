@@ -6,6 +6,7 @@ import {
   redactGame,
   type GameAction,
   type PokemonTarget,
+  type PokemonRef,
 } from "@luminous/engine";
 import type { Card, RedactedCard, RedactedInPlay, RedactedGame } from "@luminous/schema";
 import { encodeFields } from "./account";
@@ -53,6 +54,9 @@ export interface SimMenu {
   footer?: SimOption[];
   mandatory?: boolean;
   hideTargetOutline?: boolean;
+  /** Selected Adrena-Brain source stays raised while choosing its destination. */
+  counterSourceUid?: string;
+  counterTransfer?: boolean;
 }
 /** An action attached to a card (Balatro's use/sell buttons). Targeted actions
  * share a `group` and name their `targetUid`; Lua collapses them into one
@@ -138,6 +142,7 @@ export class LuaSimulator {
       this.emit();
       return;
     }
+    const beforeGame = this.host.game;
     const before = this.host.log.length;
     this.host = hostReducer(this.host, { action, at: Date.now() });
     this.knockedOut = this.host.knockedOut;
@@ -161,7 +166,15 @@ export class LuaSimulator {
       this.pendingRareCandy = null;
       this.menu = null;
       this.persist();
-      this.prompt();
+      this.prompt(
+        beforeGame.phase.kind === "effect:choose" &&
+          beforeGame.phase.cont.pendingOp.op === "moveCountersToOpponentChosen" &&
+          beforeGame.phase.cont.pendingOp.from === undefined &&
+          action.type === "resolveEffect" &&
+          action.choice.kind === "pokemon"
+          ? action.choice.ref
+          : undefined,
+      );
       if (flips) {
         this.menuId++;
         this.menu = {
@@ -182,6 +195,18 @@ export class LuaSimulator {
             },
           ],
         };
+      }
+    }
+    // A turn draw always joins the end, even if this UID has an old cosmetic
+    // position from an earlier hand (for example after being shuffled back).
+    if (!this.host.lastError && this.host.game.turn > beforeGame.turn) {
+      for (const seat of ["p1", "p2"] as const) {
+        const hand = this.host.game.players[seat].hand;
+        const previous = beforeGame.players[seat];
+        for (const uid of hand) {
+          if (!previous.hand.includes(uid) && previous.deck.includes(uid))
+            this.cardOrder.move(seat, "hand", hand, uid, hand.length - 1);
+        }
       }
     }
     if (seats.size > 0) {
@@ -272,7 +297,7 @@ export class LuaSimulator {
       this.persist();
     }
   }
-  prompt() {
+  prompt(selectedCounterSource?: PokemonRef) {
     this.takePrizesAutomatically();
     this.menuId++;
     const v = this.view();
@@ -281,7 +306,7 @@ export class LuaSimulator {
     const seat = h.viewerSeat;
     const p = v.phase;
     if (p.kind === "effect:choose" && p.prompt) {
-      this.menu = effectMenu(this, p.prompt);
+      this.menu = effectMenu(this, p.prompt, selectedCounterSource);
     } else if (p.kind === "ko:takePrizes") {
       const picked = new Set<number>();
       const draw = () => {
@@ -311,6 +336,7 @@ export class LuaSimulator {
         title: "Choose your new Active Pokémon",
         note: "Click a Benched Pokémon.",
         mandatory: true,
+        hideTargetOutline: true,
         options: v.board.you.bench.map((c, i) => ({
           ...this.action(c.name, { type: "promote", seat, benchIndex: i }),
           uid: c.id,
@@ -511,8 +537,7 @@ export class LuaSimulator {
       this.menuId++;
       this.menu = {
         kind: "cards",
-        title: `Discard ${cost} Energy to retreat`,
-        note: `Choose ${cost} attached Energy card${cost > 1 ? "s" : ""} to discard.`,
+        title: "",
         options: energies.map((c) => ({
           label: c.name,
           card: c,
@@ -527,7 +552,7 @@ export class LuaSimulator {
         })),
         footer: [
           {
-            label: "Retreat",
+            label: "Discard",
             colour: "blue",
             disabled: picked.size !== cost,
             run: () =>
@@ -755,12 +780,12 @@ export class LuaSimulator {
       const piles = this.tablePiles(v);
       const side = args[0] === "opponent" ? piles.opponent : piles.you;
       this.choose(
-        args[0] === "opponent" ? "Opponent's discard pile" : "Your discard pile",
+        "",
         side.discard
           .slice()
           .reverse()
           .map((card) => ({ label: card.name, card, uid: card.id, run: () => {}, disabled: true })),
-        side.discard.length ? `${side.discard.length} cards, newest first.` : "No discarded cards.",
+        "",
         false,
         "pile",
       );
@@ -1162,6 +1187,8 @@ export class LuaSimulator {
         !!this.menu.mandatory,
         this.menuId,
         !!this.menu.hideTargetOutline,
+        this.menu.counterSourceUid ?? "",
+        !!this.menu.counterTransfer,
       );
       for (const o of this.menu.options) option("O", o);
       for (const o of this.menu.footer ?? []) option("F", o);

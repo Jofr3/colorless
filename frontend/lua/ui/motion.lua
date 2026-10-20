@@ -70,7 +70,7 @@ function Motion:update(realDt, time, hovered, dragging, reduced)
   if reduced then
     self.juice=nil
     self.VT.x,self.VT.y,self.VT.r = self.T.x,self.T.y,self.T.r
-    self.VT.scale = 1+(hovered and 0.05 or 0)+(dragging and 0.1 or 0)
+    self.VT.scale = self.T.scale+(hovered and 0.05 or 0)+(dragging and 0.1 or 0)
     self.velocity = {x=0,y=0,r=0,scale=0}
     return
   end

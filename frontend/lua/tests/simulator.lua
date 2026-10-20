@@ -97,10 +97,25 @@ assert(sim.highlight==active,'Click highlights the Active')
 local attackButton
 for i,b in ipairs(sim.controls) do if b.attached and b.action=='cardAction' and b.label=='Flare · 30' then attackButton=b end end
 assert(attackButton and #attackButton.cost==2 and attackButton.damage=='' ,'Attack row carries its cost pips')
-sim:update(1/60,9.6,attackButton.x+10,attackButton.y+10,false)
-sim:mousepressed(attackButton.x+10,attackButton.y+10);sim:mousereleased(attackButton.x+10,attackButton.y+10)
+local menu=sim.attachedPopup
+assert(menu.motion.VT.y==1 and menu.motion.T.y==0,'Action menu starts below its selected position')
+sim:update(1/60,9.6,-100,-100,false)
+assert(menu.motion.VT.y>0 and menu.motion.VT.y<1,'Action menu eases upward')
+local buttonY=attackButton.y+menu.motion.VT.y*menu.travel+10
+assert(sim:cardHit(attackButton.x+10,buttonY)==nil,'Moving menu blocks underlying cards')
+sim:mousepressed(attackButton.x+10,buttonY);sim:mousereleased(attackButton.x+10,buttonY)
 assert(commands[#commands]=='invoke\t1\t4','Attack row invokes its token, got '..tostring(commands[#commands]))
 assert(sim.highlight==nil,'Invoking clears the highlight')
+assert(sim.closingPopup==menu and not sim.attachedPopup,'Closing menu remains visible without active buttons')
+local closingY=menu.motion.VT.y
+for i=1,6 do sim:update(1/60,9.6+i/60,-100,-100,false) end
+assert(menu.motion.VT.y>closingY,'Closing menu slides downward')
+for i=1,60 do sim:update(1/60,9.62+i/60,-100,-100,false) end
+assert(not sim.closingPopup,'Closing menu is removed after its slide')
+sim.reduced=true;sim.highlight=active;sim:build()
+assert(sim.attachedPopup.motion.VT.y==0,'Reduced motion shows the menu immediately')
+sim.highlight=nil;sim:build()
+assert(not sim.closingPopup,'Reduced motion hides the menu immediately')
 -- Active drag onto the bench retreats.
 local active=cardOf('active1')
 sim:mousepressed(active.x,active.y);sim:update(1/60,10,bench.x,bench.y,false);sim:mousereleased(bench.x,bench.y)
@@ -111,13 +126,28 @@ local benchCard=cardOf('bench1');local activeZone=sim.L.zones.you_active
 sim:mousepressed(benchCard.x,benchCard.y);sim:update(1/60,11,activeZone.x,activeZone.y,false);sim:mousereleased(activeZone.x,activeZone.y)
 assert(commands[#commands]=='retreat\t0','Benched Pokémon dropped on the Active spot retreats to it, got '..tostring(commands[#commands]))
 -- Host board prompt: candidates on the table, footer in the HUD action area.
-sim:sync(snapshot(2,{row('M','board','Choose a Pokémon','Pick one','true','m1'),row('O','8','Houndour','blue','false','false','sv01-033','active1'),row('F','9','Confirm','blue','true','false','','')}))
+sim:sync(snapshot(2,{row('M','board','Choose a Pokémon','Pick one','true','m1','true','','true'),row('O','8','Houndour','blue','false','false','sv01-033','active1'),row('F','9','Confirm','blue','true','false','','')}))
 assert(sim.targeting and sim.overlay==nil,'Board prompts do not open an overlay')
 assert(sim.targeting.panel==nil,'Target prompts do not cover the board with a banner')
 for _,b in ipairs(sim.controls) do
   if b.token=='9' then assert(b.x<sim.L.table.x,'Prompt footer belongs in the sidebar') end
 end
 assert(sim:isCandidate(cardOf('active1')) and not sim:isCandidate(cardOf('bench1')),'Only listed uids are candidates')
+-- Adrena-Brain's source and destination menus must shake only enabled targets.
+for _,c in ipairs(sim.cards) do c.motion.juice=nil;c.candidateClock=0 end
+sim:update(0.02,10,-100,-100,false)
+assert(cardOf('active1').motion.juice,'A valid source shakes on the first frame, including the ability user')
+assert(not cardOf('bench1').motion.juice and not sim.byUid['opponent:opp1'].motion.juice,'Unlisted Pokémon do not shake')
+local firstPulse=cardOf('active1').motion.juice
+sim:update(0.02,10.02,-100,-100,false)
+assert(cardOf('active1').motion.juice==firstPulse,'The immediate source pulse does not restart every frame')
+sim:sync(snapshot(2,{row('M','board','Move damage counters','Pick one','true','m1-dest','true','active1','true'),
+  row('O','8','Quaxly','blue','false','false','sv01-052','opp1'),
+  row('O','9','Growlithe','blue','true','false','sv01-030','bench1')}))
+for _,c in ipairs(sim.cards) do c.motion.juice=nil;c.candidateClock=0 end
+sim:update(0.02,10.04,-100,-100,false)
+assert(sim.byUid['opponent:opp1'].motion.juice,'Destination choice shakes the eligible opponent on the first frame')
+assert(not cardOf('active1').motion.juice and not cardOf('bench1').motion.juice,'Former sources and disabled targets stop shaking')
 local hasCancel=false;for _,b in ipairs(sim.controls) do if b.action=='dismiss' then hasCancel=true end end
 assert(not hasCancel,'Mandatory prompt offers no cancel')
 -- Card prompt: an overlay with real cards; the tray fits inside the frame.
@@ -309,13 +339,11 @@ for _,size in ipairs({{1280,800},{390,844}}) do
   for _,pile in ipairs(sim.piles) do if pile.item.kind=='discard' then p=pile end end
   assert(p.count==3 and p.topItem.id=='cost2','Costs set discard count and top immediately')
   sim:sync(playedScene(82,'ended'))
-  assert(#sim.cards==0 and #sim.ghosts==2,'End turn sends both staged Trainers to discard')
-  for _,c in ipairs(sim.ghosts) do
-    assert(c.item.owner=='opponent' and c.ghost.target==sim.L.zones.opp_discard,'Cleanup follows the owner after hot-seat flips')
-    assert(c.item.id=='used1' or c.item.id=='used2','Already discarded costs do not move again')
-  end
+  assert(#sim.cards==0 and #sim.ghosts==0,'End turn clears staged Trainers immediately without discard flights')
+  for _,pile in ipairs(sim.piles) do if pile.item.kind=='discard' then p=pile end end
+  assert(p.owner=='opponent' and p.count==5 and p.topItem.id=='cost2','Instant cleanup preserves discard order across the seat flip')
   sim:sync(playedScene(83,'played'))
-  assert(#sim.ghosts==0 and sim.byUid['you:used1'],'Undo during cleanup reclaims flying cards')
+  assert(#sim.ghosts==0 and sim.byUid['you:used1'],'Undo cleanup restores staged cards')
   sim:sync(playedScene(84,'ended'))
   settle()
   for _,pile in ipairs(sim.piles) do if pile.item.kind=='discard' then p=pile end end
@@ -330,6 +358,40 @@ for _,size in ipairs({{1280,800},{390,844}}) do
   assert(#sim.ghosts==0,'Reduced motion completes cleanup immediately')
   for _,pile in ipairs(sim.piles) do if pile.item.kind=='discard' then p=pile end end
   assert(p.count==5 and p.topItem.id=='cost2','Reduced motion preserves discard order')
+end
+-- Promotion lands before the turn's new card leaves the deck.
+for _,size in ipairs({{1280,800},{390,844}}) do
+  sim:layout(size[1],size[2]);sim:open(false)
+  local function promotionScene(rev,after)
+    local rows={
+      row(rev,'ready','Player 1','Player 2',after and 7 or 6,after and 'turn:action' or 'ko:promote','','','',0,1,'you','you','p1',0,0,0,'',''),
+      row('S','you',after and 39 or 40,6,after and 1 or 0,0,0),row('S','opponent',40,6,0,0,0),
+      row('C','replacement','sv01-030','Growlithe','you',after and 'active' or 'bench',0,'false','Pokemon','','Basic',70,0,'',0,'','Fire','true'),
+    }
+    if after then rows[#rows+1]=row('C','turn-draw','sv03-230','Fire Energy','you','hand',0,'false','Energy','','','',0,'',0,'','Fire','true') end
+    return table.concat(rows,'\n')
+  end
+  local function tick(n,reduced) for _=1,n do sim:update(1/60,sim.time+1/60,-100,-100,reduced or false) end end
+  sim:sync(promotionScene(201,false));tick(90)
+  local replacement=sim.byUid['you:replacement']
+  local benchY=replacement.y
+  sim:sync(promotionScene(202,true))
+  local drawn=sim.byUid['you:turn-draw']
+  assert(drawn.drawAfterPromotion and drawn.x==sim.L.zones.you_deck.x,'Turn draw waits at the deck after a promotion')
+  tick(6)
+  assert(replacement.y~=benchY and drawn.drawAfterPromotion,'Replacement moves first while turn draw waits')
+  assert(drawn.x==sim.L.zones.you_deck.x and drawn.y==sim.L.zones.you_deck.y,'Waiting draw does not begin moving')
+  assert(sim:cardHit(drawn.x,drawn.y)~=drawn,'Waiting draw cannot be clicked')
+  tick(120)
+  assert(not drawn.drawAfterPromotion and math.abs(drawn.x-drawn.homeX)<1 and math.abs(drawn.y-drawn.homeY)<1,'Delayed turn draw reaches the hand')
+  sim:sync(promotionScene(203,false));tick(90)
+  sim:sync(promotionScene(204,true));tick(1,true)
+  assert(not sim.byUid['you:turn-draw'].drawAfterPromotion,'Reduced motion bypasses the promotion draw delay')
+  sim.reduced=false
+  sim:sync(promotionScene(205,false));tick(90)
+  sim:sync(promotionScene(206,true))
+  sim:sync(promotionScene(207,false));tick(90)
+  assert(not sim.byUid['you:turn-draw'] and sim.byUid['you:replacement'].item.zone=='bench','Undo cancels a queued turn draw')
 end
 -- Items use the normal play command anywhere on either bench, occupied or empty.
 for _,size in ipairs({{1280,800},{390,844}}) do
@@ -607,5 +669,102 @@ for _,size in ipairs({{1280,800},{390,844}}) do
   x=energy.homeX+50
   drag(x,top);release(x,top)
   assert(commands[#commands]=='reorder\thand\ttrainer\t2','Dragging a lifted Supporter sideways only reorders, even from its top edge')
+end
+-- Stadium ownership changes to global, but the moving card stays the same.
+for _,size in ipairs({{1280,800},{390,844}}) do
+  sim:layout(size[1],size[2]);sim:open(false)
+  local function stadiumScene(rev,played)
+    return table.concat({header(rev),
+      row('S','you',40,6,played and 0 or 1,0,0),row('S','opponent',40,6,0,played and 1 or 0,0),
+      row('C','new-stadium','sv01-167','Beach Court',played and 'global' or 'you',played and 'stadium' or 'hand',0,'false','Trainer','Stadium','','',0,'',0,'','','true'),
+      row('C','old-stadium','sv02-171','Artazon',played and 'opponent' or 'global',played and 'discard' or 'stadium',0,'false','Trainer','Stadium','','',0,'',0,'','','false'),
+    },'\n')
+  end
+  sim:sync(stadiumScene(301,false))
+  for _=1,90 do sim:update(1/60,sim.time+1/60,-100,-100,false) end
+  local card=sim.byUid['you:new-stadium']
+  local oldStadium=sim.byUid['global:old-stadium']
+  local z=sim.L.zones.stadium
+  sim:mousepressed(card.x*sim.zoom+sim.ox,card.y*sim.zoom+sim.oy)
+  sim:update(1/60,sim.time+1/60,z.x*sim.zoom+sim.ox,z.y*sim.zoom+sim.oy,false)
+  sim:mousereleased(z.x*sim.zoom+sim.ox,z.y*sim.zoom+sim.oy)
+  local x,y=card.x,card.y
+  local oldX,oldY=oldStadium.x,oldStadium.y
+  sim:sync(stadiumScene(302,true))
+  assert(sim.byUid['global:new-stadium']==card,'Played Stadium reuses the card dragged from hand')
+  assert(math.abs(card.x-x)<0.001 and math.abs(card.y-y)<0.001,'Stadium continues from its visible drag position')
+  assert(card.homeX==z.x and card.homeY==z.y,'Stadium moves toward its shared board slot')
+  assert(#sim.ghosts==1 and sim.ghosts[1]==oldStadium,'Replaced Stadium makes only one discard animation')
+  assert(oldStadium.x==oldX and oldStadium.y==oldY and oldStadium.ghost.target==sim.L.zones.opp_discard,'Replaced Stadium leaves its actual position for its owner discard')
+  sim:sync(stadiumScene(303,false))
+  assert(sim.byUid['you:new-stadium']==card and #sim.ghosts==0,'Undo returns the played Stadium to hand without a duplicate flight')
+  assert(sim.byUid['global:old-stadium']==oldStadium,'Undo restores the replaced Stadium from its discard flight')
+end
+-- Adrena-Brain keeps the source raised, lifts the destination and finishes
+-- with exactly one shared pulse before dispatching (including keyboard use).
+for _,size in ipairs({{1280,800},{480,900}}) do
+  sim:layout(size[1],size[2]);sim:open(false)
+  local function brainScene(rev)
+    return snapshot(rev,{
+      row('M','board','Move damage counters','Choose an opponent','true','brain','true','active1','true'),
+      row('O','brain-target','Quaxly','blue','false','false','','opp1'),
+    })
+  end
+  sim:sync(brainScene(401))
+  for i=1,60 do sim:update(1/60,i/60,-100,-100,false) end
+  local source,target,other=cardOf('active1'),sim.byUid['opponent:opp1'],cardOf('bench1')
+  assert(source.lift==0.2*190*source.baseScale and source.tint==nil,'Chosen source is raised normally and stays undimmed')
+  assert(target.lift==0 and other.lift==0,'Unselected Pokémon remain down')
+  sim.focusCard=target
+  local before=#commands
+  sim:keypressed('return')
+  assert(sim.counterMotion and #commands==before,'Target selection starts presentation before resolving')
+  for i=1,10 do sim:update(1/60,1+i/60,-100,-100,false) end
+  assert(source.lift>0 and target.lift>0 and other.lift==0,'Both selected Pokémon rise')
+  sim:update(1/60,1.49,-100,-100,false)
+  assert(not source.motion.juice and not target.motion.juice and #commands==before,'Hold the selection before shaking')
+  sim:update(1/60,1.51,-100,-100,false)
+  local sourcePulse,targetPulse=source.motion.juice,target.motion.juice
+  assert(sourcePulse and targetPulse and sourcePulse.start_time==targetPulse.start_time,'Both final shakes start in the same frame')
+  assert(sourcePulse.scale_amt==targetPulse.scale_amt,'Both final shakes have the same strength')
+  assert(not other.motion.juice,'Unselected Pokémon do not get the final shake')
+  sim:keypressed('return');sim:activate(1)
+  assert(#commands==before,'Repeated input cannot resolve twice during the shake')
+  sim:update(1/60,1.7,-100,-100,false)
+  assert(source.motion.juice==sourcePulse and target.motion.juice==targetPulse,'Candidate pulses cannot restart the final shake')
+  sim:update(1/60,2,-100,-100,false)
+  assert(not source.motion.juice and not target.motion.juice and #commands==before,'Pause after the shake before resolving')
+  assert(source.lift==0 and target.lift==0,'Both Pokémon lower after the final shake')
+  assert(sim.counterMotion.loweringAt and #commands==before,'Lowering starts before the move resolves')
+  for _=1,120 do
+    sim:update(1/60,sim.time+1/60,-100,-100,false)
+    if #commands>before then break end
+  end
+  assert(math.abs(source.y-source.homeY)<1.5 and math.abs(target.y-target.homeY)<1.5,'Both Pokémon visibly settle before resolving')
+  assert(#commands==before+1 and commands[#commands]=='invoke\t401\tbrain-target','Resolve once after both Pokémon return')
+  sim:update(1/60,sim.time+0.1,-100,-100,false)
+  assert(#commands==before+1,'Waiting for host response never repeats the action')
+  local resolved={header(402)}
+  for _,r in ipairs(base) do
+    if not r:match('^C\tactive1\t') and not r:match('^C\topp1\t') then resolved[#resolved+1]=r end
+  end
+  resolved[#resolved+1]=row('C','active1','sv01-033','Houndour','you','active',0,'false','Pokemon','','Basic',70,0,'Fire,Fire',0,'','Fire','true')
+  resolved[#resolved+1]=row('C','opp1','sv01-052','Quaxly','opponent','active',0,'false','Pokemon','','Basic',60,20,'',0,'asleep','Water','false')
+  sim:sync(table.concat(resolved,'\n'))
+  sim:update(1/60,sim.time+1/60,-100,-100,false)
+  assert(not sim.counterMotion and source.lift==0 and target.lift==0,'Resolution clears both selections')
+  for i=1,60 do
+    sim:update(1/60,sim.time+1/60,-100,-100,false)
+    assert(not source.motion.juice and not target.motion.juice,'Counter updates do not add separate delayed shakes after the shared pulse')
+  end
+  -- History/reload cancels a queued answer rather than sending a stale token.
+  sim:sync(brainScene(403));sim.focusCard=target;sim:keypressed('return')
+  sim:sync(snapshot(404))
+  before=#commands
+  sim:update(1/60,sim.time+1,-100,-100,false)
+  assert(not sim.counterMotion and #commands==before,'A changed snapshot cancels the pending transfer')
+  sim:sync(brainScene(405));sim:update(1/60,sim.time+1,-100,-100,true)
+  sim.focusCard=target;sim:keypressed('return')
+  assert(not sim.counterMotion and commands[#commands]=='invoke\t405\tbrain-target','Reduced motion resolves immediately')
 end
 print('PASS: Lua simulator interactions, live hand/Bench reordering, KO animations and delayed handoffs in both layouts')
