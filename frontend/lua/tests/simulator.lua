@@ -768,4 +768,42 @@ for _,size in ipairs({{1280,800},{480,900}}) do
   sim.focusCard=target;sim:keypressed('return')
   assert(not sim.counterMotion and commands[#commands]=='invoke\t405\tbrain-target','Reduced motion resolves immediately')
 end
-print('PASS: Lua simulator interactions, live hand/Bench reordering, KO animations and delayed handoffs in both layouts')
+-- All three first-player controls use UIElement:click's gain, jiggle and
+-- 0.1s debounce, including keyboard activation and reduced-motion behavior.
+do
+  Moveable={extend=function() return {} end}
+  dofile((os.getenv('BALATRO_SOURCE') or '../balatro-source')..'/engine/ui.lua')
+  local sourceSounds={}
+  G={TIMERS={REAL=10},ROOM={jiggle=0},FUNCS={choose=function() end}}
+  play_sound=function(...) sourceSounds[#sourceSounds+1]={...} end
+  local sourceButton={config={button='choose'},states={visible=true}}
+  UIElement.click(sourceButton)
+  local clicks={}
+  local setup=Simulator.new({command=function(raw) clicks[#clicks+1]=raw end,
+    announce=function() end,feedback=function() error('Setup must use source gain') end,
+    sourceFeedback=function(...) clicks[#clicks+1]={...} end,
+    jiggle=function(amount) clicks[#clicks+1]=amount end})
+  setup:layout(1280,800);setup:open(false)
+  setup:sync(table.concat({
+    row(1,'ready','Player 1','Player 2',0,'setup:chooseFirst','','Choose who goes first','',0,0,'you','','p1',0,0,0,'',''),
+    row('A','1','P1 first','blue',false,'primary'),
+    row('A','2','P2 first','blue',false,'primary'),
+    row('A','3','Random','red',false,'minor'),
+  },'\n'))
+  local checked=0
+  for i,b in ipairs(setup.controls) do
+    if b.setupChoice then
+      checked=checked+1;clicks={};setup.time=10
+      setup:activate(i)
+      assert(clicks[1][1]==sourceSounds[1][1] and clicks[1][2]==sourceSounds[1][2] and clicks[1][3]==sourceSounds[1][3])
+      assert(clicks[2]==G.ROOM.jiggle and #clicks==3)
+      setup.time=10.05;setup:activate(i)
+      assert(#clicks==3,'Repeat activation inside 0.1s must be ignored')
+      setup.time=10.11;setup.reduced=true;setup:activate(i)
+      assert(#clicks==5,'Reduced motion plays the click and invokes without shaking')
+      setup.reduced=false
+    end
+  end
+  assert(checked==3,'Both named players and Random get identical feedback')
+end
+print('PASS: Lua simulator interactions, setup feedback, hand/Bench reordering, KO animations and delayed handoffs in both layouts')

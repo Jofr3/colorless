@@ -197,4 +197,24 @@ for _,size in ipairs({{1280,800},{480,850}}) do
   sim.peek=true;frames(2,27);sim:mousepressed(10,10)
   sim:keypressed('tab');sim:keypressed('return');sim:keypressed('escape')
 end
+-- History icons share a single row, retain their action labels/tokens, and
+-- stay square and within the action area on desktop and portrait.
+for _,size in ipairs({{1280,800},{480,850}}) do
+  sim:layout(size[1],size[2]);sim:open(false)
+  local entries={{'Undo turn','rewind'},{'Undo action','undo'},{'New game','restart'},{'Redo action','redo'},{'Redo turn','fast_forward'}}
+  local rows={row(100,'ready','Player 1','Player 2',1,'turn:action','','Your turn','',0,0,'you','you','p1',0,0,0,'',''),
+    row('A','end','End turn','red',false,'primary')}
+  for i,entry in ipairs(entries) do rows[#rows+1]=row('A','history'..i,entry[1],'red',i>3,'minor') end
+  sim:sync(table.concat(rows,'\n'));frames(2,30)
+  local controls={}
+  for _,b in ipairs(sim.controls) do if b.icon then controls[#controls+1]=b end end
+  assert(#controls==5)
+  for i,b in ipairs(controls) do
+    assert(b.label==entries[i][1] and b.icon==entries[i][2] and b.token=='history'..i)
+    assert(b.w==b.h and b.y==controls[1].y)
+    assert(b.x>=0 and b.x+b.w<=sim.L.w)
+    if i>1 then assert(b.x>=controls[i-1].x+controls[i-1].w+5) end
+    assert(b.colour==(i>3 and require('ui.sim_hud').insetColour or T.red))
+  end
+end
 print('PASS: Lua simulator draw paths for every table state and overlay kind in both layouts')

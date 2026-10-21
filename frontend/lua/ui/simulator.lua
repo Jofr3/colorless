@@ -18,6 +18,7 @@ local Modal=require('ui.modal')
 local Dyna=require('ui.dynatext')
 local Energy=require('ui.energy')
 local Layout=require('ui.sim_layout')
+local Screen=require('ui.screen')
 local Hud=require('ui.sim_hud')
 local Overlay=require('ui.sim_overlay')
 local Fx=require('ui.sim_fx')
@@ -38,7 +39,7 @@ end
 function Simulator.new(callbacks)
   local self=setmetatable({callbacks=callbacks,phase='empty',items={},sides={},info={},actions={},cardActions={},cards={},byUid={},ghosts={},piles={},art={},controls={},time=0,focus=0,hover=0,
     message='',title='',hint='',outcome='',outcomeDetail='',gamePhase='',turn=0,turnIndex=0,turnCount=0,waiting='',activePlayer='',viewerSeat='',allow={}},Simulator)
-  self.hud=Hud.new()
+  self.hud=Hud.new({feedback=callbacks.sourceFeedback or callbacks.feedback,jiggle=callbacks.jiggle})
   self.fx=Fx.new({feedback=function(name,pitch) callbacks.feedback(name,pitch) end,jiggle=function(amount) if callbacks.jiggle then callbacks.jiggle(amount) end end})
   return self
 end
@@ -61,15 +62,17 @@ function Simulator:open(reduced)
   self.cards={};self.byUid={};self.ghosts={};self.items={};self.sides={};self.actions={};self.cardActions={}
   self.phase='empty';self.viewerSeat='';self.outcome='';self.menu=nil;self.menuId=nil;self.message='';self.turn=0
   self.fx:clear();self.fx:background('setup',true)
+  self.hud:cancelEntrance()
   self:command('open')
 end
-function Simulator:layout(w,h)
+function Simulator:layout(w,h,viewportUnit)
   self.attachedPopup=nil;self.closingPopup=nil
   self.width,self.height=w,h
   self.portrait=w<600
   self.L=Layout.for_size(w,h)
   self.boardW,self.boardH=self.L.w,self.L.h
   self.zoom=math.min(w/self.boardW,h/self.boardH)
+  self.viewportUnit=(viewportUnit or Screen.unit(w,h))/self.zoom
   self.ox,self.oy=(w-self.boardW*self.zoom)/2,(h-self.boardH*self.zoom)/2
   self.drag=nil;self.highlight=nil;self.hoverCard=nil
   -- A browser resize goes through love.window.setMode, which empties every
@@ -885,7 +888,7 @@ end
 function Simulator:add(label,x,y,w,h,action,colour,extra)
   local b=extra or {}
   b.label,b.x,b.y,b.w,b.h,b.action=label,x,y,w,h,action
-  b.colour=b.disabled and T.panel or colour or T.blue
+  b.colour=b.disabled and Hud.insetColour or colour or T.blue
   b.fontSize=b.fontSize or 24
   -- UIBox_button labels shrink to their minw rather than wrapping.
   local shown=b.uppercase and label:upper() or label
@@ -901,8 +904,8 @@ function Simulator:build()
   local L=self.L
   -- HUD buttons: Run Info -> Game log, Options.
   local hb=self.hud:buttons(L)
-  self:add(hb.log.label or 'Log',hb.log.x,hb.log.y,hb.log.w,hb.log.h,'log',T.red,{lines=hb.log.lines,fontSize=hb.log.fontSize or 24,disabled=self.phase~='ready'})
-  self:add(hb.options.label or 'Options',hb.options.x,hb.options.y,hb.options.w,hb.options.h,'options',T.orange,{lines=hb.options.lines,fontSize=hb.options.fontSize or 20})
+  self:add(hb.log.label or 'Log',hb.log.x,hb.log.y,hb.log.w,hb.log.h,'log',T.red,{lines=hb.log.lines,lineScales=hb.log.lineScales,lineWidth=hb.log.lineWidth,fontSize=hb.log.fontSize or 24,disabled=self.phase~='ready'})
+  self:add(hb.options.label or 'Options',hb.options.x,hb.options.y,hb.options.w,hb.options.h,'options',T.orange,{lines=hb.options.lines,lineScales=hb.options.lineScales,lineWidth=hb.options.lineWidth,fontSize=hb.options.fontSize or 20})
   -- Action cluster (create_UIBox_buttons): primary blue, danger red, minors.
   -- Desktop: the cluster lives in the HUD's action panel; portrait keeps
   -- its horizontal strip under the table.
@@ -911,7 +914,33 @@ function Simulator:build()
   for _,a in ipairs((self.targeting or self.luaTargeting) and {} or self.actions) do
     if a.slot=='primary' then primaries[#primaries+1]=a elseif a.slot=='danger' then dangers[#dangers+1]=a else minors[#minors+1]=a end
   end
-  if cl.horizontal then
+  local history={}
+  for _,a in ipairs(minors) do history[a.label]=a end
+  if self.gamePhase=='setup:chooseFirst' and #primaries==2 and #minors==1 and #dangers==0 then
+    local h,gap=44,6
+    local bw=(cl.w-h-2*gap)/2
+    local y=cl.y+(cl.horizontal and 8 or 1.8+3/2)
+    for i,a in ipairs(primaries) do
+      self:add(a.label,cl.x+(i-1)*(bw+gap),y,bw,h,'invoke',a.colour,{token=a.token,disabled=a.disabled,fontSize=22,setupChoice=true})
+    end
+    local a=minors[1]
+    self:add(a.label,cl.x+2*(bw+gap),y,h,h,'invoke',a.colour,{token=a.token,disabled=a.disabled,icon='dice',setupChoice=true})
+  elseif #primaries==1 and #dangers==0 and #minors==5
+    and history['Undo turn'] and history['Undo action'] and history['New game'] and history['Redo action'] and history['Redo turn'] then
+    local gap=6
+    local size=cl.horizontal and 44 or (cl.w-4*gap)/5
+    local y=cl.horizontal and cl.y+8 or cl.y+(cl.h-44-gap-size)/2+1.8+3/2
+    local a=primaries[1]
+    local primaryW=cl.horizontal and cl.w-5*(size+gap) or cl.w
+    self:add(a.label,cl.x,y,primaryW,44,'invoke',a.colour,{token=a.token,disabled=a.disabled,fontSize=24})
+    local x=cl.horizontal and cl.x+primaryW+gap or cl.x
+    if not cl.horizontal then y=y+44+gap end
+    for i,entry in ipairs({{'Undo turn','rewind'},{'Undo action','undo'},{'New game','restart'},{'Redo action','redo'},{'Redo turn','fast_forward'}}) do
+      local action=history[entry[1]]
+      self:add(action.label,x+(i-1)*(size+gap),y,size,size,'invoke',T.red,
+        {token=action.token,disabled=action.disabled,icon=entry[2]})
+    end
+  elseif cl.horizontal then
     local all={}
     for _,a in ipairs(primaries) do all[#all+1]=a end
     for _,a in ipairs(minors) do all[#all+1]=a end
@@ -925,8 +954,15 @@ function Simulator:build()
     local y=cl.y
     for _,a in ipairs(primaries) do self:add(a.label,cl.x,y,cl.w,44,'invoke',a.colour,{token=a.token,disabled=a.disabled,fontSize=24});y=y+50 end
     for _,a in ipairs(dangers) do self:add(a.label,cl.x,y,cl.w,40,'invoke',a.colour,{token=a.token,disabled=a.disabled,fontSize=22});y=y+46 end
-    -- With one tall button (Ready / Choose decks) the panel still looks filled.
-    if #primaries+#dangers==1 and #minors==0 then self.controls[#self.controls].h=56;self.controls[#self.controls].y=cl.y+(cl.h-56)/2 end
+    -- Ready uses the first-player buttons' height; other lone actions fill
+    -- the available panel height.
+    if #primaries+#dangers==1 and #minors==0 then
+      local b=self.controls[#self.controls]
+      b.h=b.label=='Ready' and 44 or cl.h
+      -- The face lifts 1.8px at rest; the panel extends 3px below its bounds.
+      -- Compensate for both so the visible top and bottom insets match.
+      b.y=cl.y+1.8+3/2
+    end
     local n=#minors
     if n>0 then
       local cols=math.min(2,n)
@@ -1352,7 +1388,13 @@ function Simulator:activate(index)
   if self.counterMotion then return end
   if self.koPresentation then return end
   local b=self.controls[index];if not b or b.disabled then return end
-  if b.action~='pile' then self.callbacks.feedback('button') end
+  if b.setupChoice then
+    if b.lastClicked and self.time<=b.lastClicked+0.1 then return end
+    b.lastClicked=self.time
+    local feedback=self.callbacks.sourceFeedback or self.callbacks.feedback
+    feedback('button',1,0.3)
+    if not self.reduced and self.callbacks.jiggle then self.callbacks.jiggle(0.5) end
+  elseif b.action~='pile' then self.callbacks.feedback('button') end
   local a=b.action
   if a=='invoke' then self:invoke(b.token)
   elseif a=='log' then self:command('log')
@@ -1690,20 +1732,29 @@ function Simulator:draw(shaders)
   for i,b in ipairs(self.controls) do
     if not b.invisible then
       local active=not self.overlay and (self.hover==i or self.focus==i)
+      local pressed=(self.pressed==i and self.hover==i) or (b.lastClicked and self.time<b.lastClicked+0.1)
       if b.attached then
         g.push();g.translate(0,popupOffset(self.attachedPopup))
         Popup.action(b,active,self.pressed==i and self.hover==i,rw)
         g.pop()
       elseif b.lines then
         local label=b.label;b.displayLabel=' '
-        Button.draw(b,active and not b.disabled,self.pressed==i and self.hover==i,self.focus==i,rw)
+        Button.draw(b,active and not b.disabled,pressed,self.focus==i,rw)
         b.displayLabel=nil;b.label=label
-        local n=#b.lines
-        for k,line in ipairs(b.lines) do Dyna.static(line,k==1 and 0.46 or 0.38,b.x,b.y+b.h/2+(k-(n+1)/2)*24-11,b.w,22,T.white,{roomWidth=rw}) end
+        local heights,total={},0
+        for k,line in ipairs(b.lines) do
+          local _,h=Dyna.measure(line,b.lineScales[k])
+          heights[k]=h;total=total+h
+        end
+        local textY=b.y+(b.h-total)/2
+        for k,line in ipairs(b.lines) do
+          Dyna.static(line,b.lineScales[k],b.x+(b.w-b.lineWidth)/2,textY,b.lineWidth,heights[k],T.white,{roomWidth=rw,fit=true})
+          textY=textY+heights[k]
+        end
       elseif (b.cost and #b.cost>0) or (b.damage and b.damage~='') then
         -- Attack rows: cost pips at the left, name, printed damage at the right.
         local label=b.label;b.displayLabel=' '
-        Button.draw(b,active and not b.disabled,self.pressed==i and self.hover==i,self.focus==i,rw)
+        Button.draw(b,active and not b.disabled,pressed,self.focus==i,rw)
         b.displayLabel=nil;b.label=label
         local pipW=0
         if b.cost and #b.cost>0 then pipW=Energy.row(b.cost,b.x+8,b.y+b.h/2,8,3,b.disabled and 0.5 or 1,"left")+8 end
@@ -1711,7 +1762,7 @@ function Simulator:draw(shaders)
         if dmgW>0 then Dyna.static(b.damage,0.42,b.x+b.w-6-dmgW,b.y,dmgW,b.h,T.white,{align='right',roomWidth=rw}) end
         Dyna.static(label,0.38,b.x+8+pipW,b.y,b.w-16-pipW-dmgW,b.h,T.white,{align='left',fit=true,roomWidth=rw})
       else
-        Button.draw(b,active and not b.disabled,self.pressed==i and self.hover==i,self.focus==i,rw)
+        Button.draw(b,active and not b.disabled,pressed,self.focus==i,rw)
       end
       if b.selected then g.setLineWidth(1.5);Button.outline(b.x-2,b.y-2,b.w+4,b.h+4,T.white,1.2) end
     end

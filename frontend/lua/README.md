@@ -250,11 +250,14 @@ dynamic colour follows the seat whose turn it is (player 1 blue, player 2 red,
 neutral grey with no game) and also tints the turn panel's header and body
 like the blind colour does. Inside: a turn panel in the HUD blind's shape (a DynaText header naming the acting player
 over an empty body, reserved for later), the action panel in the
-hand area's slot (End turn above Undo action / Redo action / Undo turn / Redo
-turn, or Ready and the other setup buttons), the red GAME LOG / orange OPTIONS
+hand area's slot (End turn above a row of square Undo turn / Undo action /
+Redo action / Redo turn icons, or Ready and the other setup buttons), the red GAME LOG / orange OPTIONS
 buttons, and P1 Hand / P2 Hand / Turn / Energy / Supporter counters. Undo and redo
 step through every accepted action; the turn buttons jump between the
-checkpoints that begin each turn, and both survive a reload. Everything on the table sits in
+checkpoints that begin each turn, and both survive a reload. Mulligan bonus
+cards draw automatically for both players, including when resuming a pending
+draw. These draws settle before publishing the board and stay out of undo/redo
+stops, so history never repeats them. Everything on the table sits in
 CardArea wells (black 10%, `r=0.1`, plus a whisper of the seat colour: the
 opponent's half warm, yours cool) with `area_uibox` counters. The table is
 four rows of wells between three columns: the opponent's discard, deck and
@@ -291,8 +294,14 @@ Host prompts render as `create_UIBox_generic_options` overlays or on the table
 itself: button lists, real card rows in the collection tray (searches, Energy
 discards, card orders), board picks and prize picks highlighted in place,
 coin flips as spinning stake chips, the game log, discard piles, a card
-inspector, an Options menu (Settings, turn history cycle, New game, Concede,
-Save & back) and `create_UIBox_game_over`. Snapshot diffs drive the juice:
+inspector, an Options menu (Settings, New game, Main menu)
+and `create_UIBox_game_over`. Main menu saves the game before leaving.
+The desktop Options frame is 7.54
+viewport tiles wide, with 5-tile buttons and a 7-tile Back button, matching
+`create_UIBox_options`, `create_UIBox_generic_options` and both original UIBox
+sizing passes. `lua frontend/lua/tests/options.lua` compares these widths with
+the source across viewport sizes; portrait retains its compact layout.
+Snapshot diffs drive the juice:
 damage and heals use `attention_text` with its growing backdrop square and the
 mult/chips sounds, KO'd Pokémon dissolve with burn colours, prizes pop in
 gold with the coin sound, errors pop in red with `cancel`, and new cards slide
@@ -317,6 +326,31 @@ This replaces their separate damage/heal shakes. New snapshots cancel pending
 answers, and reduced motion resolves immediately.
 `build.mjs` additionally copies `chips.png` and the chips, mult, coin, cancel,
 whoosh, win and glass sounds.
+
+Choosing P1, P2 or Random follows the original blind-selection presentation.
+The source trace is `UIElement:click` → `G.FUNCS.select_blind` → `new_round`
+→ `Blind:set_blind`, with `update_canvas_juice` moving the room:
+
+- Click: `button` at pitch 1 / gain 0.3, a 0.5 room-jiggle impulse, and a
+  0.1-second pressed/debounce window.
+- The old prompt shrinks at `pop_out(5)` while moving ten tiles upward. The
+  source's 0.8-second pause is shortened to 0.5 seconds for a quicker response.
+- At 0.5 seconds, the seat colour starts its 0.3-second linear fade. At 0.55
+  seconds, the panel targets its resting position using the shared Moveable
+  equations. At 0.7 seconds, the silent title starts its letter cascade and the
+  room receives a 3-point jiggle impulse.
+- That reveal plays `chips1` (pitch 0.55–0.65, gain 0.42) and `gold_seal`
+  (pitch 1.85–1.95, gain 0.26) together, with source gain and overlapping voices.
+
+The animation uses Balatro game speed 1 with the shortened initial pause; this
+simulator has no game speed setting. The source's blind-chip/reward animations have no equivalent in
+this HUD. Portrait keeps its compact header; reduced motion skips the entrance
+and shake while retaining audio. Restoring a game, refreshing its snapshot or
+handing setup to the other player does not replay the entrance.
+`lua frontend/lua/tests/sim_hud.lua` executes the original HUD sizing,
+`Blind:set_blind` and DynaText code for comparison. `tests/room.lua` compares
+the original room equations and inverse input coordinates across frame rates,
+viewport scales, both impulses and reduced-motion settings.
 
 Checks: `bun run test:run src/features/lua/simulator.test.ts`,
 `lua frontend/lua/tests/simulator.lua` and

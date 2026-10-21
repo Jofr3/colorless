@@ -1,6 +1,7 @@
 local D=require('ui.card_dimensions')
+local Screen=require('ui.screen')
 -- Table geometry in board pixels (one Balatro tile = 60px). Desktop keeps the
--- run screen's proportions: a 4.5-tile HUD column, the hand along the bottom
+-- run screen's proportions: a 5.19-tile HUD column, the hand along the bottom
 -- edge, the deck at the bottom right, and the opponent's hand peeking in from
 -- the top edge like Balatro's off-screen discard pile.
 local Layout={}
@@ -23,12 +24,22 @@ local function tight(z,slots,width)
   end
   return z
 end
-function Layout.desktop()
+function Layout.desktop(width,height)
   local L={portrait=false,w=1280,h=800,unit=60}
+  width,height=width or L.w,height or L.h
+  local zoom=math.min(width/L.w,height/L.h)
+  -- create_UIBox_HUD is 4.93 tiles of content plus 0.08 + 0.05 padding
+  -- on each side. Convert Balatro's viewport tile size into board coordinates.
+  local hudUnit=Screen.unit(width,height)/zoom
+  local hudInset=(0.08+0.05)*hudUnit
+  local hudWidth=(4.93+2*(0.08+0.05))*hudUnit
   -- The HUD column overflows the room top and bottom like Balatro's (minh 30
   -- tiles), so only its two side lines show.
-  L.hud={x=10,y=-400,w=280,h=1600}
-  L.table={x=300,y=0,w=980,h=800,cx=786}
+  L.hud={x=10,y=-400,w=hudWidth,h=1600,unit=hudUnit,inset=hudInset}
+  local tableX=L.hud.x+L.hud.w+10
+  local tableScale=(L.w-tableX)/980
+  local function tablePos(x) return tableX+(x-300)*tableScale end
+  L.table={x=tableX,y=0,w=L.w-tableX,h=800,cx=tablePos(786)}
   -- Four 144px rows (opponent's row, the two Actives facing each other in the
   -- middle, your row) between three columns: piles on the left, the benches in
   -- the centre, prizes/deck on the right. The hand fans along the bottom edge.
@@ -42,14 +53,14 @@ function Layout.desktop()
   local top,gap=4,6
   local function rowC(i) return top+(i-1)*(rowH+gap)+rowH/2 end
   local rowsEnd=top+4*rowH+3*gap
-  local leftC,midC,rightC=376,786,1200
+  local leftC,midC,rightC=tablePos(376),tablePos(786),tablePos(1200)
   -- Prize miniatures: the largest 2x3 grid that fits the side columns.
   local PRIZE=0.4
   local pdx,pdy=D.W*PRIZE+8,D.H*PRIZE+8
   -- Bench cards pack tightly at the centre of a wide well.
   -- 28px between bench cards leaves room for attached cards to peek out.
   local benchSpacing=D.W*CARD+28
-  local benchW=660
+  local benchW=660*tableScale
   -- Prize grids share an edge with their owner's bench: the opponent's top
   -- edge with the top bench, yours with the bottom bench's lower edge.
   local prizeH=2*pdy+D.H*PRIZE+2*PAD
@@ -62,19 +73,19 @@ function Layout.desktop()
     opp_prizes=tight({x=rightC-pdx/2,y=oppPrizeTop+PAD+D.HALF_H*PRIZE,scale=PRIZE,cols=2,dx=pdx,dy=pdy}),
     opp_deck=tight({x=leftC,y=rowC(2),scale=CARD}),
     opp_active=tight({x=midC,y=rowC(2),scale=CARD}),
-    stadium=tight({x=541,y=(rowC(2)+rowC(3))/2,scale=CARD}),
+    stadium=tight({x=tablePos(541),y=(rowC(2)+rowC(3))/2,scale=CARD}),
     you_active=tight({x=midC,y=rowC(3),scale=CARD}),
-    played=tight({x=1000,y=rowC(3),scale=CARD,spacing=22},nil,176),
+    played=tight({x=tablePos(1000),y=rowC(3),scale=CARD,spacing=22},nil,176*tableScale),
     you_deck=tight({x=rightC,y=rowC(3),scale=CARD}),
     you_prizes=tight({x=leftC-pdx/2,y=youPrizeTop+PAD+D.HALF_H*PRIZE,scale=PRIZE,cols=2,dx=pdx,dy=pdy}),
     you_bench=tight({x=midC,y=rowC(4),scale=CARD,spacing=benchSpacing,slots=5},5,benchW),
     you_discard=tight({x=rightC,y=rowC(4),scale=CARD}),
-    you_hand={x=midC,y=rowsEnd+4+cardH/2,scale=CARD,span=520},
-    playmat={x=midC,y=(rowC(2)+rowC(3))/2,well={x=448,y=rowC(2)-rowH/2,w=676,h=2*rowH+gap}},
+    you_hand={x=midC,y=rowsEnd+4+cardH/2,scale=CARD,span=520*tableScale},
+    playmat={x=midC,y=(rowC(2)+rowC(3))/2,well={x=tablePos(448),y=rowC(2)-rowH/2,w=676*tableScale,h=2*rowH+gap}},
   }
   L.zones.you_bench.y=L.zones.you_bench.y-6 -- cards ride a little high in the well
-  L.cluster={x=308,y=rowsEnd+6,w=164,h=136}
-  L.message={x=300,y=772,w=760,h=26}
+  L.cluster={x=tablePos(308),y=rowsEnd+6,w=164*tableScale,h=136}
+  L.message={x=tableX,y=772,w=760*tableScale,h=26}
   L.banner={x=midC,y=(rowC(2)+rowC(3))/2}
   return L
 end
@@ -106,7 +117,7 @@ function Layout.portrait()
   return L
 end
 function Layout.for_size(w,h)
-  return (w<600) and Layout.portrait() or Layout.desktop()
+  return (w<600) and Layout.portrait() or Layout.desktop(w,h)
 end
 -- Hand fan: CardArea:align_cards for type 'hand'. Cards spread across the span
 -- (narrowing when few), rotate by 0.2*(k - n/2 - 0.5)/n, and sit on a shallow arc.

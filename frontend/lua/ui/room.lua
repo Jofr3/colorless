@@ -1,11 +1,11 @@
 -- Port of update_canvas_juice (functions/common_events.lua), with the original
 -- default screen-shake setting of 50. Coordinates here are logical pixels;
--- one Balatro tile is 60 pixels in this home layout.
+-- `unit` converts the source's tile displacement into the current layout.
 local Room = {}
 Room.__index = Room
 
-function Room.new(w,h)
-  return setmetatable({w=w,h=h,x=0,y=0,r=0,jiggle=0},Room)
+function Room.new(w,h,unit)
+  return setmetatable({w=w,h=h,unit=unit or 60,x=0,y=0,r=0,jiggle=0},Room)
 end
 
 function Room:update(dt,time,cursorX,cursorY,reduced,screenshake)
@@ -19,8 +19,8 @@ function Room:update(dt,time,cursorX,cursorY,reduced,screenshake)
   if shake<0.05 then shake=0 end
   self.jiggle=self.jiggle*(1-5*dt)*(shake>0.05 and 1 or 0)
   self.r=(0.001*math.sin(0.3*time)+0.002*self.jiggle*math.sin(39.913*time))*shake
-  self.x=shake*(60*0.015*math.sin(0.913*time)+60*0.01*self.jiggle*shake*math.sin(19.913*time)+(self.cursorX-self.w/2)*0.01)
-  self.y=shake*(60*0.015*math.sin(0.952*time)+60*0.01*self.jiggle*shake*math.sin(21.913*time)+(self.cursorY-self.h/2)*0.01)
+  self.x=shake*(self.unit*0.015*math.sin(0.913*time)+self.unit*0.01*self.jiggle*shake*math.sin(19.913*time)+(self.cursorX-self.w/2)*0.01)
+  self.y=shake*(self.unit*0.015*math.sin(0.952*time)+self.unit*0.01*self.jiggle*shake*math.sin(21.913*time)+(self.cursorY-self.h/2)*0.01)
 end
 
 -- Node:translate_container rotates around the room midpoint, then translates.

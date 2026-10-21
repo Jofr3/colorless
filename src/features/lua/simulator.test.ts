@@ -19,6 +19,8 @@ import {
   ROTO_STICK_DECK,
   battler,
   typedEnergy,
+  ONE_BASIC_DECK,
+  finishOpeningSetup,
 } from "../../../packages/engine/src/testFixtures";
 import { LuaSimulator } from "./simulator";
 import { effectMenu } from "./simulatorChoices";
@@ -510,15 +512,12 @@ describe("Lua simulator", () => {
     const { sim } = setup(true);
     sim
       .sidebar()
-      .find((o) => o.label === "Player 1 first")
+      .find((o) => o.label === "P1 first")
       ?.run();
     for (let step = 0; step < 12 && sim.host?.game.phase.kind !== "turn:action"; step++) {
       const h = sim.host;
       if (!h) throw Error("Missing host");
-      if (h.game.phase.kind === "setup:drawExtra") {
-        sim.sidebar()[0]?.run();
-        continue;
-      }
+      expect(h.game.phase.kind).not.toBe("setup:drawExtra");
       const side = h.game.players[h.viewerSeat];
       if (!side.active) {
         const uid = side.hand.find((uid) => {
@@ -537,6 +536,90 @@ describe("Lua simulator", () => {
     expect(sim.host?.game.turn).toBe(1);
     expect(loadSimulatorSave()?.state).toEqual(sim.host?.game);
   });
+  it.each(["fresh", "resume", "partial"] as const)(
+    "draws both full mulligan bonuses automatically (%s) without replaying them",
+    (mode) => {
+      const created = mustCreate(1, { p1: ONE_BASIC_DECK, p2: ONE_BASIC_DECK });
+      if (created.state.phase.kind !== "setup:chooseFirst") throw Error("Expected coin choice");
+      const pending = finishOpeningSetup(
+        must(
+          applyAction(created.state, {
+            type: "chooseFirstPlayer",
+            seat: created.state.phase.coinWinner,
+            first: "p1",
+          }),
+        ),
+      ).state;
+      if (pending.phase.kind !== "setup:drawExtra") throw Error("Expected bonus draws");
+      const owed = pending.phase.owed;
+      expect(owed.p1).toBeGreaterThan(0);
+      expect(owed.p2).toBeGreaterThan(0);
+      const publish = vi.fn();
+      const sim = new LuaSimulator(publish, vi.fn());
+      const state =
+        mode === "fresh"
+          ? created.state
+          : mode === "partial"
+            ? must(applyAction(pending, { type: "setupDrawExtra", seat: "p1", count: owed.p1 }))
+            : pending;
+      sim.open({ state, events: [], names: { p1: "Player 1", p2: "Player 2" }, startedAt: 100 });
+      if (mode === "fresh") {
+        sim
+          .sidebar()
+          .find((o) => o.label === "P1 first")
+          ?.run();
+        for (let i = 0; i < 2; i++) {
+          const h = sim.host;
+          if (!h || h.game.phase.kind !== "setup:place") throw Error("Expected opening placement");
+          const seat = h.viewerSeat;
+          const uid = h.game.players[seat].hand.find((u) => {
+            const card = cardOfUid(h.game, u);
+            return card && isBasicPokemon(card);
+          });
+          if (!uid) throw Error("Expected a Basic");
+          sim.dispatch({ type: "setupPlaceActive", seat, uid });
+          sim
+            .sidebar()
+            .find((o) => o.label === "Ready")
+            ?.run();
+        }
+      }
+      const settled = sim.host?.game;
+      expect(settled?.phase.kind).toBe("turn:action");
+      for (const seat of ["p1", "p2"] as const) {
+        const drawn = owed[seat] + (seat === "p1" ? 1 : 0);
+        expect(settled?.players[seat].hand).toHaveLength(pending.players[seat].hand.length + drawn);
+        expect(settled?.players[seat].deck).toHaveLength(pending.players[seat].deck.length - drawn);
+        expect(settled?.players[seat].prizes).toEqual(pending.players[seat].prizes);
+      }
+      expect(
+        publish.mock.calls.every(
+          ([raw]) => decodeURIComponent(raw.split("\n")[0].split("\t")[5]) !== "setup:drawExtra",
+        ),
+      ).toBe(true);
+      expect(sim.sidebar().some((o) => /^(Draw |Skip draw)/.test(o.label))).toBe(false);
+      expect(sim.host?.steps.every((s) => s.game.phase.kind !== "setup:drawExtra")).toBe(true);
+      expect(sim.host?.turns.every((s) => s.game.phase.kind !== "setup:drawExtra")).toBe(true);
+      expect(loadSimulatorSave()?.state).toEqual(settled);
+      const history = sim.host?.steps;
+      for (const [undo, redo] of [
+        ["undoAction", "redoAction"],
+        ["undoTurn", "redoTurn"],
+      ] as const) {
+        sim.history(undo);
+        expect(sim.host?.game.phase.kind).not.toBe("setup:drawExtra");
+        sim.history(redo);
+        expect(sim.host?.game).toEqual(settled);
+        expect(sim.host?.steps).toBe(history);
+      }
+      sim.command("close");
+      sim.command("open");
+      expect(sim.host?.game).toEqual(settled);
+      sim.prompt();
+      sim.emit();
+      expect(sim.host?.game).toEqual(settled);
+    },
+  );
   it("rejects a stale action token, saves turns, and restores history", () => {
     const { sim, publish } = setup();
     const token = rows(publish).find((r: string[]) => r[0] === "A" && r[2] === "End turn")?.[1];
@@ -559,7 +642,9 @@ describe("Lua simulator", () => {
       rows(publish)
         .filter((r: string[]) => r[0] === "A")
         .map((r: string[]) => r[2]);
-    expect(labels()).toEqual(["End turn", "Undo action", "Redo action", "Undo turn", "Redo turn"]);
+    expect(labels()).toEqual([
+      "End turn", "Undo turn", "Undo action", "New game", "Redo action", "Redo turn",
+    ]);
     const disabled = () =>
       Object.fromEntries(
         rows(publish)
@@ -581,6 +666,10 @@ describe("Lua simulator", () => {
     expect(sim.host?.game.turn).toBe(1);
     expect(sim.host?.steps).toHaveLength(2);
     sim.command("history\tredoAction");
+    expect(sim.host?.game.turn).toBe(2);
+    const newGame = rows(publish).find((r: string[]) => r[0] === "A" && r[2] === "New game")?.[1];
+    sim.command(`invoke\t${sim.revision}\t${newGame}`);
+    expect(sim.menu?.title).toBe("Start a new game?");
     expect(sim.host?.game.turn).toBe(2);
   });
   it("keeps the board unchanged on invalid drags and surfaces the engine reason", () => {

@@ -14,6 +14,7 @@ local g = love.graphics
 -- Game:main_menu starts REAL at 12 when skipping the introductory splash.
 local state = {time=12,focused=0,hovered=0,muted=false,reduced=false,poll=0,ready=false}
 local shaders, sounds, controls = {}, {}, {}
+local soundVoices={}
 local menuTray,room,screen,popup,library,builder,sandbox,simulator
 local function collection() return state.page=='sandbox' and sandbox or state.page=='builder' and builder or library end
 local preferences=Preferences.new()
@@ -26,11 +27,15 @@ local menu = {
   {label='Decks', route='/decks', colour=T.paleGreen, description='Build your next winning hand'},
 }
 local quiet={paper1=0.35,multhit1=0.7,multhit2=0.7,coin1=0.6,coin3=0.6,glass2=0.5,cardFan2=0.5,whoosh=0.5,win=0.7,tarot2=0.4}
-local function sound(name,pitch,volume)
+local function sound(name,pitch,volume,sourceVolume)
   if state.muted then return end
   local s=sounds[name]
   if not s then return end
-  s:stop(); s:setPitch(pitch or 1); s:setVolume((quiet[name] or 0.6)*(volume or 1)*preferences.volume/100*preferences.effectsVolume/100); s:play()
+  -- Source-matched cues use PLAY_SOUND's absolute gain and can overlap an
+  -- already playing copy. Other callers retain their existing mix.
+  if sourceVolume and s:isPlaying() then s=s:clone();soundVoices[#soundVoices+1]=s else s:stop() end
+  local gain=sourceVolume and (volume or 1) or (quiet[name] or 0.6)*(volume or 1)
+  s:setPitch(pitch or 1);s:setVolume(gain*preferences.volume/100*preferences.effectsVolume/100);s:play()
 end
 local function announce(text) print('LUMINOUS:announce:'..text) end
 local function layout(w,h)
@@ -40,7 +45,7 @@ local function layout(w,h)
   virtualWidth,virtualHeight=portrait and 480 or 1280,portrait and 850 or 800
   layoutScale=math.min(w/virtualWidth,h/virtualHeight)
   offsetX,offsetY=(w-virtualWidth*layoutScale)/2,(h-virtualHeight*layoutScale)/2
-  room=Room.new(virtualWidth,virtualHeight)
+  room=Room.new(virtualWidth,virtualHeight,Screen.unit(w,h)/layoutScale)
   local buttonWidth,buttonHeight=portrait and 368 or 219,portrait and 68 or 93
   local gap,padding=portrait and 16 or 12,portrait and 14 or 12
   local menuWidth=portrait and buttonWidth or #menu*buttonWidth+(#menu-1)*gap
@@ -67,7 +72,7 @@ local function layout(w,h)
   if library then library:layout(virtualWidth,virtualHeight) end
   if builder then builder:layout(virtualWidth,virtualHeight) end
   if sandbox then sandbox:layout(virtualWidth,virtualHeight) end
-  if simulator then simulator:layout(virtualWidth,virtualHeight) end
+  if simulator then simulator:layout(virtualWidth,virtualHeight,Screen.unit(w,h)/layoutScale) end
   love.window.setTitle('Luminous - '..(state.page=='simulator' and 'Simulator' or state.page=='sandbox' and 'Sandbox' or state.page=='builder' and 'Deck builder' or state.page=='decks' and 'Decks' or 'Home'))
 end
 local function pointer(x,y)
@@ -190,7 +195,7 @@ function love.load()
   state.handCursor=love.mouse.getSystemCursor('hand')
   state.arrowCursor=love.mouse.getSystemCursor('arrow')
   for _,name in ipairs({'splash','background','CRT','dissolve','played'}) do shaders[name]=g.newShader('assets/shaders/'..name..'.fs') end
-  for _,name in ipairs({'button','music1','cardSlide1','highlight1','paper1','card1','cardSlide2','cardFan2','chips1','multhit1','multhit2','cancel','coin1','coin3','tarot2','whoosh','whoosh2','crumple1','crumple2','crumple3','crumple4','crumple5','generic1','win','glass2'}) do
+  for _,name in ipairs({'button','music1','cardSlide1','highlight1','paper1','card1','cardSlide2','cardFan2','chips1','multhit1','multhit2','cancel','coin1','coin3','tarot2','whoosh','whoosh2','crumple1','crumple2','crumple3','crumple4','crumple5','generic1','win','glass2','gold_seal'}) do
     if love.filesystem.getInfo('assets/sounds/'..name..'.ogg') then sounds[name]=love.audio.newSource('assets/sounds/'..name..'.ogg',name=='music1' and 'stream' or 'static') end
   end
   sounds.music1:setLooping(true); sounds.music1:setVolume(0.16)
@@ -218,7 +223,11 @@ function love.load()
     decks=function() print('LUMINOUS:page:decks') end,
     signin=function() openSettings(false,4); popup:openAuth('login') end,
   })
-  simulator=Simulator.new({command=function(command) print('LUMINOUS:simulator:'..command) end, feedback=function(name,pitch,volume) sound(name,pitch,volume) end, announce=announce, settings=function() openSettings() end, jiggle=function(amount) room.jiggle=room.jiggle+(amount or 1) end})
+  simulator=Simulator.new({command=function(command) print('LUMINOUS:simulator:'..command) end,
+    feedback=function(name,pitch,volume) sound(name,pitch,volume) end,
+    sourceFeedback=function(name,pitch,volume) sound(name,pitch,volume,true) end,
+    announce=announce,settings=function() openSettings() end,
+    jiggle=function(amount) room.jiggle=room.jiggle+(amount or 1) end})
   layout(g.getDimensions())
   browserState()
   state.ready=true
@@ -226,6 +235,11 @@ function love.load()
 end
 function love.resize(w,h) if scene then layout(w,h) end end
 function love.update(dt)
+  for i=#soundVoices,1,-1 do
+    local s=soundVoices[i]
+    if state.muted then s:stop() end
+    if not s:isPlaying() then s:release();table.remove(soundVoices,i) end
+  end
   account:update(dt)
   state.smoothedDt=math.min(0.8*(state.smoothedDt or 1/100)+0.2*dt,0.1)
   dt=state.smoothedDt

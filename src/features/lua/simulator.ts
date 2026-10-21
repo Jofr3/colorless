@@ -75,7 +75,7 @@ export interface SimCardAction {
 const RS = "\x1e";
 const US = "\x1f";
 const HINTS = {
-  "setup:chooseFirst": "The coin winner chooses who goes first.",
+  "setup:chooseFirst": "Choose who goes first.",
   "setup:place": "Drag a Basic Pokémon to your Active spot, then fill your Bench and press Ready.",
   "turn:action": "Attach Energy, play Trainers and Pokémon, then attack or end your turn.",
   "ko:takePrizes": "Take your Prize cards.",
@@ -297,7 +297,31 @@ export class LuaSimulator {
       this.persist();
     }
   }
+  private drawMulligansAutomatically() {
+    let drawn = false;
+    while (this.host?.game.phase.kind === "setup:drawExtra") {
+      const h = this.host;
+      const phase = h.game.phase;
+      if (phase.kind !== "setup:drawExtra") break;
+      const seat = h.viewerSeat;
+      const next = hostReducer(h, {
+        action: { type: "setupDrawExtra", seat, count: phase.owed[seat] },
+        at: Date.now(),
+      });
+      if (next.lastError || next.game === h.game) break;
+      this.host = next;
+      drawn = true;
+    }
+    if (drawn && this.host) {
+      // Treat the automatic draws as part of completing setup. History must
+      // not land on a pending draw and discard its recorded redo branch.
+      const steps = this.host.steps.filter((step) => step.game.phase.kind !== "setup:drawExtra");
+      this.host = { ...this.host, steps, stepIndex: steps.length - 1 };
+      this.persist();
+    }
+  }
   prompt(selectedCounterSource?: PokemonRef) {
+    this.drawMulligansAutomatically();
     this.takePrizesAutomatically();
     this.menuId++;
     const v = this.view();
@@ -604,11 +628,11 @@ export class LuaSimulator {
     if (p.kind === "setup:chooseFirst")
       return [
         {
-          ...this.action("Player 1 first", { type: "chooseFirstPlayer", seat, first: "p1" }),
+          ...this.action("P1 first", { type: "chooseFirstPlayer", seat, first: "p1" }),
           slot: "primary",
         },
         {
-          ...this.action("Player 2 first", { type: "chooseFirstPlayer", seat, first: "p2" }),
+          ...this.action("P2 first", { type: "chooseFirstPlayer", seat, first: "p2" }),
           slot: "primary",
         },
         {
@@ -624,19 +648,13 @@ export class LuaSimulator {
           slot: "minor",
         },
       ];
-    if (p.kind === "setup:drawExtra")
+    if (p.kind === "setup:place")
       return [
         {
-          ...this.action(`Draw ${p.owed}`, { type: "setupDrawExtra", seat, count: p.owed }),
+          ...this.action("Ready", { type: "setupReady", seat }, seat === "p2" ? "red" : "blue"),
           slot: "primary",
         },
-        {
-          ...this.action("Skip draw", { type: "setupDrawExtra", seat, count: 0 }, "red"),
-          slot: "minor",
-        },
       ];
-    if (p.kind === "setup:place")
-      return [{ ...this.action("Ready", { type: "setupReady", seat }), slot: "primary" }];
     if (p.kind === "turn:action") {
       // Attacks, Retreat and Abilities live on the Active card's attached
       // buttons; the panel keeps End turn and the undo/redo history.
@@ -645,16 +663,17 @@ export class LuaSimulator {
         type: "undoAction" | "redoAction" | "undoTurn" | "redoTurn",
       ): SimOption => ({
         label,
-        colour: "blue",
+        colour: "red",
         slot: "minor",
         disabled: stepTarget(h, type) === null,
         run: () => this.history(type),
       });
       return [
         { ...this.action("End turn", { type: "endTurn", seat }, "red"), slot: "primary" },
-        history("Undo action", "undoAction"),
-        history("Redo action", "redoAction"),
         history("Undo turn", "undoTurn"),
+        history("Undo action", "undoAction"),
+        { label: "New game", colour: "red", slot: "minor", run: () => this.command("new") },
+        history("Redo action", "redoAction"),
         history("Redo turn", "redoTurn"),
       ];
     }
@@ -995,8 +1014,7 @@ export class LuaSimulator {
             ? "Your turn"
             : "Choose your next move";
     let hint = v ? (HINTS[v.phase.kind as keyof typeof HINTS] ?? "") : "Choose two decks to start.";
-    if (v?.phase.kind === "setup:drawExtra")
-      hint = `Your opponent mulliganed. Draw up to ${v.phase.owed} extra card${v.phase.owed === 1 ? "" : "s"}.`;
+    if (v?.phase.kind === "setup:drawExtra") hint = "Drawing mulligan bonus cards.";
     if (v?.phase.kind === "ko:takePrizes")
       hint = `Take ${v.phase.count} Prize card${v.phase.count === 1 ? "" : "s"}.`;
     if (v?.phase.kind === "effect:choose" && v.phase.prompt?.note) hint = v.phase.prompt.note;

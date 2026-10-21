@@ -101,7 +101,10 @@ function Overlay:layout()
   elseif self.kind=='gameover' then w,h=p and 456 or 720,p and 620 or 560
   elseif self.kind=='log' then w,h=p and 456 or 760,p and 760 or 640
   elseif self.kind=='coin' then w,h=p and 420 or 560,p and 440 or 400
-  elseif self.kind=='options' then w,h=p and 400 or 520,p and 520 or 500
+  elseif self.kind=='options' then
+    -- create_UIBox_generic_options + UIBox:calculate_xywh: content minw 7,
+    -- body padding 0.2 on each side, then outline padding 0.07 on each side.
+    w,h=p and 400 or (7+2*0.2+2*0.07)*sim.viewportUnit,p and 274 or 254
   else
     -- Sized to the rows it holds: title band, note lines, up to seven
     -- 50px option rows, the page cycle, footer row and the Back button.
@@ -243,19 +246,16 @@ function Overlay:build(keepCards)
     if self.pages>1 then self:add('<',x+w/2-150,bottom-48,34,36,'prev',T.red);self:add('>',x+w/2+116,bottom-48,34,36,'next',T.red) end
     back()
   elseif kind=='options' then
-    local top=y+78
-    local col=bw
-    self:add('Settings',x+24,top,col,42,'settings',T.red,{fontSize=27})
-    self:add('Game log',x+24,top+54,col,42,'log',T.blue,{fontSize=27})
-    local canBack=(sim.turnIndex or 0)>0
-    local canFwd=(sim.turnIndex or 0)<(sim.turnCount or 1)-1
-    self:add('<',x+24,top+128,42,42,'historyPrevious',T.red,{disabled=not canBack,fontSize=28})
-    self:add('>',x+w-66,top+128,42,42,'historyNext',T.red,{disabled=not canFwd,fontSize=28})
-    self.historyLabel='Step '..tostring((sim.turnIndex or 0)+1)..' of '..tostring(math.max(1,sim.turnCount or 1))
-    self:add('New game',x+24,top+192,col,42,'new',T.red,{fontSize=27})
-    self:add('Concede',x+24,top+246,col,42,'concede',T.red,{fontSize=27,disabled=sim.phase~='ready' or sim.outcome~=''})
-    self:add('Save & back to menu',x+24,top+300,col,42,'leave',T.orange,{fontSize=25})
-    back('Back','back')
+    local top=y+24
+    -- create_UIBox_options uses minw 5; set_wh expands Back to the
+    -- generic menu's 7-tile content width. Portrait keeps its compact UI.
+    local col=p and bw*5/7 or 5*sim.viewportUnit
+    local left=x+(w-col)/2
+    self:add('Settings',left,top,col,42,'settings',T.red,{fontSize=27})
+    self:add('New game',left,top+54,col,42,'new',T.red,{fontSize=27})
+    self:add('Main menu',left,top+108,col,42,'leave',T.red,{fontSize=27})
+    local backWidth=p and bw or 7*sim.viewportUnit
+    self:add('Back',x+(w-backWidth)/2,bottom,backWidth,38,'back',T.orange,{fontSize=26})
   elseif kind=='inspect' then
     local item=d.item
     local scale=p and 1.2 or 1.62
@@ -364,10 +364,7 @@ function Overlay:activate(i)
     self:changePage(a=='prev' and -1 or 1)
   elseif a=='settings' then sim:closeOverlay();sim.callbacks.settings()
   elseif a=='log' then sim:command('log')
-  elseif a=='historyPrevious' then sim:command('history','previous')
-  elseif a=='historyNext' then sim:command('history','next')
   elseif a=='new' then sim:command('new')
-  elseif a=='concede' then sim:command('concede')
   elseif a=='newgame' then sim:command('newgame')
   elseif a=='leave' then sim:command('leave')
   elseif a=='peek' then sim.peek=true
@@ -416,7 +413,7 @@ function Overlay:draw(shaders)
   g.push();g.translate(0,self:offset())
   frame(x,y,w,h)
   local kind=self.kind
-  if kind~='inspect' and kind~='gameover' and (d.title or '')~='' then self.titleText:draw(x+w/2,y+38,rw) end
+  if kind~='inspect' and kind~='gameover' and kind~='options' and (d.title or '')~='' then self.titleText:draw(x+w/2,y+38,rw) end
   if kind=='list' then
     local top=y+74
     for i=1,math.min(4,#(self.noteLines or {})) do Dyna.static(self.noteLines[i],0.3,x+32,top+(i-1)*18,w-64,18,JOKER_GREY,{roomWidth=rw}) end
@@ -486,12 +483,6 @@ function Overlay:draw(shaders)
       end
     end
     if self.pages>1 then cycle(self,x+w/2-112,y+h-54-48,224,36) end
-  elseif kind=='options' then
-    -- create_option_cycle: embossed red centre between the two arrows.
-    local cx,cw=x+72,w-144
-    Button.cycleFace(cx,y+78+128,cw,42,false)
-    Dyna.static(self.historyLabel or '',0.4,cx,y+78+128,cw,42,T.white,{roomWidth=rw})
-    Dyna.static('Rewind the game',0.26,x+72,y+78+108,w-144,14,JOKER_GREY,{roomWidth=rw,shadow=false})
   elseif kind=='inspect' then
     local item=d.item
     Dyna.static(item.name,0.5,x+24,y+8,w-48,30,T.white,{roomWidth=rw,fit=true})
