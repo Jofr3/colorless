@@ -806,4 +806,23 @@ do
   end
   assert(checked==3,'Both named players and Random get identical feedback')
 end
+-- Same-page restarts retain the old table until the shared screen wipe
+-- commits, coalesce incoming snapshots, and discard the queued state on close.
+do
+  local commit,transitions
+  transitions=0
+  sim.callbacks.transition=function(fn) transitions=transitions+1;commit=fn;return true end
+  local function match(rev,id)
+    local raw=snapshot(rev)
+    return raw:gsub('\n','\t'..id..'\n',1)
+  end
+  sim:open(false);sim:sync(match(900,'first'))
+  local old=sim.raw
+  sim:sync(match(901,'second'));sim:sync(match(902,'second'))
+  assert(transitions==1 and sim.raw==old and sim.matchId=='first','Restart must not expose the new table before coverage')
+  commit()
+  assert(sim.matchId=='second' and sim.revision==902 and not sim.wipeRaw,'Commit must consume the latest snapshot exactly once')
+  sim:sync(match(903,'third'));sim:open(false);commit()
+  assert(sim.matchId==nil and not sim.wipeRaw,'A canceled restart must not resurrect a closed table')
+end
 print('PASS: Lua simulator interactions, setup feedback, hand/Bench reordering, KO animations and delayed handoffs in both layouts')

@@ -2,6 +2,7 @@ local T = require('ui.theme')
 local Button = require('ui.button')
 local Room = require('ui.room')
 local Screen = require('ui.screen')
+local ScreenWipe = require('ui.screen_wipe')
 local Preferences = require('ui.preferences')
 local Settings = require('ui.settings')
 local Account = require('ui.account')
@@ -19,7 +20,8 @@ local menuTray,room,screen,popup,library,builder,sandbox,simulator
 local function collection() return state.page=='sandbox' and sandbox or state.page=='builder' and builder or library end
 local preferences=Preferences.new()
 local account=Account.new()
-local openSettings,closeSettings,applyPreferences
+local openSettings,closeSettings,applyPreferences,startWipe,applyPage,requestPage,cancelInteractions
+local wipe,pendingPage
 local scene, width, height, layoutScale, offsetX, offsetY, virtualWidth, virtualHeight
 local menu = {
   {label='Sandbox', route='/simulator', colour=T.blue, description='Experiment with your decks'},
@@ -73,6 +75,7 @@ local function layout(w,h)
   if builder then builder:layout(virtualWidth,virtualHeight) end
   if sandbox then sandbox:layout(virtualWidth,virtualHeight) end
   if simulator then simulator:layout(virtualWidth,virtualHeight,Screen.unit(w,h)/layoutScale) end
+  if wipe then wipe:layout(virtualWidth,virtualHeight,Screen.unit(w,h)/layoutScale,w/layoutScale,h/layoutScale) end
   love.window.setTitle('Luminous - '..(state.page=='simulator' and 'Simulator' or state.page=='sandbox' and 'Sandbox' or state.page=='builder' and 'Deck builder' or state.page=='decks' and 'Decks' or 'Home'))
 end
 local function pointer(x,y)
@@ -94,6 +97,51 @@ local function hit(x,y)
   for i,b in ipairs(controls) do if Button.hit(b,x,y) then return #menu+i end end
   return 0
 end
+-- Keep the outgoing page alive until the opaque square covers it. New
+-- browser-history requests replace a pending destination instead of stacking
+-- transitions or leaving a stale callback able to reopen an old game.
+applyPage=function(page,deckId)
+  if state.page=='builder' then builder:command('close') end
+  if state.page=='sandbox' then sandbox:command('close') end
+  if state.page=='simulator' then simulator:command('close') end
+  state.deckId=deckId
+  if popup then closeSettings() end
+  state.page=page;state.leaving=nil;state.pressed=nil;state.focused=0
+  love.window.setTitle('Luminous - '..(page=='simulator' and 'Simulator' or page=='sandbox' and 'Sandbox' or page=='builder' and 'Deck builder' or page=='decks' and 'Decks' or 'Home'))
+  if page=='simulator' then
+    library:command('close');simulator:open(state.reduced)
+  elseif page=='builder' then
+    library:command('close');builder:open(state.reduced,deckId);print('LUMINOUS:account:refresh')
+  elseif page=='sandbox' then
+    library:command('close');sandbox:open(state.reduced);print('LUMINOUS:account:refresh')
+  elseif page=='decks' then
+    library:open(state.reduced);print('LUMINOUS:account:refresh')
+  else library:closeModal();library:command('close') end
+end
+startWipe=function(callback)
+  if wipe then return false end
+  state.pressed=nil;state.hovered=0;state.focused=0
+  -- Clear held interactions so an old drag cannot move during the wipe.
+  cancelInteractions()
+  local colour=state.page=='simulator' and simulator:backgroundColours()[2] or T.panel
+  wipe=ScreenWipe.new(callback,colour,state.reduced,function(name,pitch,volume) sound(name,pitch,volume,true) end)
+  wipe:layout(virtualWidth,virtualHeight,Screen.unit(width,height)/layoutScale,width/layoutScale,height/layoutScale)
+  print('LUMINOUS:transition:open')
+  return true
+end
+requestPage=function(page,deckId)
+  pendingPage={page=page,deckId=deckId}
+  if wipe then return end
+  local function commit()
+    local destination=pendingPage;pendingPage=nil
+    if destination and (destination.page~=state.page or destination.deckId~=state.deckId) then
+      applyPage(destination.page,destination.deckId)
+    end
+  end
+  if state.ready and page~=state.page and (page=='simulator' or state.page=='simulator') then
+    startWipe(commit)
+  else commit() end
+end
 local function browserState()
   -- A tiny host-to-Lua mailbox. All rendering and interaction remain in Lua.
   if not love.filesystem.getInfo('__viewport.txt') then return end
@@ -113,24 +161,7 @@ local function browserState()
       state.pageRaw=pageRaw
       local fields=Account.fields(pageRaw)
       local page=fields[2]
-      if page~=state.page or (page=='builder' and fields[3]~=state.deckId) then
-        if state.page=='builder' then builder:command('close') end
-        if state.page=='sandbox' then sandbox:command('close') end
-        if state.page=='simulator' then simulator:command('close') end
-        state.deckId=fields[3]
-        if popup then closeSettings() end
-        state.page=page; state.leaving=nil; state.pressed=nil; state.focused=0
-        love.window.setTitle('Luminous - '..(page=='simulator' and 'Simulator' or page=='sandbox' and 'Sandbox' or page=='builder' and 'Deck builder' or page=='decks' and 'Decks' or 'Home'))
-        if page=='simulator' then
-          library:command('close');simulator:open(state.reduced)
-        elseif page=='builder' then
-          library:command('close'); builder:open(state.reduced,fields[3]); print('LUMINOUS:account:refresh')
-        elseif page=='sandbox' then
-          library:command('close'); sandbox:open(state.reduced); print('LUMINOUS:account:refresh')
-        elseif page=='decks' then
-          library:open(state.reduced); print('LUMINOUS:account:refresh')
-        else library:closeModal(); library:command('close') end
-      end
+      requestPage(page,fields[3])
     end
   end
   request=tonumber(request) or 0
@@ -159,7 +190,7 @@ closeSettings=function()
   announce('Settings closed')
 end
 openSettings=function(keyboard,tab)
-  if popup then return end
+  if popup or wipe then return end
   keyboard=keyboard or state.focused>0
   state.pressed=nil; state.focused=0; state.hovered=0
   room.jiggle=room.jiggle+1
@@ -223,7 +254,7 @@ function love.load()
     decks=function() print('LUMINOUS:page:decks') end,
     signin=function() openSettings(false,4); popup:openAuth('login') end,
   })
-  simulator=Simulator.new({command=function(command) print('LUMINOUS:simulator:'..command) end,
+  simulator=Simulator.new({transition=function(callback) return startWipe(callback) end,command=function(command) print('LUMINOUS:simulator:'..command) end,
     feedback=function(name,pitch,volume) sound(name,pitch,volume) end,
     sourceFeedback=function(name,pitch,volume) sound(name,pitch,volume,true) end,
     announce=announce,settings=function() openSettings() end,
@@ -250,12 +281,19 @@ function love.update(dt)
   -- Game:update applies canvas juice before advancing REAL/REAL_SHADER.
   state.time=state.time+dt
   screen:update(state.time,offsetX+room.cursorX*layoutScale,offsetY+room.cursorY*layoutScale,state.reduced,preferences)
+  if wipe and wipe:update(dt) then
+    wipe:release();wipe=nil
+    print('LUMINOUS:transition:closed')
+    if pendingPage then requestPage(pendingPage.page,pendingPage.deckId) end
+  end
   local mx,my=pointer(love.mouse.getPosition())
+  if wipe then mx,my=-1000,-1000 end
   if state.page=='simulator' then simulator:update(dt,state.time,popup and -1000 or mx,popup and -1000 or my,state.reduced) end
   if state.page=='decks' or state.page=='builder' or state.page=='sandbox' then
     local lx,ly=libraryPoint(mx,my)
     collection():update(dt,state.time,popup and -1000 or lx,popup and -1000 or ly,state.reduced)
   end
+  if wipe then love.mouse.setCursor(state.arrowCursor);return end
   if popup then
     if love.filesystem.getInfo('__account.txt') then
       local previousMessage=account.message
@@ -349,6 +387,10 @@ function love.draw()
     popup:draw()
     g.pop()
   end
+  if wipe then
+    g.push();g.translate(offsetX,offsetY);g.scale(layoutScale);room:apply()
+    wipe:draw(shaders,state.page=='simulator' and simulator:backgroundColours()[2] or T.panel);g.pop()
+  end
   g.setCanvas()
   screen:draw(scene)
 end
@@ -357,7 +399,7 @@ local function unlockAudio()
   if not state.muted and not sounds.music1:isPlaying() then sounds.music1:play() end
 end
 function love.mousepressed(x,y,button)
-  if button~=1 then return end
+  if button~=1 or wipe then return end
   unlockAudio(); state.focused=0
   x,y=pointer(x,y)
   if popup then popup:mousepressed(x,y); return end
@@ -366,7 +408,7 @@ function love.mousepressed(x,y,button)
   state.pressed=hit(x,y)
 end
 function love.mousereleased(x,y,button)
-  if button~=1 then return end
+  if button~=1 or wipe then return end
   x,y=pointer(x,y)
   if popup then popup:mousereleased(x,y); return end
   if state.page=='simulator' then simulator:mousereleased(x,y);return end
@@ -375,6 +417,7 @@ function love.mousereleased(x,y,button)
   state.pressed=nil
 end
 function love.keypressed(key)
+  if wipe then return end
   unlockAudio()
   if popup then popup:keypressed(key); return end
   if state.page=='simulator' then simulator:keypressed(key);return end
@@ -395,10 +438,7 @@ function love.keypressed(key)
     state.focused=0; state.pressed=nil
   end
 end
-function love.focus(focused)
-  state.windowFocused=focused
-  if not focused then
-    sounds.music1:pause()
+cancelInteractions=function()
     state.pressed=nil
     if popup then popup.drag=nil; popup.pressed=nil end
     if builder then
@@ -415,12 +455,19 @@ function love.focus(focused)
       library.drag=nil; library.pressed=nil
       for _,card in ipairs(library.cards) do card.dragging=false end
     end
+end
+function love.focus(focused)
+  state.windowFocused=focused
+  if not focused then
+    sounds.music1:pause()
+    cancelInteractions()
   elseif state.audioUnlocked and not state.muted then
     sounds.music1:play()
   end
 end
 
 function love.wheelmoved(x,y)
+  if wipe then return end
   if state.page=='simulator' and not popup then simulator:wheelmoved(y);return end
   if (state.page=='decks' or state.page=='builder' or state.page=='sandbox') and not popup then collection():wheelmoved(y) end
 end

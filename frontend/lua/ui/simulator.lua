@@ -48,6 +48,7 @@ function Simulator:command(...)
   self.callbacks.command(table.concat(fields,'\t'))
 end
 function Simulator:open(reduced,skipCommand)
+  self.wipeRaw=nil
   self:cancelKoPresentation()
   self.attachedPopup=nil;self.closingPopup=nil
   self.prizeMotion={}
@@ -280,13 +281,25 @@ function Simulator:updateKoPresentation(dt,time,reduced)
 end
 function Simulator:sync(raw,finishKo)
   if not raw then return end
+  if self.wipeRaw then self.wipeRaw=raw;return end
   local pending=self.koPresentation
   if (pending and raw==pending.raw) or (not pending and raw==self.raw) then return end
   local rows=fieldsOf(raw)
   local f=rows[1];if not f then return end
   -- A same-deck restart is a fresh table, even though card UIDs are reused.
   if f[21] and f[21]~='' then
-    if self.matchId and self.matchId~=f[21] then self:open(self.reduced,true) end
+    if self.matchId and self.matchId~=f[21] then
+      if self.callbacks.transition then
+        local accepted=self.callbacks.transition(function()
+          local latest=self.wipeRaw
+          if not latest then return end
+          self:open(self.reduced,true)
+          self:sync(latest)
+        end)
+        if accepted then self.wipeRaw=raw;return end
+      end
+      self:open(self.reduced,true)
+    end
     self.matchId=f[21]
   end
   if self.koPresentation then
@@ -944,7 +957,7 @@ function Simulator:build()
     if not cl.horizontal then y=y+44+gap end
     for i,entry in ipairs({{'Undo turn','rewind'},{'Undo action','undo'},{'New game','restart'},{'Redo action','redo'},{'Redo turn','fast_forward'}}) do
       local action=history[entry[1]]
-      self:add(action.label,x+(i-1)*(size+gap),y,size,size,'invoke',T.red,
+      self:add(action.label,x+(i-1)*(size+gap),y,size,size,'invoke',entry[2]=='restart' and T.gold or T.red,
         {token=action.token,disabled=action.disabled,icon=entry[2]})
     end
   elseif cl.horizontal then

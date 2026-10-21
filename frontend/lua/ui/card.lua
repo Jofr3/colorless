@@ -156,6 +156,7 @@ function Card:draw(shaders,time,mx,my,reduced,roomWidth)
   local scale=self.motion.VT.scale
   local resolution=self.item.resolution or 1
   local sx,sy=CARD_W*self.unit/W*scale/resolution,CARD_H*self.unit/H*scale/resolution
+  sx=sx*(self.flipScale or 1)
   -- Balatro Card:draw's greyed deck-view cards use played.fs directly, with
   -- no shadow or ordinary face beneath its translucent, desaturated artwork.
   if self.greyed then

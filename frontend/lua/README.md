@@ -104,6 +104,57 @@ Face-down cards fit their original back sprites to the same outer bounds.
 
 ## Card fidelity checks
 
+Game entry, same-deck New game, and leaving the simulator use
+`ui/screen_wipe.lua`, traced through Balatro's `wipe_on`/`wipe_off` in
+`functions/button_callbacks.lua`, `engine/event.lua`, `engine/particles.lua`,
+`Moveable:move_wh`, and `Card:start_dissolve`. One opaque, randomly rotated
+square grows and contracts with the original triangular 40-tile, 1.7-second
+envelope. Its colour follows the scene's background colour over 0.6 seconds.
+Artwork loaded while browsing/editing decks or playing is saved as resized PNGs
+in IndexedDB (`src/features/lua/artworkCache.ts`). The disk pool and shuffle
+history survive page reloads. Its 128 MiB byte budget evicts the least recently
+used artwork when necessary; there is no 64-card limit on this pool. The existing
+64-image WASM working cache remains separate. Builder/game loads reuse disk
+images before downloading them again.
+
+Transitions randomly draw unseen cards from the disk pool, then begin another
+cycle without an immediate repeat. The host prepares only one PNG in WASM;
+Lua acknowledges it after retaining its GPU image and border, then the host
+releases that file and prepares the next one. Merely preparing a card does not
+mark it shown. New images join the pool, and a flip or resize cannot lose the
+selected artwork. If storage is unavailable or still loading, selection falls
+back to the working cache, then the eight bundled scans. Browser storage remains
+subject to browser quota/eviction and clearing site data. The card uses the
+shared Pokémon frame/proportions, original face-down back, juice,
+eight-widths-per-second flip, and unchanged dissolve shader,
+BLACK/ORANGE/GOLD/RED embers and sounds.
+
+The source's `before` event starts the flip immediately and blocks the scene
+change for 0.7 seconds. Nominal burn/removal times are 1.25/1.8 seconds;
+Balatro's event queue adds frame-sized scheduling delays. The overlay is drawn
+above popups inside the room/CRT pass. Input stays locked until removal;
+history requests before coverage replace the pending destination. Tall or
+ultrawide viewports enlarge the square just enough to cover every corner.
+Reduced Motion skips the animation and its sounds. Resizing preserves progress.
+
+`frontend/lua/tests/artwork_cache.js` exercises real browser IndexedDB with 80
+cards, reopening, persistent shuffle history, concurrent downloads, byte-budget
+eviction, replacements and blocked storage. With Vite running, open
+`http://127.0.0.1:5175/lua/host.css` in an isolated agent-browser session and run
+`agent-browser --session <name> eval --stdin < frontend/lua/tests/artwork_cache.js`.
+The plain-text page avoids running the game loop during this storage-only test.
+
+`luajit frontend/lua/tests/transition_art.lua` checks cached selection, shuffle
+cycles, new arrivals, eviction and the bundled fallback.
+`luajit frontend/lua/tests/screen_wipe.lua` executes the original event and
+particle code at 30/60/120/144 FPS and checks timing, square motion, viewport
+coverage, resize and reduced motion. Run
+`luajit frontend/lua/tests/screen_wipe_navigation.lua` for covered page changes,
+input locking and history routing; the simulator tests also cover deferred
+same-deck restarts and replacement snapshots. The scans are bundled so the first
+transition works without a network request; their source URLs are recorded in
+`assets/transition_cards/SOURCES.md` and their hashes in the build manifest.
+
 With LuaJIT installed, run from the repository root:
 
 ```sh

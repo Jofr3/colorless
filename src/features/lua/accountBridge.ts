@@ -5,6 +5,9 @@ import { LuaSimulator } from "./simulator";
 import { LuaSandbox } from "./sandbox";
 import { launchSandbox } from "./sandboxLaunch";
 import { setSessionRecoveryHandler } from "../../lib/api";
+import { ArtworkCache } from "./artworkCache";
+
+window.luminousArtworkCache = new ArtworkCache();
 
 const builder = new LuaBuilder(
   (snapshot) =>

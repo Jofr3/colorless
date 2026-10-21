@@ -5,6 +5,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  readdirSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -37,9 +38,14 @@ const assets = [
   ].map((n) => `sounds/${n}.ogg`),
 ];
 try {
-  for (const name of ["conf.lua", "main.lua", "ui"])
+  for (const name of ["conf.lua", "main.lua", "ui", "assets"])
     cpSync(join(here, name), join(stage, name), { recursive: true });
   const manifest = {};
+  for (const name of readdirSync(join(here, "assets/transition_cards"))) {
+    if (!name.endsWith(".png")) continue;
+    manifest[`transition_cards/${name}`] = createHash("sha256")
+      .update(readFileSync(join(here, "assets/transition_cards", name))).digest("hex");
+  }
   for (const asset of assets) {
     const from = join(source, "resources", asset);
     const to = join(stage, "assets", asset);

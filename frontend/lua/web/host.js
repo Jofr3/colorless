@@ -30,6 +30,7 @@ document.addEventListener("luminous:account-state", (event) => {
 });
 document.addEventListener("luminous:account-ready", () => {
   accountReady = true;
+  void prepareTransitionArt();
   for (const command of pendingLibraryCommands.splice(0)) libraryCommand(command);
   for (const command of pendingBuilderCommands.splice(0)) builderCommand(command);
   for (const command of pendingSandboxCommands.splice(0)) sandboxCommand(command);
@@ -319,6 +320,12 @@ globalThis.Module = {
       document.getElementById("loading").style.display = "none";
       document.title = `Luminous — ${currentPage === "simulator" ? "Simulator" : currentPage === "sandbox" ? "Sandbox" : currentPage === "builder" ? "Deck builder" : libraryPage ? "Decks" : "Home"}`;
       canvas.focus({ preventScroll: true });
+    } else if (message.startsWith("LUMINOUS:transition-art:")) {
+      const [, action, token] = message.match(/^LUMINOUS:transition-art:(used|invalid):(\d+)$/) || [];
+      if (token) void consumeTransitionArt(Number(token), action === "invalid");
+    } else if (message.startsWith("LUMINOUS:transition:")) {
+      transitionOpen = message.endsWith(":open");
+      syncModalAccessibility();
     } else if (message.startsWith("LUMINOUS:page:")) {
       setPage(message.slice("LUMINOUS:page:".length));
     } else if (message.startsWith("LUMINOUS:builder:")) {
@@ -407,6 +414,7 @@ globalThis.startLuminous = () => {
   Love(Module)
     .then((module) => {
       runtime = module;
+      void prepareTransitionArt();
       syncPage();
       if (accountSnapshot) writeMailbox("__account.txt", accountSnapshot);
       if (new URLSearchParams(location.search).has("account")) {
@@ -475,8 +483,10 @@ let currentPage = new URLSearchParams(location.search).get("page") || "home";
 let builderId = new URLSearchParams(location.search).get("deck") || "";
 let libraryPage = ["decks","builder","sandbox","simulator"].includes(currentPage);
 let pageRevision = 0;
+let transitionOpen = false;
 function syncModalAccessibility() {
-  document.querySelector(".accessible-menu").inert = settingsOpen || libraryPage;
+  document.querySelector(".accessible-menu").inert = settingsOpen || libraryPage || transitionOpen;
+  canvas.setAttribute("aria-busy", String(transitionOpen));
   if (settingsOpen || (libraryPage && currentPage !== "simulator")) {
     canvas.setAttribute("role", "dialog");
     canvas.setAttribute("aria-modal", "true");
@@ -624,16 +634,51 @@ for(const type of ["keydown","keyup","keypress"])window.addEventListener(type,ev
 const artCache=new Map(), artPending=new Set(), artFailed=new Map();
 let artRevision=0, artSerial=0, artActive=0, wantedArt=[];
 function publishArt(){writeMailbox("__builder_art.txt",[++artRevision,...[...artCache].map(([id,path])=>[id,path].map(encodeURIComponent).join("\t"))].join("\n"));}
+// The full pool stays in IndexedDB. Stage one PNG for the next transition;
+// Lua acknowledges it only after retaining the image and border on the GPU.
+let transitionArt=null, transitionArtSerial=0, transitionPreparing=null, transitionConsuming=false;
+async function prepareTransitionArt() {
+  const cache=window.luminousArtworkCache;
+  if(!runtime||!cache||transitionArt||transitionConsuming)return;
+  if(transitionPreparing)return transitionPreparing;
+  transitionPreparing=(async()=>{
+    const selected=await cache.pick();if(!selected)return;
+    const bytes=new Uint8Array(await selected.blob.arrayBuffer());
+    const token=++transitionArtSerial,path=`__transition_art_${token}.png`;
+    runtime.FS_createDataFile("/",path,bytes,true,true);
+    transitionArt={token,id:selected.id,path};
+    writeMailbox("__transition_art.txt",[token,selected.id,path].map(encodeURIComponent).join("\t"));
+  })().catch(()=>{}).finally(()=>{transitionPreparing=null;});
+  return transitionPreparing;
+}
+async function consumeTransitionArt(token,invalid) {
+  if(!transitionArt||transitionArt.token!==token)return;
+  transitionConsuming=true;
+  const selected=transitionArt;transitionArt=null;
+  writeMailbox("__transition_art.txt","");
+  try{runtime.FS_unlink(`/${selected.path}`);}catch{}
+  const cache=window.luminousArtworkCache;
+  try {
+    if(invalid)await cache?.remove(selected.id);
+    else await cache?.markShown(selected.id);
+  } finally {transitionConsuming=false;}
+  await prepareTransitionArt();
+}
 async function loadArt(card) {
   artActive++;artPending.add(card.id);
   try {
-    const response=await fetch(card.url);if(!response.ok)throw Error("art");
-    const bitmap=await createImageBitmap(await response.blob());
-    // Twice card_dimensions.lua's 136×187 artwork area (the scan's 8:11
-    // ratio), excluding the equal inset added by the Lua frame renderer.
-    const c=document.createElement("canvas");c.width=272;c.height=374;
-    c.getContext("2d").drawImage(bitmap,0,0,c.width,c.height);bitmap.close();
-    const blob=await new Promise(resolve=>c.toBlob(resolve,"image/png"));
+    const cache=window.luminousArtworkCache;
+    let blob=await cache?.get(card.id);
+    if(!blob){
+      const response=await fetch(card.url);if(!response.ok)throw Error("art");
+      const bitmap=await createImageBitmap(await response.blob());
+      // Twice card_dimensions.lua's 136×187 artwork area (the scan's 8:11
+      // ratio), excluding the equal inset added by the Lua frame renderer.
+      const c=document.createElement("canvas");c.width=272;c.height=374;
+      c.getContext("2d").drawImage(bitmap,0,0,c.width,c.height);bitmap.close();
+      blob=await new Promise(resolve=>c.toBlob(resolve,"image/png"));
+      if(blob&&cache)void cache.put(card.id,blob).then(()=>prepareTransitionArt());
+    }
     if(!runtime||!blob)throw Error("art");
     const path=`__card_art_${++artSerial}.png`;
     runtime.FS_createDataFile("/",path,new Uint8Array(await blob.arrayBuffer()),true,true);

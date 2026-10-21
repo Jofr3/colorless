@@ -13,10 +13,11 @@ local palette={
 }
 Dissolve.duration=0.7
 Dissolve.removeAfter=1.05*Dissolve.duration
-function Dissolve.new(card,time)
-  card.dissolve=0;card.burn1=palette[1];card.burn2=palette[2]
-  card:juiceUp(time)
-  return setmetatable({start=time,lastEmission=-0.007,particles={},alpha=1},Dissolve)
+function Dissolve.new(card,time,colours,reduced)
+  colours=colours or palette
+  card.dissolve=0;card.burn1=colours[1];card.burn2=colours[2]
+  card:juiceUp(time,nil,nil,reduced)
+  return setmetatable({start=time,lastEmission=-0.007,particles={},alpha=1,colours=colours},Dissolve)
 end
 function Dissolve:update(card,dt,time)
   local age=math.max(0,time-self.start)
@@ -32,7 +33,7 @@ function Dissolve:update(card,dt,time)
     self.particles[#self.particles+1]={
       x=x,y=y,dir=love.math.random()*2*math.pi,facing=love.math.random()*2*math.pi,
       age=0,velocity=2*love.math.random()*0.7,rvel=0.2*(0.5-love.math.random()),
-      colour=palette[math.floor(love.math.random()*#palette)+1],scale=0,
+      colour=self.colours[math.floor(love.math.random()*#self.colours)+1],scale=0,
     }
   end
   for i=#self.particles,1,-1 do
