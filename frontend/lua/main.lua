@@ -11,12 +11,13 @@ local Builder = require('ui.builder')
 local Sandbox = require('ui.sandbox')
 local Simulator = require('ui.simulator')
 local Modal = require('ui.modal')
+local MenuLogo = require('ui.menu_logo')
 local g = love.graphics
 -- Game:main_menu starts REAL at 12 when skipping the introductory splash.
 local state = {time=12,focused=0,hovered=0,muted=false,reduced=false,poll=0,ready=false}
 local shaders, sounds, controls = {}, {}, {}
 local soundVoices={}
-local menuTray,room,screen,popup,library,builder,sandbox,simulator
+local menuTray,room,screen,popup,library,builder,sandbox,simulator,menuLogo
 local function collection() return state.page=='sandbox' and sandbox or state.page=='builder' and builder or library end
 local preferences=Preferences.new()
 local account=Account.new()
@@ -223,6 +224,7 @@ local function activate(index)
 end
 function love.load()
   g.setDefaultFilter('nearest','nearest')
+  menuLogo=MenuLogo.new()
   state.handCursor=love.mouse.getSystemCursor('hand')
   state.arrowCursor=love.mouse.getSystemCursor('arrow')
   for _,name in ipairs({'splash','background','CRT','dissolve','played'}) do shaders[name]=g.newShader('assets/shaders/'..name..'.fs') end
@@ -347,14 +349,16 @@ function love.draw()
   room:apply()
   if state.page=='simulator' then simulator:draw(shaders) else
   local portrait=virtualWidth<600
-  local titleY=portrait and 55 or 145
-  local titleSize=portrait and 78 or 136
-  g.push(); g.translate(virtualWidth/2,titleY+titleSize/2)
+  -- Like Game:main_menu's SPLASH_LOGO, the lettering is a painted sprite.
+  -- Draw inside the room/CRT pass so scanlines and fringing stay live.
+  local logoWidth,logoHeight=menuLogo:getDimensions()
+  local logoScale=(portrait and 440 or 900)/logoWidth
+  g.push(); g.translate(virtualWidth/2,portrait and 148 or 215)
   if not state.reduced then g.rotate(math.sin(state.time*0.6)*0.012) end
-  T.text('LUMINOUS',titleSize,-virtualWidth/2,-titleSize/2+5,virtualWidth,T.ink)
-  T.text('LUMINOUS',titleSize,-virtualWidth/2,-titleSize/2,virtualWidth,T.white)
+  g.setColor(1,1,1)
+  g.draw(menuLogo,0,0,0,logoScale,logoScale,logoWidth/2,logoHeight/2)
   g.pop()
-  T.text('Pick your next move',portrait and 23 or 28,0,portrait and 146 or 300,virtualWidth,T.paper)
+  T.text('Pick your next move',portrait and 23 or 28,0,portrait and 246 or 370,virtualWidth,T.paper)
   Button.tray(menuTray.x,menuTray.y,menuTray.w,menuTray.h)
   for i,b in ipairs(menu) do button(b,i) end
   -- Profile-style inset buttons, with 0.2-tile padding and no extra heading.

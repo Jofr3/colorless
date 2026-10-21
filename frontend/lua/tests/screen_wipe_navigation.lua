@@ -3,7 +3,9 @@ package.path='frontend/lua/?.lua;'..package.path
 local noop=function()end
 local files={['__viewport.txt']='1280 800 0 0 0 0',['__page.txt']='1\thome\t'}
 local image={release=noop,setFilter=noop,getDimensions=function()return 1850,800 end,getWidth=function()return 245 end,getHeight=function()return 337 end}
-local shader={send=noop,hasUniform=function()return true end}
+local shader={send=noop,release=noop,hasUniform=function()return true end}
+-- Logo loading is exercised separately; this test owns routing.
+package.loaded['ui.menu_logo']={new=function()return image end}
 local audio=setmetatable({isPlaying=function()return false end},{__index=function()return noop end})
 love={graphics=setmetatable({getDimensions=function()return 1280,800 end,newCanvas=function()return image end,
  newImage=function()return image end,newQuad=function()return {}end,newShader=function()return shader end,

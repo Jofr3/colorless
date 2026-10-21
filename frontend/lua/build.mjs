@@ -41,6 +41,10 @@ try {
   for (const name of ["conf.lua", "main.lua", "ui", "assets"])
     cpSync(join(here, name), join(stage, name), { recursive: true });
   const manifest = {};
+  for (const name of ['colorless.png','colorless-menu.png']) {
+    manifest[`branding/${name}`] = createHash('sha256')
+      .update(readFileSync(join(here, 'assets/branding', name))).digest('hex');
+  }
   for (const name of readdirSync(join(here, "assets/transition_cards"))) {
     if (!name.endsWith(".png")) continue;
     manifest[`transition_cards/${name}`] = createHash("sha256")
