@@ -2,7 +2,7 @@
 // generated sidewalls with the original Balatro sprite's measured border.
 import { refineReflections } from './logo_reflections.js';
 import { insertEnergy, paintEnergy } from './logo_energy.js';
-export function rebuildBorder(ctx) {
+export function rebuildBorder(ctx, { onLayers } = {}) {
   const { width: w, height: h } = ctx.canvas;
   const source = ctx.getImageData(0, 0, w, h);
   const count = w * h;
@@ -124,16 +124,31 @@ export function rebuildBorder(ctx) {
   for (let p = 0; p < energy.mask.length; p++) if (energy.mask[p]) logical.data[p * 4 + 3] = 255;
   const reflections = refineReflections(logical, energy.mask, energy.glyphs, outputWidth, logicalHeight,
     { pixelGrid: true, authoringWidth: logicalWidth, glyphOffsets: energy.offsets, skipGlyphs: [3] });
-  const energyStats = paintEnergy(logical, energy);
-  const result = ctx.createImageData(outputWidth * 2, logicalHeight * 2);
-  for (let y = 0; y < result.height; y++) for (let x = 0; x < result.width; x++) {
-    const p = (Math.floor(y / 2) * outputWidth + Math.floor(x / 2)) * 4;
-    result.data.set(logical.data.subarray(p, p + 4), (y * result.width + x) * 4);
-  }
+  const layers = onLayers ? {
+    background: ctx.createImageData(outputWidth, logicalHeight),
+    star: ctx.createImageData(energy.diameter, energy.diameter),
+  } : null;
+  if (layers) layers.background.data.set(logical.data);
+  const energyStats = paintEnergy(logical, energy, layers);
+  const result = doublePixels(ctx, logical);
+  if (layers) onLayers({
+    background: doublePixels(ctx, layers.background), star: doublePixels(ctx, layers.star),
+    centerX: (energy.left + energy.diameter / 2) * 2,
+    centerY: (energy.top + energy.diameter / 2) * 2,
+  });
   ctx.canvas.width = result.width; ctx.canvas.height = result.height;
   ctx.putImageData(result, 0, 0);
   return { letters: slimLetters, counters: slimCounters, repairedPixels, thinnedPixels, sourceScale: scale,
     pixelGrid: { width: outputWidth, height: logicalHeight, exportScale: 2, letters: pixelGlyphs.length, counters: pixelCounters - 1 }, reflections, energy: energyStats };
+}
+
+function doublePixels(ctx, source) {
+  const result = ctx.createImageData(source.width * 2, source.height * 2);
+  for (let y = 0; y < result.height; y++) for (let x = 0; x < result.width; x++) {
+    const p = (Math.floor(y / 2) * source.width + Math.floor(x / 2)) * 4;
+    result.data.set(source.data.subarray(p, p + 4), (y * result.width + x) * 4);
+  }
+  return result;
 }
 
 function reshapeE(mask, originalFace, source, glyph, w, h) {

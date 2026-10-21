@@ -45,7 +45,7 @@ export function insertEnergy(glyphs, w, h) {
     offsets };
 }
 
-export function paintEnergy(image, energy) {
+export function paintEnergy(image, energy, layers = null) {
   const { width, left, top, diameter, glyphs } = energy;
   // The border is merged with the lettering by renderBorder. Only the face
   // paints last. Keep L/R faces and their pale ledges above the energy's gray
@@ -66,14 +66,20 @@ export function paintEnergy(image, energy) {
     const u = (p % width + .5 - left) / diameter;
     const v = (Math.floor(p / width) + .5 - top) / diameter;
     const highlight = Math.exp(-((u - .72) ** 2 / .035 + (v - .27) ** 2 / .035));
+    const silver = Math.round(218 + 22 * u - 32 * v + 27 * highlight);
+    const faceColor = [Math.min(250, silver + 4), Math.min(248, silver + 2), silver];
+    if (layers) layers.background.data.set([...faceColor, 255], p * 4);
     let color;
     if (ctx.isPointInPath(star, u, v)) {
       const light = Math.round(highlight * 43);
       color = [21 + light, 25 + light, 27 + light];
+      if (layers) {
+        const localX = p % width - left, localY = Math.floor(p / width) - top;
+        layers.star.data.set([...color, 255], (localY * diameter + localX) * 4);
+      }
       starPixels++;
     } else {
-      const silver = Math.round(218 + 22 * u - 32 * v + 27 * highlight);
-      color = [Math.min(250, silver + 4), Math.min(248, silver + 2), silver];
+      color = faceColor;
     }
     image.data.set([...color, 255], p * 4);
   }
@@ -107,7 +113,8 @@ export function paintEnergy(image, energy) {
     const angle = Math.atan2(dy, arc.side * dx);
     // One logical pixel of solid neutral gray, without transparency or taper.
     if (angle >= arc.start && angle <= arc.end) {
-      image.data.set([112, 112, 112, 255], p * 4);
+      image.data.set([132, 132, 132, 255], p * 4);
+      if (layers) layers.background.data.set([132, 132, 132, 255], p * 4);
       seamPixels++;
     }
   }

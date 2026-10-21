@@ -29,7 +29,15 @@ await source.decode();
   const w=source.width*scale,h=source.height*scale;
   ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
   ctx.drawImage(source,(canvas.width-w)/2,(canvas.height-h)/2,w,h);
-  window.borderStats=rebuildBorder(ctx);
+  function encodeLayer(pixels) {
+    const layer=document.createElement('canvas');layer.width=pixels.width;layer.height=pixels.height;
+    layer.getContext('2d').putImageData(pixels,0,0);
+    return layer.toDataURL('image/png').split(',')[1];
+  }
+  window.borderStats=rebuildBorder(ctx,{onLayers:layers=>{
+    window.logoLayers={background:encodeLayer(layers.background),star:encodeLayer(layers.star),
+      centerX:layers.centerX,centerY:layers.centerY};
+  }});
   const url=canvas.toDataURL('image/png');window.logoPng=url.split(',')[1];
   const link=document.getElementById('download');link.href=url;link.hidden=false;
 }

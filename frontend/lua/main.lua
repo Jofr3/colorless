@@ -282,6 +282,7 @@ function love.update(dt)
   room:update(dt,state.time,(rawX-offsetX)/layoutScale,(rawY-offsetY)/layoutScale,state.reduced,preferences.screenshake)
   -- Game:update applies canvas juice before advancing REAL/REAL_SHADER.
   state.time=state.time+dt
+  menuLogo:update(dt,state.reduced)
   screen:update(state.time,offsetX+room.cursorX*layoutScale,offsetY+room.cursorY*layoutScale,state.reduced,preferences)
   if wipe and wipe:update(dt) then
     wipe:release();wipe=nil
@@ -356,7 +357,7 @@ function love.draw()
   g.push(); g.translate(virtualWidth/2,portrait and 148 or 215)
   if not state.reduced then g.rotate(math.sin(state.time*0.6)*0.012) end
   g.setColor(1,1,1)
-  g.draw(menuLogo,0,0,0,logoScale,logoScale,logoWidth/2,logoHeight/2)
+  menuLogo:draw(logoScale)
   g.pop()
   T.text('Pick your next move',portrait and 23 or 28,0,portrait and 246 or 370,virtualWidth,T.paper)
   Button.tray(menuTray.x,menuTray.y,menuTray.w,menuTray.h)

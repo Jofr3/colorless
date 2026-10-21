@@ -34,15 +34,23 @@ A solid neutral-gray hairline separates the disc from L/R only along their
 contact points. The line traces the outside pixels of the actual disc mask,
 following precisely the same circular silhouette instead of separately rounding
 a stroke radius. It is one logical pixel wide, with fully opaque RGB
-(112, 112, 112) and no feathering or taper.
+(132, 132, 132) and no feathering or taper.
 The shared border remains connected.
 Letter contours and reflection placement within each glyph remain.
 The final face mask has nine faces and two open counters (first O and R).
 `tools/logo_reflections.js` draws original reflection shapes specifically for
 COLORLESS. Balatro is a visual reference for the sparse irregular cuts, pastel
 colors and restrained shading; no source pixels or glyph textures are copied.
-`ui/menu_logo.lua` loads it directly with linear filtering. There is
-no startup mask processing, shader baking, Canvas readback or format conversion.
+`colorless-menu.png` retains the complete static preview. Runtime loads
+`colorless-menu-base.png` (836 × 322, including the silver disc without its star)
+and `colorless-energy-star.png` (192 × 192, transparent outside the star).
+Both are exported from the same logical pixels. Their unrotated composite is
+pixel-identical to the static preview. `ui/menu_logo_layout.lua` stores the
+exported star center (334, 158) in base-sprite pixels.
+`ui/menu_logo.lua` loads these layers directly with linear filtering and rotates
+only the star clockwise once per 60 seconds. Reduced Motion pauses its phase
+at the current angle; the disc and lettering retain their usual room motion.
+There is no startup mask processing, shader baking, Canvas readback or format conversion.
 This removes the graphics-dependent path that could leave the menu logo blank.
 CRT scanlines and fringing are applied live by the game.
 
@@ -68,8 +76,12 @@ mask onto the logical pixel grid. It rebuilds the border and hand-drawn
 reflection paint there, validates nine faces and three counters, and exports
 exact 2x pixel blocks. The current authoring path does not load the
 original Balatro sprite; the legacy path still uses the sibling source checkout.
-Download it into this directory as
-`colorless-menu.png`, inspect it, and run `bun run build:lua`.
+Download the composite into this directory as `colorless-menu.png`. The page
+also exposes `window.logoLayers`: base64 PNGs in `background` and `star`, plus
+`centerX`/`centerY`. Save those as `colorless-menu-base.png` and
+`colorless-energy-star.png`, and regenerate `ui/menu_logo_layout.lua` as
+`return {starX=centerX,starY=centerY}` using the exported numeric coordinates.
+Inspect the composite/layers and run `bun run build:lua`.
 The old coordinate-based face cleanup and bevel renderer remains available with
 `--legacy`; it reproduces the earlier rounded lettering, not the current redraw.
 
