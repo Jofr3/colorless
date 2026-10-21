@@ -6,6 +6,36 @@ import { resolve, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 const here=dirname(fileURLToPath(import.meta.url));
+// Extract the approved angular artwork, then render its border and hand-drawn
+// reflections on the source-scale logical grid and export exact 2x pixels.
+// The legacy extractor targets the older rounded logo.
+if (!process.argv.includes('--legacy')) {
+  const web=mkdtempSync(join(tmpdir(),'luminous-angular-logo-'));
+  cpSync(join(here,'branding/colorless-angular.png'),join(web,'source.png'));
+  cpSync(join(here,'logo_border.js'),join(web,'logo_border.js'));
+  cpSync(join(here,'logo_reflections.js'),join(web,'logo_reflections.js'));
+  writeFileSync(join(web,'index.html'),`<!doctype html><title>COLORLESS angular logo export</title>
+<style>body{background:#20282b}canvas{max-width:100%}</style>
+<canvas id="canvas" width="1024" height="380"></canvas>
+<a id="download" hidden download="colorless-menu.png">Download finished logo</a>
+<script type="module">
+import { rebuildBorder } from './logo_border.js';
+const source=new Image();source.src='source.png';
+await source.decode();
+{
+  const canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d');
+  const scale=Math.min(canvas.width/source.width,canvas.height/source.height);
+  const w=source.width*scale,h=source.height*scale;
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  ctx.drawImage(source,(canvas.width-w)/2,(canvas.height-h)/2,w,h);
+  window.borderStats=rebuildBorder(ctx);
+  const url=canvas.toDataURL('image/png');window.logoPng=url.split(',')[1];
+  const link=document.getElementById('download');link.href=url;link.hidden=false;
+}
+</script>`);
+  console.log(web);
+  process.exit(0);
+}
 const source=resolve(process.env.BALATRO_SOURCE || join(here,'../../../../balatro-source'));
 const root=mkdtempSync(join(tmpdir(),'luminous-logo-'));
 const stage=join(root,'source'),web=join(root,'web');

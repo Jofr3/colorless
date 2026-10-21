@@ -1,27 +1,64 @@
 # COLORLESS menu wordmark
 
-`colorless-menu.png` is the cleaned 1024 × 380 straight-alpha RGBA sprite.
+`colorless-menu.png` is the angular redraw exported as an 866 × 322
+straight-alpha RGBA sprite, with exact 2×2 pixel blocks from a 433 × 161 logical
+grid. The geometry is authored at 1024 × 380. The full-resolution transparent source is
+`tools/branding/colorless-angular.png`, created with the built-in imagegen tool
+using the previous finished wordmark and original Balatro sprite as references.
+It replaces the rounded C/O/S bowls with faceted contours, sharpens terminals,
+and gives the L/R/E strokes more pronounced flares and tapered ends.
+`tools/logo_border.js` preserves these approved faces and replaces the generated
+dark edges with clean, continuous taupe/slate/charcoal bands. It removes isolated
+face fragments, repairs tiny pinholes using nearby face paint, validates nine
+separate faces and three counters, then reproduces the original sprite's broad
+slate rim, white face-edge highlight, straight-down extrusion, and translucent
+outer rim. The two O face heights relative to the source O's 166-pixel 2x face
+determine the logical grid. Borders and paint are rendered on that grid using
+the source's 1x layer widths, then doubled without interpolation. All processing
+happens during authoring.
+`tools/logo_reflections.js` draws original reflection shapes specifically for
+COLORLESS. Balatro is a visual reference for the sparse irregular cuts, pastel
+colors and restrained shading; no source pixels or glyph textures are copied.
 `ui/menu_logo.lua` loads it directly with linear filtering. There is
 no startup mask processing, shader baking, Canvas readback or format conversion.
 This removes the graphics-dependent path that could leave the menu logo blank.
 CRT scanlines and fringing are applied live by the game.
 
-`colorless.png` is the 2057 × 764 approved lighter lettering from imagegen pass 3,
-retained as the authoring source. `tools/logo_bake.lua` extracts its ivory and
-pastel faces and renders the earlier measured source edge. Cleanup now removes
+`colorless.png` is the 2057 × 764 lighter lettering from imagegen pass 3,
+retained as the legacy authoring source. `tools/logo_bake.lua` extracts its ivory and
+pastel faces and renders the measured source edge with a deeper lower ledge. Cleanup removes
 detached mask fragments, fills small extraction holes and trims hairline spurs
 before beveling. Two local contour repairs remove a coral protrusion below the
-C and the notch inside its upper curve. Resolution, palette, filtering and
-bevel dimensions remain those of the restored version. The superseded palette
+C and the notch inside its upper curve. Resolution, face palette and filtering
+remain unchanged. The broader bevel uses the original B/O's distinct warm-gray,
+slate and charcoal steps; export restores their exact sampled colours after
+WebGL's rgba4 quantization. The superseded palette
 reduction and coarse-grid revision is retained locally in
 `tmp/colorless-iterations/07-pixel-cleanup*`. The authoring renderer explicitly
 converts GPU readback (which can be rgba4) into straight-alpha rgba8 before PNG
 export, and refuses an empty result.
 
-To rebuild the finished asset, run `node frontend/lua/tools/build-logo.mjs`,
+To rebuild the current finished asset, run `node frontend/lua/tools/build-logo.mjs`,
 serve the printed directory with a local HTTP server, then open its page in a
-WebGL browser. Download the finished logo into this directory as
+browser. The exporter downsamples the angular artwork with transparent padding,
+preserves its proportions, extracts and thins its face mask, then samples that
+mask onto the logical pixel grid. It rebuilds the border and hand-drawn
+reflection paint there, validates nine faces and three counters, and exports
+exact 2x pixel blocks. The current authoring path does not load the
+original Balatro sprite; the legacy path still uses the sibling source checkout.
+Download it into this directory as
 `colorless-menu.png`, inspect it, and run `bun run build:lua`.
+The old coordinate-based face cleanup and bevel renderer remains available with
+`--legacy`; it reproduces the earlier rounded lettering, not the current redraw.
+
+The pre-border-cleanup source and menu sprite are saved locally as
+`tmp/colorless-iterations/15-before-border-fix-{source,menu}.png`. A built-in
+imagegen border-only trial still contained ragged edges and was not selected;
+the shipped correction uses the deterministic authoring renderer instead.
+The first border reconstruction omitted the source's top/side rim and used an
+incorrect horizontal offset. The current revision measures all four directions
+directly from the original O. The superseded export and renderer are retained as
+`tmp/colorless-iterations/16-before-source-border.{png,js}`.
 
 The original main-menu screenshot and local
 `balatro-source/resources/textures/2x/balatro.png` supplied the lettering reference.
@@ -84,6 +121,13 @@ a separate center card. This custom wordmark contains letters only.
     Two visual passes retained nine connected faces and exactly three enclosed
     counters, with no detached pixels or extraction pinholes. Previous sprite
     and baker: `12-before-shape-refinement*`; comparison: `shapes-comparison.png`.
+15. Deepened the 3D ledge in three passes: extended the lower sidewall; widened
+    the warm-gray shelf and balanced the bands; restored exact source bevel
+    colours during export. A representative flat O bottom now has 3 pixels of
+    pale lip, 6 of taupe, 4 of slate, 2 of lighter slate, 2 of dark slate and 4
+    of charcoal. More extrusion samples keep pointed ends continuous. Verified
+    zero changed face pixels against the previous sprite. Previous asset and
+    baker: `13-before-deeper-ledge*`; comparison: `depth-comparison.png`.
 
 `lua frontend/lua/tests/logo_mask.lua` checks repaired pinholes, discarded
 fragments, preserved letter counters, and separation between adjacent faces.
@@ -107,9 +151,152 @@ The original O at x=610 in the 2× sprite has these bottom-edge bands:
 Beyond that edge, the original contains white RGB with alpha approximately
 100, 59, 29, 11 and 3 in successive two-pixel bands. This is a translucent rim,
 not an opaque white outline. The top of the O has only the two grey bands and
-a white face highlight. The renderer reproduces this directional layering and
-uses a short translucent rim. Band widths are tuned for the custom wordmark;
-this is a reconstruction, not a pixel-identical copy of the original atlas.
+a white face highlight. At x=610, rows 112–113 are lighter slate, 114–117
+are slate, and 118–119 are white. The side edges have the same 2/4/2-pixel
+profile. These observations imply an 8-pixel radial rim with 14 pixels of
+vertical extrusion and no horizontal offset. The bottom warm bevel occupies
+the first 8 pixels of that downward sweep.
+
+`node frontend/lua/tests/logo_border.mjs` checks the captured source top, side,
+bottom, and outer-alpha profiles against the renderer at source scale. The
+export uses approximately 1.184× that scale for the approved COLORLESS faces.
+Exact Euclidean distances keep rim widths consistent on diagonals and pointed
+terminals. The lettering remains custom; this reproduces the measured border
+construction rather than copying the complete original atlas.
+
+The user subsequently requested subtler bright lines along the lower bevel.
+The final face-edge highlight is warm ivory `#F3EDE5` rather than pure white,
+and the pale lip is `#DDD1C2` rather than `#E6DDD3`. These two lower-contrast
+colors soften the linework while retaining every band width, the slate and
+charcoal palette, outer-rim alpha, and approved face pixels. The border test
+includes this palette adjustment. The previous sprite and renderer are saved
+as `tmp/colorless-iterations/17-before-subtle-highlights.{png,js}`.
+
+The next refinement thins the letter strokes with a 3-pixel inward
+face offset on the 1024-pixel authoring grid. The reflection paint stays in
+place and the current bevel dimensions and softer highlights are retained.
+The exporter validates nine connected faces and three counters after thinning.
+The previous sprite and renderer are saved as
+`tmp/colorless-iterations/18-before-thinner-letters.{png,js}`.
+The initial 1.5-pixel offset was increased to 2 pixels at the user's request
+for another small reduction. That intermediate version is saved as
+`tmp/colorless-iterations/19-before-thinner-letters.{png,js}`.
+The user requested a further reduction to 3 pixels; the 2-pixel version is saved
+as `tmp/colorless-iterations/20-before-thinner-letters.{png,js}`.
+
+The E's lower stem and foot are redrawn with a continuous curved contour:
+the stem gradually flares into a swept lower-left serif, a shallow arch
+defines the foot, and the right terminal tapers instead of ending in a block.
+The new contour joins the original stem at y=225 before the shared thinning
+and bevel passes. Existing reflection paint is retained; added face pixels
+take the nearest original E face color. All nine faces and three counters
+remain intact. Prior asset/renderer:
+`tmp/colorless-iterations/21-before-e-redraw.{png,js}`; close-up comparison:
+`tmp/colorless-iterations/e-redraw-comparison.png`.
+
+Both the procedural regrading of inherited marks and the subsequent direct
+source texture transfer were rejected. The current pass redraws the reflection
+shapes on COLORLESS's own authoring grid. C receives a rising shoulder wedge;
+the two Os have different asymmetric cap shapes and interrupted stem marks;
+the Ls have small stem patches and fine falling lines across their flared feet;
+R, E and S have cuts positioned around their own bowl, bars and diagonals.
+
+The polygons have crisp two-pixel steps and clip to each approved face. Their
+color varies over the letter's height from blue through lavender into rose;
+it does not restart as a complete gradient across each stripe's thickness.
+Small per-letter tonal offsets accommodate the taller Ls and diagonal strokes.
+Most of each face remains flat ivory. The same drawn paths continue over the
+light bevel at its existing light level. Approved contours, thinning, E shape,
+spacing, gray borders and alpha remain unchanged.
+
+`node frontend/lua/tests/logo_reflections.mjs` checks sparse coverage, gradient
+detail, bevel continuity, the fixed authoring grid and preservation of alpha
+and gray borders. Pre-edit files remain at
+`tmp/colorless-iterations/23-before-streak-refinement*`. Rejected procedural
+passes are `streak-pass{1,2,3}*`; rejected source transfers are
+`source-transfer-*`. The first hand-drawn export and menu preview are
+`drawn-streaks-final.png` and `drawn-streaks-desktop.png` in that ignored directory.
+
+Three subsequent width passes refine those hand-drawn polygons:
+
+1. Vary the blue shoulder patches between broad wedges, narrow ends and
+   pinched sections, with different profiles on the repeated letters.
+2. Give lavender and rose marks stronger contrasts in width, including short
+   triangular patches and fine slivers across stems and diagonals.
+3. Taper the lower glints and vary their width along the L and E feet. The first
+   L widens toward its terminal; the second widens near the stem and narrows
+   across the foot. The two S lower glints also differ in weight.
+
+That paint covers 9,167 of 55,800 face pixels (about 16.4%), preserving
+the sparse ivory finish. Comparison against the preceding hand-drawn export
+found zero alpha or gray-border changes. Final export: `width-pass3.png`;
+before/after: `width-comparison.png`; menu preview: `width-desktop.png` in
+`tmp/colorless-iterations/`. The preceding two passes are retained there too.
+
+The next refinement lengthens the width transitions. Instead of short bulges
+and pinches, the polygons taper gradually across long paths, extending beyond
+the face mask when crossing a narrow stem. The E crown and both S crowns are
+redrawn as longer blue sweeps with pointed entrances instead of isolated blunt
+patches. Existing colors, gradient treatment and pixel-stepped edges remain.
+The resulting paint covers 9,361 of 55,800 face pixels (about 16.8%). Full-image
+comparison again reports zero alpha or gray-border changes. Current export:
+`long-tapers.png`; comparison: `long-tapers-comparison.png`; marked-letter
+close-up: `long-tapers-detail.png`; menu preview: `long-tapers-desktop.png`,
+all under `tmp/colorless-iterations/`.
+
+Three continuity passes then separate the repeated-letter designs and align
+marks across the open bowls. The first S uses one rising blue path, an angled
+waist cut, a broad rose cut and a fine rising lower return. The last S keeps a
+curved cap, a higher fine lavender mark and one falling rose sweep across its
+lower bowl. Their direction, placement and number of marks now differ.
+
+The Os' lavender marks and the R's blue/rose marks are clipped from shared
+paths, so separated visible sections line up through the counters. The first
+O's lower rose path falls to the right; the second O's rises. E's lower-foot
+path extends through the stem/foot transition instead of ending bluntly inside
+the face. Long tapers, the existing gradients, letter geometry and gray border
+are retained. Full-image comparison reports zero alpha or gray-border changes.
+Current export: `continuity-pass3.png`; before/after: `continuity-comparison.png`;
+S close-up: `continuity-detail.png`; menu: `continuity-desktop.png`, under
+`tmp/colorless-iterations/`. The first two passes remain there for comparison.
+
+The latest finish restores a tiny color-tinted highlight where a streak crosses
+the inner face/ledge lip, following the original sprite's pale edge treatment.
+Only the existing ivory lip under reflection paint changes: its nearest pixel
+mixes the streak color 30% toward white, with 12% on the remainder of that lip.
+This makes a narrow light line that retains the blue/rose hue and fades toward
+the shaded bevel. Face paint, streak paths, ledge width and other border layers
+stay as approved. Image comparison confirms exactly 1,993 highlighted pixels
+changed, with zero alpha or gray-border changes. Current export:
+`tinted-ledge.png`; enlarged before/after: `tinted-ledge-detail.png`; menu:
+`tinted-ledge-desktop.png`, under `tmp/colorless-iterations/`.
+
+The current pixel finish matches how the source artwork is stored and drawn.
+Balatro's base logo is 333 × 216 and its 2x logo is 666 × 432. A pixel comparison
+found that all 20,443 opaque 2x blocks exactly repeat their corresponding base
+pixel. `game.lua:set_render_settings` selects linear filtering for 2x textures
+and nearest filtering for 1x; `CRT.fs` adds scanlines without quantizing the
+image coordinates onto a coarser grid.
+
+COLORLESS now renders on a 433 × 161 logical grid, sized from the source O's
+pixel density, then exports at 866 × 322. The approved contours are sampled
+onto that grid; eight-connected face validation preserves diagonal tips, while
+four-connected empty-space validation retains the three counters. The bevel,
+streak gradients and tinted highlights are drawn at logical resolution so
+thin features survive. The exporter verifies topology and the reviewed image
+has zero mismatched 2x2 blocks. Runtime linear filtering matches the source's
+2x rendering path; the live CRT remains a separate screen effect. Desktop and
+portrait previews are checked at the existing display sizes.
+
+Current export: `pixel-grid.png`; full comparison: `pixel-grid-comparison.png`;
+original/before/after detail: `pixel-grid-detail.png`; previews:
+`pixel-grid-desktop.png` and `pixel-grid-mobile.png`, under
+`tmp/colorless-iterations/`. Pre-change asset and authoring modules are retained
+as `before-pixel-grid*` in the same ignored directory.
+
+The same-height O comparison is saved locally as
+`tmp/colorless-iterations/source-border-comparison.png`; the CRT menu check is
+`tmp/colorless-iterations/source-border-desktop.png`.
 
 The selected asset is checked in the CRT-rendered menu at desktop and phone
 sizes (1280 × 800 and 390 × 844).
@@ -118,6 +305,13 @@ Local comparison images are retained in `tmp/colorless-iterations/` (ignored
 by Git), including the previous menu logo.
 
 ## Prompts
+
+### Angular letter redesign (current)
+
+Built-in imagegen, transparent background. Input 1: previous `colorless-menu.png`;
+input 2: original `balatro-source/resources/textures/2x/balatro.png`.
+
+Use case: style-transfer. Edit target: image 1, the transparent COLORLESS wordmark. Image 2 is the original BALATRO sprite, a precise reference for letter construction. Redraw the letter SHAPES of COLORLESS to match the reference typography much more closely. Exact text: COLORLESS, nine letters, all capitals, no extra text. This is a substantial silhouette redesign, not a small warp. Study the original L, R and O: match their distinctive tall uneven hand-drawn construction, blade-like pointed ends, slanted and flared stems, angular cutouts, slightly concave edges and tilted shoulders. Both Ls should have the long angled spear tip rising above the round letters, tapered stem, broad low foot with concave underside and sharp flared right terminal of the reference L. R should have the reference R's angular asymmetric bowl and pointed descending legs. Os should use the reference O's narrow flat-sided, beveled octagonal profile, angled top shoulders, angled counters and slightly uneven baseline, not soft rounded rectangles. Design C E and both S using the same sharp, faceted, hand-cut typographic language; C has sharp angled terminals, E has blade-like flared serifs, S has angular upper/lower bowls and a tapered diagonal waist. Retain approximately the existing word width and letter spacing, overall tall condensed proportions, ivory face weight, sparse broken pastel blue/coral/lavender reflections. Preserve the current shallow down-left layered taupe, slate and charcoal bevel style and depth, with clean pixel-stepped contours. Make every letter readable. Transparent background and transparent counters, modest transparent margin. Output a wide sprite approximately 1024x380. No card, dollar symbol, background, scanlines, glow, distressed flecks, checkerboard or additional imagery. Only the wordmark.
 
 ### Pass 2: shadow weight
 
