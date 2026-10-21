@@ -1,7 +1,7 @@
 # COLORLESS menu wordmark
 
-`colorless-menu.png` is the angular redraw exported as an 866 × 322
-straight-alpha RGBA sprite, with exact 2×2 pixel blocks from a 433 × 161 logical
+`colorless-menu.png` is the angular redraw exported as a 836 × 322
+straight-alpha RGBA sprite, with exact 2×2 pixel blocks from a 418 × 161 logical
 grid. The geometry is authored at 1024 × 380. The full-resolution transparent source is
 `tools/branding/colorless-angular.png`, created with the built-in imagegen tool
 using the previous finished wordmark and original Balatro sprite as references.
@@ -16,6 +16,28 @@ outer rim. The two O face heights relative to the source O's 166-pixel 2x face
 determine the logical grid. Borders and paint are rendered on that grid using
 the source's 1x layer widths, then doubled without interpolation. All processing
 happens during authoring.
+`tools/logo_energy.js` replaces the second O with a circular colorless energy
+disc, drawn from the user's supplied visual reference. Its six-point dark mark
+uses curved concave shoulders; the silver face has a restrained upper-right
+highlight and no colored streaks. Its gray/charcoal 3D border uses circles
+rasterized from the exact face center, with a three-pixel gray rim and
+three-pixel downward extrusion. Gray covers the top edge; charcoal is underneath.
+Each corresponding border layer is merged with the letters before the next
+layer is drawn, removing black dividing lines at the L/R junctions.
+The shallow gray layers have no light-colored ledge or highlight bands.
+The energy face is 96 logical pixels across, 20% larger than its initial version.
+Contour-based spacing brings the letter faces approximately four logical pixels
+apart so their dark borders join. The energy overlaps the L and R slightly.
+Their faces and pale ledges appear above the energy's gray/black rim at the
+junctions; only the silver energy face paints last after the border merge.
+A solid neutral-gray hairline separates the disc from L/R only along their
+contact points. The line traces the outside pixels of the actual disc mask,
+following precisely the same circular silhouette instead of separately rounding
+a stroke radius. It is one logical pixel wide, with fully opaque RGB
+(112, 112, 112) and no feathering or taper.
+The shared border remains connected.
+Letter contours and reflection placement within each glyph remain.
+The final face mask has nine faces and two open counters (first O and R).
 `tools/logo_reflections.js` draws original reflection shapes specifically for
 COLORLESS. Balatro is a visual reference for the sparse irregular cuts, pastel
 colors and restrained shading; no source pixels or glyph textures are copied.

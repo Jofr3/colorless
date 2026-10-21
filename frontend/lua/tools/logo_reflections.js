@@ -124,7 +124,8 @@ function inside(polygon, x, y) {
   return hit;
 }
 
-export function refineReflections(image, mask, glyphs, w, h, { pixelGrid = false } = {}) {
+export function refineReflections(image, mask, glyphs, w, h,
+  { pixelGrid = false, authoringWidth = w, glyphOffsets = [], skipGlyphs = [] } = {}) {
   if ((!pixelGrid && (w !== 1024 || h !== 380)) || glyphs.length !== 9)
     throw new Error('Hand-drawn COLORLESS reflections require nine faces on the 1024 × 380 grid');
   const ordered = glyphs.map(pixels => ({ pixels, left: Math.min(...pixels.map(p => p % w)) }))
@@ -153,11 +154,11 @@ export function refineReflections(image, mask, glyphs, w, h, { pixelGrid = false
         }
       }
     }
-    if (letter < 0) continue;
+    if (letter < 0 || skipGlyphs.includes(letter)) continue;
     // Evaluate the original paths at each logical pixel's center. The grid
     // supplies the same steps for contours, streaks, gradients and highlights.
     // High-resolution authoring previews retain their original two-pixel snap.
-    const sx = pixelGrid ? (x + .5) * 1024 / w : Math.floor(x / 2) * 2 + 1;
+    const sx = pixelGrid ? (x - (glyphOffsets[letter] || 0) + .5) * 1024 / authoringWidth : Math.floor(x / 2) * 2 + 1;
     const sy = pixelGrid ? (y + .5) * 380 / h : Math.floor(y / 2) * 2 + 1;
     if (!STREAKS[letter].some(polygon => inside(polygon, sx, sy))) continue;
     const color = reflectionColor((pixelGrid ? sy : y) + TONE_SHIFT[letter]);

@@ -1,6 +1,7 @@
 // Authoring only: retain the approved angular faces and replace their noisy
 // generated sidewalls with the original Balatro sprite's measured border.
 import { refineReflections } from './logo_reflections.js';
+import { insertEnergy, paintEnergy } from './logo_energy.js';
 export function rebuildBorder(ctx) {
   const { width: w, height: h } = ctx.canvas;
   const source = ctx.getImageData(0, 0, w, h);
@@ -114,19 +115,25 @@ export function rebuildBorder(ctx) {
   }
   if (pixelGlyphs.length !== 9 || pixelCounters !== 3)
     throw new Error(`Pixel grid changed face topology: ${pixelGlyphs.length} letters, ${pixelCounters} counters`);
-  const logical = ctx.createImageData(logicalWidth, logicalHeight);
-  logical.data.set(renderBorder(pixelMask, logicalWidth, logicalHeight, .5));
-  for (let p = 0; p < pixelMask.length; p++) if (pixelMask[p]) logical.data[p * 4 + 3] = 255;
-  const reflections = refineReflections(logical, pixelMask, pixelGlyphs, logicalWidth, logicalHeight, { pixelGrid: true });
-  const result = ctx.createImageData(logicalWidth * 2, logicalHeight * 2);
+  const energy = insertEnergy(pixelGlyphs, logicalWidth, logicalHeight);
+  const outputWidth = energy.width;
+  const logical = ctx.createImageData(outputWidth, logicalHeight);
+  const letterMask = new Uint8Array(energy.mask.length);
+  for (const [i, glyph] of energy.glyphs.entries()) if (i !== 3) for (const p of glyph) letterMask[p] = 1;
+  logical.data.set(renderBorder(letterMask, outputWidth, logicalHeight, .5, energy));
+  for (let p = 0; p < energy.mask.length; p++) if (energy.mask[p]) logical.data[p * 4 + 3] = 255;
+  const reflections = refineReflections(logical, energy.mask, energy.glyphs, outputWidth, logicalHeight,
+    { pixelGrid: true, authoringWidth: logicalWidth, glyphOffsets: energy.offsets, skipGlyphs: [3] });
+  const energyStats = paintEnergy(logical, energy);
+  const result = ctx.createImageData(outputWidth * 2, logicalHeight * 2);
   for (let y = 0; y < result.height; y++) for (let x = 0; x < result.width; x++) {
-    const p = (Math.floor(y / 2) * logicalWidth + Math.floor(x / 2)) * 4;
+    const p = (Math.floor(y / 2) * outputWidth + Math.floor(x / 2)) * 4;
     result.data.set(logical.data.subarray(p, p + 4), (y * result.width + x) * 4);
   }
   ctx.canvas.width = result.width; ctx.canvas.height = result.height;
   ctx.putImageData(result, 0, 0);
   return { letters: slimLetters, counters: slimCounters, repairedPixels, thinnedPixels, sourceScale: scale,
-    pixelGrid: { width: logicalWidth, height: logicalHeight, exportScale: 2, letters: pixelGlyphs.length, counters: pixelCounters }, reflections };
+    pixelGrid: { width: outputWidth, height: logicalHeight, exportScale: 2, letters: pixelGlyphs.length, counters: pixelCounters - 1 }, reflections, energy: energyStats };
 }
 
 function reshapeE(mask, originalFace, source, glyph, w, h) {
@@ -211,7 +218,7 @@ function squaredDistances(mask, w, h) {
   return field;
 }
 
-export function renderBorder(mask, w, h, scale = 1) {
+export function renderBorder(mask, w, h, scale = 1, energy = null) {
   const distance = squaredDistances(mask, w, h);
   const result = new Uint8ClampedArray(w * h * 4);
   // Measurements from the 2x source O, x=610: the top has white 2px,
@@ -223,10 +230,10 @@ export function renderBorder(mask, w, h, scale = 1) {
   const bands = [
     ...[[18, 3], [16, 11], [14, 29], [12, 59], [10, 100]]
       .map(([radius, alpha]) => ({ radius, depth: 14, color: [255, 255, 255, alpha] })),
-    { radius: 8, depth: 14, color: [49, 58, 60, 255] },
-    { radius: 8, depth: 10, color: [67, 81, 83, 255] },
-    { radius: 8, depth: 8, color: [91, 117, 123, 255] },
-    { radius: 6, depth: 8, color: [79, 99, 103, 255] },
+    { radius: 8, depth: 14, color: [49, 58, 60, 255], energyRim: 3, energyDepth: 3 },
+    { radius: 8, depth: 10, color: [67, 81, 83, 255], energyRim: 3, energyDepth: 2 },
+    { radius: 8, depth: 8, color: [91, 117, 123, 255], energyRim: 3, energyDepth: 1 },
+    { radius: 6, depth: 8, color: [79, 99, 103, 255], energyRim: 2, energyDepth: 0 },
     { radius: 2, depth: 8, color: [203, 187, 167, 255] },
     { radius: 2, depth: 2, color: [221, 209, 194, 255] },
     { radius: 2, depth: 0, color: [243, 237, 229, 255] },
@@ -239,7 +246,18 @@ export function renderBorder(mask, w, h, scale = 1) {
       for (let y = 0; y < h; y++) {
         const p = y * w + x;
         if (distance[p] <= radiusSquared) lastHit = y;
-        if (y - lastHit <= depth) result.set(band.color, p * 4);
+        // Union each corresponding gray/black layer before painting the next.
+        // This removes dividing outlines where the energy meets L/R. The gray
+        // layers share the outer radius at the top, hiding the dark underlayer.
+        let energyHit = false;
+        if (energy && band.energyRim !== undefined) {
+          const radius = energy.diameter / 2;
+          const dx = x + .5 - energy.left - radius;
+          const dy = y + .5 - energy.top - radius;
+          const vertical = dy - Math.max(0, Math.min(band.energyDepth, dy));
+          energyHit = dx * dx + vertical * vertical <= (radius + band.energyRim) ** 2;
+        }
+        if (y - lastHit <= depth || energyHit) result.set(band.color, p * 4);
       }
     }
   }

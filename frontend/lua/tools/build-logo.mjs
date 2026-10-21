@@ -14,6 +14,7 @@ if (!process.argv.includes('--legacy')) {
   cpSync(join(here,'branding/colorless-angular.png'),join(web,'source.png'));
   cpSync(join(here,'logo_border.js'),join(web,'logo_border.js'));
   cpSync(join(here,'logo_reflections.js'),join(web,'logo_reflections.js'));
+  cpSync(join(here,'logo_energy.js'),join(web,'logo_energy.js'));
   writeFileSync(join(web,'index.html'),`<!doctype html><title>COLORLESS angular logo export</title>
 <style>body{background:#20282b}canvas{max-width:100%}</style>
 <canvas id="canvas" width="1024" height="380"></canvas>
