@@ -13,7 +13,21 @@ function Pile.parallax(offset)
   return (Pile.referenceX+(offset or 0)-10)/10*1.5
 end
 function Pile.new(item,index)
-  return setmetatable(Card.new(item,index),Pile)
+  return Card.new(item,index,Pile)
+end
+-- Card:draw sends deck backs through Sprite:draw_self, straight from the 2x
+-- atlas (71x95 at dpiscale 2) with set_render_settings' linear filter; the
+-- web build loads it without mipmaps. Keep those native texels rather than
+-- resampling them to our card raster. Face-up discards keep the scan raster.
+Pile.BACK_W,Pile.BACK_H=142,190
+function Pile:raster()
+  if self.item.kind=='discard' then return Card.raster(self) end
+  return Pile.BACK_W,Pile.BACK_H,'linear',true
+end
+-- Sprite:draw_self stretches the atlas quad to the card's VT.w x VT.h.
+function Pile:spriteScale(scale)
+  local w,h=self:raster()
+  return D.W*scale/w,D.H*scale/h,w/2,h/2
 end
 function Pile.ranks(count)
   local ranks={}
@@ -25,9 +39,12 @@ end
 function Pile.grey(count,rank)
   return rank>3 and 0.5+((count-rank)%7)/50 or 1
 end
+-- CardArea config.deck_height: Balatro stacks its full 52-card deck 0.15
+-- tiles high. Give a full 60-card Pokémon deck that same height.
+Pile.DECK_HEIGHT=0.15*52/60
 function Pile:target(rank,roomWidth,cardParallax)
   local areaParallax=Pile.parallax()
-  local depth=0.15/52*(self.count-rank)*self.unit
+  local depth=Pile.DECK_HEIGHT/52*(self.count-rank)*self.unit
   return self.homeX+areaParallax*depth+cardParallax*self.unit/30,self.homeY-1.5*depth
 end
 function Pile:place(x,y,scale,entering,roomWidth)
@@ -95,7 +112,8 @@ local function face(self,layer)
   local v=layer.motion.VT
   local shade=Pile.grey(self.count,layer.rank)
   g.setColor(shade,shade,shade,1)
-  g.draw(self.texture,v.x*self.unit,v.y*self.unit,v.r,self.baseScale*v.scale,self.baseScale*v.scale,D.HALF_W,D.HALF_H)
+  local sx,sy,ox,oy=self:spriteScale(self.baseScale*v.scale)
+  g.draw(self.texture,v.x*self.unit,v.y*self.unit,v.r,sx,sy,ox,oy)
 end
 function Pile:draw()
   -- Deck backs use Sprite:draw(overlay), never the mouse-tilt dissolve pass.
@@ -109,12 +127,15 @@ function Pile:drawDragged(shaders,time,mx,my,reduced,roomWidth)
   if not self.dragging then return end
   local values=self:shaderValues(time,mx,my,reduced)
   values.shadow=true; values.hovering=0
+  -- The atlas reports logical 71x95 pixels for its 2x back.
+  if self.item.kind~='discard' then values.texture_details={0,0,71,95};values.image_details={71,95} end
   local shader=shaders.dissolve
   for key,value in pairs(values) do if shader:hasUniform(key) then shader:send(key,value) end end
   local parallax=(self.motion.T.x*self.unit-roomWidth/2)/(roomWidth/2)*1.5
   local scale=self.baseScale*self.motion.VT.scale
   g.setShader(shader); g.setColor(1,1,1,1)
-  g.draw(self.texture,self.x-parallax*0.35*self.unit,self.y+1.5*0.35*self.unit,self.angle,scale*0.93,scale*0.93,D.HALF_W,D.HALF_H)
+  local sx,sy,ox,oy=self:spriteScale(scale*0.93)
+  g.draw(self.texture,self.x-parallax*0.35*self.unit,self.y+1.5*0.35*self.unit,self.angle,sx,sy,ox,oy)
   g.setShader()
   face(self,self.layers[#self.layers])
 end

@@ -19,7 +19,7 @@ for _,count in ipairs({1,9,18,52,60}) do
     local p=Pile.new({count=count},1); p:place(x,300,0.82,false,1280)
     local cw,ch=D.W*p.baseScale/p.unit,D.H*p.baseScale/p.unit
     local parallax=(20-0.5-1.1*cw/2-10)/10*1.5
-    local area={config={type='deck'},shuffle_amt=0,children={},cards={},
+    local area={config={type='deck',deck_height=Pile.DECK_HEIGHT},shuffle_amt=0,children={},cards={},
       T={x=x/p.unit-cw/2,y=300/p.unit-ch/2,w=cw,h=ch},shadow_parrallax={x=parallax,y=-1.5}}
     G={deck=area}
     for k=1,count do area.cards[k]={T={w=cw,h=ch},facing='back',states={drag={is=false}},shadow_parrallax={x=parallax}} end

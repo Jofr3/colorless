@@ -38,20 +38,33 @@ local function emblem(kind,colour)
   end
 end
 
-function Card.new(item,index)
-  local self = setmetatable({item=item,index=index,x=0,y=0,homeX=0,homeY=0,angle=0,scale=1,hovered=false,ambientTilt=0.2},Card)
+function Card.new(item,index,class)
+  local self = setmetatable({item=item,index=index,x=0,y=0,homeX=0,homeY=0,angle=0,scale=1,hovered=false,ambientTilt=0.2},class or Card)
   self:rebuild()
   return self
+end
+-- Canvas size and filter. Native rasters copy drawFace's texels unscaled.
+function Card:raster()
+  local resolution=self.item.resolution or 1
+  return W*resolution,H*resolution,'nearest',false
 end
 function Card:rebuild()
   local item,index=self.item,self.index
   if self.texture then self.texture:release() end
-  local resolution=item.resolution or 1
-  self.texture = g.newCanvas(W*resolution,H*resolution)
-  g.setCanvas(self.texture); g.clear(); g.push(); g.scale(resolution)
-  if item.drawFace then
+  local tw,th,filter,native=self:raster()
+  self.texture = g.newCanvas(tw,th)
+  g.setCanvas(self.texture); g.clear(); g.push()
+  if native then
+    -- 'replace' keeps the RGB of transparent texels for linear filtering.
+    local mode,alpha=g.getBlendMode()
+    g.setBlendMode('replace','premultiplied')
+    item.drawFace(tw,th)
+    g.setBlendMode(mode,alpha)
+  elseif item.drawFace then
+    g.scale(tw/W)
     item.drawFace(W,H)
   else
+  g.scale(tw/W)
   T.box(0,0,W,H,T.ink,5)
   T.box(2,2,W-4,H-4,T.paper,4)
   T.box(7,7,W-14,H-14,item.colour,3)
@@ -67,7 +80,7 @@ function Card:rebuild()
   T.text(item.label,24,18,152,106)
   end
   g.pop(); g.setCanvas()
-  self.texture:setFilter('nearest','nearest')
+  self.texture:setFilter(filter,filter)
 end
 -- Shared card geometry in tile units, independent of viewport/DPI.
 function Card:place(x,y,baseScale,entering)
