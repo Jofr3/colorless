@@ -1,6 +1,18 @@
 /* The host only boots WASM, bridges navigation/preferences, and exposes accessible links. */
 const canvas = document.getElementById("canvas");
 const statusElement = document.getElementById("status");
+// Preserve browser reload shortcuts before SDL can consume their key events.
+for (const type of ["keydown", "keyup", "keypress"]) {
+  window.addEventListener(
+    type,
+    (event) => {
+      if (event.ctrlKey && !event.altKey && !event.metaKey && event.key.toLowerCase() === "r") {
+        event.stopImmediatePropagation();
+      }
+    },
+    true,
+  );
+}
 let runtime;
 let ready = false;
 let mailboxCreated = false;
