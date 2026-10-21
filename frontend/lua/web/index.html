@@ -9,7 +9,10 @@
 <body>
   <main>
     <canvas id="canvas" width="1280" height="800" tabindex="0" aria-label="Luminous main menu. Use Tab or arrow keys to choose; Enter to open. M toggles sound." aria-describedby="instructions"></canvas>
-    <div id="loading" role="status"><strong>LUMINOUS</strong><span id="status">Loading the menu…</span></div>
+    <div id="loading">
+      <div id="loading-progress" role="progressbar" aria-label="Loading Luminous" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="loading-fill"></div></div>
+      <span id="status" class="sr-only" role="status">Loading the menu…</span>
+    </div>
     <p id="instructions" class="sr-only">Click a button, or use arrow keys and Enter. Settings opens a popup: Tab moves between controls, left and right adjust sliders, and Escape closes. Account opens your profile in the settings popup. Decks opens the Lua library. Sandbox opens the Lua deck chooser and game table. Online opens the existing app.</p>
     <div id="announcement" role="status" class="sr-only"></div>
     <nav class="accessible-menu" aria-label="Main menu links">

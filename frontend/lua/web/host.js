@@ -1,6 +1,14 @@
 /* The host only boots WASM, bridges navigation/preferences, and exposes accessible links. */
 const canvas = document.getElementById("canvas");
 const statusElement = document.getElementById("status");
+const loadingProgress = document.getElementById("loading-progress");
+const loadingFill = document.getElementById("loading-fill");
+let loadingValue = 0;
+function updateLoadingProgress(value) {
+  loadingValue = Math.max(loadingValue, Math.min(100, value));
+  loadingFill.style.width = `${loadingValue}%`;
+  loadingProgress.setAttribute("aria-valuenow", String(Math.round(loadingValue)));
+}
 // Preserve browser reload shortcuts before SDL can consume their key events.
 for (const type of ["keydown", "keyup", "keypress"]) {
   window.addEventListener(
@@ -328,6 +336,7 @@ globalThis.Module = {
   ],
   print: (message) => {
     if (message === "LUMINOUS:ready") {
+      updateLoadingProgress(100);
       ready = true;
       document.getElementById("loading").style.display = "none";
       document.title = `Luminous — ${currentPage === "simulator" ? "Simulator" : currentPage === "sandbox" ? "Sandbox" : currentPage === "builder" ? "Deck builder" : libraryPage ? "Decks" : "Home"}`;
@@ -416,7 +425,14 @@ globalThis.Module = {
     console.error(message);
   },
   setStatus: (message) => {
-    if (!ready && message) statusElement.textContent = message;
+    if (ready || document.body.classList.contains("failed")) return;
+    if (message) statusElement.textContent = message;
+    // love.js reports downloaded bytes as "Downloading data... (loaded/total)".
+    // Reserve the final 10% for runtime startup; only Lua's ready signal completes it.
+    const download = message?.match(/\(([\d.]+)\/(\d+)\)/);
+    if (download && Number(download[2]) > 0) {
+      updateLoadingProgress(90 * Math.min(1, Number(download[1]) / Number(download[2])));
+    }
   },
   onAbort: () => {
     fail("The menu could not start. Reload to try again, or use the menu links.");
@@ -426,6 +442,7 @@ globalThis.startLuminous = () => {
   Love(Module)
     .then((module) => {
       runtime = module;
+      updateLoadingProgress(95);
       void prepareTransitionArt();
       syncPage();
       if (accountSnapshot) writeMailbox("__account.txt", accountSnapshot);

@@ -5,7 +5,7 @@ main {
   height: 100%;
   margin: 0;
   overflow: hidden;
-  background: #1e2b2d;
+  background: #000;
 }
 #canvas {
   display: block;
@@ -22,14 +22,41 @@ main {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 20px;
-  color: #f0ead6;
-  background: #1e2b2d;
+  color: #fff;
+  background: #000;
   font: 18px monospace;
 }
-#loading strong {
-  font-size: 42px;
-  letter-spacing: 4px;
+/* Balatro's boot_timer: 300 × 30, radius 5, centered white 3px stroke.
+   Use its GOLD colour for the requested yellow fill. */
+#loading-progress {
+  position: relative;
+  width: min(300px, calc(100vw - 40px));
+  height: 30px;
+}
+#loading-progress::after {
+  content: "";
+  position: absolute;
+  inset: -1.5px;
+  border: 3px solid #fff;
+  border-radius: 6.5px;
+}
+#loading-fill {
+  width: 0;
+  height: 100%;
+  border-radius: 5px;
+  background: #eac058;
+}
+.failed #loading-progress {
+  display: none;
+}
+.failed #status {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 24px;
+  clip: auto;
+  white-space: normal;
+  text-align: center;
 }
 .sr-only,
 .accessible-menu {

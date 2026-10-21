@@ -55,6 +55,14 @@ Inside Settings, Tab/Shift+Tab or up/down move between controls. Left/right swit
 
 ## Visual source and new work
 
+The browser loading screen follows `boot_timer` in Balatro's
+`functions/misc_functions.lua`: black background, a centered 300 × 30 bar,
+5-pixel corners and a 3-pixel white outline. The fill uses Balatro's gold
+(`G.C.GOLD`, `#EAC058`) instead of the source's pale blue. Download progress
+fills the first 90%; the bar disappears when Lua signals readiness. Loading
+status remains available to screen readers, and startup errors show the
+message and fallback navigation.
+
 The build copies **unmodified** `splash.fs`, `CRT.fs`, `dissolve.fs`, `played.fs`, `foil.fs`, `holo.fs`, `polychrome.fs`, `m6x11plus.ttf`, and six audio files from the local Balatro resources. Generated `asset-manifest.json` records their SHA-256 hashes. These resources are not vendored into this repository.
 
 Unavailable cards in simulator pickers follow Balatro's `greyed` deck-view path (`functions/UI_definitions.lua`, `Card:draw`, and `played.fs`): saturation ×0.5, lightness ×0.8, alpha ×0.5, with the original card tilt and transparency and no shadow or normal face beneath the shader. Selection changes restore the normal rendering in place.

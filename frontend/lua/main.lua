@@ -24,9 +24,9 @@ local openSettings,closeSettings,applyPreferences,startWipe,applyPage,requestPag
 local wipe,pendingPage
 local scene, width, height, layoutScale, offsetX, offsetY, virtualWidth, virtualHeight
 local menu = {
-  {label='Sandbox', route='/simulator', colour=T.blue, description='Experiment with your decks'},
-  {label='Online', route='/lobby', colour=T.red, description='Challenge another player'},
-  {label='Decks', route='/decks', colour=T.paleGreen, description='Build your next winning hand'},
+  {label='Sandbox', route='/simulator', colour=T.blue},
+  {label='Online', route='/lobby', colour=T.red},
+  {label='Decks', route='/decks', colour=T.paleGreen},
 }
 local quiet={paper1=0.35,multhit1=0.7,multhit2=0.7,coin1=0.6,coin3=0.6,glass2=0.5,cardFan2=0.5,whoosh=0.5,win=0.7,tarot2=0.4}
 local function sound(name,pitch,volume,sourceVolume)
@@ -357,9 +357,6 @@ function love.draw()
   T.text('Pick your next move',portrait and 23 or 28,0,portrait and 146 or 300,virtualWidth,T.paper)
   Button.tray(menuTray.x,menuTray.y,menuTray.w,menuTray.h)
   for i,b in ipairs(menu) do button(b,i) end
-  local selected=state.hovered>0 and state.hovered or state.focused
-  local description=selected>0 and selected<=#menu and menu[selected].description or ''
-  T.text(description,portrait and 23 or 25,0,portrait and 650 or 572,virtualWidth,T.paper)
   -- Profile-style inset buttons, with 0.2-tile padding and no extra heading.
   for i,b in ipairs(controls) do
     Button.tray(b.x-12,b.y-12,b.w+24,b.h+24)
