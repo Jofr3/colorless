@@ -69,7 +69,7 @@ function Hud.new(callbacks)
 end
 function Hud:cancelEntrance()
   self.panelEntrance=nil;self.panelTitleHidden=false;self.departingPrompt=nil
-  self.pendingColour=nil;self.choosingFirst=false;self.compactActions=false
+  self.pendingColour=nil;self.choosingFirst=false;self.compactActions=false;self.turnActions=false
   self.panelMotion=Motion.new(0,0)
 end
 function Hud:setColour(colour,time)
@@ -154,6 +154,7 @@ function Hud:sync(sim,time)
   self.choosingFirst=choosingFirst
   local actions=sim.actions or {}
   self.compactActions=choosingFirst or (#actions==1 and actions[1].label=='Ready')
+  self.turnActions=sim.gamePhase=='turn:action'
   self.oppName=sim.opponent or ''
   self.activeOwner=sim.activePlayer
   self.allow=sim.allow or {}
@@ -176,7 +177,7 @@ function Hud.seatColour(sim)
   return seat=='p2' and SMALL_RED or SMALL
 end
 function Hud:actionPanelHeight()
-  return self.compactActions and 60 or 144
+  return self.compactActions and 60 or (self.turnActions and 120 or 144)
 end
 function Hud:top(L)
   local contentH=246+self:actionPanelHeight()+4.1*(L.hud.unit or 60)

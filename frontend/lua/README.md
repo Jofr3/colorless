@@ -294,8 +294,11 @@ Host prompts render as `create_UIBox_generic_options` overlays or on the table
 itself: button lists, real card rows in the collection tray (searches, Energy
 discards, card orders), board picks and prize picks highlighted in place,
 coin flips as spinning stake chips, the game log, discard piles, a card
-inspector, an Options menu (Settings, New game, Main menu)
+inspector, an Options menu (Settings, Choose decks, New game, Main menu)
 and `create_UIBox_game_over`. Main menu saves the game before leaving.
+New game asks for confirmation, then reshuffles the same complete decks and returns to setup with fresh
+history; the play-screen restart icon uses the same action. Choose decks opens
+the deck-selection flow. A new match clears the old table's animations and overlays.
 The desktop Options frame is 7.54
 viewport tiles wide, with 5-tile buttons and a 7-tile Back button, matching
 `create_UIBox_options`, `create_UIBox_generic_options` and both original UIBox

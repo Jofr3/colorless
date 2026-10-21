@@ -1,5 +1,6 @@
 import {
   applyAction,
+  createGame,
   cardOfUid,
   energyProvidesOf,
   otherSeat,
@@ -45,7 +46,7 @@ export interface SimOption {
   /** Sidebar placement: primary (blue, big), danger (red), minor. */
   slot?: "primary" | "danger" | "minor";
 }
-export type SimMenuKind = "list" | "cards" | "board" | "prizes" | "coin" | "log" | "pile";
+export type SimMenuKind = "list" | "confirm" | "cards" | "board" | "prizes" | "coin" | "log" | "pile";
 export interface SimMenu {
   kind: SimMenuKind;
   title: string;
@@ -241,12 +242,35 @@ export class LuaSimulator {
     this.active = true;
     this.knockedOut = [];
     this.pendingRareCandy = null;
+    this.shuffled = "";
     this.menu = null;
     this.message = "";
     this.host = setup ? initHost(setup) : null;
     this.cardOrder = new SimulatorOrder(this.host?.startedAt ?? 0);
     if (this.host) this.prompt();
     this.emit();
+  }
+  private restart() {
+    const h = this.host;
+    if (!h) return;
+    // createGame assigns p1#0..59 / p2#0..59 once. This immutable mapping
+    // retains the full original decks, including cards moved out of play.
+    const deck = (seat: "p1" | "p2") =>
+      Array.from({ length: 60 }, (_, i) => h.game.cardIdByUid[`${seat}#${i}`])
+        .filter((id): id is string => id !== undefined);
+    const startedAt = Math.max(Date.now(), h.startedAt + 1);
+    const created = createGame({
+      seed: startedAt,
+      decks: { p1: deck("p1"), p2: deck("p2") },
+      cardPool: h.game.cardPool,
+    });
+    if (!created.ok) {
+      this.message = created.error.message;
+      this.emit();
+      return;
+    }
+    this.open({ state: created.state, events: created.events, names: h.names, startedAt });
+    this.persist();
   }
   action(label: string, action: GameAction, colour = "blue"): SimOption {
     return { label, colour, disabled: !this.allowed(action), run: () => this.dispatch(action) };
@@ -672,7 +696,7 @@ export class LuaSimulator {
         { ...this.action("End turn", { type: "endTurn", seat }, "red"), slot: "primary" },
         history("Undo turn", "undoTurn"),
         history("Undo action", "undoAction"),
-        { label: "New game", colour: "red", slot: "minor", run: () => this.command("new") },
+        { label: "New game", colour: "red", slot: "minor", run: () => this.command("newgame") },
         history("Redo action", "redoAction"),
         history("Redo turn", "redoTurn"),
       ];
@@ -683,10 +707,7 @@ export class LuaSimulator {
           label: "New game",
           colour: "red",
           slot: "danger",
-          run: () => {
-            clearSimulatorSave();
-            this.route("sandbox");
-          },
+          run: () => this.command("newgame"),
         },
       ];
     return [];
@@ -736,9 +757,9 @@ export class LuaSimulator {
       if (type) this.history(type);
       return;
     }
-    if (cmd === "new" && !this.menu) {
+    if (cmd === "choosedecks" && !this.menu) {
       this.choose(
-        "Start a new game?",
+        "Start new game with different decks?",
         [
           {
             label: "Choose decks",
@@ -749,13 +770,20 @@ export class LuaSimulator {
             },
           },
         ],
-        "This replaces the current saved game.",
+        "",
+        false,
+        "confirm",
       );
       return;
     }
-    if (cmd === "newgame") {
-      clearSimulatorSave();
-      this.route("sandbox");
+    if (cmd === "newgame" && this.host && !this.menu) {
+      this.choose(
+        "Start a new game?",
+        [{ label: "New game", colour: "red", run: () => this.restart() }],
+        "",
+        false,
+        "confirm",
+      );
       return;
     }
     if (cmd === "concede" && this.host && !this.menu) {
@@ -1048,6 +1076,7 @@ export class LuaSimulator {
           ? "Both players ran out of options."
           : "",
       this.shuffled,
+      h?.startedAt ?? "",
     );
     this.shuffled = "";
     if (this.pendingRareCandy) row("R", this.pendingRareCandy);
@@ -1193,9 +1222,9 @@ export class LuaSimulator {
             );
       }
     }
-    if (!this.menu)
-      for (const o of this.sidebar())
-        row("A", register(o), o.label, o.colour ?? "blue", !!o.disabled, o.slot ?? "minor");
+    // Preserve the sidebar behind dialogs, without registering background actions.
+    for (const o of this.sidebar())
+      row("A", this.menu ? "" : register(o), o.label, o.colour ?? "blue", !!o.disabled, o.slot ?? "minor");
     if (this.menu) {
       row(
         "M",

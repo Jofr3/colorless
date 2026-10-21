@@ -47,7 +47,7 @@ function Simulator:command(...)
   local fields={...};for i,v in ipairs(fields) do fields[i]=Codec.encode(tostring(v)) end
   self.callbacks.command(table.concat(fields,'\t'))
 end
-function Simulator:open(reduced)
+function Simulator:open(reduced,skipCommand)
   self:cancelKoPresentation()
   self.attachedPopup=nil;self.closingPopup=nil
   self.prizeMotion={}
@@ -61,9 +61,10 @@ function Simulator:open(reduced)
   for _,p in pairs(self.pendingPiles or {}) do p.texture:release() end;self.pendingPiles={}
   self.cards={};self.byUid={};self.ghosts={};self.items={};self.sides={};self.actions={};self.cardActions={}
   self.phase='empty';self.viewerSeat='';self.outcome='';self.menu=nil;self.menuId=nil;self.message='';self.turn=0
+  self.matchId=nil;self.shuffleAt=nil
   self.fx:clear();self.fx:background('setup',true)
   self.hud:cancelEntrance()
-  self:command('open')
+  if not skipCommand then self:command('open') end
 end
 function Simulator:layout(w,h,viewportUnit)
   self.attachedPopup=nil;self.closingPopup=nil
@@ -283,6 +284,11 @@ function Simulator:sync(raw,finishKo)
   if (pending and raw==pending.raw) or (not pending and raw==self.raw) then return end
   local rows=fieldsOf(raw)
   local f=rows[1];if not f then return end
+  -- A same-deck restart is a fresh table, even though card UIDs are reused.
+  if f[21] and f[21]~='' then
+    if self.matchId and self.matchId~=f[21] then self:open(self.reduced,true) end
+    self.matchId=f[21]
+  end
   if self.koPresentation then
     local returned=false
     for _,r in ipairs(rows) do
@@ -929,7 +935,8 @@ function Simulator:build()
     and history['Undo turn'] and history['Undo action'] and history['New game'] and history['Redo action'] and history['Redo turn'] then
     local gap=6
     local size=cl.horizontal and 44 or (cl.w-4*gap)/5
-    local y=cl.horizontal and cl.y+8 or cl.y+(cl.h-44-gap-size)/2+1.8+3/2
+    -- Slightly less space above End turn than below the history row.
+    local y=cl.horizontal and cl.y+8 or cl.y+(cl.h-44-gap-size)/2+1.8+3/2-2
     local a=primaries[1]
     local primaryW=cl.horizontal and cl.w-5*(size+gap) or cl.w
     self:add(a.label,cl.x,y,primaryW,44,'invoke',a.colour,{token=a.token,disabled=a.disabled,fontSize=24})

@@ -104,7 +104,7 @@ function Overlay:layout()
   elseif self.kind=='options' then
     -- create_UIBox_generic_options + UIBox:calculate_xywh: content minw 7,
     -- body padding 0.2 on each side, then outline padding 0.07 on each side.
-    w,h=p and 400 or (7+2*0.2+2*0.07)*sim.viewportUnit,p and 274 or 254
+    w,h=p and 400 or (7+2*0.2+2*0.07)*sim.viewportUnit,p and 328 or 308
   else
     -- Sized to the rows it holds: title band, note lines, up to seven
     -- 50px option rows, the page cycle, footer row and the Back button.
@@ -178,15 +178,16 @@ function Overlay:build(keepCards)
       self:add(o.label,x+24+(i-1)*(fw+8),yy,fw,40,'invoke',o.colour,{token=o.token,disabled=o.disabled,fontSize=24,selected=o.selected})
     end
   end
-  if kind=='list' then
+  if kind=='list' or kind=='confirm' then
     local top=y+74
     if d.note and d.note~='' then self.noteLines=Dyna.wrap(d.note,0.3,bw-16);top=top+math.min(4,#self.noteLines)*18+12 else self.noteLines={} end
     local perPage=7
     self.pages=math.max(1,math.ceil(#d.options/perPage));self.page=math.min(self.page,self.pages)
     self.pageText:set('Page '..self.page..'/'..self.pages,sim.time)
+    local optionW=kind=='confirm' and (p and bw*5/7 or math.min(bw,5*sim.viewportUnit)) or bw
     for i=(self.page-1)*perPage+1,math.min(self.page*perPage,#d.options) do
       local o=d.options[i]
-      local b=self:add(o.label,x+24,top+((i-1)%perPage)*50,bw,40,'invoke',o.selected and T.green or o.colour,{token=o.token,disabled=o.disabled,selected=o.selected,fontSize=23})
+      local b=self:add(o.label,x+(w-optionW)/2,top+((i-1)%perPage)*50,optionW,40,'invoke',o.selected and T.green or o.colour,{token=o.token,disabled=o.disabled,selected=o.selected,fontSize=23})
       b.uid=o.uid
     end
     local fy=bottom-(d.mandatory and 0 or 50)
@@ -252,8 +253,9 @@ function Overlay:build(keepCards)
     local col=p and bw*5/7 or 5*sim.viewportUnit
     local left=x+(w-col)/2
     self:add('Settings',left,top,col,42,'settings',T.red,{fontSize=27})
-    self:add('New game',left,top+54,col,42,'new',T.red,{fontSize=27})
-    self:add('Main menu',left,top+108,col,42,'leave',T.red,{fontSize=27})
+    self:add('Choose decks',left,top+54,col,42,'choosedecks',T.red,{fontSize=27})
+    self:add('New game',left,top+108,col,42,'newgame',T.red,{fontSize=27,disabled=sim.phase~='ready'})
+    self:add('Main menu',left,top+162,col,42,'leave',T.red,{fontSize=27})
     local backWidth=p and bw or 7*sim.viewportUnit
     self:add('Back',x+(w-backWidth)/2,bottom,backWidth,38,'back',T.orange,{fontSize=26})
   elseif kind=='inspect' then
@@ -364,8 +366,8 @@ function Overlay:activate(i)
     self:changePage(a=='prev' and -1 or 1)
   elseif a=='settings' then sim:closeOverlay();sim.callbacks.settings()
   elseif a=='log' then sim:command('log')
-  elseif a=='new' then sim:command('new')
-  elseif a=='newgame' then sim:command('newgame')
+  elseif a=='choosedecks' then sim:command('choosedecks')
+  elseif a=='newgame' then sim:closeOverlay();sim:command('newgame')
   elseif a=='leave' then sim:command('leave')
   elseif a=='peek' then sim.peek=true
   elseif a=='cardAction' then sim:closeOverlay();sim:runCardAction(b.cardAction)
@@ -414,7 +416,7 @@ function Overlay:draw(shaders)
   frame(x,y,w,h)
   local kind=self.kind
   if kind~='inspect' and kind~='gameover' and kind~='options' and (d.title or '')~='' then self.titleText:draw(x+w/2,y+38,rw) end
-  if kind=='list' then
+  if kind=='list' or kind=='confirm' then
     local top=y+74
     for i=1,math.min(4,#(self.noteLines or {})) do Dyna.static(self.noteLines[i],0.3,x+32,top+(i-1)*18,w-64,18,JOKER_GREY,{roomWidth=rw}) end
     if self.pages>1 then cycle(self,x+w/2-112,y+h-54-(d.mandatory and 0 or 50)-48,224,36) end

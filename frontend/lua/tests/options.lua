@@ -53,13 +53,15 @@ for _,size in ipairs({{1280,800},{1280,720},{1920,1080},{2560,1080},{1024,768}})
   local menu=Overlay.new(sim,'options',{title='Options'})
   local unit=Screen.unit(width,height)
   near(menu.w*zoom,frame.T.w*unit)
-  for i=1,3 do
+  for i=1,4 do
     local button=menu.controls[i]
     near(button.w*zoom,settings.T.w*unit)
     near(button.x+button.w/2,sim.boardW/2)
   end
-  near(menu.controls[4].w*zoom,back.T.w*unit)
-  near(menu.controls[4].x+menu.controls[4].w/2,sim.boardW/2)
+  near(menu.controls[5].w*zoom,back.T.w*unit)
+  near(menu.controls[5].x+menu.controls[5].w/2,sim.boardW/2)
+  assert(menu.controls[2].label=='Choose decks' and menu.controls[2].action=='choosedecks')
+  assert(menu.controls[3].label=='New game' and menu.controls[3].action=='newgame')
   -- Direct layout callers use the same conversion without main's outer zoom.
   sim:layout(width,height)
   near(Overlay.new(sim,'options',{}).w*sim.zoom,frame.T.w*unit)

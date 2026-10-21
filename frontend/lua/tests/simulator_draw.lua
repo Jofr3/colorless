@@ -202,7 +202,7 @@ end
 for _,size in ipairs({{1280,800},{480,850}}) do
   sim:layout(size[1],size[2]);sim:open(false)
   local entries={{'Undo turn','rewind'},{'Undo action','undo'},{'New game','restart'},{'Redo action','redo'},{'Redo turn','fast_forward'}}
-  local rows={row(100,'ready','Player 1','Player 2',1,'turn:action','','Your turn','',0,0,'you','you','p1',0,0,0,'',''),
+  local rows={row(100,'ready','Player 1','Player 2',1,'turn:action','','Your turn','',0,0,'you','you','p1',0,0,0,'','','','first-match'),
     row('A','end','End turn','red',false,'primary')}
   for i,entry in ipairs(entries) do rows[#rows+1]=row('A','history'..i,entry[1],'red',i>3,'minor') end
   sim:sync(table.concat(rows,'\n'));frames(2,30)
@@ -216,5 +216,9 @@ for _,size in ipairs({{1280,800},{480,850}}) do
     if i>1 then assert(b.x>=controls[i-1].x+controls[i-1].w+5) end
     assert(b.colour==(i>3 and require('ui.sim_hud').insetColour or T.red))
   end
+  sim:openOptions()
+  sim:sync(row(101,'ready','Player 1','Player 2',0,'setup:chooseFirst','','Choose who goes first','',0,0,'you','','p1',0,0,0,'','','','new-match'))
+  assert(sim.overlay==nil and sim.gamePhase=='setup:chooseFirst','Restart closes the old overlay and returns to setup')
+  assert(sim.matchId=='new-match' and #sim.cards==0,'Restart clears the previous table')
 end
 print('PASS: Lua simulator draw paths for every table state and overlay kind in both layouts')

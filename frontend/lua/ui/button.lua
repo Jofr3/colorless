@@ -102,6 +102,26 @@ end
 
 -- Hand-drawn pixel glyphs: stepped edges throughout, including arrowheads.
 -- Mirror each back glyph for its forward counterpart.
+local dicePixels={
+  '.WWWWWWWWWWWWWWW.',
+  'WWWWWWWWWWWWWWWWW',
+  'WWWWWWWWWWWWWWWWW',
+  'WWWPPPWWWWWPPPWWW',
+  'WWWPPPWWWWWPPPWWW',
+  'WWWPPPWWWWWPPPWWW',
+  'WWWWWWWWWWWWWWWWW',
+  'WWWWWWWPPPWWWWWWW',
+  'WWWWWWWPPPWWWWWWW',
+  'WWWWWWWPPPWWWWWWW',
+  'WWWWWWWWWWWWWWWWW',
+  'WWWPPPWWWWWPPPWWW',
+  'WWWPPPWWWWWPPPWWW',
+  'WWWPPPWWWWWPPPWWW',
+  'WWWWWWWWWWWWWWWWW',
+  'WWWWWWWWWWWWWWWWW',
+  '.WWWWWWWWWWWWWWW.',
+}
+local dicePalette={W=T.white,P=T.panel}
 local historyPixels={
   rewind={
     '...............',
@@ -190,12 +210,18 @@ function Button.draw(b,active,pressed,focused,roomWidth)
   if b.icon=='dice' then
     local size=math.min(b.w,b.h)*0.5
     g.push();g.translate(b.w/2,b.h/2);g.scale(pressed and 0.985 or 1)
-    panel(-size/2,-size/2+2,size,size,{0,0,0,0.3},0.6)
-    panel(-size/2,-size/2,size,size,T.white,0.6)
-    g.setColor(T.panel)
-    local pip=size*0.14
-    for _,p in ipairs({{-1,-1},{1,-1},{0,0},{-1,1},{1,1}}) do
-      g.rectangle('fill',p[1]*size*0.25-pip/2,p[2]*size*0.25-pip/2,pip,pip)
+    g.scale(size/17);g.translate(-8.5,-8.5)
+    -- Custom top-down sprite with stepped corners and five square pips.
+    for _,shadow in ipairs({true,false}) do
+      for y,row in ipairs(dicePixels) do
+        for x=1,#row do
+          local colour=dicePalette[row:sub(x,x)]
+          if colour then
+            if shadow then g.setColor(0,0,0,0.3) else g.setColor(colour) end
+            g.rectangle('fill',x-1,y-1+(shadow and 1 or 0),1,1)
+          end
+        end
+      end
     end
     g.pop();g.pop()
     return

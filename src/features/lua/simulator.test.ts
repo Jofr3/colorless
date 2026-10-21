@@ -667,10 +667,21 @@ describe("Lua simulator", () => {
     expect(sim.host?.steps).toHaveLength(2);
     sim.command("history\tredoAction");
     expect(sim.host?.game.turn).toBe(2);
-    const newGame = rows(publish).find((r: string[]) => r[0] === "A" && r[2] === "New game")?.[1];
-    sim.command(`invoke\t${sim.revision}\t${newGame}`);
-    expect(sim.menu?.title).toBe("Start a new game?");
+    const beforeDialog = rows(publish)
+      .filter((r: string[]) => r[0] === "A")
+      .map((r: string[]) => r.slice(2));
+    sim.command("choosedecks");
+    expect(sim.menu?.title).toBe("Start new game with different decks?");
     expect(sim.host?.game.turn).toBe(2);
+    const behindDialog = rows(publish).filter((r: string[]) => r[0] === "A");
+    expect(behindDialog.map((r: string[]) => r.slice(2))).toEqual(beforeDialog);
+    expect(behindDialog.every((r: string[]) => r[1] === "")).toBe(true);
+    sim.command(`invoke\t${sim.revision}\t${behindDialog[0][1]}`);
+    expect(sim.host?.game.turn).toBe(2);
+    expect(sim.menu?.title).toBe("Start new game with different decks?");
+    sim.command("dismiss");
+    expect(rows(publish).filter((r: string[]) => r[0] === "A").map((r: string[]) => r.slice(2)))
+      .toEqual(beforeDialog);
   });
   it("keeps the board unchanged on invalid drags and surfaces the engine reason", () => {
     const { sim, publish } = setup();
@@ -889,7 +900,67 @@ describe("Lua simulator", () => {
     expect(sim.host?.game.players[seat].active?.stack.at(-1)).toBe(basic);
     expect(sim.menu).toBeNull();
   });
-  it("resumes from the home action and clears the save only after New game confirmation", () => {
+  it.each(["sidebar", "options"])("restarts with the same complete decks from %s", (entry) => {
+    const { sim, publish, route } = setup();
+    sim.open({
+      state: driveSetup(7, { p1: ALL_BASIC_DECK, p2: PRIZE_DECK }),
+      events: [],
+      names: { p1: "First deck", p2: "Second deck" },
+      startedAt: 100,
+    });
+    if (!sim.host) throw Error("Missing host");
+    sim.dispatch({ type: "endTurn", seat: sim.host.viewerSeat });
+    const previous = sim.host;
+    sim.command("close");
+    sim.command("open");
+    const requestRestart = () => {
+      if (entry === "sidebar") {
+        const action = rows(publish).find((r: string[]) => r[0] === "A" && r[2] === "New game");
+        if (!action) throw Error("Missing restart action");
+        sim.command(`invoke\t${sim.revision}\t${action[1]}`);
+      } else sim.command("newgame");
+    };
+    requestRestart();
+    expect(sim.menu?.title).toBe("Start a new game?");
+    expect(sim.host?.game).toEqual(previous.game);
+    expect(loadSimulatorSave()?.state).toEqual(previous.game);
+    expect(rows(publish).filter((r: string[]) => r[0] === "A")).toHaveLength(6);
+    sim.command("dismiss");
+    expect(sim.menu).toBeNull();
+    expect(sim.host?.game).toEqual(previous.game);
+    expect(loadSimulatorSave()?.state).toEqual(previous.game);
+    requestRestart();
+    const confirm = rows(publish).find((r: string[]) => r[0] === "O" && r[2] === "New game");
+    if (!confirm) throw Error("Missing restart confirmation");
+    sim.command(`invoke\t${sim.revision}\t${confirm[1]}`);
+    const fresh = sim.host;
+    if (!fresh) throw Error("Missing restarted host");
+    expect(fresh.game.phase.kind).toBe("setup:chooseFirst");
+    expect(fresh.game.turn).toBe(0);
+    expect(fresh.game.firstPlayer).toBeNull();
+    expect(fresh.game.cardIdByUid).toEqual(previous.game.cardIdByUid);
+    expect(fresh.names).toEqual(previous.names);
+    expect(fresh.startedAt).toBeGreaterThan(previous.startedAt);
+    expect(fresh.game.rngState).not.toBe(previous.game.rngState);
+    for (const seat of ["p1", "p2"] as const) {
+      expect(fresh.game.players[seat].deck).toHaveLength(60);
+      expect(fresh.game.players[seat].hand).toHaveLength(0);
+      expect(fresh.game.players[seat].prizes).toHaveLength(0);
+      expect(fresh.game.players[seat].active).toBeNull();
+      expect(fresh.game.players[seat].bench).toHaveLength(0);
+    }
+    expect(fresh.steps).toHaveLength(1);
+    expect(fresh.turns).toHaveLength(1);
+    expect(sim.menu).toBeNull();
+    expect(route).not.toHaveBeenCalled();
+    expect(loadSimulatorSave()?.state).toEqual(fresh.game);
+    sim.command("close");
+    sim.command("open");
+    expect(sim.host?.game).toEqual(fresh.game);
+    sim.history("undoAction");
+    expect(sim.host?.game).toEqual(fresh.game);
+  });
+  it("resumes from home and clears the save only after Choose decks confirmation", () => {
     const { sim, route } = setup();
     sim.command("leave");
     expect(loadSimulatorSave()).not.toBeNull();
@@ -897,7 +968,7 @@ describe("Lua simulator", () => {
     sim.command("resume");
     expect(route).toHaveBeenLastCalledWith("simulator");
     sim.command("open");
-    sim.command("new");
+    sim.command("choosedecks");
     expect(loadSimulatorSave()).not.toBeNull();
     sim.menu?.options[0]?.run();
     expect(loadSimulatorSave()).toBeNull();
