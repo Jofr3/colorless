@@ -54,7 +54,7 @@ local function layout(w,h)
   local menuWidth=portrait and buttonWidth or #menu*buttonWidth+(#menu-1)*gap
   local menuHeight=portrait and #menu*buttonHeight+(#menu-1)*gap or buttonHeight
   local menuX=(virtualWidth-menuWidth)/2
-  local menuY=portrait and 442-menuHeight/2 or 426
+  local menuY=portrait and 535-menuHeight/2 or 550
   for i,b in ipairs(menu) do
     b.w,b.h=buttonWidth,buttonHeight
     b.x=menuX+(portrait and 0 or (i-1)*(buttonWidth+gap))
@@ -354,12 +354,11 @@ function love.draw()
   -- Draw inside the room/CRT pass so scanlines and fringing stay live.
   local logoWidth,logoHeight=menuLogo:getDimensions()
   local logoScale=(portrait and 440 or 900)/logoWidth
-  g.push(); g.translate(virtualWidth/2,portrait and 148 or 215)
+  g.push(); g.translate(virtualWidth/2,portrait and 235 or 310)
   if not state.reduced then g.rotate(math.sin(state.time*0.6)*0.012) end
   g.setColor(1,1,1)
   menuLogo:draw(logoScale)
   g.pop()
-  T.text('Pick your next move',portrait and 23 or 28,0,portrait and 246 or 370,virtualWidth,T.paper)
   Button.tray(menuTray.x,menuTray.y,menuTray.w,menuTray.h)
   for i,b in ipairs(menu) do button(b,i) end
   -- Profile-style inset buttons, with 0.2-tile padding and no extra heading.
