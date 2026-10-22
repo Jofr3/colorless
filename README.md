@@ -34,7 +34,7 @@ bun run dev:all     # frontend (5175) + API (8787); Ctrl+C stops both
 bun run dev:tailnet # both servers over Tailnet HTTPS; selects available ports
 bun run build:lua   # rebuild the Lua app into public/love/ (refresh the page)
 bun run build       # tsc -b, build:lua, vite build → dist/
-bun run deploy      # production build + publish dist/ to luminous.jofrescari.workers.dev
+bun run deploy      # production build + publish dist/ to colorless.jofrescari.workers.dev
 bun run api:deploy  # publish the API Worker
 bun run preview
 bun run typecheck
@@ -52,12 +52,12 @@ with plain Lua from the repository root: `lua frontend/lua/tests/<name>.lua`.
 
 | Worker | URL | Command |
 |---|---|---|
-| `luminous` (static assets, root `wrangler.jsonc`) | <https://luminous.jofrescari.workers.dev> | `bun run deploy` |
-| `luminous-api` (`apps/api/wrangler.jsonc`) | <https://luminous-api.jofrescari.workers.dev> | `bun run api:deploy` |
+| `colorless` (static assets, root `wrangler.jsonc`) | <https://colorless.jofrescari.workers.dev> | `bun run deploy` |
+| `colorless-api` (`apps/api/wrangler.jsonc`) | <https://colorless-api.jofrescari.workers.dev> | `bun run api:deploy` |
 
 `bun run deploy` builds in production mode, so the bundle and its CSP point at
-`VITE_API_ORIGIN` from `.env.production`. The frontend Worker has no script and
-no SPA fallback: unknown paths return 404. The API's `APP_ORIGIN` must equal the
+`VITE_API_ORIGIN` from `.env.production`. The frontend Worker has no script; unknown
+paths (such as old React URLs) fall back to the host page. The API's `APP_ORIGIN` must equal the
 frontend's origin (CORS and the post-login redirect), so redeploy the API after
 changing it. `workers.dev` is a public suffix, which makes the two Workers
 different sites: the `SameSite=None` session cookie is a third-party cookie
@@ -68,7 +68,7 @@ domain.
 
 Create a **Web application** OAuth client in [Google Auth Platform](https://console.cloud.google.com/auth/clients).
 Register `http://localhost:8787/auth/oauth/google/callback` for local development
-and `https://luminous-api.jofrescari.workers.dev/auth/oauth/google/callback` for the deployed API.
+and `https://colorless-api.jofrescari.workers.dev/auth/oauth/google/callback` for the deployed API.
 Google requires the redirect URI to [match the registered URI exactly](https://developers.google.com/identity/protocols/oauth2/web-server).
 
 For local development, copy `apps/api/.dev.vars.example` to `apps/api/.dev.vars`,
@@ -85,7 +85,7 @@ bunx wrangler secret put GOOGLE_CLIENT_SECRET
 ```
 
 The deployed API's `APP_ORIGIN` (`apps/api/wrangler.jsonc`) is the deployed
-frontend's exact origin, `https://luminous.jofrescari.workers.dev`; the frontend's
+frontend's exact origin, `https://colorless.jofrescari.workers.dev`; the frontend's
 production build reads `VITE_API_ORIGIN` from `.env.production`.
 Google sign-in reports unavailable until both credentials are configured.
 

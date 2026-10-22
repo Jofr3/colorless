@@ -4,7 +4,7 @@
 
 export type Env = {
   DB: D1Database;
-  /** R2 bucket `luminous-assets` — the lazy tcgdex asset mirror (D9). */
+  /** R2 bucket `colorless-assets` — the lazy tcgdex asset mirror (D9). */
   ASSETS: R2Bucket;
   /** KV namespace — catalog response cache (src/catalog/cache.ts) + auth
       rate-limit counters (src/auth/rateLimit.ts). */

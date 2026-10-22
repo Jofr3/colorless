@@ -44,7 +44,7 @@ app.route("/", catalogRoutes);
 app.get("/health", (c) => {
   const payload: HealthResponse = {
     ok: true,
-    service: "luminous-api",
+    service: "colorless-api",
     time: new Date().toISOString(),
   };
   // Parse our own response at the boundary — the same pattern every future

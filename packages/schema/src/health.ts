@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const healthResponseSchema = z.object({
   ok: z.literal(true),
-  service: z.literal("luminous-api"),
+  service: z.literal("colorless-api"),
   time: z.iso.datetime(),
 });
 

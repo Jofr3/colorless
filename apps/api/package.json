@@ -8,8 +8,8 @@
     "deploy": "wrangler deploy",
     "typecheck": "tsc -b",
     "db:generate": "drizzle-kit generate",
-    "db:migrate:local": "bun ../../scripts/with-system-certs.ts wrangler d1 migrations apply luminous --local",
-    "db:migrate:remote": "wrangler d1 migrations apply luminous --remote"
+    "db:migrate:local": "bun ../../scripts/with-system-certs.ts wrangler d1 migrations apply colorless --local",
+    "db:migrate:remote": "wrangler d1 migrations apply colorless --remote"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.8.0",

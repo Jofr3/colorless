@@ -56,7 +56,7 @@ import {
 import { createSource, parseTransport } from "../src/ingest/source";
 
 const DELAY_MS = 50;
-const DATABASE = "luminous";
+const DATABASE = "colorless";
 const MAX_FAILURES_PRINTED = 10;
 
 const API_ROOT = fileURLToPath(new URL("..", import.meta.url));

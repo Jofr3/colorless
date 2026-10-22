@@ -25,7 +25,7 @@ Rebuild after editing Lua or host files, then refresh (a running Vite dev server
 bun run build:lua
 ```
 
-The root `index.html` is the host page. `build:lua` writes the love.js runtime, the game package, `web/host.js` and `web/host.css` into `public/love/` (ignored by Git), which Vite serves at `/love/` and copies into `dist/love/` on build. The page's one module script, `src/lua/bridge.ts`, is bundled by Vite with the configured `VITE_API_ORIGIN`. `bun run build` runs the Lua build and the Vite build; `bun run deploy` does the same in production mode (`.env.production` points at the deployed API) and publishes `dist/` to the static-assets Worker in the root `wrangler.jsonc` (`luminous.jofrescari.workers.dev`).
+The root `index.html` is the host page. `build:lua` writes the love.js runtime, the game package, `web/host.js` and `web/host.css` into `public/love/` (ignored by Git), which Vite serves at `/love/` and copies into `dist/love/` on build. The page's one module script, `src/lua/bridge.ts`, is bundled by Vite with the configured `VITE_API_ORIGIN`. `bun run build` runs the Lua build and the Vite build; `bun run deploy` does the same in production mode (`.env.production` points at the deployed API) and publishes `dist/` to the static-assets Worker in the root `wrangler.jsonc` (`colorless.jofrescari.workers.dev`).
 
 The production HTML carries a Content-Security-Policy (injected by `vite.config.ts`): same-origin scripts plus `'wasm-unsafe-eval'` for love.wasm, the API origin and its WebSocket twin for `connect-src`/`img-src`, and `data:`/`blob:` images and media.
 

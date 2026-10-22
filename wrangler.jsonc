@@ -4,10 +4,13 @@
   // Vite build. `bun run deploy` builds it in production mode, which reads
   // VITE_API_ORIGIN from .env.production; the api (apps/api) lists this
   // Worker's origin as its APP_ORIGIN.
-  "name": "luminous",
+  "name": "colorless",
   "compatibility_date": "2026-06-01",
   "assets": {
     // dist/.assetsignore (copied from public/) keeps the hidden source maps out.
-    "directory": "./dist"
+    "directory": "./dist",
+    // Unknown paths (old React URLs such as /decks or /lobby/CODE) get the
+    // host page, which opens home.
+    "not_found_handling": "single-page-application"
   }
 }

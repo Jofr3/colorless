@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "luminous-api",
+  "name": "colorless-api",
   "main": "src/index.ts",
   "compatibility_date": "2026-06-01",
   "observability": {
@@ -13,13 +13,13 @@
     // `--var APP_ORIGIN:http://localhost:5175` for `bun run dev`, and
     // scripts/dev-tailnet.ts appends its own (the last --var wins). OAuth
     // secrets are NOT vars — install via `wrangler secret put GOOGLE_CLIENT_ID` etc.
-    "APP_ORIGIN": "https://luminous.jofrescari.workers.dev"
+    "APP_ORIGIN": "https://colorless.jofrescari.workers.dev"
   },
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "luminous",
-      "database_id": "735f0fb5-cdc3-494d-8b97-74a8ade0124a",
+      "database_name": "colorless",
+      "database_id": "f84cf768-0fd9-49bf-a3a6-175622b0fd61",
       // drizzle-kit writes its generated SQL here (drizzle.config.ts `out`);
       // pointing wrangler at the same dir makes `d1 migrations apply` pick
       // them up directly — no copying step.
@@ -32,7 +32,7 @@
       // GET /assets/* routes, never by a backfill job. `wrangler dev`
       // simulates the bucket locally under .wrangler/state.
       "binding": "ASSETS",
-      "bucket_name": "luminous-assets"
+      "bucket_name": "colorless-assets"
     }
   ],
   "kv_namespaces": [
@@ -41,7 +41,7 @@
       // 1h TTL, keyed by normalized path+query. Simulated locally by
       // `wrangler dev` under .wrangler/state.
       "binding": "CACHE",
-      "id": "a3b270dcb3df4706be2f3273df342c0e"
+      "id": "e9954577422e4f8b91318efc3f45f55a"
     }
   ],
   "durable_objects": {
