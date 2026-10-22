@@ -244,7 +244,9 @@ export function renderBorder(mask, w, h, scale = 1, energy = null) {
   // warm ivory replaces pure white, and the lip sits closer to the taupe.
   const bands = [
     ...[[18, 3], [16, 11], [14, 29], [12, 59], [10, 100]]
-      .map(([radius, alpha]) => ({ radius, depth: 14, color: [255, 255, 255, alpha] })),
+      // Continue the same five-step halo outside the disc's 3px dark rim.
+      .map(([radius, alpha]) => ({ radius, depth: 14, color: [255, 255, 255, alpha],
+        energyRim: 3 + (radius - 8) / 2, energyDepth: 3 })),
     { radius: 8, depth: 14, color: [49, 58, 60, 255], energyRim: 3, energyDepth: 3 },
     { radius: 8, depth: 10, color: [67, 81, 83, 255], energyRim: 3, energyDepth: 2 },
     { radius: 8, depth: 8, color: [91, 117, 123, 255], energyRim: 3, energyDepth: 1 },

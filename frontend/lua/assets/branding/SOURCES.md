@@ -22,6 +22,7 @@ uses curved concave shoulders; the silver face has a restrained upper-right
 highlight and no colored streaks. Its gray/charcoal 3D border uses circles
 rasterized from the exact face center, with a three-pixel gray rim and
 three-pixel downward extrusion. Gray covers the top edge; charcoal is underneath.
+The letters' five-step translucent white glow also follows the disc's outer rim and extrusion.
 Each corresponding border layer is merged with the letters before the next
 layer is drawn, removing black dividing lines at the L/R junctions.
 The shallow gray layers have no light-colored ledge or highlight bands.
