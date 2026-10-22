@@ -9,7 +9,9 @@ import {
   matchSeatOf,
   type MatchRecord,
   readMatchRecord,
+  rematchChooser,
   SEAT_OF_SLOT,
+  settleFirstPlayer,
   startMatch,
   SUPPORTED_MATCH_ACTIONS,
 } from "./match";
@@ -77,6 +79,48 @@ describe("startMatch — the lobby → engine handoff", () => {
   it("surfaces the engine's rejection of an illegal deck (not 60 cards)", () => {
     const result = startMatch({ seed: 1, hostDeck: ["basic"], guestDeck: DECK, cardPool: POOL });
     expect(result.ok).toBe(false);
+  });
+});
+
+describe("settleFirstPlayer — who sets the play order", () => {
+  function created(seed: number) {
+    const result = startMatch({ seed, hostDeck: DECK, guestDeck: DECK, cardPool: POOL });
+    if (!result.ok || result.state.phase.kind !== "setup:chooseFirst") throw new Error("no game");
+    return { result, coinWinner: result.state.phase.coinWinner };
+  }
+
+  it("a first game has no choice: the coin winner goes first and setup moves on", () => {
+    for (const seed of [1, 2, 3, 4]) {
+      const { result, coinWinner } = created(seed);
+      const opening = settleFirstPlayer(result.state, result.events, null);
+      expect(opening.state.firstPlayer).toBe(coinWinner);
+      expect(opening.state.phase.kind).not.toBe("setup:chooseFirst");
+      const types = opening.events.map((e) => e.type);
+      expect(types).toContain("COIN_FLIP");
+      expect(types).toContain("FIRST_PLAYER_CHOSEN");
+    }
+  });
+
+  it("a rematch hands the choice to the previous loser and drops the coin row", () => {
+    for (const chooser of ["p1", "p2"] as const) {
+      const { result } = created(5);
+      const opening = settleFirstPlayer(result.state, result.events, chooser);
+      expect(opening.state.phase).toEqual({ kind: "setup:chooseFirst", coinWinner: chooser });
+      expect(opening.state.firstPlayer).toBeNull();
+      expect(opening.events.some((e) => e.type === "COIN_FLIP")).toBe(false);
+    }
+  });
+
+  it("rematchChooser names the loser, and nobody after a tie", () => {
+    const { result } = created(1);
+    const over = (outcome: object) =>
+      ({ ...result.state, phase: { kind: "gameOver", outcome } }) as typeof result.state;
+    expect(rematchChooser(over({ result: "win", winner: "p1", reason: "prizes" }))).toBe("p2");
+    expect(rematchChooser(over({ result: "win", winner: "p2", reason: "prizes" }))).toBe("p1");
+    expect(
+      rematchChooser(over({ result: "tie", reasons: { p1: "prizes", p2: "prizes" } })),
+    ).toBeNull();
+    expect(rematchChooser(result.state)).toBeNull();
   });
 });
 

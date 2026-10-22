@@ -1,0 +1,696 @@
+local D=require('ui.card_dimensions')
+-- The online lobby is one generic-options modal that changes step in place,
+-- as Settings swaps in its auth form: create_tabs (Create/Join), the seed row's
+-- black pill and Copy buttons, blind-choice seat panels, Sandbox's deck grid
+-- with a create_option_cycle filter and an
+-- attention_text countdown. src/features/lua/online.ts owns the socket.
+local T=require('ui.theme')
+local Button=require('ui.button')
+local Modal=require('ui.modal')
+local Motion=require('ui.motion')
+local Codec=require('ui.account')
+local Input=require('ui.text_input')
+local Dyna=require('ui.dynatext')
+local Fx=require('ui.sim_fx')
+local PageText=require('ui.page_text')
+local Pile=require('ui.deck_pile')
+local Labels=require('ui.deck_labels')
+local Library=require('ui.library')
+local g=love.graphics
+local Online={}
+Online.__index=Online
+local ALPHABET='ABCDEFGHJKMNPQRSTUVWXYZ23456789'
+local GREY={95/255,115/255,119/255,1}
+local heights={menu=540,joining=420,waiting=540,starting=420}
+local info={
+  invalid={'Invalid lobby code',"That code doesn't look right. Head back and try again."},
+  full={'Lobby is full','Lobby %s already has two players.'},
+  ['not-found']={'Lobby not found','No open lobby with the code %s. Ask for a fresh code, or create your own.'},
+  kicked={'Removed from the lobby','The host removed you from this lobby.'},
+}
+local backs={menu={'Back','home'},joining={'Cancel','leave'},waiting={'Leave','home'},versus={'Leave','leave'},
+  countdown={'Leave','leave'},starting={'Leave','home'}}
+-- Regulation view filter; the decks themselves are already playable.
+local filters={{'All decks'},{'Standard legal','standard',true},{'Not Standard legal','standard',false},
+  {'Expanded legal','expanded',true},{'Not Expanded legal','expanded',false}}
+local function darken(c,t) return {c[1]*(1-t),c[2]*(1-t),c[3]*(1-t),c[4] or 1} end
+local function mix(a,b,t) return {a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t,a[3]+(b[3]-a[3])*t,1} end
+local function spell(code) return (code:gsub('.','%0 '):gsub('%s+$','')) end
+local function fitted(text,size,width)
+  text=text:gsub('%c',' ')
+  while size>14 and T.font(size):getWidth(text)>width do size=size-1 end
+  if T.font(size):getWidth(text)>width then
+    local result=''
+    for char in text:gmatch('[%z\1-\127\194-\244][\128-\191]*') do
+      if T.font(size):getWidth(result..char..'...')>width then break end
+      result=result..char
+    end
+    text=result..'...'
+  end
+  return text,size
+end
+-- Mirrors normalizeLobbyCode: upper-case, drop look-alikes, cap at four.
+function Online.normalize(raw)
+  local out=''
+  for c in tostring(raw or ''):upper():gmatch('.') do
+    if ALPHABET:find(c,1,true) then out=out..c end
+    if #out==4 then break end
+  end
+  return out
+end
+function Online.new(callbacks)
+  local self=setmetatable({callbacks=callbacks,items={},cards={},decks={},seats={},piles={},dyna={},tab=1,joinCode='',
+    query='',page=1,pages=1,filter=1,focus=0,hover=0,time=0,step='menu',code='',message='',notice='',status='',
+    deckPhase='idle',name='',account='loading',pageText=PageText.new()},Online)
+  self.juice={you=Motion.new(0,0),opponent=Motion.new(0,0),youPill=Motion.new(0,0),opponentPill=Motion.new(0,0)}
+  self.fx=Fx.new({feedback=function(name,pitch) callbacks.feedback(name,pitch) end,jiggle=function(amount) callbacks.jiggle(amount) end})
+  self.motion=Modal.motion(true)
+  return self
+end
+function Online:command(...)
+  local fields={...};for i,v in ipairs(fields) do fields[i]=Codec.encode(v) end
+  self.callbacks.command(table.concat(fields,'\t'))
+end
+function Online:offset() return self.motion.VT.y*60 end
+function Online:open(reduced,code)
+  self.motion=Modal.motion(reduced);self.reduced=reduced
+  self.code=code or '';self.tab=1;self.joinCode='';self.editing=nil;self.picker=false;self.query='';self.page=1;self.filter=1
+  self.focus=0;self.hover=0;self.pressed=nil;self.busy=false;self.message='';self.notice='';self.seats={}
+  self.synced=false;self.fx:clear()
+  local say=self:enter(self.code~='' and 'joining' or 'menu')
+  self:build()
+  if self.code~='' then self:command('open',self.code) else self:command('open');self:create() end
+  self.callbacks.announce(say)
+end
+-- The Create tab is the lobby: opening on it, or returning to it, makes one.
+function Online:create()
+  if self.busy or self.step~='menu' or self.tab~=1 then return end
+  self.busy=true;self.message='';self:command('create');self:build()
+end
+-- Create/Join put the code into the URL; the lobby itself is already live.
+function Online:retarget(code) self.code=code or '' end
+function Online:finish() if self.editing then self:command('finish-input');self.editing=nil end end
+function Online:close() self:finish();self.picker=false;self:command('close') end
+function Online:leave() self:finish();self:command('leave','home');self.callbacks.home() end
+function Online:layout(w,h)
+  self.width,self.height,self.portrait=w,h,w<600
+  self.pressed=nil;self.pileKey=nil
+  self:makeCards(false);self:build()
+end
+function Online:deck(id) for _,d in ipairs(self.decks) do if d.id==id then return d end end end
+function Online:matches()
+  local out,f={},filters[self.filter]
+  local q=self.query:lower():match('^%s*(.-)%s*$')
+  for _,d in ipairs(self.decks) do
+    if (not f[2] or d[f[2]]==f[3]) and (q=='' or d.name:lower():find(q,1,true)) then out[#out+1]=d end
+  end
+  return out
+end
+function Online:frame()
+  local w,h=self.width,self.height
+  local versus=not self.picker and (self.step=='versus' or self.step=='countdown')
+  -- The versus card keeps a wider margin than the other steps; its side
+  -- margin grows the card, not the seats (392 / 424 wide).
+  self.pad=versus and (self.portrait and 24 or 20) or 16
+  self.padX=versus and (self.portrait and 36 or 52) or 16
+  self.w=versus and (self.portrait and 392 or 424)+2*self.padX or self.portrait and 440 or 780
+  if self.picker then self.h=h-72
+  elseif versus then
+    -- Your seat grows a deck preview once you have chosen one.
+    self.youH=((self.seats.you or {}).deckId or '')~='' and 432 or 208
+    self.h=math.min(2*self.pad+262+self.youH,h-40)
+  else self.h=heights[self.step] or 440 end
+  self.x,self.y=(w-self.w)/2,(h-self.h)/2
+  local x,y=self.x,self.y
+  -- One column: the opponent's seat, VS, then yours.
+  local pad,px=self.pad,self.padX
+  self.panels={opponent={x=x+px,y=y+pad,w=self.w-2*px,h=112},you={x=x+px,y=y+pad+176,w=self.w-2*px,h=self.youH or 208}}
+  self.vs={x=x+self.w/2,y=y+pad+144}
+  if self.portrait then self.area={x=x+16,y=y+136,w=self.w-32,h=self.h-312}
+  else self.area={x=x+16,y=y+90,w=self.w-32,h=self.h-260} end
+end
+-- The picker's pile size, which your seat's preview shares.
+function Online:pickerScale()
+  local ah=self.height-72-(self.portrait and 312 or 260)
+  return math.min(0.82,(ah/2-84)/D.H)
+end
+-- Your deck preview: the picker's titled pile, centred in the seat.
+function Online:deckBox(p)
+  local scale=self:pickerScale()
+  return {cx=p.x+p.w/2,cy=p.y+144+D.HALF_H*scale,scale=scale}
+end
+function Online:makeCards(entering)
+  for _,card in ipairs(self.cards) do card.texture:release() end
+  self.cards={}
+  if not self.width or not self.picker then return end
+  self:frame()
+  local matches=self:matches()
+  local size=self.portrait and 4 or 10
+  self.pages=math.max(1,math.ceil(#matches/size));self.page=math.max(1,math.min(self.pages,self.page))
+  self.pageText:set('Page '..self.page..'/'..self.pages,self.time)
+  local cols=self.portrait and 2 or 5
+  local a=self.area
+  local scale=self:pickerScale()
+  for i=(self.page-1)*size+1,math.min(#matches,self.page*size) do
+    local item=matches[i]
+    item.drawFace=function(w,h) Library.face(self,item,w,h) end
+    local card=Pile.new(item,i)
+    local index=#self.cards
+    card:place(a.x+a.w/cols*(index%cols+0.5),a.y+50+D.HALF_H*scale+math.floor(index/cols)*a.h/2,scale,false,self.width)
+    card.bounds={x=a.x+(index%cols)*a.w/cols+6,y=a.y+math.floor(index/cols)*a.h/2+4,w=a.w/cols-12,h=a.h/2-8}
+    if entering and not self.reduced then card:enterCollection(self.width/2) end
+    self.cards[#self.cards+1]=card
+  end
+end
+-- Your chosen deck's pile, drawn as in the picker.
+function Online:makePiles()
+  local you,opp=self.seats.you,self.seats.opponent
+  local shown=(self.step=='versus' or self.step=='countdown') and not self.picker
+  local key=shown and table.concat({self.width,self.height,you and you.deckId or '',opp and opp.present and 1 or 0},'|') or ''
+  if key==self.pileKey then return end
+  self.pileKey=key
+  for _,pile in pairs(self.piles) do pile.texture:release() end
+  self.piles={}
+  if not shown then return end
+  if you and you.deckId~='' then
+    local deck=self:deck(you.deckId)
+    local item={count=deck and deck.count or 60,name=you.deckName~='' and you.deckName or deck and deck.name or ''}
+    item.drawFace=function(w,h) Library.face(self,item,w,h) end
+    local box=self:deckBox(self.panels.you)
+    local pile=Pile.new(item,1);pile:place(box.cx,box.cy,box.scale,false,self.width)
+    self.piles.you=pile
+  end
+end
+function Online:build()
+  if not self.width then return end
+  self:frame();self:makePiles()
+  local x,y,w,h=self.x,self.y,self.w,self.h
+  self.items={}
+  local function add(item)
+    item.fontSize=item.fontSize or 26;item.colour=item.colour or T.red
+    self.items[#self.items+1]=item;return item
+  end
+  local step=self.step
+  if self.picker then
+    local portrait=self.portrait
+    local ready=self.deckPhase=='ready'
+    add({kind='field',field='search',label='',placeholder='Search decks',x=x+16,y=y+(portrait and 78 or 30),w=portrait and w-32 or w-348,h=42,disabled=not ready})
+    add({kind='cycle',x=portrait and x+(w-300)/2 or x+w-316,y=y+(portrait and 24 or 32),w=300,h=38.4,disabled=not ready})
+    if ready then
+      for i,card in ipairs(self.cards) do
+        local b=card.bounds
+        add({kind='card',card=i,label=card.item.name,x=b.x,y=b.y,w=b.w,h=b.h})
+      end
+      add({kind='button',action='previous',label='<',x=self.width/2-157,y=y+h-158,w=32,h=36})
+      add({kind='button',action='next',label='>',x=self.width/2+125,y=y+h-158,w=32,h=36})
+    elseif self.deckPhase=='anonymous' or self.deckPhase=='error' then
+      local anonymous=self.deckPhase=='anonymous'
+      add({kind='button',action=anonymous and 'signin' or 'decks',label=anonymous and 'Sign in' or 'Try again',x=x+(w-280)/2,y=self.area.y+180,w=280,h=48})
+    end
+  elseif step=='menu' or step=='waiting' then
+    -- A created lobby fills the Create tab in place; Join gives it up.
+    local waiting=step=='waiting'
+    local left=x+(w-312)/2
+    for i,label in ipairs({'Create','Join'}) do add({kind='tab',tab=i,label=label,x=left+(i-1)*162,y=y+34,w=150,h=48,fontSize=30}) end
+    if waiting then
+      for i,kind in ipairs({'code','link'}) do
+        local label=(self.copied==kind and self.notice~='') and self.notice or (kind=='code' and 'Copy code' or 'Copy link')
+        add({kind='button',action='copy',copy=kind,label=label,x=x+(w-320)/2,y=y+272+(i-1)*50,w=320,h=40,fontSize=24})
+      end
+    elseif self.tab==1 then
+      local bw=math.min(420,w-64)
+      add({kind='button',action='create',label=self.busy and 'Please wait...' or 'Create lobby',x=x+(w-bw)/2,y=y+214,w=bw,h=56,fontSize=40,colour=T.blue,disabled=self.busy})
+    else
+      add({kind='field',field='code',label='Lobby code',placeholder='CODE',x=x+(w-260)/2,y=y+162,w=260,h=56})
+      add({kind='button',action='join',label='Join',x=x+(w-260)/2,y=y+238,w=260,h=48,fontSize=30,disabled=self.busy or #self.joinCode<4})
+    end
+    if self.account=='anonymous' and not waiting then add({kind='button',action='signin',label='Sign in',x=x+(w-160)/2,y=y+h-116,w=160,h=36,fontSize=22,colour=T.blue}) end
+  elseif step=='versus' or step=='countdown' then
+    -- The countdown keeps the panels on screen but only Leave stays live.
+    local locked=step=='countdown'
+    local you=self.seats.you or {}
+    local p=self.panels.you
+    add({kind='button',action='choose',label=(you.deckId or '')~='' and 'Change deck' or 'Choose deck',x=p.x+12,
+      y=p.y+p.h-100,w=p.w-24,h=40,disabled=locked or you.ready})
+    add({kind='button',action='ready',label=you.ready and 'Cancel ready' or 'Ready',x=p.x+12,
+      y=p.y+p.h-52,w=p.w-24,h=40,colour=you.ready and T.orange or T.red,disabled=locked or (you.deckId or '')==''})
+  elseif info[step] then
+    add({kind='button',action='online',label='Back to online',x=x+(w-300)/2,y=y+h-124,w=300,h=46,fontSize=30})
+  end
+  local back=self.picker and {'Back','versus'} or backs[step] or {'Back','home'}
+  -- Back/Leave spans the card on every step, past the seats' side margin.
+  local pad=self.pad
+  add({kind='back',label=back[1],action=back[2],x=x+16,y=y+h-pad-42+(pad==16 and 0 or 4),w=w-32,h=38,fontSize=30,colour=T.orange})
+  if self.focus>#self.items then self.focus=0 end
+end
+-- Step entry: fresh DynaTexts, the entry cue, and what to announce.
+function Online:enter(step)
+  self.step=step;self.focus=0;self.pressed=nil
+  if step~='versus' then self.picker=false end
+  if (step~='menu' and self.editing=='code') or (self.editing=='search' and not self.picker) then self:finish() end
+  local t,reduced=self.time,self.reduced
+  local function dyna(cfg)
+    cfg.time=t;cfg.colours=cfg.colours or {T.white};cfg.shadow=true
+    if reduced then cfg.pop_in=nil end
+    return Dyna.new(cfg)
+  end
+  self.dyna={}
+  if step=='menu' then return 'Online. '..(self.tab==1 and 'Create' or 'Join')..' tab. Left and right switch tabs. Escape closes.'
+  elseif step=='joining' then
+    self.dyna.title=dyna({string='Joining lobby',scale=0.8,bump=true,pop_in=0.5})
+    return 'Joining lobby '..spell(self.code)
+  elseif step=='waiting' then
+    self.tab=1
+    -- round_scores_row seed value, at wipe_on's pop_in rate and pulse.
+    self.dyna.code=dyna({string=self.code,scale=1.6,colours={T.gold},float=true,pop_in=0,pop_in_rate=2})
+    self.dyna.code:pulse(0.2,t)
+    self.dyna.prompt=dyna({string='Waiting for an opponent to join...',scale=0.5,bump=true,pop_in=0.5})
+    self.callbacks.feedback('highlight1')
+    return 'Lobby code '..spell(self.code)..'. Waiting for an opponent to join.'
+  elseif step=='versus' then
+    self.dyna.vs=dyna({string='VS',scale=0.9,float=true})
+    local opp=self.seats.opponent
+    return 'Versus.'..(opp and opp.present and ' '..opp.name..' joined.' or '')
+  elseif step=='countdown' then
+    self.dyna.title=dyna({string='BATTLE STARTING',scale=0.6,spacing=2,float=true})
+    return 'Battle starting.'
+  elseif step=='starting' then
+    self.dyna.title=dyna({string='The match is set',scale=0.8,bump=true})
+  elseif info[step] then
+    self.dyna.title=dyna({string=info[step][1],scale=0.8,colours={T.red},pop_in=0,pop_in_rate=4})
+    if step=='kicked' then
+      -- Blind:alert_debuff's stinger, with the shipped whoosh.
+      local feedback=self.callbacks.feedback
+      feedback('whoosh');self.fx:after(0.1,function() feedback('cancel',0.8) end);self.fx:after(0.1,function() feedback('cancel',0.85) end)
+    else self.callbacks.feedback('cancel',0.8) end
+    return info[step][1]..'. '..info[step][2]:format(self.code)
+  end
+end
+-- One attention_text per countdown second; GO! gets the blue cover.
+function Online:tick()
+  local n=self.countdown
+  if self.vs then
+    self.fx.time=self.time
+    self.fx:attention({text=n>0 and tostring(n) or 'GO!',scale=2,hold=0.6,x=self.vs.x,y=self.vs.y+20,
+      backdrop=not self.reduced and (n>0 and T.orange or T.blue) or nil,sound=n>0 and 'generic1' or 'whoosh2',jiggle=n>0 and 1 or 2})
+  end
+  return n>0 and tostring(n) or 'Go!'
+end
+function Online:sync(raw)
+  if not raw or raw==self.raw then return end
+  self.raw=raw
+  local rows={};for line in raw:gmatch('[^\n]+') do rows[#rows+1]=Codec.fields(line) end
+  local f=rows[1];if not f or #f<14 then return end
+  local was={step=self.step,seats=self.seats,status=self.status,message=self.message,notice=self.notice,
+    countdown=self.countdown,deckPhase=self.deckPhase}
+  self.busy,self.message,self.code,self.role,self.link=f[3]=='1',f[4],f[5],f[6],f[7]
+  self.countdown,self.notice,self.deckPhase,self.name,self.account=tonumber(f[8]),f[9],f[10],f[11],f[12]
+  self.status=f[14]
+  local seats,decks,signature={},{},{}
+  for i=2,#rows do
+    local r=rows[i]
+    if r[1]=='P' and #r>=8 then
+      seats[r[2]]={present=r[3]=='1',name=r[4],connected=r[5]=='1',ready=r[6]=='1',deckId=r[7],deckName=r[8]}
+    elseif r[1]=='D' and #r>=4 then
+      decks[#decks+1]={id=r[2],name=r[3],count=tonumber(r[4]) or 0,standard=r[5]=='1',expanded=r[6]=='1'}
+      signature[#signature+1]=table.concat(r,'\t')
+    end
+  end
+  self.seats=seats
+  if seats.you and seats.you.ready then self.picker=false end
+  if self.editing=='search' and not self.picker then self:finish() end
+  signature=table.concat(signature,'\n')
+  local changed=signature~=self.signature
+  if changed then self.signature=signature;self.decks=decks end
+  local say=self:react(was,f[2])
+  if changed then self:makeCards(true) end
+  self:build()
+  if #say>0 then self.callbacks.announce(table.concat(say,' ')) end
+  -- Leaving a lobby lands back on the Create tab, which is a fresh lobby.
+  if f[2]=='menu' and was.step~='menu' then self:create() end
+end
+function Online:react(was,step)
+  local say={}
+  local function add(text) if text and text~='' then say[#say+1]=text end end
+  if step~=was.step then add(self:enter(step)) end
+  local opp,old=self.seats.opponent or {},was.seats.opponent or {}
+  if self.synced and (step=='versus' or step=='waiting' or step=='countdown') then
+    if opp.present and not old.present then
+      -- play_area_status_text: cardFan2 with the seat's juice and a jiggle.
+      self.callbacks.feedback('cardFan2');self.callbacks.jiggle(1)
+      self.juice.opponent:juice_up(self.time,0.05,0.02,self.reduced)
+      if was.step=='versus' then add(opp.name..' joined.') end
+    elseif old.present and (not opp.present or (old.connected and not opp.connected)) then
+      self.callbacks.feedback('chips1',0.6,0.12)
+      add(opp.present and opp.name..' disconnected.' or old.name..' left.')
+    end
+    for _,tag in ipairs({'you','opponent'}) do
+      local s,o=self.seats[tag],was.seats[tag]
+      if s and o and s.present and s.ready~=o.ready then
+        self.juice[tag..'Pill']:juice_up(self.time,0.3,0.1,self.reduced)
+        add(tag=='you' and (s.ready and 'You are ready.' or 'You are no longer ready.')
+          or s.name..(s.ready and ' is ready.' or ' is no longer ready.'))
+      end
+    end
+  end
+  if step=='versus' and self.status~=was.status then add(self.status) end
+  if self.message~=was.message then add(self.message) end
+  if self.notice~=was.notice and self.notice~='' then
+    if self.notice=='Copied' then self.callbacks.feedback('paper1') end
+    add(self.notice)
+  end
+  if step=='countdown' and self.countdown and self.countdown~=was.countdown then add(self:tick()) end
+  -- The server can flip to in-game before a zero second is ever published.
+  if step=='starting' and was.step=='countdown' and was.countdown~=0 then self.countdown=0;add(self:tick()) end
+  if self.picker and self.deckPhase~=was.deckPhase then add(self:summary()) end
+  self.synced=true
+  return say
+end
+function Online:summary()
+  if self.deckPhase=='ready' then return 'Choose your deck. '..#self:matches()..' decks.' end
+  if self.deckPhase=='anonymous' then return 'Choose your deck. Sign in to use your decks.' end
+  if self.deckPhase=='error' then return "Choose your deck. Couldn't load your decks." end
+  return 'Choose your deck. Loading decks.'
+end
+function Online:input(raw)
+  if not raw or raw==self.inputRaw then return end
+  self.inputRaw=raw
+  local f=Codec.fields(raw);if #f<6 then return end
+  local field,action=f[2],f[6]
+  self.first,self.last=tonumber(f[4]),tonumber(f[5])
+  if field=='code' then
+    self.editing=action=='input' and 'code' or nil
+    self.joinCode=Online.normalize(f[3])
+    self:build()
+    if action=='enter' and #self.joinCode==4 and self.step=='menu' and not self.busy then self:join() end
+  elseif field=='search' then
+    self.editing=action=='input' and 'search' or nil
+    if self.query~=f[3] then self.query=f[3];self.page=1;self:makeCards(true);self.focus=0;self.pressed=nil end
+    self:build()
+  end
+end
+function Online:hit(x,y,hoverOnly)
+  y=y-self:offset()
+  for i,item in ipairs(self.items) do
+    if not item.disabled and Button.hit(item,x,y) then
+      if item.kind=='cycle' then
+        if x<=item.x+28.8 then return i,'left' end
+        if x>=item.x+item.w-28.8 then return i,'right' end
+        if hoverOnly then return i,'center' end
+      else return i end
+    end
+  end
+  return 0
+end
+function Online:update(dt,time,mx,my,reduced)
+  self.time,self.reduced=time,reduced
+  self.markerTime=reduced and 12 or time
+  if love.filesystem.getInfo('__online.txt') then self:sync(love.filesystem.read('__online.txt')) end
+  if love.filesystem.getInfo('__online_input.txt') then self:input(love.filesystem.read('__online_input.txt')) end
+  self.motion:update(dt,time,false,false,reduced)
+  self.mx,self.my=mx,my-self:offset()
+  self.hover,self.hoverPart=self:hit(mx,my,true)
+  for _,d in pairs(self.dyna) do d:update(time,reduced) end
+  for _,m in pairs(self.juice) do m:update(dt,time,false,false,reduced) end
+  for _,pile in pairs(self.piles) do pile:update(dt,time,false,reduced,self.width) end
+  for i,card in ipairs(self.cards) do
+    local active=(self.items[self.hover] or {}).card==i or (self.items[self.focus] or {}).card==i
+    if active and not card.hovered then
+      if not card.motion.juice then card:juiceUp(time,0.05,0.03,reduced) end
+      self.callbacks.feedback('paper1')
+    end
+    card:update(dt,time,active,reduced,self.width)
+  end
+  self.fx:update(dt,time,reduced,false)
+end
+function Online:describe(item)
+  if item.kind=='tab' then return item.label..' tab' end
+  if item.kind=='field' and item.field=='code' then
+    return 'Lobby code, '..(self.joinCode~='' and spell(self.joinCode) or 'empty')..'. Enter to edit.'
+  end
+  if item.kind=='field' then return 'Search decks'..(self.query~='' and ', '..self.query or '')..'. Enter to edit.' end
+  if item.kind=='cycle' then return 'Deck filter: '..filters[self.filter][1]..'. Left and right change it.' end
+  if item.kind=='card' then
+    local d=self.cards[item.card].item
+    return d.name..'. '..d.count..' cards.'..(d.id==(self.seats.you or {}).deckId and ' Selected.' or '')
+  end
+  return (item.displayLabel or item.label)..'. Button.'
+end
+function Online:join()
+  if self.busy or #self.joinCode<4 then return end
+  self:finish();self.busy=true;self:command('join',self.joinCode);self:build()
+end
+function Online:openPicker()
+  self.picker=true;self.query='';self.page=1;self.focus=0;self.pressed=nil
+  self:command('decks');self:makeCards(true);self:build()
+  self.callbacks.announce(self:summary())
+end
+function Online:changePage(delta)
+  if not self.picker or self.deckPhase~='ready' then return end
+  self.page=(self.page-1+delta+self.pages)%self.pages+1;self:makeCards(true);self:build();self.focus=0;self.pressed=nil
+end
+function Online:activate(i,dir)
+  local item=self.items[i]
+  if not item or item.disabled then return end
+  local a=item.action
+  self.callbacks.feedback('button');self.callbacks.jiggle(0.5)
+  if item.kind=='tab' then
+    local switched=item.tab~=self.tab
+    self:finish();self.tab=item.tab;self:build()
+    if self.focus>0 then self.focus=i end
+    self.callbacks.announce(self:describe(item))
+    -- Joining someone else gives up the lobby you were waiting in.
+    if switched and self.step=='waiting' then self:command('leave') elseif switched then self:create() end
+  elseif item.kind=='field' then
+    self.focus=i;self.editing=item.field
+    self:command('input',item.field,item.field=='code' and self.joinCode or self.query)
+  elseif item.kind=='cycle' then
+    self.filter=(self.filter-1+(dir or 1))%#filters+1;self.page=1;self:makeCards(true);self:build()
+    self.callbacks.announce(self:describe(item))
+  elseif item.kind=='card' then
+    local card=self.cards[item.card]
+    card:click(self.time,self.reduced);self.callbacks.feedback('cardSlide1')
+    self:command('select',card.item.id);self:finish();self.picker=false;self.focus=0;self:build()
+    self.callbacks.announce('Deck chosen: '..card.item.name)
+  elseif a=='create' then self:create()
+  elseif a=='join' then self:join()
+  elseif a=='signin' then self:finish();self.callbacks.signin()
+  elseif a=='copy' then self.copied=item.copy;self:command('copy',item.copy)
+  elseif a=='choose' then self:openPicker()
+  elseif a=='ready' then self:command('ready',(self.seats.you or {}).ready and '0' or '1')
+  elseif a=='previous' or a=='next' then self:changePage(a=='previous' and -1 or 1)
+  elseif a=='decks' then self:command('decks')
+  elseif a=='online' or a=='leave' then self:finish();self:command('leave')
+  elseif a=='versus' then
+    self:finish();self.picker=false;self.focus=0;self:build();self.callbacks.announce('Versus')
+  elseif a=='home' then self:leave() end
+end
+function Online:mousepressed(x,y)
+  self.pressed,self.pressedPart=self:hit(x,y);self.focus=0
+end
+function Online:mousereleased(x,y)
+  local hit,part=self:hit(x,y)
+  if self.pressed and self.pressed>0 and self.pressed==hit and self.pressedPart==part then self:activate(hit,part=='left' and -1 or 1) end
+  self.pressed=nil;self.pressedPart=nil
+end
+function Online:keypressed(key)
+  if self.editing then return end
+  if key=='escape' then
+    if self.step~='countdown' or self.picker then self:activate(#self.items) end
+    return
+  end
+  local item=self.items[self.focus]
+  if (key=='left' or key=='right') and item and item.kind=='cycle' then self:activate(self.focus,key=='left' and -1 or 1)
+  elseif (key=='left' or key=='right') and self.step=='menu' then self:activate(self.tab==1 and 2 or 1)
+  elseif key=='tab' or key=='up' or key=='down' or key=='left' or key=='right' then
+    local direction=(key=='up' or key=='left' or (key=='tab' and love.keyboard.isDown('lshift','rshift'))) and -1 or 1
+    for _=1,#self.items do
+      self.focus=(self.focus-1+direction)%#self.items+1
+      if not self.items[self.focus].disabled then break end
+    end
+    self.callbacks.announce(self:describe(self.items[self.focus]))
+  elseif key=='pageup' or key=='pagedown' then self:changePage(key=='pageup' and -1 or 1)
+  elseif key=='return' or key=='space' then self:activate(self.focus)
+  elseif #key==1 and key:match('%w') and self.step=='menu' and self.tab==2 then
+    -- Typing into the unfocused code field starts editing with that letter.
+    for i,it in ipairs(self.items) do
+      if it.field=='code' then
+        self.focus=i;self.editing='code';self.joinCode=Online.normalize(self.joinCode..key)
+        self:command('input','code',self.joinCode);self:build()
+      end
+    end
+  end
+end
+function Online:wheelmoved(y) if y~=0 and not self.editing then self:changePage(y>0 and -1 or 1) end end
+-- create_text_input at the PLAY button's scale: centred, letter by letter.
+function Online:drawCode(item,hovered)
+  local editing=self.editing=='code'
+  T.text(item.label,24,item.x,item.y-32,item.w)
+  Input.background(item,editing,false,hovered)
+  local font,value=T.font(40),self.joinCode
+  local top=item.y+(item.h-font:getHeight())/2
+  local left=item.x+(item.w-font:getWidth(value))/2
+  if value=='' then
+    T.text(item.placeholder,40,item.x,top,item.w,T.profile)
+  else
+    if editing then
+      local first,last=font:getWidth(Codec.prefix(value,self.first or 0)),font:getWidth(Codec.prefix(value,self.last or 0))
+      if last>first then g.setColor(T.blue);g.rectangle('fill',left+first,top,last-first,font:getHeight()) end
+    end
+    T.text(value,40,left,top,font:getWidth(value)+8,T.white,'left')
+  end
+  if editing and math.floor(self.time*2)%2==0 then
+    g.setColor(T.white);g.rectangle('fill',left+font:getWidth(Codec.prefix(value,self.last or #value)),top+4,3,font:getHeight()-8)
+  end
+end
+-- Settings' create_option_cycle with five pips.
+function Online:drawCycle(item,i)
+  local x,y,cw=item.x+36,item.y,item.w-72
+  local colour=item.disabled and T.panel or T.red
+  local highlighted=not item.disabled and self.hover==i and self.hoverPart=='center'
+  local depth=highlighted and 0.5 or 0.7
+  Button.panel(x,y+6,cw,38.4,{colour[1]*depth,colour[2]*depth,colour[3]*depth,1})
+  Button.panel(x,y,cw,38.4,Button.hoverColour(colour,highlighted))
+  local label=filters[self.filter][1]
+  local size=24
+  while size>12 and T.font(size):getWidth(label)>cw-12 do size=size-1 end
+  T.text(label,size,x,y+1,cw)
+  for pip=0,#filters-1 do
+    Button.panel(x+(cw-(#filters*7.2-2.4))/2+pip*7.2,y+28,4.8,4.8,self.filter-1==pip and T.white or T.ink,0.6)
+  end
+  for _,side in ipairs({'left','right'}) do
+    local arrow={label=side=='left' and '<' or '>',x=side=='left' and item.x or item.x+item.w-28.8,y=y,w=28.8,h=38.4,fontSize=24,colour=colour}
+    local live=not item.disabled
+    Button.draw(arrow,live and ((self.hover==i and self.hoverPart==side) or self.focus==i),
+      live and self.pressed==i and self.pressedPart==side and self.hoverPart==side,false,self.width)
+  end
+end
+local function juiced(m,x,y,w,h)
+  g.push();g.translate(x+w/2,y+h/2);g.rotate(m.VT.r);g.scale(m.VT.scale);g.translate(-x-w/2,-y-h/2)
+end
+-- create_UIBox_blind_choice: dark body, seat-coloured name banner, state pill.
+function Online:drawSeat(tag)
+  local p,seat=self.panels[tag],self.seats[tag] or {}
+  local colour=tag=='you' and T.blue or T.red
+  juiced(self.juice[tag],p.x,p.y,p.w,p.h)
+  Button.panel(p.x,p.y,p.w,p.h,mix(T.panel,T.tray,0.5),2.4)
+  g.setLineWidth(1.5);Button.outline(p.x,p.y,p.w,p.h,T.tray,2.4)
+  local bh=self.portrait and 40 or 44
+  local bw=p.w-24
+  Button.panel(p.x+12,p.y+15,bw,bh,darken(colour,0.55))
+  Button.panel(p.x+12,p.y+12,bw,bh,darken(colour,0.3))
+  g.setLineWidth(2);Button.outline(p.x+12,p.y+12,bw,bh,colour)
+  Dyna.static(seat.present and seat.name or 'Waiting for opponent...',0.45,p.x+20,p.y+12,bw-16,bh,T.white,{fit=true,roomWidth=self.width})
+  local ry=p.y+bh+22
+  Button.panel(p.x+16,ry+7,12,12,seat.present and seat.connected and colour or GREY,0.9)
+  T.text(tag=='you' and 'You' or 'Opponent',24,p.x+36,ry,160,T.white,'left')
+  -- The seat state is coloured text: gold choosing, green ready.
+  local label,tint='Waiting',mix(GREY,T.white,0.4)
+  if seat.present and not seat.connected then label,tint='Away',T.red
+  elseif seat.present and seat.ready then label,tint='Ready',T.green
+  elseif seat.present then label,tint='Choosing deck',T.gold end
+  local pw=180
+  local px=p.x+p.w-12-pw
+  juiced(self.juice[tag..'Pill'],px,ry-2,pw,30)
+  T.text(label,24,px,ry,pw,tint,'right')
+  g.pop()
+  if tag=='opponent' then g.pop();return end
+  if self.piles.you then self:drawDeck(self.piles.you,false) end
+  g.pop()
+end
+-- A deck pile with its name above and count below, as the picker draws it.
+function Online:drawDeck(card,chosen)
+  card:draw()
+  local bottom=Labels.drawCounter(card)
+  local tx,ty=card:target(1,self.width,Pile.parallax())
+  local titleX,titleY=tx-D.HALF_W*card.baseScale-6,ty-D.HALF_H*card.baseScale-32
+  local titleWidth=D.W*card.baseScale+12
+  if chosen then
+    local left=math.min(titleX,card.homeX-D.HALF_W*card.baseScale)-5
+    local right=math.max(titleX+titleWidth,card.homeX+78.1*card.baseScale)+5
+    g.push('all');g.setLineWidth(1.5)
+    Button.outline(left,titleY-5,right-left,bottom-titleY+10,T.white,1.2)
+    g.pop()
+  end
+  local text,size=fitted(card.item.name,22,titleWidth)
+  T.text(text,size,titleX,titleY,titleWidth,T.white)
+end
+function Online:drawPicker()
+  local y,h,a=self.y,self.h,self.area
+  Button.panel(a.x,a.y+3,a.w,a.h,darken(T.panel,0.3))
+  Button.panel(a.x,a.y,a.w,a.h,T.panel)
+  if self.deckPhase=='ready' then
+    local chosen=(self.seats.you or {}).deckId
+    for _,card in ipairs(self.cards) do self:drawDeck(card,card.item.id==chosen) end
+    if #self.cards==0 then T.text(#self.decks==0 and 'No decks yet. Build one in Decks.' or 'No matches',28,a.x+16,a.y+80,a.w-32) end
+    local px,py=self.width/2-119,y+h-158
+    Button.cycleFace(px,py,238,36,Button.hit({x=px,y=py,w=238,h=36},self.mx or -1,self.my or -1))
+    self.pageText:draw(self.time,self.reduced,px,py,238,36,self.width,0.4)
+  else
+    local text=self.deckPhase=='anonymous' and 'Sign in to use your decks.' or self.deckPhase=='error' and "Couldn't load your decks." or 'Loading decks...'
+    T.text(text,self.portrait and 26 or 30,a.x+16,a.y+100,a.w-32)
+  end
+end
+function Online:draw()
+  local x,y,w,h=self.x,self.y,self.w,self.h
+  if not x then return end
+  g.push();g.translate(0,self:offset())
+  Button.panel(x,y+6,w,h,{0.525,0.546,0.585,1},2.4)
+  Button.panel(x,y,w,h,{191/255,199/255,213/255,1},2.4)
+  Button.panel(x+4,y+4,w-8,h-8,T.tray,2.4)
+  local step,d=self.step,self.dyna
+  if self.link=='connecting' and (step=='waiting' or step=='versus' or step=='countdown') then
+    T.text('Reconnecting...',18,x+16,y+8,w-32,T.gold,'right')
+  end
+  if self.picker then self:drawPicker()
+  elseif step=='menu' then
+    if self.tab==1 then T.text('Get a code to share, then wait for your opponent to join.',26,x+48,y+118,w-96,T.paper) end
+    if self.message~='' then local text,size=fitted(self.message,20,w-48);T.text(text,size,x+24,y+300,w-48,T.red) end
+    if self.account=='anonymous' then T.text('Sign in to play with your decks.',20,x+24,y+h-148,w-48,T.white) end
+  elseif step=='joining' then
+    d.title:draw(x+w/2,y+130,self.width)
+    if not self.reduced then T.text(string.rep('.',math.floor(self.time*2)%4),40,x+w/2+d.title.W/2+2,y+108,60,T.white,'left') end
+    T.text('Connecting to lobby '..self.code..'.',26,x+24,y+196,w-48,T.paper)
+  elseif step=='waiting' then
+    T.text('Lobby code',26,x,y+112,w,T.paper)
+    local pw,ph=320,100
+    local px,py=x+(w-pw)/2,y+156
+    Button.panel(px,py+3,pw,ph,darken(T.panel,0.3));Button.panel(px,py,pw,ph,T.panel)
+    d.code:draw(x+w/2,py+ph/2,self.width)
+    d.prompt:draw(x+w/2,y+420,self.width)
+  elseif step=='versus' or step=='countdown' then
+    self:drawSeat('opponent');self:drawSeat('you')
+    if step=='versus' then d.vs:draw(self.vs.x,self.vs.y,self.width) end
+    local pad,px=self.pad,self.padX
+    if self.message~='' then local text,size=fitted(self.message,20,w-2*px);T.text(text,size,x+px,y+h-pad-78,w-2*px,T.red) end
+  elseif step=='starting' then
+    d.title:draw(x+w/2,y+130,self.width)
+    T.text('Starting the match...',26,x+24,y+196,w-48,T.paper)
+  elseif info[step] then
+    d.title:draw(x+w/2,y+78,self.width)
+    local bx,by,bw,bh=x+40,y+128,w-80,160
+    Button.panel(bx,by+6,bw,bh,darken(T.panel,0.3));Button.panel(bx,by,bw,bh,T.panel)
+    T.text(info[step][2]:format(self.code),26,bx+20,by+24,bw-40,T.paper)
+  end
+  for i,item in ipairs(self.items) do
+    local active=not item.disabled and (self.hover==i or self.focus==i)
+    local pressed=not item.disabled and self.pressed==i and self.hover==i
+    if item.kind=='field' and item.field=='code' then self:drawCode(item,self.hover==i)
+    elseif item.kind=='field' then Input.draw(item,self.query,self.editing=='search',self.first,self.last,self.time,item.disabled,self.hover==i)
+    elseif item.kind=='cycle' then self:drawCycle(item,i)
+    elseif item.kind~='card' then
+      local colour=item.colour
+      if item.disabled then item.colour=T.panel end
+      Button.draw(item,active,pressed,self.focus==i,self.width)
+      item.colour=colour
+      if item.kind=='tab' and item.tab==self.tab then Button.chosen(item,self.markerTime or 12,pressed,self.width) end
+    end
+  end
+  if step=='countdown' and not self.picker then
+    Button.panel(x+12,y+12,w-24,h-82,{T.panel[1],T.panel[2],T.panel[3],0.55},2.4)
+    d.title:draw(self.vs.x,self.vs.y-90,self.width)
+  end
+  self.fx:draw(self.width)
+  g.pop()
+end
+return Online

@@ -6,10 +6,15 @@ const KEY = "luminous:simulator:card-order";
 type Orders = Partial<Record<`${Seat}:${OrderedZone}`, string[]>>;
 
 /** Cosmetic order, independent of engine indices and gameplay history. Bench
- * keys are the bottom card of each evolution stack, so evolving keeps its place. */
+ * keys are the bottom card of each evolution stack, so evolving keeps its place.
+ * An unsaved order (online) lives in memory only. */
 export class SimulatorOrder {
   private orders: Orders = {};
-  constructor(private readonly startedAt: number) {
+  constructor(
+    private readonly startedAt: number,
+    private readonly stored = true,
+  ) {
+    if (!stored) return;
     this.orders = readPersisted(
       KEY,
       (raw) => {
@@ -44,6 +49,7 @@ export class SimulatorOrder {
     const slot = `${seat}:${zone}` as const;
     const present = new Set(keys);
     this.orders[slot] = [...ordered, ...(this.orders[slot] ?? []).filter((id) => !present.has(id))];
-    writePersisted(KEY, JSON.stringify({ startedAt: this.startedAt, orders: this.orders }));
+    if (this.stored)
+      writePersisted(KEY, JSON.stringify({ startedAt: this.startedAt, orders: this.orders }));
   }
 }

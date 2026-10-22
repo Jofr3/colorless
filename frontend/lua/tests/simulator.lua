@@ -195,6 +195,8 @@ assert(sawTurn,'The TURN banner announces the new player')
 -- Options overlay and escape handling.
 sim:keypressed('escape')
 assert(sim.overlay and sim.overlay.kind=='options','Escape opens Options')
+local function labels(o) local out={};for i,c in ipairs(o.controls) do out[i]=c.label..'/'..c.action end;return table.concat(out,'|') end
+assert(sim.mode=='local' and labels(sim.overlay)=='Settings/settings|Choose decks/choosedecks|New game/newgame|Main menu/leave|Back/back','Local options unchanged')
 sim.overlay:keypressed('escape')
 assert(sim.overlay==nil,'Escape closes Options')
 -- Game over screen.
@@ -203,6 +205,7 @@ for _,r in ipairs(base) do over[#over+1]=r end
 sim:sync(table.concat(over,'\n'))
 for i=1,60 do sim:update(1/60,20+i/60,-100,-100,false) end
 assert(sim.overlay and sim.overlay.kind=='gameover','Outcome opens the game over screen')
+assert(labels(sim.overlay)=='New game/newgame|Main menu/leave|Game log/log|View table/peek','Local game over unchanged')
 -- Portrait layout keeps every control inside the board.
 sim:layout(480,850)
 sim:sync(snapshot(8))

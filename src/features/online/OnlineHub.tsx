@@ -4,13 +4,13 @@ import { useNavigate } from "react-router-dom";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { HomeButton } from "../../components/HomeButton";
 import { PlusIcon, SpinnerIcon } from "../../components/icons";
-import { apiUrl } from "../../lib/apiOrigin";
 import {
   ERROR_TEXT,
   GLASS_ACCENT_BUTTON,
   GLASS_NEUTRAL_BUTTON,
   GLASS_PANEL,
 } from "../../lib/glass";
+import { createLobbyCode } from "./net/createLobby";
 import { probeLobby } from "./net/probe";
 import { clearIdentity, stakeIdentity } from "./net/session";
 
@@ -60,11 +60,7 @@ export function OnlineHub() {
     setCreateError(null);
     setCreating(true);
     try {
-      const res = await fetch(apiUrl("/lobby"), { method: "POST" });
-      if (!res.ok) throw new Error(`create failed: ${res.status}`);
-      const body = (await res.json()) as { code?: unknown };
-      const code = typeof body.code === "string" && isValidLobbyCode(body.code) ? body.code : null;
-      if (code === null) throw new Error("malformed create response");
+      const code = await createLobbyCode();
       if (!mountedRef.current) return;
       stakeIdentity(code, "host");
       navigate(`/lobby/${code}`, { state: { role: "host" } });

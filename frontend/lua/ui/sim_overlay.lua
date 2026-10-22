@@ -3,7 +3,8 @@ local D=require('ui.card_dimensions')
 -- 0.1 emboss, L_BLACK body, orange Back) holding engine prompts rendered as
 -- button lists or real card rows (the booster-pack picker), the coin flip,
 -- the game log, discard piles, the options menu, a card
--- inspector and the game-over screen (create_UIBox_game_over).
+-- inspector and the game-over screen (create_UIBox_game_over). Online, Leave
+-- match uses delete_profile's press-again confirm because leaving forfeits.
 local T=require('ui.theme')
 local Button=require('ui.button')
 local Modal=require('ui.modal')
@@ -13,6 +14,7 @@ local Sprites=require('ui.sprites')
 local Popup=require('ui.popup')
 local PageText=require('ui.page_text')
 local CollectionMotion=require('ui.collection_motion')
+local Motion=require('ui.motion')
 local Overlay={};Overlay.__index=Overlay
 local g=love.graphics
 local JOKER_GREY={191/255,199/255,213/255,1}
@@ -32,7 +34,7 @@ local function lines(text)
 end
 function Overlay.new(sim,kind,data)
   local self=setmetatable({sim=sim,kind=kind,data=data or {},controls={},cards={},page=1,pages=1,focus=0,hover=0,
-    motion=Modal.motion(sim.reduced),pageText=PageText.new(),created=sim.time},Overlay)
+    motion=Modal.motion(sim.reduced),pageText=PageText.new(),created=sim.time,leaveJuice=Motion.new(0,0)},Overlay)
   self.motion.T.y=0
   self.titleText=Dyna.new({string=self.data.title or '',scale=kind=='gameover' and 1.1 or 0.62,colours={kind=='gameover' and (sim.outcome=='win' and T.blue or T.red) or T.white},shadow=true,float=true,pop_in=kind=='gameover' and 0.4 or nil,pop_in_rate=kind=='gameover' and 2 or 8,time=sim.time,maxw=kind=='gameover' and 520 or 600})
   self:layout()
@@ -158,7 +160,7 @@ function Overlay:makeCards(options,scale,top)
   end
 end
 function Overlay:build(keepCards)
-  self.controls={}
+  self.controls={};self.warningY=nil
   local sim=self.sim
   local p=sim.portrait
   local x,y,w,h=self.x,self.y,self.w,self.h
@@ -253,9 +255,17 @@ function Overlay:build(keepCards)
     local col=p and bw*5/7 or 5*sim.viewportUnit
     local left=x+(w-col)/2
     self:add('Settings',left,top,col,42,'settings',T.red,{fontSize=27})
-    self:add('Choose decks',left,top+54,col,42,'choosedecks',T.red,{fontSize=27})
-    self:add('New game',left,top+108,col,42,'newgame',T.red,{fontSize=27,disabled=sim.phase~='ready'})
-    self:add('Main menu',left,top+162,col,42,'leave',T.red,{fontSize=27})
+    if sim.mode=='online' then
+      -- No hot-seat history or new game; a live match can be conceded.
+      local live=sim.outcome==''
+      self:add('Concede',left,top+54,col,42,'concede',T.red,{fontSize=27,disabled=not sim.flags.concede})
+      self:add(self.armed and 'Leave? Forfeits' or 'Leave match',left,top+108,col,42,'leave',T.red,{fontSize=27,confirm=live})
+      self.warningY=top+162
+    else
+      self:add('Choose decks',left,top+54,col,42,'choosedecks',T.red,{fontSize=27})
+      self:add('New game',left,top+108,col,42,'newgame',T.red,{fontSize=27,disabled=sim.phase~='ready'})
+      self:add('Main menu',left,top+162,col,42,'leave',T.red,{fontSize=27})
+    end
     local backWidth=p and bw or 7*sim.viewportUnit
     self:add('Back',x+(w-backWidth)/2,bottom,backWidth,38,'back',T.orange,{fontSize=26})
   elseif kind=='inspect' then
@@ -284,6 +294,22 @@ function Overlay:build(keepCards)
       self:add(a.label,ax,ay+(i-1)*46,aw,38,'cardAction',a.colour,{token=a.token,disabled=a.disabled,fontSize=22,cardAction=a})
     end
     self:add('Back',x+24,bottom,bw,38,'back',T.orange,{fontSize=26})
+  elseif kind=='gameover' and sim.mode=='online' then
+    -- Rematch returns both players to the lobby's versus step.
+    local top=y+h-150
+    local sent=sim:rematchPending()
+    local rematch={fontSize=p and 26 or 27,disabled=sent or not sim.flags.rematch}
+    local label=sent and 'Waiting...' or 'Rematch'
+    if p then
+      self:add(label,x+24,top,bw,40,'rematch',T.red,rematch)
+      self:add('Game log',x+24,top+48,bw/2-4,40,'log',T.blue,{fontSize=24})
+      self:add('Leave',x+24+bw/2+4,top+48,bw/2-4,40,'leave',T.red,{fontSize=24})
+    else
+      self:add(label,x+24,top,bw/2-4,44,'rematch',T.red,rematch)
+      self:add('Leave',x+24+bw/2+4,top,bw/2-4,44,'leave',T.red,{fontSize=27})
+      self:add('Game log',x+24,top+54,bw/2-4,40,'log',T.blue,{fontSize=24})
+      self:add('View table',x+24+bw/2+4,top+54,bw/2-4,40,'peek',T.profile,{fontSize=24})
+    end
   elseif kind=='gameover' then
     local top=y+h-150
     if p then
@@ -301,6 +327,21 @@ end
 local function cardLayer(card)
   return (card.hovered or card.held) and 2 or (card.item.selected and 1 or 0)
 end
+-- A press anywhere but the armed Leave disarms it (delete_profile resets
+-- when the menu changes).
+function Overlay:press(x,y)
+  local i=self:hit(x,y)
+  if self.armed and (self.controls[i] or {}).action~='leave' then self:disarm() end
+  return i
+end
+function Overlay:arm()
+  self.armed=self.time or self.sim.time;self.echo=self.armed+0.06
+  self.leaveJuice:juice_up(self.armed,0.3,0.1,self.sim.reduced)
+  self.sim.callbacks.feedback('tarot2',1,0.4)
+  self:build()
+  self.sim.callbacks.announce('Press again to leave. Leaving forfeits the match - your opponent wins immediately.')
+end
+function Overlay:disarm() if self.armed then self.armed=nil;self.echo=nil;self:build() end end
 function Overlay:hit(x,y)
   y=y-self:offset()
   local v=self.viewport
@@ -326,6 +367,9 @@ function Overlay:update(dt,time,mx,my,reduced)
   self.time=time
   self.motion:update(dt,time,false,false,reduced)
   self.titleText:update(time,reduced)
+  self.leaveJuice:update(dt,time,false,false,reduced)
+  if self.echo and time>=self.echo then self.echo=nil;self.sim.callbacks.feedback('tarot2',0.76,0.4) end
+  if self.armed and time-self.armed>3 then self:disarm() end
   self.hover=self:hit(mx,my)
   local ly=my-self:offset()
   for i,c in ipairs(self.cards) do
@@ -352,6 +396,8 @@ function Overlay:activate(i)
   local sim=self.sim
   local a=b.action
   if a=='card' and self.kind=='pile' then return end
+  -- The 0.35 s lockout after arming stops a double click from leaving.
+  if a=='leave' and self.armed and (self.time or sim.time)-self.armed<0.35 then return end
   if a=='card' then
     -- Pack cards highlight on click: lift at once (the host's re-emit
     -- confirms or reverts it) with cardSlide1, or drop with a quiet cardSlide2.
@@ -368,7 +414,10 @@ function Overlay:activate(i)
   elseif a=='log' then sim:command('log')
   elseif a=='choosedecks' then sim:command('choosedecks')
   elseif a=='newgame' then sim:closeOverlay();sim:command('newgame')
+  elseif a=='leave' and b.confirm and not self.armed then self:arm()
   elseif a=='leave' then sim:command('leave')
+  elseif a=='concede' then sim:closeOverlay();sim:command('concede')
+  elseif a=='rematch' then sim:rematch()
   elseif a=='peek' then sim.peek=true
   elseif a=='cardAction' then sim:closeOverlay();sim:runCardAction(b.cardAction)
   end
@@ -384,6 +433,7 @@ function Overlay:keypressed(key)
     local delta=(key=='left' or key=='up' or (key=='tab' and love.keyboard.isDown('lshift','rshift'))) and -1 or 1
     for _=1,total do self.focus=(self.focus-1+delta+total)%total+1;if not self.controls[self.focus].disabled then break end end
     local b=self.controls[self.focus]
+    if self.armed and (not b or b.action~='leave') then self:disarm() end
     if b then
       sim.callbacks.announce(b.label)
     end
@@ -508,9 +558,17 @@ function Overlay:draw(shaders)
       Dyna.static(r.value,0.4,bx+bw/2,ry-2,bw/2-16,28,r.colour or T.white,{align='right',roomWidth=rw,fit=true})
     end
   end
+  -- delete_profile's warning_text: hidden until the first press.
+  if self.armed and self.warningY then Dyna.static('Press again to confirm',0.4,x+24,self.warningY,w-48,42,T.white,{roomWidth=rw}) end
   for i,b in ipairs(self.controls) do
     if not b.card then
+      local juice=b.action=='leave' and b.confirm
+      if juice then
+        local m=self.leaveJuice
+        g.push();g.translate(b.x+b.w/2,b.y+b.h/2);g.rotate(m.VT.r);g.scale(m.VT.scale);g.translate(-b.x-b.w/2,-b.y-b.h/2)
+      end
       Button.draw(b,not b.disabled and (self.hover==i or self.focus==i),self.sim.pressedOverlay==i and self.hover==i,self.focus==i,rw)
+      if juice then g.pop() end
       if b.selected then g.setLineWidth(1.5);Button.outline(b.x-2,b.y-2,b.w+4,b.h+4,T.white,1.2) end
     end
   end

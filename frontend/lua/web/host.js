@@ -33,6 +33,7 @@ const pendingLibraryCommands = [];
 const pendingBuilderCommands = [];
 const pendingSandboxCommands = [];
 const pendingSimulatorCommands = [];
+const pendingOnlineCommands = [];
 let accountRefreshPending = false;
 let accountSnapshot = "";
 const mailboxFiles = new Set();
@@ -55,6 +56,7 @@ document.addEventListener("luminous:account-ready", () => {
   for (const command of pendingBuilderCommands.splice(0)) builderCommand(command);
   for (const command of pendingSandboxCommands.splice(0)) sandboxCommand(command);
   for (const command of pendingSimulatorCommands.splice(0)) simulatorCommand(command);
+  for (const command of pendingOnlineCommands.splice(0)) onlineCommand(command);
   if (accountRefreshPending) accountCommand("refresh");
 });
 function accountCommand(command) {
@@ -339,7 +341,7 @@ globalThis.Module = {
       updateLoadingProgress(100);
       ready = true;
       document.getElementById("loading").style.display = "none";
-      document.title = `Luminous — ${currentPage === "simulator" ? "Simulator" : currentPage === "sandbox" ? "Sandbox" : currentPage === "builder" ? "Deck builder" : libraryPage ? "Decks" : "Home"}`;
+      document.title = pageTitle();
       canvas.focus({ preventScroll: true });
     } else if (message.startsWith("LUMINOUS:transition-art:")) {
       const [, action, token] = message.match(/^LUMINOUS:transition-art:(used|invalid):(\d+)$/) || [];
@@ -353,6 +355,8 @@ globalThis.Module = {
       builderCommand(message.slice("LUMINOUS:builder:".length));
     } else if (message.startsWith("LUMINOUS:simulator:")) {
       simulatorCommand(message.slice("LUMINOUS:simulator:".length));
+    } else if (message.startsWith("LUMINOUS:online:")) {
+      onlineCommand(message.slice("LUMINOUS:online:".length));
     } else if (message.startsWith("LUMINOUS:sandbox:")) {
       sandboxCommand(message.slice("LUMINOUS:sandbox:".length));
     } else if (message.startsWith("LUMINOUS:library:")) {
@@ -409,10 +413,7 @@ globalThis.Module = {
         );
       } else {
         syncModalAccessibility();
-        canvas.setAttribute(
-          "aria-label",
-          libraryPage ? "Deck library. Tab or arrows choose controls and cards. Enter opens." : "Luminous main menu. Use Tab or arrow keys to choose; Enter to open. M toggles sound.",
-        );
+        canvas.setAttribute("aria-label", canvasLabel());
       }
       canvas.focus({ preventScroll: true });
     } else {
@@ -508,15 +509,20 @@ addEventListener("error", (event) => {
 });
 
 // Library transport: Lua owns the page; the browser supplies text input and API I/O.
-let currentPage = new URLSearchParams(location.search).get("page") || "home";
-let builderId = new URLSearchParams(location.search).get("deck") || "";
-let libraryPage = ["decks","builder","sandbox","simulator"].includes(currentPage);
+// The page id rides in a page-specific query parameter (a deck or lobby code).
+const pageIds = { builder: "deck", online: "lobby", match: "lobby" };
+function pageFromSearch(params) {
+  return params.get("page") || (params.has("lobby") ? "online" : "home");
+}
+let currentPage = pageFromSearch(new URLSearchParams(location.search));
+let pageId = new URLSearchParams(location.search).get(pageIds[currentPage] || "deck") || "";
+let libraryPage = ["decks","builder","sandbox","simulator","online","match"].includes(currentPage);
 let pageRevision = 0;
 let transitionOpen = false;
 function syncModalAccessibility() {
   document.querySelector(".accessible-menu").inert = settingsOpen || libraryPage || transitionOpen;
   canvas.setAttribute("aria-busy", String(transitionOpen));
-  if (settingsOpen || (libraryPage && currentPage !== "simulator")) {
+  if (settingsOpen || (libraryPage && currentPage !== "simulator" && currentPage !== "match")) {
     canvas.setAttribute("role", "dialog");
     canvas.setAttribute("aria-modal", "true");
   } else {
@@ -524,37 +530,52 @@ function syncModalAccessibility() {
     canvas.removeAttribute("aria-modal");
   }
 }
+function pageTitle() {
+  return `Luminous — ${currentPage === "simulator" ? "Simulator" : currentPage === "match" ? "Online match" : currentPage === "sandbox" ? "Sandbox" : currentPage === "builder" ? "Deck builder" : currentPage === "online" ? "Online" : libraryPage ? "Decks" : "Home"}`;
+}
+function canvasLabel() {
+  return currentPage === "simulator" ? "Sandbox game table. Drag cards to play. Tab selects controls and cards; Enter activates. Escape opens options." : currentPage === "match" ? "Online game table. Drag cards to play. Tab selects controls and cards; Enter activates. Escape opens options." : currentPage === "sandbox" ? "Sandbox deck selection. Tab or arrows choose controls. Enter selects a deck or activates a button. Escape returns home." : currentPage === "online" ? "Online lobby. Tab or arrows choose controls; left and right switch tabs. Enter activates. Escape goes back." : libraryPage
+    ? "Deck library. Tab or arrows choose controls and cards. Enter opens. Escape returns home."
+    : "Luminous main menu. Use Tab or arrow keys to choose; Enter to open. M toggles sound.";
+}
 function syncPage() {
   syncModalAccessibility();
-  writeMailbox("__page.txt", [ ++pageRevision, currentPage, builderId ].map(encodeURIComponent).join("\t"));
-  document.title = `Luminous — ${currentPage === "simulator" ? "Simulator" : currentPage === "sandbox" ? "Sandbox" : currentPage === "builder" ? "Deck builder" : libraryPage ? "Decks" : "Home"}`;
-  canvas.setAttribute("aria-label", currentPage === "simulator" ? "Sandbox game table. Drag cards to play. Tab selects controls and cards; Enter activates. Escape opens options." : currentPage === "sandbox" ? "Sandbox deck selection. Tab or arrows choose controls. Enter selects a deck or activates a button. Escape returns home." : libraryPage
-    ? "Deck library. Tab or arrows choose controls and cards. Enter opens. Escape returns home."
-    : "Luminous main menu. Use Tab or arrow keys to choose; Enter to open.");
+  writeMailbox("__page.txt", [ ++pageRevision, currentPage, pageId ].map(encodeURIComponent).join("\t"));
+  document.title = pageTitle();
+  canvas.setAttribute("aria-label", canvasLabel());
 }
 function setPage(page, push = true, id = "", saved = false) {
-  if(currentPage === "builder" && !saved && (page !== currentPage || id !== builderId)) {
+  if(currentPage === "builder" && !saved && (page !== currentPage || id !== pageId)) {
     finishBuilderInput();
-    const previous=new URL(location.href);previous.searchParams.set("page","builder");previous.searchParams.set("deck",builderId);
+    const previous=new URL(location.href);previous.searchParams.set("page","builder");previous.searchParams.set("deck",pageId);
     history.replaceState(null,"",previous);
     document.dispatchEvent(new CustomEvent("luminous:builder-leave",{detail:()=>setPage(page,push,id,true)}));return;
   }
   finishLibraryInput(); finishBuilderInput();
-  currentPage = ["decks","builder","sandbox","simulator"].includes(page) ? page : "home";
-  builderId = currentPage === "builder" ? id : "";
+  currentPage = ["decks","builder","sandbox","simulator","online","match"].includes(page) ? page : "home";
+  pageId = pageIds[currentPage] ? id : "";
   libraryPage = currentPage !== "home";
   const url = new URL(location.href);
   if (libraryPage) url.searchParams.set("page", currentPage);
   else url.searchParams.delete("page");
-  if (builderId) url.searchParams.set("deck",builderId); else url.searchParams.delete("deck");
+  for (const param of Object.values(pageIds)) url.searchParams.delete(param);
+  if (pageId) url.searchParams.set(pageIds[currentPage], pageId);
   url.searchParams.delete("account");
   if (push) history.pushState(null, "", url); else history.replaceState(null, "", url);
   syncPage();
 }
-addEventListener("popstate", () => setPage(new URLSearchParams(location.search).get("page"), false, new URLSearchParams(location.search).get("deck") || ""));
+addEventListener("popstate", () => {
+  const params = new URLSearchParams(location.search);
+  const page = pageFromSearch(params);
+  setPage(page, false, params.get(pageIds[page] || "deck") || "");
+});
 document.getElementById("decks-link").addEventListener("click", event => {
   if (!ready) return;
   event.preventDefault(); setPage("decks"); canvas.focus({preventScroll:true});
+});
+document.getElementById("online-link").addEventListener("click", event => {
+  if (!ready) return;
+  event.preventDefault(); setPage("online"); canvas.focus({preventScroll:true});
 });
 document.addEventListener("luminous:library-state", event => writeMailbox("__library.txt", event.detail));
 function libraryCommand(command, owner = "library") {
@@ -564,11 +585,21 @@ function libraryCommand(command, owner = "library") {
     finishLibraryInput();
     libraryInputOwner = owner;
     libraryField = field;
+    const code = owner === "online" && field === "code";
+    // The code field caps itself in normalizeCode, so a pasted link or "AB-CD" survives.
+    libraryInput.maxLength = 100;
+    libraryInput.inputMode = "text";
+    if (code) { libraryInput.autocapitalize = "characters"; libraryInput.spellcheck = false; }
+    else { libraryInput.removeAttribute("autocapitalize"); libraryInput.removeAttribute("spellcheck"); }
     libraryInput.value = value || "";
     libraryOriginal = libraryInput.value;
-    libraryInput.setAttribute("aria-label", field === "search" ? "Search decks" : "Deck name");
+    libraryInput.setAttribute("aria-label", code ? "Lobby code" : field === "search" ? "Search decks" : "Deck name");
     libraryInput.hidden = false;
-    libraryInput.focus({preventScroll:true}); libraryInput.select(); publishLibraryInput();
+    libraryInput.focus({preventScroll:true});
+    // A code typed before the field opened keeps its caret at the end.
+    if (code) libraryInput.setSelectionRange(libraryInput.value.length, libraryInput.value.length);
+    else libraryInput.select();
+    publishLibraryInput();
   } else if (action === "finish-input") finishLibraryInput();
   else document.dispatchEvent(new CustomEvent("luminous:library-command", {detail:command}));
 }
@@ -596,7 +627,20 @@ function finishLibraryInput(action = "done", cancel = false) {
   publishLibraryInput(action, field);
   canvas.focus({preventScroll:true});
 }
-libraryInput.addEventListener("input", () => publishLibraryInput());
+// Lobby codes use normalizeLobbyCode's alphabet: upper-case, no look-alikes.
+const lobbyAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+const normalizeCode = value => [...value.toUpperCase()].filter(c => lobbyAlphabet.includes(c)).join("").slice(0, 4);
+libraryInput.addEventListener("input", () => {
+  if (libraryInputOwner === "online" && libraryField === "code") {
+    // A pasted invite link (/lua/?lobby=CODE) yields its code.
+    const link = /[?&]lobby=([^&#\s]+)/i.exec(libraryInput.value);
+    const value = normalizeCode(link ? link[1] : libraryInput.value);
+    const caret = link ? value.length : normalizeCode(libraryInput.value.slice(0, libraryInput.selectionStart || 0)).length;
+    libraryInput.value = value;
+    libraryInput.setSelectionRange(caret, caret);
+  }
+  publishLibraryInput();
+});
 libraryInput.addEventListener("select", () => { if (libraryField) publishLibraryInput(); });
 libraryInput.addEventListener("blur", () => finishLibraryInput());
 for (const type of ["keydown", "keyup", "keypress"]) window.addEventListener(type, event => {
@@ -609,7 +653,7 @@ for (const type of ["keydown", "keyup", "keypress"]) window.addEventListener(typ
 }, true);
 
 // Deck builder: browser-native text/clipboard and artwork transport only.
-document.addEventListener("luminous:route", e => setPage(e.detail.page, true, e.detail.id || ""));
+document.addEventListener("luminous:route", e => setPage(e.detail.page, !e.detail.replace, e.detail.id || ""));
 document.addEventListener("luminous:builder-state", e => {
   writeMailbox("__builder.txt", e.detail);
   if(currentPage === "builder") {
@@ -743,4 +787,13 @@ document.addEventListener("luminous:simulator-state", event => writeMailbox("__s
 function simulatorCommand(command) {
   if (!accountReady) { pendingSimulatorCommands.push(command); return; }
   document.dispatchEvent(new CustomEvent("luminous:simulator-command", {detail: command}));
+}
+
+// Online lobby transport. The modal is Lua; LuaOnline (online.ts) owns the socket.
+document.addEventListener("luminous:online-state", event => writeMailbox("__online.txt", event.detail));
+function onlineCommand(command) {
+  if (!accountReady) { pendingOnlineCommands.push(command); return; }
+  const action = command.split("\t")[0];
+  if (action === "input" || action === "finish-input") { libraryCommand(command, "online"); return; }
+  document.dispatchEvent(new CustomEvent("luminous:online-command", {detail: command}));
 }

@@ -10,6 +10,7 @@ local Library = require('ui.library')
 local Builder = require('ui.builder')
 local Sandbox = require('ui.sandbox')
 local Simulator = require('ui.simulator')
+local Online = require('ui.online')
 local Modal = require('ui.modal')
 local MenuLogo = require('ui.menu_logo')
 local g = love.graphics
@@ -17,8 +18,13 @@ local g = love.graphics
 local state = {time=12,focused=0,hovered=0,muted=false,reduced=false,poll=0,ready=false}
 local shaders, sounds, controls = {}, {}, {}
 local soundVoices={}
-local menuTray,room,screen,popup,library,builder,sandbox,simulator,menuLogo
+local menuTray,room,screen,popup,library,builder,sandbox,simulator,online,menuLogo
 local function collection() return state.page=='sandbox' and sandbox or state.page=='builder' and builder or library end
+-- Pages drawn on the game table; moving to or from one runs the screen wipe.
+local function isTable(page) return page=='simulator' or page=='match' end
+local function title(page)
+  return 'Luminous - '..(page=='simulator' and 'Simulator' or page=='match' and 'Online match' or page=='sandbox' and 'Sandbox' or page=='builder' and 'Deck builder' or page=='decks' and 'Decks' or page=='online' and 'Online' or 'Home')
+end
 local preferences=Preferences.new()
 local account=Account.new()
 local openSettings,closeSettings,applyPreferences,startWipe,applyPage,requestPage,cancelInteractions
@@ -75,9 +81,10 @@ local function layout(w,h)
   if library then library:layout(virtualWidth,virtualHeight) end
   if builder then builder:layout(virtualWidth,virtualHeight) end
   if sandbox then sandbox:layout(virtualWidth,virtualHeight) end
+  if online then online:layout(virtualWidth,virtualHeight) end
   if simulator then simulator:layout(virtualWidth,virtualHeight,Screen.unit(w,h)/layoutScale) end
   if wipe then wipe:layout(virtualWidth,virtualHeight,Screen.unit(w,h)/layoutScale,w/layoutScale,h/layoutScale) end
-  love.window.setTitle('Luminous - '..(state.page=='simulator' and 'Simulator' or state.page=='sandbox' and 'Sandbox' or state.page=='builder' and 'Deck builder' or state.page=='decks' and 'Decks' or 'Home'))
+  love.window.setTitle(title(state.page))
 end
 local function pointer(x,y)
   x,y=screen:unproject(x,y)
@@ -102,21 +109,28 @@ end
 -- browser-history requests replace a pending destination instead of stacking
 -- transitions or leaving a stale callback able to reopen an old game.
 applyPage=function(page,deckId)
+  -- Create/Join replace the URL with the lobby code; the modal stays put.
+  if page=='online' and state.page=='online' then state.deckId=deckId;online:retarget(deckId);return end
+  if state.page=='online' then online:close() end
   if state.page=='builder' then builder:command('close') end
   if state.page=='sandbox' then sandbox:command('close') end
-  if state.page=='simulator' then simulator:command('close') end
+  if isTable(state.page) then simulator:command('close') end
   state.deckId=deckId
   if popup then closeSettings() end
   state.page=page;state.leaving=nil;state.pressed=nil;state.focused=0
-  love.window.setTitle('Luminous - '..(page=='simulator' and 'Simulator' or page=='sandbox' and 'Sandbox' or page=='builder' and 'Deck builder' or page=='decks' and 'Decks' or 'Home'))
+  love.window.setTitle(title(page))
   if page=='simulator' then
     library:command('close');simulator:open(state.reduced)
+  elseif page=='match' then
+    library:command('close');simulator:open(state.reduced,false,'online',deckId or '')
   elseif page=='builder' then
     library:command('close');builder:open(state.reduced,deckId);print('LUMINOUS:account:refresh')
   elseif page=='sandbox' then
     library:command('close');sandbox:open(state.reduced);print('LUMINOUS:account:refresh')
   elseif page=='decks' then
     library:open(state.reduced);print('LUMINOUS:account:refresh')
+  elseif page=='online' then
+    library:command('close');room.jiggle=room.jiggle+1;online:open(state.reduced,deckId or '');print('LUMINOUS:account:refresh')
   else library:closeModal();library:command('close') end
 end
 startWipe=function(callback)
@@ -124,7 +138,7 @@ startWipe=function(callback)
   state.pressed=nil;state.hovered=0;state.focused=0
   -- Clear held interactions so an old drag cannot move during the wipe.
   cancelInteractions()
-  local colour=state.page=='simulator' and simulator:backgroundColours()[2] or T.panel
+  local colour=isTable(state.page) and simulator:backgroundColours()[2] or T.panel
   wipe=ScreenWipe.new(callback,colour,state.reduced,function(name,pitch,volume) sound(name,pitch,volume,true) end)
   wipe:layout(virtualWidth,virtualHeight,Screen.unit(width,height)/layoutScale,width/layoutScale,height/layoutScale)
   print('LUMINOUS:transition:open')
@@ -139,7 +153,7 @@ requestPage=function(page,deckId)
       applyPage(destination.page,destination.deckId)
     end
   end
-  if state.ready and page~=state.page and (page=='simulator' or state.page=='simulator') then
+  if state.ready and page~=state.page and isTable(page)~=isTable(state.page) then
     startWipe(commit)
   else commit() end
 end
@@ -217,6 +231,7 @@ local function activate(index)
   local item=index<=#menu and menu[index] or controls[index-#menu]
   if item.route=='/simulator' then print('LUMINOUS:simulator:resume'); return end
   if item.route=='/decks' then print('LUMINOUS:page:decks'); return end
+  if item.route=='/lobby' then print('LUMINOUS:page:online'); return end
   if item.action=='settings' then openSettings(); return end
   if item.action=='account' then openSettings(false,4); return end
   state.leaving={route=item.route,at=state.time,index=index}
@@ -256,6 +271,14 @@ function love.load()
     decks=function() print('LUMINOUS:page:decks') end,
     signin=function() openSettings(false,4); popup:openAuth('login') end,
   })
+  online=Online.new({
+    command=function(command) print('LUMINOUS:online:'..command) end,
+    feedback=function(name,pitch,volume) sound(name,pitch,volume) end,
+    announce=announce,
+    home=function() print('LUMINOUS:page:home') end,
+    signin=function() openSettings(false,4); if popup then popup:openAuth('login') end end,
+    jiggle=function(amount) room.jiggle=room.jiggle+(amount or 1) end,
+  })
   simulator=Simulator.new({transition=function(callback) return startWipe(callback) end,command=function(command) print('LUMINOUS:simulator:'..command) end,
     feedback=function(name,pitch,volume) sound(name,pitch,volume) end,
     sourceFeedback=function(name,pitch,volume) sound(name,pitch,volume,true) end,
@@ -291,11 +314,13 @@ function love.update(dt)
   end
   local mx,my=pointer(love.mouse.getPosition())
   if wipe then mx,my=-1000,-1000 end
-  if state.page=='simulator' then simulator:update(dt,state.time,popup and -1000 or mx,popup and -1000 or my,state.reduced) end
+  if isTable(state.page) then simulator:update(dt,state.time,popup and -1000 or mx,popup and -1000 or my,state.reduced) end
   if state.page=='decks' or state.page=='builder' or state.page=='sandbox' then
     local lx,ly=libraryPoint(mx,my)
     collection():update(dt,state.time,popup and -1000 or lx,popup and -1000 or ly,state.reduced)
   end
+  -- The lobby keeps polling under Settings (sign-in) and during a wipe.
+  if state.page=='online' then online:update(dt,state.time,popup and -1000 or mx,popup and -1000 or my,state.reduced) end
   if wipe then love.mouse.setCursor(state.arrowCursor);return end
   if popup then
     if love.filesystem.getInfo('__account.txt') then
@@ -315,7 +340,8 @@ function love.update(dt)
     love.mouse.setCursor(collection().hover>0 and state.handCursor or state.arrowCursor)
     return
   end
-  if state.page=='simulator' then love.mouse.setCursor((simulator.hover>0 or simulator.hoverCard or (simulator.overlay and simulator.overlay.hover>0)) and state.handCursor or state.arrowCursor);return end
+  if state.page=='online' then love.mouse.setCursor(online.hover>0 and state.handCursor or state.arrowCursor);return end
+  if isTable(state.page) then love.mouse.setCursor((simulator.hover>0 or simulator.hoverCard or (simulator.overlay and simulator.overlay.hover>0)) and state.handCursor or state.arrowCursor);return end
   local hovered=hit(mx,my)
   if hovered~=state.hovered then
     state.hovered=hovered
@@ -336,8 +362,8 @@ function love.draw()
   if not scene then return end
   local t=state.reduced and 300 or state.time
   g.setCanvas(scene); g.clear(T.ink)
-  local bg=state.page=='simulator' and shaders.background or shaders.splash
-  if state.page=='simulator' then
+  local bg=isTable(state.page) and shaders.background or shaders.splash
+  if isTable(state.page) then
     -- Game:draw's background.fs with ease_background_colour's eased palette.
     local c=simulator:backgroundColours()
     bg:send('time',t);bg:send('spin_time',0);bg:send('spin_amount',0)
@@ -348,7 +374,7 @@ function love.draw()
   g.setShader(bg); g.setColor(1,1,1); g.rectangle('fill',0,0,width,height); g.setShader()
   g.push(); g.translate(offsetX,offsetY); g.scale(layoutScale)
   room:apply()
-  if state.page=='simulator' then simulator:draw(shaders) else
+  if isTable(state.page) then simulator:draw(shaders) else
   local portrait=virtualWidth<600
   -- Like Game:main_menu's SPLASH_LOGO, the lettering is a painted sprite.
   -- Draw inside the room/CRT pass so scanlines and fringing stay live.
@@ -382,6 +408,12 @@ function love.draw()
       g.pop()
     end
   end
+  if state.page=='online' then
+    Modal.backdrop(width,height)
+    g.push(); g.translate(offsetX,offsetY); g.scale(layoutScale); room:apply()
+    online:draw()
+    g.pop()
+  end
   if popup then
     Modal.backdrop(width,height)
     g.push(); g.translate(offsetX,offsetY); g.scale(layoutScale); room:apply()
@@ -390,7 +422,7 @@ function love.draw()
   end
   if wipe then
     g.push();g.translate(offsetX,offsetY);g.scale(layoutScale);room:apply()
-    wipe:draw(shaders,state.page=='simulator' and simulator:backgroundColours()[2] or T.panel);g.pop()
+    wipe:draw(shaders,isTable(state.page) and simulator:backgroundColours()[2] or T.panel);g.pop()
   end
   g.setCanvas()
   screen:draw(scene)
@@ -404,7 +436,8 @@ function love.mousepressed(x,y,button)
   unlockAudio(); state.focused=0
   x,y=pointer(x,y)
   if popup then popup:mousepressed(x,y); return end
-  if state.page=='simulator' then simulator:mousepressed(x,y);return end
+  if isTable(state.page) then simulator:mousepressed(x,y);return end
+  if state.page=='online' then online:mousepressed(x,y);return end
   if state.page=='decks' or state.page=='builder' or state.page=='sandbox' then collection():mousepressed(libraryPoint(x,y)); return end
   state.pressed=hit(x,y)
 end
@@ -412,7 +445,8 @@ function love.mousereleased(x,y,button)
   if button~=1 or wipe then return end
   x,y=pointer(x,y)
   if popup then popup:mousereleased(x,y); return end
-  if state.page=='simulator' then simulator:mousereleased(x,y);return end
+  if isTable(state.page) then simulator:mousereleased(x,y);return end
+  if state.page=='online' then online:mousereleased(x,y);return end
   if state.page=='decks' or state.page=='builder' or state.page=='sandbox' then collection():mousereleased(libraryPoint(x,y)); return end
   if state.pressed and state.pressed==hit(x,y) then activate(state.pressed) end
   state.pressed=nil
@@ -421,7 +455,8 @@ function love.keypressed(key)
   if wipe then return end
   unlockAudio()
   if popup then popup:keypressed(key); return end
-  if state.page=='simulator' then simulator:keypressed(key);return end
+  if isTable(state.page) then simulator:keypressed(key);return end
+  if state.page=='online' then online:keypressed(key);return end
   if state.page=='decks' or state.page=='builder' or state.page=='sandbox' then collection():keypressed(key); return end
   if key=='tab' or key=='right' or key=='down' or key=='left' or key=='up' then
     local backward=key=='left' or key=='up' or (key=='tab' and love.keyboard.isDown('lshift','rshift'))
@@ -452,6 +487,7 @@ cancelInteractions=function()
       simulator.drag=nil;simulator.clicked=nil;simulator.pressed=nil;simulator.pressedOverlay=nil;simulator.clickedPrize=nil
     end
     if sandbox then sandbox.pressed=nil end
+    if online then online.pressed=nil end
     if library then
       library.drag=nil; library.pressed=nil
       for _,card in ipairs(library.cards) do card.dragging=false end
@@ -469,6 +505,7 @@ end
 
 function love.wheelmoved(x,y)
   if wipe then return end
-  if state.page=='simulator' and not popup then simulator:wheelmoved(y);return end
+  if isTable(state.page) and not popup then simulator:wheelmoved(y);return end
+  if state.page=='online' and not popup then online:wheelmoved(y);return end
   if (state.page=='decks' or state.page=='builder' or state.page=='sandbox') and not popup then collection():wheelmoved(y) end
 end

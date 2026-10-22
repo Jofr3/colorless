@@ -1,10 +1,6 @@
 import {
-  applyAction,
-  createGame,
-  cardOfUid,
   energyProvidesOf,
   otherSeat,
-  redactGame,
   type GameAction,
   type PokemonTarget,
   type PokemonRef,
@@ -22,15 +18,17 @@ export function pixelText(text: string): string {
     .replace(/−/g, "-")
     .replace(/…/g, "...");
 }
-import { initHost, hostReducer, stepTarget } from "../game/useLocalGame";
-import { projectGameState, GAME_OVER_DETAIL } from "../game/projection";
+import type { LocalGameSetup } from "../game/useLocalGame";
+import { GAME_OVER_DETAIL } from "../game/projection";
 import { moveToAction } from "../game/moveToAction";
-import { loadSimulatorSave, saveSimulator, clearSimulatorSave } from "../playmat/simulatorSave";
+import { loadSimulatorSave, clearSimulatorSave } from "../playmat/simulatorSave";
 import { cardImageUrl } from "../../lib/api";
 import { effectMenu } from "./simulatorChoices";
 import { viewLogEntries } from "../game/viewLog";
 import { usedTrainersForTurn } from "../playmat/utils/usedTrainers";
 import { SimulatorOrder } from "./simulatorOrder";
+import { LocalTableSource, type TableSource } from "./tableSource";
+import { LuaOnlineMatch, onlineGate } from "./onlineTable";
 
 export interface SimOption {
   label: string;
@@ -46,7 +44,15 @@ export interface SimOption {
   /** Sidebar placement: primary (blue, big), danger (red), minor. */
   slot?: "primary" | "danger" | "minor";
 }
-export type SimMenuKind = "list" | "confirm" | "cards" | "board" | "prizes" | "coin" | "log" | "pile";
+export type SimMenuKind =
+  | "list"
+  | "confirm"
+  | "cards"
+  | "board"
+  | "prizes"
+  | "coin"
+  | "log"
+  | "pile";
 export interface SimMenu {
   kind: SimMenuKind;
   title: string;
@@ -84,9 +90,9 @@ const HINTS = {
   "effect:choose": "Resolve the card effect.",
   gameOver: "The game is over.",
 } as const;
-/** Lua renders a full table. The existing local host remains the sole rules/state owner. */
+/** Lua renders a full table. The table source remains the sole rules/state owner. */
 export class LuaSimulator {
-  host: ReturnType<typeof initHost> | null = null;
+  source: TableSource | null = null;
   menu: SimMenu | null = null;
   message = "";
   revision = 0;
@@ -96,21 +102,38 @@ export class LuaSimulator {
   private pendingRareCandy: string | null = null;
   private knockedOut: readonly string[] = [];
   private cardOrder = new SimulatorOrder(0);
+  private unsubscribe = () => {};
+  // Online: the frame, prompt and refusal last turned into menus.
+  private seen: RedactedGame | null = null;
+  private promptKey = "";
+  private rejected: unknown = null;
+  private matchKey = "";
   constructor(
     private publish: (raw: string) => void,
-    private route: (page: string) => void,
+    private route: (page: string, id?: string, replace?: boolean) => void,
     private images: (cards: { id: string; url: string }[]) => void = () => {},
+    private onlineSource: (code: string) => TableSource | null = () => null,
   ) {}
+  private get local() {
+    return this.source instanceof LocalTableSource ? this.source : null;
+  }
+  private get online() {
+    return this.source instanceof LuaOnlineMatch ? this.source : null;
+  }
+  /** The local hot-seat host, for tests and debugging. */
+  get host() {
+    return this.local?.host ?? null;
+  }
   view(): RedactedGame | null {
-    return this.host && redactGame(this.host.game, this.host.viewerSeat);
+    return this.source?.view() ?? null;
   }
   /** Stage resolved Items/Supporters without changing the engine's discard
    * order or making those cards unavailable to recovery effects. */
   private tablePiles(view: RedactedGame) {
-    const h = this.host;
+    const src = this.source;
     const used = new Set(
-      h
-        ? usedTrainersForTurn(viewLogEntries(h.log, h.viewerSeat), h.game.turn).map((c) => c.id)
+      src
+        ? usedTrainersForTurn(viewLogEntries(src.log(), view.seat), view.turn).map((c) => c.id)
         : [],
     );
     const split = (owner: "you" | "opponent") => {
@@ -128,13 +151,16 @@ export class LuaSimulator {
     return { you: split("you"), opponent: split("opponent") };
   }
   allowed(action: GameAction) {
-    return !!this.host && applyAction(this.host.game, action).ok;
+    const v = this.view();
+    const allowed = this.source?.allowed(action);
+    return allowed ?? (!!v && onlineGate(action, v));
   }
   /** Seats whose deck was shuffled by the last accepted action ("you" /
       "opponent" / "both"), emitted once so the table can riffle the pile. */
   private shuffled = "";
   dispatch(action: GameAction) {
-    if (!this.host) return;
+    const src = this.source;
+    if (!src) return;
     if (
       this.pendingRareCandy &&
       (action.type !== "rareCandy" || action.uid !== this.pendingRareCandy)
@@ -143,39 +169,25 @@ export class LuaSimulator {
       this.emit();
       return;
     }
-    const beforeGame = this.host.game;
-    const before = this.host.log.length;
-    this.host = hostReducer(this.host, { action, at: Date.now() });
-    this.knockedOut = this.host.knockedOut;
-    const seats = new Set<string>();
-    for (const e of this.host.log.slice(before)) {
-      if (e.kind !== "action" || e.who === "system") continue;
-      const text = e.segments.map((s) => s.text).join("");
-      if (/shuffled their (deck|hand)/.test(text) && !/bottom of their deck/.test(text))
-        seats.add(e.who);
+    src.send(action);
+    if (this.online) {
+      // No optimism: the next frame (or refusal) rebuilds the prompt.
+      this.pendingRareCandy = null;
+      this.menu = null;
+      this.message = "";
+      this.emit();
+      return;
     }
-    const flips = this.host.coinFlipPresentation ? this.host.coinFlipBatch : null;
-    // The Lua coin overlay replaces the React dice presentation.
-    if (this.host.coinFlipPresentation && this.host.coinFlipBatch) {
-      this.host = hostReducer(this.host, {
-        type: "finishCoinFlip",
-        id: this.host.coinFlipBatch.id,
-      });
-    }
-    this.message = this.host.lastError?.message ?? "";
-    if (!this.host.lastError) {
+    const events = src.takeEvents();
+    this.knockedOut = events.knockedOut;
+    const error = src.lifecycle().error;
+    this.message = error ?? "";
+    if (error === null) {
       this.pendingRareCandy = null;
       this.menu = null;
       this.persist();
-      this.prompt(
-        beforeGame.phase.kind === "effect:choose" &&
-          beforeGame.phase.cont.pendingOp.op === "moveCountersToOpponentChosen" &&
-          beforeGame.phase.cont.pendingOp.from === undefined &&
-          action.type === "resolveEffect" &&
-          action.choice.kind === "pokemon"
-          ? action.choice.ref
-          : undefined,
-      );
+      this.prompt(events.counterSource);
+      const flips = events.coin;
       if (flips) {
         this.menuId++;
         this.menu = {
@@ -200,76 +212,101 @@ export class LuaSimulator {
     }
     // A turn draw always joins the end, even if this UID has an old cosmetic
     // position from an earlier hand (for example after being shuffled back).
-    if (!this.host.lastError && this.host.game.turn > beforeGame.turn) {
-      for (const seat of ["p1", "p2"] as const) {
-        const hand = this.host.game.players[seat].hand;
-        const previous = beforeGame.players[seat];
-        for (const uid of hand) {
-          if (!previous.hand.includes(uid) && previous.deck.includes(uid))
-            this.cardOrder.move(seat, "hand", hand, uid, hand.length - 1);
-        }
-      }
-    }
-    if (seats.size > 0) {
-      const mine = seats.has(this.host.viewerSeat);
-      const theirs = seats.has(otherSeat(this.host.viewerSeat));
-      this.shuffled = mine && theirs ? "both" : mine ? "you" : "opponent";
-    }
+    for (const d of this.local?.turnDraws() ?? [])
+      this.cardOrder.move(d.seat, "hand", d.hand, d.uid, d.hand.length - 1);
+    if (events.shuffled.length > 0) this.shuffled = this.seats(events.shuffled);
     this.emit();
   }
   persist() {
-    if (!this.host) return;
-    const h = this.host;
-    saveSimulator({
-      state: h.game,
-      events: [],
-      names: h.names,
-      startedAt: h.startedAt,
-      resume: {
-        log: h.log,
-        viewerSeat: h.viewerSeat,
-        turns: h.turns,
-        turnIndex: h.turnIndex,
-        latestTurn: h.latestTurn,
-        steps: h.steps,
-        stepIndex: h.stepIndex,
-      },
-    });
-    if (loadSimulatorSave()?.startedAt !== h.startedAt)
+    if (this.local && !this.local.persist())
       this.message = "Could not save this game. Browser storage may be full.";
   }
-  open(setup = loadSimulatorSave()) {
+  open(setup: LocalGameSetup | null = loadSimulatorSave()) {
+    this.bind(setup ? new LocalTableSource(setup) : null);
+  }
+  private bind(source: TableSource | null) {
+    this.release();
     this.active = true;
+    this.source = source;
+    this.reset();
+    this.unsubscribe = source?.subscribe(() => this.changed()) ?? (() => {});
+    if (source) this.prompt();
+    this.emit();
+  }
+  /** Let the bound table go (an online one hands the lobby back). */
+  private release() {
+    this.unsubscribe();
+    this.unsubscribe = () => {};
+    this.source?.release?.();
+  }
+  private reset() {
+    const src = this.source;
+    const online = this.online;
     this.knockedOut = [];
     this.pendingRareCandy = null;
     this.shuffled = "";
     this.menu = null;
     this.message = "";
-    this.host = setup ? initHost(setup) : null;
-    this.cardOrder = new SimulatorOrder(this.host?.startedAt ?? 0);
-    if (this.host) this.prompt();
+    this.seen = src?.view() ?? null;
+    this.rejected = online?.rejection() ?? null;
+    this.matchKey = src?.matchId() ?? "";
+    // Online order is cosmetic and never saved.
+    this.cardOrder = online
+      ? new SimulatorOrder(0, false)
+      : new SimulatorOrder(Number(src?.matchId() ?? 0));
+  }
+  /** A pushed change: online frames, refusals, presence and catalogue fills. */
+  private changed() {
+    const online = this.online;
+    if (online) {
+      if (online.matchId() !== this.matchKey) {
+        this.reset();
+        this.prompt();
+      }
+      const v = online.view();
+      if (v !== this.seen) {
+        this.seen = v;
+        const events = online.takeEvents();
+        this.knockedOut = events.knockedOut;
+        this.shuffled = this.seats(events.shuffled);
+        this.message = "";
+        // Keep a half-made answer while its prompt is unchanged.
+        if (!this.menu || (this.menu.mandatory && this.key(v) !== this.promptKey)) {
+          this.menu = null;
+          this.prompt(events.counterSource);
+        }
+      }
+      const error = online.rejection();
+      if (error !== this.rejected) {
+        this.rejected = error;
+        if (error) {
+          this.message = error.reason;
+          if (!this.menu) this.prompt();
+        }
+      }
+    }
     this.emit();
   }
+  private key(v: RedactedGame | null) {
+    return JSON.stringify(v ? [v.phase, v.waitingOn] : null);
+  }
+  /** Absolute seats to the table's "you" / "opponent" / "both". */
+  private seats(shuffled: readonly string[]) {
+    const seat = this.view()?.seat;
+    if (shuffled.length === 0 || !seat) return "";
+    const mine = shuffled.includes(seat);
+    const theirs = shuffled.includes(otherSeat(seat));
+    return mine && theirs ? "both" : mine ? "you" : "opponent";
+  }
   private restart() {
-    const h = this.host;
-    if (!h) return;
-    // createGame assigns p1#0..59 / p2#0..59 once. This immutable mapping
-    // retains the full original decks, including cards moved out of play.
-    const deck = (seat: "p1" | "p2") =>
-      Array.from({ length: 60 }, (_, i) => h.game.cardIdByUid[`${seat}#${i}`])
-        .filter((id): id is string => id !== undefined);
-    const startedAt = Math.max(Date.now(), h.startedAt + 1);
-    const created = createGame({
-      seed: startedAt,
-      decks: { p1: deck("p1"), p2: deck("p2") },
-      cardPool: h.game.cardPool,
-    });
-    if (!created.ok) {
-      this.message = created.error.message;
+    const next = this.local?.nextGame();
+    if (!next) return;
+    if (!next.ok) {
+      this.message = next.message;
       this.emit();
       return;
     }
-    this.open({ state: created.state, events: created.events, names: h.names, startedAt });
+    this.open(next.setup);
     this.persist();
   }
   action(label: string, action: GameAction, colour = "blue"): SimOption {
@@ -292,66 +329,15 @@ export class LuaSimulator {
     this.menu = { kind, title, options, note, mandatory, footer };
     this.emit();
   }
-  private takePrizesAutomatically() {
-    let taken = false;
-    while (this.host?.game.phase.kind === "ko:takePrizes") {
-      const h = this.host;
-      const phase = h.game.phase;
-      if (phase.kind !== "ko:takePrizes") break;
-      const next = hostReducer(h, {
-        action: {
-          type: "takePrizes",
-          seat: phase.seat,
-          prizeIndices: Array.from(
-            { length: phase.count },
-            (_, i) => h.game.players[phase.seat].prizes.length - 1 - i,
-          ),
-        },
-        at: Date.now(),
-      });
-      if (next.lastError || next.game === h.game) break;
-      this.host = next;
-      taken = true;
-    }
-    if (taken && this.host) {
-      // Prize-taking belongs to the KO that caused it. Undo/redo must not
-      // land on a pending automatic pick and immediately perform it again.
-      const steps = this.host.steps.filter((step) => step.game.phase.kind !== "ko:takePrizes");
-      this.host = { ...this.host, steps, stepIndex: steps.length - 1 };
-      this.persist();
-    }
-  }
-  private drawMulligansAutomatically() {
-    let drawn = false;
-    while (this.host?.game.phase.kind === "setup:drawExtra") {
-      const h = this.host;
-      const phase = h.game.phase;
-      if (phase.kind !== "setup:drawExtra") break;
-      const seat = h.viewerSeat;
-      const next = hostReducer(h, {
-        action: { type: "setupDrawExtra", seat, count: phase.owed[seat] },
-        at: Date.now(),
-      });
-      if (next.lastError || next.game === h.game) break;
-      this.host = next;
-      drawn = true;
-    }
-    if (drawn && this.host) {
-      // Treat the automatic draws as part of completing setup. History must
-      // not land on a pending draw and discard its recorded redo branch.
-      const steps = this.host.steps.filter((step) => step.game.phase.kind !== "setup:drawExtra");
-      this.host = { ...this.host, steps, stepIndex: steps.length - 1 };
-      this.persist();
-    }
-  }
   prompt(selectedCounterSource?: PokemonRef) {
-    this.drawMulligansAutomatically();
-    this.takePrizesAutomatically();
+    if (this.local?.autoSteps()) this.persist();
     this.menuId++;
     const v = this.view();
-    const h = this.host;
-    if (!v || !h) return;
-    const seat = h.viewerSeat;
+    this.promptKey = this.key(v);
+    if (!v) return;
+    // Online the table answers only its own decisions; Prizes are auto-taken.
+    if (this.online && (v.waitingOn !== "you" || v.phase.kind === "ko:takePrizes")) return;
+    const seat = v.seat;
     const p = v.phase;
     if (p.kind === "effect:choose" && p.prompt) {
       this.menu = effectMenu(this, p.prompt, selectedCounterSource);
@@ -411,9 +397,8 @@ export class LuaSimulator {
   cardActions(): Map<string, SimCardAction[]> {
     const out = new Map<string, SimCardAction[]>();
     const v = this.view();
-    const h = this.host;
-    if (!v || !h) return out;
-    const seat = h.viewerSeat;
+    if (!v) return out;
+    const seat = v.seat;
     const p = v.phase;
     const push = (uid: string, a: SimCardAction) => {
       const list = out.get(uid) ?? [];
@@ -546,10 +531,9 @@ export class LuaSimulator {
   /** Retreat: pick the Benched Pokémon on the table, then the Energy to discard
    * as a card row; both steps are skipped when the choice is forced. */
   retreat(promote?: number) {
-    const h = this.host;
     const v = this.view();
-    if (!h || !v || v.phase.kind !== "turn:action") return;
-    const seat = h.viewerSeat;
+    if (!v || v.phase.kind !== "turn:action") return;
+    const seat = v.seat;
     const cost = v.phase.retreat?.cost ?? 0;
     const energies = v.board.you.active?.attached?.energies ?? [];
     if (promote === undefined) {
@@ -620,12 +604,13 @@ export class LuaSimulator {
   history(
     type: "previousTurn" | "nextTurn" | "undoAction" | "redoAction" | "undoTurn" | "redoTurn",
   ) {
-    if (!this.host) return;
+    const local = this.local;
+    if (!local) return;
     if (this.pendingRareCandy) {
       this.cancelRareCandy();
       return;
     }
-    this.host = hostReducer(this.host, { type });
+    local.history(type);
     this.knockedOut = [];
     this.menu = null;
     this.message = "";
@@ -634,11 +619,10 @@ export class LuaSimulator {
     this.emit();
   }
   sidebar(): SimOption[] {
-    const h = this.host;
     const v = this.view();
-    if (!h || !v)
-      return [{ label: "Choose decks", slot: "primary", run: () => this.route("sandbox") }];
-    const seat = h.viewerSeat;
+    if (this.online) return v ? this.onlineSidebar(v) : [];
+    if (!v) return [{ label: "Choose decks", slot: "primary", run: () => this.route("sandbox") }];
+    const seat = v.seat;
     const p = v.phase;
     if (this.pendingRareCandy)
       return [
@@ -665,7 +649,8 @@ export class LuaSimulator {
             {
               type: "chooseFirstPlayer",
               seat,
-              first: h.game.phase.kind === "setup:chooseFirst" ? h.game.phase.coinWinner : seat,
+              // The coin winner is the seat waited on.
+              first: v.waitingOn === "opponent" ? otherSeat(seat) : seat,
             },
             "red",
           ),
@@ -689,7 +674,7 @@ export class LuaSimulator {
         label,
         colour: "red",
         slot: "minor",
-        disabled: stepTarget(h, type) === null,
+        disabled: !this.local?.canStep(type),
         run: () => this.history(type),
       });
       return [
@@ -712,6 +697,52 @@ export class LuaSimulator {
       ];
     return [];
   }
+  /** Online: no hot-seat history, no new game; Rematch once it is over. */
+  private onlineSidebar(v: RedactedGame): SimOption[] {
+    const seat = v.seat;
+    const p = v.phase;
+    const sent = this.online?.lifecycle().flags.includes("rematch-sent");
+    if (this.pendingRareCandy)
+      return [
+        {
+          label: "Cancel Rare Candy",
+          colour: "orange",
+          slot: "primary",
+          run: () => this.cancelRareCandy(),
+        },
+      ];
+    if (p.kind === "setup:chooseFirst" && v.waitingOn === "you")
+      return [
+        {
+          ...this.action("Go first", { type: "chooseFirstPlayer", seat, first: seat }),
+          slot: "primary",
+        },
+        {
+          ...this.action("Go second", { type: "chooseFirstPlayer", seat, first: otherSeat(seat) }),
+          slot: "primary",
+        },
+      ];
+    if (p.kind === "setup:place" && !p.ready.you)
+      return [
+        {
+          ...this.action("Ready", { type: "setupReady", seat }, seat === "p2" ? "red" : "blue"),
+          slot: "primary",
+        },
+      ];
+    if (p.kind === "turn:action" && v.activePlayer === "you")
+      return [{ ...this.action("End turn", { type: "endTurn", seat }, "red"), slot: "primary" }];
+    if (v.outcome)
+      return [
+        {
+          label: sent ? "Waiting..." : "Rematch",
+          colour: "red",
+          slot: "danger",
+          disabled: sent,
+          run: () => this.command("rematch"),
+        },
+      ];
+    return [];
+  }
   command(raw: string) {
     const [cmd, ...args] = raw.split("\t").map(decodeURIComponent);
     if (cmd === "resume") {
@@ -719,10 +750,23 @@ export class LuaSimulator {
       return;
     }
     if (cmd === "open") {
-      this.open();
+      if (args[0] !== "online") {
+        this.open();
+        return;
+      }
+      // `open\tonline\t<code>`: the lobby's live match, or back to its modal.
+      const code = args[1] ?? "";
+      const source = this.onlineSource(code);
+      if (source) this.bind(source);
+      else {
+        this.release();
+        this.active = false;
+        this.route("online", code, true);
+      }
       return;
     }
     if (cmd === "close") {
+      this.release();
       this.active = false;
       this.menu = null;
       this.pendingRareCandy = null;
@@ -740,11 +784,17 @@ export class LuaSimulator {
     if (cmd === "dismiss") {
       if (!this.menu?.mandatory) {
         this.menu = null;
+        // A decision may have arrived behind the closed menu.
+        if (this.online) this.prompt();
         this.emit();
       }
       return;
     }
-    if (cmd === "history" && this.host && !this.menu) {
+    if (cmd === "rematch") {
+      this.online?.rematch();
+      return;
+    }
+    if (cmd === "history" && this.local && !this.menu) {
       const kinds = {
         previous: "previousTurn",
         next: "nextTurn",
@@ -757,7 +807,7 @@ export class LuaSimulator {
       if (type) this.history(type);
       return;
     }
-    if (cmd === "choosedecks" && !this.menu) {
+    if (cmd === "choosedecks" && !this.online && !this.menu) {
       this.choose(
         "Start new game with different decks?",
         [
@@ -776,7 +826,7 @@ export class LuaSimulator {
       );
       return;
     }
-    if (cmd === "newgame" && this.host && !this.menu) {
+    if (cmd === "newgame" && this.local && !this.menu) {
       this.choose(
         "Start a new game?",
         [{ label: "New game", colour: "red", run: () => this.restart() }],
@@ -786,31 +836,43 @@ export class LuaSimulator {
       );
       return;
     }
-    if (cmd === "concede" && this.host && !this.menu) {
-      const seat = this.host.viewerSeat;
+    if (cmd === "concede" && this.source && !this.menu) {
+      const seat = this.view()?.seat;
+      if (!seat) return;
       this.choose(
-        "Concede the game?",
+        this.online ? "Concede the match?" : "Concede the game?",
         [this.action("Concede", { type: "concede", seat }, "red")],
-        "Your opponent wins immediately.",
+        this.online
+          ? "Your opponent wins immediately. This can't be undone."
+          : "Your opponent wins immediately.",
       );
       return;
     }
     if (cmd === "leave") {
-      this.persist();
+      // Online the canvas already asked (press again to confirm): bye now.
+      const online = this.online;
+      if (online) {
+        this.release();
+        this.active = false;
+        online.leave();
+      } else this.persist();
       this.route("home");
       return;
     }
-    if (cmd === "log" && this.host) {
+    if (cmd === "log" && this.source) {
+      const names = this.source.names();
+      const seat = this.view()?.seat;
       this.choose(
         "Game log",
         [],
-        this.host.log
+        this.source
+          .log()
           .map((e) =>
             e.kind === "turn"
               ? `turn\t\t\tTurn ${e.turn}`
               : [
                   e.who,
-                  e.who === "system" ? "" : (this.host?.names[e.who] ?? ""),
+                  e.who === "system" ? "" : e.who === seat ? names.you : names.opponent,
                   e.elapsed,
                   e.segments.map((s) => s.text).join(""),
                 ].join("\t"),
@@ -821,7 +883,7 @@ export class LuaSimulator {
       );
       return;
     }
-    if (cmd === "pile" && this.host && !this.menu) {
+    if (cmd === "pile" && this.source && !this.menu) {
       const v = this.view();
       if (!v) return;
       const piles = this.tablePiles(v);
@@ -838,22 +900,24 @@ export class LuaSimulator {
       );
       return;
     }
-    if (cmd === "retreat" && this.host && !this.menu) {
+    if (cmd === "retreat" && this.source && !this.menu) {
       const index = Number(args[0]);
       this.retreat(Number.isInteger(index) && index >= 0 ? index : undefined);
       return;
     }
-    if (cmd === "reorder" && this.host && !this.menu) {
+    if (cmd === "reorder" && this.source && !this.menu) {
       const [zone, uid, index] = args;
       if (zone !== "hand" && zone !== "bench") return;
-      const seat = this.host.viewerSeat;
-      const side = this.host.game.players[seat];
+      const src = this.source;
+      const v = this.view();
+      if (!v) return;
+      const seat = v.seat;
       const cards =
         zone === "hand"
-          ? side.hand
-              .filter((id) => id !== this.pendingRareCandy)
-              .map((id) => ({ uid: id, key: id }))
-          : side.bench.map((body) => ({ uid: body.stack.at(-1), key: body.stack[0] ?? "" }));
+          ? v.board.you.hand
+              .filter((c) => c.id !== this.pendingRareCandy)
+              .map((c) => ({ uid: c.id, key: c.id }))
+          : v.board.you.bench.map((c, i) => ({ uid: c.id, key: src.benchKey("you", i) }));
       const card = cards.find((c) => c.uid === uid);
       if (!card) return;
       this.cardOrder.move(
@@ -867,7 +931,7 @@ export class LuaSimulator {
       this.emit();
       return;
     }
-    if (cmd === "move" && this.host && !this.menu) {
+    if (cmd === "move" && this.source && !this.menu) {
       const [uid, fromZone, fromIndex, zone, index] = args;
       if (
         !uid ||
@@ -875,8 +939,10 @@ export class LuaSimulator {
         !["active", "bench", "playmat", "stadium"].includes(zone ?? "")
       )
         return;
-      const h = this.host;
-      const phase = this.view()?.phase;
+      const src = this.source;
+      const v = this.view();
+      if (!v) return;
+      const phase = v.phase;
       if (this.pendingRareCandy) {
         const target: PokemonTarget | null =
           zone === "active"
@@ -887,7 +953,7 @@ export class LuaSimulator {
         if (
           fromZone === "hand" &&
           target &&
-          phase?.kind === "turn:action" &&
+          phase.kind === "turn:action" &&
           phase.rareCandy.some(
             (option) =>
               option.target.spot === target.spot &&
@@ -898,7 +964,7 @@ export class LuaSimulator {
         ) {
           this.dispatch({
             type: "rareCandy",
-            seat: h.viewerSeat,
+            seat: v.seat,
             uid: this.pendingRareCandy,
             target,
             evolutionUid: uid,
@@ -910,7 +976,7 @@ export class LuaSimulator {
         return;
       }
       const candy =
-        phase?.kind === "turn:action"
+        phase.kind === "turn:action"
           ? phase.trainers.find((t) => t.uid === uid && t.rareCandy)
           : undefined;
       if (fromZone === "hand" && zone === "playmat" && candy) {
@@ -939,10 +1005,10 @@ export class LuaSimulator {
                 : { owner: "you", zone: "bench", index: Number(index) },
         },
         {
-          board: projectGameState(h.game, h.viewerSeat).board,
-          viewerSeat: h.viewerSeat,
-          phaseKind: h.game.phase.kind,
-          isViewerTurn: h.game.phase.kind === "turn:action" && h.game.phase.seat === h.viewerSeat,
+          board: src.board(),
+          viewerSeat: v.seat,
+          phaseKind: phase.kind,
+          isViewerTurn: phase.kind === "turn:action" && v.activePlayer === "you",
         },
       );
       if (action) this.dispatch(action);
@@ -990,8 +1056,9 @@ export class LuaSimulator {
   }
   emit() {
     if (!this.active) return;
-    const h = this.host;
+    const src = this.source;
     const v = this.view();
+    const names = src?.names();
     this.handlers.clear();
     const rows: string[] = [];
     const art = new Map<string, string>();
@@ -1030,10 +1097,10 @@ export class LuaSimulator {
           ? "win"
           : "loss"
       : "";
-    const title = v?.outcome
+    let title = v?.outcome
       ? v.outcome.result === "tie"
         ? "Draw"
-        : `${v.outcome.winner === "you" ? h?.names[h.viewerSeat] : h?.names[otherSeat(h.viewerSeat)]} wins`
+        : `${v.outcome.winner === "you" ? names?.you : names?.opponent} wins`
       : v?.phase.kind === "setup:chooseFirst"
         ? "Choose who goes first"
         : v?.phase.kind === "setup:place"
@@ -1048,26 +1115,39 @@ export class LuaSimulator {
     if (v?.phase.kind === "effect:choose" && v.phase.prompt?.note) hint = v.phase.prompt.note;
     if (v?.phase.kind === "gameOver" && v.outcome?.result === "win")
       hint = GAME_OVER_DETAIL[v.outcome.reason];
+    if (this.online && v && names && !v.outcome) {
+      const them = names.opponent;
+      // Online, only a rematch's loser chooses; a first game's order is the coin's.
+      if (v.phase.kind === "setup:chooseFirst" && v.waitingOn !== "you")
+        hint = `${them} lost the last game and is choosing who goes first.`;
+      else if (v.phase.kind === "setup:chooseFirst")
+        hint = "You lost the last game. Choose who goes first.";
+      else if (v.phase.kind === "setup:place" && v.phase.ready.you)
+        hint = `Waiting for ${them} to finish placing.`;
+      else if (v.waitingOn === "opponent") hint = `Waiting for ${them}...`;
+      if (v.phase.kind === "turn:action" && v.activePlayer === "opponent") title = `${them}'s turn`;
+    }
     if (this.pendingRareCandy)
       hint = "Drag a Stage 2 onto its Basic Pokemon. Escape cancels Rare Candy.";
-    const allow = h?.game.allowances;
+    const allow = src?.allowances();
+    const turns = this.local?.turns();
     row(
       ++this.revision,
-      h ? "ready" : "empty",
-      h?.names[h.viewerSeat] ?? "",
-      h ? h.names[otherSeat(h.viewerSeat)] : "",
+      src ? "ready" : "empty",
+      names?.you ?? "",
+      names ? names.opponent : "",
       v?.turn ?? 0,
       v?.phase.kind ?? "",
       this.message,
       title,
       hint,
-      h?.turnIndex ?? 0,
-      h?.turns.length ?? 0,
+      turns?.index ?? 0,
+      turns?.count ?? 0,
       v?.waitingOn ?? "",
       v?.activePlayer ?? "",
-      h?.viewerSeat ?? "",
-      allow?.energyAttached ? 1 : 0,
-      allow?.supporterPlayed ? 1 : 0,
+      v?.seat ?? "",
+      allow?.energy ? 1 : 0,
+      allow?.supporter ? 1 : 0,
       allow?.retreated ? 1 : 0,
       outcome,
       v?.outcome?.result === "win"
@@ -1076,15 +1156,29 @@ export class LuaSimulator {
           ? "Both players ran out of options."
           : "",
       this.shuffled,
-      h?.startedAt ?? "",
+      src?.matchId() ?? "",
     );
     this.shuffled = "";
+    if (src) {
+      const life = src.lifecycle();
+      const away = life.opponentAway;
+      // awayMs: the forfeit clock at emit time (Lua counts down from receipt),
+      // -1 away with no clock, '' present.
+      row(
+        "L",
+        src.mode,
+        src.spectating,
+        away?.name ?? "",
+        !away ? "" : away.forfeitAt === null ? -1 : Math.max(0, away.forfeitAt - Date.now()),
+        life.flags.join(","),
+        this.online ? "partial" : "full",
+      );
+    }
     if (this.pendingRareCandy) row("R", this.pendingRareCandy);
     for (const uid of this.knockedOut) row("D", uid);
-    if (v && h) {
+    if (v && src) {
       const piles = this.tablePiles(v);
-      const isViewerTurn =
-        h.game.phase.kind === "turn:action" && h.game.phase.seat === h.viewerSeat;
+      const isViewerTurn = v.phase.kind === "turn:action" && v.activePlayer === "you";
       const canDragHand = v.phase.kind === "setup:place" || isViewerTurn;
       const candyEvolutions = new Set(
         v.phase.kind === "turn:action" && this.pendingRareCandy
@@ -1094,8 +1188,8 @@ export class LuaSimulator {
       for (const owner of ["you", "opponent"] as const) {
         const side = v.board[owner];
         const hand = side.hand.filter((c) => owner !== "you" || c.id !== this.pendingRareCandy);
-        const seat = owner === "you" ? h.viewerSeat : otherSeat(h.viewerSeat);
-        const benchKeys = side.bench.map((c, i) => h.game.players[seat].bench[i]?.stack[0] ?? c.id);
+        const seat = owner === "you" ? v.seat : otherSeat(v.seat);
+        const benchKeys = side.bench.map((c, i) => src.benchKey(owner, i) || c.id);
         const handOrder = this.cardOrder.sorted(
           seat,
           "hand",
@@ -1114,11 +1208,11 @@ export class LuaSimulator {
         const cardRow = (c: RedactedCard, zone: string, index: number) => {
           const b = (c as RedactedInPlay).battle;
           const a = (c as RedactedInPlay).attached;
-          const full = c.cardId === "hidden" ? undefined : cardOfUid(h.game, c.id);
+          const full = c.cardId === "hidden" ? undefined : src.face(c);
           // Attached cards travel as "type|uid|cardId" so Lua can draw the
           // real Energy card tucked behind the Pokémon.
           const energies = (a?.energies ?? []).map((e) => {
-            const ec = cardOfUid(h.game, e.id);
+            const ec = src.face(e);
             // Catalog basic energies carry no `types`; the name is the datum.
             const type = !ec
               ? "Colorless"
@@ -1224,7 +1318,14 @@ export class LuaSimulator {
     }
     // Preserve the sidebar behind dialogs, without registering background actions.
     for (const o of this.sidebar())
-      row("A", this.menu ? "" : register(o), o.label, o.colour ?? "blue", !!o.disabled, o.slot ?? "minor");
+      row(
+        "A",
+        this.menu ? "" : register(o),
+        o.label,
+        o.colour ?? "blue",
+        !!o.disabled,
+        o.slot ?? "minor",
+      );
     if (this.menu) {
       row(
         "M",
@@ -1240,9 +1341,9 @@ export class LuaSimulator {
       for (const o of this.menu.options) option("O", o);
       for (const o of this.menu.footer ?? []) option("F", o);
     }
-    if (h)
+    if (src)
       for (const id of infoIds) {
-        const card = h.game.cardPool[id];
+        const card = src.card(id);
         if (card) rows.push(this.infoRow(card));
       }
     this.images([...art].slice(0, 64).map(([id, url]) => ({ id, url })));

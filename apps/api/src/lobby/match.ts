@@ -11,6 +11,7 @@
 import {
   type CreateGameResult,
   type GameAction,
+  type GameEvent,
   type GameState,
   type InPlayPokemon,
   type Seat,
@@ -58,6 +59,37 @@ export function startMatch(opts: StartMatchOptions): CreateGameResult {
     decks: { p1: [...opts.hostDeck], p2: [...opts.guestDeck] },
     cardPool: opts.cardPool,
   });
+}
+
+/** Who sets the play order of a lobby's game. The first game (or one after a
+    tie) is decided by the coin alone: its winner goes first, with no choice to
+    make. A rematch's previous LOSER chooses instead — the coin decided nothing,
+    so its row is dropped from the log and the loser takes the choosing seat. */
+export function settleFirstPlayer(
+  state: GameState,
+  events: readonly GameEvent[],
+  chooser: Seat | null,
+): { state: GameState; events: GameEvent[] } {
+  const phase = state.phase;
+  if (phase.kind !== "setup:chooseFirst") return { state, events: [...events] };
+  if (chooser !== null) {
+    return {
+      state: { ...state, phase: { kind: "setup:chooseFirst", coinWinner: chooser } },
+      events: events.filter((e) => e.type !== "COIN_FLIP"),
+    };
+  }
+  const seat = phase.coinWinner;
+  const result = applyAction(state, { type: "chooseFirstPlayer", seat, first: seat });
+  if (!result.ok) return { state, events: [...events] };
+  return { state: result.state, events: [...events, ...result.events] };
+}
+
+/** The seat that chooses the next game's order: the loser of a finished match,
+    or null for a tie (back to the coin). */
+export function rematchChooser(state: GameState): Seat | null {
+  const phase = state.phase;
+  if (phase.kind !== "gameOver" || phase.outcome.result !== "win") return null;
+  return phase.outcome.winner === "p1" ? "p2" : "p1";
 }
 
 /** What the DO persists when a lobby becomes a match: the authoritative
@@ -3321,7 +3353,9 @@ export const COIN_REDO_MIGRATABLE_MATCH_RECORD_VERSION = 48;
 export function migratablePoolIdsOf(raw: unknown): string[] | null {
   const record = readMigratableRecord(raw);
   if (record === null) return null;
-  return record.version === MIGRATABLE_MATCH_RECORD_VERSION ? Object.keys(record.state.cardPool) : [];
+  return record.version === MIGRATABLE_MATCH_RECORD_VERSION
+    ? Object.keys(record.state.cardPool)
+    : [];
 }
 
 /** 🆕🆕🆕 D583 — migrate a v41 record to this deploy's version: every persisted TRAINER face whose
@@ -3362,7 +3396,9 @@ export function migrateMatchRecord(raw: unknown, fresh: Record<string, Card>): M
   const withPool = { ...record.state, cardPool };
   const v44 = record.version === LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION;
   const sided =
-    v44 || record.version === RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION ? withPool : withD621SideKeys(withPool);
+    v44 || record.version === RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION
+      ? withPool
+      : withD621SideKeys(withPool);
   const keyed = v44 ? sided : withD630RecordKeys(sided);
   const state = withD636LockKeys(keyed);
   return { ...record, version: MATCH_RECORD_VERSION, state };
@@ -3380,7 +3416,8 @@ function withD636LockKeys(state: GameState): GameState {
       ...pokemon,
       attackTwoFlipLockTurn: null,
       benchedTurn: null,
-      handAttachMark: pokemon.handAttachMark === null ? null : { ...pokemon.handAttachMark, counters: 0 },
+      handAttachMark:
+        pokemon.handAttachMark === null ? null : { ...pokemon.handAttachMark, counters: 0 },
     });
     players[seat] = {
       ...side,

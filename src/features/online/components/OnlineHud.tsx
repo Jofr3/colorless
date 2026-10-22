@@ -119,7 +119,7 @@ export function OnlineHud({
   switch (game.phase.kind) {
     case "setup:chooseFirst":
       return acting ? (
-        <Panel label="Coin flip" title="You won the flip — who goes first?">
+        <Panel label="Rematch" title="You lost the last game — who goes first?">
           <div className="flex gap-2">
             <button
               type="button"

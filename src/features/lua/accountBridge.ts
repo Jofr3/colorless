@@ -1,6 +1,7 @@
 import { LuaAccount } from "./account";
 import { LuaBuilder } from "./builder";
 import { LuaLibrary } from "./library";
+import { LuaOnline } from "./online";
 import { LuaSimulator } from "./simulator";
 import { LuaSandbox } from "./sandbox";
 import { launchSandbox } from "./sandboxLaunch";
@@ -59,11 +60,25 @@ document.addEventListener("luminous:sandbox-command", (event) => {
     void sandbox.command(event.detail);
 });
 
+const route = (page: string, id?: string, replace?: boolean) =>
+  document.dispatchEvent(new CustomEvent("luminous:route", { detail: { page, id, replace } }));
+const online = new LuaOnline(
+  (snapshot) =>
+    document.dispatchEvent(new CustomEvent("luminous:online-state", { detail: snapshot })),
+  route,
+  { user: () => account.user },
+);
+document.addEventListener("luminous:online-command", (event) => {
+  if (event instanceof CustomEvent && typeof event.detail === "string")
+    void online.command(event.detail);
+});
+
 const simulator = new LuaSimulator(
   (snapshot) =>
     document.dispatchEvent(new CustomEvent("luminous:simulator-state", { detail: snapshot })),
-  (page) => document.dispatchEvent(new CustomEvent("luminous:route", { detail: { page } })),
+  route,
   (cards) => document.dispatchEvent(new CustomEvent("luminous:builder-images", { detail: cards })),
+  (code) => online.matchSource(code),
 );
 document.addEventListener("luminous:simulator-command", (event) => {
   if (event instanceof CustomEvent && typeof event.detail === "string")
@@ -76,6 +91,7 @@ const account = new LuaAccount((snapshot) => {
   library.session(fields[1] ?? "loading", fields[4] ?? "");
   builder.session(fields[1] ?? "loading", fields[4] ?? "");
   sandbox.session(fields[1] ?? "loading", fields[4] ?? "");
+  online.session(fields[1] ?? "loading", fields[4] ?? "");
 });
 setSessionRecoveryHandler(async () => {
   await account.refresh();

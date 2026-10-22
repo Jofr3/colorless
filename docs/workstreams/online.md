@@ -5,6 +5,31 @@ running authoritatively server-side.
 
 **Depends on:** P3 engine + P1 lobby Durable Object.
 
+## Status — Lua online client (2026-10-22)
+
+**Online play now runs in the Lua frontend** (`frontend/lua/README.md` → Online). No server or
+wire change: the Lua pages talk to the same lobby Durable Object as React.
+
+- `src/features/online/net/lobbyClient.ts` — the lobby WebSocket logic lifted out of `useLobby`
+  into a framework-free `LobbyClient` (hello retry, presence/not-found timers, refusals, match
+  frames). `useLobby` is now a thin wrapper with the same `Lobby` shape; `createLobby.ts` mints
+  codes for both clients.
+- `src/features/lua/online.ts` (`LuaOnline`) drives the Lua lobby modal (`/lua/?page=online`,
+  `/lua/?lobby=CODE`) over the `__online.txt` mailbox; `onlineTable.ts` (`LuaOnlineMatch`) is a
+  `TableSource` so the one `LuaSimulator` renders the live match at `/lua/?page=match&lobby=CODE`.
+- User decisions: invite links use `/lua/?lobby=CODE`; the deck picker has a view-only regulation
+  filter (All / Standard legal / Not Standard / Expanded legal / Not Expanded); spectating is not
+  offered in Lua ("Lobby is full"); the in-match Leave asks to be pressed again, while browser
+  Back and tab close keep React's behaviour (immediate forfeit on Back, the 90 s abandonment on
+  close).
+- Verified in two headless browsers (create, link and typed join, kick, sign-in mid-lobby, ready,
+  countdown, setup and turns, refused action, away banner and 90 s forfeit, resume on reload,
+  concede, rematch, Leave, Back forfeit, full / not-found / invalid) and a Lua guest joining a
+  React-created lobby.
+- Not on the wire, so absent online: coin-flip events, the Energy/Retreat allowances, effect
+  continuation titles and stack bottoms for bench order (a server deploy would have to add them to
+  `RedactedGame` first).
+
 ## Status — P4 kickoff (2026-07-23)
 
 **Started** (P3 engine broad enough at 0.39.0). **Milestone 1 (WS transport + lobby

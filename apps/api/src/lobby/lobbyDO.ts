@@ -102,6 +102,8 @@ import {
   type MatchRecord,
   matchSeatOf,
   SEAT_OF_SLOT,
+  rematchChooser,
+  settleFirstPlayer,
   startMatch,
 } from "./match";
 
@@ -116,6 +118,9 @@ const PENDING_KEY = "pendingDisconnects";
 // The authoritative match (P4) — the engine GameState + seed, written once when
 // the countdown flips the lobby to in-game (online.md increment 1b).
 const MATCH_KEY = "match";
+// The playerId who lost the last game in this lobby: they choose the rematch's
+// play order (`settleFirstPlayer`). Consumed by the next successful handoff.
+const CHOOSER_KEY = "nextChooser";
 // playerId → the account it's bound to (P4 3a-sec). Written the first time an
 // authenticated socket claims a seat; a later hello replaying that playerId must
 // present the SAME account (seatClaimAllowed) or it's refused — so a socket can't
@@ -373,6 +378,12 @@ export class LobbyDO {
         // the client only offers the control on a finished board, so reaching this
         // means a crafted frame, and it changes nothing.
         if (load.kind !== "ok" || load.record.state.phase.kind !== "gameOver") return;
+        // The loser picks who goes first next time; a tie goes back to the coin.
+        const loser = rematchChooser(load.record.state);
+        const loserId =
+          loser === "p1" ? snapshot.host.id : loser === "p2" ? snapshot.guest?.id : undefined;
+        if (loserId === undefined) await this.state.storage.delete(CHOOSER_KEY);
+        else await this.state.storage.put(CHOOSER_KEY, loserId);
         // `commit` sees the lobby leave in-game (`abandonsMatch`) and drops
         // MATCH_KEY with it — which is precisely what makes the next handoff mint
         // a FRESH game rather than hitting its idempotency guard on this one.
@@ -605,15 +616,20 @@ export class LobbyDO {
       cardPool,
     });
     if (!result.ok) return { ok: false, reason: matchStartReason(result.error.code) };
+    // A player no longer seated (a new guest since the rematch) falls back to the coin.
+    const chooserId = await this.state.storage.get<string>(CHOOSER_KEY);
+    const chooser: Seat | null =
+      chooserId === snapshot.host.id ? "p1" : chooserId === snapshot.guest.id ? "p2" : null;
+    const opening = settleFirstPlayer(result.state, result.events, chooser);
     // Seat display names for the game log's system rows (host → p1, guest → p2,
     // the SEAT_OF_SLOT mapping startMatch itself uses).
     const names: Record<Seat, string> = { p1: snapshot.host.name, p2: snapshot.guest.name };
     const startedAt = Date.now();
     // Seed the log from createGame's own events (shuffles + the coin flip), at
     // elapsed +00:00 — the same origin the local /play page uses (useLocalGame).
-    const log = logFromEvents(result.events, {
+    const log = logFromEvents(opening.events, {
       names,
-      state: result.state,
+      state: opening.state,
       elapsed: formatElapsed(0),
     });
     const record: MatchRecord = {
@@ -621,10 +637,11 @@ export class LobbyDO {
       seed,
       startedAt,
       names,
-      state: result.state,
+      state: opening.state,
       log,
     };
     await this.state.storage.put(MATCH_KEY, record);
+    await this.state.storage.delete(CHOOSER_KEY);
     return { ok: true };
   }
 

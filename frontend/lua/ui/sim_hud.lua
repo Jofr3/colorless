@@ -61,6 +61,7 @@ function Hud.new(callbacks)
   self.turnCount=Dyna.new({string='0',scale=0.88,colours={MONEY},shadow=true,bump=true,spacing=2,font_offset=true})
   self.values={};self.inited={}
   self.hint='';self.oppName='';self.allow={};self.hasActive=false
+  self.p1Label,self.p2Label='P1 Hand','P2 Hand'
   -- G.C.DYN_UI.MAIN / DARK: the blind colour eased in Blind:change_colour.
   -- Here it follows the seat whose turn it is: p1 blue, p2 red.
   self.dyn=mix(BLACK,BLACK,1);self.dynTarget=self.dyn
@@ -156,6 +157,11 @@ function Hud:sync(sim,time)
   self.compactActions=choosingFirst or (#actions==1 and actions[1].label=='Ready')
   self.turnActions=sim.gamePhase=='turn:action'
   self.oppName=sim.opponent or ''
+  -- Online the viewer's seat is fixed: name the hands instead of the seats.
+  if sim.mode=='online' then
+    local mine,theirs='Your hand',self.oppName~='' and self.oppName or 'Opponent'
+    if sim.viewerSeat=='p2' then self.p1Label,self.p2Label=theirs,mine else self.p1Label,self.p2Label=mine,theirs end
+  else self.p1Label,self.p2Label='P1 Hand','P2 Hand' end
   self.activeOwner=sim.activePlayer
   self.allow=sim.allow or {}
   self.hasActive=active~=nil
@@ -314,7 +320,9 @@ function Hud:draw(sim,L,time,reduced,hovered)
   local body=cy+48
   if not choosingFirst then Button.panel(ix+3,body,iw-6,th-52,self.dynDark,2.4) end
   if choosingFirst then
-    Dyna.static(sim.title,0.34,ix+14,cy+th/2+10,iw-28,24,LIGHT,{roomWidth=rw,fit=true})
+    -- Online only a rematch's loser chooses, so the hint says why on both sides.
+    local line=(#(sim.actions or {})==0 or sim.mode=='online') and (sim.hint or '')~='' and sim.hint or sim.title
+    Dyna.static(line,0.34,ix+14,cy+th/2+10,iw-28,24,LIGHT,{roomWidth=rw,fit=true})
   elseif not self.panelTitleHidden then
     self:drawPrompt(sim,L,ix+14,body+10,iw-28,th-72)
   end
@@ -341,8 +349,8 @@ function Hud:draw(sim,L,time,reduced,hovered)
     local b=self:bottomLayout(L)
     local u,s=b.unit,b.scale
     local gx,gy,gw=b.gridX,b.gridY,b.gridW
-    cell(gx,gy,b,'P1 Hand',self.p1HandText,rw)
-    cell(gx+b.cellW+b.gap,gy,b,'P2 Hand',self.p2HandText,rw)
+    cell(gx,gy,b,self.p1Label,self.p1HandText,rw)
+    cell(gx+b.cellW+b.gap,gy,b,self.p2Label,self.p2HandText,rw)
     gy=gy+b.cellH+0.1*u+b.gap
     emboss(gx,gy,gw,1.15*u,BOSS_MAIN,1.8*s,nil,0.05*u)
     Button.panel(gx+(gw-2.69*u)/2,gy+0.075*u,2.69*u,u,BOSS_DARK,1.8*s)
@@ -355,8 +363,13 @@ function Hud:draw(sim,L,time,reduced,hovered)
     self.turnCount:draw(0,0,rw,nil,countX)
     g.pop()
     gy=gy+1.2*u+b.gap
-    cell(gx,gy,b,'Energy',self.allow.energy and 'used' or 'open',rw,self.allow.energy)
-    cell(gx+b.cellW+b.gap,gy,b,'Supporter',self.allow.supporter and 'used' or 'open',rw,self.allow.supporter)
+    -- The online wire only carries the Supporter allowance; drop Energy.
+    if self.allow.partial then
+      cell(gx+(gw-b.cellW)/2,gy,b,'Supporter',self.allow.supporter and 'used' or 'open',rw,self.allow.supporter)
+    else
+      cell(gx,gy,b,'Energy',self.allow.energy and 'used' or 'open',rw,self.allow.energy)
+      cell(gx+b.cellW+b.gap,gy,b,'Supporter',self.allow.supporter and 'used' or 'open',rw,self.allow.supporter)
+    end
   end
 end
 function Hud:drawPortrait(sim,L,time,reduced,hovered)
@@ -375,14 +388,14 @@ function Hud:drawPortrait(sim,L,time,reduced,hovered)
   Dyna.static(self.hint,choosingFirst and 0.24 or 0.26,ix,y+56,230,14,JOKER_GREY,{roomWidth=rw,fit=true,shadow=false})
   local function mini(xx,yy,label,text,colour)
     emboss(xx,yy,64,44,BOSS_MAIN,1.2)
-    Dyna.static(label,0.26,xx,yy+2,64,12,LIGHT,{roomWidth=rw})
+    Dyna.static(label,0.26,xx,yy+2,64,12,LIGHT,{roomWidth=rw,fit=true})
     Button.panel(xx+4,yy+16,56,24,BOSS_DARK,1.2)
     local keep=text.scale;text.scale=0.5
     text:draw(xx+32,yy+28,rw)
     text.scale=keep
   end
-  mini(ix,y+72,'P1 Hand',self.p1HandText)
-  mini(ix+70,y+72,'P2 Hand',self.p2HandText)
+  mini(ix,y+72,self.p1Label,self.p1HandText)
+  mini(ix+70,y+72,self.p2Label,self.p2HandText)
   mini(ix+140,y+72,'Turn',self.turnCount)
   emboss(ix+166,y+10,70,42,BLACK,1.2)
   Dyna.static('Prizes',0.24,ix+166,y+12,70,12,LIGHT,{roomWidth=rw})

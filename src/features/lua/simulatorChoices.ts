@@ -1,4 +1,4 @@
-import { cardOfUid, topUid, type EffectChoice, type PokemonRef } from "@luminous/engine";
+import type { EffectChoice, PokemonRef } from "@luminous/engine";
 import type { RedactedEffectPrompt, RedactedCard } from "@luminous/schema";
 import type { LuaSimulator, SimMenu, SimOption } from "./simulator";
 
@@ -10,46 +10,33 @@ export function effectMenu(
   prompt: RedactedEffectPrompt,
   selectedCounterSource?: PokemonRef,
 ): SimMenu {
-  const host = sim.host;
-  if (!host) return { kind: "list", title: "No game", options: [] };
-  const seat = host.viewerSeat;
-  const continuation = host.game.phase.kind === "effect:choose" ? host.game.phase.cont : null;
-  const pendingOp = continuation?.pendingOp;
-  const placingCounters = pendingOp?.op === "damageChosen" && pendingOp.deals !== true;
+  const view = sim.view();
+  const source = sim.source;
+  if (!view || !source) return { kind: "list", title: "No game", options: [] };
+  const seat = view.seat;
+  const { placingCounters, invokedBy, abilityName } = source.effectContext();
   const selected: string[] = [];
   const assignments = new Map<string, number>();
   let amount = prompt.kind === "choosePokemon" ? (prompt.upTo ?? 1) : 100;
   let target = 0;
-  const refName = (ref: PokemonRef) => {
-    const side = host.game.players[ref.seat];
-    const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
-    const who = ref.seat === seat ? "You" : "Opponent";
-    return `${who}: ${body ? (cardOfUid(host.game, topUid(body) ?? "")?.name ?? "Pokemon") : "Pokemon"}`;
+  // The redacted board names each in-play top card and its attachments by uid.
+  const body = (ref: PokemonRef) => {
+    const side = ref.seat === seat ? view.board.you : view.board.opponent;
+    return ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
   };
-  const refUid = (ref: PokemonRef) => {
-    const side = host.game.players[ref.seat];
-    const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
-    return (body && topUid(body)) || "";
-  };
+  const refName = (ref: PokemonRef) =>
+    `${ref.seat === seat ? "You" : "Opponent"}: ${body(ref)?.name ?? "Pokemon"}`;
+  const refUid = (ref: PokemonRef) => body(ref)?.id ?? "";
+  const attached = [view.board.you, view.board.opponent]
+    .flatMap((side) => [side.active, ...side.bench])
+    .flatMap((p) => [...(p?.attached?.energies ?? []), ...(p?.attached?.tools ?? [])]);
   const transfer = prompt.kind === "choosePokemon" ? prompt.counterTransfer : undefined;
   // The engine forces a lone damaged source. Still let the player identify it
   // before presenting destinations, just as when several sources are eligible.
   let sourceSelected =
     !transfer?.from ||
     (!!selectedCounterSource && refUid(selectedCounterSource) === refUid(transfer.from));
-  const card = (uid: string): RedactedCard | undefined => {
-    const c = cardOfUid(host.game, uid);
-    return (
-      c && {
-        id: uid,
-        cardId: c.id,
-        name: c.name,
-        category: c.category,
-        trainerType: c.trainerType ?? null,
-        hasImage: !!c.image,
-      }
-    );
-  };
+  const card = (uid: string): RedactedCard | undefined => attached.find((c) => c.id === uid);
   const confirm = (choice: EffectChoice, label = "Confirm", colour = "blue") =>
     sim.action(label, { type: "resolveEffect", seat, choice }, colour);
   const refresh = () => {
@@ -131,13 +118,8 @@ export function effectMenu(
         break;
       case "confirm": {
         const targets = prompt.targets ?? [];
-        const context = continuation?.ctx;
-        const abilities = context?.sourceUid
-          ? cardOfUid(host.game, context.sourceUid)?.abilities
-          : null;
-        const abilityName = abilities?.length === 1 ? abilities[0]?.name : undefined;
         menu.title =
-          context?.invokedBy === "ability"
+          invokedBy === "ability"
             ? `Do you want to use ${abilityName ?? "this Ability"}?`
             : prompt.note || "Confirm";
         menu.note = targets.length ? "Choose a Pokémon, then confirm." : prompt.note;

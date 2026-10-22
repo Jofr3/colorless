@@ -1,0 +1,407 @@
+import type { EffectChoice, GameAction, PokemonRef, Seat } from "@luminous/engine";
+import type {
+  Card,
+  RedactedCard,
+  RedactedEffectPrompt,
+  RedactedGame,
+  SeatLogEntry,
+} from "@luminous/schema";
+import { fetchCardPool } from "../game/cardPool";
+import { projectionFromRedacted } from "../game/projection";
+import type { ActionError, LobbyClient } from "../online/net/lobbyClient";
+import { benchLimitFor } from "../playmat/constants";
+import type { TableEvents, TableLifecycle, TableSource } from "./tableSource";
+
+const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+const roomOnBench = (v: RedactedGame) =>
+  v.board.you.bench.length < benchLimitFor(projectionFromRedacted(v).board, "you");
+
+/** An effect answer the prompt can accept (React's dialog gates); anything
+ * finer (caps, legal targets) is the server's to refuse. */
+export function promptGate(prompt: RedactedEffectPrompt, choice: EffectChoice): boolean {
+  if (prompt.kind === "chooseCards" && choice.kind === "cards")
+    return choice.uids.length >= prompt.min && choice.uids.length <= prompt.max;
+  if (prompt.kind === "choosePokemonMulti" && choice.kind === "pokemonMulti")
+    return (
+      (choice.refs.length >= prompt.min && choice.refs.length <= prompt.max) ||
+      (prompt.declinable && choice.refs.length === 0)
+    );
+  if (
+    (prompt.kind === "discardEnergy" && choice.kind === "discardEnergy") ||
+    (prompt.kind === "discardTools" && choice.kind === "discardTools")
+  ) {
+    const scope = prompt.scope;
+    if (scope.kind === "total") return choice.uids.length === scope.count;
+    if (scope.kind === "upTo") return choice.uids.length <= scope.max;
+    const host = (uid: string) =>
+      JSON.stringify(prompt.discardable.find((c) => c.uid === uid)?.from);
+    const hosts = new Set(prompt.discardable.map((c) => host(c.uid)));
+    const picked = new Set(choice.uids.map(host));
+    return picked.size === choice.uids.length && picked.size === hosts.size;
+  }
+  if (prompt.kind === "orderCards" && choice.kind === "orderCards")
+    return (
+      choice.uids.length === prompt.candidates.length ||
+      (prompt.alt !== undefined && choice.uids.length === 0)
+    );
+  if (prompt.kind === "moveEnergy" && choice.kind === "moveEnergy")
+    return choice.picks.length >= (prompt.min ?? 0) && choice.picks.length <= prompt.max;
+  if (prompt.kind === "attachCards" && choice.kind === "attachCards")
+    return choice.assignments.length <= prompt.max;
+  if (choice.kind === "hpGuess") return Number.isInteger(choice.hp) && choice.hp >= 0;
+  return true;
+}
+
+/** Online there is no engine to try an action on: the redacted phase carries
+ * the server's own gates. Anything it does not know is offered, and a refusal
+ * comes back as `reject-action`. */
+export function onlineGate(action: GameAction, v: RedactedGame): boolean {
+  const p = v.phase;
+  const acting = v.waitingOn === "you";
+  const hand = (uid: string) => v.board.you.hand.find((c) => c.id === uid);
+  const basic = (c: RedactedCard | undefined) => c?.category !== "Pokemon" || c.stage === "Basic";
+  switch (action.type) {
+    case "concede":
+      return v.outcome === null;
+    case "chooseFirstPlayer":
+      return p.kind === "setup:chooseFirst" && acting;
+    case "setupDrawExtra":
+      return p.kind === "setup:drawExtra" && acting;
+    case "setupPlaceActive":
+    case "setupPlaceBench":
+      return (
+        p.kind === "setup:place" &&
+        !p.ready.you &&
+        basic(hand(action.uid)) &&
+        (p.stage !== "bonus" || (p.bonusCards ?? []).includes(action.uid)) &&
+        (action.type === "setupPlaceActive" || roomOnBench(v))
+      );
+    case "setupReady":
+      return p.kind === "setup:place" && !p.ready.you && v.board.you.active !== null;
+    case "takePrizes":
+      return p.kind === "ko:takePrizes" && acting;
+    case "promote":
+      return p.kind === "ko:promote" && acting;
+    case "resolveEffect":
+      return p.kind === "effect:choose" && p.prompt !== null && promptGate(p.prompt, action.choice);
+  }
+  if (p.kind !== "turn:action" || v.activePlayer !== "you") return false;
+  switch (action.type) {
+    case "attack":
+      return p.attacks.some((a) => a.index === action.index && a.playable);
+    case "useAbility":
+      return p.abilities.some(
+        (a) => same(a.target, action.target) && a.abilityName === action.abilityName && !a.disabled,
+      );
+    case "useStadiumAbility":
+      return !!p.stadiumAbility && !p.stadiumAbility.disabled;
+    case "retreat":
+      return !!p.retreat?.can;
+    case "playTrainer": {
+      // Offers are deduplicated per card: any copy answers for the rest.
+      const cardId = hand(action.uid)?.cardId;
+      const offer = p.trainers.find((t) => t.uid === action.uid || hand(t.uid)?.cardId === cardId);
+      return !!offer && !offer.disabled;
+    }
+    case "playBasicToBench":
+      return basic(hand(action.uid)) && roomOnBench(v);
+    case "evolve": {
+      const top =
+        action.target.spot === "active"
+          ? v.board.you.active
+          : v.board.you.bench[action.target.index];
+      return !!top && !!hand(action.uid)?.evolutionTargetIds?.includes(top.id);
+    }
+    case "rareCandy":
+      return p.rareCandy.some(
+        (o) => same(o.target, action.target) && o.stage2.some((e) => e.uid === action.evolutionUid),
+      );
+    case "discardFromPlay":
+      return (p.discardable ?? []).some((d) => same(d.target, action.target));
+    default:
+      return true;
+  }
+}
+
+const NO_EVENTS: TableEvents = { knockedOut: [], shuffled: [], coin: null };
+export type CardPool = (ids: string[]) => Promise<{ pool: Record<string, Card> }>;
+
+/** The live lobby match as a table: RedactedGame frames in, GameActions out
+ * through the one LobbyClient the modal also drives. No engine, no save. */
+export class LuaOnlineMatch implements TableSource {
+  readonly mode = "online";
+  readonly spectating = false;
+  private seen: RedactedGame | null = null;
+  private match = "";
+  private logLength = 0;
+  private events = NO_EVENTS;
+  private counter: PokemonRef | undefined;
+  private pool: Record<string, Card> = {};
+  private asked = new Set<string>();
+  private keys = new Map<string, string>();
+  private autoSent = new Set<string>();
+  private auto = false;
+  private error: ActionError | null = null;
+  private muted: ActionError | null = null;
+  private sentRematch = "";
+  private released = false;
+  private listeners = new Set<() => void>();
+  private unsubscribe: () => void;
+  /** A player action is in flight: no new frame or refusal yet. */
+  pending = false;
+
+  constructor(
+    private client: LobbyClient,
+    private hooks: { serial: () => number; release: () => void; leave: () => void },
+    private deps: { cards?: CardPool } = {},
+  ) {
+    this.error = client.state.actionError;
+    this.muted = this.error;
+    this.unsubscribe = client.subscribe(() => this.changed());
+    this.frame(client.state.match);
+  }
+
+  view() {
+    return this.seen;
+  }
+  names() {
+    return {
+      you: this.client.self?.name || "You",
+      opponent: this.client.opponent?.name || "Opponent",
+    };
+  }
+  log(): readonly SeatLogEntry[] {
+    return this.client.state.matchLog;
+  }
+  /** A new id per in-game flip of the lobby, so a rematch is a fresh table. */
+  matchId() {
+    return `${this.client.code}:${this.hooks.serial()}`;
+  }
+  card(cardId: string) {
+    return this.pool[cardId];
+  }
+  face(card: Pick<RedactedCard, "cardId">) {
+    return this.pool[card.cardId];
+  }
+  allowed() {
+    return null;
+  }
+  send(action: GameAction, opts: { auto?: boolean } = {}) {
+    const p = this.seen?.phase;
+    const transfer =
+      p?.kind === "effect:choose" && p.prompt?.kind === "choosePokemon"
+        ? p.prompt.counterTransfer
+        : undefined;
+    if (
+      transfer &&
+      !transfer.from &&
+      action.type === "resolveEffect" &&
+      action.choice.kind === "pokemon"
+    )
+      this.counter = action.choice.ref;
+    this.auto = !!opts.auto;
+    if (!opts.auto) this.pending = true;
+    this.client.sendAction(action);
+  }
+  /** Energy and Retreat are not on the wire (the `L` row says partial). */
+  allowances() {
+    const v = this.seen;
+    if (!v) return null;
+    const discard = v.board.you.discard;
+    let turn = 0;
+    let supporter = false;
+    for (const e of this.log()) {
+      if (e.kind === "turn") turn = e.turn;
+      else if (turn === v.turn && e.who === v.seat && e.playedTrainer) {
+        const t = e.playedTrainer;
+        const type =
+          discard.find((c) => c.id === t.id)?.trainerType ?? this.pool[t.cardId]?.trainerType;
+        supporter ||= type === "Supporter";
+      }
+    }
+    return { energy: false, supporter, retreated: false };
+  }
+  benchKey(owner: "you" | "opponent", index: number) {
+    const c = this.seen?.board[owner].bench[index];
+    return c ? (this.keys.get(c.id) ?? c.id) : "";
+  }
+  board() {
+    if (!this.seen) throw new Error("No match frame");
+    return projectionFromRedacted(this.seen).board;
+  }
+  effectContext() {
+    return { placingCounters: false };
+  }
+  takeEvents() {
+    const events = this.events;
+    this.events = NO_EVENTS;
+    return events;
+  }
+  /** The refusal to show: none for an automatic step. */
+  rejection(): ActionError | null {
+    return this.error !== this.muted ? this.error : null;
+  }
+  lifecycle(): TableLifecycle {
+    const over = !!this.seen?.outcome;
+    const opponent = this.client.opponent;
+    const sent = this.sentRematch === this.matchId();
+    return {
+      flags: [
+        ...(this.seen && !over ? ["concede"] : []),
+        ...(over ? ["rematch"] : []),
+        ...(over && sent ? ["rematch-sent"] : []),
+        "leave",
+      ],
+      opponentAway:
+        opponent && !opponent.connected && !over
+          ? { name: opponent.name, forfeitAt: opponent.forfeitAt }
+          : null,
+      error: this.rejection()?.reason ?? null,
+    };
+  }
+  rematch() {
+    if (!this.seen?.outcome || this.sentRematch === this.matchId()) return;
+    this.sentRematch = this.matchId();
+    // The opponent asked first and the lobby already left the game: agree by readying.
+    if (this.client.state.snapshot?.phase === "in-game") this.client.requestRematch();
+    else this.client.setReady(true);
+    this.notify();
+  }
+  /** Walk out for good: bye (a forfeit if the match is live), forget the seat. */
+  leave() {
+    this.hooks.leave();
+  }
+  subscribe(onChange: () => void) {
+    this.listeners.add(onChange);
+    return () => this.listeners.delete(onChange);
+  }
+  release() {
+    if (this.released) return;
+    this.released = true;
+    this.unsubscribe();
+    this.listeners.clear();
+    this.hooks.release();
+  }
+
+  private notify() {
+    for (const fn of [...this.listeners]) fn();
+  }
+
+  private changed() {
+    const { match, actionError } = this.client.state;
+    // A rematch takes the lobby out of in-game; the finished board stays up
+    // until the next game's first frame.
+    if (match !== this.seen && !(match === null && this.seen?.outcome)) {
+      this.pending = false;
+      this.frame(match);
+    }
+    if (actionError !== this.error) {
+      this.error = actionError;
+      if (actionError) {
+        if (this.auto) this.muted = actionError;
+        else this.pending = false;
+      }
+    }
+    this.notify();
+  }
+
+  /** Diff a new frame against the last: KOs, shuffles, bench keys, auto-steps. */
+  private frame(next: RedactedGame | null) {
+    let prev = this.seen;
+    this.seen = next;
+    if (!next) return;
+    const log = this.log();
+    const id = this.matchId();
+    if (id !== this.match || log.length < this.logLength) {
+      this.match = id;
+      this.autoSent.clear();
+      this.keys.clear();
+      this.logLength = log.length;
+      prev = null;
+    }
+    const tops = (g: RedactedGame) =>
+      [g.board.you, g.board.opponent].flatMap((s) =>
+        [s.active, ...s.bench].flatMap((c) => (c ? [c.id] : [])),
+      );
+    const discarded = new Set(
+      [...next.board.you.discard, ...next.board.opponent.discard].map((c) => c.id),
+    );
+    const seats = new Set<Seat>(this.events.shuffled);
+    for (const e of log.slice(this.logLength)) {
+      if (e.kind !== "action" || e.who === "system") continue;
+      const text = e.segments.map((s) => s.text).join("");
+      if (/shuffled their (deck|hand)/.test(text) && !/bottom of their deck/.test(text))
+        seats.add(e.who);
+    }
+    this.logLength = log.length;
+    this.events = {
+      knockedOut: [
+        ...this.events.knockedOut,
+        ...(prev ? tops(prev).filter((uid) => discarded.has(uid)) : []),
+      ],
+      shuffled: [...seats],
+      coin: null,
+      counterSource: this.counter ?? this.events.counterSource,
+    };
+    this.counter = undefined;
+    // Only the top uid travels: an evolution at the same bench slot inherits
+    // the old stack's key, so the cosmetic order survives it.
+    const inPlay = new Set(tops(next));
+    for (const owner of ["you", "opponent"] as const)
+      next.board[owner].bench.forEach((c, i) => {
+        if (this.keys.has(c.id)) return;
+        const old = prev?.board[owner].bench[i];
+        this.keys.set(c.id, old && !inPlay.has(old.id) ? (this.keys.get(old.id) ?? old.id) : c.id);
+      });
+    this.fetch(next);
+    this.autoSteps(next);
+  }
+
+  /** AutoMulliganDraw and AutoTakePrizes: once per decision, refusals muted. */
+  private autoSteps(v: RedactedGame) {
+    if (v.waitingOn !== "you" || v.outcome) return;
+    const p = v.phase;
+    if (p.kind === "setup:drawExtra")
+      this.once("draw", { type: "setupDrawExtra", seat: v.seat, count: p.owed });
+    else if (p.kind === "ko:takePrizes") {
+      const left = v.board.you.prizesRemaining;
+      this.once(`prizes:${left}:${p.count}`, {
+        type: "takePrizes",
+        seat: v.seat,
+        prizeIndices: Array.from({ length: p.count }, (_, i) => left - p.count + i),
+      });
+    }
+  }
+
+  private once(key: string, action: GameAction) {
+    if (this.autoSent.has(key)) return;
+    this.autoSent.add(key);
+    this.send(action, { auto: true });
+  }
+
+  /** Catalogue faces for every visible card id, fetched once each. */
+  private fetch(game: RedactedGame) {
+    const ids = new Set<string>();
+    const walk = (x: unknown) => {
+      if (Array.isArray(x)) for (const y of x) walk(y);
+      else if (x && typeof x === "object") {
+        const id = (x as { cardId?: unknown }).cardId;
+        if (typeof id === "string" && id !== "hidden" && id !== "empty") ids.add(id);
+        for (const y of Object.values(x)) walk(y);
+      }
+    };
+    walk(game);
+    const missing = [...ids].filter((id) => !this.asked.has(id));
+    if (missing.length === 0) return;
+    for (const id of missing) this.asked.add(id);
+    (this.deps.cards ?? fetchCardPool)(missing).then(
+      ({ pool }) => {
+        Object.assign(this.pool, pool);
+        if (!this.released) this.notify();
+      },
+      () => {
+        for (const id of missing) this.asked.delete(id);
+      },
+    );
+  }
+}

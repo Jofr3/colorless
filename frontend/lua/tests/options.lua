@@ -66,7 +66,18 @@ for _,size in ipairs({{1280,800},{1280,720},{1920,1080},{2560,1080},{1024,768}})
   sim:layout(width,height)
   near(Overlay.new(sim,'options',{}).w*sim.zoom,frame.T.w*unit)
 end
+-- Online drops the hot-seat entries; the rest keeps Balatro's sizing.
+sim:layout(1280,800,Screen.unit(1280,800))
+local menu=Overlay.new(sim,'options',{title='Options'})
+sim.mode,sim.flags,sim.outcome='online',{concede=true,leave=true},''
+local online=Overlay.new(sim,'options',{title='Options'})
+assert(#online.controls==4 and online.controls[2].action=='concede' and online.controls[3].label=='Leave match' and online.controls[3].confirm)
+for i=1,3 do near(online.controls[i].w,menu.controls[i].w);near(online.controls[i].y,menu.controls[i].y) end
+near(online.controls[4].y,menu.controls[5].y)
+sim.flags={leave=true}
+assert(Overlay.new(sim,'options',{}).controls[2].disabled,'Concede is off once the match is over')
+sim.mode,sim.flags='local',{}
 sim:layout(480,850)
 local mobile=Overlay.new(sim,'options',{})
 assert(mobile.w<=sim.boardW-32,'Portrait retains its readable compact menu')
-print('PASS: Options frame '..frame.T.w..' tiles, buttons '..settings.T.w..', Back '..back.T.w..' against Balatro at five viewports')
+print('PASS: Options frame '..frame.T.w..' tiles, buttons '..settings.T.w..', Back '..back.T.w..' against Balatro at five viewports, plus the online set')

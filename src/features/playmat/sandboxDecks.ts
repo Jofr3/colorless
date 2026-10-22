@@ -6,16 +6,26 @@ import { validateDeck, type DeckEntry } from "../builder/deckMath";
 import type { Deck } from "../decks/data";
 import { fetchCardPool } from "../game/cardPool";
 
-/** Use the builder's full legality verdict, including format and copy limits. */
-export function isValidSandboxDeck(deck: SavedDeck, pool: Record<string, Card>): boolean {
+/** The deck as builder entries, or null when a card is missing or a count is bad. */
+function deckEntries(deck: SavedDeck, pool: Record<string, Card>): DeckEntry[] | null {
   const entries: DeckEntry[] = [];
   for (const entry of deck.cards) {
     const card = pool[entry.cardId];
-    if (!card || !Number.isInteger(entry.count) || entry.count <= 0) return false;
+    if (!card || !Number.isInteger(entry.count) || entry.count <= 0) return null;
     entries.push({ card: toBuilderCard(card), quantity: entry.count });
   }
-  return validateDeck(entries, formatById(deck.format ?? "standard")).legal;
+  return entries;
 }
+
+const legalIn = (entries: DeckEntry[] | null, format: string) =>
+  entries !== null && validateDeck(entries, formatById(format)).legal;
+
+/** Use the builder's full legality verdict, including format and copy limits. */
+export function isValidSandboxDeck(deck: SavedDeck, pool: Record<string, Card>): boolean {
+  return legalIn(deckEntries(deck, pool), deck.format ?? "standard");
+}
+
+type Verdict = { deck: SavedDeck; valid: boolean; entries: DeckEntry[] | null };
 
 /** Fetch the complete candidates' contents and their card pool with bounded
  * requests, then judge each. Network failures remain retryable errors, rather
@@ -24,11 +34,11 @@ export function isValidSandboxDeck(deck: SavedDeck, pool: Record<string, Card>):
 async function judgeSandboxDecks(
   summaries: Deck[],
   current: () => boolean,
-): Promise<Map<string, { deck: SavedDeck; valid: boolean }>> {
+): Promise<Map<string, Verdict>> {
   const candidates = summaries.filter((deck) => deck.cardCount === 60);
   const queue = candidates.values();
   const saved = new Map<string, SavedDeck>();
-  const verdicts = new Map<string, { deck: SavedDeck; valid: boolean }>();
+  const verdicts = new Map<string, Verdict>();
   let failed = false;
   async function worker() {
     for (const deck of queue) {
@@ -48,7 +58,10 @@ async function judgeSandboxDecks(
     [...saved.values()].flatMap((deck) => deck.cards.map((entry) => entry.cardId)),
   );
   if (!current()) return verdicts;
-  for (const [id, deck] of saved) verdicts.set(id, { deck, valid: isValidSandboxDeck(deck, pool) });
+  for (const [id, deck] of saved) {
+    const entries = deckEntries(deck, pool);
+    verdicts.set(id, { deck, valid: legalIn(entries, deck.format ?? "standard"), entries });
+  }
   return verdicts;
 }
 
@@ -61,6 +74,29 @@ export async function validSandboxDecks(
   return summaries.flatMap((summary) => {
     const verdict = verdicts.get(summary.id);
     return verdict?.valid ? [{ ...summary, name: verdict.deck.name }] : [];
+  });
+}
+
+export type PlayableDeck = Deck & { standard: boolean; expanded: boolean };
+
+/** {@link validSandboxDecks} plus each deck's Standard and Expanded verdicts,
+ * for the online picker's regulation filter (a view filter only). */
+export async function playableDecks(
+  summaries: Deck[],
+  current: () => boolean,
+): Promise<PlayableDeck[]> {
+  const verdicts = await judgeSandboxDecks(summaries, current);
+  return summaries.flatMap((summary) => {
+    const v = verdicts.get(summary.id);
+    if (!v?.valid) return [];
+    return [
+      {
+        ...summary,
+        name: v.deck.name,
+        standard: legalIn(v.entries, "standard"),
+        expanded: legalIn(v.entries, "expanded"),
+      },
+    ];
   });
 }
 

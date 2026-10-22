@@ -36,7 +36,7 @@ The build defaults to the sibling `../balatro-source` directory, including its i
 
 ## This milestone
 
-- Three equally sized menu buttons: Sandbox (blue) → `/lua/?page=sandbox`, Online (red) → `/lobby`, Decks (pale green) → `/decks`.
+- Three equally sized menu buttons: Sandbox (blue) → `/lua/?page=sandbox`, Online (red) → the Lua lobby modal at `/lua/?page=online`, Decks (pale green) → `/decks`.
 - Account opens the Account tab in the Lua settings popup. Game, Graphics, Audio and Account share Balatro's overlay, border, controls and Back button. The Account tab shows your email in a disabled input, edits your display name, saves to the shared API, and signs out. Sign-in and registration open a Lua modal with email/password fields and Google sign-in, then return to the Account tab. The modal uses the same border, buttons, motion and screen effects as Settings.
 - Settings apply immediately: screenshake (0–100), reduced motion, CRT strength (0–100), bloom, master/music/game-sound volume, and mute. They persist in browser storage across reloads. Reduced motion follows the device preference until explicitly changed. These settings currently apply to the Lua frontend.
 - Account and Settings use separate compact panels matching Balatro's grey Profile button and original projected shadow, without extra headings. The Sound button is removed; the M keyboard shortcut remains available.
@@ -50,7 +50,7 @@ The build defaults to the sibling `../balatro-source` directory, including its i
 
 Click a button to navigate; releasing outside the pressed button cancels the action. Use arrow keys and Enter/Space while the canvas is focused; Tab also reaches native links. M toggles sound. Audio starts after the first gesture and pauses when the window loses focus.
 
-The Lua sandbox chooser opens the full gameplay page at `/lua/?page=simulator`. Online play still opens the React application. The account adapter reuses the existing API client and cookie session; passwords and session cookies never cross into Lua or local storage. The existing React pages remain available.
+The Lua sandbox chooser opens the full gameplay page at `/lua/?page=simulator`. Online play runs in Lua too: the lobby modal at `/lua/?page=online` and the live table at `/lua/?page=match&lobby=<code>` (see Online below). The React `/lobby` pages still work and share the same lobby client and server. The account adapter reuses the existing API client and cookie session; passwords and session cookies never cross into Lua or local storage. The existing React pages remain available.
 
 Inside Settings, Tab/Shift+Tab or up/down move between controls. Left/right switch tabs, cycle CRT Bloom, or adjust a focused slider by 5; Home/End set its minimum/maximum. Enter/Space activates toggles and buttons. Drag sliders with a mouse or touch. Select Display name to edit it; the canvas field uses a native input proxy for IME, selection, paste and mobile keyboards. Enter finishes editing and Escape cancels the edit. Profile changes require Save; the success message disappears after three seconds. In the authentication modal, Enter advances through the fields and submits from the last field, Tab/Shift+Tab moves between controls, and Back returns to Account settings. Passwords are masked in Lua and kept only in the native inputs/API request, then cleared on success or dismissal. Google redirects through the existing provider configuration and returns to `/lua/?account`. Escape or Back closes the popup and returns focus to Settings. The background menu cannot receive input while the popup is open. Native accessible navigation opens the same popup when WASM is running, with live control announcements; its fallback links to React settings if WASM fails.
 
@@ -86,6 +86,10 @@ The palette follows Balatro's `globals.lua`: red `#FE5F55`, blue `#009DFF`, gree
 - `ui/card.lua`: generated card faces, original hover hit buffer, pointer/ambient tilt and edition/shadow passes.
 - `ui/motion.lua`: tile-space target/visible transforms and original movement equations.
 - `ui/theme.lua`: palette, font cache, text and stepped pixel panels.
+- `ui/online.lua`: the online lobby modal (create/join, code pill, versus seats, deck picker with the regulation filter, countdown, info steps).
+- `ui/simulator.lua`, `ui/sim_overlay.lua`, `ui/sim_hud.lua`: the game table; online mode adds the `L` row, the away banner, flag-driven Options/game-over buttons and the press-again Leave.
+- `src/features/online/net/lobbyClient.ts`: the framework-free lobby WebSocket client shared by React `useLobby` and the Lua adapters; `createLobby.ts` mints a code.
+- `src/features/lua/online.ts` (`LuaOnline`), `onlineTable.ts` (`LuaOnlineMatch`) and `tableSource.ts` (`TableSource`, `LocalTableSource`): the online modal adapter, the online table source and the seam that lets one `LuaSimulator` drive local and online games.
 - `web/`: browser bootstrap, navigation allowlist, accessible fallback, viewport/reduced-motion bridge.
 - `build.mjs`: stages the application and local resources, then invokes love.js.
 
@@ -422,3 +426,79 @@ hot-seat flips, redaction, stale actions, attachment drops, card-row prompts,
 attacks from attached rows, retreat picks, persistence, hand drags and drops,
 targeting, every menu kind, the hot-seat flip, the game-over screen and both
 layouts, with the draw paths rendered against a stub LÖVE.
+
+## Online
+
+Online (home) opens `/lua/?page=online`, a page drawn as a modal over Home with
+Settings' backdrop, entrance and generic-options frame. Page ids keep browser
+history, reload and sign-in returns working: `/lua/?lobby=CODE` is the short
+invite link (it boots `online`), `/lua/?page=online&lobby=CODE` resumes or joins
+that lobby, and `/lua/?page=match&lobby=CODE` is the live table. Create and the
+online/match hand-offs use `history.replaceState`, so Back from either page goes
+Home, which leaves the lobby (React parity: a live match is forfeited).
+
+Steps: **menu** (Create / Join tabs; the code field is a native proxy that
+upper-cases and drops look-alike characters; Join stays disabled until four
+characters), **joining**, **waiting** (code pill, Copy code, Copy link =
+`<origin>/lua/?lobby=CODE`, the label flashes Copied), **versus** (your seat
+and the opponent's, presence pip, Waiting / Choosing deck / Ready / Away pills,
+Choose deck, Ready / Cancel ready; the Lua host has no Kick), the deck **picker**
+(search, 5×2 or 2×2 pile grid, pages and a regulation cycle: All decks, Standard
+legal, Not Standard legal, Expanded legal, Not Expanded legal; the filter only
+changes the view and every listed deck already passes the Sandbox's playable
+check), **countdown** (3, 2, 1, GO! as `attention_text`; only Leave works),
+**starting**, and the info steps **invalid / not-found / full / kicked** with
+Back to online. Spectating is not offered: a full lobby shows "Lobby is full".
+Anonymous players can create and join,
+and sign in from the menu or the picker; the socket then reopens with the same
+seat and the account's name.
+
+When the lobby flips in-game, both players wipe to `match`. It reuses the
+Sandbox table and `LuaSimulator` with an online `TableSource`. Play order is the
+server's (`settleFirstPlayer`, apps/api/src/lobby/match.ts): a lobby's first
+game (or one after a tie) goes to the coin winner with no choice, and each
+rematch's previous loser picks Go first / Go second. The server is
+authoritative: refused actions pop the red error, Prizes and mulligan draws are
+taken automatically, and only the Supporter allowance is on the wire, so the
+Energy cell is hidden. Options become Settings / Concede / Leave match. Leave
+during a live game uses the press-again pattern ("Leave? Forfeits", 3-second
+window); after the game it is immediate. Game over offers Rematch (Waiting...
+once sent) / Leave / Game log / View table. Both players stay at the finished
+table during a rematch: the first press asks (the server readies the asker),
+the second readies the other player, and the next game opens on the same table.
+Only an opponent who leaves or disconnects sends the wait back to the lobby
+modal. When the opponent drops, a
+`boss_warning_text` banner names them and counts down the 90-second forfeit
+locally; "{name} is back" pops when they return. Coin flips, the Energy and
+Retreat allowances and effect titles are not carried by the wire yet.
+
+Protocol: Lua prints `LUMINOUS:online:<cmd>` (fields encoded with
+`ui/account.lua`'s codec, TAB-separated); host.js queues commands until the
+account adapter is ready and dispatches `luminous:online-command`. Commands:
+`open [code]`, `close`, `create`, `join code`, `leave [home]`, `decks`,
+`select deckId`, `ready 1|0`, `kick`, `copy code|link`; `input` and
+`finish-input` stay in host.js for the native code/search proxies. `LuaOnline`
+publishes `luminous:online-state`, written to `__online.txt`: a header
+(revision, step, busy, message, code, role, link, countdown, notice, decks
+state, name, account, canKick, status), `P` seat rows (the opponent's deck is
+never sent) and `D,id,name,cardCount,standard,expanded` deck rows. Proxy edits
+arrive in `__online_input.txt`. The table keeps `__simulator.txt`; its new
+`L,mode,spectating,awayName,awayMs,flags,allow` row carries the online
+lifecycle (flags `concede`, `rematch`, `rematch-sent`, `leave`).
+
+Keyboard: Tab / Shift+Tab or up/down move focus and announce the control;
+left/right switch the menu tabs and turn the regulation cycle; Enter/Space
+activate; typing on the Join tab starts the code field and Enter joins; Escape
+closes the picker, is ignored during the countdown and otherwise
+acts as the Back slot. Page Up/Down and the wheel turn picker pages. Steps, joins, ready changes, copies and countdown ticks
+are announced through `#announcement`.
+
+Online checks: `bunx vitest run src/features/online src/features/lua`,
+`lua frontend/lua/tests/online.lua`, `lua frontend/lua/tests/simulator_online.lua`,
+`lua frontend/lua/tests/options.lua` and
+`lua frontend/lua/tests/screen_wipe_navigation.lua`. Browser QA uses two
+sessions against a local API: create, invite link, typed join, kick and
+rejoin, anonymous sign-in, picker and filter, ready/cancel, countdown, setup and
+turns, a refused second Energy, away banner and resume, concede, rematch,
+press-again Leave, browser Back forfeit, full / not-found / invalid links,
+portrait and reduced motion.

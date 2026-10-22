@@ -38,7 +38,8 @@ local function fieldsOf(raw)
 end
 function Simulator.new(callbacks)
   local self=setmetatable({callbacks=callbacks,phase='empty',items={},sides={},info={},actions={},cardActions={},cards={},byUid={},ghosts={},piles={},art={},controls={},time=0,focus=0,hover=0,
-    message='',title='',hint='',outcome='',outcomeDetail='',gamePhase='',turn=0,turnIndex=0,turnCount=0,waiting='',activePlayer='',viewerSeat='',allow={}},Simulator)
+    message='',title='',hint='',outcome='',outcomeDetail='',gamePhase='',turn=0,turnIndex=0,turnCount=0,waiting='',activePlayer='',viewerSeat='',allow={},
+    mode='local',code='',flags={}},Simulator)
   self.hud=Hud.new({feedback=callbacks.sourceFeedback or callbacks.feedback,jiggle=callbacks.jiggle})
   self.fx=Fx.new({feedback=function(name,pitch) callbacks.feedback(name,pitch) end,jiggle=function(amount) if callbacks.jiggle then callbacks.jiggle(amount) end end})
   return self
@@ -47,7 +48,11 @@ function Simulator:command(...)
   local fields={...};for i,v in ipairs(fields) do fields[i]=Codec.encode(tostring(v)) end
   self.callbacks.command(table.concat(fields,'\t'))
 end
-function Simulator:open(reduced,skipCommand)
+-- `mode` 'online' binds the lobby's live match for `code`; an internal reopen
+-- (skipCommand, a new matchId) keeps the table's mode.
+function Simulator:open(reduced,skipCommand,mode,code)
+  if not skipCommand then self.mode,self.code=mode or 'local',code or '' end
+  self.flags={};self.allow={};self.away=nil;self.rematchSent=nil
   self.wipeRaw=nil
   self:cancelKoPresentation()
   self.attachedPopup=nil;self.closingPopup=nil
@@ -65,7 +70,8 @@ function Simulator:open(reduced,skipCommand)
   self.matchId=nil;self.shuffleAt=nil
   self.fx:clear();self.fx:background('setup',true)
   self.hud:cancelEntrance()
-  if not skipCommand then self:command('open') end
+  if skipCommand then return end
+  if self.mode=='online' then self:command('open','online',self.code) else self:command('open') end
 end
 function Simulator:layout(w,h,viewportUnit)
   self.attachedPopup=nil;self.closingPopup=nil
@@ -349,7 +355,7 @@ function Simulator:sync(raw,finishKo)
   self.outcome,self.outcomeDetail=f[18] or '',f[19] or ''
   self.shuffled=f[20] or ''
   self.items={};self.sides={};self.actions={};self.cardActions={};self.info=self.info or {};self.rareCandy=nil
-  local menu
+  local menu,away
   for i=2,#rows do
     local r=rows[i]
     if r[1]=='S' then self.sides[r[2]]={deck=tonumber(r[3]) or 0,prizes=tonumber(r[4]) or 0,hand=tonumber(r[5]) or 0,discard=tonumber(r[6]) or 0,mulligan=tonumber(r[7]) or 0}
@@ -369,6 +375,12 @@ function Simulator:sync(raw,finishKo)
       self.items[#self.items+1]={id=r[2],cardId=r[3],name=r[4],owner=r[5],zone=r[6],index=tonumber(r[7]) or 0,hidden=r[8]=='true',category=r[9] or '',trainerType=r[10] or '',stage=r[11] or '',
         hp=tonumber(r[12]),damage=tonumber(r[13]) or 0,energies=energies,energyCards=energyCards,tools=#toolCards,toolCards=toolCards,status=r[16] or '',types=r[17] or '',draggable=r[18]=='true',displayIndex=tonumber(r[19]) or tonumber(r[7]) or 0}
     elseif r[1]=='R' then self.rareCandy=r[2]
+    elseif r[1]=='L' then
+      -- Lifecycle: mode, spectating, away name and forfeit ms, flags, allow.
+      if (r[2] or '')~='' then self.mode=r[2] end
+      away={name=r[4] or '',ms=r[5] or ''}
+      self.flags={};for _,flag in ipairs(Energy.split(r[6])) do self.flags[flag]=true end
+      self.allow.partial=r[7]=='partial'
     elseif r[1]=='I' then
       self.info[r[2]]={category=r[3] or '',trainerType=r[4] or '',stage=r[5] or '',hp=r[6] or '',types=r[7] or '',retreat=r[8] or '',weakness=r[9] or '',resistance=r[10] or '',effect=r[11] or '',abilities=r[12] or '',attacks=r[13] or '',energyType=r[14] or '',name=r[15] or ''}
     elseif r[1]=='A' then self.actions[#self.actions+1]={token=r[2],label=r[3],colour=T[r[4]] or T.blue,disabled=r[5]=='true',slot=r[6] or 'minor'}
@@ -405,7 +417,50 @@ function Simulator:sync(raw,finishKo)
   end
   self.hud:sync(self,self.time)
   self:build()
+  if self.overlay and self.overlay.kind=='gameover' and self.mode=='online' then self.overlay:build() end
   self.callbacks.announce(self.message~='' and self.message or (menu and menu.title) or self.title)
+  self:syncAway(away or {name='',ms=''})
+end
+-- boss_warning_text: two floating DynaTexts over the table while the opponent
+-- is disconnected. The forfeit clock counts down from receipt, so presence
+-- never needs per-second snapshots (each would invalidate click tokens).
+function Simulator.clock(seconds)
+  seconds=math.max(0,math.ceil(seconds))
+  return string.format('%d:%02d',math.floor(seconds/60),seconds%60)
+end
+function Simulator:awayDetail()
+  local a=self.away
+  if not a.deadline then return 'Waiting for them to reconnect...' end
+  local left=a.deadline-self.time
+  return left>0 and 'Forfeits in '..Simulator.clock(left) or 'Forfeiting...'
+end
+function Simulator:syncAway(row)
+  local a=self.away
+  if row.name=='' or self.outcome~='' then
+    if a and not a.leaving then
+      a.leaving=true;a.title:pop_out(3,self.time);a.detail:pop_out(3,self.time)
+      if self.outcome=='' then
+        self.fx:attention({text=a.name..' is back',scale=0.6,colour=T.white,backdrop=T.blue,x=self.L and self.L.banner.x or 0,y=self.L and self.L.banner.y or 0,hold=0.9,sound='highlight1'})
+        self.callbacks.announce(a.name..' is back')
+      end
+    end
+    return
+  end
+  local ms=tonumber(row.ms)
+  local deadline=ms and ms>=0 and self.time+ms/1000 or nil
+  if a and not a.leaving then
+    if a.name~=row.name then a.name=row.name;a.title:set(row.name..' disconnected',self.time) end
+    a.deadline=deadline;a.detail:set(self:awayDetail(),self.time)
+    return
+  end
+  local function text(s,scale) return Dyna.new({string=s,scale=scale,colours={T.white},float=true,shadow=true,pop_in=0,pop_in_rate=6,time=self.time,maxw=self.L and self.L.table.w-40}) end
+  a={name=row.name,deadline=deadline};self.away=a
+  a.title=text(row.name..' disconnected',0.7);a.detail=text(self:awayDetail(),0.6)
+  -- Later ticks swap the clock's letters in place instead of popping it again.
+  a.detail.cfg.pop_in=nil
+  local feedback=self.callbacks.sourceFeedback or self.callbacks.feedback
+  feedback('chips1',0.55+love.math.random()*0.1,0.12)
+  self.callbacks.announce(a.name..' disconnected. '..a.detail.string)
 end
 -- Lay out every card for the current snapshot. Cards keep their Moveable
 -- across snapshots, so zone changes slide; new cards start at their source.
@@ -865,7 +920,8 @@ function Simulator:openGameOver()
     {label='Opponent prizes left',value=tostring(opp.prizes),colour=T.red},
     {label='Cards in hand',value=tostring(you.hand)},
   }
-  self.overlay=Overlay.new(self,'gameover',{title=self.outcome=='win' and 'YOU WIN!' or self.outcome=='loss' and 'GAME OVER' or 'DRAW',rows=rows,mandatory=true})
+  local loss=self.mode=='online' and (self.opponent~='' and self.opponent or 'Opponent'):upper()..' WINS' or 'GAME OVER'
+  self.overlay=Overlay.new(self,'gameover',{title=self.outcome=='win' and 'YOU WIN!' or self.outcome=='loss' and loss or 'DRAW',rows=rows,mandatory=true})
   self.callbacks.feedback(self.outcome=='win' and 'win' or 'cancel',self.outcome=='win' and 1 or 0.8)
   if self.callbacks.jiggle then self.callbacks.jiggle(2) end
 end
@@ -935,15 +991,16 @@ function Simulator:build()
   end
   local history={}
   for _,a in ipairs(minors) do history[a.label]=a end
-  if self.gamePhase=='setup:chooseFirst' and #primaries==2 and #minors==1 and #dangers==0 then
+  if self.gamePhase=='setup:chooseFirst' and #primaries==2 and #minors<=1 and #dangers==0 then
+    -- Online the coin winner gets Go first / Go second without the dice.
     local h,gap=44,6
-    local bw=(cl.w-h-2*gap)/2
+    local bw=#minors==1 and (cl.w-h-2*gap)/2 or (cl.w-gap)/2
     local y=cl.y+(cl.horizontal and 8 or 1.8+3/2)
     for i,a in ipairs(primaries) do
       self:add(a.label,cl.x+(i-1)*(bw+gap),y,bw,h,'invoke',a.colour,{token=a.token,disabled=a.disabled,fontSize=22,setupChoice=true})
     end
     local a=minors[1]
-    self:add(a.label,cl.x+2*(bw+gap),y,h,h,'invoke',a.colour,{token=a.token,disabled=a.disabled,icon='dice',setupChoice=true})
+    if a then self:add(a.label,cl.x+2*(bw+gap),y,h,h,'invoke',a.colour,{token=a.token,disabled=a.disabled,icon='dice',setupChoice=true}) end
   elseif #primaries==1 and #dangers==0 and #minors==5
     and history['Undo turn'] and history['Undo action'] and history['New game'] and history['Redo action'] and history['Redo turn'] then
     local gap=6
@@ -1256,6 +1313,12 @@ function Simulator:update(dt,time,mx,my,reduced)
   mx,my=self:point(mx,my);self.mx,self.my=mx,my
   -- Table juice waits behind an open coin flip, like Balatro's event queue.
   self.fx:update(dt,time,reduced,self.overlay and self.overlay.kind=='coin')
+  local away=self.away
+  if away then
+    if not away.leaving then away.detail:set(self:awayDetail(),time) end
+    away.title:update(time,reduced);away.detail:update(time,reduced)
+    if away.leaving and (reduced or not away.title:visible()) then self.away=nil end
+  end
   self.hud:update(dt,time,reduced)
   if self.attachedPopup then self.attachedPopup.motion:update(dt,time,false,false,reduced) end
   if self.closingPopup then
@@ -1436,6 +1499,13 @@ function Simulator:runCardAction(action)
   self:build()
   self:invoke(action.token)
 end
+-- The game-over Rematch reads Waiting... until the next match reopens the table.
+function Simulator:rematch()
+  if self:rematchPending() then return end
+  self.rematchSent=true;self:command('rematch')
+  if self.overlay and self.overlay.kind=='gameover' then self.overlay:build() end
+end
+function Simulator:rematchPending() return self.rematchSent or self.flags['rematch-sent'] or false end
 function Simulator:openOptions()
   if self.overlay then self.overlay:release() end
   self.highlight=nil;self.luaTargeting=nil
@@ -1468,7 +1538,7 @@ function Simulator:mousepressed(x,y)
   x,y=self:point(x,y);self.focus=0;self.focusCard=nil
   if self.peek then self.peek=false;return end
   if self.overlay then
-    self.pressedOverlay=self.overlay:hit(x,y);return
+    self.pressedOverlay=self.overlay:press(x,y);return
   end
   self.pressed=self:hit(x,y)
   if self.pressed>0 then return end
@@ -1799,6 +1869,10 @@ function Simulator:draw(shaders)
     if py<4 then py=c.y+ch/2+10 end
     if py+box.h>self.boardH-4 then py=self.boardH-4-box.h end
     box.draw(px,py)
+  end
+  if self.away then
+    self.away.title:draw(L.banner.x,L.banner.y-22,rw)
+    self.away.detail:draw(L.banner.x,L.banner.y+22,rw)
   end
   self.fx:draw(rw)
   if self.overlay and not self.peek then

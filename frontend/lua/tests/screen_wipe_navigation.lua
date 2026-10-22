@@ -5,7 +5,7 @@ local files={['__viewport.txt']='1280 800 0 0 0 0',['__page.txt']='1\thome\t'}
 local image={release=noop,setFilter=noop,getDimensions=function()return 1850,800 end,getWidth=function()return 245 end,getHeight=function()return 337 end}
 local shader={send=noop,release=noop,hasUniform=function()return true end}
 -- Logo loading is exercised separately; this test owns routing.
-package.loaded['ui.menu_logo']={new=function()return image end}
+package.loaded['ui.menu_logo']={new=function()return {update=noop,draw=noop,getDimensions=function()return 1850,800 end}end}
 local audio=setmetatable({isPlaying=function()return false end},{__index=function()return noop end})
 love={graphics=setmetatable({getDimensions=function()return 1280,800 end,newCanvas=function()return image end,
  newImage=function()return image end,newQuad=function()return {}end,newShader=function()return shader end,
@@ -15,15 +15,18 @@ love={graphics=setmetatable({getDimensions=function()return 1280,800 end,newCanv
  filesystem={getInfo=function(name)return files[name] or name:match('sounds/')end,read=function(name)return files[name]end}}
 local T=require('ui.theme');T.text=noop
 local scenes={}
-for _,name in ipairs({'library','builder','sandbox','simulator','settings'})do
+for _,name in ipairs({'library','builder','sandbox','simulator','settings','online'})do
  package.loaded['ui.'..name]={new=function(callbacks)
   local s={callbacks=callbacks,cards={},hover=0,opens=0,inputs=0}
-  function s:open()self.opens=self.opens+1 end
+  function s:open(...)self.opens=self.opens+1;self.args={...}end
   function s:offset()return 0 end
   function s:backgroundColours()return {T.blue,T.panel,T.panel}end
   function s:keypressed()self.inputs=self.inputs+1 end
   s.mousepressed=s.keypressed;s.mousereleased=s.keypressed;s.wheelmoved=s.keypressed
-  for _,method in ipairs({'layout','command','closeModal','update','draw'})do s[method]=noop end
+  function s:retarget(id)self.target=id end
+  function s:command(c)self.last=c end
+  function s:close()self.closes=(self.closes or 0)+1 end
+  for _,method in ipairs({'layout','closeModal','update','draw'})do s[method]=noop end
   scenes[name]=s;return s
  end}
 end
@@ -52,5 +55,22 @@ files['__viewport.txt']='1280 800 1 0 0 0'
 route(5,'simulator');frames(5)
 assert(scenes.simulator.opens==2)
 assert(count('LUMINOUS:transition:open')==3 and count('LUMINOUS:transition:closed')==3)
+-- The lobby modal opens over home without a wipe; its code retargets in place.
+files['__viewport.txt']='1280 800 0 0 0 0'
+route(6,'home');frames(140);route(7,'online');frames(5)
+assert(scenes.online.opens==1 and count('LUMINOUS:transition:open')==4,'Home to online must not wipe')
+route(8,'online\tABCD');frames(5)
+assert(scenes.online.opens==1 and scenes.online.target=='ABCD','Online to online retargets without reopening')
+love.keypressed('escape');assert(scenes.online.inputs==1,'Online receives input')
+-- The live match is a table page: online to match wipes and opens it online.
+route(9,'match\tABCD')
+assert(count('LUMINOUS:transition:open')==5 and scenes.simulator.opens==2,'Online to match wipes before opening')
+frames(140)
+assert(scenes.simulator.opens==3 and scenes.online.closes==1,'The lobby closes while covered')
+local a=scenes.simulator.args;assert(a[3]=='online' and a[4]=='ABCD','Match opens the online table')
+love.keypressed('escape');assert(scenes.simulator.inputs==2,'The match table receives input')
+-- A rematch hands back to the lobby modal with another wipe.
+route(10,'online\tABCD');frames(140)
+assert(count('LUMINOUS:transition:open')==6 and scenes.online.opens==2 and scenes.simulator.last=='close','Match to online wipes and closes the table')
 print=output
-print('PASS: covered scene changes, input lock/unlock, resize, coalesced navigation and reduced-motion routing')
+print('PASS: covered scene changes, input lock/unlock, resize, coalesced navigation, reduced-motion, online and match routing')
