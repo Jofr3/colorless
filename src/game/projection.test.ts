@@ -9,9 +9,9 @@ import type {
   GameState,
   PokemonRef,
   Seat,
-} from "@luminous/engine";
-import { applyAction, createGame, redactGame, topUid } from "@luminous/engine";
-import { type Card, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from "@luminous/schema";
+} from "@colorless/engine";
+import { applyAction, createGame, redactGame, topUid } from "@colorless/engine";
+import { type Card, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from "@colorless/schema";
 import {
   completeSetup,
   ABILITY_DECK,

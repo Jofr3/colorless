@@ -6,7 +6,7 @@ import {
   makePlayer,
   removeGuest,
   seatGuest,
-} from "@luminous/schema";
+} from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import {
   ABANDON_GRACE_MS,

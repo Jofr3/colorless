@@ -30,7 +30,7 @@ import {
 // SEVEN printings, all seven Standard-legal, under TWO Ability names: Pikachu ex
 // "Resolute Heart" (sv08-057, sv08-219, sv08-238, sv08-247, sv08.5-179) and
 // Crustle "Sturdy" (sv10.5b-052, sv10.5b-130). Census re-derived for this slice
-// against the remote D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786
+// against the remote D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786
 // rows / 20 sets, 2,021 legal) on 2026-08-04, with `json_each(abilities_json)` and
 // an EQUALITY on the effect string — not `LIKE` (case-insensitive in this engine)
 // and not a grouped `attacks_json` scan, which is the exact shape that made D206

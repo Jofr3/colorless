@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { attackReaderSurface, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
@@ -41,7 +41,7 @@ import {
 // ── D317 — "…THIS ATTACK DOES {N} MORE DAMAGE, AND {CONSEQUENT}" — D316's SHAPE
 //    WITH THE DECIDER CHANGED, AND `coinFlipGate.otherwise`'s FIRST PRODUCER. ──
 //
-// THE POPULATION, queried against remote Cloudflare D1 `luminous`
+// THE POPULATION, queried against remote Cloudflare D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) over MCP on **2026-08-10**, WHOLE
 // COLUMN read (D306's rule) and at FOUR widths across all three text columns:
 //

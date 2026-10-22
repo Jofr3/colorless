@@ -58,7 +58,7 @@ import {
 // ABSENCE rather than a refusal, and it cost the same thing D413 cost: one regex
 // and one `if`, for 3 legal printings.
 //
-// ⚠️ THE CENSUS AT HEAD, RE-MEASURED RATHER THAN INHERITED. Remote D1 `luminous`
+// ⚠️ THE CENSUS AT HEAD, RE-MEASURED RATHER THAN INHERITED. Remote D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 2026-08-24, 3,786 rows / 2,021
 // `legal_standard = 1`), `json_each` over `attacks_json` and `abilities_json` plus
 // the flat `effect` column, GLOB `*damage counter on your opponent*`, GROUPED BY

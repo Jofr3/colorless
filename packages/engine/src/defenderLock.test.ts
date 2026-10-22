@@ -1,4 +1,4 @@
-import type { Card, SeatLogEntry } from "@luminous/schema";
+import type { Card, SeatLogEntry } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { prizeValueOf } from "./cards";
 import { deriveAttackEffect } from "./effects";

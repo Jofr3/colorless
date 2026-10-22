@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame, handPlayBarred, programFor, redactGame } from "./index";
 import type { GameState, Seat } from "./index";
@@ -56,7 +56,7 @@ import {
 //
 // D290's handoff made this the FIRST action of the slice, on the ground that the
 // inherited "33 legal ACE SPEC rows" had been re-quoted through six handoffs
-// without a single re-query. Remote D1 `luminous`
+// without a single re-query. Remote D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), 2026-08-08, ONE query,
 // `rarity LIKE '%ACE SPEC%'` with NO legality filter, grouped by `rarity`,
 // `legal_standard`, `category`, `trainer_type` and by registry membership:
@@ -563,7 +563,7 @@ describe("D291 §1 — the printing, the classifier and the ACE SPEC census", ()
   });
 
   it("🛑 THE CENSUS: 33 legal ACE SPEC printings, and the split is what this build is priced on", () => {
-    // Remote D1 `luminous`, 2026-08-08, ONE query, `rarity LIKE '%ACE SPEC%'`
+    // Remote D1 `colorless`, 2026-08-08, ONE query, `rarity LIKE '%ACE SPEC%'`
     // with NO legality filter. Recorded as a TABLE so the arithmetic below is
     // derived from it rather than restated beside it (D290's idiom).
     const census = {

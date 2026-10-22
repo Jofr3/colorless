@@ -1,6 +1,6 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { cardSchema } from "@luminous/schema";
+import { cardSchema } from "@colorless/schema";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { matchesFilter } from "./cards";
 import {

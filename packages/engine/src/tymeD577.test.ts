@@ -1,5 +1,5 @@
-import type { Card } from "@luminous/schema";
-import { redactedGameSchema } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
+import { redactedGameSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { GameEvent } from "./events";
 import { applyAction, createGame, redactGame } from "./index";

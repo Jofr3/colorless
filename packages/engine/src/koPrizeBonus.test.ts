@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { seatKoPrizeBonuses } from "./continuous";
 import { applyAction, createGame, deriveAttackEffect, programFor } from "./index";
@@ -31,7 +31,7 @@ import {
 //     exactly why the grep runs before the mechanism is read and not after.
 //
 // (b) THE CENSUS **AND ITS CLOSURE QUERY** — D322's rule, and it paid on the very
-//     next row. Remote D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a, 3,786
+//     next row. Remote D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a, 3,786
 //     rows, 2,021 `legal_standard`), 2026-08-10:
 //
 //       instr(abilities_json,'oesn''t stack') > 0   → 10 rows / 8 legal / 6 Abilities

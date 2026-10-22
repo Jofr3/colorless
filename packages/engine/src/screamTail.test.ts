@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame, deriveAttackEffect, redactGame } from "./index";
 import type { GameState, Seat } from "./index";
@@ -30,7 +30,7 @@ import {
 //
 // The handoff priced this slice at TWO printings (Scream Tail ex `sv06-094`/
 // `-197`) and asked for the sentence to be re-queried across all three text
-// columns before a line shipped. It was (remote D1 `luminous`
+// columns before a line shipped. It was (remote D1 `colorless`
 // `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 2026-08-08, `legal_standard = 1`):
 //
 //   SELECT SUM(instr(attacks_json,   'Supporter cards from their hand during their next turn')>0),

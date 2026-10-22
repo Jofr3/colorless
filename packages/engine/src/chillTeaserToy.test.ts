@@ -26,7 +26,7 @@ import {
 //
 //  Put an Energy attached to 1 of your opponent's Pokémon into their hand."
 //
-// Re-queried in full at the remote D1 `luminous`
+// Re-queried in full at the remote D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) on 2026-08-08 rather than inherited:
 // `category = 'Trainer'`, **`trainer_type = 'Item'`** (the handoff predicted a
 // TOOL reaching `attachTool`, which would have made it a different surface and

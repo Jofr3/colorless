@@ -83,7 +83,7 @@ export const folders = sqliteTable(
     /** Owning folder; null at the library root. Folders nest indefinitely. */
     parentId: text("parent_id"),
     name: text("name").notNull(),
-    /** Manual sort slot, global per user (see @luminous/schema Folder.position).
+    /** Manual sort slot, global per user (see @colorless/schema Folder.position).
         Lists order by it ascending; creates take min-1 so new rows prepend. */
     position: integer("position").notNull().default(0),
   },
@@ -118,7 +118,7 @@ export const decks = sqliteTable(
         ingest can't orphan it; the read side falls back to the default anyway
         if the card has left the deck. */
     coverCardId: text("cover_card_id").references(() => cards.id),
-    /** Manual sort slot, global per user (see @luminous/schema Deck.position). */
+    /** Manual sort slot, global per user (see @colorless/schema Deck.position). */
     position: integer("position").notNull().default(0),
     updated: integer("updated", { mode: "timestamp_ms" }).notNull().default(nowMs),
   },

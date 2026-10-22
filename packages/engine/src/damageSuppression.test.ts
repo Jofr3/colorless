@@ -41,7 +41,7 @@ import {
 // Four fully anchored printed sentences on the ATTACK side and one printed ABILITY,
 // resolving into THREE independent booleans and ONE shared read site.
 //
-// ⚠️ EVERY COUNT HERE IS A RE-MEASUREMENT, NOT AN INHERITANCE. Remote D1 `luminous`
+// ⚠️ EVERY COUNT HERE IS A RE-MEASUREMENT, NOT AN INHERITANCE. Remote D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), 3,786 rows / 20 sets, of which **2,021
 // carry `legal_standard = 1`** (⇔ regulation mark H or I, plus unmarked Basic
 // Energy), queried 2026-08-04 over `attacks_json` and `abilities_json` via

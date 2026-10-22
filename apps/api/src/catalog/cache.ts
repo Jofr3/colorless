@@ -3,7 +3,7 @@
 // re-ingest, so entries expire instead of living forever).
 //
 // One middleware shared by every catalog route: KV hit → serve the stored
-// body with `x-luminous-cache: hit`; miss → run the handler and, only for a
+// body with `x-colorless-cache: hit`; miss → run the handler and, only for a
 // 200, store the body and tag the response `miss`. Non-200s (400 bad params,
 // 404 unknown id) are never cached. Values are response BODIES — headers are
 // rebuilt on a hit, which is safe because every catalog response is JSON.
@@ -125,7 +125,7 @@ export const catalogCache: MiddlewareHandler<{ Bindings: Env }> = async (c, next
   if (key.length > KV_MAX_KEY_BYTES || url.searchParams.has("id")) {
     await next();
     if (c.res.status === 200) {
-      c.res.headers.set("x-luminous-cache", "bypass");
+      c.res.headers.set("x-colorless-cache", "bypass");
     }
     return;
   }
@@ -133,12 +133,12 @@ export const catalogCache: MiddlewareHandler<{ Bindings: Env }> = async (c, next
   if (cached !== null) {
     return c.body(cached, 200, {
       "Content-Type": "application/json",
-      "x-luminous-cache": "hit",
+      "x-colorless-cache": "hit",
     });
   }
   await next();
   if (c.res.status === 200) {
-    c.res.headers.set("x-luminous-cache", "miss");
+    c.res.headers.set("x-colorless-cache", "miss");
     await c.env.CACHE.put(key, await c.res.clone().text(), {
       expirationTtl: CACHE_TTL_SECONDS,
     });

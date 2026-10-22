@@ -1,5 +1,5 @@
 import manifest from "../package.json" with { type: "json" };
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { matchesFilter } from "./cards";
 import type { CardFilter } from "./effects";
@@ -32,7 +32,7 @@ import { isFirstTurnOf } from "./types";
 // hand. Then, shuffle your deck. You can't use more than 1 Fan Call Ability
 // during your turn."* — Fan Rotom, TWO Standard-legal printings, `sv07-118` and
 // `sv08.5-085`, whose `abilities_json` is BYTE-IDENTICAL (re-queried against
-// remote D1 `luminous`, 2026-08-08, both `legal_standard = 1`, both
+// remote D1 `colorless`, 2026-08-08, both `legal_standard = 1`, both
 // `types_json ["Colorless"]`, both `hp` 70).
 //
 // ── WHAT THIS SLICE SETTLED BEFORE IT BUILT ANYTHING ────────────────────────

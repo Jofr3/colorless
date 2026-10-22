@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { isExOrV, preventsAttackerClass } from "./cards";
 import { passivesOf } from "./continuous";
 import { programFor } from "./index";
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import type { GameEvent, GameState, PokemonRef } from "./index";
 import {
   FIXTURE_POOL,
@@ -34,7 +34,7 @@ import {
 //
 // ─────────────────────────────────────────────────────────────────────────────
 // THE CENSUS LADDER, TRANSCRIBED SO THE COUNT IS RE-DERIVABLE RATHER THAN
-// INHERITED — remote D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a),
+// INHERITED — remote D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a),
 // 2026-08-07, `legal_standard = 1`, GROUPED BY SENTENCE, ALL THREE TEXT COLUMNS.
 // ─────────────────────────────────────────────────────────────────────────────
 //

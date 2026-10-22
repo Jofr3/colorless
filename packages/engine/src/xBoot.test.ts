@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame } from "./index";
 import type { EffectOp, EffectPrompt, GameState, PokemonRef, Seat } from "./index";
@@ -28,7 +28,7 @@ import { FIXTURE_POOL } from "./testFixtures";
 // answered from the catalog rather than from `effects.ts`.
 //
 // ⚠️ **CENSUS 1 — THE TEMPLATE.** `attach them to <NOUN> in any way you like`,
-// over ALL THREE text columns (remote D1 `luminous`, 2026-08-16, `json_each`
+// over ALL THREE text columns (remote D1 `colorless`, 2026-08-16, `json_each`
 // keyed on **`$.effect`** for the two JSON columns plus the bare `effect`
 // column). **31 printings**, and the `<NOUN>` slot holds EXACTLY ONE set
 // description in every one of them:

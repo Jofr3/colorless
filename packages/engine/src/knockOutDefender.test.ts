@@ -1,4 +1,4 @@
-import { BASIC_ENERGY_TYPES, type Card } from "@luminous/schema";
+import { BASIC_ENERGY_TYPES, type Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import {
   deriveAttackCancelRequirement,

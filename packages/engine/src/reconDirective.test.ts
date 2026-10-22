@@ -31,7 +31,7 @@ import {
 // "shuffledBottom"`, the D334 boolean RENAMED and widened.
 //
 // ── THE CENSUS, AT SEVERAL WIDTHS, WORD ORDERS AND CASES, OVER ALL THREE TEXT
-//    COLUMNS (remote D1 `luminous`, 3,786 rows / 2,021 `legal_standard`,
+//    COLUMNS (remote D1 `colorless`, 3,786 rows / 2,021 `legal_standard`,
 //    2026-08-14, re-run at THIS head rather than inherited) ────────────────────
 //
 //   (a) `instr(<col>,'on the bottom of your deck') > 0` — the widest useful probe:

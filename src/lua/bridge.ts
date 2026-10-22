@@ -8,19 +8,19 @@ import { launchSandbox } from "./sandboxLaunch";
 import { setSessionRecoveryHandler } from "../lib/api";
 import { ArtworkCache } from "./artworkCache";
 
-window.luminousArtworkCache = new ArtworkCache();
+window.colorlessArtworkCache = new ArtworkCache();
 
 const builder = new LuaBuilder(
   (snapshot) =>
-    document.dispatchEvent(new CustomEvent("luminous:builder-state", { detail: snapshot })),
-  () => document.dispatchEvent(new CustomEvent("luminous:route", { detail: { page: "decks" } })),
-  (cards) => document.dispatchEvent(new CustomEvent("luminous:builder-images", { detail: cards })),
+    document.dispatchEvent(new CustomEvent("colorless:builder-state", { detail: snapshot })),
+  () => document.dispatchEvent(new CustomEvent("colorless:route", { detail: { page: "decks" } })),
+  (cards) => document.dispatchEvent(new CustomEvent("colorless:builder-images", { detail: cards })),
 );
-document.addEventListener("luminous:builder-leave", (event) => {
+document.addEventListener("colorless:builder-leave", (event) => {
   if (event instanceof CustomEvent && typeof event.detail === "function")
     builder.navigate(event.detail);
 });
-document.addEventListener("luminous:builder-command", (event) => {
+document.addEventListener("colorless:builder-command", (event) => {
   if (event instanceof CustomEvent && typeof event.detail === "string")
     void builder.command(event.detail);
 });
@@ -37,56 +37,56 @@ window.addEventListener("beforeunload", (event) => {
 });
 const library = new LuaLibrary(
   (snapshot) => {
-    document.dispatchEvent(new CustomEvent("luminous:library-state", { detail: snapshot }));
+    document.dispatchEvent(new CustomEvent("colorless:library-state", { detail: snapshot }));
   },
   (id) =>
-    document.dispatchEvent(new CustomEvent("luminous:route", { detail: { page: "builder", id } })),
+    document.dispatchEvent(new CustomEvent("colorless:route", { detail: { page: "builder", id } })),
 );
-document.addEventListener("luminous:library-command", (event) => {
+document.addEventListener("colorless:library-command", (event) => {
   if (!(event instanceof CustomEvent) || typeof event.detail !== "string") return;
   void library.command(event.detail);
 });
 
 const sandbox = new LuaSandbox(
   (snapshot) =>
-    document.dispatchEvent(new CustomEvent("luminous:sandbox-state", { detail: snapshot })),
+    document.dispatchEvent(new CustomEvent("colorless:sandbox-state", { detail: snapshot })),
   (setup) =>
     launchSandbox(setup, () =>
-      document.dispatchEvent(new CustomEvent("luminous:route", { detail: { page: "simulator" } })),
+      document.dispatchEvent(new CustomEvent("colorless:route", { detail: { page: "simulator" } })),
     ),
 );
-document.addEventListener("luminous:sandbox-command", (event) => {
+document.addEventListener("colorless:sandbox-command", (event) => {
   if (event instanceof CustomEvent && typeof event.detail === "string")
     void sandbox.command(event.detail);
 });
 
 const route = (page: string, id?: string, replace?: boolean) =>
-  document.dispatchEvent(new CustomEvent("luminous:route", { detail: { page, id, replace } }));
+  document.dispatchEvent(new CustomEvent("colorless:route", { detail: { page, id, replace } }));
 const online = new LuaOnline(
   (snapshot) =>
-    document.dispatchEvent(new CustomEvent("luminous:online-state", { detail: snapshot })),
+    document.dispatchEvent(new CustomEvent("colorless:online-state", { detail: snapshot })),
   route,
   { user: () => account.user },
 );
-document.addEventListener("luminous:online-command", (event) => {
+document.addEventListener("colorless:online-command", (event) => {
   if (event instanceof CustomEvent && typeof event.detail === "string")
     void online.command(event.detail);
 });
 
 const simulator = new LuaSimulator(
   (snapshot) =>
-    document.dispatchEvent(new CustomEvent("luminous:simulator-state", { detail: snapshot })),
+    document.dispatchEvent(new CustomEvent("colorless:simulator-state", { detail: snapshot })),
   route,
-  (cards) => document.dispatchEvent(new CustomEvent("luminous:builder-images", { detail: cards })),
+  (cards) => document.dispatchEvent(new CustomEvent("colorless:builder-images", { detail: cards })),
   (code) => online.matchSource(code),
 );
-document.addEventListener("luminous:simulator-command", (event) => {
+document.addEventListener("colorless:simulator-command", (event) => {
   if (event instanceof CustomEvent && typeof event.detail === "string")
     simulator.command(event.detail);
 });
 
 const account = new LuaAccount((snapshot) => {
-  document.dispatchEvent(new CustomEvent("luminous:account-state", { detail: snapshot }));
+  document.dispatchEvent(new CustomEvent("colorless:account-state", { detail: snapshot }));
   const fields = snapshot.split("\t").map(decodeURIComponent);
   library.session(fields[1] ?? "loading", fields[4] ?? "");
   builder.session(fields[1] ?? "loading", fields[4] ?? "");
@@ -97,13 +97,13 @@ setSessionRecoveryHandler(async () => {
   await account.refresh();
   return account.status === "authenticated";
 });
-document.addEventListener("luminous:account-command", (event) => {
+document.addEventListener("colorless:account-command", (event) => {
   if (event instanceof CustomEvent && typeof event.detail === "string")
     void account.command(event.detail);
 });
 // Credentials stay in the native browser inputs/API client. Lua receives only
 // the email/name and a masked password, never the password itself.
-document.addEventListener("luminous:authenticate", (event) => {
+document.addEventListener("colorless:authenticate", (event) => {
   if (!(event instanceof CustomEvent)) return;
   const { mode, email, password, name } = event.detail ?? {};
   if (
@@ -115,4 +115,4 @@ document.addEventListener("luminous:authenticate", (event) => {
     return;
   void account.authenticate(mode, email, password, name);
 });
-document.dispatchEvent(new Event("luminous:account-ready"));
+document.dispatchEvent(new Event("colorless:account-ready"));

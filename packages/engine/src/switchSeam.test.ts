@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { matchesFilter } from "./cards";
 import { deriveAttackCopy } from "./effects";
@@ -31,7 +31,7 @@ import {
 // they land SEVEN Standard-legal printings.
 //
 // ── WHAT MOVED WHEN D205's FLAG LIST WAS RE-DERIVED ──────────────────────────
-// Every id and count below was re-run against the remote D1 `luminous`
+// Every id and count below was re-run against the remote D1 `colorless`
 // (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786 rows / 20 sets, 2,021
 // `legal_standard = 1`) on 2026-08-04, ⚠️ **with `GLOB` and never `LIKE`**.
 //

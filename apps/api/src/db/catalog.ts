@@ -1,6 +1,6 @@
 // Catalog tables — ingested from tcgdex (§3.4), read-only to the app.
 // Spec: docs/workstreams/backend-data.md §5.3. Source shapes: the Zod models
-// in @luminous/schema (packages/schema/src/tcgdex/*), authored against live
+// in @colorless/schema (packages/schema/src/tcgdex/*), authored against live
 // payloads — every column here maps 1:1 onto a field of those schemas.
 //
 // Conventions:
@@ -24,7 +24,7 @@
 //   breaks when old sets are ingested, these fields are simply not persisted).
 //   `suffix` used to sit in this list and left it in D197 — see the column.
 
-import type { TcgdexAbility, TcgdexAttack, TcgdexVariants, TcgdexWeakRes } from "@luminous/schema";
+import type { TcgdexAbility, TcgdexAttack, TcgdexVariants, TcgdexWeakRes } from "@colorless/schema";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const series = sqliteTable("series", {

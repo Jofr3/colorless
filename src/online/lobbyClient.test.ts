@@ -3,7 +3,7 @@ import {
   type LobbySnapshot,
   makePlayer,
   type RedactedGame,
-} from "@luminous/schema";
+} from "@colorless/schema";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeLobbyChannel } from "../test/fakeLobbyChannel";
 import {

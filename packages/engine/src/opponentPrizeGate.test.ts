@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, conditionHolds, conditionNote, createGame, programFor } from "./index";
 import type { BoardCondition, GameEvent, GameState, Seat } from "./index";
@@ -36,7 +36,7 @@ import {
 // quietly disappearing.
 //
 // ── THE CENSUS, RE-DERIVED ───────────────────────────────────────────────────
-// Remote D1 `luminous` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`; 3,786 rows / 20
+// Remote D1 `colorless` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`; 3,786 rows / 20
 // sets, 2,021 `legal_standard = 1`) on 2026-08-04, ⚠️ with **`GLOB`** and never
 // `LIKE` (SQLite's `LIKE` is case-insensitive and cost D200 a census), and the
 // JSON surfaces swept through `json_each(abilities_json)` /

@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { effectiveMaxHp, seatMaxHpBonus } from "./continuous";
 import { applyAction, createGame, programFor } from "./index";
@@ -39,7 +39,7 @@ import {
 //     printing and was worth FOUR; this one was recorded as DONE and was worth ONE.
 //
 // (b) THE CENSUS **AND ITS CLOSURE QUERY**, over the BARE HP NOUN and across ALL
-//     THREE COLUMNS. Remote D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a,
+//     THREE COLUMNS. Remote D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a,
 //     3,786 rows, 2,021 `legal_standard`), 2026-08-10:
 //
 //       instr(abilities_json,'oesn''t stack') > 0  → 10 rows / 8 legal / 6 Abilities

@@ -3,7 +3,7 @@
 // House style as everywhere: pure helpers in the sibling modules (map.ts /
 // validate.ts, unit-tested); this file owns request validation, the D1
 // queries, and response shaping — every payload boundary-parsed through the
-// @luminous/schema deck/folder schemas. NO KV cache on any of it: user data
+// @colorless/schema deck/folder schemas. NO KV cache on any of it: user data
 // must read fresh (§6).
 //
 // Per-route chain order is zValidator → requireUser → handler: body shape
@@ -25,7 +25,7 @@ import {
   patchFolderRequestSchema,
   type ReorderRequest,
   reorderRequestSchema,
-} from "@luminous/schema";
+} from "@colorless/schema";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";

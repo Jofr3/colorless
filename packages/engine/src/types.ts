@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import type { Banner } from "./banners";
 import type {
   AttackerClass,

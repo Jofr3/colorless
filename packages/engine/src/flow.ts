@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import type { ApplyResult, ConcedeAction } from "./actions";
 import { err, ok } from "./actions";
 import { activeTop, cardOfUid, matchesFilter, pokemonSuffixOf, prizeValueOf, topCardOf, topUid } from "./cards";
@@ -655,7 +655,7 @@ function seatPrizeReduction(
 
 /** 🆕 §8.1 (D298) — the same reduction borne by an ATTACHED CARD rather than by
     the holder's Ability. Two printings reach it, and they are the whole population
-    of the sentence (remote D1 `luminous`, 2026-08-09: `legal_standard = 1 AND
+    of the sentence (remote D1 `colorless`, 2026-08-09: `legal_standard = 1 AND
     instr(effect,'fewer Prize') > 0` returns 9 rows, of which 7 are Lacey ×5 /
     Emcee's Hype ×2 printing a *"3 or fewer Prize cards **remaining**"* board
     condition and the other two are these):

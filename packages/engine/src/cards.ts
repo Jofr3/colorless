@@ -1,5 +1,5 @@
-import { BASIC_ENERGY_TYPES } from "@luminous/schema";
-import type { Attack, Card } from "@luminous/schema";
+import { BASIC_ENERGY_TYPES } from "@colorless/schema";
+import type { Attack, Card } from "@colorless/schema";
 import type { ApplyResult } from "./actions";
 import { err } from "./actions";
 import { type Banner, bannerOf } from "./banners";
@@ -108,7 +108,7 @@ export function isStage1Pokemon(card: Card): boolean {
     ⚠️ IT READS THE PRINTED `stage` STRING RATHER THAN COUNTING THE EVOLUTION
     CHAIN, which is `isBasicPokemon`'s reading one row up, and it matters here: the
     catalog's `stage` vocabulary is `Basic | Stage1 | Stage2 | VSTAR | VMAX`
-    (queried, remote D1 `luminous`, 2026-08-07), so a **VSTAR** — which sits two
+    (queried, remote D1 `colorless`, 2026-08-07), so a **VSTAR** — which sits two
     evolutions deep and would pass a chain count — is NOT a Stage 2 and correctly
     does not promote. The printed word is the datum the sentence names.
 
@@ -402,7 +402,7 @@ export function isExOrV(card: Card): boolean {
 /** §8.5 (D255) — the printed RULE-BOX CLASS an always-on prevention aura names of
     its ATTACKER, as a RECORD over the two axes the printed sentences actually
     vary. Two Standard-legal sentences inhabit it today (5 printings, measured over
-    `abilities_json` with `legal_standard = 1` against the remote D1 `luminous`,
+    `abilities_json` with `legal_standard = 1` against the remote D1 `colorless`,
     2026-08-07, GROUPED BY SENTENCE):
 
       "…by attacks from your opponent's Pokémon ex."
@@ -591,7 +591,7 @@ export function hasPrintedAbility(card: Card | undefined): boolean {
     basic energies carry no `types` — the NAME is the datum, and real prints
     spell it both ways: "Fire Energy" and "Basic Darkness Energy"
     (sv06.5-098). The vocabulary is the shared BASIC_ENERGY_TYPES (§6.1,
-    @luminous/schema) — INGEST DEBT: provision should become Card data at
+    @colorless/schema) — INGEST DEBT: provision should become Card data at
     ingest; until then the name parse lives here. Anything unparseable
     (a special energy's fancy name) conservatively provides 1 Colorless: it can
     pay colorless slots, never typed ones (§6.4). This is the FALLBACK for an

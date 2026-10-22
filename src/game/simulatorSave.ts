@@ -1,9 +1,9 @@
-import { engineVersion, type GameState } from "@luminous/engine";
+import { engineVersion, type GameState } from "@colorless/engine";
 import { readPersisted, writePersisted } from "../lib/persistedState";
 import { projectGameState } from "./projection";
 import type { LocalGameSetup, LocalTurnSnapshot } from "./localHost";
 
-const SIMULATOR_SAVE_KEY = "luminous:simulator:game";
+const SIMULATOR_SAVE_KEY = "colorless:simulator:game";
 const SAVE_VERSION = 1;
 
 /** Full engine state includes the card pool, shuffled piles, RNG and effect

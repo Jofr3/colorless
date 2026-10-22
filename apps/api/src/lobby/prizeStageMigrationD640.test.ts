@@ -3,8 +3,8 @@
 // rollback misreads. No v46 writer could write either, so a v46 record is migrated by a re-stamp alone (no D1 read), as a
 // v45 one is; a v44 record takes D636's step, a v43 two, a v42 three, a v41 all four.
 
-import { applyAction, type GameState, type InPlayPokemon, type Seat } from "@luminous/engine";
-import type { Card } from "@luminous/schema";
+import { applyAction, type GameState, type InPlayPokemon, type Seat } from "@colorless/engine";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import {
   FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION,

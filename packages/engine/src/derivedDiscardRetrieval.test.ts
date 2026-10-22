@@ -22,7 +22,7 @@ import {
 // code; this slice takes those 4 and leaves 2.
 //
 // ✅ THE COUNT, RE-DERIVED A SECOND TIME BY A SECOND SLICE and unchanged — the
-// FIFTH row running. The brace sweep's own figures (remote D1 `luminous`, 3,786
+// FIFTH row running. The brace sweep's own figures (remote D1 `colorless`, 3,786
 // rows / 20 sets, 2,021 legal, 2026-08-06, `json_each` + `GLOB`, grouped BY
 // SENTENCE, all three text columns):
 //
@@ -51,7 +51,7 @@ import {
 //     them on THIS anchor, and two of those sentences were named by no page in
 //     this repo. A residue table is a census of what its slice measured.
 //
-// ✅ THE COUNT. Re-measured against the remote D1 `luminous` on 2026-08-06 —
+// ✅ THE COUNT. Re-measured against the remote D1 `colorless` on 2026-08-06 —
 // `json_each` + `GLOB` (never `LIKE`), grouped BY SENTENCE, over ALL THREE text
 // columns, `legal_standard = 1`:
 //

@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame, handPlayBarred, programFor, redactGame } from "./index";
 import type { GameState, Seat } from "./index";

@@ -32,7 +32,7 @@ import {
 // requirement off the companion sentence and cancel nothing"* — with nothing
 // behind it. This file is what is behind it.
 //
-// 🛑 THE MEASUREMENT, RE-QUERIED RATHER THAN INHERITED (remote D1 `luminous`,
+// 🛑 THE MEASUREMENT, RE-QUERIED RATHER THAN INHERITED (remote D1 `colorless`,
 // `$.effect`, 2026-08-18, and re-derived LIVE in §1 below off the committed
 // corpus). D363's handoff quoted the census D282 priced its refusal against:
 // *"613 of 1,732 legal attack units are multi-sentence, and only 16 open with

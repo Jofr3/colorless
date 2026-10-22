@@ -1,4 +1,4 @@
-import type { Card, Deck as SavedDeck } from "@luminous/schema";
+import type { Card, Deck as SavedDeck } from "@colorless/schema";
 import { ApiError, getDeck } from "../lib/api";
 import { formatById } from "../decks/cards";
 import { toBuilderCard } from "../decks/catalog";

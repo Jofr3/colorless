@@ -4,9 +4,9 @@
 // only impurity (the wall clock for log timestamps) rides IN on the host
 // event, stamped once per user gesture by the caller (src/lua/tableSource.ts).
 
-import type { ErrorCode, GameAction, GameEvent, GameState, Seat } from "@luminous/engine";
-import { applyAction, formatElapsed, logFromEvents, phaseViewOf } from "@luminous/engine";
-import type { SeatLogEntry } from "@luminous/schema";
+import type { ErrorCode, GameAction, GameEvent, GameState, Seat } from "@colorless/engine";
+import { applyAction, formatElapsed, logFromEvents, phaseViewOf } from "@colorless/engine";
+import type { SeatLogEntry } from "@colorless/schema";
 import { coinFlipsFromEvents, coinFlipTitle, type CoinFlipBatch } from "./coinFlips";
 
 /** Everything a fresh match starts from — the createGame result plus the

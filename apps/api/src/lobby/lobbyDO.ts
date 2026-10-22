@@ -44,14 +44,14 @@ import {
   makePlayer,
   removeGuest,
   seatGuest,
-} from "@luminous/schema";
+} from "@colorless/schema";
 import {
   type CreateErrorCode,
   formatElapsed,
   logFromEvents,
   redactGame,
   type Seat,
-} from "@luminous/engine";
+} from "@colorless/engine";
 import { drizzle } from "drizzle-orm/d1";
 import type { Env } from "../env";
 import { avatarSeedFrom } from "../auth/avatar";

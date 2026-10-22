@@ -3,7 +3,7 @@
 Unmodified English Scarlet & Violet card scans downloaded from TCGdex on
 2026-10-21. Bundled at the source’s low PNG resolution (245 × 337) so the
 transition never waits for network access. Card artwork belongs to its
-respective Pokémon TCG rights holders; it is not original Luminous artwork.
+respective Pokémon TCG rights holders; it is not original Colorless artwork.
 
 - `sv01-030.png`: [Growlithe](https://assets.tcgdex.net/en/sv/sv01/030/low.png)
 - `sv01-033.png`: [Houndour](https://assets.tcgdex.net/en/sv/sv01/033/low.png)

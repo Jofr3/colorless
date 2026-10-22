@@ -24,7 +24,7 @@ import {
 //
 // D364 handed over a population, a price and an ordering. The POPULATION
 // reproduces exactly (§1, re-derived live off the committed corpus, and confirmed
-// pool-wide on the remote D1 `luminous` `$.effect` on 2026-08-18 with the
+// pool-wide on the remote D1 `colorless` `$.effect` on 2026-08-18 with the
 // extractor verified against the 1,732-unit total FIRST): **9 sentences / 18 legal
 // units open with the `"If <clause>, this attack does nothing."` skeleton, 2 s /
 // 4 u were carried, 7 s / 14 u reached the table and MISSED.** Its "ZERO anchors

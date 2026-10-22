@@ -23,7 +23,7 @@ import {
 // with a NEW ONE rather than with a field.
 //
 // ✅ THE COUNT RE-DERIVES TO THE DIGIT FOR THE FOURTEENTH ROW RUNNING. Remote D1
-// `luminous`, `legal_standard = 1`, `json_each` over `attacks_json` /
+// `colorless`, `legal_standard = 1`, `json_each` over `attacks_json` /
 // `abilities_json` PLUS the bare `effect` column, GLOB (never LIKE), GROUPED BY
 // SENTENCE, on 2026-08-06 — and run on the SHAPE, not on the row's four ids:
 //

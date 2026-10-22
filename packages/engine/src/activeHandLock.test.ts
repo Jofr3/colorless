@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame, handPlayBarred, programFor, redactGame } from "./index";
 import type { GameState, Seat } from "./index";
@@ -32,7 +32,7 @@ import {
 // ── THE CENSUS, AND WHY THE SLICE IS 4 AND NOT 7 ────────────────────────────
 //
 // 🛑 **THE POPULATION WAS RE-QUERIED IN THE VOCABULARY, NOT IN THE SENTENCE**,
-// which is D283's own lesson spent rather than repeated. Remote D1 `luminous`
+// which is D283's own lesson spent rather than repeated. Remote D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), 2026-08-08, `legal_standard = 1`,
 // one row of `SUM(instr(col,…)>0)` per column (D283's compound-SELECT limit):
 //

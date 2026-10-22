@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 
 // 🆕🆕🆕 D576 — THE ANTIQUE FOSSILS' POKÉMON FACE, keyed by printing id.
 //

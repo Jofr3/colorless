@@ -19,7 +19,7 @@ import * as effects from "./effects";
 // live and the classification recorded; here the classification (which sentences
 // resolve) is live and the population is recorded.
 //
-// ⚠️ PROVENANCE — the exact statement, run against remote D1 `luminous`
+// ⚠️ PROVENANCE — the exact statement, run against remote D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) on 2026-08-08:
 //
 //     SELECT COUNT(*) AS n, json_extract(j.value,'$.effect') AS s

@@ -13,7 +13,7 @@ import {
   recomputePhase,
   removeGuest,
   setGuestConnected,
-} from "@luminous/schema";
+} from "@colorless/schema";
 
 /** The old model's reconnect grace (its PRESENCE_TIMEOUT_MS): a lost socket
     only shows as a disconnected seat if the player hasn't come back within

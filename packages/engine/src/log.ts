@@ -1,4 +1,4 @@
-// GameEvent stream → game-log rows (`SeatLogEntry`, @luminous/schema). Entries
+// GameEvent stream → game-log rows (`SeatLogEntry`, @colorless/schema). Entries
 // are recorded SEAT-keyed because the log outlives its viewer: on /play the
 // hot-seat device flips mid-game, and online the SAME array is broadcast to both
 // clients — a row minted as "you" would lie to whoever ends up reading it. The
@@ -16,7 +16,7 @@
 // persists across viewer flips, so a named draw would leak one player's hand
 // to the other.
 
-import type { LogSegment, SeatLogEntry } from "@luminous/schema";
+import type { LogSegment, SeatLogEntry } from "@colorless/schema";
 import { type DamageModifier, cardOfUid, topCardOf } from "./cards";
 import type { AttackerClass } from "./effects";
 import type { GameEvent, StatusName } from "./events";

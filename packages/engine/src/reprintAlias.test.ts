@@ -28,7 +28,7 @@ import { FIXTURE_POOL } from "./testFixtures";
 // 2026-08-04 census and SAID SO, on the rows and here.
 //
 // ⚠️ ALL FOUR ARE NOW **MEASURED**, against the 978-row / 6-set catalog reached
-// through the remote D1 (`luminous`), and all four HOLD:
+// through the remote D1 (`colorless`), and all four HOLD:
 //   • `sv02-245` — `abilities_json` byte-identical to `sv02-150`'s, both exactly
 //     [{"type":"Ability","name":"Bronze Body","effect":"This Pokémon takes 30
 //     less damage from attacks (after applying Weakness and Resistance)."}];

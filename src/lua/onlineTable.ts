@@ -1,11 +1,11 @@
-import type { EffectChoice, GameAction, PokemonRef, Seat } from "@luminous/engine";
+import type { EffectChoice, GameAction, PokemonRef, Seat } from "@colorless/engine";
 import type {
   Card,
   RedactedCard,
   RedactedEffectPrompt,
   RedactedGame,
   SeatLogEntry,
-} from "@luminous/schema";
+} from "@colorless/schema";
 import { fetchCardPool } from "../game/cardPool";
 import { projectionFromRedacted } from "../game/projection";
 import type { ActionError, LobbyClient } from "../online/lobbyClient";

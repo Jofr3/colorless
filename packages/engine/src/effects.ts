@@ -12,7 +12,7 @@
 // just hand-written instead of text-derived, and sit ABOVE the deriver at the
 // one attack call site (`programFor(id).attack ?? deriveAttackEffect(text)`).
 
-import { BASIC_ENERGY_TYPES, type BasicEnergyType } from "@luminous/schema";
+import { BASIC_ENERGY_TYPES, type BasicEnergyType } from "@colorless/schema";
 import type { StatusName } from "./events";
 import type { PokemonRef } from "./interpreter";
 // 🆕🆕 D444 — the ONE edge this file takes back to `registry.ts`, and it is
@@ -31,12 +31,12 @@ import type { AttackTimingGate } from "./registry";
 // which markers exist — `registry.ts` and `continuous.ts` take the identical
 // edge for the identical reason.
 import type { PokemonSuffix } from "./cards";
-// 🆕🆕🆕 D568 — TYPE-ONLY, like the edge above: `banners.ts` imports only `@luminous/schema`.
+// 🆕🆕🆕 D568 — TYPE-ONLY, like the edge above: `banners.ts` imports only `@colorless/schema`.
 import type { Banner } from "./banners";
 // D297 — the ONE value import this file takes from `types.ts`, and it is the
 // §4 Bench ceiling used as a printed-number guard (see
 // `ATTACK_REVEAL_AND_BENCH_UP_TO`). No runtime cycle: `types.ts`'s only
-// non-type import is `@luminous/schema`.
+// non-type import is `@colorless/schema`.
 import { BENCH_MAX, type PokemonTarget, type SpecialConditions } from "./types";
 // 🆕🆕 D460 — the THIRD type-only edge out of this file, and the cheapest of
 // the three: `rng.ts` imports NOTHING AT ALL (checked, not assumed), so this edge
@@ -67,7 +67,7 @@ export type CardFilter =
 
       🛑 **IT IS A CARD READ OF `Card.hp`, AND THE CLASSIFICATION IS WHAT DECIDES
       THE YIELD.** The legal pool prints the phrase *"HP or less"* on **15
-      printings / 6 sentences** (remote D1 `luminous`, 2026-08-07, all three text
+      printings / 6 sentences** (remote D1 `colorless`, 2026-08-07, all three text
       columns, `legal_standard = 1`), and they split by KIND: **9 / 4 are this
       CARD read** (the two above plus Fan Rotom `sv07-118`/`sv08.5-085` and
       Mandibuzz `sv10.5w-064`/`-145`, both blocked on other machinery) and **6 / 2
@@ -198,7 +198,7 @@ export type CardFilter =
       NEVER COULD WAS A CENSUS THAT ROTTED.** D238 wrote *"There is no `evolution`
       value here, unlike `ownerPokemon`'s: **no printing spells one** (measured
       over all 3,786 catalog rows)"*. Re-measured at HEAD (2026-08-06, remote D1
-      `luminous`, `json_each` over all three text columns, `legal_standard = 1`,
+      `colorless`, `json_each` over all three text columns, `legal_standard = 1`,
       `LIKE '%evolution {%'`), the printed idiom returns **2 sentences / 4 legal
       printings**: Victini `sv08-021` *"Attacks used by your **Evolution {R}**
       Pokémon do 10 more damage…"* (1) and Genesect ex `sv10.5b-067`/`-161`/`-169`
@@ -1046,7 +1046,7 @@ export type PokemonType = (typeof POKEMON_TYPES)[number];
     already spellable, and the READ was missing (`playTrainer` dispatches to
     `playStadium` on the line ABOVE its gate). D287 built that read.
     ⚠️ **MEASURED, NOT INHERITED — the attack column still cannot name it.**
-    Remote D1 `luminous` `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 2026-08-08,
+    Remote D1 `colorless` `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 2026-08-08,
     `legal_standard = 1`, one row of `SUM(instr(col,…)>0)`: `'any Stadium cards'`
     → ability **1** / attack **0** / effect **0**; and the same 1/0/0 for the
     MECHANISM rather than the sentence (`'play any Stadium'`, and
@@ -3639,7 +3639,7 @@ export type BoardCondition =
       CORRECTED A CLAIM THAT USED TO SIT ON THIS LINE.** D275 wrote that these 2
       printings were *"the whole population of `%during your first turn%` this
       engine can spell"*, having measured the phrase only far enough to find its
-      own row. The full ladder (remote D1 `luminous`, `legal_standard = 1`, all
+      own row. The full ladder (remote D1 `colorless`, `legal_standard = 1`, all
       three text columns, 2026-08-08) returns **ability 15 / attack 13 / effect 8
       = 36 printings on 15 names and 10 distinct first-turn CLAUSES**, and the
       bare-`%your first turn%` rung returns **ZERO**, so 36 is the whole phrase.
@@ -3757,7 +3757,7 @@ export type BoardCondition =
       may Bench 8, so 5 is no longer full there; the FLOOR reading below is unaffected] — and
       a `yourBenchIsFull` predicate would answer this one card identically forever
       while being the wrong shape. The whole-pool `%Benched Pokémon%` census on all
-      three text columns (remote D1 `luminous`, `$.effect`, extractor verified
+      three text columns (remote D1 `colorless`, `$.effect`, extractor verified
       against the 640 / 1,732 / 60,467 total FIRST, 2026-08-19) returns exactly TWO
       bench-COUNT board facts in the legal catalog: this one, and *"If your
       opponent has 3 or more Benched Pokémon, this attack does 80 more damage."*
@@ -5693,7 +5693,7 @@ export type EffectOp =
       "Freezing Shroud": *"During Pokémon Checkup, put 1 damage counter on each
       Pokémon that has an Ability (both yours and your opponent's), except any
       Froslass."* — **3 Standard-legal printings on ONE sentence**, and the whole
-      legal population of the sentence (remote D1 `luminous`, 2026-08-15).
+      legal population of the sentence (remote D1 `colorless`, 2026-08-15).
 
       🛑 **IT IS `healEachAll`'s COUNTER TWIN, AND THE PARENTHETICAL IS THE PROOF
       THAT THE SEAT-BLIND SHAPE IS THE RIGHT ONE.** Picnic Basket prints *"each
@@ -8063,7 +8063,7 @@ export type EffectOp =
           CENSUS IS THE WHOLE REASON.** D332 gave the sibling op an arity-EXACTLY-2
           `also` under D331's rule (ship the arity the printing spells), and D333's
           note there predicted this slice would want a list. Re-measured at this
-          head against remote D1 `luminous` (2026-08-14), the multi-noun
+          head against remote D1 `colorless` (2026-08-14), the multi-noun
           `searchDeck` conjunction is **8 printings / 3 legal** — the query is
           `instr(col,'earch your deck for') > 0 AND instr(col,' and a ') > 0` over
           all three text columns, which is the WIDENED form of the resume point's
@@ -8335,7 +8335,7 @@ export type EffectOp =
       `sv10-011` "Ascension", Team Rocket's Pupitar `sv10-095` "Explosive
       Ascension" (Stage 1, `damage: 30`) and — behind D282's gate split — Exeggcute
       `sv08-001`/`-192` "Precocious Evolution". **6 legal printings on 4 cards and
-      ONE effect string**, re-queried against remote D1 `luminous` on 2026-08-09
+      ONE effect string**, re-queried against remote D1 `colorless` on 2026-08-09
       (`instr(attacks_json,'that evolves from this') > 0`, whole column read, every
       arm): 4 on the bare sentence, 2 on the licensed one, plus 4 rows at
       `legal_standard = 0` (Glimmet `sv02-124`/`sv04.5-179`, and Finizen
@@ -8440,7 +8440,7 @@ export type EffectOp =
       §10's own chain match, asked of the deck (D307). For a **Pidove** body that
       set is **Tranquill**. The card the sentence NAMES is **Unfezant**, whose
       `evolve_from` is **`Tranquill`** and not `Pidove` — measured against remote
-      D1 `luminous` on 2026-08-10: all four `Unfezant` printings are `Stage2`
+      D1 `colorless` on 2026-08-10: all four `Unfezant` printings are `Stage2`
       evolving from `Tranquill`, and `sv05-133` is a `Basic`. **So the intersection
       of the chain predicate and the printed name is EMPTY ON EVERY BOARD THAT WILL
       EVER EXIST.** A `names` filter ANDed onto the chain is the exact defect
@@ -8521,7 +8521,7 @@ export type EffectOp =
   /** 🆕 **D308 — "For each of your Benched Pokémon, search your deck for a card
       that evolves from that Pokémon and put it onto that Pokémon to evolve it.
       Then, shuffle your deck."** **4 legal printings on 2 cards and ONE effect
-      string**, re-queried against remote D1 `luminous` on 2026-08-09
+      string**, re-queried against remote D1 `colorless` on 2026-08-09
       (`instr(attacks_json,'deck for a card that evolves') > 0 AND
       legal_standard = 1`, whole column read, every arm): Vivillon `sv08-007`/
       `-193` "Evo-Powder" (Stage 2, second attack "Cutting Wind" {G} `damage: 90`)
@@ -8560,7 +8560,7 @@ export type EffectOp =
   /** 🆕 **D309 — "Search your deck for a card that evolves from 1 of your Pokémon
       and put it onto that Pokémon to evolve it. Then, shuffle your deck."**
       **2 legal printings on ONE card and ONE effect string**, re-queried against
-      remote D1 `luminous` on 2026-08-09 (`instr(attacks_json,'evolves from 1 of
+      remote D1 `colorless` on 2026-08-09 (`instr(attacks_json,'evolves from 1 of
       your') > 0`, whole column read, every arm): Duosion `sv10.5b-038`/`-119`
       "Cellular Evolution" ({C}, no damage; second attack "Spray Fluid" {C}
       `damage: 30`). ⚠️ A THIRD printing of the identical sentence is
@@ -8651,7 +8651,7 @@ export type EffectOp =
   /** 🆕 **D315 — "Choose up to 2 of your {D} Pokémon. For each of those Pokémon,
       search your deck for a card that evolves from that Pokémon and put it onto
       that Pokémon to evolve it. Then, shuffle your deck."** **ONE legal printing
-      on ONE card and ONE effect string**, queried against remote D1 `luminous` on
+      on ONE card and ONE effect string**, queried against remote D1 `colorless` on
       2026-08-10 (`instr(<col>,'For each of those') > 0` over all three text
       columns, whole column read, every arm): Team Rocket's Nidorina `sv10-115`
       "Dark Awakening" ({D}, no damage; second attack "Scratch" {D}{D}
@@ -8922,7 +8922,7 @@ export type EffectOp =
       free to drift.
 
       ⚠️ **`basicOnly?: true` AND NOT A `stage` OR A `CardFilter`, MEASURED
-      RATHER THAN CHOSEN.** Over remote D1 `luminous` (2026-08-13) the whole
+      RATHER THAN CHOSEN.** Over remote D1 `colorless` (2026-08-13) the whole
       *"Switch in 1 of your opponent's…"* family is 10 rows on `effect` (5 legal)
       and 18 on `attacks_json` (10 legal), and **exactly three of those 28 print a
       stage word at all** — these three, and the word is "Basic". No attack
@@ -8980,7 +8980,7 @@ export type EffectOp =
       — **10 Standard-legal bare printings**, 13 across the whole family
       (`sv05-106`, `sv07-121`, `sv09-009`, `sv10-002`, `sv10-105`, `sv10-183`,
       `sv10.5w-007`, `sv10.5w-075`, `sv10.5w-092`, `sv10.5w-155`; remote D1
-      `luminous`, 2026-08-05, over `json_each(attacks_json)`).
+      `colorless`, 2026-08-05, over `json_each(attacks_json)`).
 
       🛑 **THE BOARD MOVE IS `gust`'s, BYTE FOR BYTE — `switchInto` on the
       opponent's seat. THE WHOLE DIFFERENCE IS WHO ANSWERS.** That is why this is
@@ -9060,7 +9060,7 @@ export type EffectOp =
       when an empty opposing Bench is the ordinary board rather than an edge case.
 
       **THE POPULATION IS 5 PRINTINGS ON 3 SENTENCES, PLUS ILLUMISE BEHIND D282's
-      SPLIT** (remote D1 `luminous`, `legal_standard = 1`, 2026-08-09,
+      SPLIT** (remote D1 `colorless`, `legal_standard = 1`, 2026-08-09,
       `instr(attacks_json,'and all attached cards into') > 0` — 27 rows, 15 of
       them legal):
         • *"Shuffle 1 of your Benched Pokémon and all attached cards into your
@@ -9146,7 +9146,7 @@ export type EffectOp =
       neither Lillie's Comfey (all → hand) nor Revavroom ex (all → discard) has.
       **The family is THIRTEEN legal printings.**
 
-      **THE SELF-REMOVAL FAMILY, RE-DERIVED 2026-08-10** (remote D1 `luminous`,
+      **THE SELF-REMOVAL FAMILY, RE-DERIVED 2026-08-10** (remote D1 `colorless`,
       `legal_standard = 1`, `attacks_json` + `abilities_json` + `effect`, the union
       of `'this Pokémon and all attached cards'`, `'it and all attached cards'` and
       `'cards attached to this Pokémon'`) — **THIRTEEN legal printings**, of which
@@ -9572,7 +9572,7 @@ export type EffectOp =
 
       🛑 **A FIELD-FREE OP, AND THE ABSENCE OF FIELDS IS THE MEASUREMENT.** The
       clause is byte-identical across all three sentences that print it — the
-      three-column census on remote D1 `luminous` (2026-08-15) returns
+      three-column census on remote D1 `colorless` (2026-08-15) returns
       `effect` 0 + `abilities_json` **9 printings / 9 legal / 3 sentences** +
       `attacks_json` 0 for `instr(<col>, 'If you use this Ability, this Pokémon is
       Knocked Out') > 0` — so there is nothing for a field to vary over. D104's
@@ -10509,7 +10509,7 @@ export type EffectOp =
       /** ⚠️⚠️ D248 — THE SPREAD WITH NO DECISION IN IT: *"Attach a Basic {F}
           Energy card from your discard pile to **each of** your Benched
           Pokémon."* (Mudsdale `sv05-092`/`sv05-175` "Mud Stock" — **2 legal
-          attack printings on 1 sentence**, remote D1 `luminous`, 2026-08-06).
+          attack printings on 1 sentence**, remote D1 `colorless`, 2026-08-06).
           Present = the attach runs once against EVERY eligible target this op's
           riders admit, in `attachEnergyTargets` order, and **asks nothing**.
 
@@ -10945,7 +10945,7 @@ export type EffectOp =
           and a Trainer card') > 0` returns exactly these 4 rows of 3,786, all
           legal, and the same literal over `attacks_json` / `abilities_json`
           returns 0, as does the reversed word order *"a Trainer card and a
-          Pokémon"*; remote D1 `luminous`, 2026-08-14): *"Look at the top 7 cards
+          Pokémon"*; remote D1 `colorless`, 2026-08-14): *"Look at the top 7 cards
           of your deck. You may reveal **a Pokémon and a Trainer card** you find
           there and put them into your hand."*
 
@@ -11386,7 +11386,7 @@ export type EffectOp =
       (**2 Standard-legal printings**, `abilities_json`; `instr(abilities_json,
       'Shuffle the other cards and put') > 0` is exactly these 2 rows of 3,786, both
       legal, and the same literal over `effect` returns only Rika's 3 out-of-Standard
-      printings while `attacks_json` returns 0 — remote D1 `luminous`, 2026-08-14)
+      printings while `attacks_json` returns 0 — remote D1 `colorless`, 2026-08-14)
       prints *"…attach any number of Basic {M} Energy cards you find there to your
       Pokémon in any way you like. **Shuffle the other cards and put them on the
       bottom of your deck.**"* — the third leftovers destination, on THIS op. It is
@@ -12610,7 +12610,7 @@ export type EffectOp =
 
       AUTHORING NOTE: the rider is independent of `route`, so `anySource` on the
       FREE route is representable and matches no printed card — a three-column
-      `json_each` census of the remote D1 `luminous` on 2026-08-05 finds exactly
+      `json_each` census of the remote D1 `colorless` on 2026-08-05 finds exactly
       ONE multi-source move sentence in 3,786 rows, and it is N's Plan's. The
       registry is the only author, so this is a caution, not a hole (the
       `handRefresh` note's reasoning, verbatim).
@@ -13638,7 +13638,7 @@ export type EffectOp =
           Invitation's, 0 legal), a NUMBER (Lickitung's "up to 2", 2 legal) and
           `"any"` (3 legal) — which closes the mechanism at **3 of 3 legal
           sentences / 7 of 7 legal printings** over all three text columns (remote
-          D1 `luminous`, 2026-08-15: `reveal…hand` AND `onto their Bench` OR `onto
+          D1 `colorless`, 2026-08-15: `reveal…hand` AND `onto their Bench` OR `onto
           your opponent's Bench` returns 4 sentences / 10 printings / 7 legal).
 
           🛑 **THE NO-NEW-VOCABULARY REFUTATION, RUN FROM SOURCE, FAILED ON THE
@@ -15820,7 +15820,7 @@ const COUNTER_PUT_ON_OPPONENT_BENCH =
 // N counters) and this one drops the "1 of" and adds the distribution tail (N
 // counters, each naming its OWN body).
 //
-// CENSUS (remote D1 `luminous` 735f0fb5-…, 2026-08-15, grouped through `json_each`
+// CENSUS (remote D1 `colorless` 735f0fb5-…, 2026-08-15, grouped through `json_each`
 // so the unit is a SENTENCE and not a JSON blob — D347's unit defect, refused by
 // construction). `instr(<col>,'in any way you like') > 0 AND
 // instr(<col>,'damage counters') > 0` over ALL THREE text columns:
@@ -18461,7 +18461,7 @@ const HAND_DISCARD_THEN_SCALED_ANY_TARGET = new RegExp(
 //
 // CENSUS: **1 sentence / 3 legal printings**, read off `censusAttackCorpus.ts` row
 // 108 — the committed `legal_standard = 1` attack column (640 sentences / 1,732
-// printings, remote D1 `luminous`, 2026-08-08). ⚠️ THE THREE CARRIERS CANNOT BE
+// printings, remote D1 `colorless`, 2026-08-08). ⚠️ THE THREE CARRIERS CANNOT BE
 // RESOLVED IN THIS CHECKOUT — there is no local D1 and no remote credentials, and the
 // corpus is grouped BY SENTENCE, so it records the count and not the ids. Stated
 // unresolved rather than invented (D425).
@@ -19105,7 +19105,7 @@ const OPPONENT_COUNTER_SCALE =
 // (idx 0, {W}, printed "20×") and Flapple `sv08-139` / `sv08-210` "Acidic Spit"
 // (idx 0, {C}, printed "20×" — the SAME card at Uncommon and at Illustration Rare,
 // so the second printing is a RARITY and not a second body). Re-measured against
-// the remote D1 `luminous` (2026-08-24) with `json_each` over all three text
+// the remote D1 `colorless` (2026-08-24) with `json_each` over all three text
 // columns, GLOB `*damage counter on your opponent*`, grouped by sentence before
 // anything was priced.
 //
@@ -19445,7 +19445,7 @@ const OPPONENT_BENCH_MULTIPLY =
 // mirror of the two patterns directly above with one word changed ("of your" for
 // "of your opponent's"), and the third face of the noun `bothSidesBenchCount`
 // spans — so the family that D193 left at "your opponent's" and "both" is closed
-// by the one side it never had. Re-measured against the remote D1 `luminous`
+// by the one side it never had. Re-measured against the remote D1 `colorless`
 // (2026-08-08) with `json_each` over `attacks_json`, GLOB `*for each of your
 // Benched Pok*`, GROUPED BY SENTENCE before anything was priced:
 //   • "This attack does (20) more damage for each of your Benched Pokémon."
@@ -21722,7 +21722,7 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // that makes this table's pair complete: SIX printed amounts across SIX
   // Standard-legal sentences / TEN printings — `svp-179` + `sv10.5w-077`/`-162`/
   // `-170` (+100), `sv07-090` + `sv10-131` (+70), `sv10-130` (+40), `sv08.5-089`
-  // (+50), `sv08-141` (+80), `sv09-018` (+90). Measured on remote D1 `luminous`
+  // (+50), `sv08-141` (+80), `sv09-018` (+90). Measured on remote D1 `colorless`
   // across all three text columns keyed on `$.effect` (2026-08-18); the one
   // `effect`-column printing of this clause is `legal_standard = 0`.
   //
@@ -21898,7 +21898,7 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // prints *"If your opponent has 3 or fewer Prize cards remaining, draw …"* on
   // SEVEN legal Trainer `effect` rows, and *"if your opponent has 4 or fewer Prize
   // cards remaining"* — this row's clause, byte for byte — on FIVE `abilities_json`
-  // rows, ALL `legal_standard = 0` (remote D1 `luminous`, 2026-08-19). The
+  // rows, ALL `legal_standard = 0` (remote D1 `colorless`, 2026-08-19). The
   // whole-sentence anchor is what keeps every one of them off this path.
   [
     "your opponent has 4 or fewer Prize cards remaining",
@@ -22107,7 +22107,7 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // names is UNREACHABLE from `legalAttackCorpus()`, Palafin's and Lycanroc's
   // situation a third time — while the legal pool prints **FOUR MORE** of exactly
   // this shape that the sentence said do not exist. Measured end to end: remote D1
-  // `luminous`, `$.effect`, `GLOB 'If * on your Bench, this attack does * more
+  // `colorless`, `$.effect`, `GLOB 'If * on your Bench, this attack does * more
   // damage.'` returns **12 printings, 8 of them `legal_standard = 1`**, and
   // Falinks is in the other four. **A COUNT IN A COMMENT IS A MEASUREMENT WITH NO
   // INSTRUMENT BEHIND IT; THIS FAMILY IS NOW DERIVED FROM THE CORPUS IN
@@ -23163,7 +23163,7 @@ function boardConditionForClause(clause: string): BoardCondition | null {
 //
 // 🆕🆕 D366 — RE-MEASURED AGAIN, on the same four surfaces and inheriting nothing.
 // Over `legalAttackCorpus()` with the live reader (surface S1, and confirmed
-// pool-wide on the remote D1 `luminous`, `$.effect`, extractor verified against
+// pool-wide on the remote D1 `colorless`, `$.effect`, extractor verified against
 // the 640 / 1,732 / 60,467 total FIRST, 2026-08-19): the skeleton ADMITS
 // **9 sentences / 18 legal units** — UNMOVED, and it is the invariant this
 // paragraph exists to hold — and the TABLE now carries **7 rows / 6 admitted
@@ -23263,7 +23263,7 @@ const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
   //
   // ⚠️ 🆕🆕 D364 — **THIS ROW HAS ZERO STANDARD-LEGAL PRINTINGS AT HEAD.** All
   // five printings of the sentence (`sv03-062`/`-200`, `sv04.5-124`/`-225`,
-  // `svp-036`) are `legal_standard = 0` (remote D1 `luminous`, `$.effect`,
+  // `svp-036`) are `legal_standard = 0` (remote D1 `colorless`, `$.effect`,
   // 2026-08-18). The row is KEPT, not deleted — it is keyed on printed text, the
   // reading is still correct, and a reprint restores it for free — but it is
   // UNREACHABLE from `legalAttackCorpus()`, so nothing in the legal pool can
@@ -23287,7 +23287,7 @@ const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
   // ⚠️ 🆕🆕 D364 — **THE COUNT WAS RIGHT AND THE CARD IS WRONG, AND IT IS NOT A
   // HAPAX.** `sv03-117` Lycanroc is `legal_standard = 0` at HEAD; the sentence's
   // TWO Standard-legal printings are **Basculin `sv10.5w-024`/`-108` "Bared
-  // Fangs" ({W}, 50, attack index 1)** (remote D1 `luminous`, `$.effect`,
+  // Fangs" ({W}, 50, attack index 1)** (remote D1 `colorless`, `$.effect`,
   // 2026-08-18). The row's 2-legal-printing price has been correct throughout —
   // only the id and the "HAPAX" claim rotted, one set rotation at a time, which
   // is D363's own lesson (a count reproduces while its attribution is wrong)
@@ -23390,7 +23390,7 @@ const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
   //
   // ⚠️ THE NAMES ARE READ OFF THE STACK TOP (§1.2), which is `yourBenchHasNamed`'s
   // own reading: a Uxie that has evolved is no longer a Uxie and stops satisfying
-  // this. Both bodies are real and Standard-legal at HEAD (remote D1 `luminous`,
+  // this. Both bodies are real and Standard-legal at HEAD (remote D1 `colorless`,
   // 2026-08-18: Uxie 1 printing, Azelf 1 printing, both `legal_standard = 1`), so
   // unlike Palafin's row this one is reachable from a legal deck.
   [
@@ -23574,7 +23574,7 @@ export function deriveAttackRequirement(text: string): BoardCondition | null {
 
     ⚠️ **THE POPULATION IS TWO PRINTINGS, WHICH IS WHY THIS IS NOT A GENERIC
     SENTENCE-LIST COMPOSER.** Re-queried before a line shipped (remote D1
-    `luminous`, `$.effect`, 2026-08-18): across all 978 cards / 6 sets exactly TWO rows
+    `colorless`, `$.effect`, 2026-08-18): across all 978 cards / 6 sets exactly TWO rows
     print a leading does-nothing sentence with ANY trailing text, and they are the
     two Sawk printings of one sentence. Seven more sentences / 23 legal printings
     carry a does-nothing sentence with a LEADING companion instead — those are the
@@ -25845,7 +25845,7 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
 // printed articles (`an` / `a Special` / `a {X}`); an optional suffix would
 // therefore also derive *"Discard a Special Energy from your opponent's Active
 // Pokémon ex."* and its typed twin. Queried across `attacks_json`,
-// `abilities_json` and `effect` on remote D1 `luminous` (2026-08-18), the catalog
+// `abilities_json` and `effect` on remote D1 `colorless` (2026-08-18), the catalog
 // holds **exactly ONE** `Active Pokémon ex` sentence in `attacks_json` — this one,
 // on the BARE article — and **ZERO** of the cross-product. Deriving them would be
 // authoring two cards, which is D361's own refusal on `(a|all) × (Active|all of)`
@@ -26594,7 +26594,7 @@ const ATTACK_SELF_SWITCH_TYPED =
 // correct today (no printing drops the parenthetical: measured, 0 rows of 33) and
 // would be reading the wrong thing for the right answer.
 //
-// THE CENSUS, over the remote D1 `luminous` (3,786 rows / 20 sets, 2,021
+// THE CENSUS, over the remote D1 `colorless` (3,786 rows / 20 sets, 2,021
 // `legal_standard = 1`) on 2026-08-05, `json_each(attacks_json)` +
 // `json_extract(value,'$.effect')`, GLOB (case-SENSITIVE — SQLite's LIKE is not),
 // and swept over ALL THREE text columns because a two-column sweep has cost this
@@ -26687,7 +26687,7 @@ const ATTACK_SELF_SWITCH_THEN_OPPONENT_SWITCH_OUT = new RegExp(
 // alternation would have to be edited by the next reprint that prints 50.
 //
 // THE CENSUS, re-derived (not inherited from D227, per conventions.md) against the
-// remote D1 `luminous` — 3,786 rows / 20 sets, 2,021 `legal_standard = 1` — on
+// remote D1 `colorless` — 3,786 rows / 20 sets, 2,021 `legal_standard = 1` — on
 // 2026-08-05, over `json_each(attacks_json)` + `json_extract(value,'$.effect')`
 // with GLOB (SQLite's LIKE is ASCII case-INSENSITIVE and has cost this repo a
 // census), swept over all three text columns:
@@ -26738,7 +26738,7 @@ const ATTACK_OPPONENT_SWITCH_OUT_THEN_DAMAGE_NEW_ACTIVE =
 // text parser — which is why the near-miss block below is longer than the anchors.
 //
 // THE CENSUS, re-derived (never inherited — the backlog row's own figure is
-// corrected below) against the remote D1 `luminous` — 3,786 rows / 20 sets, 2,021
+// corrected below) against the remote D1 `colorless` — 3,786 rows / 20 sets, 2,021
 // `legal_standard = 1` — on 2026-08-05, over `json_each(attacks_json)` +
 // `json_extract(value,'$.effect')` with GLOB (SQLite's LIKE is ASCII
 // case-INSENSITIVE and has cost this repo a census), swept over ALL THREE text
@@ -26936,7 +26936,7 @@ const ATTACK_MAY_DRAW_UNTIL = /^You may draw cards until you have (\d+) cards in
 // authored per card).
 //
 // THE CENSUS, re-derived (never inherited — the backlog row's own figures are
-// corrected below) against the remote D1 `luminous` — 3,786 rows / 20 sets, 2,021
+// corrected below) against the remote D1 `colorless` — 3,786 rows / 20 sets, 2,021
 // `legal_standard = 1` — on 2026-08-05, over `json_each` + `GLOB` (SQLite's LIKE is
 // ASCII case-INSENSITIVE and has cost this repo a census), swept over ALL THREE
 // text columns and GROUPED BY SENTENCE before anything was priced:
@@ -27056,7 +27056,7 @@ const ATTACK_MAY_DRAW_UNTIL = /^You may draw cards until you have (\d+) cards in
 // (D231) and the discard-pile retrieval (D237) each print a type-narrowed noun
 // and each pinned it derived-to-null. This block is the whole fix.
 //
-// ✅ THE COUNT, RE-DERIVED (never inherited) against the remote D1 `luminous` —
+// ✅ THE COUNT, RE-DERIVED (never inherited) against the remote D1 `colorless` —
 // 3,786 rows / 20 sets, 2,021 `legal_standard = 1` — on 2026-08-06, `json_each` +
 // `json_extract(value,'$.effect')`, GROUPED BY SENTENCE, over ALL THREE text
 // columns:
@@ -27292,7 +27292,7 @@ const ATTACK_BENCH_SEARCH_THEN_MOVE = new RegExp(
 // rather than `"bench"`, the same trailing `shuffleDeck`), and the BIGGEST
 // single count this reader has ever taken.
 //
-// THE CENSUS, re-derived (never inherited) against the remote D1 `luminous` —
+// THE CENSUS, re-derived (never inherited) against the remote D1 `colorless` —
 // 3,786 rows / 20 sets, 2,021 `legal_standard = 1` — on 2026-08-06, over
 // `json_each` + `GLOB '*[Ss]earch your deck*'` (case class on the opening verb:
 // D230's first sweep was case-SENSITIVE and undercounted by one), all three text
@@ -27615,7 +27615,7 @@ const ATTACK_EVOLVE_FROM_DECK_EACH_CHOSEN =
 // (reveal / discard-at-random / choose-at-random-and-shuffle-back) taking two
 // ops, which is what the row's "2 ops" said and the only half of it that held.
 //
-// Re-derived (never inherited) against the remote D1 `luminous` — 3,786 rows /
+// Re-derived (never inherited) against the remote D1 `colorless` — 3,786 rows /
 // 20 sets, 2,021 `legal_standard = 1` — on 2026-08-06, `json_each` +
 // `json_extract(value,'$.effect')`, GROUPED BY SENTENCE, over ALL THREE text
 // columns. **The attack column holds 20 legal printings on these three
@@ -27655,7 +27655,7 @@ const ATTACK_REVEAL_AND_BOTTOM =
 // IT.** Lickitung `sv05-124`/`-180` "Tongue Pull" — *"Your opponent reveals their
 // hand. Put up to 2 Basic Pokémon you find there onto your opponent's Bench."*
 // **2 legal printings and that is the WHOLE population of the phrase**: the
-// remote D1 `luminous` sweep `instr(attacks_json, 'you find there onto your
+// remote D1 `colorless` sweep `instr(attacks_json, 'you find there onto your
 // opponent') > 0` returns exactly these two rows, both `legal_standard = 1`, mark
 // H, attack INDEX 0, cost {C}, and the two `attacks_json` blobs are BYTE-IDENTICAL
 // (re-queried 2026-08-09, one flat `WHERE id IN`).
@@ -27927,7 +27927,7 @@ const ATTACK_OPPONENT_CHOOSES_SHUFFLE_HAND =
 // rule says this collapses to one arm" — and it is the first prediction on that
 // page to survive contact rather than be corrected by it.
 //
-// RE-DERIVED (never inherited) against the remote D1 `luminous` — 3,786 rows /
+// RE-DERIVED (never inherited) against the remote D1 `colorless` — 3,786 rows /
 // 20 sets, 2,021 `legal_standard = 1` — on 2026-08-06, `json_each` +
 // `json_extract(value,'$.effect')`, GROUPED BY SENTENCE, over ALL THREE text
 // columns:
@@ -28187,7 +28187,7 @@ const DISCARD_ATTACH = attachFromZoneAnchor(SOURCE_ZONE_PHRASE, "");
 // control. 🛑 `attachFromZoneClause` is NOT widened with an optional `(opponent['’]s )?`
 // group: that would shift groups 2–5 across all THREE anchors the factory builds and
 // `attachFromZoneProgram`'s `match[5]` / `match[2] ?? match[4]` reads with them — D447's
-// hazard. CENSUS (remote D1 `luminous`, `legal_standard = 1`, all three text columns):
+// hazard. CENSUS (remote D1 `colorless`, `legal_standard = 1`, all three text columns):
 //   LIKE '%from your opponent''s discard pile to their%'   → 1 row (this one; FILE LINE 70)
 // MEASURED: `SOURCE_ZONE_PHRASE` (" from your discard pile") is NOT a substring of the
 // print (the print reads " from your opponent's discard pile"), so the sibling
@@ -28207,7 +28207,7 @@ const ATTACK_OPPONENT_DISCARD_ATTACH =
 // than the printings.
 //
 // ✅ THE COUNT RE-DERIVES TO THE DIGIT — the second row running, and the whole
-// 33, not just the half this arm takes. Remote D1 `luminous`, `legal_standard =
+// 33, not just the half this arm takes. Remote D1 `colorless`, `legal_standard =
 // 1`, `json_each` over `attacks_json`/`abilities_json` PLUS the bare `effect`
 // column, GLOB (never LIKE), GROUPED BY SENTENCE, on 2026-08-06:
 //
@@ -28458,7 +28458,7 @@ const EACH_BENCHED_DECK_ATTACH = new RegExp(
 // bought.
 //
 // ✅ THE COUNT RE-DERIVES TO THE DIGIT, AND FOR THE THIRD ROW RUNNING THE WHOLE
-// ROW DOES. Remote D1 `luminous`, `legal_standard = 1`, `json_each` over
+// ROW DOES. Remote D1 `colorless`, `legal_standard = 1`, `json_each` over
 // `attacks_json`/`abilities_json` PLUS the bare `effect` column, GLOB (never
 // LIKE), GROUPED BY SENTENCE, on 2026-08-06:
 //
@@ -28534,7 +28534,7 @@ const EACH_BENCHED_DECK_ATTACH = new RegExp(
     `attachEnergyFrom.healTarget`. */
 /** ⚠️⚠️ D246 WIDENED IT TWICE, AND BOTH WIDENINGS ARE MEASURED RATHER THAN
     ANTICIPATED. The whole `*If you do, heal*` family is TWO sentences and 4
-    legal printings (remote D1 `luminous`, all three text columns, GLOB, grouped
+    legal printings (remote D1 `colorless`, all three text columns, GLOB, grouped
     by sentence, 2026-08-06) — D236's three **Leafeon** printings and Snorlax
     `sv06-136` *"Attach an Energy card from your hand to this Pokémon. **If you
     do, heal 60 damage from this Pokémon.**"*.
@@ -28595,7 +28595,7 @@ const HAND_ATTACH = attachFromZoneAnchor(
     single sentence and the last thing that row owed apart from its two-mechanism
     outlier. *"You may attach **any number of** Basic Energy cards from your hand
     to your Pokémon in any way you like."* — **4 legal printings on 1 sentence**
-    (`sv08-133`/`-225`/`-242`/`-248`; remote D1 `luminous`, 2026-08-06).
+    (`sv08-133`/`-225`/`-242`/`-248`; remote D1 `colorless`, 2026-08-06).
 
     🛑 **A SEPARATE ANCHOR RATHER THAN A THIRD BRANCH IN `attachFromZoneClause`,
     AND THE REASON IS THAT IT EMITS A DIFFERENT OP.** The factory's three branches
@@ -28666,7 +28666,7 @@ const ATTACK_HAND_ANY_NUMBER_ATTACH = new RegExp(
     THIS FAMILY WHOSE SENTENCE DOES NOT START WITH THE VERB. *"Switch this Pokémon
     with 1 of your Benched Pokémon. If you do, attach up to 2 Basic {L} Energy
     cards from your hand to this Pokémon."* — **1 legal printing, 1 sentence**
-    (remote D1 `luminous`, 2026-08-06; the same antecedent carries 3 further
+    (remote D1 `colorless`, 2026-08-06; the same antecedent carries 3 further
     sentences, one legal and BUILT at D227 — Iron Bundle — and two rotated).
 
     ✅ **THE BACKLOG CELL'S "EVERY OP IT NEEDS EXISTS" SURVIVES**, which is the
@@ -28837,7 +28837,7 @@ function attachFromZoneProgram(
 // row 13), and the FOURTH row running whose count re-derives to the digit — but
 // the FIRST whose *edit estimate* was short by a whole op destination.
 //
-// RE-DERIVED (never inherited) against the remote D1 `luminous` — 3,786 rows /
+// RE-DERIVED (never inherited) against the remote D1 `colorless` — 3,786 rows /
 // 20 sets, 2,021 `legal_standard = 1` — on 2026-08-06, `json_each` +
 // `json_extract(value,'$.effect')`, GROUPED BY SENTENCE, over ALL THREE text
 // columns:
@@ -29234,7 +29234,7 @@ const ATTACK_DISCARD_SHUFFLE_BACK = new RegExp(
 // 7 sentences** and the query returns 15 on 7.
 //
 //   ```sql
-//   -- remote D1 `luminous`, legal_standard = 1, 2026-08-06, GROUPED BY SENTENCE
+//   -- remote D1 `colorless`, legal_standard = 1, 2026-08-06, GROUPED BY SENTENCE
 //   SELECT json_extract(j.value,'$.effect') AS s, COUNT(*) n, GROUP_CONCAT(c.id)
 //     FROM cards c, json_each(c.attacks_json) j
 //    WHERE c.legal_standard = 1
@@ -29367,7 +29367,7 @@ const ATTACK_LOOK_TOP_DISCARD = /^Look at the top card of your deck\. You may di
     sentences differ in nothing else, so a second constant would be two spellings
     of one grammar (the shape this file refuses everywhere else).
 
-    **THE CENSUS THIS ARM IS SIZED BY** (remote D1 `luminous`, 2026-08-15,
+    **THE CENSUS THIS ARM IS SIZED BY** (remote D1 `colorless`, 2026-08-15,
     `instr(attacks_json,'deck and put them back in any order') > 0`): **6
     printings, 4 legal.**
       • YOUR deck — Iron Valiant `sv05-080` "Calculation", top **4**. 1 legal.
@@ -38402,7 +38402,7 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
 
     ⚠️ **THE THREE-WAY SPLIT IS DECIDED BY THE PRINTED OBJECTS, AND ONLY TWO OF THE
     THREE PROVE THEMSELVES INSIDE THE BUILT SET.** Measured against the remote D1
-    `luminous` (3,786 rows / 20 sets, 2,021 `legal_standard = 1`) on 2026-08-04,
+    `colorless` (3,786 rows / 20 sets, 2,021 `legal_standard = 1`) on 2026-08-04,
     the four FULLY ANCHORED printings of this sentence are
 
       "…by any effects on your opponent's Active Pokémon."         29 rows, 15 legal

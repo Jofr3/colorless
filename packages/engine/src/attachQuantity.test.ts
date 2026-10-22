@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
@@ -35,7 +35,7 @@ import {
 // by walking the REGISTRY. **THE REGISTRY IS NOT THE BUILD.** `deriveAttackEffect`
 // is this op's second producer and it emits `count: 2` for three more
 // Standard-legal sentences no registry walk can reach. Re-derived here off the
-// registry AND the deriver, joined to remote D1 `luminous` on `$.effect` (never
+// registry AND the deriver, joined to remote D1 `colorless` on `$.effect` (never
 // `$.text`, which returns a false zero — the extractor was verified against the
 // eight known-present rows before any zero in it was believed), 2026-08-18:
 //

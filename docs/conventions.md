@@ -8376,14 +8376,14 @@ A second worktree lets a slice be built while the main tree runs a three-hour sw
 and both are silent.
 
 🛑 **(i) THE WORKTREE CAN TEST THE MAIN TREE'S SOURCE.** Symlinking or copying `node_modules` from the main
-repo makes the checkout resolve `@luminous/engine` to the **MAIN TREE's** `packages/engine`. Every suite —
+repo makes the checkout resolve `@colorless/engine` to the **MAIN TREE's** `packages/engine`. Every suite —
 `packages/engine`'s as much as `src/`'s — then reports green about code that is not in the checkout, and a
 whole slice can be built, probed and reviewed against source it never touched. **It is not made safe by a
 slice having no `src/` bytes.** Before trusting any green run, and again after anything that could touch
 `node_modules`:
 
 ```
-node -e "console.log(require('fs').realpathSync('node_modules/@luminous/engine'))"
+node -e "console.log(require('fs').realpathSync('node_modules/@colorless/engine'))"
 ```
 
 must print a path **inside the worktree**. D541 hit this and caught it here; `vite.config.ts` carries no
@@ -8440,21 +8440,21 @@ artefact. D542 checked that both partial logs agreed with the finished run on ev
 (2,659 / 2,659 and 292 / 292, same order) — a check worth running, because it is what says an interruption
 cost wall-clock and nothing else.
 
-### A worktree's isolation check is EVERY `@luminous` link, not the root one (D543 close-out)
+### A worktree's isolation check is EVERY `@colorless` link, not the root one (D543 close-out)
 
-D541's check above — one `realpath` of the root's `node_modules/@luminous/engine` — is NECESSARY and not
+D541's check above — one `realpath` of the root's `node_modules/@colorless/engine` — is NECESSARY and not
 SUFFICIENT. This repo carries **five** workspace links, and three of them live in NESTED `node_modules`:
 
 ```
-node_modules/@luminous/engine                    # ABSOLUTE in the main tree — D541's case
-node_modules/@luminous/schema
-apps/api/node_modules/@luminous/engine           # RELATIVE: ../../../../packages/engine
-apps/api/node_modules/@luminous/schema
-packages/engine/node_modules/@luminous/schema    # RELATIVE: ../../../schema
+node_modules/@colorless/engine                    # ABSOLUTE in the main tree — D541's case
+node_modules/@colorless/schema
+apps/api/node_modules/@colorless/engine           # RELATIVE: ../../../../packages/engine
+apps/api/node_modules/@colorless/schema
+packages/engine/node_modules/@colorless/schema    # RELATIVE: ../../../schema
 ```
 
 🛑 **A relative link resolves against its REAL path.** Symlink `packages/engine/node_modules` WHOLE into the
-main tree and `../../../schema` resolves from inside the MAIN tree — so the engine's `@luminous/schema` is the
+main tree and `../../../schema` resolves from inside the MAIN tree — so the engine's `@colorless/schema` is the
 main checkout's `packages/schema` while the root link reads perfectly. D543 hit it (the engine did not redden
 on a schema edit that `src/` already saw), and D544's builder hit it again; both rebuilt the nested
 directories as REAL directories whose links point inside the worktree. That is the second-checkout build
@@ -8463,7 +8463,7 @@ running against the very tree a whole-corpus sweep is patching in place.
 **So the check is all of them, and every one must print a path inside the worktree:**
 
 ```
-for l in node_modules/@luminous/* */*/node_modules/@luminous/*; do realpath "$l"; done
+for l in node_modules/@colorless/* */*/node_modules/@colorless/*; do realpath "$l"; done
 ```
 
 Build a worktree's nested `node_modules` as real directories, never as symlinks to the main checkout's.

@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame } from "./index";
 import type { EffectOp, GameEvent, GameState, PokemonRef, Seat } from "./index";
@@ -16,7 +16,7 @@ import { battler, deckOf, itemTrainer, specialEnergy, typedEnergy } from "./test
 //        (Lycanroc sv09-085 / sv09-166 — an Ability, 2 Standard-legal printings)
 //
 // ⚠️ **THE CLAUSE, CENSUSED OVER ALL THREE TEXT COLUMNS AND NOT CARRIED FROM
-// BACKLOG ROW 9.** Remote D1 `luminous`, 2026-08-16, `json_each(abilities_json)` /
+// BACKLOG ROW 9.** Remote D1 `colorless`, 2026-08-16, `json_each(abilities_json)` /
 // `json_each(attacks_json)` keyed on **`$.effect`** plus the bare `effect` column,
 // filtered to sentences containing `attach` AND any of the fourteen non-basic
 // Energy card NAMES the catalog prints. The extractor was verified against three

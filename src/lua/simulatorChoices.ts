@@ -1,5 +1,5 @@
-import type { EffectChoice, PokemonRef } from "@luminous/engine";
-import type { RedactedEffectPrompt, RedactedCard } from "@luminous/schema";
+import type { EffectChoice, PokemonRef } from "@colorless/engine";
+import type { RedactedEffectPrompt, RedactedCard } from "@colorless/schema";
 import type { LuaSimulator, SimMenu, SimOption } from "./simulator";
 
 /** Shared engine prompt shapes, rendered by Lua as button lists, real card

@@ -1207,7 +1207,7 @@ describe("the record-shape derivation, made rather than inherited", () => {
     //     by `deriveAttackDamageBonus` / `deriveAttackDamageMultiplier` from card
     //     TEXT at declaration and consumed by `scaledAttackDamage` in the same
     //     tick. They appear in no `GameState` field, no `PendingStage`, no
-    //     `@luminous/schema` projection and no redaction — swept, and
+    //     `@colorless/schema` projection and no redaction — swept, and
     //     `scaledAttackDamage`'s switch is the repo's ONLY dispatch over the union.
     //   • NO new `EffectOp` inhabitant, which is D189's stated bump condition: an
     //     op can be parked mid-program inside `GameState.phase`, and a count

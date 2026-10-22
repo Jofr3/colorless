@@ -8,8 +8,8 @@ import {
   type GameState,
   type PokemonRef,
   type Seat,
-} from "@luminous/engine";
-import type { Card, RedactedCard, RedactedGame, SeatLogEntry } from "@luminous/schema";
+} from "@colorless/engine";
+import type { Card, RedactedCard, RedactedGame, SeatLogEntry } from "@colorless/schema";
 import { initHost, hostReducer, stepTarget, type LocalGameSetup } from "../game/localHost";
 import { projectGameState } from "../game/projection";
 import type { CoinFlipBatch } from "../game/coinFlips";

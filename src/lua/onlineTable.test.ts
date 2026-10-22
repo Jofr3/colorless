@@ -1,4 +1,4 @@
-import { type GameState, redactGame } from "@luminous/engine";
+import { type GameState, redactGame } from "@colorless/engine";
 import {
   createSnapshot,
   type LobbySnapshot,
@@ -6,7 +6,7 @@ import {
   type RedactedEffectPrompt,
   type RedactedGame,
   type SeatLogEntry,
-} from "@luminous/schema";
+} from "@colorless/schema";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { driveSetup } from "../../packages/engine/src/testFixtures";
 import { fakeLobbyChannel } from "../test/fakeLobbyChannel";
@@ -436,6 +436,6 @@ describe("LuaOnlineMatch", () => {
     if (!a || !b) throw new Error("Expected two hand cards");
     t.sim.command(`reorder\thand\t${b[1]}\t0`);
     expect(t.tagged("C").find((r) => r[1] === b[1])?.[18]).toBe("0");
-    expect(local.keys().filter((k) => k.startsWith("luminous:simulator"))).toEqual([]);
+    expect(local.keys().filter((k) => k.startsWith("colorless:simulator"))).toEqual([]);
   });
 });

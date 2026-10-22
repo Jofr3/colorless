@@ -27,7 +27,7 @@ import {
 //        Kecleon `sv08-150` / `sv08-213` "Expert Hider" — 2
 //
 // ✅ THE CENSUS, RE-RUN AT THIS COMMIT rather than transcribed from the handoff.
-// Remote D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a), all three text
+// Remote D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a), all three text
 // columns via `json_each`, `legal_standard = 1`, GROUPED BY SENTENCE, lower-cased.
 //
 // RUNG 1 — `%prevent that damage%` ∪ `%flip a coin%prevent%`:

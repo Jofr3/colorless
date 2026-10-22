@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame, redactGame } from "./index";
 import type { GameState, Seat } from "./index";
@@ -19,7 +19,7 @@ import {
 //    YOU MAY SEARCH YOUR DECK FOR AN UNFEZANT OR UNFEZANT EX AND PUT IT ONTO THIS
 //    PIDOVE TO EVOLVE IT." THE EVOLVE-FROM-DECK FAMILY'S **ABILITY** PRINTING. ──
 //
-// THE POPULATION, queried against remote Cloudflare D1 `luminous`
+// THE POPULATION, queried against remote Cloudflare D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) over MCP on **2026-08-10**, WHOLE
 // COLUMN read (D306's rule — every arm, `damage` and `cost` included):
 //

@@ -19,7 +19,7 @@ import {
   serieSchema,
   setBriefSchema,
   setWithCardsSchema,
-} from "@luminous/schema";
+} from "@colorless/schema";
 import { asc, count, eq, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { type Context, Hono } from "hono";

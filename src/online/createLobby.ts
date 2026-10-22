@@ -1,4 +1,4 @@
-import { isValidLobbyCode } from "@luminous/schema";
+import { isValidLobbyCode } from "@colorless/schema";
 import { apiUrl } from "../lib/apiOrigin";
 
 /** Ask the server to mint a lobby (POST /lobby: no body, no credentials — the

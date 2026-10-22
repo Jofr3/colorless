@@ -24,7 +24,7 @@ import {
 //
 // ── THE CENSUS, RE-DERIVED AND NOT INHERITED ─────────────────────────────────
 // D261 closed this column, so this slice ran the COLUMN query rather than an
-// exploratory ladder (remote D1 `luminous` 735f0fb5-cdc3-494d-8b97-74a8ade0124a,
+// exploratory ladder (remote D1 `colorless` 735f0fb5-cdc3-494d-8b97-74a8ade0124a,
 // `legal_standard = 1 AND category='Energy' AND energy_type='Special' AND
 // effect <> ''`, GROUPED BY `effect`, 2026-08-07): **7 sentences / 8 printings**,
 // unchanged. `sv05-162` is **1 legal printing on ONE sentence**, in the `effect`

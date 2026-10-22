@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
@@ -33,13 +33,13 @@ import {
 // (D201 also gave the online router its `never` floor). This file is the asking.
 //
 // TWO REGEXES AND TWO ARMS. No op, no prompt, no choice kind, no event, no error
-// code, no park machinery, no dialog, no `apps/api` diff, no `@luminous/schema`
+// code, no park machinery, no dialog, no `apps/api` diff, no `@colorless/schema`
 // diff. The two inner ops (`drawCards`, `drawUntilHandSize`) have run since M4
 // and have been read off their UNWRAPPED sentences since D181; what was missing
 // was a reader for the four printed words in front of them.
 //
 // ── THE CENSUS, RE-DERIVED ───────────────────────────────────────────────────
-// Remote D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786 rows /
+// Remote D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786 rows /
 // 20 sets, 2,021 `legal_standard = 1`), swept 2026-08-04 over
 // `json_each(attacks_json)` + `json_extract(value,'$.effect')`. BOTH of D186's
 // figures held EXACT — 10 and 2, all twelve Standard-legal:
@@ -1003,7 +1003,7 @@ describe("the wire and the seat gate, on the DERIVED park", () => {
     //
     //   LEG 1, STILL STANDING: this slice adds no union inhabitant, no required
     //   field, no `GameState` field, no `EffectContinuation` shape, no prompt or
-    //   choice kind, no event, no wire member and no `@luminous/schema` diff. It
+    //   choice kind, no event, no wire member and no `@colorless/schema` diff. It
     //   adds two REGEXES. What widened is which op values are REACHABLE from the
     //   deriver seam — D125's widening-not-a-missing-field distinction, and
     //   exactly the ground on which D181 derived four ops and stayed at 11 (see

@@ -22,7 +22,7 @@ import {
 //   Item, **1 Standard-legal printing.**
 //
 // ── THE CENSUS, AT THREE WIDTHS AND OVER ALL THREE TEXT COLUMNS ─────────────
-// Re-run against the remote D1 `luminous` at THIS head (2026-08-14) rather than
+// Re-run against the remote D1 `colorless` at THIS head (2026-08-14) rather than
 // inherited, with every per-column split re-added against its own total.
 //
 //   (a) `instr(<col>,'reveal any number of') > 0` — the printed CLAUSE:

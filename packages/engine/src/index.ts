@@ -1,4 +1,4 @@
-// @luminous/engine — deterministic, pure PTCG game engine (P3).
+// @colorless/engine — deterministic, pure PTCG game engine (P3).
 //
 // M1 surface: the setup sequence (shuffle, coin flip, hands + mulligans +
 // compensation, placements, prizes), the turn loop with its mandatory draw
@@ -233,7 +233,7 @@ import type { GameState, Seat } from "./types";
     connected socket, so no full `GameState` (opponent hand/deck/prizes) ever
     crosses the network. It restates the web app's playmat redaction (opponent
     hand/prizes/decks as counts, setup in-play as anonymous backs) against the
-    neutral `@luminous/schema` `RedactedGame` wire shape — no image URLs, no
+    neutral `@colorless/schema` `RedactedGame` wire shape — no image URLs, no
     engine imports on the far side. Its subtle phase derivation (turn owner /
     who-must-act / parked interrupt / outcome) is the exhaustive `phaseViewOf`
     switch, MOVED here from that projection (phaseView.ts) so both share one
@@ -566,7 +566,7 @@ import type { GameState, Seat } from "./types";
     §13.4's paralysis clock reused verbatim — cleared in `runCheckup` for
     `endedSeat` only — plus the early clears wherever an effect of an attack ends
     (leaving the Active Spot, evolving). ZERO registry rows: every print derives
-    off its printed text. No API/DB/`@luminous/schema` change; the web diff is the
+    off its printed text. No API/DB/`@colorless/schema` change; the web diff is the
     one `&&`. */
 
 /* 0.64.0 — `preventOpponentActiveRetreat`: Snorlax swsh10.5-055 "Block" ("As
@@ -589,7 +589,7 @@ import type { GameState, Seat } from "./types";
     it on. One registry row, one turn.ts guard reusing the existing
     `RETREAT_PREVENTED` code (a different message: "an attack effect" would be a
     lie for an Ability), one `&&` in redact.ts's `can` and one in the web HUD. No
-    new events, ops or error codes; no API/DB/`@luminous/schema` change. It is
+    new events, ops or error codes; no API/DB/`@colorless/schema` change. It is
     also the family's first §9-POSITIVE: Snorlax is a BASIC, so an Active Klefki's
     "Mischievous Lock" really does silence it — where Lunar Zone and Trap
     Territory, both Stage 1 sources, could only assert the negative. */
@@ -620,7 +620,7 @@ import type { GameState, Seat } from "./types";
     cycle. It is also the aura family's SECOND §9 POSITIVE — Wimpod is a BASIC, so
     an Active Klefki's "Mischievous Lock" genuinely silences Punk Out and the
     printed 3 snaps back. One registry row, one new scan, one barrel export; no
-    new op, event, error code or wire field, and no API/DB/`@luminous/schema`/web
+    new op, event, error code or wire field, and no API/DB/`@colorless/schema`/web
     change. */
 
 /* 0.66.0 — the CONDITIONAL flat attack-damage bonus (D115): "If <clause>,
@@ -677,7 +677,7 @@ import type { GameState, Seat } from "./types";
     untouched: the pool prints no "If …, this attack does N damage." (no-"more")
     twin, and no "… more damage if …" trailing form or "N LESS damage" variant
     exists either. No new op, event, error code, registry row or wire field; no
-    API/DB/`@luminous/schema`/web change. */
+    API/DB/`@colorless/schema`/web change. */
 
 /* 0.67.0 — the SECOND wave of D115's clause table (D116): FOUR more printed
     clauses, 7 printings across 6 cards, again on ZERO registry rows and with no
@@ -743,7 +743,7 @@ import type { GameState, Seat } from "./types";
     Galvantula sv06.5-002 "Shocking Web" (+80, `{L}`), Cetitan sv02-055 "Special
     Horn" (+140) and Tinkaton sv02-105 "Special Hammer" (+90, both `Special`).
     6 printings / 5 cards, ZERO registry rows, no new op, event, error code or
-    wire field, no fold change, no web/API/DB/`@luminous/schema` diff.
+    wire field, no fold change, no web/API/DB/`@colorless/schema` diff.
 
     `BoardCondition` gains its first member carrying a PARAMETER —
     `{ kind: "yourActiveHasEnergyAttached"; energy: BasicEnergyType | "special" }`
@@ -774,7 +774,7 @@ import type { GameState, Seat } from "./types";
     2 or 4, +120), Absol ex sv03-135/-214 "Cursed Slug" (their hand 3 or fewer,
     +120) and Bronzong sv03-145 "Extrasensory" (the two hands equal, +90). 5
     printings / 4 cards / 4 clauses, ZERO registry rows, no new op, event, error
-    code or wire field, no fold change, no web/API/DB/`@luminous/schema` diff.
+    code or wire field, no fold change, no web/API/DB/`@colorless/schema` diff.
 
     Three `BoardCondition` members: `opponentPrizesRemaining { counts }` (ONE
     member at two values — the printed "exactly" is set MEMBERSHIP, so `[2, 4]` is
@@ -801,7 +801,7 @@ import type { GameState, Seat } from "./types";
     ("If your opponent's Active Pokémon is a Dragon Pokémon", +90) and Falinks
     sv02-119 "Reckless Charge Together" ("If Falinks is on your Bench", +90). 2
     printings / 2 cards / 2 clauses, ZERO registry rows, no new op, event, error
-    code or wire field, no fold change, no web/API/DB/`@luminous/schema` diff.
+    code or wire field, no fold change, no web/API/DB/`@colorless/schema` diff.
 
     Both vary on exactly one token and they get OPPOSITE treatments, which is the
     slice's whole point. The discriminator is not the printing count (each is a
@@ -824,7 +824,7 @@ import type { GameState, Seat } from "./types";
 /* 0.72.0 — the BOARD-WIDE Energy count (D121): Absol sv06.5-030 "Darkfall",
     "If you have at least 3 {D} Energy in play, this attack does 50 more damage."
     1 printing / 1 card / 1 clause, ZERO registry rows, no new op, event, error
-    code or wire field, no fold change, no web/API/DB/`@luminous/schema` diff.
+    code or wire field, no fold change, no web/API/DB/`@colorless/schema` diff.
 
     ONE WORD SEPARATES IT FROM D118, AND THAT WORD IS THE SLICE. "attached" scopes
     to a single Pokémon (nine printings, four cards); "in play" means your whole
@@ -882,7 +882,7 @@ import type { GameState, Seat } from "./types";
 
     Cost: 1 union member, 1 `conditionHolds` arm, 1 `conditionNote` arm, 1 table
     row, 1 test-surgery helper. No new op, event, error code, registry row, wire
-    field or fold change; no continuous.ts diff; no web/API/DB/`@luminous/schema`
+    field or fold change; no continuous.ts diff; no web/API/DB/`@colorless/schema`
     diff. The note ROUND-TRIPS to the printed clause with only the pronoun swapped
     — this sentence carries no timing word and no card-face glyph.
 
@@ -934,7 +934,7 @@ import type { GameState, Seat } from "./types";
     Cost: 1 union member, 1 `conditionHolds` arm, 1 `conditionNote` arm, 1 literal
     table row, 0 new state fields, 0 registry rows. No new op, event, error code,
     wire field or fold change; no continuous.ts diff; no web/API/DB/
-    `@luminous/schema` diff. The note ROUND-TRIPS to the printed clause byte for
+    `@colorless/schema` diff. The note ROUND-TRIPS to the printed clause byte for
     byte — the family's first that drops nothing at all. */
 /** 0.75.0 — P3-M5: the PROMOTED-THIS-TURN clause (D124). `BoardCondition` gains
     `yourActivePromotedThisTurn`, mapping "If this Pokémon moved from your Bench to
@@ -992,7 +992,7 @@ import type { GameState, Seat } from "./types";
     Cost: 1 union member, 1 `conditionHolds` arm, 1 `conditionNote` arm, 1 literal
     table row, 1 NEW `InPlayPokemon` field, 3 one-line stamp sites, 0 registry rows.
     No new op, event, error code, wire field or fold change; no continuous.ts diff;
-    no web/API/`@luminous/schema` diff. `redact.ts` allow-lists what crosses the
+    no web/API/`@colorless/schema` diff. `redact.ts` allow-lists what crosses the
     wire, so the field is invisible to clients by construction. **MATCH_RECORD_VERSION
     1 → 2** (apps/api/src/lobby/match.ts): a record written by the previous deploy
     has in-play Pokémon with NO `promotedTurn` at all, which is a MISSING REQUIRED
@@ -1058,7 +1058,7 @@ import type { GameState, Seat } from "./types";
     `ATTACK_FAILED.reason` ("confusion" | "requirement") and its log line. ZERO
     new `BoardCondition` members, `conditionHolds`/`conditionNote` arms, ops,
     state fields, error codes, registry rows or fold changes; no continuous.ts
-    diff; no web/API/DB/`@luminous/schema` diff. NO MATCH_RECORD_VERSION BUMP:
+    diff; no web/API/DB/`@colorless/schema` diff. NO MATCH_RECORD_VERSION BUMP:
     widening an event's reason enum is a widening, not a missing required field —
     the distinction D124 had to bump for. */
 /** 0.77.0 — P3-M5: the PRINTED COIN FLIP (D126), and the cheapest slice the
@@ -1123,7 +1123,7 @@ import type { GameState, Seat } from "./types";
     WIDENING on `ATTACK_FAILED.reason` ("confusion" | "requirement" | "coinFlip")
     and its log arm. ZERO new `BoardCondition` members, `DamageCountSource`
     members, clause-table rows, ops, events, state fields, error codes, registry
-    rows or fold changes; no continuous.ts diff; no web/API/DB/`@luminous/schema`
+    rows or fold changes; no continuous.ts diff; no web/API/DB/`@colorless/schema`
     diff. NO MATCH_RECORD_VERSION BUMP — the same widening-not-a-missing-field
     distinction D125 recorded. */
 /** 0.78.0 — P3-M5: the MULTI-FLIP COUNT FOLD (D127). "Flip N coins. This attack
@@ -1185,7 +1185,7 @@ import type { GameState, Seat } from "./types";
     Cost: 1 skeleton regex + 1 constant, 1 union member, 1 deriver arm, 1 loop + 2
     terms in attack.ts. ZERO new events, ops, `BoardCondition`/`DamageCountSource`
     members, clause-table rows, state fields, error codes, registry rows or log
-    arms; no continuous.ts diff; no web/API/DB/`@luminous/schema` diff. NO
+    arms; no continuous.ts diff; no web/API/DB/`@colorless/schema` diff. NO
     MATCH_RECORD_VERSION BUMP — no event shape changed at all. */
 /** 0.79.0 — P3-M5: the BOARD-COUNTED FLIP COUNT (D128). "Flip a coin for each
     [{X}] Energy attached to this Pokémon. This attack does D damage for each
@@ -1230,7 +1230,7 @@ import type { GameState, Seat } from "./types";
     continuous.ts counter (`countAttachedEnergy`, beside `hasAttachedEnergy`), 1
     private `flipCount` reader + 1 changed line in attack.ts. ZERO new events, ops,
     `BoardCondition`/`DamageCountSource` members, clause-table rows, state fields,
-    error codes, registry rows or log arms; no web/API/DB/`@luminous/schema` diff.
+    error codes, registry rows or log arms; no web/API/DB/`@colorless/schema` diff.
     NO MATCH_RECORD_VERSION BUMP — no event shape changed at all. */
 /** 0.80.0 — P3-M5: the UNBOUNDED FOLD (D129). "Flip a coin until you get tails.
     This attack does D [more] damage for each heads." (5 damaging printings) now
@@ -1280,7 +1280,7 @@ import type { GameState, Seat } from "./types";
     1 constant, and `flipCount` → `takeFlips` in attack.ts. ZERO new events, ops,
     `BoardCondition`/`DamageCountSource` members, clause-table rows, state fields,
     error codes, registry rows or log arms; no continuous.ts diff; no web/API/DB/
-    `@luminous/schema` diff. NO MATCH_RECORD_VERSION BUMP — no event shape changed
+    `@colorless/schema` diff. NO MATCH_RECORD_VERSION BUMP — no event shape changed
     at all. */
 /** 0.81.0 — P3-M5: the per-heads PROGRAM (D130). "Flip {N} coins|a coin until you
     get tails. For each heads, discard the top {M} cards of your opponent's deck."
@@ -1367,7 +1367,7 @@ import type { GameState, Seat } from "./types";
     `BoardCondition`/`DamageCountSource` members, clause-table rows, state fields,
     prompts, error codes, registry rows or redact arms; no rng.ts diff and no
     continuous.ts diff. NO MATCH_RECORD_VERSION BUMP — no `MatchRecord`/`GameState`
-    shape changed and no event shape changed. No web/API/DB/`@luminous/schema`
+    shape changed and no event shape changed. No web/API/DB/`@colorless/schema`
     diff. */
 /** 0.82.0 — P3-M5: the UNCONDITIONAL MILL, both directions (D131). "Discard the
     top [{N} cards|card] of your [opponent's] deck." now SIMULATES on ONE anchored
@@ -1432,7 +1432,7 @@ import type { GameState, Seat } from "./types";
     property that let one op start emitting on both seats with no copy change. No
     rng.ts / continuous.ts / attack.ts diff. NO MATCH_RECORD_VERSION BUMP — no
     `MatchRecord`/`GameState` shape and no event shape changed. No web/API/DB/
-    `@luminous/schema` diff. */
+    `@colorless/schema` diff. */
 /** 0.83.0 — P3-M5: the BARE SELF-HEAL sentence (D132). "Heal {N} damage from this
     Pokémon." now SIMULATES on ONE anchored regex and ONE deriver arm — **18
     printings / 4 distinct clauses** (N = 10, 20, 30, 50), every one of them a
@@ -1488,7 +1488,7 @@ import type { GameState, Seat } from "./types";
     DIFF — `healSelf` was already correct, including its clamp and its silence. No
     rng.ts / continuous.ts / attack.ts / events.ts diff. NO MATCH_RECORD_VERSION BUMP
     — no `MatchRecord`/`GameState` shape and no event shape changed. No web/API/DB/
-    `@luminous/schema` diff. */
+    `@colorless/schema` diff. */
 /** 0.84.0 — P3-M5: the OWN-BOARD HEAL sentence (D133). "Heal {N} damage from each of
     your Pokémon." now SIMULATES on ONE anchored regex and ONE deriver arm — **7
     printings / 2 distinct clauses** (N = 20, 30), every one a STANDALONE single
@@ -1550,7 +1550,7 @@ import type { GameState, Seat } from "./types";
     INTERPRETER DIFF — `healEach` was already correct, including its per-Pokémon clamp,
     its silence and its Active. No rng.ts / continuous.ts / attack.ts / events.ts diff.
     NO MATCH_RECORD_VERSION BUMP — no `MatchRecord`/`GameState` shape and no event
-    shape changed. No web/API/DB/`@luminous/schema` diff. */
+    shape changed. No web/API/DB/`@colorless/schema` diff. */
 /** 0.85.0 — P3-M5: the FLIP-GATED OP family (D134). "Flip a coin. If heads,
     <action>." now SIMULATES for two more consequents, on TWO anchored regexes and
     TWO deriver arms — 3 printings / 2 distinct clauses. Censused against the local
@@ -1608,7 +1608,7 @@ import type { GameState, Seat } from "./types";
     redact arms or log arms. NO INTERPRETER DIFF — `coinFlipGate`, `heal` and
     `discardDeckTop` were all already correct. No rng.ts / continuous.ts / attack.ts /
     events.ts diff. NO MATCH_RECORD_VERSION BUMP — no `MatchRecord`/`GameState` shape
-    and no event shape changed. No web/API/DB/`@luminous/schema` diff. */
+    and no event shape changed. No web/API/DB/`@colorless/schema` diff. */
 /** 0.86.0 — P3-M5: the CHOSEN HEAL (D135). "Heal {N|all} damage from 1 of your
     [Benched] Pokémon." now SIMULATES — **10 printings across 7 distinct clauses** on
     ONE anchored regex, ONE deriver arm and ONE NEW FIELD, and it closes the heal
@@ -1678,7 +1678,7 @@ import type { GameState, Seat } from "./types";
     attack.ts / flow.ts / cardplay.ts / events.ts diff. NO MATCH_RECORD_VERSION BUMP —
     the same widening-not-a-missing-field distinction D125 recorded, and an absent
     optional field reads identically in every older record. No web/API/DB/
-    `@luminous/schema` diff. */
+    `@colorless/schema` diff. */
 /** 0.87.0 — P3-M5: the COUNTER MOVE (D138). "Move all damage counters from 1 of
     your Benched Pokémon to your opponent's Active Pokémon." now SIMULATES —
     **2 printings** (Dedenne ex sv02-093/-239 "Tail Swap", one attack in two
@@ -1762,7 +1762,7 @@ import type { GameState, Seat } from "./types";
     cardplay.ts diff. NO MATCH_RECORD_VERSION BUMP — a new union member and a new
     enum value are WIDENINGS, D125's distinction and D130's precedent (which added a
     whole op and did not bump either); an older record stays readable and simply
-    never carries them. No web/API/DB/`@luminous/schema` diff. */
+    never carries them. No web/API/DB/`@colorless/schema` diff. */
 /** 0.88.0 — P3-M5: the PUT on the defender (D139). "Put {N} damage counters on
     your opponent's Active Pokémon." now SIMULATES — **2 printings / 2 distinct
     clauses**, Mimikyu sv02-097 "Ghost Eye" ({P}{C}, N = 7) and Polteageist
@@ -1865,7 +1865,7 @@ import type { GameState, Seat } from "./types";
     MATCH_RECORD_VERSION BUMP — a new enum value is a WIDENING (D125's distinction,
     D130/D135/D137/D138's precedent), and the op's new field is not persisted at
     all: `damageActive` never parks, so no `EffectContinuation` has ever carried
-    one. No web/API/DB/`@luminous/schema` diff.
+    one. No web/API/DB/`@colorless/schema` diff.
 
     ⚠️ FOUND AND WRITTEN DOWN RATHER THAN FIXED — `placeSnipe` CARRIES THE SAME
     HARDCODED LABEL, AND ITS GUARD IS AN ACCIDENT. It pushes `COUNTERS_PLACED`
@@ -2004,7 +2004,7 @@ import type { GameState, Seat } from "./types";
     never "did a type change" but "can the PREVIOUS deploy's record hold the old
     shape", and for an op that turns entirely on whether it can be sitting in
     `phase.cont` at write time. Two slices, one field, opposite answers.
-    No web/API/DB/`@luminous/schema` diff beyond that one constant. */
+    No web/API/DB/`@colorless/schema` diff beyond that one constant. */
 /** 0.90.0 — P3-M5: the §9 RECOIL LABEL (D141). `attack.ts`'s reactive recoil
     pushed `COUNTERS_PLACED` source `"ability"` as a string literal, so **every
     Rocky Helmet sv01-193 — a Pokémon TOOL — has rendered "Ability: 20 damage to
@@ -2083,7 +2083,7 @@ import type { GameState, Seat } from "./types";
     suites, 1 added log-arm pin. ZERO new ops, prompts, parks, events, clause-table
     rows, state fields, error codes, registry rows or redact arms; no
     `effects.ts`/`interpreter.ts`/`continuous.ts`/`registry.ts`/`flow.ts` diff and
-    no web/API/DB/`@luminous/schema` diff. */
+    no web/API/DB/`@colorless/schema` diff. */
 /** 0.91.0 — THE GATED PREVENT CLAUSE: *"Flip a coin. If heads, during your
     opponent's next turn, prevent all damage [FROM AND EFFECTS OF] attacks done to
     this Pokémon."* — **13 printings across TWO READINGS** on two anchored
@@ -2198,7 +2198,7 @@ import type { GameState, Seat } from "./types";
     GREEN exit 0, **184 files / 2993 tests** (was 183 / 2960). ZERO new prompts,
     parks, clause-table rows, `BoardCondition` members, error codes, registry rows
     or redact arms; no `rng.ts`/`cardplay.ts`/`registry.ts` diff and no web/DB/
-    `@luminous/schema` diff beyond the one `MATCH_RECORD_VERSION` constant. */
+    `@colorless/schema` diff beyond the one `MATCH_RECORD_VERSION` constant. */
 /** 0.92.0 — THE SELF-LOCK: *"During your next turn, this Pokémon can't attack."*
     — **22 printings across TWO sentences** on two anchored regexes, ONE new bare
     `EffectOp`, ONE new turn-stamped `InPlayPokemon` field, ONE new error code and
@@ -2324,7 +2324,7 @@ import type { GameState, Seat } from "./types";
     ZERO new prompts, parks, clause-table rows, `BoardCondition` members, registry
     rows, `COUNTERS_PLACED` members or `EffectContext` fields; no
     `rng.ts`/`cardplay.ts`/`registry.ts`/`flow.ts` diff and no DB/
-    `@luminous/schema` diff beyond the one `MATCH_RECORD_VERSION` constant. */
+    `@colorless/schema` diff beyond the one `MATCH_RECORD_VERSION` constant. */
 /** 0.93.0 — THE TAILS GATE: *"Flip a coin. If tails, during your next turn, this
     Pokémon can't attack."* — **5 printings on ONE sentence**, bought with **ONE
     OPTIONAL FIELD** (`coinFlipGate.onTails`), one regex, one deriver arm and ONE
@@ -2560,7 +2560,7 @@ import type { GameState, Seat } from "./types";
     `preventDamage` (D146). Item 1 of D145's remainder list. **No new op, no new
     event, no new error code, no new park, no new prompt, no registry row, no
     `redact.ts` / `turn.ts` / `flow.ts` / `cardplay.ts` / `rng.ts` / `registry.ts`
-    diff, no web/DB/`@luminous/schema` diff and NO `MATCH_RECORD_VERSION` bump.**
+    diff, no web/DB/`@colorless/schema` diff and NO `MATCH_RECORD_VERSION` bump.**
 
     ⚠️ **THE ITEM WAS RIGHT ABOUT ITS COUNT AND WRONG ABOUT ITS CARDS, AND ITS
     ONE STRUCTURAL CLAIM WAS TRUE IN LETTER AND FALSE IN SUBSTANCE.** Four
@@ -2779,7 +2779,7 @@ import type { GameState, Seat } from "./types";
     new `continuous.ts` reader, 4 read sites (`+` each), 3 §10 clear sites, 1 new
     event, 1 log arm** — and no `redact.ts` / `flow.ts` / `cardplay.ts` / `rng.ts`
     / `registry.ts` / `triggers.ts` diff, no new error code, no new park, no new
-    prompt, no registry row and no web/DB/`@luminous/schema` diff beyond the one
+    prompt, no registry row and no web/DB/`@colorless/schema` diff beyond the one
     constant. 4 new fixtures (Swablu sv03-169, Pineco sv01-001, Eiscue sv02-048,
     plus Forretress sv01-139 promoted from deriver-only to driven), 1 new deck
     (`DAMAGE_REDUCTION_DECK`), `damageReduction.test.ts` (**36 tests**, SEED-FREE
@@ -2911,7 +2911,7 @@ import type { GameState, Seat } from "./types";
     new error code, no new park, no new prompt, no new state field, no registry
     row, no `attack.ts` / `continuous.ts` / `redact.ts` / `turn.ts` / `log.ts` /
     `events.ts` / `flow.ts` / `cardplay.ts` / `rng.ts` / `types.ts` behavioural
-    diff and no web/DB/`@luminous/schema` diff. 2 new fixtures (Eiscue ex
+    diff and no web/DB/`@colorless/schema` diff. 2 new fixtures (Eiscue ex
     `sv03-042`, Houndoom ex `sv03-134`), 1 new deck (`DEFENDER_LOCK_DECK`),
     `defenderLock.test.ts` (**40 tests, SEED-FREE**), 3 re-pointed stays-LOUD
     witnesses (`attackLock.test.ts`, `attackPark.test.ts`, `typeNameClause.test.ts`
@@ -3043,7 +3043,7 @@ import type { GameState, Seat } from "./types";
     1 log arm + 1 breadcrumb, 4 one-term read sites, 3 §10 clear lines** — no new
     prompt, park, error code, registry row, `BoardCondition` member, redact arm or
     `flow.ts` / `cardplay.ts` / `rng.ts` / `triggers.ts` / `redact.ts` diff, and no
-    web/DB/`@luminous/schema` diff beyond `MATCH_RECORD_VERSION`. **`MRV` 6 → 7**
+    web/DB/`@colorless/schema` diff beyond `MATCH_RECORD_VERSION`. **`MRV` 6 → 7**
     (D124's trigger, the FIFTH time: a required key on `InPlayPokemon`). 3 new
     fixtures (Houndoom `sv06.5-008`, Pikachu `sv02-062`, Pidove `swsh10.5-061`) and
     1 COMPLETED (Florges `sv01-093` gained its only printed attack), 1 new deck
@@ -3140,7 +3140,7 @@ import type { GameState, Seat } from "./types";
 
     Cost: **1 `PassiveEffects` flag, 1 registry row, 1 new reader, 4 one-term read
     sites** — no new op, field, event, error code, prompt, park, regex, deriver
-    arm, redact arm or projection, and no web/DB/`@luminous/schema` diff at all.
+    arm, redact arm or projection, and no web/DB/`@colorless/schema` diff at all.
     1 fixture COMPLETED (Entei gained its printed Ability), 1 new deck
     (`PRESSURE_DECK`), `pressureAura.test.ts` (**19 tests, one SEED**), 1
     re-pointed stays-LOUD witness (`attackDebuff.test.ts` — "absent" → "landed as
@@ -3224,7 +3224,7 @@ import type { GameState, Seat } from "./types";
     Cost: **1 op, 1 required `InPlayPokemon` field, 1 record type, 1 regex, 1
     deriver arm, 1 reader, 1 event, 1 log row, 3 §10 clears, 1 one-term read
     site** — no new `COUNTERS_PLACED` member, no park, no error code, no prompt,
-    no redact arm, no projection, no registry row and no web/DB/`@luminous/schema`
+    no redact arm, no projection, no registry row and no web/DB/`@colorless/schema`
     diff. 1 fixture ADDED (Lycanroc ex, verbatim vs the D1), 1 new deck
     (`INSTALLED_RECOIL_DECK`), `installedRecoil.test.ts`, 1 re-pointed stays-LOUD
     witness in `counterattack.test.ts` (none deleted). */
@@ -3286,7 +3286,7 @@ import type { GameState, Seat } from "./types";
 
     Cost: **1 event field, 1 ternary in log.ts, 2 producer lines** — no op, no state
     field, no regex, no deriver arm, no error code, no prompt, no redact arm, no
-    projection, no registry row, no fixture and no web/API/DB/`@luminous/schema`
+    projection, no registry row, no fixture and no web/API/DB/`@colorless/schema`
     diff. `log.test.ts` +1 case, its DECK_TOP_DISCARDED block rewritten. */
 /** 0.102.0 — P3-M5 long tail (**D154**): the **PER-ATTACK LOCK** — *"During your
     next turn, this Pokémon can't use {AttackName}."* **6 catalogued printings
@@ -3347,7 +3347,7 @@ import type { GameState, Seat } from "./types";
     Cost: **1 op, 1 required `InPlayPokemon` field, 1 record type, 1 regex, 1
     deriver arm, 1 reader, 1 EVENT FIELD (not a new event — D113/D153), 1 log
     branch, 3 §10 clears, 1 §8 gate and BOTH payability projections** — no park, no
-    new error code, no prompt, no registry row, no DB/`@luminous/schema` diff. */
+    new error code, no prompt, no registry row, no DB/`@colorless/schema` diff. */
 /** 0.102.0 → 0.103.0 — **P3-M5 (long tail): the PER-ATTACK DAMAGE BUFF**:
 
       "During your next turn, this Pokémon's {AttackName} attack does {N} more
@@ -3489,7 +3489,7 @@ import type { GameState, Seat } from "./types";
     deriver arm, 1 reader, 1 shared install-side resolver (extracted from D154's op
     so its one curly-named witness covers both), 1 NEW EVENT, 1 log arm, 4 §10
     clears and 1 term at ONE read site** — no park, no new error code, no prompt,
-    no `DAMAGE_DEALT` member, no redact/HUD diff, no `@luminous/schema` or DB diff
+    no `DAMAGE_DEALT` member, no redact/HUD diff, no `@colorless/schema` or DB diff
     beyond the one constant.
 
     ---
@@ -3853,7 +3853,7 @@ import type { GameState, Seat } from "./types";
     Cost: 2 `PassiveEffects` fields, 1 `continuous.ts` function, 1 gate inside
     `passivesOf`, 2 registry rows, 4 read sites — no new op, event, error code,
     prompt, park, regex, deriver arm, redact arm or projection, and no
-    web/DB/`@luminous/schema` diff. `MATCH_RECORD_VERSION` stays **10**: both
+    web/DB/`@colorless/schema` diff. `MATCH_RECORD_VERSION` stays **10**: both
     fields live on the CATALOG, both readers are pure functions of the current
     state, and the cached-total dodge was priced and REFUSED. */
 /** **D162 — the RESTORED-CATALOG RE-CENSUS, and the per-attack lock family
@@ -3949,7 +3949,7 @@ import type { GameState, Seat } from "./types";
     Cost: **1 regex, 1 reader, 2 lines in `attack.ts`'s pipeline** (one `+` on the
     `debuff` term, one term on each simulated-flag) — no new op, event, event field,
     log crumb, error code, prompt, park, field, registry row, redact arm or
-    projection, and no web/DB/`@luminous/schema` diff. 1 fixture, 1 deck
+    projection, and no web/DB/`@colorless/schema` diff. 1 fixture, 1 deck
     (`SELF_SCALING_PENALTY_DECK`, its own 60), `selfScalingPenalty.test.ts` (**34
     tests, SEED-FREE**), manifest regenerated (208 → **209** fixture rows, 0
     absent). `MATCH_RECORD_VERSION` stays **10** — the NINTH control on D124's
@@ -4038,7 +4038,7 @@ import type { GameState, Seat } from "./types";
     `MATCH_RECORD_VERSION` **10 → 11**: the eighth time on D124's trigger and the
     FIRST that is a CHANGED TYPE rather than a new key, which is where *"can the
     previous deploy's RECORD hold the new TYPE"* earns its wording. No
-    `@luminous/schema` diff — the wire is byte-identical, only the DO's stored
+    `@colorless/schema` diff — the wire is byte-identical, only the DO's stored
     `GameState` moves.
 
     ⚠️ **COMMITTED WITH AN OUTSTANDING DEBT: the mutation pass was INTERRUPTED at
@@ -4068,7 +4068,7 @@ import type { GameState, Seat } from "./types";
     the third arrival cost **one regex and one `if`**: no new `DamageCountSource`,
     no new evaluator arm, no new reader, no new fold, no branch in `attack.ts`, no
     op, event, event field, log crumb, error code, prompt, park, field, registry
-    row, redact arm or projection, and no web/DB/`@luminous/schema` diff. D163's
+    row, redact arm or projection, and no web/DB/`@colorless/schema` diff. D163's
     subtractive twin needed a whole third reader because its FOLD was new; this one
     needed none because its fold was not.
 
@@ -4148,7 +4148,7 @@ import type { GameState, Seat } from "./types";
 
     Cost: **1 regex, 1 reader arm, 1 `DamageCountSource` member, 1 evaluator arm** —
     no new op, event, event field, log crumb, error code, prompt, park, state field,
-    registry row, redact arm or projection, and no web/DB/`@luminous/schema` diff.
+    registry row, redact arm or projection, and no web/DB/`@colorless/schema` diff.
     3 fixtures (all authored fresh — `FIXTURE_POOL` had ZERO coverage of any of the
     three cards or either sentence), 1 deck (`OPPONENT_COUNTER_DECK`, its own 60,
     fielding Tyranitar ex `sv03-066` because the defender must arrive PRE-DAMAGED
@@ -4211,7 +4211,7 @@ import type { GameState, Seat } from "./types";
     direction** the moment a DISCOUNT exists (the button lights up while the dots
     show a cost the player has not paid). Fixed by a **SIBLING** field
     `RedactedAttack.effectiveCost?: string[]` — *not* by widening `cost`, whose
-    meaning as PRINTED is documented in `@luminous/schema` and depended on by two
+    meaning as PRINTED is documented in `@colorless/schema` and depended on by two
     HUDs. A sibling is additive, reversible, and strictly more informative (a client
     can render "was 5, now 3"); it is emitted **only when the two differ**, so every
     board without a cost modifier puts a byte-identical frame on the wire, mirroring
@@ -4298,7 +4298,7 @@ import type { GameState, Seat } from "./types";
     the same four-edit shape D168 found, and the same two edits ("one regex + one
     evaluator arm") the remainder list had again omitted. No new op, event, event
     field, log crumb, error code, prompt, park, state field, registry row, redact arm
-    or projection, and no web/DB/`@luminous/schema` diff. Plus **1 fixture**
+    or projection, and no web/DB/`@colorless/schema` diff. Plus **1 fixture**
     (`swsh10.5-043`, authored fresh — `FIXTURE_POOL` had ZERO coverage — COMPLETE
     against the manifest, carrying its **UNSIMULATED** idx-1 "Earthquake" self-spread
     as the declared simplification AND as the skipped-sibling witness), **1 deck**
@@ -4393,7 +4393,7 @@ import type { GameState, Seat } from "./types";
     field + 1 log line, 1 widened `attachTool` gate, 1 registry row (`EXP_SHARE`),
     1 fixture (`sv01-174`) and 1 deck
     (`EXP_SHARE_DECK`, **SEED-FREE** — no coin anywhere in the card). No new event,
-    no new log arm, no error code, no `@luminous/schema` diff, no DB diff, no web
+    no new log arm, no error code, no `@colorless/schema` diff, no DB diff, no web
     diff. Manifest **215 → 216** fixture rows. */
 
 /** 0.117.0 — **D172, the §12 STATUS-IMMUNITY family: the OTHER half of the Ability
@@ -4457,7 +4457,7 @@ import type { GameState, Seat } from "./types";
     1 event + 1 log arm**, 2 registry rows on 1 new program (`ELECTRICITY_POUCHES`)
     + 1 field added to `WELL_BAKED_BODY`, 2 fixtures (`sv01-068`/`-208`) and 1 deck
     (`STATUS_IMMUNITY_DECK`). No op, no error code, no prompt, no park, no regex, no
-    deriver arm, no redact arm, no `@luminous/schema` diff, no DB diff, no web diff.
+    deriver arm, no redact arm, no `@colorless/schema` diff, no DB diff, no web diff.
     2 re-pointed D159 pins (`attackerFilter.test.ts`), `statusImmunity.test.ts`
     (**49 tests**). Manifest **216 → 218** fixture rows.
 
@@ -4558,7 +4558,7 @@ import type { GameState, Seat } from "./types";
     its printed `effect`), 1 optional `specialEnergy` param and 1 deck
     (`THERAPEUTIC_ENERGY_DECK`). **No op, no error code, no prompt, no park, no
     `PendingStage`, no regex, no deriver arm, no redact arm, no projection, no
-    `@luminous/schema` diff, no DB diff, no web diff.** 6 re-pointed D172 pins
+    `@colorless/schema` diff, no DB diff, no web diff.** 6 re-pointed D172 pins
     (`statusImmunity.test.ts` ×5, `attackerFilter.test.ts` ×1), new
     `therapeuticEnergy.test.ts` (**52 tests**). Manifest **218 → 219** fixture rows. */
 
@@ -4706,7 +4706,7 @@ import type { GameState, Seat } from "./types";
     implementation**, **1 registry row** (`BLISSEY`), **4 fixtures** (sv01-086 gains
     its printed attack; sv01-228 / sv01-245 / sv01-145 are new) and **1 deck**
     (`CLEAR_STATUS_DECK`). **No new field, event, error code, prompt, park,
-    `PendingStage`, log arm, redact arm, projection, `@luminous/schema` diff, DB diff
+    `PendingStage`, log arm, redact arm, projection, `@colorless/schema` diff, DB diff
     or web diff.** New `clearStatus.test.ts` (**36 tests**). Manifest **219 → 222**
     fixture rows (the sqlite's recorded mtime moved 2026-07-26 → 2026-08-03 with
     every count unchanged — the D160 checkpoint, measured rather than assumed).
@@ -4776,7 +4776,7 @@ import type { GameState, Seat } from "./types";
     a lookup keyed by card id, not a persisted shape. Nothing here adds or
     removes an op, so no `EffectOp` inhabitant moved; nothing parks, so no
     `EffectPrompt`, `EffectChoice` or `EffectContinuation` shape moved; no
-    `GameState` field, no event, no error code, no `@luminous/schema` diff. What
+    `GameState` field, no event, no error code, no `@colorless/schema` diff. What
     changed is which ids the map ANSWERS FOR — a value question, not a shape one.
     It stays **11**. */
 /** 0.122.0 — **D181, THE TRAINER-PATH OPS PRINTED AS ATTACK TEXT — AND THE
@@ -4844,7 +4844,7 @@ import type { GameState, Seat } from "./types";
     rows + 3 probes, 2 re-pointed pins. New `derivedDrawAndGust.test.ts`
     (**38 tests**). No new op, field, event, error code, prompt, park,
     `PendingStage`, log arm, redact arm, projection, registry row,
-    `@luminous/schema` diff, DB diff or web diff. Manifest untouched (the fixture
+    `@colorless/schema` diff, DB diff or web diff. Manifest untouched (the fixture
     is synthetic `fix-*`). ⚠️ **NO `MATCH_RECORD_VERSION` BUMP, DERIVED RATHER THAN
     ASSUMED**: every op produced here already existed as an `EffectOp` inhabitant,
     so no persisted union moved — what widened is which values are REACHABLE from
@@ -4898,7 +4898,7 @@ import type { GameState, Seat } from "./types";
     `EffectPrompt`/`EffectChoice`/`EffectContinuation`, an event or the wire.
     This slice moves a FUNCTION between modules. No `CardFilter` arm changed, no
     op was added or removed, nothing parks, no `GameState` field, no event, no
-    error code, no `@luminous/schema` diff — and a predicate is code, never
+    error code, no `@colorless/schema` diff — and a predicate is code, never
     serialized into a record. Because the body is byte-identical, a record
     written by the previous deploy replays identically under this one. It stays
     **11**. */
@@ -4932,7 +4932,7 @@ import type { GameState, Seat } from "./types";
     "fall back to the Active", which is **exactly the defect**, so the type would
     carry the bug as a supported inhabitant rather than as history. Nothing else
     moved with it — `readMatchRecord` needs no arm (the version gate IS the check;
-    a mismatch is `stale`, D165's precedent), no `@luminous/schema` diff
+    a mismatch is `stale`, D165's precedent), no `@colorless/schema` diff
     (`PendingStage` is never projected; `koParkActiveSeat` keys on `kind`+`seat`),
     no new `EffectOp`, prompt, choice, continuation, `InPlayPokemon` key, event or
     log wording.
@@ -5277,7 +5277,7 @@ import type { GameState, Seat } from "./types";
     `passivesOf` — neither is persisted state. No `GameState` field, no
     `InPlayPokemon` key, no `PendingStage`, no new `EffectOp` (so nothing new can
     park), no `EffectPrompt`/`EffectChoice`/`EffectContinuation`, no
-    `@luminous/schema` diff, no redaction change. `DAMAGE_DEALT` is unchanged:
+    `@colorless/schema` diff, no redaction change. `DAMAGE_DEALT` is unchanged:
     `weakness: null` and `resistance: null` are already-supported inhabitants
     (`seatRemovesWeakness` and the snipe arms write both today) and `reduction` is
     already optional. D181's precedent — reachability widening is not a shape
@@ -5395,7 +5395,7 @@ import type { GameState, Seat } from "./types";
 
     `MATCH_RECORD_VERSION` **stays 12**, derived not inherited: `DamageCountSource`
     is a PARSE-TIME type consumed in the same tick — no `GameState` field, no
-    `PendingStage`, no `@luminous/schema` projection, no redaction — and there is
+    `PendingStage`, no `@colorless/schema` projection, no redaction — and there is
     no new `EffectOp`, so nothing new can park in `GameState.phase`. The re-homing
     moves TEST scaffolding only (`FIXTURE_POOL`, `SCALED_DAMAGE_DECK`); no saved
     record names a fixture id. `apps/api` untouched.
@@ -5639,7 +5639,7 @@ import type { GameState, Seat } from "./types";
     ordering is surfaces first. Both surfaces answer it now (D201 also gave the
     online router its `never` floor), so this is the asking. ZERO new ops,
     prompts, choice kinds, events, error codes, park machinery, dialogs, registry
-    rows, state fields, `src/**`, `apps/**` or `@luminous/schema` diff.
+    rows, state fields, `src/**`, `apps/**` or `@colorless/schema` diff.
 
     **THE CENSUS WAS RE-DERIVED AND BOTH OF D186's FIGURES HELD EXACT.** Swept
     2026-08-04 over `json_each(attacks_json)` on the remote D1 (3,786 rows / 20
@@ -5759,7 +5759,7 @@ import type { GameState, Seat } from "./types";
     scan — and **no op took a predicate for a body ON THE BOARD**, so the
     sentences that point at the board were unreachable. This is that predicate.
     ZERO new ops, prompts, choice kinds, events, error codes, park machinery,
-    dialogs, state fields, `src/**`, `apps/**` or `@luminous/schema` diff.
+    dialogs, state fields, `src/**`, `apps/**` or `@colorless/schema` diff.
 
     **THE DESIGN QUESTION WAS ANSWERED NEITHER WAY.** The standing rule — *the
     unit of sharing is decided by the READ SITE, the unit of storage by the WRITE
@@ -6691,7 +6691,7 @@ import type { GameState, Seat } from "./types";
     turn.\n\nSearch your deck for up to 3 Basic Team Rocket's Pokémon, reveal
     them, and put them into your hand. Then, shuffle your deck."* — `sv10-177` /
     `sv10-227`, both `legal_standard = 1`, byte-identical, and the only two rows
-    in the catalog carrying the sentence (remote D1 `luminous`, 2026-08-05).
+    in the catalog carrying the sentence (remote D1 `colorless`, 2026-08-05).
     `MATCH_RECORD_VERSION` **unchanged at 12** — a build-time table keyed by card
     id crosses no wire. No `packages/schema`, no `apps/api`, no `src/` diff.
 
@@ -6764,7 +6764,7 @@ import type { GameState, Seat } from "./types";
     pinned. The whole debt lived on `dest: "hand"`.
 
     🛑 **AND THE FIELD EXISTS BECAUSE THE CENSUS KILLED THE FREE VERSION.**
-    Standard-legal, remote D1 `luminous`, 2026-08-05, all THREE text columns via
+    Standard-legal, remote D1 `colorless`, 2026-08-05, all THREE text columns via
     `json_each` (the D206 rule): **100 printings / 55 sentences** search a deck
     into hand, of which **15 printings / 8 sentences print NO reveal** —
     Cassiopeia ×3, Amulet of Hope, Thwackey ×2, Eldegoss, Scrafty, Greninja ex
@@ -6830,14 +6830,14 @@ import type { GameState, Seat } from "./types";
     (`revealClause.test.ts`, 14 tests), 5 pre-existing pins updated, 6 mutants.
     engineVersion 0.141.0 → **0.142.0**. No `rng.ts` / `continuous.ts` /
     `attack.ts` / `flow.ts` / `cardplay.ts` / `redact.ts` diff; no web / API / DB
-    / `@luminous/schema` diff. */
+    / `@colorless/schema` diff. */
 
 /** 0.143.0 — **D226, N's PLAN: the SINGLE-SOURCE COUPLING RELAXED, AND THE LAST
     OF D190's FOUR `DROPPED` WORK ORDERS COLLECTED.**
 
     "Move up to 2 Energy from your Benched Pokémon to your Active Pokémon." — 3
     Standard-legal printings (`sv10.5b-083`/`-163`/`-170`, regulation mark I, all
-    three byte-identical; remote D1 `luminous`, 2026-08-05). `DROPPED` is now
+    three byte-identical; remote D1 `colorless`, 2026-08-05). `DROPPED` is now
     **empty**: D221 took Teal Dance's 8, D222 Flashing Draw's 3, D223 Carmine's 4,
     and this takes the last 3 — **18 printings, 4 for 4, every prediction to the
     field.**
@@ -6923,7 +6923,7 @@ import type { GameState, Seat } from "./types";
     `sv10-002`/`-183`, `sv10-105`, `sv10.5w-007`/`-092`, `sv10.5w-075`/`-155`;
     plus `sv10-160`/`svp-178` behind the printed "You may" and Iron Bundle
     `sv06-062` compound). Row 4 of `coverage-backlog-legal.md`, re-derived on the
-    remote D1 `luminous`, 2026-08-05.
+    remote D1 `colorless`, 2026-08-05.
 
     🛑 **THE BOARD MOVE IS `gust`'s, BYTE FOR BYTE — ONE `switchInto` ON THE
     OPPONENT'S SEAT, THE SAME CANDIDATE SET, THE SAME `POKEMON_SWITCHED` ROW. THE
@@ -6996,7 +6996,7 @@ import type { GameState, Seat } from "./types";
     printings** across five sentences (`sv05-112`/`sv10-091` 30, `sv10.5b-027`/
     `-111` 20, `sv08-153`/`-214` 40, `sv06-127` 70, and `sv07-096` Grimmsnarl 160
     behind a printed *"If you do"*). D227's split-out backlog row, re-derived on
-    the remote D1 `luminous`, 2026-08-05 — **its count was exact.**
+    the remote D1 `colorless`, 2026-08-05 — **its count was exact.**
 
     🛑 **D227's OPEN QUESTION WAS "IS THE §8.5 FOLD RE-ENTERED PER PROMOTED BODY,
     OR DOES THE INTERPRETER GAIN AN OP `attack.ts` RESOLVES?" — AND THE ANSWER IS
@@ -7090,7 +7090,7 @@ import type { GameState, Seat } from "./types";
 
     🛑 **THE ROW'S "35 LEGAL" IS A NUMBER NOTHING REPRODUCES, AND THE FOURTH COUNT
     IN A ROW ON THAT PAGE TO BE ONE.** Re-derived (never inherited) against the
-    remote D1 `luminous` — 3,786 rows / 20 sets, 2,021 legal — on 2026-08-06 over
+    remote D1 `colorless` — 3,786 rows / 20 sets, 2,021 legal — on 2026-08-06 over
     `json_each` + `GLOB`, **grouped BY SENTENCE and swept over ALL THREE text
     columns**: the three named sentences hold **20** in the ATTACK column, the
     family's whole set of verbs holds **31** there, **6** in abilities and **6** in
@@ -7179,7 +7179,7 @@ import type { GameState, Seat } from "./types";
 
     🛑 **THE BACKLOG ROW SAID "25 LEGAL / ~15 ARMS" AND UNDER-COUNTED THE
     POPULATION BY A THIRD.** Re-derived (never inherited) against the remote D1
-    `luminous` — 3,786 rows / 20 sets, 2,021 legal — on 2026-08-06 over `json_each`
+    `colorless` — 3,786 rows / 20 sets, 2,021 legal — on 2026-08-06 over `json_each`
     + `GLOB '*[Ss]earch your deck*'`, all three text columns, **grouped BY SENTENCE
     before anything was priced**: the ATTACK column holds **42 legal printings over
     23 distinct sentences**, and it is **ONE** anchor. Sixth `needs` cell on this
@@ -7258,7 +7258,7 @@ import type { GameState, Seat } from "./types";
     🛑 **THE BACKLOG ROW SAID "22 PRINTINGS FOR ~9 ARMS" — WRONG IN BOTH HALVES,
     THE FIFTH `needs` CELL ON THIS BRANCH TO MISPRICE AND THE SECOND IN A ROW TO
     MISS IN BOTH DIRECTIONS AT ONCE.** Re-derived (never inherited) against the
-    remote D1 `luminous` (3,786 rows / 20 sets, 2,021 `legal_standard = 1`) on
+    remote D1 `colorless` (3,786 rows / 20 sets, 2,021 `legal_standard = 1`) on
     2026-08-05 over `json_each` with `GLOB`, all three text columns, and **grouped
     BY SENTENCE before anything was priced** — which is exactly what D229's resume
     point asked for: the family is **25 legal printings over 12 distinct
@@ -7369,7 +7369,7 @@ import type { GameState, Seat } from "./types";
 
     🛑 **AND THE BACKLOG ROW SAID "19 PRINTINGS FOR ~7 ARMS" — WRONG IN BOTH HALVES
     AND IN OPPOSITE DIRECTIONS.** Re-derived (never inherited) against the remote D1
-    `luminous` (3,786 rows / 20 sets, 2,021 `legal_standard = 1`) on 2026-08-05 over
+    `colorless` (3,786 rows / 20 sets, 2,021 `legal_standard = 1`) on 2026-08-05 over
     `json_each(attacks_json)` with `GLOB`, swept over all three text columns: the
     family is **16 legal printings over five sentences**, not 19, and it is **2
     anchors**, not 7. The numeric and article forms are ONE alternation
@@ -7433,7 +7433,7 @@ import type { GameState, Seat } from "./types";
 
     ✅ **THE COUNT RE-DERIVES TO THE DIGIT, WHICH IS NEW ON THAT PAGE.** Four rows
     running carried a printing count nobody could reproduce (D229 19→16, D230
-    22→25, D231 25→42, D232 35→31). Re-measured against the remote D1 `luminous`
+    22→25, D231 25→42, D232 35→31). Re-measured against the remote D1 `colorless`
     (3,786 rows / 20 sets, 2,021 `legal_standard = 1`) on 2026-08-06 with
     `json_each` + `GLOB`, grouped BY SENTENCE, over all three text columns:
     `GLOB '*[Aa]ttach*Energy card*from your*discard pile*'` returns **attack 17 / 12
@@ -7772,7 +7772,7 @@ import type { GameState, Seat } from "./types";
     ANCHORS**, and the last blocker on backlog row 13.
 
     ✅ **THE COUNT, AND THE CEILING IS NOT THE YIELD.** The raw sweep for a
-    brace-coded Pokémon noun (remote D1 `luminous`, 3,786 rows / 20 sets, 2,021
+    brace-coded Pokémon noun (remote D1 `colorless`, 3,786 rows / 20 sets, 2,021
     legal, 2026-08-06, `json_each` + `GLOB`, grouped BY SENTENCE, all three text
     columns) returns **attack 32 / 16 · ability 28 / 12 · effect 25 / 15** —
     reproducing the resume point's figures exactly. **Six of those 32 attack
@@ -7874,7 +7874,7 @@ import type { GameState, Seat } from "./types";
 
     ✅ **THE COUNT RE-DERIVES EXACTLY — 17 = 17.** `GLOB '*[Pp]revent all
     damage*by attacks from*'` over `json_each` + all three text columns (remote D1
-    `luminous`, `legal_standard = 1`, 2026-08-06, GROUPED BY SENTENCE) returns
+    `colorless`, `legal_standard = 1`, 2026-08-06, GROUPED BY SENTENCE) returns
     **attack 10 / 4 sentences · ability 8 / 4 · effect 1 / 1**. Subtract what is
     already read — the bare *"from Basic Pokémon"* attack sentence (1, derivable
     since 0.95.0) and Neutralization Zone `sv06.5-060` (the effect column's only
@@ -8598,7 +8598,7 @@ import type { GameState, Seat } from "./types";
     ✅ **THE COUNT RE-DERIVES TO THE DIGIT FOR THE FIFTEENTH ROW RUNNING**, off a
     query run on the SHAPE and not the row's two ids (`LIKE '%to each of your
     benched%'` over `json_each` on all three text columns, `legal_standard = 1`,
-    GROUPED BY SENTENCE, remote D1 `luminous`, 2026-08-06): the residue cell says
+    GROUPED BY SENTENCE, remote D1 `colorless`, 2026-08-06): the residue cell says
     **2 legal** and it is exactly 2. `BUILT.attack` **1113 → 1115**, re-derived by
     the FULL seven-reader sweep over all 640 legal attack sentences (1,111 derived
     on 288 sentences, +4 registry) rather than argued from one diff — D247 left
@@ -8664,7 +8664,7 @@ import type { GameState, Seat } from "./types";
 
     ⚠️ **AND THE WIDENING PAID AS A CORRECTION RATHER THAN AS PRINTINGS, WHICH IS
     D247's LESSON HOLDING.** `LIKE '%ttach%to each%'` over all three columns,
-    `json_each`, GROUPED BY SENTENCE (re-run at commit time, remote D1 `luminous`)
+    `json_each`, GROUPED BY SENTENCE (re-run at commit time, remote D1 `colorless`)
     returns **FIVE further sentences and NOT ONE is this reader's**: the residue
     cell's *"rotated, 0 legal"* sibling — *"Choose up to 2 of your Benched {C}
     Pokémon and attach … to each of them"* — is **2 LEGAL** (Glass Trumpet
@@ -8851,7 +8851,7 @@ import type { GameState, Seat } from "./types";
     now survives an `attack.ts` AND `interpreter.ts` diff in one commit.
 
     🛑 **THE COUNT IS INHERITED, NOT RE-DERIVED, AND THAT IS THE FIRST TIME SINCE
-    D242.** The remote D1 `luminous` answered `403 / code 7403` to every query this
+    D242.** The remote D1 `colorless` answered `403 / code 7403` to every query this
     session and the local sqlite is the ROTATED six-set population, which holds no
     `sv06` and no `sv10` row — so neither the row's `GROUP BY` nor the 376-unit
     join could be run. The twenty-row re-derivation streak is **SUSPENDED**, and
@@ -8961,7 +8961,7 @@ import type { GameState, Seat } from "./types";
                                — Farigiraf ex `sv05-108`/`-194` "Armor Tail" (2)
 
     `BUILT.ability` **137 → 142, BOTH ENDS RE-DERIVED** by the 376-unit
-    `programFor` join against the remote D1 `luminous`; `BUILT.attack` **STANDS
+    `programFor` join against the remote D1 `colorless`; `BUILT.attack` **STANDS
     STILL at 1115** for the TENTH slice.
 
     🛑 **THE CENSUS FINDING, AND THE PREDICTION LOST ON BOTH COUNTS.** The
@@ -9020,7 +9020,7 @@ import type { GameState, Seat } from "./types";
        Rule Boxes.)"
 
     `BUILT.ability` **142 → 144, BOTH ENDS RE-DERIVED** by the 376-unit `programFor`
-    join against the remote D1 `luminous`; `BUILT.attack` **STANDS STILL at 1115**
+    join against the remote D1 `colorless`; `BUILT.attack` **STANDS STILL at 1115**
     for the ELEVENTH slice. The `%prevent all damage%` ability ladder is **22 on 9,
     UNCHANGED**, and the residue after this slice is **4 printings on 2 sentences**
     (the unbuildable TERA group, and row 15-B alone).
@@ -9077,7 +9077,7 @@ import type { GameState, Seat } from "./types";
        Pokémon if that damage is 200 or more."
 
     `BUILT.ability` **144 → 145, BOTH ENDS RE-DERIVED** by the 376-unit `programFor`
-    join against the remote D1 `luminous`; `BUILT.attack` **STANDS STILL at 1115**
+    join against the remote D1 `colorless`; `BUILT.attack` **STANDS STILL at 1115**
     for the TWELFTH slice; the non-attack total goes **203 → 204** for the
     THIRTEENTH consecutive slice. The `%prevent all damage%` ladder is **22 on 9 in
     `abilities_json`, 34 on 9 in `attacks_json`, 1 on 1 in `c.effect` — UNCHANGED**,
@@ -9561,7 +9561,7 @@ import type { GameState, Seat } from "./types";
     mis-spelled type is the FIELD'S TYPE and not a regex.
 
     🛑 **AND THE CATALOG WAS UNREACHABLE FOR THE WHOLE SLICE — SAID PLAINLY
-    RATHER THAN PAPERED OVER.** Remote D1 `luminous` answers `401` here and the
+    RATHER THAN PAPERED OVER.** Remote D1 `colorless` answers `401` here and the
     local miniflare sqlite is absent, so the wider `%from each of your%` census
     D265 prescribed has no measurement, and `BUILT.trainer`'s 63 → 66 rests on a
     registry-half join measured at both ends (396 → 399) plus the `DROPPED` row's
@@ -9974,7 +9974,7 @@ import type { GameState, Seat } from "./types";
 
     🛑 **THE SLICE WAS SENT TO FIND A SECOND CONSUMER OF
     `BoardCondition.yourFirstTurn`, AND THE CENSUS SAYS THERE ISN'T ONE.** The
-    `%during your first turn%` ladder (remote D1 `luminous`, `legal_standard = 1`,
+    `%during your first turn%` ladder (remote D1 `colorless`, `legal_standard = 1`,
     all three text columns, 2026-08-08) returns **36 printings on 15 names and 10
     distinct first-turn CLAUSES** — eighteen times what D275 saw — and the second
     rung (`%your first turn%` minus the first) returns **ZERO**, so the phrase is
@@ -10116,7 +10116,7 @@ import type { GameState, Seat } from "./types";
     during your first turn."* **ONE Standard-legal printing, no reprint.**
 
     🛑 **THE CENSUS RE-QUERIED THE INHERITED "12", AND IT REPRODUCES — AS THE
-    *UNBUILT* SUBSET OF A POOL OF 24.** Remote D1 `luminous`, 2026-08-08, all three
+    *UNBUILT* SUBSET OF A POOL OF 24.** Remote D1 `colorless`, 2026-08-08, all three
     text columns, six going-order spellings, `legal_standard = 1`: **24 printings
     on 9 names**, in SIX printed shapes. 9 were already built (Carmine ×4, Team
     Rocket's Proton ×2, Meloetta ex ×3), 3 belong to the separate per-attack-index
@@ -10180,7 +10180,7 @@ import type { GameState, Seat } from "./types";
     backlog had left.
 
     🛑 **THE CENSUS RE-DERIVED, AND FOR ONCE THE INHERITED NUMBER SURVIVES INTACT.**
-    Remote D1 `luminous`, 2026-08-08, `json_each(attacks_json)` so the printed
+    Remote D1 `colorless`, 2026-08-08, `json_each(attacks_json)` so the printed
     INDEX comes back beside the text: **15 rows pool-wide / 13 Standard-legal**
     (the 2 losses are Bombirdier ex `sv04-156`/`-234`, `legal_standard = 0`), and
     the 7/3/3 split D280 forecast holds to the printing — 7 BAN (Terapagos ex), 3
@@ -10531,7 +10531,7 @@ import type { GameState, Seat } from "./types";
     or Unfezant ex and put it onto this Pidove to evolve it. Then, shuffle your
     deck."* **ONE legal printing and the whole population** — `instr(abilities_json,
     'remaining HP is 30 or less') > 0` returns exactly this row over all 3,786
-    (remote D1 `luminous`, 2026-08-10), and `instr(abilities_json,'remaining HP
+    (remote D1 `colorless`, 2026-08-10), and `instr(abilities_json,'remaining HP
     is') > 0` returns the same single row, so the clause has no sibling at any
     width. The first member of this family to land as an ABILITY rather than an
     attack, and therefore the first to move `BUILT.ability` rather than
@@ -12050,7 +12050,7 @@ import type { GameState, Seat } from "./types";
     **102** (the moving summand again after D335 moved `BUILT.ability`);
     `BUILT.attack` **1,190**, `BUILT.ability` **249** and `BUILT.specialEnergy`
     **8** all UNMOVED and measured so — every one of the three ids carries
-    `attacks_json IS NULL` AND `abilities_json IS NULL` (remote D1 `luminous`,
+    `attacks_json IS NULL` AND `abilities_json IS NULL` (remote D1 `colorless`,
     2026-08-14). `built` 1546 → **1549** = `1190 + 249 + 102 + 8`, written out; the
     residue `2383 − 1549 = 834` **and** `837 − 3 = 834`, both ways, against an
     unmoved `units` of 2,383. The 356 sum → **359**; the 519 sum → **522** (0
@@ -12689,7 +12689,7 @@ import type { GameState, Seat } from "./types";
     producer branch and 1 evaluator branch.** ZERO new `DamageCountSource` members, ZERO
     new counters, ZERO new ops, ZERO new readers, ZERO `BoardCondition` members, ZERO
     registry rows, ZERO clause-table rows, ZERO prompts, ZERO events, ZERO error codes
-    and ZERO `GameState` fields. No web/API/DB or `@luminous/schema` change.
+    and ZERO `GameState` fields. No web/API/DB or `@colorless/schema` change.
 
     engineVersion 0.311.0 → **0.312.0**
     (`packages/engine/package.json` in the same commit). */
@@ -12788,7 +12788,7 @@ import type { GameState, Seat } from "./types";
     evaluator arm and 1 shared board counter.** ZERO new ops, ZERO new `EffectOp` fields,
     ZERO new readers, ZERO `BoardCondition` members, ZERO registry rows, ZERO clause-table
     rows, ZERO prompts, ZERO events, ZERO error codes and ZERO `GameState` fields. No
-    web/API/DB or `@luminous/schema` change.
+    web/API/DB or `@colorless/schema` change.
 
     engineVersion 0.310.0 → **0.311.0**
     (`packages/engine/package.json` in the same commit). */
@@ -12885,7 +12885,7 @@ import type { GameState, Seat } from "./types";
     Cost: **1 whole-sentence anchor, 1 arm, 1 caption branch, 1 fixture and 1 deck.**
     ZERO new ops, ZERO new fields, ZERO new readers, ZERO `BoardCondition` members, ZERO
     registry rows, ZERO clause-table rows and ZERO `attack.ts` edits. No web/API/DB or
-    `@luminous/schema` change.
+    `@colorless/schema` change.
 
     engineVersion 0.309.0 → **0.310.0**
     (`packages/engine/package.json` in the same commit). */
@@ -12956,7 +12956,7 @@ import type { GameState, Seat } from "./types";
 
     Cost: **1 whole-sentence anchor, 1 arm, 1 fixture and 1 deck.** ZERO new ops, ZERO
     new fields, ZERO `BoardCondition` members, ZERO registry rows, ZERO clause-table
-    rows, ZERO readers and ZERO `attack.ts` edits. No web/API/DB/`@luminous/schema`
+    rows, ZERO readers and ZERO `attack.ts` edits. No web/API/DB/`@colorless/schema`
     change.
 
     engineVersion 0.308.0 → **0.309.0**
@@ -13037,7 +13037,7 @@ import type { GameState, Seat } from "./types";
     member, 1 OPTIONAL `damageDefender` field, 3 `attack.ts` chain terms, 1 append, 2
     interpreter literals, 1 caption arm, 2 fixtures and 1 deck.** ZERO new ops, ZERO
     `BoardCondition` members, ZERO registry rows, ZERO clause-table rows. No web/API/DB/
-    `@luminous/schema` change.
+    `@colorless/schema` change.
 
     engineVersion 0.307.0 → **0.308.0**
     (`packages/engine/package.json` in the same commit). */
@@ -16018,7 +16018,7 @@ import type { GameState, Seat } from "./types";
     D365 handed over four sentences / nine legal printings still behind the
     `"If <clause>, this attack does nothing."` skeleton. **THE POPULATION
     REPRODUCES EXACTLY** on S1 (`legalAttackCorpus()` + the live requirement
-    reader), S3 (remote D1 `luminous`, `$.effect`, extractor verified against the
+    reader), S3 (remote D1 `colorless`, `$.effect`, extractor verified against the
     640 / 1,732 / 60,467 total FIRST, 2026-08-19) and S4: 9 sentences / 18 legal
     units open with the skeleton, 5 s / 9 u carried, 4 s / 9 u missed. **AND SO
     DOES THE PRICE — the first slice in four where it did.**
@@ -16065,7 +16065,7 @@ import type { GameState, Seat } from "./types";
 
     D364 handed over a population and a price. The POPULATION reproduces exactly
     on three surfaces — S1 (`legalAttackCorpus()` + the live requirement reader),
-    S3 (remote D1 `luminous`, `$.effect`, extractor verified against the 1,732-unit
+    S3 (remote D1 `colorless`, `$.effect`, extractor verified against the 1,732-unit
     total FIRST) and S4 (the producer set: two call sites, both `attack.ts`):
     **9 sentences / 18 legal units open with the `"If <clause>, this attack does
     nothing."` skeleton; 2 s / 4 u were carried; 7 s / 14 u reached the table and
@@ -16140,7 +16140,7 @@ import type { GameState, Seat } from "./types";
     | `^` alone — a LEADING companion, the does-nothing sentence last | 7 | 23 |
     | both | 1 | 2 |
 
-    Confirmed pool-wide on the remote D1 (`luminous`, `$.effect`, 2026-08-18, the
+    Confirmed pool-wide on the remote D1 (`colorless`, `$.effect`, 2026-08-18, the
     extractor verified against known-present rows first): `GLOB 'If *, this attack
     does nothing.*'` minus `GLOB 'If *, this attack does nothing.'` returns **2
     rows in 978 cards / 6 sets**, both Sawk `sv10.5w-049`/`-130`, both `legal_standard =
@@ -16362,7 +16362,7 @@ import type { GameState, Seat } from "./types";
         reddens here"*) firing exactly as designed.
 
     ✅ **THE FAMILY ACCOUNTS FOR ITSELF.** `LIKE '%ttach up to%'` over all three
-    text columns keyed on `$.effect` (remote D1 `luminous`, 2026-08-18; extractor
+    text columns keyed on `$.effect` (remote D1 `colorless`, 2026-08-18; extractor
     verified against nine known-present rows FIRST) is **23 sentences / 53
     printings / 24 Standard-legal**, and 13 (D359) + 6 (D358) + 4 (D360) + 1
     🆕🆕🆕 BUILT AT D532 (Grafaiai `sv08-121`, the cross-seat attach — THREE declinable
@@ -16833,7 +16833,7 @@ import type { GameState, Seat } from "./types";
 
     ⚠️ **AND IT IS THE SECOND CONSECUTIVE SLICE WHOSE CLAUSE-CENSUS RETURNED ITS
     OWN CARD.** The by-name attach clause over all three columns (remote D1
-    `luminous`, `json_each` keyed on `$.effect`, 2026-08-16) is **2 sentences / 4
+    `colorless`, `json_each` keyed on `$.effect`, 2026-08-16) is **2 sentences / 4
     printings / 2 LEGAL**, and both legal printings are these two ids. An op that
     small can hide an unprobed line for fifty decisions — which is exactly what
     D352 found one op over.
@@ -16914,7 +16914,7 @@ import type { GameState, Seat } from "./types";
     *"Once during your turn, you may attach a Basic {R} Energy card, a Basic {F}
     Energy card, **or 1 of each** from your hand to your Pokémon in any way you
     like."* **3 Standard-legal printings on ONE byte-identical sentence**, which is
-    the whole population (remote D1 `luminous`, 2026-08-15, `json_each(abilities_json)`
+    the whole population (remote D1 `colorless`, 2026-08-15, `json_each(abilities_json)`
     keyed on `$.effect` — NOT `$.text`, the false-zero key — and grouped so the unit
     is a SENTENCE).
 
@@ -16970,7 +16970,7 @@ import type { GameState, Seat } from "./types";
     your Pokémon during your turn, you may have your opponent reveal their hand and
     you put **any number of** Basic Pokémon you find there onto their Bench."*
     **3 Standard-legal printings on ONE byte-identical sentence**, which is the
-    whole population (remote D1 `luminous`, 2026-08-15, `json_each(abilities_json)`
+    whole population (remote D1 `colorless`, 2026-08-15, `json_each(abilities_json)`
     keyed on `$.effect` — NOT `$.text`, the false-zero key — and grouped so the unit
     is a SENTENCE).
 
@@ -17063,7 +17063,7 @@ import type { GameState, Seat } from "./types";
     (`abilities_json`) and Bianca's Devotion `sv05-142`/`sv05-197`/`sv05-209`
     (Supporter, `effect`) — **6 Standard-legal printings on 2 sentences across 2
     text columns**, which is the WHOLE legal population of the clause (remote D1
-    `luminous`, 2026-08-15, all three columns unioned and grouped through
+    `colorless`, 2026-08-15, all three columns unioned and grouped through
     `json_each` so the unit is a sentence; the only other printing is Vanilluxe
     `sv06-039`, not legal and an aura rather than a narrowing).
 
@@ -17181,7 +17181,7 @@ import type { GameState, Seat } from "./types";
     **row 10** (5 = 4 `abilityIds` + 1 `effectIds`, read off the file at head; row 9
     is 4 LIVE because three of its five `effectIds` are D346's recorded dead datum,
     row 12 is 4, row 11 is 3) → census the CLAUSE over all three text columns on
-    remote D1 `luminous`: `instr(<col>,'from your Bench to the Active Spot')` is
+    remote D1 `colorless`: `instr(<col>,'from your Bench to the Active Spot')` is
     `effect` **0/0/0** + `abilities_json` **13/3 legal/4 sentences** +
     `attacks_json` **6/5 legal/2 sentences** → **the attack half had SHIPPED at
     D124** (`BoardCondition.yourActivePromotedThisTurn` reading
@@ -17247,7 +17247,7 @@ import type { GameState, Seat } from "./types";
 
     **ZERO new ops, ZERO new op fields, ZERO new `BoardCondition` members, ZERO new
     `TriggerTiming`s, ZERO new prompt kinds, ZERO new events, ZERO new error codes,
-    ZERO wire fields, ZERO `continuous.ts` / web / API / DB / `@luminous/schema`
+    ZERO wire fields, ZERO `continuous.ts` / web / API / DB / `@colorless/schema`
     diff.** `attachFromDeck.toSelf` is D171 at its first row above `max: 1`;
     `yourActivePromotedThisTurn` is D124. `MATCH_RECORD_VERSION` **STAYS 20** —
     `playableIf` is read by `useAbility` at use time and is never persisted.
@@ -17330,7 +17330,7 @@ import type { GameState, Seat } from "./types";
     Out.**"* — Dusclops `sv06.5-019`/`-069`/`sv08.5-036`, Dusknoir
     `sv06.5-020`/`-070`/`sv08.5-037`.
 
-    **THE CLAUSE CENSUS, OVER ALL THREE TEXT COLUMNS ON REMOTE D1 `luminous`
+    **THE CLAUSE CENSUS, OVER ALL THREE TEXT COLUMNS ON REMOTE D1 `colorless`
     (2026-08-15).** `instr(<col>, 'If you use this Ability, this Pokémon is
     Knocked Out') > 0`:
 
@@ -17400,7 +17400,7 @@ import type { GameState, Seat } from "./types";
     3 cards of your deck and put them back in any order, **or** shuffle them and
     put them on the bottom of your deck."*
 
-    **THE FAMILY CENSUS, RE-DERIVED FROM REMOTE D1 `luminous` AT THIS HEAD
+    **THE FAMILY CENSUS, RE-DERIVED FROM REMOTE D1 `colorless` AT THIS HEAD
     (2026-08-15) RATHER THAN INHERITED** — the resume point flagged it as
     unverified and it needed the flag. `instr(<col>,'in any order') > 0` over all
     three text columns: **15 printings / 11 legal / 7 distinct sentences**
@@ -17607,7 +17607,7 @@ import type { GameState, Seat } from "./types";
     AT ITS SECOND SITE.** The backlog priced *Deduction Kit `sv08-171` (**1**
     legal)* as the ordered-answer row. `instr(<col>,'in any order') > 0` over all
     three text columns returns **15 printings / 11 legal / 7 sentences** (remote D1
-    `luminous`, 2026-08-15): Ciphermaniac's Codebreaking ×3, Kofu ×2, Deduction Kit
+    `colorless`, 2026-08-15): Ciphermaniac's Codebreaking ×3, Kofu ×2, Deduction Kit
     ×1, Iron Valiant ×1, Dialga ×1, Dottler + Gothorita ×3 legal, plus Raifort ×2
     and Absol ex ×2 out of Standard. **AND DEDUCTION KIT IS NOT THE CHEAPEST MEMBER
     OF ITS OWN FAMILY:** it prints this arm's exact sentence PLUS *"**, or** shuffle
@@ -21172,7 +21172,7 @@ import type { GameState, Seat } from "./types";
     🆕🆕🆕 engineVersion 0.464.0 → **0.465.0** (D581 — THE DATA SLICE: THE MEGA EVOLUTION SERIE INGESTED INTO THE LOCAL
     D1 AND A TRAINER'S PRINTED POKÉMON FACE KEPT BY THE INGEST; `MATCH_RECORD_VERSION` STAYS 41 (apps/api match.ts
     "STAYS 41 AT D581"). `apps/api/src/ingest/map.ts`'s Trainer branch keeps `hp` / `abilities` / `attacks` (the
-    `@luminous/schema` tcgdex Trainer schema no longer strips them), so the engine's two hand-written faces are gone:
+    `@colorless/schema` tcgdex Trainer schema no longer strips them), so the engine's two hand-written faces are gone:
     fossils.ts reads a fossil's Ability off its catalog row (the table is deleted; `FOSSIL_IDS` and the rule's 60 HP stay)
     and `CardProgram.toolAttacks` is the FLAG `true` — continuous.ts `attackMenuOf`'s Tool section reads the Tool card's
     own `attacks` (`technicalMachines.ts` is deleted). Two predicates that leaned on "a Trainer's catalog row carries
@@ -26248,12 +26248,12 @@ export type { DrawReason, GameEvent, StatusName } from "./events";
 export { inSetup, phaseViewOf } from "./phaseView";
 export type { PendingDecision, PhaseView } from "./phaseView";
 /** The authoritative per-viewer wire redactor (P4). Runs server-side in the
-    lobby Durable Object once per socket; produces the `@luminous/schema`
+    lobby Durable Object once per socket; produces the `@colorless/schema`
     `RedactedGame` — no full `GameState` crosses the network. */
 export { redactGame } from "./redact";
 /** The GameEvent → game-log formatter (log.ts). PURE and shared: /play builds
     the rows client-side, the P4 lobby DO builds them server-side with the full
-    state. Rows are seat-keyed `SeatLogEntry` (@luminous/schema); the seat→viewer
+    state. Rows are seat-keyed `SeatLogEntry` (@colorless/schema); the seat→viewer
     relabel is the web's `viewLogEntries`. */
 export { formatElapsed, logFromEvents, STATUS_LABELS } from "./log";
 export type { LogContext } from "./log";

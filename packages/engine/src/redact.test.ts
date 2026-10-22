@@ -10,7 +10,7 @@ import {
   HIDDEN_CARD_ID,
   HIDDEN_CARD_NAME,
   type RedactedGame,
-} from "@luminous/schema";
+} from "@colorless/schema";
 import { rareCandyOptions } from "./cardplay";
 import type { EffectContinuation, EffectPrompt } from "./interpreter";
 import { redactGame } from "./redact";

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LuaBuilder } from "./builder";
 import { encodeFields } from "./account";
 import * as api from "../lib/api";
-import type { CardBrief, Deck } from "@luminous/schema";
+import type { CardBrief, Deck } from "@colorless/schema";
 vi.mock("../lib/api", () => ({
   getDeck: vi.fn(),
   patchDeck: vi.fn(),

@@ -35,7 +35,7 @@ import {
 // 🛑 THE ROW PRICED IT AT **19 PRINTINGS FOR ~7 ARMS** AND BOTH HALVES ARE WRONG,
 // IN OPPOSITE DIRECTIONS — the fourth `needs` cell on this branch to misprice and
 // the FIRST to over-count. Re-derived (never inherited) against the remote D1
-// `luminous` on 2026-08-05, `json_each` + `GLOB`, all three text columns:
+// `colorless` on 2026-08-05, `json_each` + `GLOB`, all three text columns:
 // the family is **16** legal printings, not 19, and it is **2** anchors, not 7.
 // The numeric and article forms are ONE alternation (`ATTACK_DRAW`'s precedent)
 // and the two "all Energy" sentences are not arms at all. ⚠️ **AN EDIT ESTIMATE
@@ -53,7 +53,7 @@ import {
 
 /** The three sentences these two anchors read, with the program each derives to
     and the printing counts measured for it. Census re-derived (not inherited) on
-    2026-08-05 against the remote D1 `luminous` — 3,786 rows / 20 sets, 2,021
+    2026-08-05 against the remote D1 `colorless` — 3,786 rows / 20 sets, 2,021
     `legal_standard = 1` — over `json_each(attacks_json)` +
     `json_extract(value,'$.effect')` with `GLOB` rather than `LIKE`, because
     SQLite's `LIKE` is ASCII case-insensitive and has cost this repo a census.

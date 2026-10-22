@@ -22,7 +22,7 @@ import {
 //   Supporter, **4 Standard-legal printings and they are the whole population.**
 //
 // ── THE CENSUS, AT THREE WIDTHS AND OVER ALL THREE TEXT COLUMNS ─────────────
-// Re-run against the remote D1 `luminous` at THIS head (2026-08-14) rather than
+// Re-run against the remote D1 `colorless` at THIS head (2026-08-14) rather than
 // inherited, and every per-column split is re-added against its own total,
 // because a split that does not sum is the cheapest census check there is.
 //

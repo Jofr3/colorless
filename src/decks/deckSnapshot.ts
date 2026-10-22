@@ -4,7 +4,7 @@
 // the card ORDER (which decides whether a save fires at all) and the cover PIN
 // (which decides whether the server accepts it).
 
-import type { DeckCard } from "@luminous/schema";
+import type { DeckCard } from "@colorless/schema";
 
 /** Name kept pre-trimmed so it either matches the server's own trim or is
     omitted (empty) from the PATCH body. */

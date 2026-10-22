@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { matchesFilter } from "./cards";
 import { resolvedByAnyReader } from "./censusAttackCorpus";
@@ -28,7 +28,7 @@ import {
 // the measured finding that the filter ALONE finishes SIX printings.
 //
 // ── THE CENSUS, RE-DERIVED ───────────────────────────────────────────────────
-// Remote D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786 rows /
+// Remote D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786 rows /
 // 20 sets, 2,021 `legal_standard = 1`), swept 2026-08-04 over ALL THREE text
 // columns — `effect`, `attacks_json` and `abilities_json` (the two JSON columns
 // via `json_each` + `json_extract(value,'$.effect')`) — for a possessive owner

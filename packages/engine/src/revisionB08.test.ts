@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { GameAction, GameEvent, GameState } from "./index";
 import { ANY_ENERGY, applyAction, createGame, providedEnergy } from "./index";

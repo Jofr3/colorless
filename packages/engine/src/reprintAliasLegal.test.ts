@@ -37,7 +37,7 @@ import {
 //
 // ⚠️ THE SWEEP WAS RE-RUN, NOT CARRIED — WHICH IS THE ONE THING D180 COULD NOT
 // DO AND ITS OWN TEST FILE ASKED THE NEXT SESSION TO DO. The text-equality sweep
-// of unbuilt-against-built ran on 2026-08-04 against the REMOTE D1 `luminous`
+// of unbuilt-against-built ran on 2026-08-04 against the REMOTE D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), **3,786 rows / 20 sets, of which
 // 2,021 are `legal_standard = 1`** — the same population and the same predicate
 // the census used. Both axes are reported on every row below, because a count
@@ -329,7 +329,7 @@ describe("the SKIPPED candidates — correct aliases with ZERO Standard-legal pa
 // row's price is its LEGAL count, not its catalog count** (see
 // `SKIPPED_ZERO_LEGAL` above). Every one of the 81 measures `legal_standard = 0`.
 //
-// ⚠️ **THE CENSUS, MEASURED — remote D1 `luminous`
+// ⚠️ **THE CENSUS, MEASURED — remote D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786 rows / 2,021 `legal_standard`),
 // 2026-08-08.** One query, one row per catalog IDENTITY, keyed on
 // `name, category, effect, abilities_json, attacks_json, hp, stage, evolve_from,

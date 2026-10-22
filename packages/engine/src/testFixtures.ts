@@ -3,7 +3,7 @@
 // Not exported from the package index — test-only, but framework-free
 // (plain throws) so any suite can use it.
 
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { CATALOG_MANIFEST } from "./catalogManifest";
 import type { EffectOp } from "./effects";
 import type {
@@ -1418,7 +1418,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
       count, so a real-id fixture here would either redden that suite or force a
       false row into a census of a catalog that does not contain the card.
       **The sentences are what this file needs, and they are verbatim off remote D1
-      `luminous` (2026-08-15); the bodies around them are `fix-*` on purpose.**
+      `colorless` (2026-08-15); the bodies around them are `fix-*` on purpose.**
       (A second reason, smaller but real: Flutter Mane also prints an ability-lock
       Ability, "Midnight Fluttering", which is nothing to do with arm 23a and which
       a real-card fixture would have had to carry or silently omit.) */
@@ -4351,7 +4351,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
       Trainer. (Hydreigon `sv02-140` keeps its real id because `sv02` IS in the
       manifest.)
 
-      Every field verbatim off the remote D1 `luminous` row `sv06-129` on 2026-08-14
+      Every field verbatim off the remote D1 `colorless` row `sv06-129` on 2026-08-14
       (Stage 1 over Dreepy, `types_json` `["Dragon"]`, "Dragon Headbutt" {R}{P} 70);
       printed Weakness is omitted as it is on every fixture here, since this one is
       never a defender. `sv08.5-072` is the byte-identical reprint and needs no body
@@ -9493,7 +9493,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
 
   // ── D192: the MAIN-HIT DAMAGE-MODIFIER SUPPRESSION cast. Four printed attack
   //    sentences (34 Standard-legal printings) and one printed Ability (6, all
-  //    Walking Wake ex), transcribed char-for-char off the remote D1 `luminous`
+  //    Walking Wake ex), transcribed char-for-char off the remote D1 `colorless`
   //    (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786 rows / 20 sets, 2,021 legal)
   //    on 2026-08-04.
   //
@@ -10533,7 +10533,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
       "basic" }` in both directions, and both are Basics — so nothing in the pool
       could tell a build that DROPPED the `stage` conjunct from one that kept it.
       The Standard pool holds **34 Basic and 35 non-Basic** "Team Rocket's" Pokémon
-      (remote D1 `luminous`, 2026-08-07), so that omission would shield 35 printed
+      (remote D1 `colorless`, 2026-08-07), so that omission would shield 35 printed
       bodies the sentence does not name — a near-even split, not a corner case.
 
       An `evolveFrom` is carried beside the stage word so `matchesFilter`'s
@@ -11208,7 +11208,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
   /** 🆕 D310 — the SECOND printed name, and the only way its half of the pair is
       reachable at all: **`Unfezant ex` has ZERO printings in the whole 3,786-row
       catalog** (`instr(name,'Unfezant') > 0` returns four `Unfezant` and nothing
-      else, remote D1 `luminous`, 2026-08-10). Without it the array's second member
+      else, remote D1 `colorless`, 2026-08-10). Without it the array's second member
       is authored and undriven, and a build that read only `names[0]` would pass
       every test. Same `evolveFrom` for the same reason as its sibling. */
   "fix-unfezant-ex": battler("fix-unfezant-ex", {
@@ -11624,7 +11624,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
   //    AND that must make the card refuse itself when it is the only body there.
 
   /** The SUPPORTER — Lisia's Appeal, the printed bytes off `effect` (remote D1
-      `luminous`, `sv08-179`, 2026-08-13). `fix-*` rather than the real id, this
+      `colorless`, `sv08-179`, 2026-08-13). `fix-*` rather than the real id, this
       suite's standing reason: a fixture id naming a real printing must appear in
       `catalogManifest.ts`, generated off a local sqlite that holds no `sv08`. */
   "fix-lisiasappeal": trainerCard(
@@ -11661,7 +11661,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
   //    were read or ignored.
 
   /** The SUPPORTER — Drayton, the printed bytes off `effect` (remote D1
-      `luminous`, `sv08-174`, 2026-08-14). `fix-*` rather than the real id, this
+      `colorless`, `sv08-174`, 2026-08-14). `fix-*` rather than the real id, this
       file's standing reason: a fixture id naming a real printing must appear in
       `catalogManifest.ts`, generated off a local sqlite that holds no `sv08`. */
   "fix-drayton": trainerCard(
@@ -11669,7 +11669,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Supporter",
     "Look at the top 7 cards of your deck. You may reveal a Pokémon and a Trainer card you find there and put them into your hand. Shuffle the other cards back into your deck.",
   ),
-  /** 🆕 D333 — Roto-Stick, the printed bytes off `effect` (remote D1 `luminous`,
+  /** 🆕 D333 — Roto-Stick, the printed bytes off `effect` (remote D1 `colorless`,
       `sv08.5-127`, 2026-08-14). `fix-*` for `fix-drayton`'s stated reason: the
       generated manifest holds no `sv08.5` row. */
   "fix-rotostick": trainerCard(
@@ -11678,14 +11678,14 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Look at the top 4 cards of your deck. You may reveal any number of Supporter cards you find there and put them into your hand. Shuffle the other cards back into your deck.",
   ),
   /** 🆕 D333 — Bug Catching Set, the printed bytes off `effect` (remote D1
-      `luminous`, `sv06-143`, 2026-08-14; `sv08.5-102` is byte-identical). */
+      `colorless`, `sv06-143`, 2026-08-14; `sv08.5-102` is byte-identical). */
   "fix-bugcatchingset": trainerCard(
     "fix-bugcatchingset",
     "Item",
     "Look at the top 7 cards of your deck. You may reveal up to 2 in any combination of {G} Pokémon and Basic {G} Energy cards you find there and put them into your hand. Shuffle the other cards back into your deck.",
   ),
   /** 🆕 D334 — Explorer's Guidance, the printed bytes off `effect` (remote D1
-      `luminous`, `sv05-147`, 2026-08-14; `sv05-200` and `sv08.5-107` are
+      `colorless`, `sv05-147`, 2026-08-14; `sv05-200` and `sv08.5-107` are
       byte-identical at 95 chars). `fix-*` for `fix-drayton`'s stated reason: the
       generated manifest holds no `sv05` row either. */
   "fix-explorersguidance": trainerCard(
@@ -11693,7 +11693,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Supporter",
     "Look at the top 6 cards of your deck and put 2 of them into your hand. Discard the other cards.",
   ),
-  /** 🆕 D335 — Rika, the printed bytes off `effect` (remote D1 `luminous`,
+  /** 🆕 D335 — Rika, the printed bytes off `effect` (remote D1 `colorless`,
       `sv04-172`, 2026-08-14; `sv04-241` and `sv04-258` are byte-identical at 135
       chars). `fix-*` for `fix-explorersguidance`'s stated reason, and one more
       besides: all three real printings are `legal_standard = 0`, so this fixture is
@@ -11721,7 +11721,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
   //    have something to refuse as well as something to admit.
 
   /** 🆕 D336 — Larry's Skill, the printed bytes off `effect` (remote D1
-      `luminous`, `sv08.5-115`, 2026-08-14; `sv08.5-139` is byte-identical at 163
+      `colorless`, `sv08.5-115`, 2026-08-14; `sv08.5-139` is byte-identical at 163
       chars). `fix-*` for `fix-rotostick`'s stated reason: the generated manifest
       holds no `sv08.5` row. */
   "fix-larrysskill": trainerCard(
@@ -11729,7 +11729,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Supporter",
     "Discard your hand and search your deck for a Pokémon, a Supporter card, and a Basic Energy card, reveal them, and put them into your hand. Then, shuffle your deck.",
   ),
-  /** 🆕 D336 — Secret Box, the printed bytes off `effect` (remote D1 `luminous`,
+  /** 🆕 D336 — Secret Box, the printed bytes off `effect` (remote D1 `colorless`,
       `sv06-163`, 233 chars, 2026-08-14 — the paragraph break between the cost and
       the search is the print's own `\n\n`). `fix-*` for `fix-bugcatchingset`'s
       stated reason: the manifest holds no `sv06` row. */
@@ -11747,7 +11747,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
   //    refuse. Four bodies buy both directions.
   //
   // ⚠️ THE NAMES ARE THE PRINTED ONES, re-queried rather than invented (remote D1
-  //    `luminous`, `name LIKE 'Ethan''s %'`, 2026-08-14): sv10-032 Ethan's
+  //    `colorless`, `name LIKE 'Ethan''s %'`, 2026-08-14): sv10-032 Ethan's
   //    Cyndaquil (Basic, {R}), sv10-034 Ethan's Typhlosion (Stage 2, {R},
   //    evolves from Ethan's Quilava), sv10-071 Ethan's Pichu (Basic, **{L}**).
   //    The NAME is the datum here in the strictest sense the repo has — the
@@ -11791,7 +11791,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
     types: ["Fire"],
   }),
   /** 🆕 D337 — Ethan's Adventure, the printed bytes off `effect` (remote D1
-      `luminous`, `sv10-165`, 2026-08-14; `sv10-221` and `sv10-236` are
+      `colorless`, `sv10-165`, 2026-08-14; `sv10-221` and `sv10-236` are
       byte-identical). `fix-*` for `fix-larrysskill`'s stated reason: the generated
       manifest holds no `sv10` row. */
   "fix-ethansadventure": trainerCard(
@@ -14295,7 +14295,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
       "more", and the sentence a suite rung had PINNED as unprinted since D168.
 
       ⚠️ **A `fix-*` KEY WITH A REAL CARD BEHIND IT, D421's SITUATION EXACTLY.** The
-      id is known and so is every scalar — remote D1 `luminous`, 2026-08-24,
+      id is known and so is every scalar — remote D1 `colorless`, 2026-08-24,
       `legal_standard = 1`, regulation mark H, Uncommon, illustrator Oku. What is
       missing is the ROW: this container's local D1 holds six sets
       (sv01/sv02/sv03/sv06.5/sve/swsh10.5) and **no `sv06`**, and
@@ -14391,7 +14391,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
   }),
 
   /** 🆕🆕 **D424 — THE TWO-STATUS PAIR, five bodies for four printed sentences.**
-      All five rows were read column by column off the remote D1 `luminous`
+      All five rows were read column by column off the remote D1 `colorless`
       (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) on 2026-08-26 and are transcribed
       whole, printed index by printed index (D144's rule).
 

@@ -1,5 +1,5 @@
 import manifest from "../package.json" with { type: "json" };
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { programPlayable } from "./cardplay";
 import type { EffectOp } from "./effects";
@@ -31,7 +31,7 @@ import { BENCH_MAX, otherSeat } from "./types";
 // reveals their hand, and you put a Basic Pokémon with 70 HP or less that you
 // find there onto your opponent's Bench."* — Mandibuzz, TWO Standard-legal
 // printings, `sv10.5w-064` and `sv10.5w-145`, whose `abilities_json` is
-// BYTE-IDENTICAL (remote D1 `luminous`, re-queried 2026-08-08:
+// BYTE-IDENTICAL (remote D1 `colorless`, re-queried 2026-08-08:
 // `GROUP BY lower(j.value ->> 'effect')` over `json_each(abilities_json)` at
 // `legal_standard = 1` returns ONE row, n = 2, these two ids). Both are Stage 1,
 // regulation mark I.

@@ -51,7 +51,7 @@ import {
 //     damage, …. ", "Switch in …. ");
 //   • BOTH: 1 sentence / 2 printings.
 //
-// Confirmed pool-wide on the remote D1 (`luminous`, `$.effect`, 2026-08-18):
+// Confirmed pool-wide on the remote D1 (`colorless`, `$.effect`, 2026-08-18):
 // `GLOB 'If *, this attack does nothing.*'` minus `GLOB 'If *, this attack does
 // nothing.'` is **2 rows in 978 cards / 6 sets**, both Sawk, both `legal_standard = 1`.
 // **A `$` WIDENING BUYS TWO PRINTINGS, NOT TWENTY-SEVEN.** §1 asserts the whole
@@ -533,7 +533,7 @@ describe("§6 — what this slice did NOT buy", () => {
   });
 
   it("the ROTATED and NON-ATTACK columns cannot move — the sentence is attack-only", () => {
-    // Measured on the remote D1 (`luminous`, 2026-08-18) rather than assumed: the
+    // Measured on the remote D1 (`colorless`, 2026-08-18) rather than assumed: the
     // sentence returns ZERO rows on `effect` and ZERO on `abilities_json`, and
     // both `attacks_json` rows are `legal_standard = 1`. Recorded here as the two
     // printing ids, which is the half a test can re-check.

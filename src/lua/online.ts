@@ -3,7 +3,7 @@ import {
   LOBBY_CODE_LENGTH,
   normalizeLobbyCode,
   type User,
-} from "@luminous/schema";
+} from "@colorless/schema";
 import * as api from "../lib/api";
 import { createLobbyCode } from "../online/createLobby";
 import {

@@ -30,7 +30,7 @@ import {
 //    all of your Pokémon."
 //     — Rhyperior sv07-076 "Wide Wall".                            1 printing
 //
-// ✅ RE-DERIVED AT THIS COMMIT, NOT TRANSCRIBED. Remote D1 `luminous`
+// ✅ RE-DERIVED AT THIS COMMIT, NOT TRANSCRIBED. Remote D1 `colorless`
 // (735f0fb5-cdc3-494d-8b97-74a8ade0124a), 2026-08-07, over ALL THREE text columns
 // via `json_each`, `legal_standard = 1`, GROUPED BY SENTENCE:
 //

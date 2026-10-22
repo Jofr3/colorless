@@ -3,8 +3,8 @@
 // read; a v41 record takes D583's pool refresh AND the two keys. Read as-is, a v42 side has neither
 // key, and this build reads both as records: the first attack's damage step throws.
 
-import { applyAction, type GameState, type Seat } from "@luminous/engine";
-import type { Card } from "@luminous/schema";
+import { applyAction, type GameState, type Seat } from "@colorless/engine";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import {
   loadMatchRecord,

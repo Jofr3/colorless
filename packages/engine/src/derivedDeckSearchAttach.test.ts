@@ -27,7 +27,7 @@ import {
 // on that page to be graded PART WRONG.
 //
 // ✅ THE COUNT RE-DERIVES TO THE DIGIT — and unlike D234 the WHOLE row does, not
-// just the half an anchor can take. Remote D1 `luminous`, `legal_standard = 1`,
+// just the half an anchor can take. Remote D1 `colorless`, `legal_standard = 1`,
 // `json_each` over `attacks_json`/`abilities_json` plus the bare `effect` column,
 // GLOB (never LIKE), GROUPED BY SENTENCE, 2026-08-06:
 //

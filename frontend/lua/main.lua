@@ -23,7 +23,7 @@ local function collection() return state.page=='sandbox' and sandbox or state.pa
 -- Pages drawn on the game table; moving to or from one runs the screen wipe.
 local function isTable(page) return page=='simulator' or page=='match' end
 local function title(page)
-  return 'Luminous - '..(page=='simulator' and 'Simulator' or page=='match' and 'Online match' or page=='sandbox' and 'Sandbox' or page=='builder' and 'Deck builder' or page=='decks' and 'Decks' or page=='online' and 'Online' or 'Home')
+  return 'Colorless - '..(page=='simulator' and 'Simulator' or page=='match' and 'Online match' or page=='sandbox' and 'Sandbox' or page=='builder' and 'Deck builder' or page=='decks' and 'Decks' or page=='online' and 'Online' or 'Home')
 end
 local preferences=Preferences.new()
 local account=Account.new()
@@ -46,7 +46,7 @@ local function sound(name,pitch,volume,sourceVolume)
   local gain=sourceVolume and (volume or 1) or (quiet[name] or 0.6)*(volume or 1)
   s:setPitch(pitch or 1);s:setVolume(gain*preferences.volume/100*preferences.effectsVolume/100);s:play()
 end
-local function announce(text) print('LUMINOUS:announce:'..text) end
+local function announce(text) print('COLORLESS:announce:'..text) end
 local function layout(w,h)
   width,height=w,h
   state.pressed=nil
@@ -124,13 +124,13 @@ applyPage=function(page,deckId)
   elseif page=='match' then
     library:command('close');simulator:open(state.reduced,false,'online',deckId or '')
   elseif page=='builder' then
-    library:command('close');builder:open(state.reduced,deckId);print('LUMINOUS:account:refresh')
+    library:command('close');builder:open(state.reduced,deckId);print('COLORLESS:account:refresh')
   elseif page=='sandbox' then
-    library:command('close');sandbox:open(state.reduced);print('LUMINOUS:account:refresh')
+    library:command('close');sandbox:open(state.reduced);print('COLORLESS:account:refresh')
   elseif page=='decks' then
-    library:open(state.reduced);print('LUMINOUS:account:refresh')
+    library:open(state.reduced);print('COLORLESS:account:refresh')
   elseif page=='online' then
-    library:command('close');room.jiggle=room.jiggle+1;online:open(state.reduced,deckId or '');print('LUMINOUS:account:refresh')
+    library:command('close');room.jiggle=room.jiggle+1;online:open(state.reduced,deckId or '');print('COLORLESS:account:refresh')
   else library:closeModal();library:command('close') end
 end
 startWipe=function(callback)
@@ -141,7 +141,7 @@ startWipe=function(callback)
   local colour=isTable(state.page) and simulator:backgroundColours()[2] or T.panel
   wipe=ScreenWipe.new(callback,colour,state.reduced,function(name,pitch,volume) sound(name,pitch,volume,true) end)
   wipe:layout(virtualWidth,virtualHeight,Screen.unit(width,height)/layoutScale,width/layoutScale,height/layoutScale)
-  print('LUMINOUS:transition:open')
+  print('COLORLESS:transition:open')
   return true
 end
 requestPage=function(page,deckId)
@@ -194,14 +194,14 @@ applyPreferences=function()
 end
 local function savePreferences()
   applyPreferences()
-  print('LUMINOUS:preferences:'..preferences:serialize())
+  print('COLORLESS:preferences:'..preferences:serialize())
 end
 closeSettings=function()
-  print('LUMINOUS:auth:close')
-  print('LUMINOUS:account:finish-edit')
+  print('COLORLESS:auth:close')
+  print('COLORLESS:account:finish-edit')
   popup=nil; state.pressed=nil; state.focused=#menu+2; state.hovered=0
   savePreferences()
-  print('LUMINOUS:settings:closed')
+  print('COLORLESS:settings:closed')
   announce('Settings closed')
 end
 openSettings=function(keyboard,tab)
@@ -213,14 +213,14 @@ openSettings=function(keyboard,tab)
     changed=savePreferences,close=closeSettings,announce=announce,
     reduced=function() return state.reduced end,
     feedback=function() sound('button'); room.jiggle=room.jiggle+0.5 end,
-    account=function(command) print('LUMINOUS:account:'..command) end,
-    auth=function(command) print('LUMINOUS:auth:'..command) end,
+    account=function(command) print('COLORLESS:account:'..command) end,
+    auth=function(command) print('COLORLESS:auth:'..command) end,
   },state.reduced,keyboard,account)
   popup.tab=tab or 1
   if keyboard then popup.focus=popup.tab end
   popup:layout(virtualWidth,virtualHeight)
-  print('LUMINOUS:account:refresh')
-  print('LUMINOUS:settings:open')
+  print('COLORLESS:account:refresh')
+  print('COLORLESS:settings:open')
   announce('Settings. '..(popup.tab==4 and 'Account' or 'Game')..' tab. Tab moves between controls. Escape closes.')
 end
 local function activate(index)
@@ -229,9 +229,9 @@ local function activate(index)
   room.jiggle=room.jiggle+0.5
   state.lastClicked={index=index,at=state.time}
   local item=index<=#menu and menu[index] or controls[index-#menu]
-  if item.action=='sandbox' then print('LUMINOUS:simulator:resume')
-  elseif item.action=='decks' then print('LUMINOUS:page:decks')
-  elseif item.action=='online' then print('LUMINOUS:page:online')
+  if item.action=='sandbox' then print('COLORLESS:simulator:resume')
+  elseif item.action=='decks' then print('COLORLESS:page:decks')
+  elseif item.action=='online' then print('COLORLESS:page:online')
   elseif item.action=='settings' then openSettings()
   elseif item.action=='account' then openSettings(false,4) end
 end
@@ -246,38 +246,38 @@ function love.load()
   end
   sounds.music1:setLooping(true); sounds.music1:setVolume(0.16)
   library=Library.new({
-    command=function(command) print('LUMINOUS:library:'..command) end,
+    command=function(command) print('COLORLESS:library:'..command) end,
     feedback=function(name,pitch,volume) sound(name,pitch,volume) end,
     announce=announce,
-    refresh=function() print('LUMINOUS:account:refresh') end,
-    home=function() print('LUMINOUS:page:home') end,
+    refresh=function() print('COLORLESS:account:refresh') end,
+    home=function() print('COLORLESS:page:home') end,
     settings=function() openSettings() end,
     signin=function() openSettings(false,4); popup:openAuth('login') end,
   })
   builder=Builder.new({
-    command=function(command) print('LUMINOUS:builder:'..command) end,
+    command=function(command) print('COLORLESS:builder:'..command) end,
     feedback=function(name,pitch,volume) sound(name,pitch,volume) end,
     announce=announce,
     signin=function() openSettings(false,4); popup:openAuth('login') end,
   })
   sandbox=Sandbox.new({
-    command=function(command) print('LUMINOUS:sandbox:'..command) end,
+    command=function(command) print('COLORLESS:sandbox:'..command) end,
     feedback=function(name,pitch,volume) sound(name,pitch,volume) end,
     announce=announce,
-    refresh=function() print('LUMINOUS:account:refresh') end,
-    home=function() print('LUMINOUS:page:home') end,
-    decks=function() print('LUMINOUS:page:decks') end,
+    refresh=function() print('COLORLESS:account:refresh') end,
+    home=function() print('COLORLESS:page:home') end,
+    decks=function() print('COLORLESS:page:decks') end,
     signin=function() openSettings(false,4); popup:openAuth('login') end,
   })
   online=Online.new({
-    command=function(command) print('LUMINOUS:online:'..command) end,
+    command=function(command) print('COLORLESS:online:'..command) end,
     feedback=function(name,pitch,volume) sound(name,pitch,volume) end,
     announce=announce,
-    home=function() print('LUMINOUS:page:home') end,
+    home=function() print('COLORLESS:page:home') end,
     signin=function() openSettings(false,4); if popup then popup:openAuth('login') end end,
     jiggle=function(amount) room.jiggle=room.jiggle+(amount or 1) end,
   })
-  simulator=Simulator.new({transition=function(callback) return startWipe(callback) end,command=function(command) print('LUMINOUS:simulator:'..command) end,
+  simulator=Simulator.new({transition=function(callback) return startWipe(callback) end,command=function(command) print('COLORLESS:simulator:'..command) end,
     feedback=function(name,pitch,volume) sound(name,pitch,volume) end,
     sourceFeedback=function(name,pitch,volume) sound(name,pitch,volume,true) end,
     announce=announce,settings=function() openSettings() end,
@@ -285,7 +285,7 @@ function love.load()
   layout(g.getDimensions())
   browserState()
   state.ready=true
-  print('LUMINOUS:ready')
+  print('COLORLESS:ready')
 end
 function love.resize(w,h) if scene then layout(w,h) end end
 function love.update(dt)
@@ -307,7 +307,7 @@ function love.update(dt)
   screen:update(state.time,offsetX+room.cursorX*layoutScale,offsetY+room.cursorY*layoutScale,state.reduced,preferences)
   if wipe and wipe:update(dt) then
     wipe:release();wipe=nil
-    print('LUMINOUS:transition:closed')
+    print('COLORLESS:transition:closed')
     if pendingPage then requestPage(pendingPage.page,pendingPage.deckId) end
   end
   local mx,my=pointer(love.mouse.getPosition())
@@ -386,7 +386,7 @@ function love.draw()
     Button.tray(b.x-12,b.y-12,b.w+24,b.h+24)
     button(b,#menu+i)
   end
-  T.text('Luminous',19,24,virtualHeight-33,160,T.paper,'left')
+  T.text('Colorless',19,24,virtualHeight-33,160,T.paper,'left')
   T.text('Home',19,virtualWidth-130,virtualHeight-33,106,T.paper,'right')
   end
   g.pop()

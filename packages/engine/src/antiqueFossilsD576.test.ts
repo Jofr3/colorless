@@ -1,5 +1,5 @@
-import type { Card } from "@luminous/schema";
-import { redactedGameSchema } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
+import { redactedGameSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { cardOfUid, hasPrintedAbility, hpOf, isFossilTop, prizeValueOf } from "./cards";
 import { CATALOG_MANIFEST } from "./catalogManifest";

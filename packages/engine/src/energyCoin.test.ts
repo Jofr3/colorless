@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame, programFor } from "./index";
 import type { EffectPrompt, GameEvent, GameState, PokemonRef } from "./index";
@@ -22,7 +22,7 @@ import {
 //
 // ── THE CENSUS, RE-VERIFIED RATHER THAN COPIED ──────────────────────────────
 // The clause *"both of them are heads"* over ALL THREE text columns (remote D1
-// `luminous` `735f0fb5-…`, 2026-08-16):
+// `colorless` `735f0fb5-…`, 2026-08-16):
 //     effect          2 printings / 2 sentences / **1 legal**
 //     attacks_json    4 printings / 3 sentences /   0 legal
 //     abilities_json  0

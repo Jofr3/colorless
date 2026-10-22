@@ -404,7 +404,7 @@ describe("§4 — the discard anchor is defended by TWO independent printed word
   it("word TWO — the article `an`, so the cross-product NOBODY prints stays null", () => {
     // The bare family is map-built over THREE articles. An optional `(?: ex)?`
     // there would have derived these two sentences, and the catalog holds ZERO of
-    // them on any of its three text columns (remote D1 `luminous`, 2026-08-18).
+    // them on any of its three text columns (remote D1 `colorless`, 2026-08-18).
     // Deriving them would be authoring two cards.
     expect(
       deriveAttackEffect("Discard a Special Energy from your opponent's Active Pokémon ex."),

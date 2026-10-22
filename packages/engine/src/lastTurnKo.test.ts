@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { conditionHolds, conditionNote } from "./interpreter";
 import { applyAction, createGame, programFor } from "./index";
@@ -28,7 +28,7 @@ import { koedDuringOpponentsLastTurn } from "./types";
 //
 // THE SENTENCE. *"You can use this card only if any of your Pokémon were Knocked
 // Out during your opponent's last turn."* — THREE Standard-legal printings
-// (re-queried against the remote D1 `luminous` on 2026-08-07, all
+// (re-queried against the remote D1 `colorless` on 2026-08-07, all
 // `legal_standard = 1`):
 //
 //   · `sv06-165` Unfair Stamp (**Item**) — + *"Each player shuffles their hand

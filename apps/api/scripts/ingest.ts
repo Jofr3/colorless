@@ -9,7 +9,7 @@
 //
 // Flow: resolve target sets → per set, fetch every card's FULL detail
 // (sequentially, 50ms apart — same politeness as validate-live.ts), validate
-// each payload with @luminous/schema; any failure aborts that set with a
+// each payload with @colorless/schema; any failure aborts that set with a
 // report → write chunked upsert SQL files → apply in FK order (series → set →
 // card chunks) via `wrangler d1 execute`. Idempotent: everything is an
 // ON CONFLICT DO UPDATE upsert, so reruns are always safe.
@@ -40,7 +40,7 @@ import {
   tcgdexCardSchema,
   tcgdexSerieSchema,
   tcgdexSetSchema,
-} from "@luminous/schema";
+} from "@colorless/schema";
 import {
   CARDS_PER_CHUNK,
   cardsUpsertSql,

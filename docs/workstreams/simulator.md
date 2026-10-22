@@ -229,7 +229,7 @@ prompt).
 - **`isBasicPokemon` now exists twice** in the repo: the engine's (over the
   canonical `Card.stage`) and the builder's (over `BuilderCard.subtype`, a
   relabelled view). They read different vocabularies of the same data and can
-  drift. Lift one predicate into `@luminous/schema` when convenient.
+  drift. Lift one predicate into `@colorless/schema` when convenient.
 
 ## M2 as built (2026-07-16) — attacks, KO/prizes, win check + the projection
 
@@ -270,7 +270,7 @@ findings, all confirmed ones fixed in-session). The headline classes:
   Colorless — typed attacks permanently unpayable on legal boards; and the
   schema-documented additive weakness `"+20"` was silently applied as ×2
   (dp5-4 fixture proves it). Fixes: optional "Basic " prefix + the canonical
-  `BASIC_ENERGY_TYPES` now lives in **`@luminous/schema`** (builder derives
+  `BASIC_ENERGY_TYPES` now lives in **`@colorless/schema`** (builder derives
   its palette from it; Fairy added, Dragon correctly provides nothing), and
   weakness/resistance parse to `DamageModifier` (×N/+N/−N).
 - **Data gaps must not guess:** `hp ≤ 0` now reads as the null data gap (a
@@ -500,7 +500,7 @@ Asleep); Slowpoke's Rest now actually simulates (self-Asleep + heal 30).
 - `BattleConditions` structurally restates `SpecialConditions` (playmat stays
   engine-free), pinned by a two-way assignability assert in `battleStateOf`.
   When M4 markers widen conditions, **lift the vocabulary to
-  `@luminous/schema`** (the BASIC_ENERGY_TYPES precedent).
+  `@colorless/schema`** (the BASIC_ENERGY_TYPES precedent).
 - Still open from M2: `prizeValueOf` = 1 (ingest suffix column), name-derived
   energy provision, phase↔`pending[0]` dual encoding (checkup added no
   parked-phase writers, so it stands unchanged), opponent-hand/setup reveal
@@ -4482,7 +4482,7 @@ same shape.
 **Deferred:** the HUD affordance. The engine action + projection surface for a
 **target-less "global" Stadium button** (no Pokémon `PokemonTarget`, no drag
 target) is a distinct web/schema slice — it needs a new redacted-phase field
-(`@luminous/schema`) + a button the client renders and dispatches. Landed
+(`@colorless/schema`) + a button the client renders and dispatches. Landed
 engine-only, reachable by tests and the P4 action path; surface it with a live
 /play pass. Also deferred, out of the sv01–03 scope: **Academy at Night
 sv06.5-054** (the 4th activated Stadium — "put a card from hand on top of their
@@ -4664,7 +4664,7 @@ own-side self-switch. All apostrophes in the pool's retreat text are **ASCII**.
 
 **Where the flag lives, and why not in `SpecialConditions`.** `InPlayPokemon.retreatBlocked`,
 a sibling of `conditions`, not a member of it. `SpecialConditions` is pinned field-by-field by
-`RedactedConditions` (`@luminous/schema`) and `BattleConditions` (the playmat), and its members
+`RedactedConditions` (`@colorless/schema`) and `BattleConditions` (the playmat), and its members
 render as status chips, tick at the Checkup and gate ATTACKING — a retreat block does none of
 those, and adding a field there would have dragged the wire + playmat into an engine-only
 slice. **The reusable rule: a struct something else pins field-by-field is not a free place to
@@ -4704,7 +4704,7 @@ Every census in this file written before 2026-08-01 says five sets / ~890 cards.
   either column is NULL, so a `LIKE` over the raw concatenation silently drops them. Use
   `LOWER(COALESCE(abilities_json,'') || COALESCE(attacks_json,'') || COALESCE(effect,''))`.
 - The **live remote D1 holds 3698 cards** through `sv10.5b` + `svp`
-  (`bunx wrangler d1 execute luminous --remote --command "…"`). Every seam here is
+  (`bunx wrangler d1 execute colorless --remote --command "…"`). Every seam here is
   ingested-pool-scoped and **reopens the moment a new set is ingested**.
 - When a census claims a seam is "N/N closed", say **which** scope: raw local pool, or the
   Standard-legal subset. The retreat-COST seam read 9/10 raw until D114 built Wimpod
@@ -4751,7 +4751,7 @@ information and must be announced; a board condition is not, per the D40 invaria
 `per × count` is then the printed flat bonus when the clause holds and **0** when it does not.
 Modelling the conditional bonus as a degenerate *count* is what lets it reuse the additive
 `AttackDamageBonus` fold whole: **no new fold in attack.ts, no new branch in the §8.5
-pipeline, no new op, no new event or event field, no registry row, no web/API/DB/`@luminous/schema`
+pipeline, no new op, no new event or event field, no registry row, no web/API/DB/`@colorless/schema`
 diff.** This is D110's "a member, not a mechanism" rule applied a second time.
 
 The **only** structural change is that `scaledAttackDamage` gains the **ATTACKER's seat**. It
@@ -5738,7 +5738,7 @@ optional to skip: it would read back **benignly** (`undefined === state.turn` is
 false, i.e. "did not move this turn"), and a silently-defaulted rules-relevant
 field is precisely the misreading the version exists to refuse. `redact.ts`
 allow-lists what crosses the wire, so nothing else moved: no wire field, no
-`@luminous/schema` diff, no web/API diff beyond the constant.
+`@colorless/schema` diff, no web/API diff beyond the constant.
 
 ### Census facts (local D1, 2026-08-01, 978 cards, whole effect string)
 - `Active Spot this turn` — exactly **5** cards (the 3 positive printings + 2
@@ -6603,7 +6603,7 @@ it to duplicate).
   only (contains 0, contains ≥2) — D129's rule for an unbounded count.
 
 `bun run check` GREEN exit 0: **172 → 173 files, 2710 → 2747 tests**. No web/API/DB/
-`@luminous/schema` diff; no `MATCH_RECORD_VERSION` bump.
+`@colorless/schema` diff; no `MATCH_RECORD_VERSION` bump.
 
 ### Still unmapped in the coin family after D130 *(the seven mills item is DONE — D131 below)*
 
@@ -6715,7 +6715,7 @@ was discarded; refused by the bonus reader too, so the whole row stays loud).
 
 `bun run check` GREEN exit 0: **173 → 174 files, 2747 → 2768 tests**. `biome format`
 churn re-measured on a clean tree: **20 files, unchanged**. No web/API/DB/
-`@luminous/schema` diff; no `MATCH_RECORD_VERSION` bump.
+`@colorless/schema` diff; no `MATCH_RECORD_VERSION` bump.
 
 ### Still unmapped after D131 — the mill neighbourhood
 
@@ -6858,7 +6858,7 @@ undocumented member, 1 flipped assertion. ZERO new events, ops, `EffectOp` /
 `AttackCoinFlip` / `AttackFlipCount` / `BoardCondition` / `DamageCountSource` members,
 clause-table rows, state fields, prompts, error codes, registry rows, redact arms or log
 arms. **No `interpreter.ts` diff.** No `rng.ts` / `continuous.ts` / `attack.ts` /
-`events.ts` diff. No web/API/DB/`@luminous/schema` diff; no `MATCH_RECORD_VERSION` bump.
+`events.ts` diff. No web/API/DB/`@colorless/schema` diff; no `MATCH_RECORD_VERSION` bump.
 Full `bun run check` green exit 0: **174 → 175 files, 2768 → 2785 tests**.
 
 ### ⚠️ The `biome format` churn number was never a measurement
@@ -7552,7 +7552,7 @@ D96–D135; anything from D136 on is again unreviewed.
 `bun run check` green, exit 0 — **178 files / 2859 tests** (was 178 / 2857: two new `it`
 blocks, and two entries removed from near-miss loops that were never separate tests).
 **Engine version UNCHANGED** — no behaviour a card can reach moved. No
-`MATCH_RECORD_VERSION` bump, no web/API/DB/`@luminous/schema` diff.
+`MATCH_RECORD_VERSION` bump, no web/API/DB/`@colorless/schema` diff.
 
 ## D137 — the APOSTROPHE FOLD: the literal clause-table half of D136's hardening (engine unchanged, 0.86.0)
 
@@ -7717,7 +7717,7 @@ retreat-cost class fails **2**.
 **Engine version UNCHANGED and no `MATCH_RECORD_VERSION` bump** — no behaviour a card in
 today's catalog can reach moved, because today's catalog has no U+2019 to fold. This is a
 property of the READER, bought against an ingest that has not happened yet, which is
-exactly the case where a version bump would be noise. No web/API/DB/`@luminous/schema`
+exactly the case where a version bump would be noise. No web/API/DB/`@colorless/schema`
 diff; no interpreter, `attack.ts`, `rng.ts` or `continuous.ts` diff.
 
 Cost: **1 helper (7 lines) + 2 constants, 5 call sites re-pointed, 2 regexes classed, 3
@@ -8987,7 +8987,7 @@ case, `publicCount`'s Palafin "Oracle Press") are both still correctly LOUD.
 `bun run check` **GREEN exit 0 — 184 files / 2993 tests** (was 183 / 2960).
 engineVersion 0.90.0 → **0.91.0**; `MATCH_RECORD_VERSION` **3 → 4**. ZERO new prompts,
 parks, clause-table rows, `BoardCondition` members, error codes, registry rows or redact
-arms; no `rng.ts`/`cardplay.ts`/`registry.ts` diff and no web/DB/`@luminous/schema` diff
+arms; no `rng.ts`/`cardplay.ts`/`registry.ts` diff and no web/DB/`@colorless/schema` diff
 beyond the one constant.
 
 ### Still unmapped after D142 — ranked by cost
@@ -10197,7 +10197,7 @@ and the misnamed cards were corrected in place.
 engineVersion 0.94.0 → **0.95.0**; `MATCH_RECORD_VERSION` **unchanged at 5**. ZERO
 new ops, events, error codes, prompts, parks, clause-table rows, `BoardCondition`
 members, registry rows or redact arms; no `redact.ts` / `turn.ts` / `flow.ts` /
-`cardplay.ts` / `rng.ts` / `registry.ts` diff and no web/DB/`@luminous/schema`
+`cardplay.ts` / `rng.ts` / `registry.ts` diff and no web/DB/`@colorless/schema`
 diff at all.
 
 ### Still unmapped after D146 — ranked by cost
@@ -10524,7 +10524,7 @@ witnesses, on the printing D145 forecast would need it).
 engineVersion 0.95.0 → **0.96.0**; `MATCH_RECORD_VERSION` **5 → 6**. ZERO new
 prompts, parks, clause-table rows, `BoardCondition` members, error codes, registry
 rows or redact arms; no `redact.ts` / `flow.ts` / `cardplay.ts` / `rng.ts` /
-`registry.ts` / `triggers.ts` diff and no web/DB/`@luminous/schema` diff beyond the
+`registry.ts` / `triggers.ts` diff and no web/DB/`@colorless/schema` diff beyond the
 one constant.
 
 ### Still unmapped after D147 — ranked by cost
@@ -10934,7 +10934,7 @@ engineVersion 0.96.0 → **0.97.0**; `MATCH_RECORD_VERSION` **unchanged at 6**.
 ZERO new ops, events, error codes, prompts, parks, state fields, registry rows or
 redact arms; no behavioural diff in `attack.ts` / `continuous.ts` / `redact.ts` /
 `turn.ts` / `log.ts` / `events.ts` / `flow.ts` / `cardplay.ts` / `rng.ts` /
-`registry.ts` / `triggers.ts`, and no web/DB/`@luminous/schema` diff (the
+`registry.ts` / `triggers.ts`, and no web/DB/`@colorless/schema` diff (the
 `GameHud.tsx` change is a comment).
 
 ### Still unmapped after D148 — ranked by cost
@@ -11283,7 +11283,7 @@ it and this one still does not" — two readers must not claim one printed claus
 engineVersion 0.97.0 → **0.98.0**; `MATCH_RECORD_VERSION` **6 → 7**. ZERO new
 prompts, parks, clause-table rows, `BoardCondition` members, error codes, registry
 rows or redact arms; no `redact.ts` / `flow.ts` / `cardplay.ts` / `rng.ts` /
-`registry.ts` / `triggers.ts` diff and no web/DB/`@luminous/schema` diff beyond the
+`registry.ts` / `triggers.ts` diff and no web/DB/`@colorless/schema` diff beyond the
 one constant.
 
 ### ⚠️ The name sweep — THREE misnamed ids, all pre-existing, the third slice in four
@@ -11601,7 +11601,7 @@ to a future hardening slice.
 
 **Cost.** 1 `PassiveEffects` flag, 1 registry row, 1 new reader, 4 one-term read
 sites. No new op, field, event, error code, prompt, park, regex, deriver arm,
-redact arm or projection; no web/DB/`@luminous/schema` diff at all. 1 fixture
+redact arm or projection; no web/DB/`@colorless/schema` diff at all. 1 fixture
 COMPLETED (Entei), 1 new deck (`PRESSURE_DECK` — its own 60, so D149's seeded
 boards stay byte-identical), `pressureAura.test.ts` (19 tests), 1 re-pointed
 stays-LOUD witness. engine 0.98.0 → **0.99.0**, `MATCH_RECORD_VERSION` **7
@@ -11734,7 +11734,7 @@ fifth), so *do not re-open on a sixth field*.
 **Cost.** 1 op, 1 required `InPlayPokemon` field, 1 record type, 1 regex, 1
 deriver arm, 1 reader, 1 event, 1 log row, 3 §10 clears, 1 one-term read site. No
 new `COUNTERS_PLACED` member, no park, no error code, no prompt, no redact arm,
-no projection, no registry row, no web/DB/`@luminous/schema` diff. 1 fixture
+no projection, no registry row, no web/DB/`@colorless/schema` diff. 1 fixture
 ADDED (Lycanroc ex, verbatim and checked field-by-field including its absences),
 1 new deck (`INSTALLED_RECOIL_DECK` — its own 60 so D141's seeded boards stay
 byte-identical), `installedRecoil.test.ts` (22 tests, one SEED), 2 re-pointed
@@ -11914,7 +11914,7 @@ doc block already said so.
 **1 event field, 1 ternary in `log.ts`, 2 producer lines.** No op, no state field, no
 regex, no deriver arm, no error code, no prompt, no redact arm, no projection, no registry
 row, no fixture, no new deck, no `MATCH_RECORD_VERSION` bump and no
-web/API/DB/`@luminous/schema` diff. Files: `events.ts`, `interpreter.ts`, `log.ts`,
+web/API/DB/`@colorless/schema` diff. Files: `events.ts`, `interpreter.ts`, `log.ts`,
 `effects.ts`, `index.ts`, `log.test.ts`. engineVersion **0.100.0 → 0.101.0** — a log label
 is behaviour a player sees (D141's precedent), applied here to a slice that changes nothing
 else. `bun run check` **GREEN exit 0 — 193 files / 3270 tests** (was 193 / 3269).
@@ -12154,7 +12154,7 @@ arm, 1 reader, 1 exported fold helper (`foldApostrophes`), 1 EVENT FIELD (not a 
 event), 1 log branch, 3 §10 clears, 1 §8 gate, 2 payability projections. No park,
 no new error code (`ATTACK_PREVENTED` reused with a message that **names** the
 barred attack, because what differs is what the player must do next), no prompt, no
-registry row, no DB/`@luminous/schema` diff. **6 fixtures ADDED** — Skarmory
+registry row, no DB/`@colorless/schema` diff. **6 fixtures ADDED** — Skarmory
 `sv03-142`, Munkidori ex `sv06.5-037`, Greedent ex `sv03-179`, Lucario `sv01-114`
 (each verbatim off the D1 and checked field by field **including its absences**),
 plus `fix-skarm-stage1` (the evolve route) and `fix-curly-barrer` (the re-ingest
@@ -12467,7 +12467,7 @@ two captures), **1 deriver arm** (24b), **1 reader** (`boostedAttackDamage`), **
 shared resolver** (`printedAttackIndex`), **1 new event** (`ATTACK_BOOSTED`), **1
 log arm**, **4 §10 clears**, **1 term at ONE read site**. No park, no error code, no
 prompt, no `DAMAGE_DEALT` member, no `BoardCondition` member, no redact/HUD diff, no
-web/DB/`@luminous/schema` diff beyond `MATCH_RECORD_VERSION`.
+web/DB/`@colorless/schema` diff beyond `MATCH_RECORD_VERSION`.
 
 4 fixtures ADDED (`sv03-052`, `fix-echoer`, `fix-echoer-stage1`,
 `fix-booster-ability`, `fix-curly-booster` — five entries, one of them a real card)
@@ -13221,7 +13221,7 @@ second pass is **21/21**.
 60 so `COUNTERATTACK_DECK`'s and `ROCKY_HELMET_DECK`'s seeded boards stay
 byte-identical). **No op, no event, no `COUNTERS_PLACED` member, no log arm, no
 error code, no park, no prompt, no redact arm, no projection, no persisted shape,
-no web/DB/`@luminous/schema` diff.** `vengefulPunch.test.ts` (**33 tests,
+no web/DB/`@colorless/schema` diff.** `vengefulPunch.test.ts` (**33 tests,
 SEED-FREE**), **three re-pointed pool-wide guard cases and two re-pointed
 stays-LOUD witnesses, none deleted.** engine **0.106.0**, `MATCH_RECORD_VERSION`
 **UNCHANGED at 10**. The slice was GREEN in its own worktree; **the merged test
@@ -13499,7 +13499,7 @@ lifetime).]
 **2 `PassiveEffects` fields, 1 `StadiumEffects` field, 3 new `continuous.ts`
 functions, 5 registry rows on 4 programs, 4 read sites at 2–3 terms each, 1 log
 crumb** — no new op, event, error code, prompt, park, regex, deriver arm, redact
-arm or projection, and **no web/DB/`@luminous/schema` diff at all**. 5 new fixtures
+arm or projection, and **no web/DB/`@colorless/schema` diff at all**. 5 new fixtures
 (all COMPLETE against the manifest — no `INCOMPLETE` declaration owed), 1 new deck
 (`ATTACKER_FILTER_DECK` — its own 60 so `SAFEGUARD_DECK`'s seeded boards stay
 byte-identical, D152's move), `attackerFilter.test.ts` (**43 tests**), 1 re-pointed
@@ -13798,7 +13798,7 @@ run), `packages/engine/src/catalogManifest.test.ts` (**22 → 24 tests**: the st
 collision case and the `censusedInTheGap` case are new, and four existing
 assertions changed sides), `packages/engine/src/testFixtures.ts` (one doc block).
 No op, event, field, registry row, regex, prompt, park, log arm, redact arm or
-projection; no `@luminous/schema`, web, API or DB diff. engine 0.106.0 →
+projection; no `@colorless/schema`, web, API or DB diff. engine 0.106.0 →
 **0.106.1** (a patch, on D156's precedent — a hardening slice with 0 engine lines),
 `MATCH_RECORD_VERSION` **UNCHANGED at 10**. `bun run check` GREEN exit 0 —
 **199 files / 3460 tests** (was 199 / 3458).
@@ -14033,7 +14033,7 @@ asks for is the precondition.
 **2 `PassiveEffects` fields, 1 gate inside `passivesOf`, 1 new `continuous.ts`
 function, 2 registry rows, 4 read sites** — no new op, event, error code, prompt,
 park, regex, deriver arm, redact arm, projection or log arm, and **no
-web/DB/`@luminous/schema` diff at all**. 2 new fixtures (both COMPLETE against the
+web/DB/`@colorless/schema` diff at all**. 2 new fixtures (both COMPLETE against the
 manifest), 1 new deck (`ALWAYS_ON_REDUCTION_DECK` — its own 60 so
 `DAMAGE_REDUCTION_DECK`'s seeded boards stay byte-identical, D151's move),
 `alwaysOnReduction.test.ts` (**31 tests, SEED-FREE**), `catalogManifest.ts`
@@ -14223,7 +14223,7 @@ coexisted in `testFixtures.ts` and a global substitution would have mislabelled 
 byte-identical), 8 tests, 1 regenerated manifest (978 rows, 6 sets, **208** fixture
 rows, 0 absent), 3 corrected `effects.ts` census blocks. **0 engine behaviour lines.**
 No op, event, field, registry row, read site, prompt, park, error code, projection or
-web/DB/`@luminous/schema` diff. **10 mutations run, 10 caught.**
+web/DB/`@colorless/schema` diff. **10 mutations run, 10 caught.**
 engine **0.107.0 → 0.108.0**; `MATCH_RECORD_VERSION` **10**; `bun run check` GREEN
 exit 0 — **200 files / 3499 tests** (was 200 / 3491).
 
@@ -14430,7 +14430,7 @@ exactly as designed and was RE-POINTED rather than deleted**: the bare `×` twin
 **1 regex, 1 reader, 2 lines in `attack.ts`'s pipeline** — one `+` on the `debuff`
 term, one term on each of `effectSimulated` / `modifierSimulated`. No new op, event,
 event field, log crumb, error code, prompt, park, field, registry row, redact arm or
-projection, and **no web/DB/`@luminous/schema` diff**. 1 new fixture (`sv01-060`,
+projection, and **no web/DB/`@colorless/schema` diff**. 1 new fixture (`sv01-060`,
 COMPLETE against the manifest — no `INCOMPLETE` declaration owed), 1 new deck
 (`SELF_SCALING_PENALTY_DECK`, its own 60 so `ALWAYS_ON_REDUCTION_DECK`'s and
 `PER_ATTACK_BUFF_DECK`'s boards stay byte-identical), `selfScalingPenalty.test.ts`
@@ -14664,7 +14664,7 @@ through `collectKnockOuts` → `planPrizes`, 2 registry programs (`MUNKIDORI_EX`
 this printing carries no coin and every board is built by surgery).**
 `ohNoYouDont.test.ts` (**28 tests**, 6 groups: the re-queried printed datum, the
 reduction, the CAUSE, the ORDER, the VOICE, the structural questions). No regex, no
-op, no prompt, no error code, no `@luminous/schema` diff, no DB diff, no web diff.
+op, no prompt, no error code, no `@colorless/schema` diff, no DB diff, no web diff.
 
 engine **0.109.0 → 0.110.0**; `MATCH_RECORD_VERSION` **10, unmoved**;
 `bun run check` GREEN — tests **3533 → 3561**; manifest **209 rows, 0 absent**.
@@ -14869,7 +14869,7 @@ defect D155 declined to build. One field, one meaning, N addresses.
    landing is not even soft). No op was added or removed and neither writer parks;
    `preventChosenAttack`'s park and its `chooseAttack` prompt/choice shapes are
    untouched. **D156–D164 in between did NOT bump — nine consecutive controls.** And
-   **no `@luminous/schema` diff**: `redactedAttacksOf` still folds the fact into the
+   **no `@colorless/schema` diff**: `redactedAttacksOf` still folds the fact into the
    per-attack `playable` boolean, so the WIRE is byte-identical across the bump and
    only the DO's stored `GameState` moves.
 2. **VOICE — NO ROW MOVED, AND THE ROW WAS ALREADY RIGHT WHILE THE ENGINE WAS WRONG.**
@@ -14910,7 +14910,7 @@ defect D155 declined to build. One field, one meaning, N addresses.
 
 **1 field TYPE, 1 merge helper, 1 renamed reader, 1 §8 gate line, 2 projection lines,
 4 §10 literals.** No new op, event, event field, log crumb, error code, prompt, park,
-registry row, regex, fixture, deck, `@luminous/schema` diff or DB diff.
+registry row, regex, fixture, deck, `@colorless/schema` diff or DB diff.
 `lockedAttackMerge.test.ts` (**14 tests, SEED-FREE**, on the two predecessors' decks
 one per seat — the collision needs a self-side barrer facing an opponent-side one, and
 mixing them at the seats costs no new 60 and moves no seeded board in either), 1 new
@@ -15050,7 +15050,7 @@ number of a two-number census, wrong three handoffs running.
 **2 tests** (`lockedAttackMerge.test.ts` **14 → 16**) and **3 doc blocks amended**
 (`addLockedAttack`'s prune bullet, `index.ts`'s D165 changelog entry, and the D165
 mutation lines in `decisions.md` / this file). No op, event, prompt, regex, fixture,
-deck, registry row, error code, web / DB / `@luminous/schema` diff.
+deck, registry row, error code, web / DB / `@colorless/schema` diff.
 
 `bun run check` GREEN exit 0 — **203 files / 3578 tests** (was 203 / 3576).
 
@@ -15230,7 +15230,7 @@ never as a hand edit.
 **1 regex, 1 `if`.** No new op, event, event field, log crumb, error code, prompt, park,
 field, registry row, redact arm or projection; no new `DamageCountSource`, evaluator
 arm, reader or fold; **no branch in `attack.ts`**; and **no web / DB /
-`@luminous/schema` diff**. `attack.ts` and `index.ts` take **comment and doc diffs only**
+`@colorless/schema` diff**. `attack.ts` and `index.ts` take **comment and doc diffs only**
 apart from the version string.
 
 Plus **2 fixtures** (`sv01-089`, `swsh10.5-036` — both COMPLETE against the manifest),
@@ -15511,7 +15511,7 @@ no longer exists.
 
 **1 regex, 1 reader arm, 1 `DamageCountSource` member, 1 evaluator arm.** No new op,
 event, event field, log crumb, error code, prompt, park, state field, registry row,
-redact arm or projection, and **no web / DB / `@luminous/schema` diff**.
+redact arm or projection, and **no web / DB / `@colorless/schema` diff**.
 
 Plus **3 fixtures** (`sv01-095`, `sv03-086`, `sv06.5-025` — all COMPLETE against the
 manifest), **1 deck** (`OPPONENT_COUNTER_DECK`), `opponentCounterScaling.test.ts`
@@ -15782,7 +15782,7 @@ Active+Bench source loop, which is exactly the sibling scan a future author woul
 ### Cost
 
 **2 `PassiveEffects` fields, 2 registry rows, 2 continuous scans, 1 reworked fold, 1
-optional `@luminous/schema` field, 1 `redact.ts` arm and 2 HUD lines.** No op, event,
+optional `@colorless/schema` field, 1 `redact.ts` arm and 2 HUD lines.** No op, event,
 event field, log crumb, error code, prompt, park, state field, `BoardCondition` member or
 `EffectContinuation` inhabitant; **no fixture card and no DB diff**. `effects.ts` and
 `testFixtures.ts` take **comment-only** diffs (the two LOUD simplifications discharged).
@@ -16109,7 +16109,7 @@ pretending a test covers it) is now backed by a measurement rather than by an ar
 
 **1 regex, 1 reader arm, 1 `DamageCountSource` member, 1 evaluator arm.** No new op, event,
 event field, log crumb, error code, prompt, park, state field, registry row, redact arm or
-projection, and **no web / DB / `@luminous/schema` diff**.
+projection, and **no web / DB / `@colorless/schema` diff**.
 
 Plus **1 fixture** (`swsh10.5-043` — COMPLETE against the manifest, carrying its
 unsimulated idx-1 spread), **1 deck** (`BENCH_COUNTER_DECK`, its own 60 so no neighbouring
@@ -16442,7 +16442,7 @@ route + 1 ref helper (`toolHolderRef`) + 1 prompt arm, 1 optional event field
 `expShare.test.ts` (**40 tests**, 8 groups: the printed datum, the board scan, the park,
 the antecedent, the seam, the voice, the structural questions, the family after D171), plus
 the re-pointed `ohNoYouDont.test.ts` pin. **No new event type, no new log arm, no error
-code, no op, no prompt kind, no `@luminous/schema` diff, no DB diff, no web diff.**
+code, no op, no prompt kind, no `@colorless/schema` diff, no DB diff, no web diff.**
 
 15 files under `packages/engine/src` move (`registry.ts`, `types.ts`, `triggers.ts`,
 `flow.ts`, `attack.ts`, `interpreter.ts`, `events.ts`, `log.ts`, `cardplay.ts`,
@@ -16778,7 +16778,7 @@ is the whole reason D159 wrote a pin it expected to outlive itself.
 program (`ELECTRICITY_POUCHES`) on 2 rows + 1 field added to `WELL_BAKED_BODY`, 2 fixtures
 (`sv01-068`/`-208`, verbatim off the D1) and 1 deck (`STATUS_IMMUNITY_DECK`). **No op, no
 error code, no prompt, no park, no `PendingStage`, no regex, no deriver arm, no redact
-arm, no projection, no `@luminous/schema` diff, no DB diff, no web diff.**
+arm, no projection, no `@colorless/schema` diff, no DB diff, no web diff.**
 
 9 files under `packages/engine/src` move (`registry.ts`, `continuous.ts`,
 `interpreter.ts`, `events.ts`, `log.ts`, `testFixtures.ts`, `catalogManifest.ts`,
@@ -17103,7 +17103,7 @@ is to read the DATE before the number, and `history.lastSeen` is 2026-08-02.
    is a generated **MEASUREMENT** whose only consumers are two test files and which
    **`index.ts` does not re-export**, so the `types` field is not a public-API change;
    `testFixtures.ts` is the fixture pool. **No op, event, game-state field, registry row,
-   regex, prompt, park, log arm, redact arm or projection**; no `@luminous/schema`, web,
+   regex, prompt, park, log arm, redact arm or projection**; no `@colorless/schema`, web,
    API or DB diff. **0 ENGINE BEHAVIOUR LINES.** D150/D166's precedent.
    `packages/engine/package.json` stays `0.3.0`.
 2. **`MATCH_RECORD_VERSION` UNCHANGED at 11, DERIVED** on D124's DIRECTIONAL test — *can
@@ -17533,7 +17533,7 @@ flow function (`recoverStatuses`) at 2 call sites, 1 widened event `reason` + 1 
 1 registry row (`THERAPEUTIC_ENERGY`), 1 fixture (`sv02-193` — the pool's first Energy carrying
 its printed `effect`), 1 optional `specialEnergy` param, 1 deck (`THERAPEUTIC_ENERGY_DECK`).
 **No op, no error code, no prompt, no park, no `PendingStage`, no regex, no deriver arm, no
-redact arm, no projection, no new EVENT, no `@luminous/schema` diff, no DB diff, no web diff.**
+redact arm, no projection, no new EVENT, no `@colorless/schema` diff, no DB diff, no web diff.**
 
 ⚠️ **`applyStatus` TOOK A ZERO BEHAVIOUR DIFF** — the gate D172 wrote already read the fold, so
 the whole cost of the family's third printing landed upstream of it. Its only edit is a comment.
@@ -17771,7 +17771,7 @@ declare-instead-of-fix with the pin KEPT — dies on it and on nothing else.
    from the package index"*) and `catalogManifest.test.ts` (a suite). The new import
    `testFixtures.ts → catalogManifest.ts` joins two modules `index.ts` already does not
    re-export, so it is **not a public-API edge**. **No op, event, game-state field, registry
-   row, regex, prompt, park, log arm, redact arm or projection**; no `@luminous/schema`,
+   row, regex, prompt, park, log arm, redact arm or projection**; no `@colorless/schema`,
    web, API or DB diff. **0 ENGINE BEHAVIOUR LINES.** D150/D166/D173's precedent.
    `packages/engine/package.json` stays `0.3.0`, and **0.118.0 is left free for the
    in-flight D174.**
@@ -18047,7 +18047,7 @@ covering all three ATTACK printings — the seam is text-keyed, so the reprints 
 row) · **1 interpreter arm + implementation** · **1 registry row** (`BLISSEY`) · **4 fixtures**
 (`sv01-086` gains its printed attack; `sv01-228` / `sv01-245` / `sv01-145` are new) · **1 deck**
 (`CLEAR_STATUS_DECK`). **No new field, event, error code, prompt, park, `PendingStage`, log arm,
-redact arm, projection, `@luminous/schema` diff, DB diff or web diff.** 3 re-pointed pins
+redact arm, projection, `@colorless/schema` diff, DB diff or web diff.** 3 re-pointed pins
 (`therapeuticEnergy.test.ts` ×2, `preventBlock.test.ts`'s D150 table gains its **eighth**
 classified op + probe). New `clearStatus.test.ts` (**36 tests**); suite 212 files / 3865 tests →
 **213 / 3901**. Manifest **219 → 222** fixture rows — and the regeneration moved the sqlite's
@@ -18155,7 +18155,7 @@ on the *Trainer* path since M4 and had no *attack* reader for:
 | **built total** | | **19** | **34** |
 
 No new op, field, event, error code, prompt, park, `PendingStage`, log arm, redact arm,
-projection, registry row, `@luminous/schema` diff, DB diff or web diff.
+projection, registry row, `@colorless/schema` diff, DB diff or web diff.
 
 ### The census re-derived exact — and two of its generalisations did not
 
@@ -18320,7 +18320,7 @@ Decided, not defaulted. The sole future consumer (`attack.ts`) is **inside** the
 package; a grep over `apps/`, `src/` and `packages/` found **no reference to
 `matchesFilter` outside the engine** (the only mentions are comments in `registry.ts`,
 `effects.ts` and `providesEnergy.test.ts`, plus docs); and nothing outside imports
-`cards.ts` directly — every external consumer goes through `@luminous/engine`. The
+`cards.ts` directly — every external consumer goes through `@colorless/engine`. The
 public API is not widened on speculation. If a web or API caller ever needs it, that
 slice adds the line.
 
@@ -18341,7 +18341,7 @@ program lives in `GameState.phase`), an `EffectPrompt`/`EffectChoice`/
 `EffectContinuation`, an event, or the wire. This slice moves a **function between
 modules**. No `CardFilter` arm changed, no op was added or removed, nothing parks (the
 predicate is synchronous and field-free), no `GameState` field, no event, no error
-code, no `@luminous/schema` diff, no log label. A predicate is code and is never
+code, no `@colorless/schema` diff, no log label. A predicate is code and is never
 serialized into a record — and because the body is byte-identical, a record written by
 the previous deploy replays identically under this one.
 
@@ -18402,7 +18402,7 @@ is the consequent.
 D180 shipped its byte-identity **asserted from a doc**, and its test file left the
 exact query for the next session with the note that *"a pin claiming a measurement
 nobody made is worse than no pin"*. That sweep ran here, against the **REMOTE D1
-`luminous`** (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), on **3,786 rows / 20 sets**, of
+`colorless`** (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), on **3,786 rows / 20 sets**, of
 which **2,021 carry `legal_standard = 1`**.
 
 **The read predicate is PER COLUMN**, which is D180's own correction applied to the
@@ -18473,7 +18473,7 @@ antecedent) → **3**; and landing one of the zero-legal skips → **1**. No sur
 `MatchRecord` persists `{version, seed, startedAt, state, log, names}`, so the gate
 moves when a persisted **shape** moves. A registry row is a map lookup keyed by card
 id: no `GameState` field, no `EffectOp` inhabitant, no `EffectPrompt`/`EffectChoice`/
-`EffectContinuation`, no event, no error code, no wire, no `@luminous/schema` diff.
+`EffectContinuation`, no event, no error code, no wire, no `@colorless/schema` diff.
 Three of the nine programs **do** park, and a parked program lives in `GameState.phase`
 — so that was checked rather than waved past: `EffectContinuation` is
 `{pendingOp, rest, ctx, record}`, i.e. **the OPS themselves and never a card id**, and
@@ -18588,7 +18588,7 @@ survivors.
 
 Both unchanged, on the same derivations as D190a. Three map lookups keyed by card id:
 no `GameState` field, no `EffectOp` inhabitant, no prompt/choice/`EffectContinuation`
-shape, no event, no wire, no `@luminous/schema` diff. "Trade" **parks** (a `chooseCards`
+shape, no event, no wire, no `@colorless/schema` diff. "Trade" **parks** (a `chooseCards`
 hand cost) and a parked program lives in `GameState.phase` — but `EffectContinuation`
 carries `{pendingOp, rest, ctx, record}`, the ops themselves and never a card id, and
 `payFromHand`/`drawCards` have shipped since M5. `index.ts` and
@@ -18747,7 +18747,7 @@ Engine **0.124.0**, ascending changelog block in `index.ts` and `package.json` i
 `MATCH_RECORD_VERSION` **stays 12**, derived rather than inherited. `DamageCountSource`
 is a **PARSE-TIME** type: produced by the two readers from card TEXT at declaration and
 consumed by `scaledAttackDamage` in the same tick. Swept — it appears in no `GameState`
-field, no `PendingStage`, no `@luminous/schema` projection and no redaction, and
+field, no `PendingStage`, no `@colorless/schema` projection and no redaction, and
 `scaledAttackDamage`'s switch is the repo's only dispatch over it. There is **no new
 `EffectOp`**, which is D189's stated bump condition (a parked program lives in
 `GameState.phase`). `countEnergyInPlay`'s widened parameter is a reachability widening —
@@ -18808,7 +18808,7 @@ at exactly one `||`.
 
 ### The population, re-measured
 
-Remote D1 `luminous` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), **3,786 rows / 20 sets**,
+Remote D1 `colorless` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), **3,786 rows / 20 sets**,
 of which **2,021 carry `legal_standard = 1`** (⇔ mark H or I, plus unmarked Basic Energy),
 queried 2026-08-04 over `attacks_json` and `abilities_json`.
 
@@ -18939,7 +18939,7 @@ value produced from card text and consumed in the same tick;
 `PassiveEffects.suppressTargetEffectsOnAttack` is a **CATALOG** value read through
 `passivesOf`, not persisted state. No `GameState` field, no `InPlayPokemon` key, no
 `PendingStage`, no new `EffectOp` (D189's stated bump condition — nothing new can park),
-no `EffectPrompt`/`EffectChoice`/`EffectContinuation`, no `@luminous/schema` diff, no
+no `EffectPrompt`/`EffectChoice`/`EffectContinuation`, no `@colorless/schema` diff, no
 redaction change. `DAMAGE_DEALT` is unchanged: `weakness: null` and `resistance: null` are
 already-supported inhabitants (`seatRemovesWeakness` and the snipe arms write both today)
 and `reduction` is already optional. The widened `passivesOf` return is a reachability
@@ -19196,7 +19196,7 @@ of those are refusals.
 Engine **0.126.0**, ascending block in `index.ts` and `package.json` in step.
 `MATCH_RECORD_VERSION` **stays 12**, derived: `DamageCountSource` is a PARSE-TIME type
 produced from card text at declaration and consumed by `scaledAttackDamage` in the same
-tick — no `GameState` field, no `PendingStage`, no `@luminous/schema` projection, no
+tick — no `GameState` field, no `PendingStage`, no `@colorless/schema` projection, no
 redaction, and no new `EffectOp` (D189's stated bump condition — a parked program lives in
 `GameState.phase`, and a count source can never). No widened signature this time. The
 re-homing moves TEST scaffolding only; no saved record names a fixture id.
@@ -19231,7 +19231,7 @@ version bump and changelog block are **owed at merge**.
 Ability / Trainer / Special-Energy printings**, exactly **6 were built — 0.9 %**.
 D190 worked the census's seven named candidates, built 3 and dropped 4, and **exhausted
 the list**. This slice did not inherit a list: it re-censused **all 651** against the
-remote D1 `luminous` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`; 3,786 rows / 20 sets,
+remote D1 `colorless` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`; 3,786 rows / 20 sets,
 2,021 legal) on 2026-08-04 — every distinct sentence in `abilities_json` and in
 `effect`, grouped by text, ranked by legal printings — and asked one question of each:
 **does it map onto ops that already exist**, with no new op, no new field, no new
@@ -19388,7 +19388,7 @@ here, and the fix wants its own witness.
 
 `MATCH_RECORD_VERSION` **stays 12**, derived rather than assumed. A registry row is a map
 lookup keyed by card id: no `GameState` field, no new `EffectOp` inhabitant, no
-prompt/choice/`EffectContinuation` shape, no event, no wire, no `@luminous/schema` diff.
+prompt/choice/`EffectContinuation` shape, no event, no wire, no `@colorless/schema` diff.
 **The PARK check was made explicitly**, since D189's stated bump condition is that a
 parked program lives in `GameState.phase` and is persisted: **eleven of the 28 park** —
 `lookAtTopN`, `payFromHand` ×3, `damageChosen`, `gust`, `healChosen`, `discardEnergy`,
@@ -19532,7 +19532,7 @@ Suite: **+34 tests in 3 new files**. Repo: **225 files / 4204 tests** at `e34c25
 ### The census, re-derived — and the prior one was wrong three ways
 
 Swept over **all three text columns** (`effect`, `attacks_json`, `abilities_json` via
-`json_each` + `json_extract(value,'$.effect')`) of the remote D1 `luminous`
+`json_each` + `json_extract(value,'$.effect')`) of the remote D1 `colorless`
 (3,786 rows / 20 sets, 2,021 Standard-legal) on 2026-08-04.
 
 | Owner | effect | attack | ability | legal total | | Owner | effect | attack | ability | legal total |
@@ -19690,7 +19690,7 @@ surface cannot render is a soft-lock and the honest ordering is surfaces first. 
 surfaces answer it now (D201 also gave the online router its `never` floor). This is the
 asking, and it is the whole slice: **zero** new ops, prompts, choice kinds, events, error
 codes, park machinery, dialogs, registry rows, state fields, `src/**`, `apps/**` or
-`@luminous/schema` diff.
+`@colorless/schema` diff.
 
 * `^You may draw (\d+) cards\.$` → `optional{ note, then:[drawCards N] }` — **2 legal**
 * `^You may draw cards until you have (\d+) cards in your hand\.$` →
@@ -19699,7 +19699,7 @@ codes, park machinery, dialogs, registry rows, state fields, `src/**`, `apps/**`
 ### The census, re-derived — and both of D186's figures held EXACT
 
 Swept 2026-08-04 over `json_each(attacks_json)` + `json_extract(value,'$.effect')` on the
-remote D1 `luminous` (3,786 rows / 20 sets, 2,021 `legal_standard = 1`).
+remote D1 `colorless` (3,786 rows / 20 sets, 2,021 `legal_standard = 1`).
 
 | sentence | printings | legal | ids |
 |---|--:|--:|---|
@@ -20255,7 +20255,7 @@ new op, no new `EffectSlot`, no new gate, no new prompt kind.
 
 ### The census, re-derived — **D205's data holds row by row; two of its SIZES do not**
 
-Re-run against the remote D1 `luminous` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`;
+Re-run against the remote D1 `colorless` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`;
 3,786 rows / 20 sets, 2,021 `legal_standard = 1`) on 2026-08-04, ⚠️ **with `GLOB`
 and never `LIKE`**. Giovanni 3, Orbeetle 2, N's Zoroark ex 4, Cofagrigus
 `sv10.5w-040/-123` 2, Flutter Mane `sv08-096` 1 — every id resolves to the card
@@ -20891,7 +20891,7 @@ said 0.137.0 — D220 bumped the constant and not the manifest. Both read 0.138.
 
 `sv10.5b-083`/`-163`/`-170` — *"Move up to 2 Energy from your Benched Pokémon to
 your Active Pokémon."* **3 Standard-legal printings**, regulation mark I, all
-three byte-identical (remote D1 `luminous`, 2026-08-05). **The last of D190's
+three byte-identical (remote D1 `colorless`, 2026-08-05). **The last of D190's
 four `DROPPED` work orders; that table is now EMPTY at 18 printings and 4-for-4
 to the field.**
 
@@ -20985,7 +20985,7 @@ vitest **249 files / 4606 tests** (from 248 / 4593: +1 file, +13 tests). engine
 printings across five sentences**: four "Drag Off"-family gust riders
 (`sv05-112`/`sv10-091` 30, `sv10.5b-027`/`-111` 20, `sv08-153`/`-214` 40,
 `sv06-127` 70 — **7 legal**) plus Grimmsnarl `sv07-096`'s 160 behind a printed
-*"If you do"* (**1 legal**). Census re-derived against the remote D1 `luminous`
+*"If you do"* (**1 legal**). Census re-derived against the remote D1 `colorless`
 (3,786 rows / 20 sets, 2,021 `legal_standard = 1`) over `json_each(attacks_json)`
 with `GLOB`, 2026-08-05. **D227's split-out backlog row counted this family
 exactly; what it got wrong was the mechanism.**
@@ -21097,7 +21097,7 @@ has ever had**: every printing before this one is a registry row (Energy Switch,
 Poppy, Armarouge, Exp. Share, N's Plan), so the op had never had to survive a text
 parser.
 
-Census re-derived (never inherited) against the remote D1 `luminous` — 3,786 rows
+Census re-derived (never inherited) against the remote D1 `colorless` — 3,786 rows
 / 20 sets, 2,021 `legal_standard = 1` — on 2026-08-05 over `json_each(attacks_json)`
 + `json_extract(value,'$.effect')` with `GLOB`, swept over **all three text
 columns**.
@@ -28417,7 +28417,7 @@ prompt kind; Crobat still owed; 🆕🆕🆕 Crobat BUILT at D564.)
 
 ## D556 — the this-turn side-wide bonus, three conditional Trainers on three new `BoardCondition` members, and three riders: 19 printings / 7 texts / 7 objects (engine 0.440.0, `MATCH_RECORD_VERSION` 34 → 35)
 
-**Status:** ✅ BUILT — keyed MID-MAP after `sv06-138`. Built in the `lum-wt-d556` worktree stacked on the parked D555;
+**Status:** ✅ BUILT — keyed MID-MAP after `sv06-138`. Built in the `colorless-wt-d556` worktree stacked on the parked D555;
 committed on `d556-prep` at `aaba3087` and LANDED on `main` by cherry-pick onto the D555 close-out `66dbfab3`.
 
 ### (a) The seven rows (registry.ts, one block before `const REGISTRY`)
@@ -28461,7 +28461,7 @@ the remaining audit rows.
 
 ## D557 — eleven Trainers: Kieran's labelled confirm, Venture Bomb's Item counter source, and one rider each for nine more: 19 printings / 11 texts / 11 objects (engine 0.441.0, `MATCH_RECORD_VERSION` stays 35)
 
-**Status:** ✅ BUILT — keyed MID-MAP after `svp-149`. Built in the `lum-wt-d557` worktree stacked on the parked D556, committed there on `d557-prep` at `8ecbe83c`, and LANDED on `main` by cherry-pick onto the D556 close-out `0a9db1be`.
+**Status:** ✅ BUILT — keyed MID-MAP after `svp-149`. Built in the `colorless-wt-d557` worktree stacked on the parked D556, committed there on `d557-prep` at `8ecbe83c`, and LANDED on `main` by cherry-pick onto the D556 close-out `0a9db1be`.
 
 ### (a) The eleven rows (registry.ts, one block before `const REGISTRY`)
 | Card | Ids | Surface | Program |
@@ -28509,7 +28509,7 @@ D558 — the first Tools and Stadiums plus Salvatore, parked on `d558-prep` at `
 
 ## D558 — the first Tools and Stadiums on the four existing modifier seams, plus Salvatore: 18 printings / 12 texts / 12 objects (engine 0.442.0, `MATCH_RECORD_VERSION` stays 35)
 
-**Status:** ✅ BUILT — keyed MID-MAP after `sv10.5w-085`. Built in the `lum-wt-d558` worktree stacked on the parked D557; committed there on `d558-prep` at `28518c81` and LANDED on `main` by cherry-pick onto the D557 close-out `01c6d987`.
+**Status:** ✅ BUILT — keyed MID-MAP after `sv10.5w-085`. Built in the `colorless-wt-d558` worktree stacked on the parked D557; committed there on `d558-prep` at `28518c81` and LANDED on `main` by cherry-pick onto the D557 close-out `01c6d987`.
 
 ### (a) The twelve rows (registry.ts, one block before `const REGISTRY`)
 | Card | Ids | Surface | Program |
@@ -28561,7 +28561,7 @@ reading (named debt, pinned); Neutralization Zone's own-side exposure is unreach
 
 ## D559 — the ability bundle: 15 printings / 7 texts / 7 objects (engine 0.443.0, `MATCH_RECORD_VERSION` stays 35)
 
-**Status:** ✅ BUILT — keyed MID-MAP after `sv05-212`. Built in the `lum-wt-d559` worktree stacked on the parked D558; committed there on `d559-prep` at `51a86c06`, then LANDED on `main` by cherry-pick onto the D558 close-out `ff618ad6` as ONE commit, with the last review's three prose findings fixed at the landing (the `lavaZone.test.ts` §9 claim withdrawn and driven by one new rung, this file's (e), registry.ts's "no BUILT lock").
+**Status:** ✅ BUILT — keyed MID-MAP after `sv05-212`. Built in the `colorless-wt-d559` worktree stacked on the parked D558; committed there on `d559-prep` at `51a86c06`, then LANDED on `main` by cherry-pick onto the D558 close-out `ff618ad6` as ONE commit, with the last review's three prose findings fixed at the landing (the `lavaZone.test.ts` §9 claim withdrawn and driven by one new rung, this file's (e), registry.ts's "no BUILT lock").
 
 ### (a) The seven rows (registry.ts, one block before `const REGISTRY`; `passive` only — every printed attack keeps deriving)
 | Card | Ids | Ability | Program |
@@ -28612,7 +28612,7 @@ Lead, the Ability that names it, stays blocked.) (🆕🆕🆕 D570 (D539): Fest
 
 ## D560 — the ability bundle, part two: 17 printings / 11 texts / 11 objects (engine 0.444.0, `MATCH_RECORD_VERSION` stays 35)
 
-**Status:** ✅ BUILT — keyed MID-MAP after `sv09-082`. Built in the `lum-wt-d560` worktree stacked on the parked D559; committed there on `d560-prep` at `18a94293`, then LANDED on `main` by cherry-pick onto the D559 close-out `ea7f8433` as ONE commit.
+**Status:** ✅ BUILT — keyed MID-MAP after `sv09-082`. Built in the `colorless-wt-d560` worktree stacked on the parked D559; committed there on `d560-prep` at `18a94293`, then LANDED on `main` by cherry-pick onto the D559 close-out `ea7f8433` as ONE commit.
 
 ### (a) The eleven rows (registry.ts, one block before `const REGISTRY`; no `attack` key — every printed attack keeps deriving)
 | Card | Ids | Ability | Program |
@@ -28662,7 +28662,7 @@ The whole-corpus sweep (~~D558 → D560 pending~~ D558 and D559 PAID, each exact
 
 ## D561 — the trainer bundle: 15 printings / 9 texts / 9 objects (engine 0.445.0, `MATCH_RECORD_VERSION` stays 35)
 
-**Status:** ✅ BUILT — keyed MID-MAP after `sv07-006`. Built in the `lum-wt-d561` worktree stacked on the parked D560; committed there on `d561-prep` at `b063a5be`, then LANDED on `main` by cherry-pick onto the D560 close-out `a4e0cd5e` as ONE commit carrying its last review's three prose fixes (D539).
+**Status:** ✅ BUILT — keyed MID-MAP after `sv07-006`. Built in the `colorless-wt-d561` worktree stacked on the parked D560; committed there on `d561-prep` at `b063a5be`, then LANDED on `main` by cherry-pick onto the D560 close-out `a4e0cd5e` as ONE commit carrying its last review's three prose fixes (D539).
 
 ### (a) The nine rows (registry.ts, one block before `const REGISTRY`)
 | Card | Ids | Subtype | Program |
@@ -28709,7 +28709,7 @@ Brock's Scouting (deferred) (🆕🆕🆕 D566: BUILT); Farfetch'd `sv06-132` (�
 
 ## D562 — consumable Tools, Jamming Tower and Festival Grounds: 14 printings / 12 texts / 12 objects (engine 0.446.0, `MATCH_RECORD_VERSION` stays 35)
 
-**Status:** ✅ BUILT — keyed MID-MAP after `sv05-156`. Built in the `lum-wt-d562` worktree stacked on the parked D561 (🆕 committed
+**Status:** ✅ BUILT — keyed MID-MAP after `sv05-156`. Built in the `colorless-wt-d562` worktree stacked on the parked D561 (🆕 committed
 there on `d562-prep` at `0203be21`, then LANDED on `main` by cherry-pick onto the D561 close-out `f310fd9b`).
 
 ### (a) The twelve rows (registry.ts, one block before `const REGISTRY`)
@@ -28757,7 +28757,7 @@ Impromptu Carrier are BUILT — see D565 below.)
 
 ## D563 — five Ability texts: 11 printings / 5 texts / 5 objects (engine 0.447.0, `MATCH_RECORD_VERSION` stays 35)
 
-**Status:** ✅ BUILT — keyed MID-MAP after `sv08.5-108`. Built in the `lum-wt-d563` worktree at `9c53b112` (D562 as landed)
+**Status:** ✅ BUILT — keyed MID-MAP after `sv08.5-108`. Built in the `colorless-wt-d563` worktree at `9c53b112` (D562 as landed)
 while D562's whole-corpus sweep ran in the main checkout; ~~NOT committed by the builder~~ (🆕 committed there on `d563-prep`
 at `ecbd2c4f`, then LANDED on `main` by cherry-pick onto the D562 close-out `3b68a3c1`).
 
@@ -28801,7 +28801,7 @@ route into play. Rocket Brain, Flustered Leap, Impromptu Carrier; Team Rocket's 
 
 ## D564 — the MRV 35 → 36 trainer bundle: 9 printings / 5 texts / 5 objects plus the Caretaker rider (engine 0.448.0, `MATCH_RECORD_VERSION` 35 → 36)
 
-**Status:** ✅ BUILT — keyed MID-MAP after `sv08.5-151`. Built in the `lum-wt-d564` worktree STACKED ON THE PARKED, UNLANDED
+**Status:** ✅ BUILT — keyed MID-MAP after `sv08.5-151`. Built in the `colorless-wt-d564` worktree STACKED ON THE PARKED, UNLANDED
 D563 commit `ecbd2c4f` while D562's whole-corpus sweep ran in the main checkout; ~~NOT committed by the builder~~ committed there on
 `d564-prep` at `d6729892`, then LANDED on `main` by cherry-pick onto the D563 close-out `78823284`.
 
@@ -28849,7 +28849,7 @@ Impromptu Carrier and Ruffian are all in D565, parked on `d565-prep` at `47eba40
 
 ## D565 — four Abilities and a Supporter: 8 printings / 5 texts / 5 objects, and Palafin ex ×4 made reachable (engine 0.449.0, `MATCH_RECORD_VERSION` stays 36)
 
-**Status:** ✅ BUILT — keyed MID-MAP after `sv06.5-029`. Built in the `lum-wt-d565` worktree STACKED ON THE PARKED, UNLANDED
+**Status:** ✅ BUILT — keyed MID-MAP after `sv06.5-029`. Built in the `colorless-wt-d565` worktree STACKED ON THE PARKED, UNLANDED
 D564 commit `d6729892` while D563's whole-corpus sweep ran in the main checkout; ~~NOT committed by the builder~~ committed there on
 `d565-prep` at `47eba40f`, then LANDED on `main` by cherry-pick onto the D564 close-out `97ef099b`.
 
@@ -28890,7 +28890,7 @@ Powerglass (🆕🆕🆕 D566: BUILT).
 
 ## D566 — the trainer bundle plus the Watchtower rider: 9 printings / 6 texts / 6 objects (engine 0.450.0, `MATCH_RECORD_VERSION` stays 36)
 
-**Status:** ✅ BUILT — keyed MID-MAP after `sv06-060`. Built in the `lum-wt-d566` worktree STACKED ON THE PARKED, UNLANDED
+**Status:** ✅ BUILT — keyed MID-MAP after `sv06-060`. Built in the `colorless-wt-d566` worktree STACKED ON THE PARKED, UNLANDED
 D565 commit `47eba40f` while D564's whole-corpus sweep ran in the main checkout; ~~NOT committed by the builder~~ committed there on
 `d566-prep` at `db323c1a`, then LANDED on `main` by cherry-pick onto the D565 close-out `182d4055`.
 
@@ -28940,7 +28940,7 @@ constructed fixture Tool — D580 below.]
 
 ## D567 — the trainer bundle: 4 printings / 4 texts / 4 objects (engine 0.451.0, `MATCH_RECORD_VERSION` stays 36)
 
-**Status:** ✅ BUILT — keyed MID-MAP after `sv10-180`. Built in the `lum-wt-d567` worktree STACKED ON THE PARKED, UNLANDED
+**Status:** ✅ BUILT — keyed MID-MAP after `sv10-180`. Built in the `colorless-wt-d567` worktree STACKED ON THE PARKED, UNLANDED
 D566 commit `db323c1a` while D565's whole-corpus sweep ran in the main checkout; ~~NOT committed by the builder~~ committed
 there on `d567-prep` at `1cc85745`, then LANDED on `main` by cherry-pick onto the D566 close-out `7d81ada4` (🆕 landing).
 
@@ -28988,7 +28988,7 @@ a parked Bother-Bot confirm answered yes is a hard failure under 0.450). ~~NEXT:
 
 ## D568 — the Tera banner unlock, Slice 1: 19 printings / 10 texts (engine 0.452.0, `MATCH_RECORD_VERSION` stays 36)
 
-**Status:** ✅ BUILT in the `lum-wt-d568` worktree (detached at `d872509e`), ~~not committed by the builder~~ committed on `d568-prep` at `c244f449` and 🆕 LANDED on `main` by cherry-pick onto the D567 close-out `d872509e` (clean pick; re-verified in the main checkout — `progress.md` NEXT (1-land)); its whole-corpus sweep is ~~PENDING~~ 🆕 PAID, exactly, on its first launch (close-out `8e36c690`), predicted `3794 · 52` over 3,846. The top row of the
+**Status:** ✅ BUILT in the `colorless-wt-d568` worktree (detached at `d872509e`), ~~not committed by the builder~~ committed on `d568-prep` at `c244f449` and 🆕 LANDED on `main` by cherry-pick onto the D567 close-out `d872509e` (clean pick; re-verified in the main checkout — `progress.md` NEXT (1-land)); its whole-corpus sweep is ~~PENDING~~ 🆕 PAID, exactly, on its first launch (close-out `8e36c690`), predicted `3794 · 52` over 3,846. The top row of the
 pricing round the D567 close-out asked for (`progress.md` NEXT (7), ranked by printings per blast radius): the banner
 blocker frees ~~51~~ 52 printings (🆕 review correction: Tera is 24, not 23 — the census missed TM Fluorite `sv08-188`, whose Tera sentence is on its granted attack); this slice builds 19.
 
@@ -29037,7 +29037,7 @@ NEXT: see `progress.md` NEXT (7).
 
 ## D569 — the Paradox banner unlock, Slice 2 part a: 20 printings / 11 texts (engine 0.453.0, `MATCH_RECORD_VERSION` stays 36)
 
-**Status:** ✅ BUILT in the `lum-wt-d569` worktree (detached at `4b29bb1c`), ~~NOT committed by the builder~~ committed on `d569-prep` at `cefec00f` and 🆕 LANDED on `main` by cherry-pick onto the D568 close-out `8e36c690` (docs-only conflicts, every close-out fact kept; re-verified in the main checkout — `progress.md` NEXT (1-land)); its whole-corpus sweep is PENDING, predicted `3840 · 52` over 3,892 on D568's PAID `3794 · 52`. The top row of the
+**Status:** ✅ BUILT in the `colorless-wt-d569` worktree (detached at `4b29bb1c`), ~~NOT committed by the builder~~ committed on `d569-prep` at `cefec00f` and 🆕 LANDED on `main` by cherry-pick onto the D568 close-out `8e36c690` (docs-only conflicts, every close-out fact kept; re-verified in the main checkout — `progress.md` NEXT (1-land)); its whole-corpus sweep is PENDING, predicted `3840 · 52` over 3,892 on D568's PAID `3794 · 52`. The top row of the
 D569 pricing round (`progress.md` NEXT (7), recorded verbatim): 20 printings, about 9 engine files, about 2.2 printings per
 file. Nine Paradox printings are DEFERRED, each on a named mechanism (`docs/decisions.md` D569).
 
@@ -29082,7 +29082,7 @@ Onslaught, Dual Core, Iron Moth's Anachronism Repulsor). (🆕🆕🆕 D571 (D53
 
 ## D570 — Festival Lead, the attack-again turn machine: 7 printings / 1 text / 1 object (engine 0.454.0, `MATCH_RECORD_VERSION` 36 → 37)
 
-**Status:** ✅ BUILT in the `lum-wt-d570` worktree (detached at `5ae558f3`), ~~NOT committed by the builder~~ committed there on `d570-prep` at `c1097d62` and 🆕 LANDED on `main` by cherry-pick onto the D569 close-out `a04889a9` (re-verified there, `progress.md` NEXT (1-land)), while D569's
+**Status:** ✅ BUILT in the `colorless-wt-d570` worktree (detached at `5ae558f3`), ~~NOT committed by the builder~~ committed there on `d570-prep` at `c1097d62` and 🆕 LANDED on `main` by cherry-pick onto the D569 close-out `a04889a9` (re-verified there, `progress.md` NEXT (1-land)), while D569's
 whole-corpus sweep ran in the main checkout (never written). The top row of the D570 pricing round (`progress.md` NEXT (7),
 recorded verbatim): 7 printings, 12 engine files (10 without the optional event), 0.58 printings per file / 0.37 per site.
 
@@ -29157,7 +29157,7 @@ window; 🆕 (c-ter) both HUDs' confusion hint still says "turn ends" [🆕 thir
 
 ## D571 — Paradox part b (Iron Thorns) + the Ignition rider: 6 printings / 3 texts / 3 objects (engine 0.455.0, `MATCH_RECORD_VERSION` stays 37)
 
-**Status:** ✅ BUILT in the `lum-wt-d571` worktree (detached at `f879402c`), ~~NOT committed by the builder~~ committed on
+**Status:** ✅ BUILT in the `colorless-wt-d571` worktree (detached at `f879402c`), ~~NOT committed by the builder~~ committed on
 `d571-prep` at `03e68891` and 🆕 LANDED on `main` by cherry-pick onto the D570 close-out `b3a0d539`, while D570's
 whole-corpus sweep ran in the main checkout (never written). The top row of the D571 pricing round (`progress.md` NEXT
 (7), recorded verbatim): paradox-part-b-thorns plus the judge's Ignition rider, 6 printings, 0.55 printings per file /
@@ -29215,7 +29215,7 @@ is spent), then the Paradox MRV trio (37 → 38). (🆕🆕🆕 D572: calm-diver
 
 ## D572 — "calm divers": 6 printings / 4 texts / 4 objects (engine 0.456.0, `MATCH_RECORD_VERSION` stays 37)
 
-**Status:** ✅ BUILT in the `lum-wt-d572` worktree (detached at `4b7892f1`), ~~NOT committed by the builder, NOT landed~~ committed on `d572-prep` at `ec525ac7` and 🆕 LANDED on `main` by cherry-pick onto the D571 close-out `b83179da`, while
+**Status:** ✅ BUILT in the `colorless-wt-d572` worktree (detached at `4b7892f1`), ~~NOT committed by the builder, NOT landed~~ committed on `d572-prep` at `ec525ac7` and 🆕 LANDED on `main` by cherry-pick onto the D571 close-out `b83179da`, while
 D571's whole-corpus sweep ran in the main checkout (never written). The top row of the D572 pricing round (`progress.md`
 NEXT (7), recorded verbatim): calm-divers, 6 printings, 0.35 printings per file / 0.13 per site.
 
@@ -29265,7 +29265,7 @@ by declaration-time substitution, `MATCH_RECORD_VERSION` stays 37.)
 
 ## D573 — the copy-attack substitution: 9 printings / 4 texts (engine 0.457.0, `MATCH_RECORD_VERSION` stays 37)
 
-**Status:** ✅ BUILT in the `lum-wt-d573` worktree (detached at `cb16bd63`), ~~NOT committed by the builder, NOT landed~~ committed on `d573-prep` at `8c935cd1` and 🆕 LANDED on `main` by cherry-pick onto the D572 close-out `1c40e5a5`,
+**Status:** ✅ BUILT in the `colorless-wt-d573` worktree (detached at `cb16bd63`), ~~NOT committed by the builder, NOT landed~~ committed on `d573-prep` at `8c935cd1` and 🆕 LANDED on `main` by cherry-pick onto the D572 close-out `1c40e5a5`,
 while D572's whole-corpus sweep ran in the main checkout (never written). The top row of the D573 pricing round
 (`progress.md` NEXT (7), recorded verbatim): copy-attack-substitution, 9 printings, about 1.3 printings per core file /
 about 0.45-0.6 per binding site. Haughty Order ×3 and Seek Inspiration stay BLOCKED (a park in the MIDDLE of an attack) [🆕🆕🆕 D574 (D539): BUILT at D574, below].
@@ -29334,7 +29334,7 @@ Paradox MRV trio), then antique-fossils, Tyme, Scovillain ex [🆕🆕🆕 D578:
 
 ## D574 — the copy-family remainder + the Bundle A rider: 7 printings / 5 texts (engine 0.458.0, `MATCH_RECORD_VERSION` stays 37)
 
-**Status:** ✅ BUILT in the `lum-wt-d574` worktree (detached at `b0e16eb4`, D573), ~~NOT committed (the brief's final
+**Status:** ✅ BUILT in the `colorless-wt-d574` worktree (detached at `b0e16eb4`, D573), ~~NOT committed (the brief's final
 instruction), the tree parked uncommitted on the branch `d574-prep`~~ committed there on `d574-prep` at `0f028a27`, while
 D573's whole-corpus sweep ran in the main checkout (never written); 🆕 LANDED on `main` by cherry-pick onto the D573
 close-out `b022087d`. The top row of the D574 pricing round (`progress.md` NEXT (7), recorded verbatim): the judge's
@@ -29397,7 +29397,7 @@ antique-fossils [🆕🆕🆕 D576: TAKEN, 38 → 39, Area Zero Underdepths PARK
 
 ## D575 — the MRV-38 attack slice: 6 printings / 6 texts (engine 0.459.0, `MATCH_RECORD_VERSION` 37 → 38)
 
-**Status:** ✅ BUILT in the `lum-wt-d575` worktree (detached at `380f8b4e`, D574), NOT committed (the brief: "DO NOT
+**Status:** ✅ BUILT in the `colorless-wt-d575` worktree (detached at `380f8b4e`, D574), NOT committed (the brief: "DO NOT
 COMMIT"), while D574's whole-corpus sweep ran in the main checkout (never written). Rank 1 of the D575 pricing round
 (`progress.md` NEXT (7), recorded verbatim): the MRV-38 core (Iron Moth, Miraidon, Glimmora, Hypno) plus Blipbug and N's
 Sigilyph, 6 printings over about 57-65 binding sites, the version step paid once; Walking Wake left OUT (the last REACHED
@@ -29505,7 +29505,7 @@ Koraidon after R-1, the gates on constructed literals); the Mega ingest is a use
 
 ## D576 — the Antique Fossils: 4 printings / 3 texts (engine 0.460.0, `MATCH_RECORD_VERSION` 38 → 39)
 
-**Status:** ✅ BUILT in the `lum-wt-d576` worktree (detached at `61a980d2`, D575), ~~NOT committed (the brief: "DO NOT
+**Status:** ✅ BUILT in the `colorless-wt-d576` worktree (detached at `61a980d2`, D575), ~~NOT committed (the brief: "DO NOT
 COMMIT")~~ 🆕 committed on `d576-prep` at `010a95f0` and LANDED on `main` by cherry-pick onto the D575 close-out
 `65211a5b` (`progress.md` NEXT (1-land)), while D575's whole-corpus sweep ran in the main checkout (never written). Rank 1 of the D576 pricing round
 (`progress.md` NEXT (7), recorded verbatim): fossils + Area Zero Underdepths, 7 printings — built DOWN TO ITS OFF-RAMP,
@@ -29572,7 +29572,7 @@ widening are user decisions.
 
 ## D577 — Area Zero Underdepths ×3 + Boomerang Energy + Tyme ×2: 6 printings / 3 texts (engine 0.461.0, `MATCH_RECORD_VERSION` 39 → 40)
 
-**Status:** ✅ BUILT in the `lum-wt-d577` worktree (detached at `6d87241c`, D576), ~~NOT committed (the brief: "DO NOT
+**Status:** ✅ BUILT in the `colorless-wt-d577` worktree (detached at `6d87241c`, D576), ~~NOT committed (the brief: "DO NOT
 COMMIT")~~ 🆕 committed on `d577-prep` at `e51d1706` and LANDED on `main` by cherry-pick onto the D576 close-out
 `34d11336` (`progress.md` NEXT (1-land)), while D576's whole-corpus sweep ran in the main checkout (never written). Rank 1 of the D577 pricing round
 (`progress.md` NEXT (7), recorded verbatim): underdepths-boomerang + the Tyme rider, 6 printings — built WHOLE, no
@@ -29630,7 +29630,7 @@ NEXT: see `progress.md` NEXT (7) — ⑴ Scovillain ×2 + Relicanth ×2 + TM Flu
 
 ## D578 — Scovillain ex ×2 + Relicanth ×2 + Technical Machine: Fluorite + Team Rocket's Energy: 6 printings / 4 texts (engine 0.462.0, `MATCH_RECORD_VERSION` stays 40)
 
-**Status:** ✅ BUILT in the `lum-wt-d578` worktree (detached at `2635118f`, D577), ~~NOT committed (the brief: "DO NOT
+**Status:** ✅ BUILT in the `colorless-wt-d578` worktree (detached at `2635118f`, D577), ~~NOT committed (the brief: "DO NOT
 COMMIT")~~ 🆕 committed on `d578-prep` at `88d88dd9` and LANDED on `main` by cherry-pick onto the D577 close-out
 `f537dd0e`, R-MD4 and R-TRE1 FIXED there (progress.md NEXT (1-land)), while D577's whole-corpus sweep ran in the main checkout (never written). Rank 1 of the D578 pricing round
 (`progress.md` NEXT (7), recorded verbatim): plus-tr-energy, 6 printings — built WHOLE, neither off-ramp fired (Relicanth is
@@ -29686,7 +29686,7 @@ Mega Evolution ingest and the map.ts Trainer-branch attack widening as USER deci
 
 ## D579 — the census close-out: Walking Wake "Undulating Slice" + Koraidon "Unrelenting Onslaught", 2 printings / 2 texts (engine 0.463.0, `MATCH_RECORD_VERSION` 40 → 41)
 
-**Status:** ✅ BUILT in the `lum-wt-d579` worktree (detached at `4ed880b2`, D578), ~~NOT committed (the brief: "DO NOT
+**Status:** ✅ BUILT in the `colorless-wt-d579` worktree (detached at `4ed880b2`, D578), ~~NOT committed (the brief: "DO NOT
 COMMIT")~~ 🆕 committed on `d579-prep` at `7eed24e8` and LANDED on `main` by cherry-pick onto the D578 close-out `49290a0b`,
 while D578's whole-corpus sweep ran in the main checkout (never written by the build). Rank 1 of the D579 pricing round
 (`progress.md` NEXT (7), recorded verbatim with the judge's corrections): census-closeout, 2 printings, built WHOLE — the
@@ -29736,13 +29736,13 @@ all struck and annotated in place; no behaviour was wrong.
 
 NEXT: see `progress.md` NEXT — the attack pool is closed; what is left is USER decisions (R-1b, R-TM1, R-TRE2, the Mega
 Evolution ingest, the map.ts Trainer-branch widening). [🆕 D579 landing: R-1c is on that list too; and D580 — Mr. Mime
-`sv05-063` + Iron Treads `sv05-118`, the user's request — is being built stacked on D579 in `lum-wt-d580`, landing after
+`sv05-063` + Iron Treads `sv05-118`, the user's request — is being built stacked on D579 in `colorless-wt-d580`, landing after
 D579's sweep pays.] [🆕🆕 D580 landing: D579's sweep PAID EXACTLY (`4183 · 51` over 4,234, close-out `56e11018`);
 D580 is BUILT and LANDED — the section below.]
 
 ## D580 — the last attack and the last ability: Mr. Mime "Look-Alike Show" + Iron Treads "Dual Core", 2 printings / 2 texts (engine 0.464.0, `MATCH_RECORD_VERSION` stays 41)
 
-**Status:** ✅ BUILT in the `lum-wt-d580` worktree (detached at `7eed24e8`, the parked D579), ~~NOT committed (the brief: "DO
+**Status:** ✅ BUILT in the `colorless-wt-d580` worktree (detached at `7eed24e8`, the parked D579), ~~NOT committed (the brief: "DO
 NOT COMMIT")~~ 🆕 committed on `d580-prep` at `9f53b291` and LANDED on `main` by cherry-pick onto the D579 close-out
 `56e11018`, while D579's whole-corpus sweep ran in the main checkout (never written by the build). The only row of the D580 pricing
 round (`progress.md` NEXT (7), recorded verbatim with the judge's corrections), built WHOLE. **The whole ingested legal
@@ -29800,7 +29800,7 @@ taken as D581 below.]
 
 ## D581 — the data slice: the Mega Evolution serie ingested and a Trainer's printed face kept (engine 0.465.0, `MATCH_RECORD_VERSION` stays 41)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree (branch `mega-ingest` at `a4d75939`), NOT committed. The user's
+**Status:** ✅ BUILT in the `colorless-mega` worktree (branch `mega-ingest` at `a4d75939`), NOT committed. The user's
 decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule is D582's, not this slice's.
 
 - **Ingest.** The tcgdex Trainer schema keeps `hp` / `abilities` / `attacks`; `apps/api/src/ingest/map.ts` writes them on
@@ -29824,7 +29824,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 
 ## D582 — the Mega Evolution ex rule and the `me` reprint-alias tier (engine 0.466.0, `MATCH_RECORD_VERSION` stays 41)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D581 (`874df707`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D581 (`874df707`), NOT committed.
 
 - **Rule.** cards.ts `prizeValueOf` returns 3 for `isMegaEvolutionPokemonEx` (the printed *"Mega Evolution ex rule"*;
   read off the NAME, since tcgdex's `suffix` never says MEGA). It is the base `planPrizes` composes over (Legacy Energy
@@ -29841,7 +29841,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 
 ## D583 — the fix-up slice: Special Energy by printed text, and the persisted pool migrated (engine 0.467.0, `MATCH_RECORD_VERSION` 41 → 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D582 (`d5f7130d`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D582 (`d5f7130d`), NOT committed.
 
 - **Special Energy.** tcgdex tags 14 legal Specials `energy_type` Normal (all 11 `me`; `sv` Reversal, Prism, Ignition);
   at 0.466 the engine treated them as Basic Energy (Energy Search offered Prism). cards.ts `isSpecialEnergy` now reads
@@ -29859,7 +29859,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 
 ## D584 — the `me` alias tier 2: renamed copies, parameter copies, whitespace twins (engine 0.468.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D583 (`d906fc45`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D583 (`d906fc45`), NOT committed.
 
 - **On existing objects (4).** Ultra Ball `me02.5-213` / `-264` (one newline from `sv01-196`), Zoroark `30th-096`
   (`SECRET_FOREST_PATH`; tcgdex prints {C}{C} as "ColorlessColorless"), Hop's Pincurchin ex `me02.5-068`
@@ -29876,7 +29876,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 
 ## D585 — WP19: parameter copies of passives and Abilities (engine 0.469.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D584 (`97317879`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D584 (`97317879`), NOT committed.
 
 - **Eight new objects (19 `me` printings / 8 texts)**, each a built `sv` program's op or field at the printed
   parameter: `TUNDRA_WALL` (Aurorus ×2; Gear Coating at {W} / 50 with `noStack`), `WASH_OUT` (Dewgong; Fire Off with
@@ -29892,7 +29892,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 
 ## D586 — WP03: rows on existing condition members (engine 0.470.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D585 (`415ef046`, + the D583 follow-up `1c7e1653`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D585 (`415ef046`, + the D583 follow-up `1c7e1653`), NOT committed.
 
 - **Eight attack sentences / 17 `me` printings** now derive, on shipped members and ops only (effects.ts): the
   `OPPONENT_ACTIVE_SPECIAL_CONDITION_KO` anchor (Mega Darkrai ex ×5 "Abyss Eye"; arm 6a-ii with the gate swapped for
@@ -29911,7 +29911,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 
 ## D587 — WP04: Trainer parameters I (engine 0.471.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D586 (`d262cffc`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D586 (`d262cffc`), NOT committed.
 
 - **19 `me` Trainer printings / 9 texts** keyed on nine new registry objects, each a built program's op at the printed
   parameter (registry.ts D587 block): Wondrous Patch ×2 and Philippe ×2 (N's PP Up's `attachEnergyFrom` from the
@@ -29934,7 +29934,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 
 ## D588 — WP22: Trainer parameters II (engine 0.472.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D587 (`75f4bd42`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D587 (`75f4bd42`), NOT committed.
 
 - **17 `me` Trainer printings / 8 texts** keyed on eight new registry objects (registry.ts D588 block): Canari ×3
   (Earthen Vessel's hand cost, then a {L} Pokémon search at 4), Lillie's Determination ×4 (Lacey's if/else on
@@ -29957,7 +29957,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 
 ## D589 — WP08: Mega Greninja ex and the optional-cost family (engine 0.473.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D588 (`4869c966`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D588 (`4869c966`), NOT committed.
 
 - **4 `me` attack sentences / 9 printings** derive through `deriveAttackOptionalCostBoost`'s third skeleton,
   `OPTIONAL_COST_AND_HAVE_BOOST` (*"You may {cost} and have this attack do N more damage."*), over four new one-line cost
@@ -29975,7 +29975,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 
 ## D590 — WP05: the `me` on-evolve Abilities and the self-shuffle (engine 0.474.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D589 (`2d93c80b`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D589 (`2d93c80b`), NOT committed.
 
 - **9 Ability texts / 13 `me` printings** on nine new `onEvolve` objects: Psychic Draw ×4 (Alakazam ×3 draw 3, Kadabra
   draw 2 — each behind a confirm, since a forced draw can deck its owner out), Prison Panic (Confused, behind a confirm,
@@ -30000,7 +30000,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 
 ## D591 — WP20a: the `me` activated Abilities, the Flapping trio and the draw engines (engine 0.475.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D590 (`75e48365`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D590 (`75e48365`), NOT committed.
 
 - **11 Ability texts / 19 `me` printings** on seven new `abilities` objects: Run Errand ×4 (Mega Kangaskhan ex, draw 2,
   `activeOnly`, `oncePerTurn: "sharedByName"`), Alluring Wings (Frosmoth, Alluring Light's `drawCards` `who: "eachPlayer"`,
@@ -30022,7 +30022,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 
 ## D592 — WP02: the `me` reader wording drift and Corrosive Liquid (engine 0.476.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D591 (`52e966a4`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D591 (`52e966a4`), NOT committed.
 
 - **11 attack texts / 18 `me` printings** now read by `deriveAttackEffect`. Ten are `me` phrasings of sentences the readers
   already build in their `sv` wording; `normaliseMeWording` (effects.ts) rewrites each before the anchors run, through six
@@ -30044,7 +30044,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 
 ## D593 — WP07: more `me` clause rows and the "Fade Out" objects (engine 0.477.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D592 (`641272f4`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D592 (`641272f4`), NOT committed.
 
 - **9 attack texts / 15 `me` printings.** Five `CONDITIONAL_DAMAGE_CLAUSES` rows: Pancham (`yourBenchNamedDamaged`), Hop's
   (`yourPokemonKoedOnOpponentsLastTurn` with `owner` and `byAttack`), Magneton (`yourActiveEvolvedFromThisTurn`), Spiky Rolling
@@ -30068,7 +30068,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 
 ## D594 — WP33a: bonus / requirement rows on shipped condition members (engine 0.478.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D593 (`4b2b46cc`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D593 (`4b2b46cc`), NOT committed.
 
 - **6 texts / 10 `me` printings.** Three `CONDITIONAL_DAMAGE_CLAUSES` rows: Chi-Yu "Whirling Envy"
   (`yourActiveDamageCountersAtLeast` 2, D494's Weakness-only anchor), Steelix ×2 "Welcoming Tail" (`yourPrizesRemaining` [6]),
@@ -30091,7 +30091,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 
 ## D595 — WP13: coin-gate compositions (engine 0.479.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D594 (`8ded76b4`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D594 (`8ded76b4`), NOT committed.
 
 - **8 texts / 11 `me` printings.** `deriveAttackEffect` arm 46b: `COIN_GATE_HEAD` (one coin / "2 coins … both" /
   "3 coins … all") sets `coinFlipGate.coins` (D355) over a closed five-row (🆕🆕🆕 D605 (D539): SIX rows now — Grafaiai's Miraculous Paint; 18 crossings, 6 printed; 🆕🆕🆕 D634 (D539): EIGHT rows now — Challenging Delivery, Reversing Gust; 24 crossings, 8 printed, `coinRestMeD634.test.ts` §2) `COIN_GATED_CONSEQUENTS` table — Miltank
@@ -30122,7 +30122,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 
 ## D596 — WP09: Mega Gardevoir ex and Xerneas (engine 0.480.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D595 (`fe789bff`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D595 (`fe789bff`), NOT committed.
 
 - **3 texts / 14 `me` printings.** `SELF_BOARD_ENERGY_MULTIPLY` reads "N damage for each {P} Energy attached to all of
   your Pokémon" as `energyOnSelf { zone: "board" }` on the `×` fold: Mega Symphonia ×6, Geo Storm ×2. A separate anchor,
@@ -30142,7 +30142,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 
 ## D597 — WP29: the discard-scaled attacks (engine 0.481.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D596 (`11741ce6`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D596 (`11741ce6`), NOT committed.
 
 - **8 texts / 18 `me` printings.** `COMMA_DISCARD_SCALED_DAMAGE` (arm 10d, a separate anchor beside D402's
   `ENERGY_DISCARD_SCALED_DAMAGE`) reads the `me` comma spelling of the `×` fold: Inferno X ×4 (`discardEnergy` from
@@ -30161,7 +30161,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 
 ## D598 — WP32: KO / damage-taken Abilities (engine 0.482.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D597 (`2b832f64`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D597 (`2b832f64`), NOT committed.
 
 - **6 texts / 13 `me` printings, 13 registry keys on 6 objects.** Mega Gengar ex "Shadowy Concealment" ×5
   (`seatKoPrizeReduction`, a seat aura on the KO'd side read in `planPrizes`), Mega Hawlucha ex "Tenacious Body" ×3 and
@@ -30182,7 +30182,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 
 ## D599 — WP24a: two WP24 Supporters (engine 0.483.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D598 (`d80f4089`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D598 (`d80f4089`), NOT committed.
 
 - **2 texts / 4 `me` printings, 4 registry keys on 2 objects.** Anthea & Concordia ×2 (Briar's shape: card-level
   `supporterKoPrizeBonus { 3, ownerPokemon N }`, read by flow.ts `briarPrizeBonus`; a six-name `allOf` play gate) and
@@ -30199,7 +30199,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 
 ## D600 — WP14 + WP33b: the hand count and five bonus conditions (engine 0.484.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D599 (`9728cfdb`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D599 (`9728cfdb`), NOT committed.
 
 - **7 texts / 12 `me` printings, all attacks, no registry key.** WP14: `DamageCountSource.cardsInYourHand` (nullary,
   `countCardsInHand` over `anyCard` on the attacker's seat) — Galarian Meowth "Treasure Rush" ×2 on the `×` fold and
@@ -30216,7 +30216,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 
 ## D601 — D598's open review findings (engine stays 0.484.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D600 (`70cf5520`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D600 (`70cf5520`), NOT committed.
 
 - **No engine behaviour change.** flow.ts gets doc comments only, so there is no version bump. No card or registry key changes.
 - **Readings (UNRULED, `progress.md` NEXT).**
@@ -30232,7 +30232,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 
 ## D602 — WP20b: the `me` activated Abilities, search / heal / attach (engine 0.485.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D601 (`3e0f4b2d`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D601 (`3e0f4b2d`), NOT committed.
 
 - **6 texts / 9 `me` printings on six new `abilities` objects, shipped vocabulary only.** Silvally ×2 "Call a Buddy"
   (`playableIf` `yourHandExactly` 0, a Supporter), Erika's Tangela ×2 "Gathering of Blossoms" (`ownerPokemon` Erika),
@@ -30250,7 +30250,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 
 ## D646 — Backtrack Badge (engine 0.529.0, `MATCH_RECORD_VERSION` 48 → 49)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D645 (`dbaa4780`), NOT committed. 1 text / 1 printing (`me`), D644's drop — the
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D645 (`dbaa4780`), NOT committed. 1 text / 1 printing (`me`), D644's drop — the
 last unbuilt legal `me` printing; the Mega program closes here (what is owed: `progress.md` NEXT).
 
 - **Backtrack Badge** `me05-074` (Tool): the NEW `PassiveEffects.reflipAttackCoins`; continuous.ts `coinRedoToolOf` (in-effect Tool,
@@ -30269,7 +30269,7 @@ last unbuilt legal `me` printing; the Mega program closes here (what is owed: `p
 
 ## D645 — the last one-offs (engine 0.528.0, `MATCH_RECORD_VERSION` stays 48)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D644 (`1b624a3b`), NOT committed. 3 texts / 5 printings (`me`) — after it every
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D644 (`1b624a3b`), NOT committed. 3 texts / 5 printings (`me`) — after it every
 buildable legal `me` printing is built (Backtrack Badge, D644's drop, is the one `me` text left [🆕🆕🆕 D646 (D539): BUILT at D646]).
 
 - **Wild Growth** (Meganium `me01-010` / `mep-001`): the NEW `PassiveEffects.basicEnergyProvidesTwice`; continuous.ts
@@ -30287,7 +30287,7 @@ buildable legal `me` printing is built (Backtrack Badge, D644's drop, is the one
 
 ## D644 — Y1e: rule hooks, one printing each (engine 0.527.0, `MATCH_RECORD_VERSION` stays 48)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D643 (`0c50eeb2`), NOT committed. 5 texts / 5 printings (`me` + `30th`) —
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D643 (`0c50eeb2`), NOT committed. 5 texts / 5 printings (`me` + `30th`) —
 the D625 re-rank's Y1e group less Backtrack Badge (dropped and named) [🆕🆕🆕 D646 (D539): BUILT at D646].
 
 - **Explosiveness** (Cinderace `me01-028`): the NEW `CardProgram.setupActiveFromHand`, read by setup.ts `setupPlaceActive`
@@ -30311,7 +30311,7 @@ the D625 re-rank's Y1e group less Backtrack Badge (dropped and named) [🆕🆕�
 
 ## D643 — Y1a: Multi Adapter (engine 0.526.0, `MATCH_RECORD_VERSION` 47 → 48)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D642 (`4f9ce7fc`), NOT committed. 1 text / 3 printings (`me`) — the D625
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D642 (`4f9ce7fc`), NOT committed. 1 text / 3 printings (`me`) — the D625
 re-rank's Y1a, alone.
 
 - **The cap.** Rotom ex `me02-029` / `-111` / `-126`: the NEW `PassiveEffects.toolCapForName { nameContains: "Rotom", cap: 2 }`, read by
@@ -30329,7 +30329,7 @@ re-rank's Y1a, alone.
 
 ## D642 — Z1 + K2: the `me` Stadium rest and the watched-Active damage triggers (engine 0.525.0, `MATCH_RECORD_VERSION` stays 47)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D641 (`ad5eb285`), NOT committed. 5 texts / 6 printings (`me` + `30th`) —
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D641 (`ad5eb285`), NOT committed. 5 texts / 6 printings (`me` + `30th`) —
 the D625 re-rank's Z1 and K2 groups, whole.
 
 - **Spiteful Swirl** (Spiritomb `me01-087` / `-148`) and **Counterattack Grouping** (Wishiwashi `30th-022`): the NEW
@@ -30355,7 +30355,7 @@ the D625 re-rank's Z1 and K2 groups, whole.
 
 ## D641 — W1 + Y1b: effects the opponent answers, and deck swap / reveal (engine 0.524.0, `MATCH_RECORD_VERSION` stays 47)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D640 (`93df22ea`), NOT committed. 4 texts / 7 printings (`me` + `mep` +
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D640 (`93df22ea`), NOT committed. 4 texts / 7 printings (`me` + `mep` +
 `30th`) — the D625 re-rank's W1 and Y1b groups, whole.
 
 - **Surprisingly Transform** (Ditto `mep-106` / `30th-115`): `coinFlipGate` over the NEW `switchWithDeckChosen { filter: anyPokemon }` —
@@ -30374,7 +30374,7 @@ the D625 re-rank's Z1 and K2 groups, whole.
 
 ## D640 — Y1a + MRV47, cut to Overwriting Bolt and Celebration (engine 0.523.0, `MATCH_RECORD_VERSION` 46 → 47)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D639 (`c275888b`), NOT committed. 2 texts / 3 printings (`30th`) — the D625
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D639 (`c275888b`), NOT committed. 2 texts / 3 printings (`30th`) — the D625
 re-rank's Y1a + MRV47 group less Multi Adapter (the brief's off-ramp). [🆕🆕🆕 D643 (D539): Multi Adapter BUILT at D643 (47 → 48).]
 
 - **Overwriting Bolt** (Pikachu `30th-040`): D552's `retypeDefenderWeakness` at `{L}` with the NEW `asTimesTwo`, stored on
@@ -30393,7 +30393,7 @@ re-rank's Y1a + MRV47 group less Multi Adapter (the brief's off-ramp). [🆕🆕
 
 ## D639 — K3 + R1: KO-by-this-attack consequents and the KO sweep (engine 0.522.0, `MATCH_RECORD_VERSION` stays 46)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D638 (`4b62beef`), NOT committed. 3 texts / 6 printings (`me` + `30th`) — the
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D638 (`4b62beef`), NOT committed. 3 texts / 6 printings (`me` + `30th`) — the
 D625 re-rank's K3 and R1 groups, less Celebration. [🆕🆕🆕 D640 (D539): Celebration BUILT at D640 (MRV 46 → 47).]
 
 - **Shadowy Side Kick / Critical Slash** (Marshadow `me01-080` / `-146`, Golisopod `me04-026`): `conditionGate` on the NEW `BoardCondition`
@@ -30412,7 +30412,7 @@ D625 re-rank's K3 and R1 groups, less Celebration. [🆕🆕🆕 D640 (D539): Ce
 
 ## D638 — X1: copy / borrowed effects (engine 0.521.0, `MATCH_RECORD_VERSION` stays 46)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D637 (`85a9bb88`), NOT committed. 3 texts / 6 printings (`me` + `30th`) — the
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D637 (`85a9bb88`), NOT committed. 3 texts / 6 printings (`me` + `30th`) — the
 D625 re-rank's X1 group, whole, on the shipped copy family.
 
 - **Memory Helix** (Mew ex `30th-066` / `-152` / `-158`): the NEW `PassiveEffects.memoryHelix` (`MEMORY_HELIX`). continuous.ts
@@ -30434,7 +30434,7 @@ D625 re-rank's X1 group, whole, on the shipped copy family.
 
 ## D637 — the four `me` Antique Fossils (engine 0.520.0, `MATCH_RECORD_VERSION` 45 → 46)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D636 (`7c0da7ca`), NOT committed. 4 texts / 4 printings — the D625 re-rank's
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D636 (`7c0da7ca`), NOT committed. 4 texts / 4 printings — the D625 re-rank's
 "Fossils + Y1a" group, cut to the fossils.
 
 - **The fossils.** fossils.ts `FOSSIL_IDS` 4 → 8: `me03-068` / `-069`, `me05-072` / `-073`, each D576's `playAsPokemon` with its printed
@@ -30456,7 +30456,7 @@ D625 re-rank's X1 group, whole, on the shipped copy family.
 
 ## D636 — L1 + Clawitzer: the next-turn opponent locks (engine 0.519.0, `MATCH_RECORD_VERSION` 44 → 45)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D635 (`c98326dc`), NOT committed. 6 texts / 7 printings (`me` + `30th`).
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D635 (`c98326dc`), NOT committed. 6 texts / 7 printings (`me` + `30th`).
 
 - **Cursed Roots** (Trevenant `me04-039`): Glimmora's second sentence alone — the shipped `markHandAttach { barred }`, no key.
 - **Electrified Incisors** (Pachirisu `me01-051`): `markHandAttach` with the NEW `counters` (`HandAttachMark.counters`, REQUIRED). Each
@@ -30484,7 +30484,7 @@ D625 re-rank's X1 group, whole, on the shipped copy family.
 
 ## D635 — F1: the Antique archetype, its unpersisted half (engine 0.518.0, `MATCH_RECORD_VERSION` stays 44)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D634 (`1fd6b84a`), NOT committed. 2 texts / 2 `me` printings of F1's 6.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D634 (`1fd6b84a`), NOT committed. 2 texts / 2 `me` printings of F1's 6.
 
 - **Fossil Quarry** (`me05-076`, Stadium): a NEW `stadium` object, Lumiose City's program without the turn end — `searchDeck` up to 2
   onto the Bench, then `shuffleDeck` — over the NEW `CardFilter` member `itemNameContaining` (an Item whose name holds the fragment;
@@ -30503,7 +30503,7 @@ D625 re-rank's X1 group, whole, on the shipped copy family.
 
 ## D634 — C1: the coin rest (engine 0.517.0, `MATCH_RECORD_VERSION` stays 44)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D633 (`6157c1c8`), NOT committed. 7 texts / 8 printings (`me` + `30th`), all
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D633 (`6157c1c8`), NOT committed. 7 texts / 8 printings (`me` + `30th`), all
 reader rows; the texts D595 and D605 dropped, less Octillery and Ditto. [🆕🆕🆕 D641 (D539): Ditto BUILT at D641 (W1).] [🆕🆕🆕 D636 (D539): Octillery BUILT at D636.]
 
 - **Hyper Lariat** (Bewear `me01-112`): the NEW `AttackCoinFlip` member `bonusOnAllHeads` — the printed 100 plus 100 only when both coins
@@ -30524,7 +30524,7 @@ reader rows; the texts D595 and D605 dropped, less Octillery and Ditto. [🆕�
 
 ## D633 — O1: attack odds and ends (engine 0.516.0, `MATCH_RECORD_VERSION` stays 44)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D632 (`3a27f924`), NOT committed. 5 texts / 7 printings (`me` + `30th`), all
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D632 (`3a27f924`), NOT committed. 5 texts / 7 printings (`me` + `30th`), all
 reader rows (effects.ts arm 10e).
 
 - **All-You-Can-Yeet** (Slowpoke `me05-029`) and **Rocket Feathers** (Team Rocket's Honchkrow `me02.5-127`): D617's uncapped declinable
@@ -30544,7 +30544,7 @@ reader rows (effects.ts arm 10e).
 
 ## D632 — D1: Damp (engine 0.515.0, `MATCH_RECORD_VERSION` stays 44)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D631 (`7e7aef7c`), NOT committed. 2 texts / 5 `me` printings, two new
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D631 (`7e7aef7c`), NOT committed. 2 texts / 5 `me` printings, two new
 registry objects (one per wording).
 
 - **Damp ×3** (Psyduck `me02.5-039` / `-226`, Golduck `me02.5-040`) and **Damp ×2** (Psyduck `mep-007`, Golduck `mep-008`).
@@ -30562,7 +30562,7 @@ registry objects (one per wording).
 
 ## D631 — P1: the rest of the passive modifiers (engine 0.514.0, `MATCH_RECORD_VERSION` stays 44)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D630 (`cfb0a01c`), NOT committed. 6 texts / 9 printings (`me` + `30th`), six new
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D630 (`cfb0a01c`), NOT committed. 6 texts / 9 printings (`me` + `30th`), six new
 registry objects.
 
 - **Ancient Bulwark ×3.** `preventSeatDamageWhileBenchedFromEnergyAtMost: 2`: a BENCHED holder shields every body on its side (itself
@@ -30581,7 +30581,7 @@ registry objects.
 
 ## D630 — M1: the persisted-record bundle (engine 0.513.0, `MATCH_RECORD_VERSION` 43 → 44)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D629 (`d011987a`), NOT committed. 8 texts / 13 `me` printings.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D629 (`d011987a`), NOT committed. 8 texts / 13 `me` printings.
 
 - **Juggernaut Horn ×2 / Counter ×2.** The NEW REQUIRED `InPlayPokemon.attackDamageTaken { turn, amount }`, written at the four §8.5
   sites (`withAttackDamageTaken`, summed per turn), read as `DamageCountSource.attackDamageTakenLastTurnOnSelf` (`per: 1`, R-JH1).
@@ -30599,7 +30599,7 @@ registry objects.
 
 ## D629 — S1: the rest of the snipe / spread wording (engine 0.512.0, `MATCH_RECORD_VERSION` stays 43)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D628 (`23b660d6`), NOT committed. 7 texts / 7 printings.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D628 (`23b660d6`), NOT committed. 7 texts / 7 printings.
 
 - **Bug's Cannon / Hydro Jet.** The literal `CHOSEN_ANY_TARGET_PER_TYPED_ENERGY` and the NEW `damageChosen.perTypedEnergyOnSelf`
   (the attacker's Energy cards providing the type; `snipeAmount`).
@@ -30615,7 +30615,7 @@ registry objects.
 
 ## D628 — A1: the rest of the on-bench / on-move Abilities, plus finding 0b (engine 0.511.0, `MATCH_RECORD_VERSION` stays 43)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D627 (`ccdebcc8`), NOT committed. 3 texts / 5 `me` printings.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D627 (`ccdebcc8`), NOT committed. 3 texts / 5 `me` printings.
 
 - **Meowth ex ×3 "Last-Ditch Catch".** An `onPlayToBench` trigger on D593's `TUCK_TAIL`: an inner confirm around a revealed Supporter
   search and the shuffle. `TriggeredAbility.oncePerTurn` widened to `"sharedByName"` and read by `runBoardTrigger` (key
@@ -30633,7 +30633,7 @@ registry objects.
 
 ## D627 — H1: the Hide 'n' Sneak archetype (engine 0.510.0, `MATCH_RECORD_VERSION` stays 43)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D626 (`54801b49`), NOT committed. 5 texts / 8 `me` printings / 10 units
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D626 (`54801b49`), NOT committed. 5 texts / 8 `me` printings / 10 units
 (6 attack + 4 Ability).
 
 - **Hide 'n' Sneak ×4** (Poltchageist, Sinistcha, Shuppet, Banette). One NEW object, `passive { preventAttackEffects,
@@ -30651,7 +30651,7 @@ registry objects.
 
 ## D626 — K1: the rest of the KO / damaged triggers (engine 0.509.0, `MATCH_RECORD_VERSION` stays 43)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D625 (`153f58f8`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D625 (`153f58f8`), NOT committed.
 
 - **Flygon ×3 "Sandy Flapping".** Two triggered rows: `onEvolve` (D590's shape) and `onKnockOut` behind `byOpponentAttack` and
   `activeOnly` — the latter now read for an on-KO program (flow.ts `planPrizes`, `koWasActiveSpot`, the pre-batch board). Each mills
@@ -30671,7 +30671,7 @@ registry objects.
 
 ## D625 — T1: the rest of the `me` Trainers, plus the open docs findings (engine 0.508.0, `MATCH_RECORD_VERSION` stays 43)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D624 (`c5c727a2`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D624 (`c5c727a2`), NOT committed.
 
 - **Special Red Card ×2.** Iono's `handRefresh` on the opponent (`toBottom`, `onlyIfAnyMoved`, draw 3) behind
   `opponentPrizesRemaining [0, 1, 2, 3]`. R-SRC1 UNRULED (an empty hand draws 0).
@@ -30694,7 +30694,7 @@ registry objects.
 
 ## D624 — WP31c: the rest of the `me` deck / hand / discard / Energy misc (engine 0.507.0, `MATCH_RECORD_VERSION` stays 43)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D623 (`3a3026a4`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D623 (`3a3026a4`), NOT committed.
 
 - **Tail Generator ×2.** `attachFromDiscard` with the NEW `max: "opponentEnergyInPlay"`, resolved by `discardAttachCeiling` to the
   Energy cards on the opponent's board when the op runs; {L} hosts; "up to" stands; its own caption.
@@ -30710,7 +30710,7 @@ registry objects.
 
 ## D623 — WP28b: the rest of the scaling count sources (engine 0.506.0, `MATCH_RECORD_VERSION` stays 43)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D622 (`4fbcc7ae`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D622 (`4fbcc7ae`), NOT committed.
 
 - **Three Bench-body counts.** NEW `DamageCountSource` members, each on a literal anchor, evaluated by attack.ts over the attacker's
   Bench: `damagedBenchedPokemon` (Gourgeist ex ×2 "Horrifying Rondo"), `benchedPokemonWithEnergy` (Armarouge ×2 "Flame Legion", by
@@ -30724,7 +30724,7 @@ registry objects.
 
 ## D622 — fix-up: R-AM2 retired, the bare W/R tail is W/R only (engine 0.505.0, `MATCH_RECORD_VERSION` stays 43)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D621 (`5b67aaa2`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D621 (`5b67aaa2`), NOT committed.
 
 - **The split.** The NEW optional `damageChosen.wrOnly`, set beside `ignoreWR` by the three bare-tail readers: Oil Salvo, Sonic
   Peridot, Severe Squall, Telekinesis (4 texts / 8 `sv` printings; the `me` column prints none). `placeSnipe` reads
@@ -30739,7 +30739,7 @@ registry objects.
 
 ## D621 — WP24c + WP23: persisted side state (engine 0.504.0, `MATCH_RECORD_VERSION` 42 → 43)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D620 (`6448679e`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D620 (`6448679e`), NOT committed.
 
 - **Bonus attacker filter.** The NEW optional `SideAttackBonus.attacker` (`boostSideAttacksThisTurn.attacker`), read by
   `sideAttackBonusThisTurn` on the attacker's `inPlayCardOf`: Gladion's Final Battle ×3 (Cassiopeia's last-card gate, +80 for
@@ -30769,7 +30769,7 @@ registry objects.
 
 ## D620 — WP10 + WP26: prizes you have taken, Mega Mawile ex and the `me` Tools (engine 0.503.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D619 (`659c2fa9`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D619 (`659c2fa9`), NOT committed.
 
 - **WP10 (reader rows).** effects.ts, the NEW `DamageCountSource.yourPrizesTaken` (attack.ts `takenPrizes` on the attacking seat):
   Incessant Onslaught, Cheerful Flame ×2 (70×), Gobble Down ×2 (80×); the NEW `AttackBonusConsequent.baseOverride`: Huge Bite ×2
@@ -30788,7 +30788,7 @@ registry objects.
 
 ## D619 — WP12 (passive half) + WP15: attacker-gated reductions and named-Supporter conditions (engine 0.502.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D618 (`d70e2058`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D618 (`d70e2058`), NOT committed.
 
 - **The reduction.** registry.ts, the NEW `PassiveEffects.damageReductionAfterWRFromAttacker { amount, attacker, holderType? }` on
   Sacred Charm ×2 (`abilityPokemon`), Thick Scale (a {N} holder; {G}/{R}/{W}/{L}) and Dewgong ×2 "Thick Fat" ({R}/{W}).
@@ -30806,7 +30806,7 @@ registry objects.
 
 ## D618 — WP25b: the rest of the `me` Stadiums (engine 0.501.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D617 (`001fdbcc`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D617 (`001fdbcc`), NOT committed.
 
 - **The programs.** registry.ts, three new `stadium` objects on 8 `me` ids: Battle Cage ×2 (the NEW
   `StadiumEffects.benchCounterShield`), Mystery Garden ×3 (Revavroom's `payFromHand` 1 `anyEnergy`, then `drawUntilHandSize` 1 with
@@ -30833,7 +30833,7 @@ registry objects.
 
 ## D617 — WP24b: five more WP24 Supporters (engine 0.500.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D616 (`48f9c661`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D616 (`48f9c661`), NOT committed.
 
 - **The programs.** registry.ts, five new objects on 11 `me` Supporter ids: Pokémon Center Lady (`healChosen` 60 + the NEW
   `recoverHealed`; a picked Active also gets `clearStatus`, through `healedRiderOps`, the helper Super Potion's discard now
@@ -30856,7 +30856,7 @@ registry objects.
 
 ## D616 — WP31b: the second part of the `me` deck / hand / discard / Energy misc (engine 0.499.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D615 (`7b1ab8d2`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D615 (`7b1ab8d2`), NOT committed.
 
 - **The readings.** effects.ts arm 6e-quater, nine literal anchors onto shipped programs: Ice Prison (`discardEnergy` 2 +
   `applyStatus` Paralyzed), Backfire (`discardEnergy` `to: "hand"`, 2 `providesEnergy` Fire), Soothing Melody ×2 (`healChosen`
@@ -30879,7 +30879,7 @@ registry objects.
 
 ## D615 — WP31a: the first part of the `me` deck / hand / discard / Energy misc (engine 0.498.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D614 (`5dace4c0`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D614 (`5dace4c0`), NOT committed.
 
 - **The readings.** effects.ts arm 6e-ter, eight literal anchors onto shipped programs: Trick Portal (`lookAtTopN` → Bench,
   `max: "any"`), Fruity Aroma (`lookAtTopN` → hand, `reveal`), Pika-Pika Parade ×3 (Precious Trolley's `searchDeck`), Gentle
@@ -30902,7 +30902,7 @@ registry objects.
 
 ## D614 — WP37b: the Ability-effect shield, Mega Clefable ex "Luminous Wing" (engine 0.497.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D613 (`55ccb609`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D613 (`55ccb609`), NOT committed.
 
 - **The piece.** registry.ts `LUMINOUS_WING` = `passive.preventAbilityEffects` (NEW) on `mep-072`, `me03-031` / `-103` / `-119`.
   `EffectContext.invokedBy` gains `"ability"`, set at every Pokémon-Ability `runProgram` site (cardplay.ts `useAbility`,
@@ -30920,7 +30920,7 @@ registry objects.
 
 ## D613 — fix-up: the Jet Energy switch's Knock Out check and Basic-only bench placement (engine 0.496.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D612 (`662f1911`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D612 (`662f1911`), NOT committed.
 
 - **The Jet sweep (D610's open review finding).** turn.ts `attachEnergy`: Jet Energy's `switchIfBenched` rider is the one
   `switchInto` route outside a program; the mid-turn Knock Out sweep now runs whenever it moved a body, so Holes counters that
@@ -30939,7 +30939,7 @@ registry objects.
 
 ## D612 — WP06: the tcgdex markup normaliser (engine 0.495.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D611 (`9aa0ec4c`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D611 (`9aa0ec4c`), NOT committed.
 
 - **The normaliser.** cardText.ts `normalizeCardText`: energy-symbol `<span>` → `{X}`, `<em>` stripped, "[R]" → `{R}`, a type
   word before "Energy" / "Pokémon" (or a joined list of them) → its symbol, glued type words and a cost word before "less" /
@@ -30961,7 +30961,7 @@ registry objects.
 
 ## D611 — WP21: the rest of the `me` activated Abilities, plus Dragonair (engine 0.494.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D610 (`994a949d`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D610 (`994a949d`), NOT committed.
 
 - **Vocabulary.** `payFromHand.swapWithTop` (the old top card goes to the hand; `HAND_COST_PAID.took`), `evolveFromDeck.fromHand`
   + `recordAs` (a mandatory evolve from the hand, refused by `programPlayable` with no candidate), the op
@@ -30981,7 +30981,7 @@ registry objects.
 
 ## D610 — WP37a: the first part of the `me` on-move / as-often / HP passives (engine 0.493.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D609 (`1928f466`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D609 (`1928f466`), NOT committed.
 
 - **Vocabulary.** One new piece: `PassiveEffects.hpBonus.requiresEnergyCount` ("N or more", `countAttachedEnergy`), and
   `hpBonus.requiresEnergyType` widened to the card class `"special"`. Everything else is a shipped shape: Happy Switch's
@@ -31004,7 +31004,7 @@ registry objects.
 
 ## D609 — WP36: the `me` KO / damage-counter attacks (engine 0.492.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D608 (`221a6544`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D608 (`221a6544`), NOT committed.
 
 - **Vocabulary.** The NEW `BoardCondition` `opponentActiveDamageCountersExactly` (Terminal Period's gate around
   `knockOutDefender`); `knockOutChosen` gains `target: "anyExceptSelf"` and `leastHpRemaining` (Bring Down; the funnel is a
@@ -31020,7 +31020,7 @@ registry objects.
 
 ## D608 — WP30: the `me` snipe / spread wording (engine 0.491.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D607 (`e6239436`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D607 (`e6239436`), NOT committed.
 
 - **Vocabulary.** "each of N" (N ≥ 2) on `CHOSEN_ANY_TARGET` / `SELF_DISCARD_THEN_ANY_TARGET`, read as the shipped arity;
   `BENCHED_SNIPE_TARGET_COUNTERS` without "Benched" → `opponentAny`; three literal compounds (Sonic Ripper, Bone Sniper,
@@ -31037,7 +31037,7 @@ registry objects.
 
 ## D607 — WP28a: the first half of the scaling count sources (engine 0.490.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D606 (`59dcf041`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D606 (`59dcf041`), NOT committed.
 
 - **Vocabulary.** Three nullary `DamageCountSource` members, each one literal `×` anchor and one attack.ts arm:
   `energyInPlayBothSides` (every Energy card on both boards), `toolsInPlayBothSides` (every Tool on both boards),
@@ -31054,7 +31054,7 @@ registry objects.
 
 ## D606 — WP25a: the first half of the `me` Stadiums (engine 0.489.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D605 (`8717d9cb`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D605 (`8717d9cb`), NOT committed.
 
 - **Vocabulary.** `StadiumAbility.endsTurn?: "always" | "ifHealed"` (cardplay.ts `stadiumUseEndsTurn` → `settleProgram`'s
   shipped `endsTurn`, which rides `phase.endsTurn` across a park; `"ifHealed"` reads the use's own `HEALED` rows) and
@@ -31077,7 +31077,7 @@ registry objects.
 
 ## D605 — WP34: coin (the rest) (engine 0.488.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D604 (`2b194185`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D604 (`2b194185`), NOT committed.
 
 - **Vocabulary.** Two optional `damageChosen` riders: `perHeadsInPlay` (the pick first, then one coin per own body in play
   matching the filter, `amount × heads`; interpreter.ts `perHeadsHit`) and `flipEach` (one coin per candidate, every coin
@@ -31098,7 +31098,7 @@ registry objects.
 
 ## D604 — WP18: the Mega Evolution typed Special Energies (engine 0.487.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D603 (`4b1d4622`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D603 (`4b1d4622`), NOT committed.
 
 - **Vocabulary.** `EnergyProgram.holderType` (the printed "{T} Pokémon this card is attached to", continuous.ts
   `energyRulesApply`; `provides` is never gated), `EnergyOnAttach.benchSearch`, `returnAfterAttackDiscard: "hand"` and
@@ -31114,7 +31114,7 @@ registry objects.
 
 ## D603 — WP11: the Mega-gated texts (engine 0.486.0, `MATCH_RECORD_VERSION` stays 42)
 
-**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D602 (`757efac0`), NOT committed.
+**Status:** ✅ BUILT in the `colorless-mega` worktree on D602 (`757efac0`), NOT committed.
 
 - **Vocabulary.** `BoardCondition.yourMegaExInPlay { type? }` (your Active and Bench, in-play card, D582's
   `isMegaEvolutionPokemonEx`) and `CardFilter.megaEvolutionEx`.

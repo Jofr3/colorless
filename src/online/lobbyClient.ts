@@ -1,4 +1,4 @@
-import type { GameAction } from "@luminous/engine";
+import type { GameAction } from "@colorless/engine";
 import {
   COUNTDOWN_MS,
   createSnapshot,
@@ -11,7 +11,7 @@ import {
   type RedactedGame,
   type SeatLogEntry,
   type WireAction,
-} from "@luminous/schema";
+} from "@colorless/schema";
 import { createLobbyChannel, type LobbyChannel } from "./channel";
 
 // The framework-free lobby client: one WebSocket per code, the hello/presence

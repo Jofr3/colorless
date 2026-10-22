@@ -1,7 +1,7 @@
 // A scripted LobbyChannel for the lobby client suites: records every post and
 // pushes server frames to the subscribers. Not a test file itself.
 
-import type { LobbyMessage } from "@luminous/schema";
+import type { LobbyMessage } from "@colorless/schema";
 import type { LobbyChannel } from "../online/channel";
 
 export function fakeLobbyChannel() {

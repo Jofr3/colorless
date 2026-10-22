@@ -2,7 +2,7 @@
 // packages/schema/src/tcgdex/__fixtures__): each payload is parsed with the
 // real Zod schema first, so these tests cover schema→row end to end.
 
-import { tcgdexCardSchema, tcgdexSerieSchema, tcgdexSetSchema } from "@luminous/schema";
+import { tcgdexCardSchema, tcgdexSerieSchema, tcgdexSetSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import cardEnergyBasic from "../../../../packages/schema/src/tcgdex/__fixtures__/card-energy-basic-sve-002.json";
 import cardEnergySpecial from "../../../../packages/schema/src/tcgdex/__fixtures__/card-energy-special-sv02-191.json";

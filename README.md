@@ -1,6 +1,6 @@
-# luminous_ui_v2
+# colorless
 
-Luminous: a trading-card-game (TCG) playmat with a deck builder, a hot-seat
+Colorless: a trading-card-game (TCG) playmat with a deck builder, a hot-seat
 sandbox and online play. The web frontend is a LÖVE 11.4 application packaged
 with love.js (WebAssembly) and drawn in Balatro's visual language; the rules
 engine and the API are TypeScript.

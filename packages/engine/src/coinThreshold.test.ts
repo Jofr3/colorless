@@ -661,7 +661,7 @@ describe("§7 — the record-shape derivation, made rather than inherited", () =
     //       exactly `[applyStatus]` and no `EffectContinuation` is ever written.
     //
     // ZERO new `EffectOp` members, op FIELDS, prompt kinds, prompt fields,
-    // `@luminous/schema` bytes, `redact.ts` bytes, events, error codes or registry
+    // `@colorless/schema` bytes, `redact.ts` bytes, events, error codes or registry
     // rows. `AttackCoinFlip` and `AttackFlipThreshold` are PARSE-TIME types produced
     // at declaration and consumed at the flip site in the same tick.
     for (const text of [EITHER_HEADS, BOTH_TAILS, AT_LEAST_TWO]) {

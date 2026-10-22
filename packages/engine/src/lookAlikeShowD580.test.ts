@@ -1,5 +1,5 @@
-import type { Card } from "@luminous/schema";
-import { redactedEffectPromptSchema } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
+import { redactedEffectPromptSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { resolvedByAnyReader } from "./censusAttackCorpus";
 import { supporterEffectOf } from "./continuous";

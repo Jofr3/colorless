@@ -20,7 +20,7 @@
 //
 // Applied by `mapCard` ONLY when tcgdex sends neither field, so an upstream fix wins.
 
-import type { TcgdexWeakRes } from "@luminous/schema";
+import type { TcgdexWeakRes } from "@colorless/schema";
 
 export interface WeakResSupplement {
   weaknesses: TcgdexWeakRes[];

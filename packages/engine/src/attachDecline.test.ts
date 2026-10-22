@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
 import { applyAction, createGame } from "./index";
@@ -65,7 +65,7 @@ import { battler, deckOf, typedEnergy } from "./testFixtures";
 // printings are 7 live ones"; D353 wrote the same claim as *"from 5 legal
 // printings to 7"* over a list of **6**. **NO PARTITION PRODUCES 7.**
 // Re-derived at D358 by walking the registry (113 ids carry a `parkOrForce`-family
-// op) and joining to remote D1 `luminous` on **`$.effect`** — NOT `$.text`, which
+// op) and joining to remote D1 `colorless` on **`$.effect`** — NOT `$.text`, which
 // returns a false zero, and the extractor was verified against eight
 // known-present rows before any zero in it was believed:
 //
@@ -909,7 +909,7 @@ describe("D358 §6 — the ids this slice rests on are real, and the registry ho
 // later slice cannot repeat the omission by reading only the one above it.
 //
 // THE POPULATION, re-derived at D360 over both producers and joined to remote D1
-// `luminous` on `$.effect` (extractor verified against nine known-present rows
+// `colorless` on `$.effect` (extractor verified against nine known-present rows
 // across all three text columns FIRST):
 //   • `LIKE '%ttach up to%'` — **23 sentences / 53 printings / 24 Standard-legal**
 //   • and the 24 account for themselves exactly:

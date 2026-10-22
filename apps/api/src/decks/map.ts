@@ -1,10 +1,10 @@
 // D1 row → deck-library domain mapping (P1 milestone 7, §5.2/§6) — the
 // catalog/map.ts pattern: pure functions from Drizzle rows to the shapes in
-// @luminous/schema/decks, so routes.ts owns queries and these unit-test flat.
+// @colorless/schema/decks, so routes.ts owns queries and these unit-test flat.
 // `user_id` never crosses the boundary — ownership is a WHERE clause, not a
 // response field — and the epoch-ms `updated` column serializes to ISO here.
 
-import type { Deck, DeckCard, DeckSummary, Folder } from "@luminous/schema";
+import type { Deck, DeckCard, DeckSummary, Folder } from "@colorless/schema";
 import type { decks, folders } from "../db/schema";
 
 export type FolderRow = typeof folders.$inferSelect;

@@ -28,7 +28,7 @@ import {
 //
 // ── THE CARD WAS READ END TO END, AND FOR THE SECOND SLICE RUNNING THAT REMOVED
 //    A PARAGRAPH FROM THE BILL ────────────────────────────────────────────────
-// 🛑 `length(effect)` is **337** (remote D1 `luminous`, 2026-08-09), and five
+// 🛑 `length(effect)` is **337** (remote D1 `colorless`, 2026-08-09), and five
 // consecutive resume points priced this row by quoting the SECOND paragraph and
 // charging it for all 337 characters. The first paragraph is Jet's, Spiky's,
 // Mist's, Neo Upper's, Prism's and Legacy's line verbatim (`provides:
@@ -39,7 +39,7 @@ import {
 // priced at its SECOND paragraph before a blocker is typed against it.
 //
 // ── THE POPULATION, RE-QUERIED AND KEYED ON `cards.category` ─────────────────
-// Remote D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a), 2026-08-09:
+// Remote D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a), 2026-08-09:
 // `name = 'Reversal Energy'` returns **2 printings** — `sv02-192`
 // (`legal_standard = 0`) and `sv04-266` (`legal_standard = 1`, reg mark G, Hyper
 // rare). ⚠️ **1 LEGAL, NOT 2**, and the illegal one is a reprint of the same text,

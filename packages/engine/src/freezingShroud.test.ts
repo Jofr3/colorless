@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
@@ -59,7 +59,7 @@ import {
 //       unreadable banner from (1).
 //
 // ── THE CENSUS THAT FOUND THIS ROW: THE *GRAMMAR*, NOT THE CARD ─────────────
-// Re-queried against remote D1 `luminous` (3,786 rows, 2,021 `legal_standard`)
+// Re-queried against remote D1 `colorless` (3,786 rows, 2,021 `legal_standard`)
 // on 2026-08-15, across ALL THREE text columns, selecting the WHOLE column.
 //
 //   `instr(<col>,'except any') > 0`:

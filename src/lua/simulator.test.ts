@@ -26,7 +26,7 @@ import { LuaSimulator } from "./simulator";
 import { effectMenu } from "./simulatorChoices";
 import { SimulatorOrder } from "./simulatorOrder";
 import { loadSimulatorSave } from "../game/simulatorSave";
-import { applyAction, cardOfUid, isBasicPokemon, otherSeat } from "@luminous/engine";
+import { applyAction, cardOfUid, isBasicPokemon, otherSeat } from "@colorless/engine";
 
 beforeEach(() => {
   const storage = new Map<string, string>();

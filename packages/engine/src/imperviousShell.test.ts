@@ -21,7 +21,7 @@ import {
 //  Pokémon if that damage is 200 or more."
 //
 // ✅ THE CENSUS, RE-RUN AT THIS COMMIT rather than transcribed from the handoff.
-// Remote D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a), all three text
+// Remote D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a), all three text
 // columns, `legal_standard = 1`, GROUPED BY SENTENCE, case-insensitive.
 //
 // RUNG 1 — `%if that damage is%`:

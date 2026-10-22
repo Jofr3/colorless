@@ -29,8 +29,8 @@
 //   engine reads a persisted raw face through the same function (cards.ts
 //   `cardOfUid`), so a row ingested before D612 still plays right.
 
-import { normalizeCardText } from "@luminous/engine";
-import type { TcgdexCard, TcgdexSerie, TcgdexSet } from "@luminous/schema";
+import { normalizeCardText } from "@colorless/engine";
+import type { TcgdexCard, TcgdexSerie, TcgdexSet } from "@colorless/schema";
 import type { cards, series, sets } from "../db/schema";
 import { normalizeSentinel } from "../sentinel";
 import { WEAK_RES_SUPPLEMENT } from "./weakResSupplement";

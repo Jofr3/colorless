@@ -4,10 +4,10 @@
 // shared across the builder. Kept side-effect-free so the pure logic
 // (deckMath, decklistText) and their tests can import it freely.
 
-import { BASIC_ENERGY_TYPES, type BasicEnergyType } from "@luminous/schema";
+import { BASIC_ENERGY_TYPES, type BasicEnergyType } from "@colorless/schema";
 
 /** The energy types the builder filters and paints, in the canonical wheel
-    order. Derived from the shared basic-energy vocabulary (@luminous/schema)
+    order. Derived from the shared basic-energy vocabulary (@colorless/schema)
     minus the retired Fairy — old Fairy prints keep adapting to typeless
     tiles rather than growing a palette entry — plus Dragon (a Pokémon type
     with no Basic Energy) and Colorless (a cost symbol), which exist only in
@@ -82,7 +82,7 @@ export function isBasicPokemon(card: BuilderCard): boolean {
 }
 
 /** True for a basic Energy — the lone exception to the 4-copies-per-name rule. [🆕 D628 (finding 0b): the
-    subtype it reads is the ENGINE's Basic / Special answer (catalog.ts `energySubtypeOf` → `@luminous/engine`
+    subtype it reads is the ENGINE's Basic / Special answer (catalog.ts `energySubtypeOf` → `@colorless/engine`
     `isBasicEnergy` / `isSpecialEnergy`), no longer the raw tcgdex tag, so the 14 "Normal"-tagged Special
     Energies count toward the 4-copy limit.] */
 export function isBasicEnergy(card: BuilderCard): boolean {

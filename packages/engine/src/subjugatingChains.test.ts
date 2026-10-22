@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame, programFor, topCardOf } from "./index";
 import type { GameState, PokemonRef, Seat } from "./index";
@@ -27,7 +27,7 @@ import {
 // `abilities_json` is BYTE-IDENTICAL across all five.
 //
 // ── THE CENSUS, TRANSCRIBED SO IT CAN BE RE-RUN ──────────────────────────────
-// Remote D1 `luminous` (uuid 735f0fb5-cdc3-494d-8b97-74a8ade0124a), 2026-08-07:
+// Remote D1 `colorless` (uuid 735f0fb5-cdc3-494d-8b97-74a8ade0124a), 2026-08-07:
 //
 //   SELECT lower(j.value ->> 'effect') AS eff, count(*) n, group_concat(c.id) ids
 //   FROM cards c, json_each(c.abilities_json) j

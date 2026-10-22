@@ -5,7 +5,7 @@
   const databases=[],connections=[];
   const assert=(ok,message)=>{if(!ok)throw Error(message)};
   const open=(name,budget)=>{const c=new ArtworkCache(name,budget);connections.push(c);return c};
-  const name=label=>{const n=`luminous-artwork-test-${label}-${crypto.randomUUID()}`;databases.push(n);return n};
+  const name=label=>{const n=`colorless-artwork-test-${label}-${crypto.randomUUID()}`;databases.push(n);return n};
   const blob=(value,size=40)=>new Blob([value.padEnd(size,'.')],{type:'image/png'});
   try {
     const poolName=name('pool');let cache=open(poolName,100000);

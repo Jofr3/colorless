@@ -27,7 +27,7 @@
   //
   // ⚠️ WHY IT IS NOT A PROJECT REFERENCE ON `packages/engine`. The instruments
   // import ENGINE SOURCES by relative path (`../packages/engine/src/effects`),
-  // not through the `@luminous/engine` entry point, and `tsc -b` can only route
+  // not through the `@colorless/engine` entry point, and `tsc -b` can only route
   // that through a reference if the referenced project is `composite` and emits
   // declarations. `packages/engine` is `noEmit` and deliberately so. Ordinary
   // module resolution pulls those sources into THIS program instead, which

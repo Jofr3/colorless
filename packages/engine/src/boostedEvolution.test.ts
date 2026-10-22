@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { rareCandyOptions } from "./cardplay";
 import { passivesOf } from "./continuous";
@@ -23,7 +23,7 @@ import {
 // THE CENSUS — the evolve-licence group, RUNG BY RUNG, re-queried not carried.
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// Run against the remote D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a,
+// Run against the remote D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a,
 // 3,786 rows) on 2026-08-08, at `legal_standard = 1`, over ALL THREE text
 // columns (`abilities_json`, `attacks_json`, `effect`).
 //

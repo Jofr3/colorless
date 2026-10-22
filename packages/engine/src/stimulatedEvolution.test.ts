@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { passivesOf } from "./continuous";
 import type { GameState, InPlayPokemon, Seat } from "./index";
@@ -22,7 +22,7 @@ import {
 // THE CENSUS — RUNG BY RUNG, RE-QUERIED AND NOT CARRIED.
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// Remote D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a, 3,786 rows),
+// Remote D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a, 3,786 rows),
 // 2026-08-08, over all three text columns (`abilities_json`, `attacks_json`,
 // `effect`). Every rung's ACTUAL return is written down, including the ones that
 // returned nothing new.

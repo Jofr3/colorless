@@ -1,4 +1,4 @@
-You are continuing autonomous work on **luminous_ui**. This is a FRESH session —
+You are continuing autonomous work on **colorless**. This is a FRESH session —
 nothing from the previous one is in your context. `docs/` is the handoff.
 
 ## Boot (do exactly this, nothing more)

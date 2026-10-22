@@ -23,7 +23,7 @@ import {
 // Flashing Draw, D223 Carmine, and this). **3 Standard-legal printings** —
 // `sv10.5b-083`, `sv10.5b-163`, `sv10.5b-170`, all regulation mark **I**, all
 // `legal_standard = 1`, one distinct `effect` string across the three (remote D1
-// `luminous`, `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 2026-08-05).
+// `colorless`, `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 2026-08-05).
 //
 // ⚠️ **THE WORD THAT COSTS IS "Pokémon", AND IT IS PLURAL.** Every other printed
 // member of this family says "from **1 of** your Pokémon" (Energy Switch, Poppy,

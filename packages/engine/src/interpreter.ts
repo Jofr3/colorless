@@ -1,4 +1,4 @@
-import type { Attack, BasicEnergyType, Card } from "@luminous/schema";
+import type { Attack, BasicEnergyType, Card } from "@colorless/schema";
 import {
   activeTop,
   applyDamageModifier,

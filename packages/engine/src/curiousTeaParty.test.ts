@@ -69,7 +69,7 @@ import {
 // mutant is a corpus defect rather than coverage.
 //
 // ⚠️ THE CENSUS, AND THE ONE THING THIS SLICE COULD NOT DO. D252 measured the
-// family on the remote D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a) on
+// family on the remote D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a) on
 // 2026-08-07 with
 //
 //   SELECT lower(json_extract(a.value,'$.effect')) AS s, COUNT(*) n,

@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { attackGateOf, attackTimingBlocked, firstTurnAttackBanned } from "./index";
 import { applyAction, createGame, programFor, redactGame } from "./index";
@@ -35,7 +35,7 @@ import {
 // ── THE CENSUS, RE-DERIVED RATHER THAN CARRIED ───────────────────────────────
 //
 // D280 measured 13 and left the number to be re-derived. It reproduces EXACTLY,
-// with the 7/3/3 split intact (remote D1 `luminous`, 2026-08-08, `json_each` over
+// with the 7/3/3 split intact (remote D1 `colorless`, 2026-08-08, `json_each` over
 // `attacks_json` so the printed INDEX comes back with the text):
 //
 //   n  shape    ids                                        printed clause

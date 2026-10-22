@@ -1,13 +1,13 @@
 // P4 — resolve catalog ids to full domain Cards for the engine's `cardPool`
 // (online.md). The lobby → engine handoff needs every card in both decks as a
-// `@luminous/schema` Card; the DO reads them out of D1 here, then hands the pool
+// `@colorless/schema` Card; the DO reads them out of D1 here, then hands the pool
 // to `startMatch` (match.ts, which stays pure of D1).
 //
 // The query half mirrors `guardUnknownCards` (decks/routes.ts): one logical IN
 // query, chunked to D1's bound-parameter cap and run in a single db.batch. The
 // row→domain fold is the pure `poolFromRows`, so it unit-tests without a Worker.
 
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { inArray } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 import type { DrizzleD1Database } from "drizzle-orm/d1";

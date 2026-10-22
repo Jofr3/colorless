@@ -35,7 +35,7 @@ import {
 // behind for the next unread card.
 //
 // ── THE CENSUS, RE-QUERIED AND NOT INHERITED ─────────────────────────────────
-// Remote D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a),
+// Remote D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a),
 // `instr(effect,'provides every type of Energy') > 0 AND legal_standard = 1`,
 // 2026-08-09: **4 printings**, exactly the four D298 recorded —
 //   • `sv04-266` Reversal Energy   (337 chars) — REFUSED, see below

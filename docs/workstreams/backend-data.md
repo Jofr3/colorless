@@ -19,7 +19,7 @@
 
 ## 1. Where the project is today
 
-`luminous_ui` is currently a **frontend-only skeleton**: the design language,
+`colorless` is currently a **frontend-only skeleton**: the design language,
 the main pages, and simple interactions exist, but there is **no backend and no
 persistence** beyond `localStorage`.
 
@@ -79,7 +79,7 @@ tcgdex.dev ──▶   │  ingest job ──▶ D1 (cards/sets/series)     Hono
 ### 3.1 Repo layout — Bun-workspace monorepo
 
 ```text
-luminous_ui/
+colorless/
   apps/
     web/            # the existing Vite app (relocated from repo root — can be deferred)
     api/            # NEW — Bun + Hono Cloudflare Worker (+ Lobby Durable Object)
@@ -123,14 +123,14 @@ luminous_ui/
 
 1. Traverse serie → sets → each card's full detail from the tcgdex REST API
    (sequential, ~50ms spacing), validating every payload with the Zod schemas
-   in `@luminous/schema`; any card validation failure aborts that set with a
+   in `@colorless/schema`; any card validation failure aborts that set with a
    report.
 2. Map onto the §5.3 rows (missing `legal` → false/false; category-specific
    fields NULL elsewhere; `*_url` columns keep the tcgdex **origin** base
    URLs) and generate batched upsert SQL — `INSERT … ON CONFLICT(id) DO
    UPDATE`, ≤100 cards per file (`apps/api/src/ingest/`, unit-tested).
 3. Apply in FK order (series → set → card chunks) via
-   `wrangler d1 execute luminous --local|--remote --file …`. Idempotent by
+   `wrangler d1 execute colorless --local|--remote --file …`. Idempotent by
    tcgdex `id` — rerunning is always safe; `--dry-run` writes SQL, applies
    nothing.
 
@@ -177,7 +177,7 @@ seam (`getSerie` / `getSet` / `getCard`) with two implementations:
 ships TypeScript *types*, which are erased at runtime and therefore cannot
 hold the property that makes this pipeline safe (D5 — every external payload
 is parsed at the boundary, so upstream drift is a loud failure rather than a
-corrupt D1 row). The Zod schemas in `@luminous/schema` remain the validation
+corrupt D1 row). The Zod schemas in `@colorless/schema` remain the validation
 boundary, unchanged and unconditional; changing transport cannot change
 whether validation happens. Mapping, chunking, SQL and FK order are untouched.
 
@@ -252,7 +252,7 @@ data loss rather than a validation failure.
   routes answer `503 {"error":"provider not configured"}`. To activate, register
   a Google OAuth client (<https://console.cloud.google.com/auth/clients>, Web application)
   with BOTH redirect URIs per provider:
-  - `https://luminous-api.jofrescari.workers.dev/auth/oauth/google/callback`
+  - `https://colorless-api.jofrescari.workers.dev/auth/oauth/google/callback`
   - `http://localhost:8787/auth/oauth/google/callback` (wrangler dev)
 
   then install the secrets (from `apps/api/`):
@@ -373,7 +373,7 @@ cd apps/api && bun scripts/ingest.ts --serie sv --remote
 | Command | Exists? |
 | --- | --- |
 | `bun run db:migrate:remote` **from the repo root** | ❌ **NO** — the root `package.json` has no such script. It is defined only in `apps/api/package.json`, so it must be run as `cd apps/api && bun run db:migrate:remote` (or `bun run --cwd apps/api db:migrate:remote`). Commit messages that quote the bare form are wrong. |
-| `cd apps/api && bun run db:migrate:remote` | ✅ `wrangler d1 migrations apply luminous --remote` |
+| `cd apps/api && bun run db:migrate:remote` | ✅ `wrangler d1 migrations apply colorless --remote` |
 | `cd apps/api && bun scripts/ingest.ts --remote` | ✅ the script exists; `--remote` and `--serie` are real flags (`apps/api/scripts/ingest.ts`). Note it is `bun scripts/ingest.ts`, **not** `bun run` — there is no npm script wrapping it. |
 | `bun run api:deploy` (repo root) | ✅ `bun run --cwd apps/api deploy` → `wrangler deploy` |
 | `cd apps/api && bun run db:migrate:local` | ✅ the local twin, used for the pre-flight |
@@ -713,7 +713,7 @@ whose required `suffixes` is `undefined` — a crash, not a stale chip list.
 ```
 GET    /health
 
-# Catalog (public; KV cache-aside on every 200, 1h TTL, `x-luminous-cache: hit|miss`,
+# Catalog (public; KV cache-aside on every 200, 1h TTL, `x-colorless-cache: hit|miss`,
 # key = `catalog:v9:` (D628; v8 was D612) + normalized path+sorted-query — bump the version prefix
 # whenever a cached shape — or its values for already-ingested rows — changes;
 # invalid query params → terse 400 JSON)
@@ -757,7 +757,7 @@ GET    /assets/cards/:cardId/:file   # high|low . webp|png|jpg (e.g. high.webp)
 GET    /assets/sets/:setId/:file     # logo|symbol . png|webp  (e.g. symbol.png)
 
 # Auth (D2a) — implemented (§3.5 as-built); bodies validated, users
-# boundary-parsed through @luminous/schema userSchema (never any hash field)
+# boundary-parsed through @colorless/schema userSchema (never any hash field)
 POST   /auth/register            # {email, password, displayName?} → 201 user + session
                                  #   cookie; 400 invalid body; 409 duplicate email; 429 rate-limited
 POST   /auth/login               # {email, password} → 200 user + session cookie;
@@ -774,7 +774,7 @@ POST   /auth/verify-email  ·  POST /auth/reset-password
 # scoped WHERE user_id = ? so someone else's (or a missing) resource is the
 # SAME 404 — no existence leak; a folderId/parentId you don't own → 400. NO KV
 # cache: user data reads fresh. Responses boundary-parsed through the
-# @luminous/schema deck/folder schemas. Card lists: {cardId, count 1–99},
+# @colorless/schema deck/folder schemas. Card lists: {cardId, count 1–99},
 # ≤200 distinct entries, duplicate cardIds → 400, ids absent from the catalog
 # → 400 `{"error":"unknown card id(s)","cardIds":[…]}` (checked with a chunked
 # IN query against `cards`, never the FK error text).
@@ -836,11 +836,11 @@ GET    /lobby/:code/ws           # strict code check (404) → upgrade check (42
 
 1. ✅ **Scaffold** `apps/api` (Hono + wrangler) + `packages/schema` (+ stub
    `packages/engine`); Bun workspaces; `/health` deployed green at
-   `https://luminous-api.jofrescari.workers.dev/health`.
+   `https://colorless-api.jofrescari.workers.dev/health`.
 2. ✅ **Schemas** — tcgdex Zod schemas (`packages/schema/src/tcgdex/`, fixtures
    + 19 tests + live sweep via `bun packages/schema/scripts/validate-live.ts`,
    370 requests / 0 failures); lobby types/reducer moved to
-   `packages/schema/src/lobby/`, web importers now use `@luminous/schema`.
+   `packages/schema/src/lobby/`, web importers now use `@colorless/schema`.
 3. ✅ **D1 migrations** — catalog + user tables via Drizzle
    (`apps/api/src/db/`, migration `apps/api/drizzle/0000_tired_sentry.sql`,
    scripts `db:generate` / `db:migrate:local` / `db:migrate:remote`). Applied

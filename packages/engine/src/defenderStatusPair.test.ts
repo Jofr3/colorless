@@ -42,7 +42,7 @@ import {
 // because `splitAttackTrailingClause` reaches Confused+Poisoned through this same
 // anchor (§5).
 //
-// ⚠️ **THE CARDS, READ COLUMN BY COLUMN OFF THE REMOTE D1 `luminous`
+// ⚠️ **THE CARDS, READ COLUMN BY COLUMN OFF THE REMOTE D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) ON 2026-08-26** — not off memory, and not
 // off the local catalog, which holds none of these four sets (978 cards / 6 sets:
 // `sv01`, `sv02`, `sv03`, `sv06.5`, `sve`, `swsh10.5`). Every fixture is therefore a

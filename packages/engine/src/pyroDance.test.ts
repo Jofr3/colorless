@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { programPlayable } from "./cardplay";
 import { deriveAttackEffect } from "./effects";
@@ -16,7 +16,7 @@ import { FIXTURE_POOL, battler, deckOf, typedEnergy } from "./testFixtures";
 //   card, a Basic {F} Energy card, or 1 of each from your hand to your Pokémon in
 //   any way you like."
 //   **3 legal printings on ONE byte-identical sentence** — the whole population,
-//   remote D1 `luminous` 2026-08-15, `json_each(abilities_json)` keyed on
+//   remote D1 `colorless` 2026-08-15, `json_each(abilities_json)` keyed on
 //   `$.effect` (NOT `$.text` — the false-zero key) and grouped so the unit is a
 //   SENTENCE. The extractor was verified against a known-present row BEFORE any
 //   zero in this block was believed.

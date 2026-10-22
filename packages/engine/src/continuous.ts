@@ -26,7 +26,7 @@ import {
 } from "./cards";
 import type { DamageModifier, PokemonSuffix, PreventedAttackerClass } from "./cards";
 import { type Banner, bannerOf } from "./banners";
-import type { Attack, BasicEnergyType, Card } from "@luminous/schema";
+import type { Attack, BasicEnergyType, Card } from "@colorless/schema";
 import type {
   AttackerClass,
   BoardCondition,
@@ -1293,7 +1293,7 @@ export function passivesOf(
       sentence reads "prevent all damage FROM AND EFFECTS OF attacks", and the
       effects half is a rule this pipeline does not have. Measured, not assumed: the
       `%prevent all damage%` sweep over `abilities_json` with `legal_standard = 1`
-      (remote D1 `luminous`, 2026-08-07) returns 9 sentences and FIVE of them carry
+      (remote D1 `colorless`, 2026-08-07) returns 9 sentences and FIVE of them carry
       "from and effects of". A field that took an attacker-predicate KIND would have
       made that twin look one enum member away when it is a whole second rule away.
 
@@ -5655,7 +5655,7 @@ function handPlayBarredByOpponentActive(
     readings of one label in one repo would be a disagreement no board could show
     you — the engine would let you PLAY a card the builder would not let you DECK.
     ⚠️ **AND IT IS NOT `=== "ACE SPEC Rare"` EVEN THOUGH THE CATALOG IS
-    SINGLE-VALUED TODAY.** Remote D1 `luminous`, 2026-08-08: `rarity LIKE '%ACE
+    SINGLE-VALUED TODAY.** Remote D1 `colorless`, 2026-08-08: `rarity LIKE '%ACE
     SPEC%'` returns **33 rows under exactly one distinct string**, so the equality
     test would be correct and the substring test is correct for a longer time —
     older fixture spellings and any future "ACE SPEC …" variant read the same.

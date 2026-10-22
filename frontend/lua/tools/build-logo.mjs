@@ -10,7 +10,7 @@ const here=dirname(fileURLToPath(import.meta.url));
 // reflections on the source-scale logical grid and export exact 2x pixels.
 // The legacy extractor targets the older rounded logo.
 if (!process.argv.includes('--legacy')) {
-  const web=mkdtempSync(join(tmpdir(),'luminous-angular-logo-'));
+  const web=mkdtempSync(join(tmpdir(),'colorless-angular-logo-'));
   cpSync(join(here,'branding/colorless-angular.png'),join(web,'source.png'));
   cpSync(join(here,'logo_border.js'),join(web,'logo_border.js'));
   cpSync(join(here,'logo_reflections.js'),join(web,'logo_reflections.js'));
@@ -46,7 +46,7 @@ await source.decode();
   process.exit(0);
 }
 const source=resolve(process.env.BALATRO_SOURCE || join(here,'../../../../balatro-source'));
-const root=mkdtempSync(join(tmpdir(),'luminous-logo-'));
+const root=mkdtempSync(join(tmpdir(),'colorless-logo-'));
 const stage=join(root,'source'),web=join(root,'web');
 for(const directory of ['ui','tools','assets/branding']) mkdirSync(join(stage,directory),{recursive:true});
 mkdirSync(web);

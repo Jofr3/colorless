@@ -23,7 +23,7 @@ if (!existsSync(compiler))
   throw new Error(
     `Install love.js in ${source}, or set BALATRO_SOURCE to your Balatro source directory.`,
   );
-const stage = mkdtempSync(join(tmpdir(), "luminous-love-"));
+const stage = mkdtempSync(join(tmpdir(), "colorless-love-"));
 // Vite's public dir: served at /love/ by the dev server and copied into
 // dist/love/ by the production build. Generated, so gitignored.
 const output = join(root, "public/love");
@@ -61,7 +61,7 @@ try {
   mkdirSync(output, { recursive: true });
   execFileSync(
     process.execPath,
-    [compiler, "--compatibility", "--title", "Luminous", "--memory", "134217728", stage, output],
+    [compiler, "--compatibility", "--title", "Colorless", "--memory", "134217728", stage, output],
     { stdio: "inherit" },
   );
   // The compiler copies the runtime with fs-extra, which unlinks the old file
@@ -81,7 +81,7 @@ try {
   rmSync(join(output, "theme"), { recursive: true, force: true });
   for (const name of ["host.js", "host.css"]) copyFileSync(join(here, "web", name), join(output, name));
   writeFileSync(join(output, "asset-manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
-  console.log("Luminous Lua frontend built → public/love/");
+  console.log("Colorless Lua frontend built → public/love/");
 } finally {
   rmSync(stage, { recursive: true, force: true });
 }

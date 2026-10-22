@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import manifest from "../package.json" with { type: "json" };
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
@@ -76,10 +76,10 @@ import {
 // (`opponentActiveIsStage2`, reusing D262's `isStage2Pokemon` VERBATIM) for
 // Tauros's restricting adjective — the second mechanism D295 priced this row's
 // fourth printing at, and the price held. No new op, no new prompt kind, no new
-// choice kind, no new event, no `@luminous/schema` diff, no `src/` diff.
+// choice kind, no new event, no `@colorless/schema` diff, no `src/` diff.
 //
 // ── THE CENSUS, RE-DERIVED (never inherited) ─────────────────────────────────
-// Remote D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a), 2026-08-08,
+// Remote D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a), 2026-08-08,
 // `legal_standard = 1`:
 //   • `attacks_json LIKE '%into their hand%'` → **4** (these four; abilities 0)
 //   • `attacks_json LIKE '%Active Stage 2 Pok%'` → **1** (Tauros alone)

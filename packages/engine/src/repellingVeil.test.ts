@@ -27,7 +27,7 @@ import {
 //      not an effect.)"
 //
 // ── THE CENSUS, RE-DERIVED AT THIS COMMIT AND NOT TRANSCRIBED ─────────────────
-// Remote D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a), 2026-08-07,
+// Remote D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a), 2026-08-07,
 // `legal_standard = 1`, GROUPED BY SENTENCE, over ALL THREE text columns via
 // `json_each` (`attacks_json`, `abilities_json`, the flat `effect`),
 // case-insensitively — D257's ladder discipline, now paying on its fifth

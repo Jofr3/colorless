@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame, formatElapsed, logFromEvents, programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
@@ -26,7 +26,7 @@ import {
 //  them into your hand. Then, shuffle your deck."
 //
 // **2 Standard-legal printings** (`sv10-177`, `sv10-227` — byte-identical, and
-// the ONLY two rows in the catalog carrying this sentence; remote D1 `luminous`
+// the ONLY two rows in the catalog carrying this sentence; remote D1 `colorless`
 // `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 2026-08-05).
 //
 // ⚠️ **THE POINT OF THE ROW IS THE TRANSFER.** `ownerPrefix.test.ts` dropped this

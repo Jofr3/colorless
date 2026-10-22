@@ -2,7 +2,7 @@
 // (validated in routes.ts via @hono/zod-validator) and the Drizzle `where`
 // builder. Pure — no Worker types — so filters unit-test as plain functions.
 
-import { cardCategorySchema } from "@luminous/schema";
+import { cardCategorySchema } from "@colorless/schema";
 import {
   and,
   type AnyColumn,

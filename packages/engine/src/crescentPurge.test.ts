@@ -1,5 +1,5 @@
-import type { Card } from "@luminous/schema";
-import { redactedEffectPromptSchema, redactedSideSchema } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
+import { redactedEffectPromptSchema, redactedSideSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import manifest from "../package.json" with { type: "json" };
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";

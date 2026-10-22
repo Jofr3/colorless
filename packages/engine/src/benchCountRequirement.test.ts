@@ -25,7 +25,7 @@ import {
 // D365 handed over four sentences / nine legal printings still behind the
 // `"If <clause>, this attack does nothing."` skeleton, every one refused by
 // VOCABULARY. **THE POPULATION REPRODUCES EXACTLY** (§1, re-derived live off the
-// committed corpus and confirmed pool-wide on the remote D1 `luminous` `$.effect`
+// committed corpus and confirmed pool-wide on the remote D1 `colorless` `$.effect`
 // on 2026-08-19 with the extractor verified against the 640 / 1,732 / 60,467
 // total FIRST): 9 sentences / 18 legal units open with the skeleton, 5 s / 9 u
 // were carried, 4 s / 9 u reached the table and MISSED.

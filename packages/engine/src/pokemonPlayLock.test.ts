@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import {
   applyAction,
@@ -43,7 +43,7 @@ import {
 //
 // 🛑 **THE HANDOFF PRICED THIS AT 2 AND SAID TO ASK WHAT ELSE BARS AN EVOLVE OR
 // A BENCH PLACEMENT, BECAUSE A GATE SURFACE PRICED AT 2 IS A BAD TRADE AND ONE
-// PRICED AT 6 IS THE BEST ROW ON THE PAGE.** Asked. Remote D1 `luminous`
+// PRICED AT 6 IS THE BEST ROW ON THE PAGE.** Asked. Remote D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), 2026-08-08, `legal_standard = 1`,
 // one row of `SUM(instr(col,…)>0)` per column (D283's compound-SELECT limit):
 //

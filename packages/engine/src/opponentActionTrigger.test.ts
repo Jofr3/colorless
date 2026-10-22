@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame, programFor } from "./index";
 import type { GameState, Seat } from "./index";
@@ -17,7 +17,7 @@ import {
 
 // D319 — THE OPPONENT-ACTION TRIGGER: A SCAN DIRECTION, NOT A TIMING.
 //
-// THE TWO SENTENCES, transcribed off the remote D1 `luminous`
+// THE TWO SENTENCES, transcribed off the remote D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) on 2026-08-10 rather than copied from
 // a census bullet — D318's cheapest habit, and the reason the third bullet below
 // says something the handoff did not:

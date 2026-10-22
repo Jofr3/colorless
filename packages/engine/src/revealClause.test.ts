@@ -39,7 +39,7 @@ import {
 // rider and not a new op.
 //
 // 🛑 AND WHY IT IS A FIELD RATHER THAN `dest === "hand"`. Standard-legal census,
-// remote D1 `luminous`, 2026-08-05, all THREE text columns via `json_each` (the
+// remote D1 `colorless`, 2026-08-05, all THREE text columns via `json_each` (the
 // D206 rule — D224's figure of 41/4 read `effect` alone and was a floor):
 //   • search-deck-into-hand — 100 printings / 55 sentences, of which
 //     15 printings / 8 sentences print NO reveal: Cassiopeia ×3, Amulet of Hope,

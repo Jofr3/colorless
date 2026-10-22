@@ -1,6 +1,6 @@
-# Luminous Lua frontend
+# Colorless Lua frontend
 
-Luminous's web frontend: a LÖVE 11.4 application packaged with love.js for WebAssembly and served at `/`. Pages are chosen by query string (`/?page=sandbox`, `/?lobby=CODE`, `/?account`, …). All visible menu content, layout, input handling, animation, audio, and rendering run in Lua. The small HTML/JS host boots LÖVE, passes viewport/preferences through a file mailbox, and exposes native accessible links.
+Colorless's web frontend: a LÖVE 11.4 application packaged with love.js for WebAssembly and served at `/`. Pages are chosen by query string (`/?page=sandbox`, `/?lobby=CODE`, `/?account`, …). All visible menu content, layout, input handling, animation, audio, and rendering run in Lua. The small HTML/JS host boots LÖVE, passes viewport/preferences through a file mailbox, and exposes native accessible links.
 
 ## Run
 
@@ -67,7 +67,7 @@ Unavailable cards in simulator pickers follow Balatro's `greyed` deck-view path 
 
 Card-grid page changes follow `your_collection_joker_page` in `functions/button_callbacks.lua` and the `title` branch of `CardArea:align_cards` in `cardarea.lua`. Cards are replaced immediately and each row spreads from the collection area's centre (converted from top-left to centre coordinates), using the existing `Moveable` velocity equations. `ui/collection_motion.lua` preserves the row fan, vertical bow, ambient sway, parallax offset, centred partial rows and 0.95 scale from the source. Selection refreshes preserve the current cards instead of replaying the entrance; reduced motion skips the spread and ambient sway.
 
-The palette follows Balatro's `globals.lua`: red `#FE5F55`, blue `#009DFF`, green `#4BC292`, panel `#374244`, with gold `#F5B244` and card stock `#F0EAD6`. The title and buttons are drawn in Lua. The reusable card system and its four pixel card faces are retained, but are not loaded by the home scene. `ui/motion.lua` ports Balatro's separate target/visible transforms, position/rotation/scale velocities, and juice equations. `ui/card.lua` follows `Card:draw` and `Sprite:draw_shader` for ambient and pointer tilt, screen-space uniforms, shadow parallax, and edition passes; it does not import Balatro's entire game/UI object system. The composition, card emblems, controls and responsive layout are new Luminous UI, so this is a first visual milestone, not a claim of complete behavioral parity.
+The palette follows Balatro's `globals.lua`: red `#FE5F55`, blue `#009DFF`, green `#4BC292`, panel `#374244`, with gold `#F5B244` and card stock `#F0EAD6`. The title and buttons are drawn in Lua. The reusable card system and its four pixel card faces are retained, but are not loaded by the home scene. `ui/motion.lua` ports Balatro's separate target/visible transforms, position/rotation/scale velocities, and juice equations. `ui/card.lua` follows `Card:draw` and `Sprite:draw_shader` for ambient and pointer tilt, screen-space uniforms, shadow parallax, and edition passes; it does not import Balatro's entire game/UI object system. The composition, card emblems, controls and responsive layout are new Colorless UI, so this is a first visual milestone, not a claim of complete behavioral parity.
 
 ## Files
 
@@ -469,13 +469,13 @@ modal. When the opponent drops, a
 locally; "{name} is back" pops when they return. Coin flips, the Energy and
 Retreat allowances and effect titles are not carried by the wire yet.
 
-Protocol: Lua prints `LUMINOUS:online:<cmd>` (fields encoded with
+Protocol: Lua prints `COLORLESS:online:<cmd>` (fields encoded with
 `ui/account.lua`'s codec, TAB-separated); host.js queues commands until the
-account adapter is ready and dispatches `luminous:online-command`. Commands:
+account adapter is ready and dispatches `colorless:online-command`. Commands:
 `open [code]`, `close`, `create`, `join code`, `leave [home]`, `decks`,
 `select deckId`, `ready 1|0`, `kick`, `copy code|link`; `input` and
 `finish-input` stay in host.js for the native code/search proxies. `LuaOnline`
-publishes `luminous:online-state`, written to `__online.txt`: a header
+publishes `colorless:online-state`, written to `__online.txt`: a header
 (revision, step, busy, message, code, role, link, countdown, notice, decks
 state, name, account, canKick, status), `P` seat rows (the opponent's deck is
 never sent) and `D,id,name,cardCount,standard,expanded` deck rows. Proxy edits

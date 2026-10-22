@@ -1,4 +1,4 @@
-import { deckSchema, deckSummarySchema, folderSchema } from "@luminous/schema";
+import { deckSchema, deckSummarySchema, folderSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { type DeckRow, type FolderRow, mapDeckRow, mapDeckSummaryRow, mapFolderRow } from "./map";
 

@@ -24,7 +24,7 @@ import {
 //
 // ✅ THE COUNT RE-DERIVES TO THE DIGIT FOR THE THIRTEENTH ROW RUNNING — and it
 // re-derives to **3**, where the two backlog cells this slice was handed said
-// **2**. Remote D1 `luminous`, `legal_standard = 1`, `json_each` over
+// **2**. Remote D1 `colorless`, `legal_standard = 1`, `json_each` over
 // `attacks_json`/`abilities_json` PLUS the bare `effect` column, GLOB (never
 // LIKE), GROUPED BY SENTENCE, on 2026-08-06:
 //

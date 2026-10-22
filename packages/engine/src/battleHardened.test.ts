@@ -22,7 +22,7 @@ import {
 // ⚠️ **THE COUNT, RE-DERIVED ON THE SHAPE RATHER THAN ON THE ROW'S TWO IDS.**
 // `LIKE '%when you play this pok%onto your bench%attach%'`, `legal_standard = 1`,
 // swept across `json_each(abilities_json)` / `json_each(attacks_json)` / `effect`
-// and GROUPED BY SENTENCE (remote D1 `luminous`, 2026-08-07) returns **2
+// and GROUPED BY SENTENCE (remote D1 `colorless`, 2026-08-07) returns **2
 // printings on this sentence** — `sv06.5-025` and `sv08.5-054` — which is backlog
 // row 12's figure to the digit and the SEVENTEENTH row running to survive
 // re-derivation.

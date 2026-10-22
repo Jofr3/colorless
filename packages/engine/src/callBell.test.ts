@@ -26,7 +26,7 @@ import {
 //  Then, shuffle your deck."                                (Item, `sv08-165`)
 //
 // 🛑 **THE CENSUS THIS SLICE CAME OUT OF, AND WHAT IT DID *NOT* FIND.** Remote D1
-// `luminous` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), 2026-08-08, all THREE text
+// `colorless` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), 2026-08-08, all THREE text
 // columns, the six going-order spellings ("go/goes/went first/second"), pool-wide
 // and then at `legal_standard = 1`:
 //
@@ -90,7 +90,7 @@ import {
 // * Dropping the HUD mirror fails the wire row-lighting test, which reads the same
 //   `redactGame` call that lights the CONTROL Item on the very same board.
 
-/** The one Standard-legal printing, measured against the remote D1 `luminous`
+/** The one Standard-legal printing, measured against the remote D1 `colorless`
     on 2026-08-08: `legal_standard = 1`, `trainer_type = 'Item'`, and **no
     reprint** — the whole going-order census returned this id once. */
 const CALL_BELL_ID = "sv08-165";

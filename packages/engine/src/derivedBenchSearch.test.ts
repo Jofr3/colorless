@@ -39,7 +39,7 @@ import {
 // 🛑 THE ROW PRICED IT AT **22 PRINTINGS / ~9 ARMS** AND BOTH HALVES ARE WRONG —
 // the fifth `needs` cell on this branch to misprice, and the second in a row to
 // miss in both directions at once. Re-derived (never inherited) against the
-// remote D1 `luminous` — 3,786 rows / 20 sets, 2,021 `legal_standard = 1` — on
+// remote D1 `colorless` — 3,786 rows / 20 sets, 2,021 `legal_standard = 1` — on
 // 2026-08-05 over `json_each` + `GLOB`, all three text columns, and **grouped BY
 // SENTENCE before anything was priced** (D229's lesson, applied as instructed):
 // the family is **25 legal printings over 12 distinct sentences** in the attack
@@ -62,7 +62,7 @@ import {
 
 /** The four printed FORMS this one anchor reads, with the program each derives
     to and the printings measured for it. Census re-derived (not inherited) on
-    2026-08-05 against the remote D1 `luminous` over `json_each` +
+    2026-08-05 against the remote D1 `colorless` over `json_each` +
     `json_extract(value,'$.effect')` with `GLOB` rather than `LIKE` — SQLite's
     `LIKE` is ASCII case-insensitive and has cost this repo a census.
 

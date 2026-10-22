@@ -78,7 +78,7 @@ import {
 
 /** The three sentences this slice reads, with the program each derives to and the
     LEGAL printing count measured for it. Census re-derived (not inherited) on
-    2026-08-05 against the remote D1 `luminous` — 3,786 rows / 20 sets, 2,021
+    2026-08-05 against the remote D1 `colorless` — 3,786 rows / 20 sets, 2,021
     `legal_standard = 1` — over `json_each(attacks_json)` +
     `json_extract(value,'$.effect')`, with `GLOB` rather than `LIKE` because
     SQLite's `LIKE` is ASCII case-insensitive and has cost this repo a census.

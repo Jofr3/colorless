@@ -30,7 +30,7 @@ import {
 // HALF ITS REASON WAS FIVE SLICES STALE.
 //
 // ── THE PRINTED TEXT, RE-QUERIED IN FULL ────────────────────────────────────
-// Remote D1 `luminous` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), 2026-08-09, ONE
+// Remote D1 `colorless` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), 2026-08-09, ONE
 // flat `WHERE id = 'sv06-167'` over every column — the whole row, not the first
 // 90 characters D292 read:
 //

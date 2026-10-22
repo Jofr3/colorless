@@ -39,7 +39,7 @@ import {
   tcgdexCardSchema,
   tcgdexSerieSchema,
   tcgdexSetSchema,
-} from "@luminous/schema";
+} from "@colorless/schema";
 import TCGdex, {
   type Card as SdkCard,
   CardModel,

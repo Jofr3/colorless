@@ -306,7 +306,7 @@ Cleanup / altitude (each names its fix):
   parallel safe).
 - Deck hydration = N× `GET /cards/:id` → repeatable `?id=` filter on
   `GET /cards` (the multiParam machinery is already there).
-- `RARITIES` hardcoded vocabulary → shared enum in `@luminous/schema` or a
+- `RARITIES` hardcoded vocabulary → shared enum in `@colorless/schema` or a
   facets endpoint (P2 task 10).
 - Kinds → server params for the stage/trainerType/energyType kinds (P2 tasks
   8–9); the client-side gap forced `loadedCount`/`total` caption plumbing

@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import { deriveAttackEffect, splitAttackGateClause } from "./effects";
@@ -61,7 +61,7 @@ import { otherSeat } from "./types";
 //
 // ── THE POPULATION, WHICH IS SIX AND NOT ONE ────────────────────────────────
 //
-// Remote D1 `luminous` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), 2026-08-09,
+// Remote D1 `colorless` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), 2026-08-09,
 // `instr(attacks_json, 'and all attached cards into') > 0` over all 3,786 rows:
 // **27 rows, 15 of them `legal_standard = 1`**. Six of the fifteen are this op:
 //

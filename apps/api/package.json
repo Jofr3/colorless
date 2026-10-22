@@ -1,5 +1,5 @@
 {
-  "name": "@luminous/api",
+  "name": "@colorless/api",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -13,8 +13,8 @@
   },
   "dependencies": {
     "@hono/zod-validator": "^0.8.0",
-    "@luminous/engine": "workspace:*",
-    "@luminous/schema": "workspace:*",
+    "@colorless/engine": "workspace:*",
+    "@colorless/schema": "workspace:*",
     "@tcgdex/sdk": "2.9.0",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.12.0",

@@ -3,8 +3,8 @@
 // contract drift between the three surfaces breaks here, not on the page.
 
 import { describe, expect, it } from "vitest";
-import type { GameState, Phase, Seat } from "@luminous/engine";
-import { applyAction } from "@luminous/engine";
+import type { GameState, Phase, Seat } from "@colorless/engine";
+import { applyAction } from "@colorless/engine";
 import {
   MIXED_DECK,
   driveSetup,

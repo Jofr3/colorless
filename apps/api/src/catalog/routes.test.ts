@@ -83,7 +83,7 @@ describe("catalog KV cache middleware", () => {
     // Param order differs from the stored key — normalization must line up.
     const res = await app.request("/cards?set=nope&page=1", {}, envWith(kv));
     expect(res.status).toBe(200);
-    expect(res.headers.get("x-luminous-cache")).toBe("hit");
+    expect(res.headers.get("x-colorless-cache")).toBe("hit");
     expect(res.headers.get("content-type")).toBe("application/json");
     expect(await res.json()).toEqual({ items: [], page: 1, pageSize: 50, total: 0 });
   });
@@ -95,7 +95,7 @@ describe("catalog KV cache middleware", () => {
     });
     const res = await app.request("/cards?type=Water&type=Fire&rarity=Common", {}, envWith(kv));
     expect(res.status).toBe(200);
-    expect(res.headers.get("x-luminous-cache")).toBe("hit");
+    expect(res.headers.get("x-colorless-cache")).toBe("hit");
   });
 
   it("accepts repeated type/rarity params — hono hands them to zod as arrays", async () => {
@@ -157,7 +157,7 @@ describe("catalog KV cache middleware", () => {
     const { kv } = fakeKv({ "catalog:v12:/facets": JSON.stringify(facets) });
     const res = await app.request("/facets", {}, envWith(kv));
     expect(res.status).toBe(200);
-    expect(res.headers.get("x-luminous-cache")).toBe("hit");
+    expect(res.headers.get("x-colorless-cache")).toBe("hit");
     expect(await res.json()).toEqual(facets);
   });
 });

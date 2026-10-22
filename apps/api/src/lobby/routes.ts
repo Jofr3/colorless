@@ -7,7 +7,7 @@
 // an account at /ws (P4 increment 3) — used ONLY to owner-scope that player's
 // saved-deck read at the match handoff, never for seat identity.
 
-import { generateLobbyCode, isValidLobbyCode } from "@luminous/schema";
+import { generateLobbyCode, isValidLobbyCode } from "@colorless/schema";
 import { Hono } from "hono";
 import type { Env } from "../env";
 

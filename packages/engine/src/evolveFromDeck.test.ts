@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect, splitAttackGateClause } from "./effects";
 import type { GameEvent } from "./events";
@@ -25,7 +25,7 @@ import {
 //    D306 PRICED, AND THIS SLICE BUILDS — BY REMOVING THE BLOCKER RATHER THAN BY
 //    CHANNELLING IT. ──
 //
-// THE POPULATION, re-queried END TO END against remote Cloudflare D1 `luminous`
+// THE POPULATION, re-queried END TO END against remote Cloudflare D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) over MCP on **2026-08-09**:
 //
 //   SELECT id, name, stage, evolve_from, legal_standard, attacks_json

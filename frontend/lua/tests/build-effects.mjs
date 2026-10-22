@@ -6,7 +6,7 @@ import { execFileSync } from "node:child_process";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const source = resolve(process.env.BALATRO_SOURCE || join(here, "../../../../balatro-source"));
-const root = mkdtempSync(join(tmpdir(), "luminous-effects-"));
+const root = mkdtempSync(join(tmpdir(), "colorless-effects-"));
 const stage = join(root, "source");
 const web = join(root, "web");
 mkdirSync(stage);

@@ -1,4 +1,4 @@
-import type { Attack, Card } from "@luminous/schema";
+import type { Attack, Card } from "@colorless/schema";
 import type {
   ApplyResult,
   AttackAction,

@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame, effectiveRetreatCost, programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
@@ -76,7 +76,7 @@ import {
 // READ SITES.** Re-derive them before quoting a row's cost.
 //
 // What survives (of the LANDED tier): **3 programs / 11 Standard-legal
-// printings**, every count measured against the remote D1 `luminous`
+// printings**, every count measured against the remote D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`; 3,786 rows / 20 sets, of which 2,021
 // carry `legal_standard = 1`) on 2026-08-04.
 

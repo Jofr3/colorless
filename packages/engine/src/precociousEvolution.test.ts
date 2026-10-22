@@ -48,7 +48,7 @@ import {
 // the question D305 wrote down and could not answer: **what would `BUILT.attack`
 // move by if the family shipped?**
 //
-// ⚠️ PROVENANCE OF THE POPULATION. Remote Cloudflare D1 `luminous`
+// ⚠️ PROVENANCE OF THE POPULATION. Remote Cloudflare D1 `colorless`
 // (`database_id 735f0fb5-cdc3-494d-8b97-74a8ade0124a`) over MCP on **2026-08-09**:
 //
 //   SELECT id, name, legal_standard, stage, evolve_from, hp, attacks_json

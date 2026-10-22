@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame, handPlayBarred, programFor, redactGame } from "./index";
 import type { GameState, Seat } from "./index";
@@ -34,7 +34,7 @@ import {
 // D286 excised the row without verifying it. **A MEASUREMENT WRITTEN BY A
 // PROCESS THAT DIED IS A GUESS**, so it was re-run here — and re-run against the
 // MECHANISM rather than against the sentence, which is D283's lesson spent
-// instead of repeated. Remote D1 `luminous`
+// instead of repeated. Remote D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), 2026-08-08, `legal_standard = 1`,
 // one row of `SUM(instr(col,…)>0)` per column (D283's compound-SELECT limit):
 //

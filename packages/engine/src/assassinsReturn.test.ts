@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
@@ -32,7 +32,7 @@ import {
 //
 // ── THE CENSUS, SWEPT ON A FOURTH AXIS ──────────────────────────────────────
 //
-// Remote Cloudflare D1 `luminous` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786
+// Remote Cloudflare D1 `colorless` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786
 // rows / 2,021 `legal_standard = 1`), 2026-08-10, WHOLE COLUMN read (D306's rule).
 // D310 widened the COLUMNS (8), D311 shortened the LITERAL to the pronoun (9),
 // D312 reversed the WORD ORDER (13). D313 swept the axis none of the three

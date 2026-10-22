@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame, programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
@@ -30,7 +30,7 @@ import {
 //
 // ⚠️ **THE ABILITY HALF OF BACKLOG ROW 12, AND THE SENTENCE THAT PAGE RANKS AS THE
 // CHEAPEST SINGLE PROGRAM LEFT IN THE POOL.** The count was re-derived against the
-// remote D1 `luminous` on 2026-08-07 on the SHAPE rather than on the row's four
+// remote D1 `colorless` on 2026-08-07 on the SHAPE rather than on the row's four
 // ids — `LIKE '%if you attached energy to a pok%in this way%'`, `legal_standard = 1`,
 // swept across all three text columns with `json_each` and GROUPED BY SENTENCE. It
 // returns exactly four printings for this sentence (`sv07-014`/`-156`/`-167`/
@@ -80,7 +80,7 @@ import {
 //   the demonstrator in play, which is the one thing four identical printings on
 //   one board could disagree with the print about.
 
-/** The four Standard-legal printings, re-queried against the remote D1 `luminous`
+/** The four Standard-legal printings, re-queried against the remote D1 `colorless`
     on 2026-08-07 on the SENTENCE and not on these ids. */
 const RIPENING_IDS = ["sv07-014", "sv07-156", "sv07-167", "sv08.5-011"] as const;
 

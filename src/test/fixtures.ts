@@ -1,7 +1,7 @@
 // Shared wire-shape fixtures for the suites that stub the api, plus the
 // hand-built BuilderCard factory (`builderCard`) the pure builder suites use.
 
-import type { CardBrief, CatalogFacets, User } from "@luminous/schema";
+import type { CardBrief, CatalogFacets, User } from "@colorless/schema";
 import type { BuilderCard } from "../decks/cards";
 
 /** The signed-in account the account suite authenticates as. */

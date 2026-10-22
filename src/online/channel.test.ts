@@ -1,4 +1,4 @@
-import type { LobbyMessage } from "@luminous/schema";
+import type { LobbyMessage } from "@colorless/schema";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createLobbyChannel, reconnectDelayMs } from "./channel";
 

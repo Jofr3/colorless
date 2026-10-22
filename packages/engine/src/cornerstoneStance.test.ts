@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { hasPrintedAbility } from "./cards";
 import { passivesOf } from "./continuous";
 import { programFor } from "./index";
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import type { GameEvent, GameState, PokemonRef } from "./index";
 import {
   CORNERSTONE_DECK,
@@ -30,7 +30,7 @@ import {
 // damaged Pokémon.
 //
 // ⚠️ THE CENSUS, TRANSCRIBED SO THE COUNT IS RE-DERIVABLE RATHER THAN INHERITED.
-// Run against the remote D1 `luminous` on 2026-08-07:
+// Run against the remote D1 `colorless` on 2026-08-07:
 //
 //   SELECT lower(j.value ->> 'effect') AS sentence, COUNT(*) AS n,
 //          group_concat(c.id) AS ids

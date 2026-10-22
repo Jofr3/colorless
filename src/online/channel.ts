@@ -1,4 +1,4 @@
-import { LOBBY_WS_PING, LOBBY_WS_PONG, type LobbyMessage } from "@luminous/schema";
+import { LOBBY_WS_PING, LOBBY_WS_PONG, type LobbyMessage } from "@colorless/schema";
 import { apiWebSocketUrl } from "../lib/apiOrigin";
 
 // The transport the lobby talks over. The rest of the online feature depends

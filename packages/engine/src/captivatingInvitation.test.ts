@@ -60,7 +60,7 @@ const FLORGES = "sv06-088";
 const PETREL_IDS = ["sv10-176", "sv10-226"] as const;
 
 // ── THE CENSUS, TRANSCRIBED SO IT CAN BE RE-RUN ─────────────────────────────
-// Remote D1 `luminous` (uuid 735f0fb5-cdc3-494d-8b97-74a8ade0124a, 3,786 rows,
+// Remote D1 `colorless` (uuid 735f0fb5-cdc3-494d-8b97-74a8ade0124a, 3,786 rows,
 // 2,021 `legal_standard`), 2026-08-13, run at three widths and over all three
 // text columns, because inherited counts on this page have been wrong in BOTH
 // directions:

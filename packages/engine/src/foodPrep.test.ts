@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { effectiveAttackCost, selfAttackCostDiscount } from "./continuous";
 import { applyAction, createGame, programFor } from "./index";
@@ -21,7 +21,7 @@ import {
 // D327 — THE COST SEAM'S SECOND AND THIRD COUNT SOURCES, AND THE ROW NO BACKLOG
 // CARRIED.
 //
-// THE TWO SENTENCES, byte-for-byte off remote D1 `luminous` (2026-08-11, all six
+// THE TWO SENTENCES, byte-for-byte off remote D1 `colorless` (2026-08-11, all six
 // printings `legal_standard = 1`, `category = 'Pokemon'`):
 //
 //   "Attacks used by this Pokémon cost {C} less for each Kofu card in your
@@ -78,7 +78,7 @@ const SONIC_EDGE = ["Colorless", "Colorless", "Colorless", "Colorless"] as const
 const HAYMAKER = ["Water", "Colorless", "Colorless", "Colorless", "Colorless"] as const;
 const BLAZE_BLAST = ["Fire", "Colorless", "Colorless", "Colorless", "Colorless"] as const;
 
-/** Kofu's printed text, off remote D1 `luminous` (`sv07-138` / `sv07-165`, both
+/** Kofu's printed text, off remote D1 `colorless` (`sv07-138` / `sv07-165`, both
     `legal_standard = 1`, `trainer_type = 'Supporter'`). Cosmetic here — nothing in
     this file plays the card, and the count is over the NAME — but fielded verbatim
     because a fixture that invents text is a fixture that can drift from the print. */

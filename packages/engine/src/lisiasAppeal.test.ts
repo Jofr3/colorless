@@ -24,7 +24,7 @@ import {
 //   `sv08-179` / `sv08-234` / `sv08-246` — Supporter, **3 Standard-legal
 //   printings and they are the whole population**: `instr(effect,'Benched Basic
 //   Pok') > 0` returns exactly these 3 rows of 3,786, all `legal_standard = 1`
-//   (remote D1 `luminous`, 2026-08-13).
+//   (remote D1 `colorless`, 2026-08-13).
 //
 // ── THE CENSUS, AT THREE WIDTHS AND OVER ALL THREE TEXT COLUMNS ─────────────
 // Re-run at this head rather than inherited, and the per-column split is written

@@ -9,7 +9,7 @@
 // itself is shared across matches, which is safe because every consumer
 // (the engine included) treats pool cards as read-only.
 
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { ApiError, getCard } from "../lib/api";
 
 /** Requests in flight at once — enough to hide per-request latency across a

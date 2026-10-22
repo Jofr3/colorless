@@ -5,7 +5,7 @@
 // every non-2xx becomes a typed ApiError so features can branch on `.status`.
 //
 // TYPES-ONLY by design: this module imports nothing but types from
-// @luminous/schema — no zod, no runtime schema values — so the web bundle
+// @colorless/schema — no zod, no runtime schema values — so the web bundle
 // stays zod-free (the same constraint that split zod off the online chunk in
 // M8). The api already boundary-parses everything it serves; the client
 // trusts the wire and casts to the shared types.
@@ -26,7 +26,7 @@ import type {
   SetBrief,
   UpdateProfileRequest,
   User,
-} from "@luminous/schema";
+} from "@colorless/schema";
 import { apiUrl } from "./apiOrigin";
 
 /** A non-2xx api response. `status` is the http status; `body` is the parsed

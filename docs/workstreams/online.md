@@ -35,7 +35,7 @@ wire change: the Lua pages talk to the same lobby Durable Object as React.
 **Started** (P3 engine broad enough at 0.39.0). **Milestone 1 (WS transport + lobby
 over the DO) is already DONE** (P1 M8) — this workstream is really Milestone 2+.
 
-**Increment 1a — DONE:** the engine is wired into `apps/api` (`@luminous/engine`
+**Increment 1a — DONE:** the engine is wired into `apps/api` (`@colorless/engine`
 dependency added; imports + runs in the Worker/DO package, proven by tests). New pure
 seam `apps/api/src/lobby/match.ts` — `startMatch({seed, hostDeck, guestDeck, cardPool})`
 wraps `createGame`, fixing the seat mapping **host → p1, guest → p2** (`SEAT_OF_SLOT`);
@@ -55,7 +55,7 @@ Water Energy, guest = Mareep `sv01-066` + Lightning Energy; 60 each, distinct pe
 **Increment 1c — DONE:** the redactor + wire + read-only client (D60, engine 0.40.0). The
 match now CROSSES THE WIRE and renders. New PURE **`redactGame(state, seat) → RedactedGame`**
 (`packages/engine/src/redact.ts`) — the per-viewer hidden-information filter, run server-side once
-per socket, so no full `GameState` ever leaves the DO. **`RedactedGame`** is a `@luminous/schema`
+per socket, so no full `GameState` ever leaves the DO. **`RedactedGame`** is a `@colorless/schema`
 wire type (`match/redacted.ts`, Zod source-of-truth, viewer-relative you/opponent): opponent hand a
 count of positional-id backs (never the engine uid), prizes + decks counts, discards + Stadium
 public, in-play redacted to anonymous backs during setup (no battle row → no HP leak), the
@@ -90,7 +90,7 @@ online drive ONE tested drag router / drop gate (the placement.test.ts lockstep 
 
 **Increment 2b-i — DONE:** the attack + KO loop (engine 0.40.0). The online match now plays TO A
 WIN with the fixed basic decks. `RedactedPhase.turn:action` gained an **`attacks`** field — a new
-`RedactedAttack` (`index`/`name`/`cost`/`damage`/`playable`), the `@luminous/schema` wire type. The
+`RedactedAttack` (`index`/`name`/`cost`/`damage`/`playable`), the `@colorless/schema` wire type. The
 engine's `redactPhase` fills it via a new **`redactedAttacksOf(state, viewerSeat, turnSeat)`**: the
 viewer's OWN Active's printed attacks, each with a server-computed **`playable`** that folds §8.2
 payability (under the Stadium's continuous cost, `effectiveAttackCost`+`providedEnergy`+`costMet`),
@@ -130,7 +130,7 @@ in `match.ts` (real decks/increment 3 must not precede the 2b-iii effect dialog)
 KO-loop AND retreat with the fixed decks. Scoped to RETREAT ALONE (the fixed basic decks have no
 abilities and no non-Stadium trainers, so those surfaces can't be exercised end-to-end — CUT and
 deferred to real deck selection / increment 3). `RedactedPhase.turn:action` gained a **`retreat`**
-field — a new `@luminous/schema` **`RedactedRetreat`** (`cost`/`can`), NULLABLE (null for the
+field — a new `@colorless/schema` **`RedactedRetreat`** (`cost`/`can`), NULLABLE (null for the
 non-acting viewer, mirroring `attacks: []`). The engine's `redactPhase` fills it via a new
 **`redactedRetreatOf(state, viewerSeat, turnSeat)`**: the viewer's OWN Active's CONTINUOUS retreat cost
 (§7.3 Beach Court discount) + a server-computed **`can`** folding the §12 immobilize gate, the
@@ -158,7 +158,7 @@ independently ran the 91 affected tests green.
 0.40.0). The mid-effect decision PROMPT now crosses the wire redacted per-viewer. **2b-iii is SPLIT**
 (7 `EffectPrompt` kinds, several needing hidden-card resolution — see the sub-slices below); 2b-iii-a
 lands the seam with the ONE prompt with no card references AND the only one whose answerer is the
-non-controller: **`mayDraw`** (Ortega). New `@luminous/schema` **`RedactedEffectPrompt`** (discriminated
+non-controller: **`mayDraw`** (Ortega). New `@colorless/schema` **`RedactedEffectPrompt`** (discriminated
 union, `mayDraw` arm = `count`/`note`); `RedactedPhase.effect:choose` gained **`prompt` NULLABLE**. The
 engine's `redactPhase` fills it via **`redactedPromptOf(phase, viewerSeat)`** — non-null ONLY for the
 answering seat (`phase.answerer ?? phase.seat`), **STRICTER than `phaseViewOf`'s hot-seat `withheld`**
@@ -265,7 +265,7 @@ rejection pill) and d-ii (the online event log, a bigger multi-package refactor:
 log types must move from `apps/web` into shared packages so the DO can build rows server-side, then
 accumulate them in `MatchRecord` and broadcast them). d-i closes the silent-drop gap the DO code flagged
 ("increment 2b adds the rejection pill"): a refused game action now surfaces to the ACTOR as a transient
-pill instead of vanishing. New `@luminous/schema` server frame **`{kind:"reject-action", reason}`**
+pill instead of vanishing. New `@colorless/schema` server frame **`{kind:"reject-action", reason}`**
 (added to `LobbyMessage` + `lobbyServerMessageSchema` with the exactness proof; server-only — the client
 schema refuses it). **`applyMatchAction` now returns a discriminated `MatchActionOutcome`**
 (`{ok:true,record} | {ok:false,reason}`) instead of `MatchRecord | null`: the reason is a generic string
@@ -296,9 +296,9 @@ deferred, not touched by this online slice.
 shows the game log (previously `NO_LOG`), built server-side and broadcast to both clients. **The move
 (the multi-package refactor 2b-iii-d anticipated):** the pure GameEvent→rows formatter `logFromEvents`
 (+ `formatElapsed`, `STATUS_LABELS`, `LogContext`) moved from the web (`src/features/game/logFromEvents.ts`)
-INTO **`@luminous/engine`** (`log.ts`, exported from the barrel) — it reads engine events/state and now
+INTO **`@colorless/engine`** (`log.ts`, exported from the barrel) — it reads engine events/state and now
 runs in TWO places (the /play client AND the DO), so the engine is its single home, the `redactGame`
-precedent (D60). The wire log types live in **`@luminous/schema`** (`match/log.ts`, Zod source-of-truth):
+precedent (D60). The wire log types live in **`@colorless/schema`** (`match/log.ts`, Zod source-of-truth):
 **`SeatLogEntry`** (seat-keyed — `who` ∈ p1/p2/system) + `LogSegment`. **The layering** (the board's:
 schema=wire, engine=producer, web=wire→render): the log is broadcast SEAT-KEYED and **identical to both
 clients** — it is LEAK-SAFE regardless of viewer (counts for hidden draws/prizes, face-down setup
@@ -654,8 +654,8 @@ until 1c broadcasts the redacted view.
         `applyMatchAction` returns `{ok,reason}` instead of `MatchRecord | null`; the DO sends it on `!ok`;
         `useLobby.actionError` + `OnlineMatch`'s `TransientErrorPill` (the GamePage nonce+TTL pattern).
       - **2b-iii-d-ii — the online event log. DONE** (D68, see Status above): `logFromEvents` (+
-        `formatElapsed`/`STATUS_LABELS`/`LogContext`) moved into `@luminous/engine`; the wire log types
-        (`SeatLogEntry`/`LogSegment`) into `@luminous/schema` (`match/log.ts`); the `{kind:"match"}` frame
+        `formatElapsed`/`STATUS_LABELS`/`LogContext`) moved into `@colorless/engine`; the wire log types
+        (`SeatLogEntry`/`LogSegment`) into `@colorless/schema` (`match/log.ts`); the `{kind:"match"}` frame
         grew `log: SeatLogEntry[]`. `MatchRecord` grew `startedAt`/`names`/`log`; `applyMatchAction` takes
         a `now` arg and appends the accepted events' rows; `handoffToMatch` seeds the initial log; the DO
         broadcasts `record.log` (seat-keyed + leak-safe → same array to both, no per-viewer redaction).

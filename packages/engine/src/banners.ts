@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 
 // 🆕🆕🆕 D568 — THE BANNER DATUM: which printings carry the TERA banner.
 // (🆕🆕🆕 D569: and the two PARADOX banners, ANCIENT and FUTURE — the D569 block below.)

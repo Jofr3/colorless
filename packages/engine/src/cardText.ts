@@ -1,4 +1,4 @@
-import type { Ability, Attack, Card } from "@luminous/schema";
+import type { Ability, Attack, Card } from "@colorless/schema";
 
 // 🆕🆕🆕 D612 — WP06: THE tcgdex MARKUP NORMALISER. ONE pure text function, applied in two places:
 // at INGEST (apps/api/src/ingest/map.ts writes every card text through it) and at READ time

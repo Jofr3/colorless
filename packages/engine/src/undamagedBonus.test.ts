@@ -110,7 +110,7 @@ const DECLARATION_SENTENCES: readonly (readonly [string, number])[] = [
   [`If ${DECLARATION_CLAUSE}, this attack does 100 more damage.`, 2],
 ];
 
-/** The three ids behind the taken sentence — remote D1 `luminous`
+/** The three ids behind the taken sentence — remote D1 `colorless`
     (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), `$.effect`, the extractor verified
     against the 640 / 1,732 / 60,467 total FIRST, 2026-08-19. Every one
     `legal_standard = 1` and `category = 'Pokemon'`. */
@@ -167,7 +167,7 @@ describe("§1 — the handed candidate is a DECLARATION fact, settled from the C
 
   it("🛑 the SAME clause is printed on TWO attacks with TWO DIFFERENT COSTS", () => {
     // THE MEASUREMENT THAT DISQUALIFIES IT, recorded as data rather than as prose.
-    // Remote D1 `luminous`, `$.effect` joined to `$.cost`, 2026-08-19:
+    // Remote D1 `colorless`, `$.effect` joined to `$.cost`, 2026-08-19:
     //
     //   Electivire ex  sv10-069/-212        High-Voltage Press  {L}{L}{C}  cost 3
     //   Jellicent ex   sv10.5w-045/-160/-168 Power Press        {P}{C}     cost 2

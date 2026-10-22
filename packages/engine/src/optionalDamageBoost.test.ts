@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { parseAttackDamage } from "./cards";
 import { attackReaderSurface, resolvedByAnyReader } from "./censusAttackCorpus";
@@ -40,7 +40,7 @@ import {
 // ── D316 — "YOU MAY DO {N} MORE DAMAGE. IF YOU DO, …" — A PLAYER DECISION IN
 //    FRONT OF §8.5, AND THE TWO FIELDS IT COST. ────────────────────────────────
 //
-// THE POPULATION, queried against remote Cloudflare D1 `luminous`
+// THE POPULATION, queried against remote Cloudflare D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) over MCP on **2026-08-10**, WHOLE
 // COLUMN read (D306's rule) and at TWO widths across all three text columns —
 // `instr(…,'more damage. If you do')` and the shorter, paraphrase-proof

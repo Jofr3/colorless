@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import { applyAction, createGame } from "./index";
@@ -23,7 +23,7 @@ import {
 //   ATTACK index 0, cost {C}, no printed damage. **1 Standard-legal printing.**
 //
 // ── THE CENSUS, RE-RUN AT THIS HEAD OVER ALL THREE TEXT COLUMNS ─────────────
-// Every figure re-queried against remote D1 `luminous` (3,786 rows, 2,021
+// Every figure re-queried against remote D1 `colorless` (3,786 rows, 2,021
 // `legal_standard`) on 2026-08-15 rather than inherited from the work order, at
 // two widths and two word orders, and every per-column split re-added against its
 // own total.
@@ -687,7 +687,7 @@ describe("D339 — Maushold 'Familial March', a flat cap over a NAMED union", ()
   });
 
   it("🛑 THE GRAMMAR CLOSES AT 6 OF 6 — stated as arithmetic, not as prose", () => {
-    // Re-queried against remote D1 `luminous` on 2026-08-15 at two widths and two
+    // Re-queried against remote D1 `colorless` on 2026-08-15 at two widths and two
     // word orders (see the header census). The population of *"Search your deck for
     // up to … in any combination of …"* is SIX legal printings across all three
     // text columns, and after this row every one of them is built:

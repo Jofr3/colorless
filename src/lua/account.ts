@@ -1,4 +1,4 @@
-import type { User } from "@luminous/schema";
+import type { User } from "@colorless/schema";
 import { ApiError, login, register, logout, me, updateProfile } from "../lib/api";
 import { startOAuth } from "../lib/startOAuth";
 

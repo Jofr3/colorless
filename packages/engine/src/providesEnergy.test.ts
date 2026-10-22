@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BASIC_ENERGY_TYPES } from "@luminous/schema";
+import { BASIC_ENERGY_TYPES } from "@colorless/schema";
 import { ENERGY_TYPE_BY_CODE, deriveAttackEffect } from "./effects";
 import { applyAction } from "./index";
 import type { GameState, PokemonRef } from "./index";
@@ -128,7 +128,7 @@ describe("M5 op-slice — the providesEnergy filter: the deriver", () => {
   });
 
   it("the map's vocabulary IS BASIC_ENERGY_TYPES — no more, no less", () => {
-    // The engine has ONE basic-energy vocabulary (@luminous/schema §6.1) and the
+    // The engine has ONE basic-energy vocabulary (@colorless/schema §6.1) and the
     // deriver must not grow a second. Colorless and Dragon are absent there on
     // purpose, and their absence here is load-bearing rather than incidental:
     // Colorless is the conservative provision FALLBACK for every unauthored

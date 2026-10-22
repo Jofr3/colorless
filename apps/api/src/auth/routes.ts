@@ -5,7 +5,7 @@
 // House style as everywhere: the pure logic lives in the sibling modules
 // (password / session / oauth / rateLimit, all unit-tested); this file owns
 // request validation, the D1 queries, and response shaping — every user
-// payload boundary-parsed through @luminous/schema userSchema, which also
+// payload boundary-parsed through @colorless/schema userSchema, which also
 // guarantees no password/hash field can ever leak.
 
 import { zValidator } from "@hono/zod-validator";
@@ -15,7 +15,7 @@ import {
   updateProfileRequestSchema,
   type User,
   userSchema,
-} from "@luminous/schema";
+} from "@colorless/schema";
 import { and, eq } from "drizzle-orm";
 import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
 import { type Context, Hono } from "hono";

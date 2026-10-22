@@ -1,4 +1,4 @@
-import type { LobbySlot } from "@luminous/schema";
+import type { LobbySlot } from "@colorless/schema";
 import { readPersisted, writePersisted } from "../lib/persistedState";
 
 // Who you are, per lobby. Split across two stores on purpose:

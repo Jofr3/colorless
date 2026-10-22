@@ -3,8 +3,8 @@
 // a v45 record is migrated by a re-stamp alone, with no D1 read, and skips every earlier step. A v44 record takes
 // D636's step, a v43 two, a v42 three, a v41 all four.
 
-import { applyAction, type GameState, type InPlayPokemon, type Seat } from "@luminous/engine";
-import type { Card } from "@luminous/schema";
+import { applyAction, type GameState, type InPlayPokemon, type Seat } from "@colorless/engine";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import {
   FOSSILS_MIGRATABLE_MATCH_RECORD_VERSION,

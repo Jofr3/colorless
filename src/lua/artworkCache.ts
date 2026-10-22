@@ -24,7 +24,7 @@ export class ArtworkCache {
   private database: Promise<IDBDatabase | null>;
 
   constructor(
-    name = "luminous-lua-artwork-v1",
+    name = "colorless-lua-artwork-v1",
     private maxBytes = DEFAULT_BUDGET,
     factory: IDBFactory | undefined = globalThis.indexedDB,
   ) {
@@ -190,6 +190,6 @@ export class ArtworkCache {
 
 declare global {
   interface Window {
-    luminousArtworkCache?: ArtworkCache;
+    colorlessArtworkCache?: ArtworkCache;
   }
 }

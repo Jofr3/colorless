@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame } from "./index";
 import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
@@ -38,7 +38,7 @@ import {
 //       printings on TWO sentences, and its own note prices the bigger one
 //       (Magneton "Overvolt Discharge" ×3) at *"NO op in this engine knocks out
 //       its own host; grepped"*. So the thing to census is that CLAUSE. Over ALL
-//       THREE text columns on remote D1 `luminous` (2026-08-15):
+//       THREE text columns on remote D1 `colorless` (2026-08-15):
 //
 //         instr(<col>, 'If you use this Ability, this Pokémon is Knocked Out') > 0
 //           effect          0 printings /  0 legal / 0 sentences

@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame } from "./index";
 import type { EffectOp, GameEvent, GameState, PokemonRef, Seat } from "./index";
@@ -19,7 +19,7 @@ import { FIXTURE_POOL, battler, deckOf, itemTrainer, typedEnergy } from "./testF
 //   Morpeko `sv06-072` — "Snack Seek": "Once during your turn, you may look at the
 //   top card of your deck. You may discard that card." **1 legal printing.**
 //
-//   Both off remote D1 `luminous`, 2026-08-15, `json_each(abilities_json)` keyed on
+//   Both off remote D1 `colorless`, 2026-08-15, `json_each(abilities_json)` keyed on
 //   `$.effect` — **NOT `$.text`, the false-zero key** — and grouped so the unit is a
 //   SENTENCE. The extractor was verified against these very rows BEFORE any zero in
 //   this block was believed.

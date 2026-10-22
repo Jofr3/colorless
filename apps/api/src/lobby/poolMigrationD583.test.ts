@@ -4,8 +4,8 @@
 // Fluorite `sv08-188` with `attacks: null` (the pre-D581 ingest dropped a Trainer's printed
 // face); read as-is by this build, the TM grants no attack for the rest of the match.
 
-import { applyAction, formatElapsed, type GameAction, type GameState, logFromEvents, redactGame } from "@luminous/engine";
-import { type Card, tcgdexCardSchema } from "@luminous/schema";
+import { applyAction, formatElapsed, type GameAction, type GameState, logFromEvents, redactGame } from "@colorless/engine";
+import { type Card, tcgdexCardSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import cardTrainerFossil from "../../../../packages/schema/src/tcgdex/__fixtures__/card-trainer-fossil-sv07-129.json";
 import cardTrainerTm from "../../../../packages/schema/src/tcgdex/__fixtures__/card-trainer-tm-sv08-188.json";

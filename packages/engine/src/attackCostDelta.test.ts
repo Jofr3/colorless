@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { redactedAttackSchema } from "@luminous/schema";
+import { redactedAttackSchema } from "@colorless/schema";
 import { topUid } from "./cards";
 import {
   disabledAbilityUids,

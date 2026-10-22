@@ -1,5 +1,5 @@
-import type { Card } from "@luminous/schema";
-import { redactedGameOverReasonSchema, redactedGameSchema } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
+import { redactedGameOverReasonSchema, redactedGameSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { attackBlockOf, liveHandAttachMark } from "./continuous";

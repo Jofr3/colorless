@@ -1,5 +1,5 @@
-import type { Card } from "@luminous/schema";
-import { redactedAttackSchema } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
+import { redactedAttackSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { attackGateOf, effectiveAttackCost } from "./continuous";

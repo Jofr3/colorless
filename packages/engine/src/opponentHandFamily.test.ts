@@ -29,7 +29,7 @@ import {
 // 🛑 THE ROW PRICED IT AT **35 LEGAL PRINTINGS / "~14 ARMS + 2 OPS"**, AND IT IS
 // THE FIRST ROW ON THE PAGE WHOSE **OP** COUNT WAS RIGHT AND WHOSE OTHER TWO
 // NUMBERS WERE BOTH WRONG. Re-derived (never inherited) against the remote D1
-// `luminous` — 3,786 rows / 20 sets, 2,021 `legal_standard = 1` — on 2026-08-06
+// `colorless` — 3,786 rows / 20 sets, 2,021 `legal_standard = 1` — on 2026-08-06
 // over `json_each` + `json_extract(value,'$.effect')` with `GLOB` (SQLite's
 // `LIKE` is ASCII case-insensitive and has cost this repo a census), **grouped BY
 // SENTENCE and swept over ALL THREE text columns**:

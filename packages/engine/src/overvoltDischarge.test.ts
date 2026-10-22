@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame } from "./index";
 import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
@@ -33,7 +33,7 @@ import {
 //       off a handoff — row 9 is 5 `abilityIds` + 5 `effectIds`, row 10 is 5, row
 //       12 is 4, row 11 is 3. Row 9 wins on either the paper or the live reading.
 //   (2) CENSUS THE CLAUSE, NOT THE CARD, over all three text columns (remote D1
-//       `luminous`, 2026-08-15). `instr(<col>,'in any way you like')`:
+//       `colorless`, 2026-08-15). `instr(<col>,'in any way you like')`:
 //         effect          3 printings /  1 legal /  2 sentences
 //         abilities_json 38 printings / 13 legal / 13 sentences
 //         attacks_json   59 printings / 36 legal / 36 sentences

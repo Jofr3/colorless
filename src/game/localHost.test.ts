@@ -3,7 +3,7 @@
 // game not to soft-lock (D17: gate on who must ACT, never on turn owner).
 
 import { describe, expect, it } from "vitest";
-import type { GameState, Phase, Seat } from "@luminous/engine";
+import type { GameState, Phase, Seat } from "@colorless/engine";
 import {
   MIXED_DECK,
   ALL_BASIC_DECK,

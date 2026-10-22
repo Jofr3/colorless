@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
@@ -32,7 +32,7 @@ import {
 //   **4 Standard-legal printings on 2 sentences, ALL on `attacks_json`.**
 //
 // ── THE CENSUS, RE-RUN AT THIS HEAD AT TWO WIDTHS AND ON THE CONSTRUCTION ────
-// Every figure re-queried against remote D1 `luminous` (3,786 rows, 2,021
+// Every figure re-queried against remote D1 `colorless` (3,786 rows, 2,021
 // `legal_standard`) on 2026-08-15 rather than inherited from the work order.
 //
 //   (a) THE CONSTRUCTION — `instr(<col>,'in any order') > 0`, all three columns

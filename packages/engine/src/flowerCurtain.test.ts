@@ -21,7 +21,7 @@ import {
 //  Boxes.)"
 //
 // ✅ THE CENSUS, RE-RUN AT THIS COMMIT rather than transcribed from the handoff.
-// Remote D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a), `abilities_json`,
+// Remote D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a), `abilities_json`,
 // `legal_standard = 1`, GROUPED BY SENTENCE, `LIKE '%prevent all damage%'`:
 //
 //   5  …by your opponent's Pokémon that have an Ability.          BUILT D251

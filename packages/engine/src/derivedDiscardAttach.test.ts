@@ -24,7 +24,7 @@ import {
 // ✅ THE ROW'S COUNT RE-DERIVES TO THE DIGIT, WHICH IS NEW ON THIS PAGE. Four
 // rows running (D229 19→16, D230 22→25, D231 25→42, D232 35→31) carried a
 // printing count nobody could reproduce. Re-measured against the remote D1
-// `luminous` on 2026-08-06 — `json_each` + `GLOB` (never `LIKE`), grouped BY
+// `colorless` on 2026-08-06 — `json_each` + `GLOB` (never `LIKE`), grouped BY
 // SENTENCE, over ALL THREE text columns, `legal_standard = 1`:
 //
 //   WHERE t GLOB '*[Aa]ttach*Energy card*from your*discard pile*'
@@ -1262,7 +1262,7 @@ describe("D248 — the distribution axis has THREE members and a print is exactl
 // *"attach up to 2 … in any way you like"* was still an EXACT 2 on every
 // printing the deriver owns: 3 sentences / 4 Standard-legal printings —
 // Morpeko `sv06-072`, Lycanroc `sv05-090`, Mesprit `sv08-079`/`sv08-204`
-// (remote D1 `luminous`, 2026-08-18, `$.effect` over all three text columns;
+// (remote D1 `colorless`, 2026-08-18, `$.effect` over all three text columns;
 // the family's `LIKE '%ttach up to%'` census is 23 sentences / 53 printings /
 // 24 legal and partitions 13 + 6 + 4 + 1).
 //

@@ -2,7 +2,7 @@ import { readPersisted, writePersisted } from "../lib/persistedState";
 
 type Seat = "p1" | "p2";
 export type OrderedZone = "hand" | "bench";
-const KEY = "luminous:simulator:card-order";
+const KEY = "colorless:simulator:card-order";
 type Orders = Partial<Record<`${Seat}:${OrderedZone}`, string[]>>;
 
 /** Cosmetic order, independent of engine indices and gameplay history. Bench

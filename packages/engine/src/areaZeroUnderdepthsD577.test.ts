@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { benchLimitForIds, benchLimitOf, benchTrimStages } from "./continuous";
 import type { GameEvent } from "./events";

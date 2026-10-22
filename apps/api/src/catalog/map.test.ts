@@ -3,7 +3,7 @@
 // the sv serie — checked against the local D1). Every mapped value is also
 // parsed through its domain schema, pinning the row → schema contract.
 
-import { cardBriefSchema, cardSchema, serieSchema, setSchema } from "@luminous/schema";
+import { cardBriefSchema, cardSchema, serieSchema, setSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import {
   type CardRow,

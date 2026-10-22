@@ -51,7 +51,7 @@ import {
 // `COUNTER_SPREAD_ON_OPPONENT` in `effects.ts` quotes 8/3, and this is what makes
 // that quote answerable to something.
 
-/** The three Standard-legal sentences, verbatim off remote D1 `luminous`
+/** The three Standard-legal sentences, verbatim off remote D1 `colorless`
     (`735f0fb5-…`, 2026-08-15) through `json_each(attacks_json)`. */
 const HEX_HURL = "Put 2 damage counters on your opponent's Benched Pokémon in any way you like.";
 const PHANTOM_DIVE =

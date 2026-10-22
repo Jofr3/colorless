@@ -7,7 +7,7 @@
 //
 // It applies the SAME hidden-information rules the web app's playmat projection
 // applies for hot-seat play (src/features/game/projection.ts), but produces the
-// neutral `@luminous/schema` wire shape instead of playmat `CardModel`s: no
+// neutral `@colorless/schema` wire shape instead of playmat `CardModel`s: no
 // image URLs (the client builds them from `cardId`), no engine imports on the
 // far side. Phase derivation is shared with that projection through
 // `phaseViewOf` (phaseView.ts); only the board redaction is restated here,
@@ -51,8 +51,8 @@ import type {
   RedactedStadiumAbility,
   RedactedTrainer,
   Viewer,
-} from "@luminous/schema";
-import { EMPTY_CARD_ID, EMPTY_CARD_NAME, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from "@luminous/schema";
+} from "@colorless/schema";
+import { EMPTY_CARD_ID, EMPTY_CARD_NAME, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from "@colorless/schema";
 import { attackCostAt, costMet } from "./attack";
 import { pendingMulligansOf } from "./mulligans";
 import {

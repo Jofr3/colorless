@@ -5,8 +5,8 @@
 // builder keeps speaking its own dialect (accented "Pokémon", "Stage 1",
 // "Pokémon Tool", …) unchanged.
 
-import { isBasicEnergy, isSpecialEnergy } from "@luminous/engine";
-import type { Card, CardBrief, CardCategory, CatalogFacets } from "@luminous/schema";
+import { isBasicEnergy, isSpecialEnergy } from "@colorless/engine";
+import type { Card, CardBrief, CardCategory, CatalogFacets } from "@colorless/schema";
 import { type CardsQuery, getCards, getSets } from "../lib/api";
 import {
   type BuilderCard,

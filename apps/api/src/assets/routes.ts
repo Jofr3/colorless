@@ -37,7 +37,7 @@ function assetResponse(
     headers: {
       "Content-Type": contentType,
       "Cache-Control": CACHE_FOREVER,
-      "x-luminous-cache": cache,
+      "x-colorless-cache": cache,
     },
   });
 }

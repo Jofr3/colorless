@@ -3,7 +3,7 @@
 // hidden-info rules matter as much as the wording: draws and prize takes are
 // counts only, face-down placements are never named.
 
-import type { SeatLogEntry } from "@luminous/schema";
+import type { SeatLogEntry } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { topCardOf } from "./cards";
 import type { GameEvent } from "./events";

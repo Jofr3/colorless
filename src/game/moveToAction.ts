@@ -6,7 +6,7 @@
 // (D14: applyAction rejects, never throws), so a translated action may still
 // come back ok:false and surface as the table's error notice.
 
-import type { GameAction, Phase, Seat } from "@luminous/engine";
+import type { GameAction, Phase, Seat } from "@colorless/engine";
 import type { BoardState, CardMoveRequest } from "./board";
 
 export interface MoveTranslationContext {

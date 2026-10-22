@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
@@ -29,7 +29,7 @@ import { makeInPlay } from "./types";
 // (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands. 🆕🆕🆕 D569 (D539): that last clause is WITHDRAWN in turn — Slice 2 part a gave Ancient/Future the same writer, `banners.ts` (86 more ids); "no INGESTED column classifies it" stays TRUE.)
 //       row 12 = 4; row 11 = 3; rows 13/0/15 = 0. **Row 10 wins.**
 //   (2) CENSUS THE CLAUSE, NOT THE CARD, over ALL THREE text columns (remote D1
-//       `luminous`, uuid 735f0fb5-cdc3-494d-8b97-74a8ade0124a, 2026-08-15).
+//       `colorless`, uuid 735f0fb5-cdc3-494d-8b97-74a8ade0124a, 2026-08-15).
 //       `instr(<col>, 'from your Bench to the Active Spot') > 0`:
 //
 //         effect          0 printings / 0 legal / 0 sentences

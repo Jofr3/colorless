@@ -3,10 +3,10 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "luminous_ui_v2",
+      "name": "colorless",
       "dependencies": {
-        "@luminous/engine": "workspace:*",
-        "@luminous/schema": "workspace:*",
+        "@colorless/engine": "workspace:*",
+        "@colorless/schema": "workspace:*",
       },
       "devDependencies": {
         "@biomejs/biome": "^1.9.4",
@@ -18,12 +18,12 @@
       },
     },
     "apps/api": {
-      "name": "@luminous/api",
+      "name": "@colorless/api",
       "version": "0.0.0",
       "dependencies": {
+        "@colorless/engine": "workspace:*",
+        "@colorless/schema": "workspace:*",
         "@hono/zod-validator": "^0.8.0",
-        "@luminous/engine": "workspace:*",
-        "@luminous/schema": "workspace:*",
         "@tcgdex/sdk": "2.9.0",
         "drizzle-orm": "^0.45.2",
         "hono": "^4.12.0",
@@ -36,14 +36,14 @@
       },
     },
     "packages/engine": {
-      "name": "@luminous/engine",
+      "name": "@colorless/engine",
       "version": "0.555.0",
       "dependencies": {
-        "@luminous/schema": "workspace:*",
+        "@colorless/schema": "workspace:*",
       },
     },
     "packages/schema": {
-      "name": "@luminous/schema",
+      "name": "@colorless/schema",
       "version": "0.0.0",
       "dependencies": {
         "zod": "^4.0.0",
@@ -93,6 +93,12 @@
     "@cloudflare/workerd-windows-64": ["@cloudflare/workerd-windows-64@1.20260708.1", "", { "os": "win32", "cpu": "x64" }, "sha512-bC/aSAwLy16Vjo24i9XU3aWH+eRgz7NeR5xPKavGbembO18ZywYTQbXh14eXtY6fAqN3RzRG8psijTdhX4xydA=="],
 
     "@cloudflare/workers-types": ["@cloudflare/workers-types@5.20260708.1", "", {}, "sha512-FSRyCsxALKmmNnk/2HMkTiX9Iz9yqTiTWX/BJZdffGznMSunXmQgb3mKy9wGBX2BCTLOuRYWL36uh7/3Gm05Eg=="],
+
+    "@colorless/api": ["@colorless/api@workspace:apps/api"],
+
+    "@colorless/engine": ["@colorless/engine@workspace:packages/engine"],
+
+    "@colorless/schema": ["@colorless/schema@workspace:packages/schema"],
 
     "@cspotcode/source-map-support": ["@cspotcode/source-map-support@0.8.1", "", { "dependencies": { "@jridgewell/trace-mapping": "0.3.9" } }, "sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw=="],
 
@@ -219,12 +225,6 @@
     "@jridgewell/sourcemap-codec": ["@jridgewell/sourcemap-codec@1.5.5", "", {}, "sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og=="],
 
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.9", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.0.3", "@jridgewell/sourcemap-codec": "^1.4.10" } }, "sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ=="],
-
-    "@luminous/api": ["@luminous/api@workspace:apps/api"],
-
-    "@luminous/engine": ["@luminous/engine@workspace:packages/engine"],
-
-    "@luminous/schema": ["@luminous/schema@workspace:packages/schema"],
 
     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@1.1.4", "", { "dependencies": { "@tybys/wasm-util": "^0.10.1" }, "peerDependencies": { "@emnapi/core": "^1.7.1", "@emnapi/runtime": "^1.7.1" } }, "sha512-3NQNNgA1YSlJb/kMH1ildASP9HW7/7kYnRI2szWJaofaS1hWmbGI4H+d3+22aGzXXN9IJ+n+GiFVcGipJP18ow=="],
 

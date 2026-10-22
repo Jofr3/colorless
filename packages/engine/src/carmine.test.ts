@@ -21,7 +21,7 @@ import {
 //
 // ⚠️ **THE THIRD OF D190's FOUR `DROPPED` ROWS TO BE COLLECTED**, and the biggest
 // by printings: **4 Standard-legal** (`sv06-145`, `sv06-204`, `sv06-217`,
-// `sv08.5-103` — all four byte-identical, remote D1 `luminous`, 2026-08-05).
+// `sv08.5-103` — all four byte-identical, remote D1 `colorless`, 2026-08-05).
 //
 // ⚠️ **AND THE ONE ROW OF THAT TABLE WHOSE CENSUS ENTRY WAS FLATLY WRONG.**
 // `coverage-backlog-legal.md` prices this card at "1 registry program" and calls
@@ -56,7 +56,7 @@ import {
 //   one is asserted against the same `redactGame` call that lights Nemona, so it
 //   cannot pass by the whole list being enabled.
 
-/** The four Standard-legal printings, measured against the remote D1 `luminous`
+/** The four Standard-legal printings, measured against the remote D1 `colorless`
     (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) on 2026-08-05: `legal_standard = 1`
     on all four, and one distinct `effect` string across them. */
 const CARMINE_IDS = ["sv06-145", "sv06-204", "sv06-217", "sv08.5-103"] as const;

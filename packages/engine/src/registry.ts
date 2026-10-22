@@ -1,4 +1,4 @@
-import type { BasicEnergyType } from "@luminous/schema";
+import type { BasicEnergyType } from "@colorless/schema";
 import { ANY_ENERGY, constrainedEnergyUnit } from "./cards";
 import type { Banner } from "./banners";
 import type { PokemonSuffix, PreventedAttackerClass } from "./cards";
@@ -129,7 +129,7 @@ export interface AbilityProgram {
       or less, …"* — Pidove `sv05-133` "Emergency Evolution", the **only** legal
       printing of a remaining-HP clause in the catalog (`instr(abilities_json,
       'remaining HP is') > 0` over all 3,786 rows returns exactly this one, remote
-      D1 `luminous`, 2026-08-10).
+      D1 `colorless`, 2026-08-10).
 
       🛑 **IT IS A SEPARATE FIELD FROM `playableIf` BECAUSE `conditionHolds` TAKES A
       SEAT AND NO UID**, which is exactly the argument the `playableIf` doc block
@@ -918,7 +918,7 @@ export interface PassiveEffects {
       `sv08-072`) and *"If your opponent's Basic Pokémon is Knocked Out by damage
       from an attack used by this Pokémon, take 1 more Prize card."* (Hydreigon ex
       `sv10.5w-067`/`-161`/`-169` "Greedy Eater"). **TWO sentences, FOUR legal
-      printings, and they are the WHOLE legal population** — remote D1 `luminous`,
+      printings, and they are the WHOLE legal population** — remote D1 `colorless`,
       2026-08-10: `instr(abilities_json,'more Prize') > 0` returns 7 rows / 4
       legal, and the four are exactly these. (The three illegal ones are two
       Luxray "Swelling Flash", which reads *"more Prize cards **remaining**"* as a
@@ -1653,7 +1653,7 @@ export interface PassiveEffects {
       Pokémon." — Walking Wake ex "Azure Seas" (sv05-050/-189/-205/-215,
       sv08.5-178, svp-127; **6 printings, all 6 Standard-legal**, and the ONLY
       sentence in the whole legal pool that prints this rule as an Ability,
-      measured over `abilities_json` against the remote D1 `luminous` on
+      measured over `abilities_json` against the remote D1 `colorless` on
       2026-08-04).
 
       ⚠️ **THE FIRST HOLDER-MODIFYING PASSIVE THAT MODIFIES THE HOLDER'S OWN
@@ -1750,7 +1750,7 @@ export interface PassiveEffects {
       opponent's Pokémon that have an Ability." — Cornerstone Mask Ogerpon ex
       "Cornerstone Stance" `sv06-112`/`-199`/`-215` and `sv08.5-058`/`-160`, **5 printings on ONE sentence, all 5 Standard-legal**,
       measured over `abilities_json` with `legal_standard = 1` against the remote D1
-      `luminous` on 2026-08-07. The BIGGEST cheap unbuilt ability group in the pool
+      `colorless` on 2026-08-07. The BIGGEST cheap unbuilt ability group in the pool
       at D251.
 
       THE THIRD MEMBER OF THE ATTACKER-PROPERTY PREVENT FAMILY and a SIBLING field
@@ -1787,7 +1787,7 @@ export interface PassiveEffects {
          your opponent's Pokémon that have any Special Energy attached."
 
       **2 printings on ONE sentence, both Standard-legal**, measured over
-      `abilities_json` with `legal_standard = 1` against the remote D1 `luminous` on
+      `abilities_json` with `legal_standard = 1` against the remote D1 `colorless` on
       2026-08-07, GROUPED BY SENTENCE.
 
       THE FOURTH MEMBER OF THE ATTACKER-PROPERTY PREVENT FAMILY, and the three
@@ -1826,7 +1826,7 @@ export interface PassiveEffects {
       **3 printings on ONE sentence** — Poltchageist `sv06-020`/`sv06-171` and
       ⚠️ 🛑 **`sv10-048`, WHICH IS `Misty's Magikarp` AND NOT `Sinistcha`** —
       corrected at D305, having read "Sinistcha `sv10-048`" here since D253. Remote
-      D1 `luminous`, 2026-08-09: `sv10-048` is `Misty's Magikarp`, its Ability is
+      D1 `colorless`, 2026-08-09: `sv10-048` is `Misty's Magikarp`, its Ability is
       **"So Submerged"**, and its `evolve_from` is **NULL**, so it is not an
       evolution of anything. The real `Sinistcha` is **`sv06-022`** and is not in
       this registry at all. **THE COUNT OF 3 AND THE SHARED OBJECT ARE BOTH
@@ -1834,7 +1834,7 @@ export interface PassiveEffects {
       exactly why D254's re-derivation of the COUNT could not catch it.
 
       ✅ **THE COUNT WAS UNVERIFIED AT D253 AND IS MEASURED AT D254.** The remote
-      D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a) answered `403 code 7403`
+      D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a) answered `403 code 7403`
       ("account is not authorized") to every query at D253, so the 3/1 was D252's
       transcribed row. D254 re-ran it (`abilities_json`, `legal_standard = 1`,
       `LIKE '%and effects of attacks%'`, GROUPED BY SENTENCE) and the row returns
@@ -1896,7 +1896,7 @@ export interface PassiveEffects {
       RULE-BOX CLASS — the SIXTH member of the prevent family and the first whose
       gate is PARAMETERISED since D159's type list. TWO Standard-legal sentences,
       FIVE printings, measured over `abilities_json` with `legal_standard = 1`
-      against the remote D1 `luminous` on 2026-08-07, GROUPED BY SENTENCE:
+      against the remote D1 `colorless` on 2026-08-07, GROUPED BY SENTENCE:
 
         "Prevent all damage done to this Pokémon by attacks from your opponent's
          Pokémon ex."                              — 3 printings
@@ -2321,7 +2321,7 @@ export interface PassiveEffects {
 
       **4 legal printings on ONE sentence** — Fraxure `sv06.5-045`/`sv06.5-077`
       "Unnerve"; Cetitan ex `sv10-065`/`sv10-210` "Snow Camouflage" — measured over
-      `abilities_json` with `legal_standard = 1` against the remote D1 `luminous`
+      `abilities_json` with `legal_standard = 1` against the remote D1 `colorless`
       (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) on 2026-08-07, GROUPED BY SENTENCE,
       with the attack and effect columns returning ZERO for the same predicate.
 
@@ -2402,7 +2402,7 @@ export interface PassiveEffects {
          any Item cards or Pokémon Tool cards from their hand." (Jellicent ex ×3)
 
       **4 legal printings on 2 sentences**, measured over `abilities_json` with
-      `legal_standard = 1` against the remote D1 `luminous`
+      `legal_standard = 1` against the remote D1 `colorless`
       (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) on 2026-08-08 — and measured by
       the MECHANISM (`instr(abilities_json, "your opponent can't play")`), which
       returns SEVEN rows of which these 4 are the ones this vocabulary reaches.
@@ -2486,7 +2486,7 @@ export interface PassiveEffects {
 
       🛑 **THE CLASSIFIER IS A DERIVED READ OVER `Card.rarity` AND NOT A NEW
       FIELD**, and the census that made that safe is the first thing D291 ran.
-      Remote D1 `luminous` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), 2026-08-08,
+      Remote D1 `colorless` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), 2026-08-08,
       `rarity LIKE '%ACE SPEC%'` with NO legality filter, split by `trainer_type`
       and by registry membership:
 
@@ -2531,7 +2531,7 @@ export interface PassiveEffects {
   /** §7.5/§10 (D285) — CONTINUOUS, seat-wide bar on the OPPONENT playing POKÉMON
       out of their hand while this body is in the Active Spot. **1 legal
       printing** — Team Rocket's Arbok `sv10-113` "Potent Glare", measured over
-      `abilities_json` with `legal_standard = 1` against the remote D1 `luminous`
+      `abilities_json` with `legal_standard = 1` against the remote D1 `colorless`
       (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) on 2026-08-08:
 
         "As long as this Pokémon is in the Active Spot, your opponent can't play
@@ -2587,7 +2587,7 @@ export interface PassiveEffects {
          this Pokémon. (Damage is not an effect.)"
 
       **1 legal printing** — Skeledirge `sv08-031` "Unaware", measured over
-      `abilities_json` with `legal_standard = 1` against the remote D1 `luminous`
+      `abilities_json` with `legal_standard = 1` against the remote D1 `colorless`
       (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) on 2026-08-07, GROUPED BY SENTENCE,
       at three ladder rungs across all three text columns.
 
@@ -3004,7 +3004,7 @@ export interface PassiveEffects {
 
       ⚠️ **THE COUNT IS BY PRINTED NAME AND SPANS BOTH KOFU PRINTINGS.** `Kofu` is a
       Supporter with TWO Standard-legal ids (`sv07-138`/`sv07-165`, remote D1
-      `luminous`, 2026-08-11), so a name test — and not an id test — is what the
+      `colorless`, 2026-08-11), so a name test — and not an id test — is what the
       sentence means; a discard holding one of each counts TWO. */
   attackCostDiscountPerNamedInDiscard?: { name: string; amount: number };
 
@@ -4743,7 +4743,7 @@ const MIGHTY_SHELL: CardProgram = {
 
     🛑 **THIS CONSTANT'S NAME IS WRONG AND SO WAS EVERY NAME IN THIS BLOCK UNTIL
     D305 — the BINDING was right the whole time.** Queried against remote D1
-    `luminous`, 2026-08-09:
+    `colorless`, 2026-08-09:
       • `instr(abilities_json, 'Curious Tea Party') > 0` returns **ZERO rows over
         all 3,786 rows**. **NO CARD IN THE CATALOG PRINTS AN ABILITY BY THAT
         NAME.** Poltchageist's Ability is **"Storehouse Hideaway"**.
@@ -4876,7 +4876,7 @@ const OCEANIC_CURSE: CardProgram = {
     and the printing D284 refused BY NAME while recording that the class was
     already spellable. Copperajah `sv06.5-042` "Massive Body", **1 legal printing
     of ONE sentence, and the ONLY row in the catalog at any legality** (remote D1
-    `luminous` `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 2026-08-08:
+    `colorless` `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 2026-08-08:
     `instr(abilities_json,'play any Stadium')>0` returns exactly this id with
     `legal_standard = 1`; the attack and effect columns return 0 — so no reprint
     and no attack-borne twin):
@@ -4925,7 +4925,7 @@ const MASSIVE_BODY: CardProgram = {
     row of D284's seven-sentence census. Genesect `sv06.5-040` "ACE Nullifier",
     **1 legal printing**, and the catalog holds **exactly one row whose printed
     text contains the words "ACE SPEC" at all** — measured across all three text
-    columns with NO legality filter against the remote D1 `luminous`
+    columns with NO legality filter against the remote D1 `colorless`
     (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) on 2026-08-08, which is D283's
     query-the-mechanism rule spent rather than re-learned:
 
@@ -5043,7 +5043,7 @@ const REPELLING_VEIL: CardProgram = {
       "Prevent all damage from and effects of attacks from your opponent's
        Pokémon done to your Benched Pokémon."
 
-    Re-derived at this commit against the remote D1 `luminous`
+    Re-derived at this commit against the remote D1 `colorless`
     (735f0fb5-cdc3-494d-8b97-74a8ade0124a): the family is 9 printings on 4
     sentences and this row is the 1. **6 of 6 addressable printings are now built**
     (2 at D252, 3 at D253, 1 here); the 3-printing TERA group stays UNBUILDABLE for
@@ -5082,7 +5082,7 @@ const SPHERICAL_SHIELD: CardProgram = {
        by attacks from your opponent's Pokémon. (Pokémon ex, Pokémon V, etc. have
        Rule Boxes.)"
 
-    Re-derived at this commit against the remote D1 `luminous`
+    Re-derived at this commit against the remote D1 `colorless`
     (735f0fb5-cdc3-494d-8b97-74a8ade0124a): the `%prevent all damage%` ability
     census is **22 printings on 9 sentences, unchanged**, and this row is the 2.
 
@@ -5116,7 +5116,7 @@ const FLOWER_CURTAIN: CardProgram = {
       "Prevent all damage done to this Pokémon by attacks from your opponent's
        Pokémon if that damage is 200 or more."
 
-    Re-derived at this commit against the remote D1 `luminous`
+    Re-derived at this commit against the remote D1 `colorless`
     (735f0fb5-cdc3-494d-8b97-74a8ade0124a): `LIKE '%if that damage is%'` over
     `json_each` and all three text columns, `legal_standard = 1`, GROUPED BY
     SENTENCE, returns **ability 1 / 1** (this card), **attack 3 / 2** (Shuckle
@@ -5160,7 +5160,7 @@ const IMPERVIOUS_SHELL: CardProgram = {
        flip a coin. If heads, prevent that damage."
 
     Measured over `abilities_json` with `legal_standard = 1` against remote D1
-    `luminous` on 2026-08-07, GROUPED BY SENTENCE: this row is 3 and its
+    `colorless` on 2026-08-07, GROUPED BY SENTENCE: this row is 3 and its
     antecedent-dropped twin below is 2, and the `%prevent%` ∧ `%coin%` sweep over all
     three text columns returns those two rows plus the 21-printing DURATED §11 attack
     family (built since D142) and NOTHING else. Backlog row **15-C**.
@@ -5224,7 +5224,7 @@ const EXPERT_HIDER: CardProgram = {
        Pokémon ex."
 
     Measured over `abilities_json` with `legal_standard = 1` against the remote D1
-    `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a) on 2026-08-07, GROUPED BY
+    `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a) on 2026-08-07, GROUPED BY
     SENTENCE — the LARGEST unbuilt row of the `%prevent all damage%` census, and the
     census's own transcript is in `preventedAttackerClass.test.ts`'s header.
 
@@ -5272,7 +5272,7 @@ const PREVENT_FROM_BASIC_EX: CardProgram = {
 
     Pikachu ex "Resolute Heart" (sv08-057, sv08-219, sv08-238, sv08-247,
     sv08.5-179) and Crustle "Sturdy" (sv10.5b-052, sv10.5b-130), measured against
-    the remote D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786 rows /
+    the remote D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786 rows /
     20 sets, 2,021 legal) on 2026-08-04 with `json_each(abilities_json)` and an
     EQUALITY on the effect string — not `LIKE`, which is case-insensitive here,
     and not a grouped `attacks_json` scan, which is how D206 and D207 each
@@ -6043,7 +6043,7 @@ const TREVENANT: CardProgram = {
     *"During Pokémon Checkup, put 1 damage counter on each Pokémon that has an
     Ability (both yours and your opponent's), except any Froslass."*
     **3 Standard-legal printings on ONE sentence, and that is the whole legal
-    population** — remote D1 `luminous`, 2026-08-15, `instr(abilities_json,'except
+    population** — remote D1 `colorless`, 2026-08-15, `instr(abilities_json,'except
     any') > 0` across all three text columns.
 
     🛑 **THE ROW EXISTS BECAUSE THE *EXEMPTION GRAMMAR* WAS CENSUSED, NOT THE
@@ -6353,7 +6353,7 @@ const FLIP_THE_SCRIPT: CardProgram = {
     **5 Standard-legal printings on ONE byte-identical `abilities_json`** — the
     BIGGEST single-sentence ability group left on the name-lock sweep, re-derived
     rather than inherited (`GROUP BY lower(j.value ->> 'effect')` over
-    `json_each(abilities_json)` with `legal_standard = 1`, remote D1 `luminous`,
+    `json_each(abilities_json)` with `legal_standard = 1`, remote D1 `colorless`,
     2026-08-07: the whole `%You can't use more than 1%` ladder returns **10** —
     Pecharunt 5, Fezandipiti 3 BUILT at D272, Fan Rotom 2 still blocked).
 
@@ -6415,7 +6415,7 @@ const SUBJUGATING_CHAINS: CardProgram = {
     use more than 1 Fan Call Ability during your turn."
 
     **THE LAST ROW ON THE `%You can't use more than 1%` NAME-LOCK SWEEP.** That
-    ladder returns TEN legal printings on THREE sentences (remote D1 `luminous`,
+    ladder returns TEN legal printings on THREE sentences (remote D1 `colorless`,
     re-queried 2026-08-08, `GROUP BY lower(j.value ->> 'effect')` over
     `json_each(abilities_json)` at `legal_standard = 1`): Pecharunt ex 5 (D273),
     Fezandipiti ex 3 (D272) and these **2**. Both printings are `legal_standard =
@@ -7059,7 +7059,7 @@ const LICKING_CATCH: CardProgram = {
 
     🛑 **THE SIXTH AND LAST PRINTING OF *"search … in any combination of"* IN THE
     CATALOG — THIS ROW CLOSES THE GRAMMAR AT 6 OF 6.** Re-queried against remote D1
-    `luminous` rather than inherited: `attacks_json` 3 legal of 3 (Heatmor
+    `colorless` rather than inherited: `attacks_json` 3 legal of 3 (Heatmor
     `sv10.5w-019`/`-104`, D338, and this one), `effect` 3 legal of 3 (Ethan's
     Adventure `sv10-165`/`-221`/`-236`, D337), `abilities_json` **0**. `3 + 3 + 0 =
     6` ✅. ⚠️ THE WIDE NET IS NOT THE GRAMMAR: `instr(effect,'in any combination of')`
@@ -7703,7 +7703,7 @@ const PRIMAL_KNOWLEDGE: CardProgram = {
 /** Genesect ex `sv10.5b-067`/`-161`/`-169` — "Metallic Signal": "Once during your
     turn, you may search your deck for up to 2 **Evolution {M}** Pokémon, reveal
     them, and put them into your hand. Then, shuffle your deck." **3 legal
-    printings**, byte-identical on all three (remote D1 `luminous`, 2026-08-06).
+    printings**, byte-identical on all three (remote D1 `colorless`, 2026-08-06).
 
     🆕 **NOT AN AURA, AND IT IS HERE BECAUSE THE FIELD IS, NOT BECAUSE THE ROW
     WAS.** Backlog row 14-B(b)-R names ONE printing needing `typedPokemon.stage`
@@ -8225,7 +8225,7 @@ const POPPY: CardProgram = {
 
 /** N's Plan — "Move up to 2 Energy from your Benched Pokémon to your Active
     Pokémon." (Supporter, `sv10.5b-083`/`-163`/`-170`, regulation mark I, all
-    three `legal_standard = 1` and byte-identical — remote D1 `luminous`,
+    three `legal_standard = 1` and byte-identical — remote D1 `colorless`,
     2026-08-05). D190's LAST `DROPPED` work order, collected at D226.
 
     Poppy with two words changed, and both changes are fields:
@@ -8489,7 +8489,7 @@ const CALL_BELL: CardProgram = {
 /** 🆕 **D295 — Chill Teaser Toy `sv08-166` (Item): *"You can use this card only if
     you go second, and only during your first turn. / Put an Energy attached to 1
     of your opponent's Pokémon into their hand."* ONE Standard-legal printing, no
-    reprint** (remote D1 `luminous`, 2026-08-08, re-queried in full rather than
+    reprint** (remote D1 `colorless`, 2026-08-08, re-queried in full rather than
     inherited). The card D280 named by id and refused, closed — **and its blocker
     was exactly the one D280 wrote down**: *"wants an op that moves an Energy off
     an OPPONENT'S Pokémon into THEIR hand, which no `EffectOp` spells"*.
@@ -8676,7 +8676,7 @@ const ILLUMISE_SLOWING_PERFUME: CardProgram = {
 };
 
 /** 🆕 **D294 — Mandibuzz `sv10.5w-064`/`-145` "Look for Prey"** (Stage 1, **2
-    legal printings on ONE byte-identical sentence** — remote D1 `luminous`,
+    legal printings on ONE byte-identical sentence** — remote D1 `colorless`,
     re-queried 2026-08-08, `GROUP BY lower(j.value ->> 'effect')` over
     `json_each(abilities_json)` at `legal_standard = 1`, which returns exactly
     these two ids and nothing else):
@@ -9461,7 +9461,7 @@ const METAL_BRIDGE: CardProgram = {
     ⚠️ IT DOES NOT SHARE AN OBJECT WITH EITHER NEIGHBOUR. The reprint idiom shares
     on BYTE-IDENTICAL text and this sentence is neither of theirs; sharing would
     make an edit to one card silently move a card that never printed the words.
-    3 legal printings of 3 in the catalog (remote D1 `luminous`, `%no Retreat
+    3 legal printings of 3 in the catalog (remote D1 `colorless`, `%no Retreat
     Cost%` over all three text columns, `legal_standard = 1`, 2026-08-07):
     `sv08-076` and its two alternate-art reprints. */
 const SKYLINER: CardProgram = { passive: { noRetreatCostAura: { stage: "Basic" } } };
@@ -9491,7 +9491,7 @@ const SKYLINER: CardProgram = { passive: { noRetreatCostAura: { stage: "Basic" }
     once per turn PER POKÉMON and two copies in the Active Spot across two turns
     is two refreshes.
 
-    2 legal printings of 2 in the catalog (remote D1 `luminous`, `%hand into%deck%`
+    2 legal printings of 2 in the catalog (remote D1 `colorless`, `%hand into%deck%`
     over all three text columns, `legal_standard = 1`, 2026-08-07): the `svp-211`
     promo and the `sv10.5w-043` set printing, byte-identical text, ONE sentence. */
 const DISTORTED_FUTURE: CardProgram = {
@@ -9509,7 +9509,7 @@ const DISTORTED_FUTURE: CardProgram = {
 //    LIST WAS DERIVED RATHER THAN INHERITED. D190 worked the seven candidates
 //    `docs/reference/coverage-backlog-legal.md` had already named and exhausted
 //    them (3 built / 4 dropped). This slice re-censused **all 651 Standard-legal
-//    non-attack printings** against the remote D1 `luminous`
+//    non-attack printings** against the remote D1 `colorless`
 //    (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`; 3,786 rows / 20 sets, 2,021 legal)
 //    on 2026-08-04 — every distinct sentence in `abilities_json` and in `effect`,
 //    grouped by text and ranked by legal printings — and asked ONE question of
@@ -9747,7 +9747,7 @@ const DEFIANT_HORN: CardProgram = {
     damage counters on that Pokémon. The effect of Darkest Impulse doesn't stack."*
 
     **1 legal printing, Stage 2, evolves from Team Rocket's Flaaffy** — remote D1
-    `luminous`, `instr(abilities_json,'to evolve 1 of their') > 0` over all 3,786
+    `colorless`, `instr(abilities_json,'to evolve 1 of their') > 0` over all 3,786
     rows returns exactly this one, and it is the EVOLVE half of a two-verb family
     whose other half is `GNAWING_CURSE` below.
 
@@ -9794,7 +9794,7 @@ const DARKEST_IMPULSE: CardProgram = {
     counters on that Pokémon."*
 
     **2 legal printings on ONE sentence** (`sv05-104` and its `-193` reprint;
-    remote D1 `luminous`, 2026-08-10). The ATTACH half of the family — the same
+    remote D1 `colorless`, 2026-08-10). The ATTACH half of the family — the same
     direction, the same op, a different moment and a different amount.
 
     🛑 **AND IT IS THE ROW THAT MAKES `doesNotStack` A CLAIM RATHER THAN A
@@ -9830,7 +9830,7 @@ const GNAWING_CURSE: CardProgram = {
 
     🛑 **AND THAT SENTENCE IS WHY THE TWO PRIOR REFUSALS WERE PRICED WRONG.** D354
     and D355 both refused this row as *"a whole new `triggers.ts` trigger point for
-    1 legal printing"*. The RATIO was right — remote D1 `luminous`, 2026-08-16:
+    1 legal printing"*. The RATIO was right — remote D1 `colorless`, 2026-08-16:
     `'whenever you attach'` returns **3** rows over `abilities_json` and **0** over
     `attacks_json` and `effect`, and of the 3 only this one is `legal_standard = 1`
     (Minior `sv04-099`/`sv04-201` are rotated out, and are the SAME timing with a
@@ -9876,7 +9876,7 @@ const AUTO_HEAL: CardProgram = {
     (LOCAL D1), both built at D610 on this trigger.] The
     literal `'moves to the Bench'` returns exactly ONE row over all 3,786 across
     `abilities_json`, `attacks_json` AND `effect`; so does `'during their turn'`
-    over `abilities_json` (remote D1 `luminous`, 2026-08-10). The wider
+    over `abilities_json` (remote D1 `colorless`, 2026-08-10). The wider
     `'new Active'` sweep returns 44 legal rows and every other one of them is a
     switch-out attack's parenthetical *"(Your opponent chooses the new Active
     Pokémon.)"* or an ACTIVATED Ability — no *"Whenever"* among them — which is
@@ -9923,7 +9923,7 @@ const LAVA_ZONE: CardProgram = {
     amount of Energy from your other Pokémon to this Pokémon."
 
     **6 Standard-legal printings on ONE sentence** (`GROUP BY` over
-    `json_each(abilities_json)` with `legal_standard = 1`, remote D1 `luminous`,
+    `json_each(abilities_json)` with `legal_standard = 1`, remote D1 `colorless`,
     2026-08-06 — the ids are exactly the six `coverage-backlog-legal.md` row 14-R
     names, re-derived rather than inherited). Backlog row 14-R, and the last
     third of row 14.
@@ -10475,7 +10475,7 @@ const GREEDY_ORDER: CardProgram = {
 
 /** 🆕🆕 **D350 — Lillie's Ribombee `sv09-067` / `sv09-164` / `svp-183` — "Inviting
     Wink"** (Stage 1, **3 legal printings on ONE byte-identical sentence** — remote
-    D1 `luminous`, 2026-08-15, `json_each(abilities_json)` keyed on `$.effect` and
+    D1 `colorless`, 2026-08-15, `json_each(abilities_json)` keyed on `$.effect` and
     grouped so the unit is a SENTENCE; the three ids are the whole population):
 
     *"When you play this Pokémon from your hand to evolve 1 of your Pokémon during
@@ -10576,7 +10576,7 @@ const INVITING_WINK: CardProgram = {
     one column, 4 legal printings; 3 of them need no new vocabulary and 1 needs a
     union. `instr(abilities_json,'or 1 of each')` is **4 printings / 4 legal / 2
     sentences**, with `effect` **0** and `attacks_json` **0** (remote D1
-    `luminous`, 2026-08-15, keyed on `$.effect`).
+    `colorless`, 2026-08-15, keyed on `$.effect`).
 
     ⚠️ **`energyType` IS THE FULL NAME AND NOT THE BRACE CODE** — "Fire" for {R}
     and "Fighting" for {F}, read by `attachableEnergies`, exactly as
@@ -10650,7 +10650,7 @@ const PYRO_DANCE: CardProgram = {
     argument one op over. **A PRICE THAT NAMES A FIELD HAS NOT THEREBY NAMED WHAT
     PERSISTS IT.**
 
-    THE CENSUS THIS ROW IS SIZED BY (remote D1 `luminous`, 2026-08-15, `json_each`
+    THE CENSUS THIS ROW IS SIZED BY (remote D1 `colorless`, 2026-08-15, `json_each`
     over all three text columns, ability key `$.effect` verified against these very
     rows before any zero was believed):
       • `instr(txt,'and put them on the bottom of your deck')` — **4 sentences /
@@ -10759,7 +10759,7 @@ const SNACK_SEEK: CardProgram = {
     🛑 **THE ONE NEW THING IS `attachEnergyFrom.energyName`, THE PRINTED PROPER
     NAME**, and it is bought for the ENTIRE Standard-legal population of the
     narrowing rather than merely for the cheapest member of it. The by-name attach
-    clause censused over ALL THREE text columns (remote D1 `luminous`, `json_each`
+    clause censused over ALL THREE text columns (remote D1 `colorless`, `json_each`
     keyed on `$.effect`, 2026-08-16) is **2 sentences / 4 printings / 2 LEGAL**,
     and both legal printings are the two ids below. The other sentence is
     Wigglytuff `sv02-084`/`sv04.5-147` *"attach a **Therapeutic Energy** card from
@@ -11041,7 +11041,7 @@ const DANGEROUS_LASER: CardProgram = {
     deck."* (Item, mark H, **1 legal printing of 1**)
 
     **THE LAST LEGAL MEMBER OF THE *"IN ANY ORDER"* FAMILY**, re-derived from
-    remote D1 `luminous` at this head rather than inherited: `instr(<col>,'in any
+    remote D1 `colorless` at this head rather than inherited: `instr(<col>,'in any
     order') > 0` over all three text columns returns **15 printings / 11 legal /
     7 distinct sentences** (`effect` 8/6 · `attacks_json` 7/5 · `abilities_json`
     0/0). Four of the seven were built — the two `ATTACK_REORDER_TOP` sentences
@@ -11559,7 +11559,7 @@ const NEO_UPPER_ENERGY: CardProgram = {
     🆕🆕🆕 D583 (D539): the tag no longer matters to the ENGINE either — cards.ts `isSpecialEnergy`
     reads the printed rules text since D583, so this printing is a SPECIAL Energy there.
 
-    THE POPULATION, RE-QUERIED AND NOT INHERITED (remote D1 `luminous`,
+    THE POPULATION, RE-QUERIED AND NOT INHERITED (remote D1 `colorless`,
     `instr(effect,'provides every type of Energy') > 0 AND legal_standard = 1`,
     2026-08-09): **4 printings** — `sv04-266` Reversal, `sv05-162` Neo Upper,
     `sv06-167` Legacy, `sv10.5b-086` Prism. ⚠️ **TWO of the four were ALREADY
@@ -11705,7 +11705,7 @@ const LILLIES_PEARL: CardProgram = {
 
 // ── D200 — THE OWNER-PREFIX SUBGROUP FILTER's own rows. Five programs / SIX
 //    Standard-legal printings, every one a `searchDeck` whose only new datum is
-//    the `ownerPokemon` filter. Counts measured against the remote D1 `luminous`
+//    the `ownerPokemon` filter. Counts measured against the remote D1 `colorless`
 //    (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786 rows / 20 sets, 2,021 of them
 //    `legal_standard = 1`) on 2026-08-04; each row's `ids` is the COMPLETE set of
 //    catalog printings carrying that exact sentence, legal or not.
@@ -12198,7 +12198,7 @@ const ETHANS_HO_OH_EX: CardProgram = {
 // print the word "remaining", so both are the `BoardCondition`, and the test
 // file asserts the two are not crossed at the value where it would show.
 //
-// Counts re-derived against the remote D1 `luminous`
+// Counts re-derived against the remote D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`; 3,786 rows / 20 sets, 2,021
 // `legal_standard = 1`) on 2026-08-04, ⚠️ with `GLOB` and never `LIKE`, and over
 // `json_each(abilities_json)` / `json_each(attacks_json)` rather than a grouped
@@ -12632,7 +12632,7 @@ const RIPENING_CHARGE: CardProgram = {
     The count was re-derived on the SHAPE and not on those two ids — `LIKE '%when
     you play this pok%onto your bench%attach%'`, `legal_standard = 1`, swept over
     `json_each(abilities_json)` / `json_each(attacks_json)` / `effect` and GROUPED
-    BY SENTENCE (remote D1 `luminous`, 2026-08-07). Exactly 2, the SEVENTEENTH row
+    BY SENTENCE (remote D1 `colorless`, 2026-08-07). Exactly 2, the SEVENTEENTH row
     running to survive re-derivation.
 
     ⚠️ **THE TWO PRINTINGS ARE BYTE-IDENTICAL CARDS, NOT MERELY A SHARED
@@ -12785,7 +12785,7 @@ const FLASHING_DRAW: CardProgram = {
 /** D223 — CARMINE (Supporter). "If you go first, you may use this card during
     your first turn.\n\nDiscard your hand and draw 5 cards." — sv06-145 /
     sv06-204 / sv06-217 / sv08.5-103, all four `legal_standard = 1`, all four
-    byte-identical (remote D1 `luminous`, 2026-08-05).
+    byte-identical (remote D1 `colorless`, 2026-08-05).
 
     ⚠️ TWO SENTENCES, TWO MECHANISMS, AND THE FIRST ONE IS NOT DECORATION. D190's
     census recorded the first-turn clause as "INERT — the engine has no going-first
@@ -12811,7 +12811,7 @@ const CARMINE: CardProgram = {
     Rocket's Pokémon, reveal them, and put them into your hand. Then, shuffle
     your deck." — sv10-177 / sv10-227, both `legal_standard = 1`, both
     byte-identical, and the ONLY two rows in the catalog carrying this sentence
-    (remote D1 `luminous`, 2026-08-05).
+    (remote D1 `colorless`, 2026-08-05).
 
     ⚠️ **TWO SENTENCES, TWO SLICES, AND THIS ROW IS THE PLACE THEY MEET.** The
     first is D223's `trainerFirstTurnExempt` verbatim — an engine piece bought for
@@ -12929,7 +12929,7 @@ const POWER_SAVER: CardProgram = {
     is the same three payability projections.
 
     ⚠️ **THE CENSUS THIS ROW CAME OUT OF, AND WHAT IT DID *NOT* FIND.** The remote
-    D1 `luminous` at `legal_standard = 1` on 2026-08-08, `GLOB '*during your first
+    D1 `colorless` at `legal_standard = 1` on 2026-08-08, `GLOB '*during your first
     turn*'` over all THREE text columns: **ability 15 / attack 13 / effect 8 = 36
     printings on 15 names and 10 distinct first-turn CLAUSES** (15 distinct full
     column texts, one per name); the second rung (`'*your first turn*'` MINUS the
@@ -12970,7 +12970,7 @@ const DEBUT_PERFORMANCE: CardProgram = {
     byte-identical `abilities_json`**, and the §4 EVOLVE licence to D277's §4
     ATTACK licence.
 
-    THE CENSUS, RE-QUERIED RATHER THAN CARRIED (remote D1 `luminous`
+    THE CENSUS, RE-QUERIED RATHER THAN CARRIED (remote D1 `colorless`
     `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, `legal_standard = 1`, 2026-08-08) —
     the ladder is transcribed rung by rung in `boostedEvolution.test.ts`'s
     header. The short form: the phrase `%evolve during your first turn%` over all
@@ -13062,7 +13062,7 @@ const STIMULATED_EVOLUTION_SHELMET: CardProgram = {
 
     ✅ **THEY COINCIDE ON ALL SIX PRINTINGS, MEASURED.** Every one of the six rows
     has `json_array_length(attacks_json) = 1` and that attack is named *Blood
-    Moon* (remote D1 `luminous`, 2026-08-06 — the query is in
+    Moon* (remote D1 `colorless`, 2026-08-06 — the query is in
     `abilityAttackGate.test.ts`'s header). So the unscoped field is EXACT on the
     whole legal pool of this sentence, today.
 
@@ -13085,7 +13085,7 @@ const SEASONED_SKILL: CardProgram = {
 /** 🆕 **D327 — "Food Prep"**: *"Attacks used by this Pokémon cost {C} less for
     each Kofu card in your discard pile."* — `svp-134`, `sv07-042`, `sv07-045`,
     `sv07-149`, **FOUR Standard-legal printings on ONE byte-identical
-    `abilities_json`** (remote D1 `luminous`, re-queried 2026-08-11, all four
+    `abilities_json`** (remote D1 `colorless`, re-queried 2026-08-11, all four
     `legal_standard = 1`, `category = 'Pokemon'`, `types_json = ["Water"]`), and
     the `DROPPED` row `legalNonAttackPrograms.test.ts` has asserted UNBUILT since
     D162.
@@ -13121,7 +13121,7 @@ const FOOD_PREP: CardProgram = {
 /** 🆕 **D327 — Incineroar ex `sv05-034`/`sv05-187` "Hustle Play"**: *"Attacks
     used by this Pokémon cost {C} less for each of your opponent's Benched
     Pokémon."* — **TWO Standard-legal printings on one byte-identical
-    `abilities_json`** (remote D1 `luminous`, 2026-08-11).
+    `abilities_json`** (remote D1 `colorless`, 2026-08-11).
 
     🛑 **THIS ROW WAS INVISIBLE TO EVERY BACKLOG THIS REPO KEEPS, AND ONLY THE
     ORTHOGONAL-WIDTH PROBE FOUND IT.** It is in no `DROPPED` row, no `needs`
@@ -13149,7 +13149,7 @@ const HUSTLE_PLAY: CardProgram = {
     Pokémon to the Active Spot, and the new Active Pokémon is now Confused."* —
     **ONE Standard-legal printing, and it is the whole population**:
     `instr(abilities_json,'Captivating Invitation') > 0` returns exactly this row
-    over all 3,786 (remote D1 `luminous`, 2026-08-13).
+    over all 3,786 (remote D1 `colorless`, 2026-08-13).
 
     ✅ **ZERO NEW ENGINE FIELDS — every member of the program shipped, and this is
     the row `legalNonAttackPrograms.test.ts` named as the cheapest on the page.**
@@ -13205,7 +13205,7 @@ const CAPTIVATING_INVITATION: CardProgram = {
     If you do, the new Active Pokémon is now Confused."* — **THREE Standard-legal
     printings on one byte-identical `effect`, and they are the whole population**:
     `instr(effect,'Benched Basic Pok') > 0` returns exactly these 3 rows of 3,786,
-    all `legal_standard = 1` (remote D1 `luminous`, 2026-08-13).
+    all `legal_standard = 1` (remote D1 `colorless`, 2026-08-13).
 
     ✅ **FLORGES' PROGRAM WITH THE COIN GATE TAKEN OFF AND ONE ADJECTIVE PUT ON.**
     `CAPTIVATING_INVITATION` (D330) is `coinFlipGate` over
@@ -13244,7 +13244,7 @@ const LISIAS_APPEAL: CardProgram = {
     Trainer card') > 0` returns exactly these 4 rows of 3,786, all
     `legal_standard = 1`; the same literal over `attacks_json` and
     `abilities_json` returns 0, and so does the reversed word order *"a Trainer
-    card and a Pokémon"* over all three columns (remote D1 `luminous`,
+    card and a Pokémon"* over all three columns (remote D1 `colorless`,
     2026-08-14).
 
     ✅ **GREAT BALL'S PROGRAM WITH A SECOND NOUN ON IT.** `GREAT_BALL` is
@@ -13291,7 +13291,7 @@ const DRAYTON: CardProgram = {
 
     **ONE Standard-legal printing, and the SENTENCE has three** —
     `instr(effect,'reveal any number of') > 0` returns exactly 3 rows of 3,786
-    (remote D1 `luminous`, 2026-08-14): this one and Bill's Transfer
+    (remote D1 `colorless`, 2026-08-14): this one and Bill's Transfer
     `sv03.5-156`/`-194`, which print the identical clause over *"Pokémon"* at a
     top-8 window and are **`legal_standard = 0`**. The same literal over
     `attacks_json` and `abilities_json` returns 0 rows. So the row is 1 legal of a
@@ -13340,7 +13340,7 @@ const ROTO_STICK: CardProgram = {
     Shuffle the other cards back into your deck."* (Item)
 
     **TWO Standard-legal printings on one byte-identical `effect`, and they are
-    the whole population of the sentence** (remote D1 `luminous`, 2026-08-14).
+    the whole population of the sentence** (remote D1 `colorless`, 2026-08-14).
 
     ✅ **ZERO NEW ENGINE CODE — NOT ONE LINE.** `lookAtTopN`, `anyOf`,
     `typedPokemon` and `basicEnergy` all predate this row, and the printed *"up to
@@ -13400,7 +13400,7 @@ const BUG_CATCHING_SET: CardProgram = {
     other cards') > 0` returns 4 rows of 3,786 and the fourth is Hydreigon "Tri
     Howl" on `abilities_json`, out of Standard and BUILT since M5 on
     `attachFromTop.restTo` (🆕 D352 — was `discardRest`); `attacks_json` returns 0 for the clause, as does
-    *"Discard the rest"* over `effect` (remote D1 `luminous`, 2026-08-14). **So this
+    *"Discard the rest"* over `effect` (remote D1 `colorless`, 2026-08-14). **So this
     row closes the printed population of "Discard the other cards" outright.**
 
     ✅ **GREAT BALL'S PROGRAM WITH THE "up to" TAKEN OFF AND THE SHUFFLE TRADED FOR
@@ -13464,7 +13464,7 @@ const EXPLORERS_GUIDANCE: CardProgram = {
     over Dreepy) — **TWO Standard-legal printings on one byte-identical 205-char
     `abilities_json`**, and `instr(abilities_json,'the other card on the bottom') > 0`
     returns exactly 3 rows of 3,786: these two and Gothitelle `sv02-092` (remote D1
-    `luminous`, 2026-08-14).
+    `colorless`, 2026-08-14).
 
     ✅ **EXPLORER'S GUIDANCE'S PROGRAM WITH THE WINDOW NARROWED AND THE LEFTOVERS
     SENT SOMEWHERE ELSE.** `lookAtTopN{n 6, anyCard, max 2, exact, restTo:"discard"}`
@@ -13514,7 +13514,7 @@ const DRAKLOAK: CardProgram = {
     of your deck and put 2 of them into your hand. **Shuffle the other cards and put
     them on the bottom of your deck.**"* (Supporter) — **THREE printings on one
     byte-identical 135-char `effect`, and all three are `legal_standard = 0`**
-    (remote D1 `luminous`, 2026-08-14).
+    (remote D1 `colorless`, 2026-08-14).
 
     ⚠️ **OUT OF STANDARD, AND THAT IS WHY IT IS IN NO COLUMN OF `censusAtHead` AND NO
     ROW OF `LANDED`** — the Hydreigon "Tri Howl" precedent exactly (`sv02-140` has
@@ -13551,7 +13551,7 @@ const RIKA: CardProgram = {
 /** 🆕 **D330 — Team Rocket's Petrel `sv10-176`/`sv10-226`**: *"Search your deck
     for a Trainer card, reveal it, and put it into your hand. Then, shuffle your
     deck."* (Supporter) — **TWO Standard-legal printings on one byte-identical
-    `effect`** (remote D1 `luminous`, 2026-08-13).
+    `effect`** (remote D1 `colorless`, 2026-08-13).
 
     🛑 **THIS ROW WAS RECORDED AS BLOCKED AND THE THING BLOCKING IT HAD SHIPPED.**
     `legalNonAttackPrograms.test.ts`'s `lookAtTopN` `DROPPED` row prices itself at
@@ -13892,7 +13892,7 @@ const CIPHERMANIACS_CODEBREAKING: CardProgram = { trainer: searchTopOrderProgram
     largest live residue is row 9 (attach from the discard pile, 5 `abilityIds` +
     5 `effectIds`), whose ability half is blocked — by that row's own note — on
     *"NO op in this engine knocks out its own host"*. Censused over ALL THREE text
-    columns on remote D1 `luminous` (2026-08-15),
+    columns on remote D1 `colorless` (2026-08-15),
     `instr(<col>, 'If you use this Ability, this Pokémon is Knocked Out') > 0`
     returns `effect` **0** + `abilities_json` **9 printings / 9 legal / 3
     sentences** + `attacks_json` **0** = **9 / 9 / 3**. The three sentences are
@@ -14047,7 +14047,7 @@ const OVERVOLT_DISCHARGE: CardProgram = {
     *"or 1 of each"* grammar AND two `targetType`s in one sentence and stays out).
 
     ── THE CLAUSE CENSUS, TRANSCRIBED SO IT CAN BE RE-RUN ─────────────────────
-    Remote D1 `luminous` (uuid 735f0fb5-cdc3-494d-8b97-74a8ade0124a), 2026-08-15,
+    Remote D1 `colorless` (uuid 735f0fb5-cdc3-494d-8b97-74a8ade0124a), 2026-08-15,
     `instr(<col>, 'from your Bench to the Active Spot') > 0` over ALL THREE text
     columns — D340's rule, census the SENTENCE and not the card:
 
@@ -14165,7 +14165,7 @@ const BUZZING_BOOST: CardProgram = {
     *"When you play this Pokémon from your hand to evolve 1 of your Pokémon during
     your turn, you may switch in 1 of your opponent's Benched Pokémon **that has 90
     HP or less remaining** to the Active Spot."* **3 Standard-legal printings on ONE
-    sentence** (remote D1 `luminous`, 2026-08-15, `json_each(abilities_json)` on
+    sentence** (remote D1 `colorless`, 2026-08-15, `json_each(abilities_json)` on
     `$.effect`).
 
     🛑 **IT IS `DEFIANT_HORN` WITH ONE RELATIVE CLAUSE ON IT, AND THAT CLAUSE IS THE
@@ -14201,7 +14201,7 @@ const GLITTERING_STAR_PATTERN: CardProgram = {
 /** 🆕🆕 D349 — Bianca's Devotion `sv05-142`/`sv05-197`/`sv05-209` (Supporter):
     *"Heal all damage from 1 of your Pokémon **that has 30 HP or less remaining**."*
     **3 Standard-legal printings on ONE sentence**, byte-identical across all three
-    (remote D1 `luminous`, 2026-08-15, a 72-char `effect` with `abilities_json` and
+    (remote D1 `colorless`, 2026-08-15, a 72-char `effect` with `abilities_json` and
     `attacks_json` both NULL on every one, so no ability reader and no attack reader
     can see this sentence at all and `BUILT.ability`/`BUILT.attack` cannot move on
     it).
@@ -14233,7 +14233,7 @@ const BIANCAS_DEVOTION: CardProgram = {
     any way you like. Then, shuffle your deck."*
     **1 printing, 1 card, 1 sentence, `legal_standard = 1`** — the WHOLE
     Standard-legal population of the two-type attach target, over all three text
-    columns (remote D1 `luminous`, 2026-08-16, keyed on `$.effect`).
+    columns (remote D1 `colorless`, 2026-08-16, keyed on `$.effect`).
 
     🛑 **THE RULES QUESTION WAS SETTLED BEFORE THE PRICE, WHICH IS WHY THIS ROW
     COSTS ANYTHING AT ALL.** D351 left this cell holding *"a disjunction on the
@@ -19799,14 +19799,14 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08.5-163": SUBJUGATING_CHAINS, // (reprint)
   // — D275 — Fan Rotom "Fan Call": the name-lock sweep's LAST row, and the one
   // that needed a per-seat turn ORDINAL. TWO Standard-legal printings on ONE
-  // byte-identical `abilities_json` (remote D1 `luminous`, 2026-08-08 — the same
+  // byte-identical `abilities_json` (remote D1 `colorless`, 2026-08-08 — the same
   // `GROUP BY` as the block above; both rows carry `types_json ["Colorless"]`
   // and `hp` 70, which is what licenses the `pokemonType` on the filter).
   "sv07-118": FAN_CALL,
   "sv08.5-085": FAN_CALL, // (reprint)
   // 🆕 D294 — Mandibuzz "Look for Prey": the cross-seat DESTINATION, one optional
   // field on an M5 op. TWO Standard-legal printings on ONE byte-identical
-  // `abilities_json` (remote D1 `luminous`, 2026-08-08), and the whole legal
+  // `abilities_json` (remote D1 `colorless`, 2026-08-08), and the whole legal
   // population of the sentence.
   "sv10.5w-064": LOOK_FOR_PREY,
   "sv10.5w-145": LOOK_FOR_PREY, // (reprint)
@@ -19857,7 +19857,7 @@ const REGISTRY: Record<string, CardProgram> = {
   //   family. ONE sentence, ONE card, 6 printings, all 6 Standard-legal —
   //   the whole population of "Damage from attacks used by this Pokémon isn't
   //   affected by …" over `abilities_json`, measured against the remote D1
-  //   `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786 rows / 20 sets,
+  //   `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786 rows / 20 sets,
   //   2,021 legal) on 2026-08-04. No fixture for the real ids: they are outside
   //   the local 6-set manifest (D190's Tier-1 idiom). —
   "sv05-050": AZURE_SEAS, // Walking Wake ex — Azure Seas
@@ -19870,7 +19870,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // — P3-M5 (D208): the §8.1 KO-SURVIVAL clamp. ONE sentence, TWO Ability names,
   //   7 printings, all 7 Standard-legal — the whole population of "…has full HP
   //   and would be Knocked Out by damage from an attack…" over `abilities_json`,
-  //   measured against the remote D1 `luminous`
+  //   measured against the remote D1 `colorless`
   //   (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786 rows / 20 sets, 2,021 legal)
   //   on 2026-08-04 by `json_each` + an EQUALITY on the effect string. No fixture
   //   for the real ids: all seven are outside the local 6-set manifest, which
@@ -20088,7 +20088,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // ── D243 — the SEAT-WIDE PRE-W/R DAMAGE AURA, backlog row 14-B(b). 7 legal
   //    printings on THREE sentences, verified by `GROUP BY` over
   //    `json_each(abilities_json)` with `legal_standard = 1` against the remote D1
-  //    `luminous` on 2026-08-06: 3 · 2 · 2. All seven are printed Pokémon
+  //    `colorless` on 2026-08-06: 3 · 2 · 2. All seven are printed Pokémon
   //    ABILITIES and every one is §9-suppressible; none is a Tool. —
   "sv10.5b-003": REGAL_CHEER, // Serperior ex — Regal Cheer (20 more, SEAT-WIDE, bare)
   "sv10.5b-156": REGAL_CHEER, // Serperior ex (reprint)
@@ -20099,7 +20099,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv09-117": EXTRA_HELPINGS, // Hop's Snorlax (reprint)
   // ── D323 — the §8.1 SEAT-WIDE PRIZE BONUS. Four legal printings on TWO
   //    sentences, and they are the WHOLE legal population of the seam (remote D1
-  //    `luminous`, 2026-08-10: `instr(abilities_json,'more Prize') > 0` returns
+  //    `colorless`, 2026-08-10: `instr(abilities_json,'more Prize') > 0` returns
   //    7 rows / 4 legal, and the other 3 are rotated or read the noun as a board
   //    comparison rather than as a grant). —
   "sv08-072": WONDER_KISS, // Togekiss — Wonder Kiss (+1 Prize, ACTIVE KO only, COIN FLIP, DOESN'T STACK)
@@ -20107,7 +20107,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // called BUILT for three sessions without a key ever existing for it.
   "sv09-037": VIBRANT_DANCE, // Ludicolo — Vibrant Dance (+40 HP SEAT-WIDE, DOESN'T STACK)
   // ── D325 — the §8.1 SELF-SCALING max-HP grants, and they CLOSE the seam: the
-  //    bare HP noun over all three columns at HEAD (remote D1 `luminous`,
+  //    bare HP noun over all three columns at HEAD (remote D1 `colorless`,
   //    2026-08-11) is 24 `abilities_json` / 21 `effect` / 5 `attacks_json` legal
   //    rows, every one enumerated and classified, and after these six printings
   //    the difference set is EMPTY. Where D324's six rows are FLAT, all three of
@@ -21021,7 +21021,7 @@ const REGISTRY: Record<string, CardProgram> = {
   //    logged "Scorching Armor"; it is keyed on the D584 renamed copy `INCANDESCENT_BODY` (same ops).]
   //
   //    ⚠️ MEASURED, NOT CARRIED. The text-equality sweep of unbuilt-against-built
-  //    was RE-RUN against the REMOTE D1 `luminous`
+  //    was RE-RUN against the REMOTE D1 `colorless`
   //    (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786 rows / 20 sets) on
   //    2026-08-04, PER COLUMN — `abilities_json` and `effect` each joined against
   //    the built texts of the ids whose program reads THAT column, which is
@@ -21101,7 +21101,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-trade": NS_ZOROARK_EX,
   "fix-metalbridge": METAL_BRIDGE,
   // ── D199 — THE DERIVED REGISTRY-ONLY SWEEP. 28 programs / 47 Standard-legal
-  //    printings, every id below verified against the remote D1 `luminous`
+  //    printings, every id below verified against the remote D1 `colorless`
   //    (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786 rows / 20 sets) on
   //    2026-08-04: each group returned `legal_standard = 1` on EVERY id, exactly
   //    ONE distinct printed sentence and exactly ONE card name, so no group below
@@ -21145,7 +21145,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10.5w-043": DISTORTED_FUTURE, // Gothitelle (set printing) — same sentence
   // D269 — `coinFlipGate.otherwise`, the printed "If tails, …". 2 programs / 3
   // Standard-legal printings on 2 sentences, both on the TRAINER surface. The
-  // three ids were re-queried against the remote D1 `luminous` on 2026-08-07:
+  // three ids were re-queried against the remote D1 `colorless` on 2026-08-07:
   // all `legal_standard = 1`, Picnicker one sentence under one name, Drasna the
   // same sentence twice under one name.
   "svp-114": PICNICKER, // Picnicker (Supporter, mark H) — flip: draw 4, else draw 2
@@ -21154,14 +21154,14 @@ const REGISTRY: Record<string, CardProgram> = {
   // D270 — `HandRefreshDraw.perSeat`, the printed "you draw N cards, and your
   // opponent draws M cards". 1 program / 2 Standard-legal printings on ONE
   // sentence, on the TRAINER surface. Both ids were re-queried against the remote
-  // D1 `luminous` on 2026-08-07: `legal_standard = 1`, `trainer_type = Supporter`,
+  // D1 `colorless` on 2026-08-07: `legal_standard = 1`, `trainer_type = Supporter`,
   // one byte-identical sentence under one name.
   "sv10.5w-083": HARLEQUIN, // Harlequin (Supporter, mark I) — 5/3 on heads, 3/5 on tails
   "sv10.5w-163": HARLEQUIN, // Harlequin (alternate art) — same sentence
   // D271 — the last-turn-KO play gate (`yourPokemonKoedOnOpponentsLastTurn`).
   // 2 programs / 3 Standard-legal printings on ONE printed sentence, on the
   // TRAINER surface. All three ids were re-queried against the remote D1
-  // `luminous` on 2026-08-07: `legal_standard = 1`, and the `trainer_type`s
+  // `colorless` on 2026-08-07: `legal_standard = 1`, and the `trainer_type`s
   // DIFFER (Item / Supporter / Supporter), which is the point — the gate is a
   // vocabulary, not a rider on one card's second half.
   // 🆕 D326 — and Team Rocket's Archer's OWNER-PREFIXED narrowing of the same
@@ -21185,7 +21185,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv09-159": SPIKY_ENERGY, // Spiky Energy (Special Energy, mark I)
   "sv09-190": SPIKY_ENERGY, // (reprint)
   // D261 — THE SPECIAL ENERGY COLUMN's two cheapest remaining rows. The column
-  // census (remote D1 `luminous` `735f0fb5-cdc3-494d-8b97-74a8ade0124a`,
+  // census (remote D1 `colorless` `735f0fb5-cdc3-494d-8b97-74a8ade0124a`,
   // `legal_standard = 1`, `category='Energy' AND energy_type='Special'`, GROUPED BY
   // `effect`, 2026-08-07) is 7 sentences / 8 printings, of which Spiky's 2 were
   // already built. These are 1 + 1 on TWO sentences; the four left are named, with
@@ -21220,7 +21220,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-reversal-energy": REVERSAL_ENERGY,
   // 🆕 D298 — the SAME PRINTED SENTENCE on two attach classes, and the column's
   // FIRST movement since D262. `instr(effect,'fewer Prize') > 0 AND
-  // legal_standard = 1` (remote D1 `luminous`, 2026-08-09) returns 9 rows: these
+  // legal_standard = 1` (remote D1 `colorless`, 2026-08-09) returns 9 rows: these
   // two, plus Lacey ×5 and Emcee's Hype ×2 printing an unrelated *"3 or fewer
   // Prize cards remaining"* board condition. So the family CLOSES at 2 of 2.
   // The two `fix-*` demonstrators are `fix-mist-energy`'s reason verbatim: the
@@ -21419,7 +21419,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // D221 — TEAL DANCE. 1 program / **8 Standard-legal printings**, the largest
   // single row landed on this branch and the top of the ranked backlog. The eight
   // ids are `coverage-backlog-legal.md`'s own enumeration (D219, measured against
-  // the remote D1 `luminous` on 2026-08-04), carried rather than re-queried —
+  // the remote D1 `colorless` on 2026-08-04), carried rather than re-queried —
   // ⚠️ SAID OUT LOUD BECAUSE THIS PAGE'S OWN RULE IS THAT CARRIED IDS ROT (D206's
   // wrong-row failure, D219's four corrections to D187). The network policy
   // refuses `api.tcgdex.net` and this session has no D1 access, so a re-query was
@@ -21442,7 +21442,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // D249 — RIPENING CHARGE. 1 program / **4 Standard-legal printings**, the
   // ability half of backlog row 12 and the sentence that page ranks as the
   // cheapest single program left in the pool. ⚠️ THE FOUR IDS WERE RE-QUERIED
-  // AGAINST THE REMOTE D1 `luminous` ON 2026-08-07, NOT CARRIED — the query was
+  // AGAINST THE REMOTE D1 `colorless` ON 2026-08-07, NOT CARRIED — the query was
   // run on the SHAPE (`LIKE '%if you attached energy to a pok%in this way%'`
   // over `json_each(abilities_json)` / `json_each(attacks_json)` / `effect`,
   // `legal_standard = 1`, GROUPED BY SENTENCE) rather than on these ids, and it
@@ -21463,7 +21463,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // sentence**, the triggered-attach third of backlog row 12's ability half. The
   // ids are the SENTENCE's, re-derived on the shape (`LIKE '%when you play this
   // pok%onto your bench%attach%'` over all three text columns with `json_each`,
-  // `legal_standard = 1`, GROUPED BY SENTENCE — remote D1 `luminous`, 2026-08-07)
+  // `legal_standard = 1`, GROUPED BY SENTENCE — remote D1 `colorless`, 2026-08-07)
   // and not carried from the row. The same sweep's ONLY other hit on that shape
   // is `sv06-132`, a Pokémon-Tool DECK search on the same opening — a different
   // mechanism, named here rather than left as a claim (🆕🆕🆕 still a different mechanism,
@@ -21476,7 +21476,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // D222 — FLASHING DRAW. 1 program / **3 Standard-legal printings**, row 3 of
   // the ranked backlog and the second of D190's `DROPPED` rows collected. The
   // three ids are `registryOnlyPrograms.test.ts`'s own `DROPPED` enumeration
-  // (D190, measured against the remote D1 `luminous` on 2026-08-04), carried
+  // (D190, measured against the remote D1 `colorless` on 2026-08-04), carried
   // rather than re-queried — ⚠️ SAID OUT LOUD BECAUSE THIS REPO'S RULE IS THAT
   // CARRIED IDS ROT (D206's wrong-row failure). The network policy refuses
   // `api.tcgdex.net` and this session has no D1 access, so what is asserted
@@ -21557,7 +21557,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // ── D242 — backlog row 14, two of its three groups. TWELVE Standard-legal
   // printings across two programs, the biggest single non-attack yield any slice
   // has taken. ⚠️ THE IDS ARE RE-QUERIED, NOT CARRIED (D206's rule): both groups
-  // came out of a `GROUP BY` on the ability column of the remote D1 `luminous`
+  // came out of a `GROUP BY` on the ability column of the remote D1 `colorless`
   // with `legal_standard = 1` on 2026-08-06, ordered by printings — the query and
   // its full output are transcribed in `abilityAttackGate.test.ts`'s header.
   "svp-205": POWER_SAVER, // Team Rocket's Mewtwo ex — "Power Saver" (promo)
@@ -21573,7 +21573,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06-222": SEASONED_SKILL,
   // ── D277 — Meloetta ex "Debut Performance", ALL THREE Standard-legal printings.
   // ⚠️ THE IDS ARE RE-QUERIED, NOT CARRIED (D206's rule): they came out of the
-  // `%during your first turn%` census of the remote D1 `luminous` on 2026-08-08,
+  // `%during your first turn%` census of the remote D1 `colorless` on 2026-08-08,
   // whose full ladder is transcribed in `debutPerformance.test.ts`'s header. No
   // FIXTURE demonstrator — the test drives a LOCAL `cardPool` (D275's idiom), so
   // `FIXTURE_POOL` and `catalogManifest.test.ts` both take a zero diff.
@@ -21582,7 +21582,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10.5b-167": DEBUT_PERFORMANCE,
   // ── D278 — Eevee "Boosted Evolution", ALL THREE Standard-legal printings.
   // ⚠️ THE IDS ARE RE-QUERIED, NOT CARRIED (D206's rule): they came out of the
-  // `%evolve during your first turn%` census of the remote D1 `luminous` on
+  // `%evolve during your first turn%` census of the remote D1 `colorless` on
   // 2026-08-08, whose ladder is transcribed in `boostedEvolution.test.ts`'s
   // header, and all three returned one byte-identical `abilities_json`. No
   // FIXTURE demonstrator — the suite drives a LOCAL `cardPool` (D275's idiom, and
@@ -21664,7 +21664,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // Standard-legal ABILITY printings across two programs. ⚠️ THE IDS ARE
   // RE-QUERIED, NOT CARRIED (D206's rule): `GROUP BY` over
   // `json_each(abilities_json)` with `legal_standard = 1` on the remote D1
-  // `luminous`, 2026-08-06 — the row's six ids re-derive to the digit, and
+  // `colorless`, 2026-08-06 — the row's six ids re-derive to the digit, and
   // WIDENING the same query from those ids to the printed PRONOUN turns up a
   // SEVENTH legal printing the row never named. The query and its full output are
   // transcribed in `benchSwitchTrigger.test.ts`'s header.
@@ -21689,7 +21689,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // of the attacker-property prevent family and the biggest cheap unbuilt ability
   // group in the legal pool. FIVE printings on ONE sentence, re-derived by
   // `GROUP BY lower(j.value ->> 'effect')` over `json_each(abilities_json)` with
-  // `legal_standard = 1` on the remote D1 `luminous`, 2026-08-07 — the row's five
+  // `legal_standard = 1` on the remote D1 `colorless`, 2026-08-07 — the row's five
   // ids re-derive to the digit, and the same query WIDENED to the bare
   // `%prevent all damage%` returns 9 ability sentences, five of them carrying the
   // "from and effects of" half this field deliberately cannot spell. The query
@@ -21706,7 +21706,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // lines up and the half D251 refused to build. TWO printings on ONE sentence,
   // re-derived by `GROUP BY lower(json_extract(a.value,'$.effect'))` over
   // `json_each(abilities_json)` with `legal_standard = 1` and
-  // `LIKE '%and effects of attacks%'` on the remote D1 `luminous`, 2026-08-07 —
+  // `LIKE '%and effects of attacks%'` on the remote D1 `colorless`, 2026-08-07 —
   // 9 printings on 4 sentences, of which this row is the 2, and the row's two ids
   // re-derive to the digit. The full output is transcribed in
   // `mightyShell.test.ts`'s header, including WHY the 3-printing Tera group at the
@@ -21741,7 +21741,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // `sv05-024` row either (it is the ROTATED six-set population).
   "fix-spherical": SPHERICAL_SHIELD,
   // D259 — BACKLOG ROW 15-D, the TRAINER-BORNE effect shield. The `%prevent%`
-  // ability census (remote D1 `luminous` `735f0fb5-cdc3-494d-8b97-74a8ade0124a`,
+  // ability census (remote D1 `colorless` `735f0fb5-cdc3-494d-8b97-74a8ade0124a`,
   // `abilities_json`, `legal_standard = 1`, GROUPED BY SENTENCE, 2026-08-07)
   // measures this row at **4 + 1 printings on TWO sentences**, with the attack and
   // effect columns returning ZERO for the same three-rung predicate. RE-DERIVED at
@@ -21799,7 +21799,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06.5-040": ACE_NULLIFIER, // Genesect — "ACE Nullifier", every ACE SPEC at once
   // D260 — BACKLOG ROW 15-E, the ATTACK-BORNE EFFECTS-ONLY shield, and the whole
   // remaining BUILDABLE residue of the `%prevent%` ability seam. The same census
-  // (remote D1 `luminous` `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, GROUPED BY
+  // (remote D1 `colorless` `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, GROUPED BY
   // SENTENCE, `legal_standard = 1`, 2026-08-07) measures this row at **1 + 1
   // printings on TWO sentences** in the ABILITY column, RE-DERIVED at this commit
   // over a THREE-RUNG ladder across all three text columns. The wide rung's false
@@ -21815,7 +21815,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-unaware": UNAWARE,
   "fix-repellingveil": REPELLING_VEIL,
   // D255 — the ATTACKER'S PRINTED RULE-BOX CLASS, the two rows the `%prevent all
-  // damage%` census (remote D1 `luminous`, 2026-08-07, `abilities_json`,
+  // damage%` census (remote D1 `colorless`, 2026-08-07, `abilities_json`,
   // `legal_standard = 1`, GROUPED BY SENTENCE) left as the biggest BUILDABLE
   // residue: 22 printings on 9 sentences, of which 11 on 4 were already built and
   // the 3-printing TERA row is permanently unbuildable. These two are the 3 and the
@@ -21864,7 +21864,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-imperviousweak": IMPERVIOUS_SHELL,
   // D258 — the COIN-FLIP defensive Ability, backlog row 15-C and the largest row of
   // the census D257 opened by WIDENING THE VERB: `%prevent that damage%` ∪
-  // `%flip a coin%prevent%` over all three text columns (remote D1 `luminous`,
+  // `%flip a coin%prevent%` over all three text columns (remote D1 `colorless`,
   // `legal_standard = 1`, GROUPED BY SENTENCE, re-run at this commit) returns
   // **5 ability printings on 2 sentences** — these — and 21 attack printings on 3
   // sentences, every one of them the DURATED §11 spelling built since D142. A wider
@@ -21885,7 +21885,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // 🆕 D310 — the evolve-from-deck family's ABILITY printing, and the only
   // remaining-HP gate in the catalog. ONE legal printing, no reprint anywhere:
   // `instr(abilities_json,'remaining HP is 30 or less') > 0` returns exactly
-  // `sv05-133` over all 3,786 rows (remote D1 `luminous`, 2026-08-10).
+  // `sv05-133` over all 3,786 rows (remote D1 `colorless`, 2026-08-10).
   "sv05-133": EMERGENCY_EVOLUTION,
   // FIXTURE demonstrator — the manifest holds no `sv05` row (`fix-imperviousshell`'s
   // reason verbatim). ONE, because this row is ONE printed sentence.
@@ -21895,14 +21895,14 @@ const REGISTRY: Record<string, CardProgram> = {
   // printings and no third: the union of `instr(abilities_json,'this Pokémon and
   // all attached cards') > 0` and `instr(abilities_json,'it and all attached
   // cards') > 0` over all 3,786 rows returns these two plus Abra `sv06-080`
-  // (remote D1 `luminous`, 2026-08-10). NO `fix-*` demonstrator: this is a Pokémon
+  // (remote D1 `colorless`, 2026-08-10). NO `fix-*` demonstrator: this is a Pokémon
   // BODY driven on a LOCAL `cardPool` (D275's idiom), not a Trainer played against
   // `FIXTURE_POOL`.
   "sv05-129": RUN_AWAY_DRAW,
   "sv08.5-080": RUN_AWAY_DRAW, // (reprint)
   // 🆕 D312 — the SELF-removal family's Ability half CLOSED at 3 of 3. ONE legal
   // printing and no reprint: `instr(abilities_json,'it and all attached cards') > 0`
-  // returns exactly `sv06-080` over all 3,786 rows (remote D1 `luminous`,
+  // returns exactly `sv06-080` over all 3,786 rows (remote D1 `colorless`,
   // 2026-08-10). NO `fix-*` demonstrator, for `RUN_AWAY_DRAW`'s reason verbatim.
   "sv06-080": TELEPORTER,
   // 🆕 D312 — the family's ATTACK half opened, at index 1 ONLY. ONE legal printing:
@@ -21915,7 +21915,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // 🆕 D313 — the family's DISCARD destination, at index 1 ONLY. TWO legal
   // printings and no third: `instr(attacks_json,'Discard this Pokémon and all
   // attached cards') > 0` returns exactly `sv06.5-015`/`-081` over all 3,786 rows
-  // (remote D1 `luminous`, 2026-08-10). ⚠️ **THESE ARE THE ONLY TWO IDS THIS SLICE
+  // (remote D1 `colorless`, 2026-08-10). ⚠️ **THESE ARE THE ONLY TWO IDS THIS SLICE
   // ADDS TO `registryCardIds()` AT ALL** — Team Rocket's Crobat ex ×4 and Lillie's
   // Comfey are already keys (for "Biting Spree" and "Inviting Flowers"), so seven
   // new printings buy **+2** on `raw.length`. And this row is `attack`-ONLY, like
@@ -21928,7 +21928,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // 🆕 D314 — the family's LAST reachable printing, at index 0 ONLY. ONE legal
   // printing: `instr(attacks_json,'Put this Pokémon and all attached cards into
   // your deck') > 0` returns exactly `sv07-011` over all 3,786 rows (remote D1
-  // `luminous`, 2026-08-10). ⚠️ A NEW id carrying an `attack`-ONLY program, so
+  // `colorless`, 2026-08-10). ⚠️ A NEW id carrying an `attack`-ONLY program, so
   // `raw.length` steps by **+1** and `nonAttackRegistryIds()` by **ZERO** — the
   // THIRD consecutive slice on which the two pools disagree, and the third
   // distinct reason (D312: an attack-only program on an id already present;
@@ -21941,7 +21941,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // SENTENCES / 3 OF 3 LEGAL PRINTINGS. The consequent is what bounds it:
   // `instr(abilities_json,'on that Pok') > 0` returns ELEVEN rows over all 3,786
   // and exactly THREE with `legal_standard = 1` — `sv10-074` and `sv05-104`/
-  // `-193` (remote D1 `luminous`, 2026-08-10). ⚠️ THE ANTECEDENT SIDE AGREES AND
+  // `-193` (remote D1 `colorless`, 2026-08-10). ⚠️ THE ANTECEDENT SIDE AGREES AND
   // IS WIDER: `instr(abilities_json,'Whenever your opponent') > 0` returns EIGHT
   // rows, all eight legal, and the other five are two DIFFERENT mechanisms —
   // Magcargo `sv05-029` "Lava Zone" (the opponent's Active moving to the Bench,
@@ -21978,7 +21978,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // `raw.length` step by **+3 each** for the second slice running. NO `fix-*`
   // demonstrator: Pokémon BODIES driven on a LOCAL `cardPool` (D275's idiom),
   // and neither `sv06` nor `sv09` nor `sv10` is one of `catalogManifest`'s six
-  // sets. (Verified vs the remote D1 `luminous`, 3,786 rows, 2026-08-10.) —
+  // sets. (Verified vs the remote D1 `colorless`, 3,786 rows, 2026-08-10.) —
   "sv06-005": BIG_NET, // Ariados — the TARGET-NARROWED cross-board surcharge
   "sv09-089": SECRET_FOREST_PATH, // Toedscruel — the OWN-SIDE discount, bench-gated
   "sv10-036": MELT_AWAY, // Ethan's Magcargo — the self-only zero under a HOLDER gate
@@ -22090,7 +22090,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // (`ability`) and Bianca's Devotion ×3 (`effect`) are the WHOLE legal population
   // of *"HP or less remaining"* as a CANDIDATE narrowing — 6 legal printings on 2
   // legal sentences across all three text columns, `json_each`-grouped so the unit
-  // is a SENTENCE (remote D1 `luminous`, 2026-08-15). The only other printing is
+  // is a SENTENCE (remote D1 `colorless`, 2026-08-15). The only other printing is
   // Vanilluxe `sv06-039` (*"Your opponent's Pokémon that have 40 HP or less
   // remaining can't attack."*), which is NOT Standard-legal and is an aura rather
   // than a narrowing.

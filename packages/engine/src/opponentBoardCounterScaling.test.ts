@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { countDamageCountersInPlay } from "./continuous";
@@ -37,7 +37,7 @@ import {
 // and 1 shared board counter (`countDamageCountersInPlay`)**. ZERO new ops, ZERO
 // new `EffectOp` fields, ZERO new readers, ZERO `BoardCondition` members, ZERO
 // registry rows, ZERO prompts, ZERO events, ZERO error codes, ZERO `GameState`
-// fields, and no web/API/DB or `@luminous/schema` change.
+// fields, and no web/API/DB or `@colorless/schema` change.
 //
 // 🛑 **WHY THIS ROW AND NOT THE CENSUS'S OTHER ONE-EDIT CANDIDATES: IT READS NO
 // CARD COLUMN AT ALL.** D468's finding is that the residue classifier picks a

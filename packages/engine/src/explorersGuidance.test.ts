@@ -23,7 +23,7 @@ import {
 //   `effect`**, and they are the whole population of the sentence.
 //
 // ── THE CENSUS, AT SEVERAL WIDTHS AND OVER ALL THREE TEXT COLUMNS ───────────
-// Re-run against the remote D1 `luminous` at THIS head (2026-08-14) rather than
+// Re-run against the remote D1 `colorless` at THIS head (2026-08-14) rather than
 // inherited, and every per-column split re-added against its own total, because a
 // split that does not sum is the cheapest census check there is.
 //

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import {
   attackReaderSurface,
   legalAttackCorpus,

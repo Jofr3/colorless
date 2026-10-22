@@ -1,7 +1,7 @@
 // D1 row → canonical catalog domain mapping (P1 milestone 5, §5.2/§6).
 //
 // The inverse altitude of ../ingest/map.ts (tcgdex payload → row): here rows
-// come back out as the domain shapes in @luminous/schema/catalog. Pure —
+// come back out as the domain shapes in @colorless/schema/catalog. Pure —
 // routes.ts owns the queries — so every branch unit-tests as a plain function.
 //
 // The mappers ALSO normalise "no value" sentinels (the literal "None") to
@@ -28,8 +28,8 @@ import type {
   SerieBrief,
   Set as CatalogSet,
   SetBrief,
-} from "@luminous/schema";
-import { isBasicEnergy, isSpecialEnergy } from "@luminous/engine";
+} from "@colorless/schema";
+import { isBasicEnergy, isSpecialEnergy } from "@colorless/engine";
 import { sql } from "drizzle-orm";
 import { cards, type series, type sets } from "../db/schema";
 import { normalizeSentinel } from "../sentinel";

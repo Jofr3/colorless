@@ -19,8 +19,8 @@ import {
   createGame,
   formatElapsed,
   logFromEvents,
-} from "@luminous/engine";
-import type { Card, LobbySnapshot, SeatLogEntry, WireAction } from "@luminous/schema";
+} from "@colorless/engine";
+import type { Card, LobbySnapshot, SeatLogEntry, WireAction } from "@colorless/schema";
 import { slotOf } from "./logic";
 
 /** The one place the lobby's seats map to the engine's: host → p1, guest → p2. */
@@ -111,7 +111,7 @@ export interface MatchRecord {
   names: Record<Seat, string>;
   /** The engine's full game state — never sent whole to a client (online.md). */
   state: GameState;
-  /** The accumulated game log, seat-keyed + leak-safe (@luminous/engine
+  /** The accumulated game log, seat-keyed + leak-safe (@colorless/engine
       `logFromEvents`). Grows as actions apply; the DO broadcasts it WHOLE on every
       match frame (a reconnect gets the full backlog), and each client relabels it
       for its own seat (`viewLogEntries`). It can't be rebuilt from `state` — it is
@@ -473,7 +473,7 @@ export interface MatchRecord {
     naming its own attack, so no row had to learn to say "and also". No
     `GameState` field, no `EffectContext` field, no `BoardCondition` member, no
     new error code (the §8 gate still reuses `ATTACK_PREVENTED`), and no
-    `@luminous/schema` diff: `redactedAttacksOf` still folds the fact into the
+    `@colorless/schema` diff: `redactedAttacksOf` still folds the fact into the
     per-attack `playable` boolean the wire already carries, so the WIRE shape is
     byte-identical across this bump and only the DO's stored `GameState` moves.
 
@@ -519,7 +519,7 @@ export interface MatchRecord {
     check and a mismatched record is `stale`, which is how all ten previous bumps
     were handled (this repo has no migration path, by design; D165's commit is the
     worked precedent — `match.ts`, `match.test.ts`, and the engine, nothing else).
-    No `@luminous/schema` diff: `PendingStage` is not projected to the wire at all
+    No `@colorless/schema` diff: `PendingStage` is not projected to the wire at all
     — `redactGame` derives what a client needs from `phase` — and the one web
     reader of `pending` (`koParkActiveSeat`) keys on `kind` + `seat` and never on
     the new field. No new `EffectOp` inhabitant (`switchActive` has existed since

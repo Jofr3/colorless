@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import { deriveAttackEffect } from "./effects";
@@ -24,7 +24,7 @@ import {
 //    THAT POKÉMON TO EVOLVE IT. THEN, SHUFFLE YOUR DECK." THE FAMILY'S LAST
 //    SENTENCE, AND THE ROW IT CLOSES. ──
 //
-// THE POPULATION, re-queried END TO END against remote Cloudflare D1 `luminous`
+// THE POPULATION, re-queried END TO END against remote Cloudflare D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) over MCP on **2026-08-10**, with the
 // WHOLE COLUMN read on every row (D306's rule) and ALL THREE text columns swept
 // (`conventions.md`'s rule), on the part of the sentence a paraphrase cannot

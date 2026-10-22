@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
@@ -25,7 +25,7 @@ import {
 //   one byte-identical sentence.**
 //
 // ── THE CENSUS, RE-RUN AT THIS HEAD OVER ALL THREE TEXT COLUMNS ─────────────
-// Every figure re-queried against remote D1 `luminous` (3,786 rows, 2,021
+// Every figure re-queried against remote D1 `colorless` (3,786 rows, 2,021
 // `legal_standard`) on 2026-08-14 rather than inherited from the work order, and
 // every per-column split re-added against its own total.
 //

@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { abilityUsedKey, applyAction, createGame, programFor, redactGame } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
@@ -23,7 +23,7 @@ import {
 // during your opponent's last turn, you may draw 3 cards. You can't use more than
 // 1 Flip the Script Ability each turn."* — Fezandipiti ex, THREE Standard-legal
 // printings, `sv06.5-038` / `sv06.5-084` / `sv06.5-092`, whose `abilities_json`
-// is BYTE-IDENTICAL across all three (re-queried against remote D1 `luminous`,
+// is BYTE-IDENTICAL across all three (re-queried against remote D1 `colorless`,
 // 2026-08-07, all `legal_standard = 1`).
 //
 // ZERO new ops, ZERO new `BoardCondition` members, ZERO `conditionHolds` arms,

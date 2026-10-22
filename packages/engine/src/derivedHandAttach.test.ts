@@ -23,7 +23,7 @@ import {
 // CONTROL for D235's own finding.
 //
 // ✅ THE ROW'S COUNT RE-DERIVES TO THE DIGIT, AND FOR THE THIRD ROW RUNNING THE
-// WHOLE ROW DOES. Remote D1 `luminous`, `json_each` + `GLOB` (never `LIKE`),
+// WHOLE ROW DOES. Remote D1 `colorless`, `json_each` + `GLOB` (never `LIKE`),
 // grouped BY SENTENCE, over ALL THREE text columns, `legal_standard = 1`, on
 // 2026-08-06:
 //

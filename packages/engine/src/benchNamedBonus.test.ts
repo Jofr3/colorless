@@ -179,7 +179,7 @@ const TAKEN: readonly (readonly [string, number, BoardCondition])[] = [
   ],
 ];
 
-/** The ids behind the thirteen printings — remote D1 `luminous`, `$.effect`, the
+/** The ids behind the thirteen printings — remote D1 `colorless`, `$.effect`, the
     extractor verified against the 640 / 1,732 / 60,467 total FIRST, 2026-08-19.
     Every one `legal_standard = 1` and `category = 'Pokemon'`, and NONE of the nine
     sentences has a `legal_standard = 0` copy anywhere in the catalog. */

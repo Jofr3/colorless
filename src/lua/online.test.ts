@@ -4,7 +4,7 @@ import {
   makePlayer,
   type RedactedGame,
   type User,
-} from "@luminous/schema";
+} from "@colorless/schema";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeLobbyChannel } from "../test/fakeLobbyChannel";
 import { json, stubFetch } from "../test/fetchStub";
@@ -115,7 +115,7 @@ beforeEach(() => {
   localStorage.setItem("online.playerName", "Ash");
   writeText = vi.fn(async () => {});
   vi.stubGlobal("navigator", { clipboard: { writeText } });
-  vi.stubGlobal("location", { origin: "https://luminous.test" });
+  vi.stubGlobal("location", { origin: "https://colorless.test" });
 });
 afterEach(() => {
   clearCardPoolCache();
@@ -429,7 +429,7 @@ describe("Lua online adapter", () => {
     vi.advanceTimersByTime(NOTICE_MS);
     expect(header()[8]).toBe("");
     await online.command("copy\tlink");
-    expect(writeText).toHaveBeenLastCalledWith(`https://luminous.test/?lobby=${CODE}`);
+    expect(writeText).toHaveBeenLastCalledWith(`https://colorless.test/?lobby=${CODE}`);
     writeText.mockRejectedValueOnce(new Error("denied"));
     await online.command("copy\tcode");
     expect(header()[8]).toBe("Copy failed");

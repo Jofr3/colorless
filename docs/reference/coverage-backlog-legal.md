@@ -26,7 +26,7 @@
 > | **Population** | `legal_standard = 1` — **2,021 rows** over **18 sets** (of 20 in the catalog). Re-derived, unchanged from D187. |
 > | **What that predicate means** | Regulation mark **H** + **I** + unmarked Basic Energy + the one `sv04-266` anomaly |
 > | **Text units** | **2,383** = attack 1,732 · ability 376 · Trainer 264 · Special Energy 11. Re-derived, unchanged from D187. |
-> | **Measured against** | **REMOTE Cloudflare D1** `luminous`, `database_id 735f0fb5-cdc3-494d-8b97-74a8ade0124a`, queried live over MCP on **2026-08-04** |
+> | **Measured against** | **REMOTE Cloudflare D1** `colorless`, `database_id 735f0fb5-cdc3-494d-8b97-74a8ade0124a`, queried live over MCP on **2026-08-04** |
 > | **Engine seam** | repo commit **`02b839c`**, engine **0.135.0**, measured in a **detached throwaway worktree** at that commit |
 > | **Query dialect** | Every text predicate in this file uses **`GLOB`** (case-SENSITIVE) unless a row explicitly says `LIKE`. `LIKE` is case-insensitive in SQLite and has produced wrong rows in this file before — see §"What D187 got WRONG". |
 >
@@ -221,7 +221,7 @@ labelled *"the cheapest measured row on this page"* before anyone re-read D190's
 rule that a registry row's price is its LEGAL count, not its catalog count.
 
 🆕 **D291 — THE ACE SPEC POPULATION, MEASURED, AND THE ONE ROW IT LEAVES.**
-Remote D1 `luminous`, 2026-08-08, ONE query — `rarity LIKE '%ACE SPEC%'` with **no
+Remote D1 `colorless`, 2026-08-08, ONE query — `rarity LIKE '%ACE SPEC%'` with **no
 legality filter**, split by `trainer_type` and by registry membership: **33
 printings**, Item **20** (8 already carry a registry row) / Tool **8** (2) /
 Stadium **2** (1) / **Energy 3** (2). **Every one is `legal_standard = 1` and
@@ -356,7 +356,7 @@ estimate, and flagged as such.
 > re-computed from the printed sentences by `packages/engine/src/censusAtHead.test.ts`
 > on every `bun run check` — a count in a markdown cell has nothing behind it.
 
-**Measured against the REMOTE Cloudflare D1 `luminous`, `database_id
+**Measured against the REMOTE Cloudflare D1 `colorless`, `database_id
 735f0fb5-cdc3-494d-8b97-74a8ade0124a`, over MCP on 2026-08-06. Engine seam:
 branch HEAD `862e8af`, engine 0.149.0. `legal_standard = 1`.**
 
@@ -852,7 +852,7 @@ predicate from the BOARD rider before pricing either.**
 
 ### 🆕 D255's RESIDUE — the `%prevent all damage%` ABILITY column, measured to the digit
 
-**The ladder, run against the remote D1 `luminous` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`)
+**The ladder, run against the remote D1 `colorless` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`)
 on 2026-08-07 with `legal_standard = 1`, GROUPED BY SENTENCE, on ALL THREE text columns —
 and the columns are reported SEPARATELY, which is the finding.**
 
@@ -931,7 +931,7 @@ its `attackIds` half and the decomposition, whose D256 and D257 terms name the i
 
 🆕 **THE WHOLE `%prevent%` ABILITY COLUMN IS NOW MEASURED END TO END, WHICH IS WHAT
 ROWS 15-D AND 15-E ABOVE ARE.** Run BARE — `abilities_json`, `legal_standard = 1`,
-GROUPED BY SENTENCE, remote D1 `luminous`, 2026-08-07 — the family is **15 sentences /
+GROUPED BY SENTENCE, remote D1 `colorless`, 2026-08-07 — the family is **15 sentences /
 34 printings**, of which — ✅ **AS OF D260** — **31 on 14 are BUILT** (D251 5, D252 2,
 D253 3, D254 1, D255 3+2, D256 2, D257 1, D258 3+2, D259 4+1, D260 1+1). 🛑 **THE
 RESIDUE IS 3 PRINTINGS ON 1 SENTENCE AND IT IS THE TERA GROUP, WHICH IS PERMANENTLY
@@ -951,7 +951,7 @@ next.**
 ✅ **AND IT PAID OUT IN ONE SLICE: D261 BUILT `sv05-161`, AND CLOSED THE COLUMN IT
 LIVES IN WHILE IT WAS THERE.** The SPECIAL ENERGY column is now measured end to end —
 `legal_standard = 1`, `category='Energy' AND energy_type='Special'`, `effect <> ''`,
-GROUPED BY `effect`, remote D1 `luminous`, 2026-08-07 — at **7 sentences / 8
+GROUPED BY `effect`, remote D1 `colorless`, 2026-08-07 — at **7 sentences / 8
 printings**, of which — ✅ **AS OF D262** — **5 on 5 are BUILT** (D239 Spiky ×2, D261 Mist ×1 +
 Enriching ×1, D262 Neo Upper ×1). 🛑 **THE RESIDUE IS 3 PRINTINGS ON 3 SENTENCES AND
 EVERY ONE IS NAMED WITH ITS BLOCKER**, in `packages/engine/src/mistEnergy.test.ts`'s header:

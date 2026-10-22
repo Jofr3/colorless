@@ -23,7 +23,7 @@ import {
 // PRINTED SENTENCE of the op field it needed.
 //
 // ── THE CENSUS, TRANSCRIBED SO IT CAN BE RE-RUN ──────────────────────────────
-// Remote D1 `luminous` (uuid 735f0fb5-cdc3-494d-8b97-74a8ade0124a), 2026-08-06,
+// Remote D1 `colorless` (uuid 735f0fb5-cdc3-494d-8b97-74a8ade0124a), 2026-08-06,
 // `json_each(abilities_json)` + `legal_standard = 1`, GROUPED BY SENTENCE:
 //
 //   SELECT json_extract(a.value,'$.effect') AS sent, COUNT(*) n, group_concat(c.id)

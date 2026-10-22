@@ -1,4 +1,4 @@
-import { redactedDiscardScopeSchema, redactedEffectPromptSchema } from "@luminous/schema";
+import { redactedDiscardScopeSchema, redactedEffectPromptSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { DiscardScope, EffectContinuation, EffectPrompt } from "./interpreter";
 import { engineVersion } from "./index";

@@ -3,8 +3,8 @@
 // `InPlayPokemon.attackTwoFlipLockTurn: null`, `benchedTurn: null` and (on a live mark) `handAttachMark.counters: 0` on
 // every in-play body. A v44 record skips D621's and D630's steps; a v43 record takes D630's, a v42 three, a v41 all four.
 
-import { applyAction, type GameState, type InPlayPokemon, type Seat } from "@luminous/engine";
-import type { Card } from "@luminous/schema";
+import { applyAction, type GameState, type InPlayPokemon, type Seat } from "@colorless/engine";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import {
   LOCK_KEYS_MIGRATABLE_MATCH_RECORD_VERSION,

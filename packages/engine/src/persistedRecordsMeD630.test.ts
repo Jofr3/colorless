@@ -20,7 +20,7 @@
 // `cardPool` (D275) in the suite's OWN 60-card deck (D270). Attack COSTS are dropped to `[]` on the local faces
 // (no Energy is needed to drive a declaration); names, stages, HP, types, Weakness and Resistance are printed.
 
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackDamageBonus, deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState, InPlayPokemon, Seat } from "./index";

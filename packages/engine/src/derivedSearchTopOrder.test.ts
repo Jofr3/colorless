@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect, searchTopOrderProgram } from "./effects";
 import type { EffectOp } from "./effects";
@@ -25,7 +25,7 @@ import { FIXTURE_POOL, battler, deckOf, trainerCard, typedEnergy } from "./testF
 //   **4 Standard-legal printings, ONE byte-identical sentence, TWO columns.**
 //
 // ── THE CENSUS, RE-DERIVED AT THIS HEAD RATHER THAN INHERITED ───────────────
-// Every figure re-queried against remote D1 `luminous` (3,786 rows, 2,021
+// Every figure re-queried against remote D1 `colorless` (3,786 rows, 2,021
 // `legal_standard`) on 2026-08-15, in one 3-arm `UNION ALL` (D340/D341's shape;
 // the compound-SELECT cap is five arms).
 //

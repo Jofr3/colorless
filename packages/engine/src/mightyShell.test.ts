@@ -47,7 +47,7 @@ import {
 // more than one op or it is not a claim.
 //
 // ⚠️ THE CENSUS, TRANSCRIBED SO THE COUNT IS RE-DERIVABLE RATHER THAN INHERITED.
-// Run against the remote D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a) on
+// Run against the remote D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a) on
 // 2026-08-07:
 //
 //   SELECT lower(json_extract(a.value,'$.effect')) AS s, COUNT(*) n,

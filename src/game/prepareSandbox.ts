@@ -1,5 +1,5 @@
-import { createGame, DECK_SIZE, isBasicPokemon } from "@luminous/engine";
-import type { DeckCard } from "@luminous/schema";
+import { createGame, DECK_SIZE, isBasicPokemon } from "@colorless/engine";
+import type { DeckCard } from "@colorless/schema";
 import { getDeck } from "../lib/api";
 import { fetchCardPool } from "./cardPool";
 import type { LocalGameSetup } from "./localHost";

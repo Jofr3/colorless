@@ -1,5 +1,5 @@
 {
-  "name": "luminous_ui_v2",
+  "name": "colorless",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -31,8 +31,8 @@
     "deploy": "bun run build && wrangler deploy"
   },
   "dependencies": {
-    "@luminous/engine": "workspace:*",
-    "@luminous/schema": "workspace:*"
+    "@colorless/engine": "workspace:*",
+    "@colorless/schema": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

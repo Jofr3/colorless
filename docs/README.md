@@ -1,4 +1,4 @@
-# luminous_ui — Project Docs & Continuation System
+# colorless — Project Docs & Continuation System
 
 This `docs/` tree is the **durable memory of the project**. It exists so any new
 Claude Code session (or human) can resume work **without reloading the whole

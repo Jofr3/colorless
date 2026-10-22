@@ -41,7 +41,7 @@ import type {
   PokemonRef,
   Seat,
   SpecialConditions,
-} from "@luminous/engine";
+} from "@colorless/engine";
 import {
   BENCH_MAX,
   benchLimitForIds,
@@ -54,7 +54,7 @@ import {
   phaseViewOf,
   pendingMulligansOf,
   topUid,
-} from "@luminous/engine";
+} from "@colorless/engine";
 import type {
   CardCategory,
   RedactedDiscardScope,
@@ -62,7 +62,7 @@ import type {
   RedactedInPlay,
   RedactedPokemonRef,
   RedactedSide,
-} from "@luminous/schema";
+} from "@colorless/schema";
 import { cardImageUrl } from "../lib/api";
 import type {
   BattleConditions,
@@ -74,9 +74,9 @@ import type {
   PlayerId,
 } from "./board";
 
-// The hidden/empty sentinels live in @luminous/schema (the wire redactor and
+// The hidden/empty sentinels live in @colorless/schema (the wire redactor and
 // this projection share them).
-import { EMPTY_CARD_ID, EMPTY_CARD_NAME, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from "@luminous/schema";
+import { EMPTY_CARD_ID, EMPTY_CARD_NAME, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from "@colorless/schema";
 
 /** The zones BoardState cannot carry: deck size and the public discard. */
 export interface ProjectedPiles {
@@ -88,7 +88,7 @@ export interface ProjectedPiles {
   discard: CardModel[];
 }
 
-// PendingDecision (the parked KO/effect interrupt) now lives in @luminous/engine
+// PendingDecision (the parked KO/effect interrupt) now lives in @colorless/engine
 // (phaseView.ts) — shared with the P4 wire redactor — and is imported above.
 
 /** The engine's GameOutcome with seats mapped into the viewer's vocabulary. */
@@ -406,7 +406,7 @@ function asPlayerId(seat: Seat | null, viewerSeat: Seat): PlayerId | null {
 
 // PhaseView + phaseViewOf (the exhaustive Phase→view switch) + its
 // koParkActiveSeat/turnOwnerOf/preferViewer helpers now live in
-// @luminous/engine (phaseView.ts), shared with the P4 wire redactor; phaseViewOf
+// @colorless/engine (phaseView.ts), shared with the P4 wire redactor; phaseViewOf
 // is imported above.
 
 /** Viewer-map a finished game's outcome — fresh objects, nothing aliased

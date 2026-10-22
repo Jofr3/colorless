@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { alliedRetreatDiscount, opposingRetreatSurcharge } from "./continuous";
 import {
@@ -49,7 +49,7 @@ import {
 // EXACTLY ONCE in all 3,786 rows: three sentences, three printings, no reprint.
 //
 // ─────────────────────────────────────────────────────────────────────────────
-// THE SENTENCES, transcribed off the remote D1 `luminous`
+// THE SENTENCES, transcribed off the remote D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786 rows) on 2026-08-10 rather than
 // copied out of a census bullet (D306).
 // ─────────────────────────────────────────────────────────────────────────────

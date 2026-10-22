@@ -18,7 +18,7 @@
 // (D275) in the suite's OWN 60-card deck (D270). Attack COSTS and Retreat Costs are dropped to `[]` / 0 on the local
 // faces; names, stages, HP, types, Weakness and Resistance are printed. Coins are chosen by seeding `rngState`.
 
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { GameAction, GameEvent, GameState, InPlayPokemon, Seat } from "./index";

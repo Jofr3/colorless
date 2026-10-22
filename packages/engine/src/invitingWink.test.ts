@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import { applyAction, createGame } from "./index";
@@ -23,7 +23,7 @@ import {
 //   your Pokémon during your turn, you may have your opponent reveal their hand
 //   and you put any number of Basic Pokémon you find there onto their Bench."
 //   **3 legal printings on ONE byte-identical sentence** — the whole population,
-//   remote D1 `luminous` 2026-08-15, `json_each(abilities_json)` keyed on
+//   remote D1 `colorless` 2026-08-15, `json_each(abilities_json)` keyed on
 //   `$.effect` (NOT `$.text` — the false-zero key) and grouped so the unit is a
 //   SENTENCE.
 //

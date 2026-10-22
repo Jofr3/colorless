@@ -29,7 +29,7 @@ interface MarkCensus {
   disagreements: number;
 }
 
-/** Measured 2026-08-04 against the live catalog D1 (`luminous`, 735f0fb5-…):
+/** Measured 2026-08-04 against the live catalog D1 (735f0fb5-…, the pre-rename database):
     `SELECT COALESCE(regulation_mark,'(none)'), COUNT(*), SUM(legal_standard),
      SUM(legal_expanded) FROM cards GROUP BY 1` — 3,786 rows over 20 sets. */
 const CENSUS: MarkCensus[] = [

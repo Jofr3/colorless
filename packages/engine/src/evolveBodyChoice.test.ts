@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import { deriveAttackEffect, splitAttackGateClause } from "./effects";
@@ -21,7 +21,7 @@ import {
 //    PUT IT ONTO THAT POKÉMON TO EVOLVE IT." THE BODY-CHOICE HALF OF D307's
 //    FAMILY — AND THIS IS THE ONE THAT REALLY DOES OWE A SECOND PARK. ──
 //
-// THE POPULATION, re-queried END TO END against remote Cloudflare D1 `luminous`
+// THE POPULATION, re-queried END TO END against remote Cloudflare D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) over MCP on **2026-08-10**, with the
 // WHOLE COLUMN read on every row (D306's rule — every arm, `damage` and `cost`
 // included):

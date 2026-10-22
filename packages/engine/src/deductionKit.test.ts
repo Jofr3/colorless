@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import type { EffectOp } from "./effects";
 import { applyAction, createGame, engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
@@ -17,7 +17,7 @@ import { FIXTURE_POOL, battler, deckOf, expectErr, trainerCard, typedEnergy } fr
 //    shuffle them and put them on the bottom of your deck."
 //   Item, mark H, **1 Standard-legal printing of 1**, `effect` (125 chars).
 //
-// ── THE FAMILY CENSUS, RE-DERIVED FROM REMOTE D1 `luminous` (2026-08-15) ────
+// ── THE FAMILY CENSUS, RE-DERIVED FROM REMOTE D1 `colorless` (2026-08-15) ────
 // The resume point flagged the inherited figure as unverified and it needed the
 // flag. `instr(<col>,'in any order') > 0` over ALL THREE text columns:
 //

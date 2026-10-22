@@ -1,4 +1,4 @@
-import { healthResponseSchema } from "@luminous/schema";
+import { healthResponseSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import app from "./index";
 

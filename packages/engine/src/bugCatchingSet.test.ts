@@ -23,7 +23,7 @@ import {
 //   are the whole population of the sentence.**
 //
 // ── THE CENSUS, AT TWO WIDTHS AND OVER ALL THREE TEXT COLUMNS ──────────────
-// Re-run against the remote D1 `luminous` at THIS head (2026-08-14), with every
+// Re-run against the remote D1 `colorless` at THIS head (2026-08-14), with every
 // per-column split re-added against its own total.
 //
 //   (a) `instr(<col>,'up to 2 in any combination of') > 0` — the sentence:

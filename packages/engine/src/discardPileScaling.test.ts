@@ -1,4 +1,4 @@
-import { HIDDEN_CARD_ID } from "@luminous/schema";
+import { HIDDEN_CARD_ID } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {

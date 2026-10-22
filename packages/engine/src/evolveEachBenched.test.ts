@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import { deriveAttackEffect, splitAttackGateClause } from "./effects";
@@ -21,7 +21,7 @@ import {
 //    EVOLVES FROM THAT POKÉMON AND PUT IT ONTO THAT POKÉMON TO EVOLVE IT." THE
 //    ITERATED HALF OF D307's FAMILY — AND IT NEEDS NO PARK OF ITS OWN. ──
 //
-// THE POPULATION, re-queried END TO END against remote Cloudflare D1 `luminous`
+// THE POPULATION, re-queried END TO END against remote Cloudflare D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) over MCP on **2026-08-09**:
 //
 //   SELECT id, name, stage, evolve_from, legal_standard, attacks_json

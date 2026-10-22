@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
@@ -26,7 +26,7 @@ import {
 //   **6 Standard-legal printings on 2 sentences over 2 text columns.**
 //
 // ── THE CENSUS, RE-DERIVED AT THIS HEAD RATHER THAN QUOTED ──────────────────
-// Remote D1 `luminous` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), 2026-08-15, all
+// Remote D1 `colorless` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), 2026-08-15, all
 // THREE text columns unioned and grouped through `json_each` so the unit is a
 // SENTENCE and not a printing (a `COUNT(DISTINCT <json column>)` is always a
 // printing count — D347's unit defect, avoided by construction). The ability key

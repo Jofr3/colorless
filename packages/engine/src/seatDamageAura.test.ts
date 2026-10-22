@@ -29,7 +29,7 @@ import {
 // count re-derives at 3 on 1 sentence for the bare version and 6 on 1 for the
 // Future version … `BUILT.ability` 100 → 109 if both land."*
 //
-// The query, re-run against the remote D1 `luminous`
+// The query, re-run against the remote D1 `colorless`
 // (735f0fb5-cdc3-494d-8b97-74a8ade0124a) over MCP on 2026-08-06, GROUPED BY
 // SENTENCE and swept across ALL THREE text columns (`abilities_json`,
 // `attacks_json`, `effect` — D205's rule, and here it earns its keep):

@@ -1,4 +1,4 @@
-import { HIDDEN_CARD_ID } from "@luminous/schema";
+import { HIDDEN_CARD_ID } from "@colorless/schema";
 import manifest from "../package.json" with { type: "json" };
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";

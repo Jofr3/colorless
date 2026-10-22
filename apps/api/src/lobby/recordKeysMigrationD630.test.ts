@@ -4,8 +4,8 @@
 // A v42 record takes D621's step first, a v41 record all three. Read as-is, a v43 side's `null` reduction is
 // iterated by this build's `seatDamageReduction`: the first damaging hit throws.
 
-import { applyAction, type GameState, type InPlayPokemon, type Seat } from "@luminous/engine";
-import type { Card } from "@luminous/schema";
+import { applyAction, type GameState, type InPlayPokemon, type Seat } from "@colorless/engine";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import {
   loadMatchRecord,

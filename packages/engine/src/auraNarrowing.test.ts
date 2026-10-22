@@ -29,7 +29,7 @@ import {
 // 13 → 10; no `MATCH_RECORD_VERSION` bump"*, and flagged *"three sentences, three
 // singles"* as the clause most likely to lose.
 //
-// The query, re-run against the remote D1 `luminous`
+// The query, re-run against the remote D1 `colorless`
 // (735f0fb5-cdc3-494d-8b97-74a8ade0124a) over MCP on 2026-08-06, GROUPED BY
 // SENTENCE and swept across ALL THREE text columns (`abilities_json`,
 // `attacks_json`, `effect`) with `legal_standard = 1`:

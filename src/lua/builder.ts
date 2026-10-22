@@ -1,5 +1,5 @@
 import * as api from "../lib/api";
-import { MAX_DECK_CARD_ENTRIES, type CatalogFacets } from "@luminous/schema";
+import { MAX_DECK_CARD_ENTRIES, type CatalogFacets } from "@colorless/schema";
 import { encodeFields } from "./account";
 import { DEFAULT_FILTERS, type Filters } from "../decks/poolFilter";
 import { formatById, ENERGY_TYPES, type BuilderCard } from "../decks/cards";

@@ -9,7 +9,7 @@
 // TypeScript *types*, which are erased at runtime and so cannot hold that
 // property. Therefore the SDK is used for TRANSPORT ONLY and every method here
 // returns `unknown`: the raw, unvalidated payload, exactly as the API served
-// it. @luminous/schema's Zod schemas remain the validation boundary, one layer
+// it. @colorless/schema's Zod schemas remain the validation boundary, one layer
 // up in the CLI. `unknown` is the seam's whole point — it makes bypassing the
 // boundary a type error rather than a matter of discipline.
 //

@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { matchesFilter } from "./cards";
 import { deriveAttackCopy } from "./effects";
@@ -29,7 +29,7 @@ import {
 // ordered to VERIFY it rather than inherit it — because D200's list named
 // entirely different cards on six of ten rows and its "every id asserted
 // unbuilt" guard passed anyway. Every id and every count D205 relies on was
-// re-run against the remote D1 `luminous`
+// re-run against the remote D1 `colorless`
 // (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786 rows / 20 sets, 2,021
 // `legal_standard = 1`) on 2026-08-04, ⚠️ **with `GLOB` and never `LIKE`**.
 //

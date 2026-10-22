@@ -4,7 +4,7 @@ import {
   type GameEvent,
   type GameState,
   type Seat,
-} from "@luminous/engine";
+} from "@colorless/engine";
 
 export interface CoinFlipBatch {
   id: number;

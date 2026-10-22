@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { firstTurnAttackBanned, passivesOf } from "./continuous";
 import type { GameState, InPlayPokemon, Seat } from "./index";
@@ -26,7 +26,7 @@ import {
 // The handoff sent this slice to find a SECOND CONSUMER of
 // `BoardCondition.yourFirstTurn` (D275), on the reasoning that D275 had measured
 // the phrase only far enough to find its own row. The ladder was run against the
-// remote D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a, 3,786 rows) on
+// remote D1 `colorless` (735f0fb5-cdc3-494d-8b97-74a8ade0124a, 3,786 rows) on
 // 2026-08-08, at `legal_standard = 1`, over ALL THREE text columns.
 //
 //   RUNG 1 — GLOB '*during your first turn*'

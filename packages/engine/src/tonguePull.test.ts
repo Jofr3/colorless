@@ -1,5 +1,5 @@
 import manifest from "../package.json" with { type: "json" };
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
@@ -29,7 +29,7 @@ import { BENCH_MAX, otherSeat } from "./types";
 // THE SENTENCE. *"Your opponent reveals their hand. Put up to 2 Basic Pokémon you
 // find there onto your opponent's Bench."* — Lickitung, TWO Standard-legal
 // printings, `sv05-124` and `sv05-180`, whose `attacks_json` is BYTE-IDENTICAL
-// (remote D1 `luminous`, re-queried 2026-08-09 in one flat `WHERE id IN (…)`:
+// (remote D1 `colorless`, re-queried 2026-08-09 in one flat `WHERE id IN (…)`:
 // both `legal_standard = 1`, both regulation mark **H**, both **Basic**, both
 // carrying Tongue Pull at **attack index 0** with cost **{C}** and "Strength"
 // {C}{C}{C} for 50 at index 1, and both blobs 236 bytes of identical text).

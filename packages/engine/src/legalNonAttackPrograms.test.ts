@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { matchesFilter, topUid } from "./cards";
 import { programPlayable } from "./cardplay";
@@ -50,7 +50,7 @@ import {
 // took that census's list of 7 candidates, built 3 and dropped 4, and exhausted
 // it.
 //
-// THIS SLICE RE-CENSUSED THE WHOLE 651 against the remote D1 `luminous`
+// THIS SLICE RE-CENSUSED THE WHOLE 651 against the remote D1 `colorless`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`; 3,786 rows / 20 sets, of which 2,021
 // carry `legal_standard = 1`) on 2026-08-04: every distinct sentence in
 // `abilities_json` and in `effect`, grouped by text, ranked by legal printings,
@@ -91,7 +91,7 @@ import {
     the thing that reddens and prose is not. **A COUNT IN A COMMENT IS A COUNT THAT
     WILL BE WRONG**; the two `expect` calls at the foot of this file are the only
     honest place for one, and they are re-added from the rows rather than
-    incremented. Each row's `ids` were re-queried against the remote D1 `luminous`
+    incremented. Each row's `ids` were re-queried against the remote D1 `colorless`
     on the day the row landed, by the rule this block states. */
 const LANDED = [
   {
@@ -698,7 +698,7 @@ const DROPPED: { sentence: string; ids: string[]; legal: number; needs: string }
   // ⚠️ **AND IT UNDER-COUNTED ITS OWN FAMILY IN A WAY THIS TABLE STRUCTURALLY
   // CANNOT SEE — the same blindness the Rapid Vernier row above records, at the
   // other end.** This table is keyed by SENTENCE. The ORTHOGONAL width (`%less for
-  // each%`, 12 legal, remote D1 `luminous` 2026-08-11) returns 6 built Bloodmoon
+  // each%`, 12 legal, remote D1 `colorless` 2026-08-11) returns 6 built Bloodmoon
   // Ursaluna ex + these 4 + **Incineroar ex `sv05-034`/`sv05-187` "Hustle Play"**,
   // a sibling sentence on the SAME seam that was in no row of this table, no
   // `needs` string and no session log — `git grep sv05-034 -- packages/` returned
@@ -1170,7 +1170,7 @@ const LOCAL_CARDS: Record<string, Card> = {
     "Once during your turn, you may attach a Basic Energy card from your discard pile to 1 of your Pokémon.",
   ),
   // ── D263 — the ability half of backlog row 9. Each sentence VERBATIM off the
-  //    remote D1 `luminous` (2026-08-07), so a later census can see the text. ──
+  //    remote D1 `colorless` (2026-08-07), so a later census can see the text. ──
   "fix-chargingup": abilityBody(
     "fix-chargingup",
     "Charging Up",
@@ -1327,7 +1327,7 @@ const LOCAL_CARDS: Record<string, Card> = {
     retreat: 1,
   }),
   // ── D265 — the HP-THRESHOLD rider (`basicPokemon.maxHp`), on TWO ops. Each
-  //    sentence VERBATIM off the remote D1 `luminous` (2026-08-07). ──
+  //    sentence VERBATIM off the remote D1 `colorless` (2026-08-07). ──
   "fix-buddybuddypoffin": trainerCard(
     "fix-buddybuddypoffin",
     "Item",
@@ -2533,7 +2533,7 @@ describe("Inferno Fandango / Seething Spirit — the attachEnergyFrom rows", () 
 //
 // The `%attach%…%discard pile%` ladder run at D263 (all three text columns,
 // `json_each`, case-insensitive, `legal_standard = 1`, GROUPED BY SENTENCE,
-// remote D1 `luminous`, 2026-08-07) returns **38 printings on 24 sentences**:
+// remote D1 `colorless`, 2026-08-07) returns **38 printings on 24 sentences**:
 // ability 14/7, attack 17/12, effect 7/5. 🛑 **RUNG 1 — the resume point's own
 // `%from your discard pile%attach%` — RETURNS ZERO ROWS**, because this corpus
 // prints the verb FIRST every single time ("Attach … from your discard pile"),

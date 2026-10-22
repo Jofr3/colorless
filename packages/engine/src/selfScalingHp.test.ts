@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { effectiveMaxHp } from "./continuous";
 import { applyAction, createGame, programFor } from "./index";
@@ -39,7 +39,7 @@ import {
 //
 // (b) THE CENSUS **AND ITS CLOSURE QUERY**, re-run at HEAD rather than copied
 //     from D324's published enumeration — which is exactly the artefact D310/
-//     D316/D320 say goes stale silently. Remote D1 `luminous`
+//     D316/D320 say goes stale silently. Remote D1 `colorless`
 //     (735f0fb5-cdc3-494d-8b97-74a8ade0124a, 3,786 rows, 2,021 `legal_standard`),
 //     2026-08-11:
 //

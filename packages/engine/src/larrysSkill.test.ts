@@ -26,7 +26,7 @@ import {
 //      Then, shuffle your deck."
 //
 // ── THE CENSUS, RE-RUN AT THIS HEAD AND WIDENED PAST THE INHERITED LITERAL ──
-// Every figure re-queried against remote D1 `luminous` (3,786 rows, 2,021
+// Every figure re-queried against remote D1 `colorless` (3,786 rows, 2,021
 // `legal_standard`) on 2026-08-14 rather than inherited, and every split
 // re-added against its own total.
 //

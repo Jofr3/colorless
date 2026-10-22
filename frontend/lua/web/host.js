@@ -43,13 +43,13 @@ function writeMailbox(name, text) {
   runtime.FS_createDataFile("/", name, text, true, true);
   mailboxFiles.add(name);
 }
-document.addEventListener("luminous:account-state", (event) => {
+document.addEventListener("colorless:account-state", (event) => {
   accountSnapshot = event.detail;
   writeMailbox("__account.txt", accountSnapshot);
   if (accountSnapshot.split("\t")[1] !== "authenticated") finishName(true);
   if (accountSnapshot.split("\t")[1] === "authenticated") clearAuthInputs();
 });
-document.addEventListener("luminous:account-ready", () => {
+document.addEventListener("colorless:account-ready", () => {
   accountReady = true;
   void prepareTransitionArt();
   for (const command of pendingLibraryCommands.splice(0)) libraryCommand(command);
@@ -65,7 +65,7 @@ function accountCommand(command) {
     return;
   }
   accountRefreshPending = false;
-  document.dispatchEvent(new CustomEvent("luminous:account-command", { detail: command }));
+  document.dispatchEvent(new CustomEvent("colorless:account-command", { detail: command }));
 }
 // A native text-input proxy gives the Lua field IME, paste, selection and a
 // mobile keyboard. The visible field and caret are drawn in the Lua canvas.
@@ -224,7 +224,7 @@ function authCommand(command) {
   } else if (action === "submit") {
     finishAuthInput();
     document.dispatchEvent(
-      new CustomEvent("luminous:authenticate", {
+      new CustomEvent("colorless:authenticate", {
         detail: {
           mode: authMode,
           email: authInputs.email.value,
@@ -297,9 +297,9 @@ function validatedPreferences(value) {
   return result;
 }
 try {
-  const stored = JSON.parse(localStorage.getItem("luminous.lua.preferences") || "null");
+  const stored = JSON.parse(localStorage.getItem("colorless.lua.preferences") || "null");
   if (stored?.version === 1) preferences = validatedPreferences(stored);
-  else preferences.muted = localStorage.getItem("luminous.lua.muted") === "1" ? 1 : 0;
+  else preferences.muted = localStorage.getItem("colorless.lua.muted") === "1" ? 1 : 0;
 } catch (_) {}
 
 function fail(message) {
@@ -338,34 +338,34 @@ globalThis.Module = {
     },
   ],
   print: (message) => {
-    if (message === "LUMINOUS:ready") {
+    if (message === "COLORLESS:ready") {
       updateLoadingProgress(100);
       ready = true;
       document.getElementById("loading").style.display = "none";
       document.title = pageTitle();
       canvas.focus({ preventScroll: true });
-    } else if (message.startsWith("LUMINOUS:transition-art:")) {
-      const [, action, token] = message.match(/^LUMINOUS:transition-art:(used|invalid):(\d+)$/) || [];
+    } else if (message.startsWith("COLORLESS:transition-art:")) {
+      const [, action, token] = message.match(/^COLORLESS:transition-art:(used|invalid):(\d+)$/) || [];
       if (token) void consumeTransitionArt(Number(token), action === "invalid");
-    } else if (message.startsWith("LUMINOUS:transition:")) {
+    } else if (message.startsWith("COLORLESS:transition:")) {
       transitionOpen = message.endsWith(":open");
       syncModalAccessibility();
-    } else if (message.startsWith("LUMINOUS:page:")) {
-      setPage(message.slice("LUMINOUS:page:".length));
-    } else if (message.startsWith("LUMINOUS:builder:")) {
-      builderCommand(message.slice("LUMINOUS:builder:".length));
-    } else if (message.startsWith("LUMINOUS:simulator:")) {
-      simulatorCommand(message.slice("LUMINOUS:simulator:".length));
-    } else if (message.startsWith("LUMINOUS:online:")) {
-      onlineCommand(message.slice("LUMINOUS:online:".length));
-    } else if (message.startsWith("LUMINOUS:sandbox:")) {
-      sandboxCommand(message.slice("LUMINOUS:sandbox:".length));
-    } else if (message.startsWith("LUMINOUS:library:")) {
-      libraryCommand(message.slice("LUMINOUS:library:".length));
-    } else if (message.startsWith("LUMINOUS:auth:")) {
-      authCommand(message.slice("LUMINOUS:auth:".length));
-    } else if (message.startsWith("LUMINOUS:account:")) {
-      const command = message.slice("LUMINOUS:account:".length);
+    } else if (message.startsWith("COLORLESS:page:")) {
+      setPage(message.slice("COLORLESS:page:".length));
+    } else if (message.startsWith("COLORLESS:builder:")) {
+      builderCommand(message.slice("COLORLESS:builder:".length));
+    } else if (message.startsWith("COLORLESS:simulator:")) {
+      simulatorCommand(message.slice("COLORLESS:simulator:".length));
+    } else if (message.startsWith("COLORLESS:online:")) {
+      onlineCommand(message.slice("COLORLESS:online:".length));
+    } else if (message.startsWith("COLORLESS:sandbox:")) {
+      sandboxCommand(message.slice("COLORLESS:sandbox:".length));
+    } else if (message.startsWith("COLORLESS:library:")) {
+      libraryCommand(message.slice("COLORLESS:library:".length));
+    } else if (message.startsWith("COLORLESS:auth:")) {
+      authCommand(message.slice("COLORLESS:auth:".length));
+    } else if (message.startsWith("COLORLESS:account:")) {
+      const command = message.slice("COLORLESS:account:".length);
       if (command.startsWith("edit\t")) {
         originalName = decodeURIComponent(command.slice(5));
         nameInput.value = originalName;
@@ -376,24 +376,24 @@ globalThis.Module = {
         publishName();
       } else if (command === "finish-edit") finishName();
       else accountCommand(command);
-    } else if (message.startsWith("LUMINOUS:announce:")) {
+    } else if (message.startsWith("COLORLESS:announce:")) {
       document.getElementById("announcement").textContent = message.slice(
-        "LUMINOUS:announce:".length,
+        "COLORLESS:announce:".length,
       );
-    } else if (message.startsWith("LUMINOUS:preferences:")) {
-      const values = message.slice("LUMINOUS:preferences:".length).split(" ").map(Number);
+    } else if (message.startsWith("COLORLESS:preferences:")) {
+      const values = message.slice("COLORLESS:preferences:".length).split(" ").map(Number);
       if (values.length !== preferenceKeys.length || !values.every(Number.isFinite)) return;
       preferences = validatedPreferences(
         Object.fromEntries(preferenceKeys.map((key, i) => [key, values[i]])),
       );
       try {
         localStorage.setItem(
-          "luminous.lua.preferences",
+          "colorless.lua.preferences",
           JSON.stringify({ version: 1, ...preferences }),
         );
-        localStorage.setItem("luminous.lua.muted", String(preferences.muted));
+        localStorage.setItem("colorless.lua.muted", String(preferences.muted));
       } catch (_) {}
-    } else if (message === "LUMINOUS:settings:open" || message === "LUMINOUS:settings:closed") {
+    } else if (message === "COLORLESS:settings:open" || message === "COLORLESS:settings:closed") {
       settingsOpen = message.endsWith(":open");
       if (!settingsOpen) {
         finishName();
@@ -538,12 +538,12 @@ function syncModalAccessibility() {
   }
 }
 function pageTitle() {
-  return `Luminous — ${currentPage === "simulator" ? "Simulator" : currentPage === "match" ? "Online match" : currentPage === "sandbox" ? "Sandbox" : currentPage === "builder" ? "Deck builder" : currentPage === "online" ? "Online" : libraryPage ? "Decks" : "Home"}`;
+  return `Colorless — ${currentPage === "simulator" ? "Simulator" : currentPage === "match" ? "Online match" : currentPage === "sandbox" ? "Sandbox" : currentPage === "builder" ? "Deck builder" : currentPage === "online" ? "Online" : libraryPage ? "Decks" : "Home"}`;
 }
 function canvasLabel() {
   return currentPage === "simulator" ? "Sandbox game table. Drag cards to play. Tab selects controls and cards; Enter activates. Escape opens options." : currentPage === "match" ? "Online game table. Drag cards to play. Tab selects controls and cards; Enter activates. Escape opens options." : currentPage === "sandbox" ? "Sandbox deck selection. Tab or arrows choose controls. Enter selects a deck or activates a button. Escape returns home." : currentPage === "online" ? "Online lobby. Tab or arrows choose controls; left and right switch tabs. Enter activates. Escape goes back." : libraryPage
     ? "Deck library. Tab or arrows choose controls and cards. Enter opens. Escape returns home."
-    : "Luminous main menu. Use Tab or arrow keys to choose; Enter to open. M toggles sound.";
+    : "Colorless main menu. Use Tab or arrow keys to choose; Enter to open. M toggles sound.";
 }
 function syncPage() {
   syncModalAccessibility();
@@ -556,7 +556,7 @@ function setPage(page, push = true, id = "", saved = false) {
     finishBuilderInput();
     const previous=new URL(location.href);previous.searchParams.set("page","builder");previous.searchParams.set("deck",pageId);
     history.replaceState(null,"",previous);
-    document.dispatchEvent(new CustomEvent("luminous:builder-leave",{detail:()=>setPage(page,push,id,true)}));return;
+    document.dispatchEvent(new CustomEvent("colorless:builder-leave",{detail:()=>setPage(page,push,id,true)}));return;
   }
   finishLibraryInput(); finishBuilderInput();
   currentPage = ["decks","builder","sandbox","simulator","online","match"].includes(page) ? page : "home";
@@ -585,7 +585,7 @@ document.getElementById("online-link").addEventListener("click", event => {
   if (!ready) return;
   event.preventDefault(); setPage("online"); canvas.focus({preventScroll:true});
 });
-document.addEventListener("luminous:library-state", event => writeMailbox("__library.txt", event.detail));
+document.addEventListener("colorless:library-state", event => writeMailbox("__library.txt", event.detail));
 function libraryCommand(command, owner = "library") {
   if (!accountReady) { pendingLibraryCommands.push(command); return; }
   const [action, field, value] = command.split("\t").map(decodeURIComponent);
@@ -609,7 +609,7 @@ function libraryCommand(command, owner = "library") {
     else libraryInput.select();
     publishLibraryInput();
   } else if (action === "finish-input") finishLibraryInput();
-  else document.dispatchEvent(new CustomEvent("luminous:library-command", {detail:command}));
+  else document.dispatchEvent(new CustomEvent("colorless:library-command", {detail:command}));
 }
 const libraryInput = document.createElement("input");
 libraryInput.className = "sr-only";
@@ -661,12 +661,12 @@ for (const type of ["keydown", "keyup", "keypress"]) window.addEventListener(typ
 }, true);
 
 // Deck builder: browser-native text/clipboard and artwork transport only.
-document.addEventListener("luminous:route", e => setPage(e.detail.page, !e.detail.replace, e.detail.id || ""));
-document.addEventListener("luminous:builder-state", e => {
+document.addEventListener("colorless:route", e => setPage(e.detail.page, !e.detail.replace, e.detail.id || ""));
+document.addEventListener("colorless:builder-state", e => {
   writeMailbox("__builder.txt", e.detail);
   if(currentPage === "builder") {
     const f=e.detail.split("\n")[0].split("\t").map(decodeURIComponent);
-    document.title=`Luminous — ${f[2] || "Deck builder"}`;
+    document.title=`Colorless — ${f[2] || "Deck builder"}`;
     canvas.setAttribute("aria-label", `Deck builder. ${f[2]}. ${f[10]} cards. Tab selects controls. Enter inspects a card. Drag a card into your deck or use Add in its dialog.`);
   }
 });
@@ -681,7 +681,7 @@ function publishBuilderInput(action="input",field=builderField) {
   else if(field==="optionQuery") dispatchBuilder("option-query",builderInput.value);
   else if(field!=="transfer") dispatchBuilder("filter",field,builderInput.value);
 }
-function dispatchBuilder(...args) {document.dispatchEvent(new CustomEvent("luminous:builder-command",{detail:args.map(encodeURIComponent).join("\t")}));}
+function dispatchBuilder(...args) {document.dispatchEvent(new CustomEvent("colorless:builder-command",{detail:args.map(encodeURIComponent).join("\t")}));}
 function finishBuilderInput(cancel=false) {
   if(!builderField)return;
   const field=builderField;builderField="";
@@ -699,7 +699,7 @@ function builderCommand(command) {
   } else if(action==="finish-input")finishBuilderInput();
   else if(action==="copy") {
     navigator.clipboard.writeText(field).then(()=>writeMailbox("__builder_clipboard.txt",`${Date.now()}\tCopied decklist.`),()=>writeMailbox("__builder_clipboard.txt",`${Date.now()}\tCopy failed. Select the decklist and use your copy shortcut.`));
-  } else document.dispatchEvent(new CustomEvent("luminous:builder-command",{detail:command}));
+  } else document.dispatchEvent(new CustomEvent("colorless:builder-command",{detail:command}));
 }
 builderInput.addEventListener("input",()=>publishBuilderInput());
 builderInput.addEventListener("select",()=>{if(builderField)publishBuilderInput();});
@@ -719,7 +719,7 @@ function publishArt(){writeMailbox("__builder_art.txt",[++artRevision,...[...art
 // Lua acknowledges it only after retaining the image and border on the GPU.
 let transitionArt=null, transitionArtSerial=0, transitionPreparing=null, transitionConsuming=false;
 async function prepareTransitionArt() {
-  const cache=window.luminousArtworkCache;
+  const cache=window.colorlessArtworkCache;
   if(!runtime||!cache||transitionArt||transitionConsuming)return;
   if(transitionPreparing)return transitionPreparing;
   transitionPreparing=(async()=>{
@@ -738,7 +738,7 @@ async function consumeTransitionArt(token,invalid) {
   const selected=transitionArt;transitionArt=null;
   writeMailbox("__transition_art.txt","");
   try{runtime.FS_unlink(`/${selected.path}`);}catch{}
-  const cache=window.luminousArtworkCache;
+  const cache=window.colorlessArtworkCache;
   try {
     if(invalid)await cache?.remove(selected.id);
     else await cache?.markShown(selected.id);
@@ -748,7 +748,7 @@ async function consumeTransitionArt(token,invalid) {
 async function loadArt(card) {
   artActive++;artPending.add(card.id);
   try {
-    const cache=window.luminousArtworkCache;
+    const cache=window.colorlessArtworkCache;
     let blob=await cache?.get(card.id);
     if(!blob){
       const response=await fetch(card.url);if(!response.ok)throw Error("art");
@@ -775,15 +775,15 @@ function pumpArt(){
     if(!artCache.has(card.id)&&!artPending.has(card.id)&&Date.now()-(artFailed.get(card.id)||0)>30000)void loadArt(card);
   }
 }
-document.addEventListener("luminous:builder-images",e=>{wantedArt=e.detail;for(const c of wantedArt){if(artCache.has(c.id)){const path=artCache.get(c.id);artCache.delete(c.id);artCache.set(c.id,path);}}pumpArt();});
+document.addEventListener("colorless:builder-images",e=>{wantedArt=e.detail;for(const c of wantedArt){if(artCache.has(c.id)){const path=artCache.get(c.id);artCache.delete(c.id);artCache.set(c.id,path);}}pumpArt();});
 
 // Sandbox API transport. The chooser and its controls are rendered in Lua.
-document.addEventListener("luminous:sandbox-state", event => writeMailbox("__sandbox.txt", event.detail));
+document.addEventListener("colorless:sandbox-state", event => writeMailbox("__sandbox.txt", event.detail));
 function sandboxCommand(command) {
   if (!accountReady) { pendingSandboxCommands.push(command); return; }
   const action = command.split("\t")[0];
   if (action === "input" || action === "finish-input") { libraryCommand(command, "sandbox"); return; }
-  document.dispatchEvent(new CustomEvent("luminous:sandbox-command", {detail: command}));
+  document.dispatchEvent(new CustomEvent("colorless:sandbox-command", {detail: command}));
 }
 document.getElementById("sandbox-link").addEventListener("click", event => {
   if (!ready) return;
@@ -791,17 +791,17 @@ document.getElementById("sandbox-link").addEventListener("click", event => {
 });
 
 // Full Lua game page; it shares the existing image cache and local engine host.
-document.addEventListener("luminous:simulator-state", event => writeMailbox("__simulator.txt", event.detail));
+document.addEventListener("colorless:simulator-state", event => writeMailbox("__simulator.txt", event.detail));
 function simulatorCommand(command) {
   if (!accountReady) { pendingSimulatorCommands.push(command); return; }
-  document.dispatchEvent(new CustomEvent("luminous:simulator-command", {detail: command}));
+  document.dispatchEvent(new CustomEvent("colorless:simulator-command", {detail: command}));
 }
 
 // Online lobby transport. The modal is Lua; LuaOnline (online.ts) owns the socket.
-document.addEventListener("luminous:online-state", event => writeMailbox("__online.txt", event.detail));
+document.addEventListener("colorless:online-state", event => writeMailbox("__online.txt", event.detail));
 function onlineCommand(command) {
   if (!accountReady) { pendingOnlineCommands.push(command); return; }
   const action = command.split("\t")[0];
   if (action === "input" || action === "finish-input") { libraryCommand(command, "online"); return; }
-  document.dispatchEvent(new CustomEvent("luminous:online-command", {detail: command}));
+  document.dispatchEvent(new CustomEvent("colorless:online-command", {detail: command}));
 }

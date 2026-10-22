@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame, programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
@@ -36,7 +36,7 @@ import {
 // read the price as high. Driven in §5.
 //
 // ── THE CENSUS, RE-RUN AT THIS HEAD OVER ALL THREE COLUMNS ──────────────────
-// Remote D1 `luminous` (`735f0fb5-…`, 3,786 rows / 2,021 `legal_standard`),
+// Remote D1 `colorless` (`735f0fb5-…`, 3,786 rows / 2,021 `legal_standard`),
 // 2026-08-17, keyed on **`$.effect`** in BOTH JSON columns, and **every cut
 // controlled against a raw `LIKE` on the same column** — the control agreed on
 // every one, so no false zero is hiding here (D355 paid this; it is not skipped

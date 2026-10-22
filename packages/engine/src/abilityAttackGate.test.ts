@@ -27,7 +27,7 @@ import {
 //
 // The row (`coverage-backlog-legal.md`) says **18 = 0 · 18 · 0**, "the ABILITY
 // column's three biggest reprint groups — three registry programs, six legal
-// printings each". The query, re-run against the remote D1 `luminous`
+// printings each". The query, re-run against the remote D1 `colorless`
 // (735f0fb5-cdc3-494d-8b97-74a8ade0124a) on 2026-08-06, GROUPED BY SENTENCE:
 //
 //   SELECT COUNT(*) AS printings, json_extract(j.value,'$.effect') AS t,

@@ -1,4 +1,4 @@
-import type { Card } from "@luminous/schema";
+import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import {
   attackReaderSurface,
@@ -49,7 +49,7 @@ import {
 // D281's handoff asked for one number before any design: *how many legal attack
 // units carry a leading clause of any kind*, "because that number is the entire
 // case for doing it generically", and predicted it is LARGER than 13. **IT IS
-// NOT. IT IS EXACTLY 13.** Remote D1 `luminous`, 2026-08-08, `json_each` over
+// NOT. IT IS EXACTLY 13.** Remote D1 `colorless`, 2026-08-08, `json_each` over
 // `attacks_json`, five rungs and what each ACTUALLY returned:
 //
 //   1,732  legal attack units                        (the whole column)

@@ -27,7 +27,7 @@ import {
 //
 // 🛑 THE ROW PRICED IT AT **25 LEGAL PRINTINGS / ~15 ARMS**, AND BOTH HALVES ARE
 // WRONG IN THE SAME DIRECTION D230's WERE NOT. Re-derived (never inherited)
-// against the remote D1 `luminous` — 3,786 rows / 20 sets, 2,021
+// against the remote D1 `colorless` — 3,786 rows / 20 sets, 2,021
 // `legal_standard = 1` — on 2026-08-06 over `json_each` + `GLOB
 // '*[Ss]earch your deck*'`, all three text columns, and **grouped BY SENTENCE
 // before anything was priced**: the ATTACK column holds **42 legal printings over

@@ -1,7 +1,7 @@
-// The luminous api — a Hono app deployed as a Cloudflare Worker.
+// The colorless api — a Hono app deployed as a Cloudflare Worker.
 // Spec: docs/workstreams/backend-data.md (§6 is the target API surface).
 
-import { type HealthResponse, healthResponseSchema } from "@luminous/schema";
+import { type HealthResponse, healthResponseSchema } from "@colorless/schema";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { assetsRoutes } from "./assets/routes";

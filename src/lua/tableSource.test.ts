@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { redactGame } from "@luminous/engine";
+import { redactGame } from "@colorless/engine";
 import { ALL_BASIC_DECK, driveSetup, mustCreate } from "../../packages/engine/src/testFixtures";
 import { LuaSimulator } from "./simulator";
 import { LocalTableSource, type TableSource } from "./tableSource";

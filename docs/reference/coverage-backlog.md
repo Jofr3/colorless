@@ -343,7 +343,7 @@ distinct-string count inside the family; "printings" is the text-unit count.
 > CONNECT**).
 >
 > ### 2. The REMOTE D1 is queryable, and is the practical oracle
-> Cloudflare D1 database `luminous`, uuid `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, reachable via
+> Cloudflare D1 database `colorless`, uuid `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, reachable via
 > the Cloudflare MCP. It holds **20 sets / 3,786 rows**, and it CONTAINS the six sets the local
 > D1 holds at **exactly 978 rows** — byte-identical to the population every census in this file
 > and in `progress.md` was measured against.
