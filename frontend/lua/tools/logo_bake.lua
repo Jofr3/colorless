@@ -98,23 +98,28 @@ float expand(Image image, vec2 uv, float r) {
 }
 float edge(Image image, vec2 uv, float radius, float depth) {
   vec2 offset=vec2(-0.28,1.0)*pixel*depth;
-  return max(expand(image,uv,radius),max(expand(image,uv-offset*0.5,radius),expand(image,uv-offset,radius)));
+  // Closer sweep samples keep the longer extrusion continuous at narrow tips.
+  float a=expand(image,uv,radius);
+  a=max(a,expand(image,uv-offset*0.25,radius));
+  a=max(a,expand(image,uv-offset*0.5,radius));
+  a=max(a,expand(image,uv-offset*0.75,radius));
+  return max(a,expand(image,uv-offset,radius));
 }
 vec4 effect(vec4 colour, Image image, vec2 uv, vec2 screen) {
   // Short translucent white rim: the original alpha falls from ~100 to 3.
-  float halo=edge(image,uv,9.0,12.0)*0.01;
-  halo=max(halo,edge(image,uv,8.0,12.0)*0.05);
-  halo=max(halo,edge(image,uv,7.0,12.0)*0.12);
-  halo=max(halo,edge(image,uv,6.0,12.0)*0.24);
+  float halo=edge(image,uv,9.0,18.0)*0.01;
+  halo=max(halo,edge(image,uv,8.0,18.0)*0.05);
+  halo=max(halo,edge(image,uv,7.0,18.0)*0.12);
+  halo=max(halo,edge(image,uv,6.0,18.0)*0.24);
   vec4 p=vec4(1.0,1.0,1.0,halo);
-  // Bands sampled from textures/2x/balatro.png, including the lighter stripe
-  // INSIDE the grey sidewall. The top edge is thin; depth projects down-left.
-  p=mix(p,vec4(49.0/255.0,58.0/255.0,60.0/255.0,1.0),edge(image,uv,4.0,12.0));
-  p=mix(p,vec4(67.0/255.0,81.0/255.0,83.0/255.0,1.0),edge(image,uv,4.0,10.0));
-  p=mix(p,vec4(91.0/255.0,117.0/255.0,123.0/255.0,1.0),edge(image,uv,6.0,7.0));
-  p=mix(p,vec4(79.0/255.0,99.0/255.0,103.0/255.0,1.0),edge(image,uv,4.0,7.0));
-  p=mix(p,vec4(203.0/255.0,187.0/255.0,167.0/255.0,1.0),edge(image,uv,1.0,4.0));
-  p=mix(p,vec4(230.0/255.0,221.0/255.0,211.0/255.0,1.0),edge(image,uv,0.5,2.0));
+  // B/O reference: a broad taupe shelf above distinct slate/charcoal steps.
+  // Widen the lower ledge with depth, preserving the thin top-edge radii.
+  p=mix(p,vec4(49.0/255.0,58.0/255.0,60.0/255.0,1.0),edge(image,uv,4.0,18.0));
+  p=mix(p,vec4(67.0/255.0,81.0/255.0,83.0/255.0,1.0),edge(image,uv,4.0,14.0));
+  p=mix(p,vec4(91.0/255.0,117.0/255.0,123.0/255.0,1.0),edge(image,uv,6.0,10.0));
+  p=mix(p,vec4(79.0/255.0,99.0/255.0,103.0/255.0,1.0),edge(image,uv,4.0,10.0));
+  p=mix(p,vec4(203.0/255.0,187.0/255.0,167.0/255.0,1.0),edge(image,uv,1.0,9.0));
+  p=mix(p,vec4(230.0/255.0,221.0/255.0,211.0/255.0,1.0),edge(image,uv,0.5,3.0));
   p=mix(p,vec4(1.0),expand(image,uv,0.5));
   vec4 face=Texel(image,uv);
   if(face.a>0.5) p=vec4(face.rgb/max(face.a,0.001),1.0);
@@ -125,7 +130,7 @@ function Logo.new(inspectFace)
   local source=g.newImage('assets/branding/colorless.png')
   source:setFilter('linear','linear')
   local sw,sh=source:getDimensions()
-  -- Keep the approved resolution, face colours and bevel dimensions.
+  -- Keep the approved resolution and face colours; bake the deeper bevel.
   local w,h=1024,math.floor(1024*sh/sw+0.5)
   local face,result=g.newCanvas(w,h),g.newCanvas(w,h)
   local extract,bevel=g.newShader(faceShader),g.newShader(edgeShader)
@@ -197,7 +202,7 @@ function Logo.new(inspectFace)
   if inspectFace then inspectFace(shaped) end
   local cleanFace=g.newImage(shaped)
   cleanFace:setFilter('nearest','nearest')
-  pixels:release();repaired:release();shaped:release()
+  pixels:release();repaired:release()
   g.push('all');g.origin();g.setColor(1,1,1)
   g.setBlendMode('alpha','alphamultiply')
   bevel:send('pixel',{1/w,1/h})
@@ -209,15 +214,30 @@ function Logo.new(inspectFace)
   -- WebGL's default Canvas can read back as rgba4. Copy normalized values
   -- into rgba8 explicitly: PNG encoders and ordinary textures support it.
   local baked=love.image.newImageData(w,h,'rgba8')
+  -- WebGL compatibility canvases quantize the slate bands to rgba4. Restore
+  -- only opaque bevel pixels to the sampled source palette during export;
+  -- keep the painted face byte-for-byte and leave translucent rims alone.
+  local bevelPalette={{49,58,60},{67,81,83},{91,117,123},{79,99,103},
+    {203,187,167},{230,221,211},{255,255,255}}
   local visible=0
   baked:mapPixel(function(x,y)
     local r,gc,b,a=readback:getPixel(x,y)
     if a==0 then return 0,0,0,0 end
     if a>0.5 then visible=visible+1 end
+    local _,_,_,faceAlpha=shaped:getPixel(x,y)
+    if a>0.99 and faceAlpha<0.5 then
+      local nearest,distance=nil,math.huge
+      for _,c in ipairs(bevelPalette) do
+        local d=(r*255-c[1])^2+(gc*255-c[2])^2+(b*255-c[3])^2
+        if d<distance then nearest,distance=c,d end
+      end
+      return nearest[1]/255,nearest[2]/255,nearest[3]/255,1
+    end
     return math.min(r/a,1),math.min(gc/a,1),math.min(b/a,1),a
   end)
   assert(visible>1000,'Refusing to export an empty logo')
   readback:release()
+  shaped:release()
   local texture=g.newImage(baked)
   result:release()
   source:release();face:release();cleanFace:release();extract:release();bevel:release()
