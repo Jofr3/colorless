@@ -1,7 +1,7 @@
 // Browser-native IndexedDB regression checks. With the Vite server running:
 // agent-browser --session <name> eval --stdin < frontend/lua/tests/artwork_cache.js
 (async () => {
-  const { ArtworkCache } = await import('/src/features/lua/artworkCache.ts');
+  const { ArtworkCache } = await import('/src/lua/artworkCache.ts');
   const databases=[],connections=[];
   const assert=(ok,message)=>{if(!ok)throw Error(message)};
   const open=(name,budget)=>{const c=new ArtworkCache(name,budget);connections.push(c);return c};

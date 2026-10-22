@@ -54,15 +54,6 @@ function Dyna.static(text,scale,x,y,w,h,colour,opts)
   g.print(text,cx-tw/2+Dyna.OFFSET_X*f,cy-th/2+Dyna.OFFSET_Y*f,0,f,f)
   return tw,th
 end
--- Multi-line static text, top-left anchored, returning the height used.
-function Dyna.paragraph(text,scale,x,y,w,colour,opts)
-  local lines,lh=Dyna.wrap(text,scale,w)
-  opts=opts or {}
-  for i,line in ipairs(lines) do
-    Dyna.static(line,scale,x,y+(i-1)*(lh+(opts.gap or 2)),w,lh,colour,opts)
-  end
-  return #lines*(lh+(opts.gap or 2))
-end
 function Dyna.new(cfg)
   cfg=cfg or {}
   local self=setmetatable({

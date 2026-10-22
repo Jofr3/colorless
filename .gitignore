@@ -16,4 +16,4 @@ tmp/
 scratchpad/
 
 # Generated love.js frontend; rebuild with bun run build:lua.
-/public/lua/
+/public/love/

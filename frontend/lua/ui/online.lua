@@ -3,7 +3,7 @@ local D=require('ui.card_dimensions')
 -- as Settings swaps in its auth form: create_tabs (Create/Join), the seed row's
 -- black pill and Copy buttons, blind-choice seat panels, Sandbox's deck grid
 -- with a create_option_cycle filter and an
--- attention_text countdown. src/features/lua/online.ts owns the socket.
+-- attention_text countdown. src/lua/online.ts owns the socket.
 local T=require('ui.theme')
 local Button=require('ui.button')
 local Modal=require('ui.modal')

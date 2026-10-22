@@ -14,7 +14,7 @@
 // counts here stop reconciling.
 
 import { describe, expect, it } from "vitest";
-import { DEFAULT_FORMAT, isLegalInFormat } from "../features/builder/cards";
+import { DEFAULT_FORMAT, isLegalInFormat } from "../decks/cards";
 import { builderCard, legalFromMark, STANDARD_LEGAL_MARKS } from "./fixtures";
 
 interface MarkCensus {

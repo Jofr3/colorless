@@ -8,11 +8,12 @@
   },
   "vars": {
     // The web app's origin: CORS allow-origin (credentialed) + OAuth
-    // post-login redirect target (§3.5). This dev default suits `wrangler
-    // dev` + `bun run dev`; override for production once the web app has a
-    // real origin (env-specific vars or the dashboard). OAuth secrets are
-    // NOT vars — install via `wrangler secret put GOOGLE_CLIENT_ID` etc.
-    "APP_ORIGIN": "http://localhost:5175"
+    // post-login redirect target (§3.5). Production is the static frontend
+    // Worker (root wrangler.jsonc); the `dev` script overrides it with
+    // `--var APP_ORIGIN:http://localhost:5175` for `bun run dev`, and
+    // scripts/dev-tailnet.ts appends its own (the last --var wins). OAuth
+    // secrets are NOT vars — install via `wrangler secret put GOOGLE_CLIENT_ID` etc.
+    "APP_ORIGIN": "https://luminous.jofrescari.workers.dev"
   },
   "d1_databases": [
     {

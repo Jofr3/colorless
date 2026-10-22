@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "CI=true bun run db:migrate:local && bun ../../scripts/with-system-certs.ts wrangler dev",
+    "dev": "CI=true bun run db:migrate:local && bun ../../scripts/with-system-certs.ts wrangler dev --var APP_ORIGIN:http://localhost:5175",
     "deploy": "wrangler deploy",
     "typecheck": "tsc -b",
     "db:generate": "drizzle-kit generate",

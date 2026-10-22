@@ -16,19 +16,14 @@ import type {
   CardCategory,
   CatalogFacets,
   CreateDeckRequest,
-  CreateFolderRequest,
   Deck,
   DeckSummary,
-  Folder,
   LoginRequest,
   Paginated,
   PatchDeckRequest,
-  PatchFolderRequest,
   RegisterRequest,
-  ReorderRequest,
   Serie,
   SetBrief,
-  SetWithCards,
   UpdateProfileRequest,
   User,
 } from "@luminous/schema";
@@ -55,23 +50,15 @@ export class ApiError extends Error {
   }
 }
 
-/** The api's 400 `{error: "unknown card id(s)", cardIds}` payload, if that's
-    what an ApiError's `.body` is — the ids the catalog rejected. */
-export function unknownCardIdsOf(body: unknown): string[] | null {
-  if (typeof body !== "object" || body === null || !("cardIds" in body)) return null;
-  const ids = (body as { cardIds: unknown }).cardIds;
-  return Array.isArray(ids) && ids.every((id) => typeof id === "string") ? ids : null;
-}
-
 // ---- Session recovery (the ONE owner of 401 → re-probe → retry-once) --------
 // A mid-session 401 usually means the cookie expired, but it can also be a
 // one-off (a session rotated in another tab, a hiccup). Instead of every
-// feature hand-rolling "on 401, refresh() the auth context", the client owns
-// it: an unexpected 401 asks the installed handler to re-probe the session,
-// and if the session turns out to still be alive the failed request is
-// retried once. When the probe lands on signed-out, the handler's own state
-// change (AuthProvider → "anonymous") flips the UI; the 401 then propagates
-// to the caller as before.
+// adapter hand-rolling "on 401, re-probe the account", the client owns it: an
+// unexpected 401 asks the installed handler to re-probe the session, and if
+// the session turns out to still be alive the failed request is retried once.
+// When the probe lands on signed-out, the handler's own state change (the Lua
+// account bridge, src/lua/bridge.ts) flips the UI; the 401 then propagates to
+// the caller as before.
 
 /** Re-probe the session; resolve true when it's still alive (retry the
     request), false when the user is really signed out. */
@@ -81,7 +68,7 @@ let sessionRecovery: SessionRecoveryHandler | null = null;
 /** In-flight probe, shared so a burst of parallel 401s asks once. */
 let recovery: Promise<boolean> | null = null;
 
-/** Installed by AuthProvider (null on teardown). One owner at a time. */
+/** Installed by src/lua/bridge.ts (null on teardown). One owner at a time. */
 export function setSessionRecoveryHandler(handler: SessionRecoveryHandler | null): void {
   sessionRecovery = handler;
 }
@@ -243,11 +230,6 @@ export function getSets(serie?: string): Promise<SetBrief[]> {
   return request(`/sets${queryString({ serie })}`);
 }
 
-/** One full set with its card briefs, ordered by local id. */
-export function getSet(id: string): Promise<SetWithCards> {
-  return request(`/sets/${encodeURIComponent(id)}`);
-}
-
 /** Every serie with its nested set briefs. */
 export function getSeries(): Promise<Serie[]> {
   return request("/series");
@@ -268,15 +250,6 @@ export function cardImageUrl(
   ext: "webp" | "png" | "jpg" = "webp",
 ): string {
   return apiUrl(`/assets/cards/${encodeURIComponent(cardId)}/${quality}.${ext}`);
-}
-
-/** The url of a set's logo or symbol on the api's lazy R2 mirror. */
-export function setAssetUrl(
-  setId: string,
-  kind: "logo" | "symbol",
-  ext: "png" | "webp" = "png",
-): string {
-  return apiUrl(`/assets/sets/${encodeURIComponent(setId)}/${kind}.${ext}`);
 }
 
 // ---- Auth -------------------------------------------------------------------
@@ -315,11 +288,11 @@ export function updateProfile(body: UpdateProfileRequest): Promise<User> {
 /** The url that STARTS an OAuth flow — assign it to window.location (it
     302s to the provider), don't fetch it. The api answers 503 until the
     provider's secrets are installed. */
-export function oauthStartUrl(provider: "google", redirect = "/decks"): string {
+export function oauthStartUrl(provider: "google", redirect = "/"): string {
   return apiUrl(`/auth/oauth/${provider}?${new URLSearchParams({ redirect })}`);
 }
 
-// ---- Decks & folders (every route needs a session; 401 otherwise) -----------
+// ---- Decks (every route needs a session; 401 otherwise) --------------------
 
 /** Every deck of mine as list rows (`cardCount`, no card lists). */
 export function listDecks(): Promise<DeckSummary[]> {
@@ -345,35 +318,4 @@ export function patchDeck(id: string, body: PatchDeckRequest): Promise<Deck> {
 
 export function deleteDeck(id: string): Promise<void> {
   return request(`/decks/${encodeURIComponent(id)}`, { method: "DELETE" });
-}
-
-/** Persist a manual reorder: absolute `position` assignments, applied
-    atomically (all land or none do). An id that isn't mine → ApiError 400
-    naming it in `ids`. */
-export function reorderDecks(positions: ReorderRequest["positions"]): Promise<void> {
-  return request("/decks/reorder", { method: "POST", body: { positions } });
-}
-
-/** Every folder of mine as a FLAT list — the client builds the tree. */
-export function listFolders(): Promise<Folder[]> {
-  return request("/folders");
-}
-
-export function createFolder(body: CreateFolderRequest): Promise<Folder> {
-  return request("/folders", { method: "POST", body });
-}
-
-/** Rename and/or move. Moving under itself or a descendant → 400. */
-export function patchFolder(id: string, body: PatchFolderRequest): Promise<Folder> {
-  return request(`/folders/${encodeURIComponent(id)}`, { method: "PATCH", body });
-}
-
-/** Subfolders cascade away; contained decks fall to the library root. */
-export function deleteFolder(id: string): Promise<void> {
-  return request(`/folders/${encodeURIComponent(id)}`, { method: "DELETE" });
-}
-
-/** Folder twin of `reorderDecks` — same body, same atomicity, same 400. */
-export function reorderFolders(positions: ReorderRequest["positions"]): Promise<void> {
-  return request("/folders/reorder", { method: "POST", body: { positions } });
 }

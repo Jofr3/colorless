@@ -14,7 +14,6 @@ import { resolve, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { build } from "vite";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../..");
@@ -25,7 +24,9 @@ if (!existsSync(compiler))
     `Install love.js in ${source}, or set BALATRO_SOURCE to your Balatro source directory.`,
   );
 const stage = mkdtempSync(join(tmpdir(), "luminous-love-"));
-const output = join(root, "public/lua");
+// Vite's public dir: served at /love/ by the dev server and copied into
+// dist/love/ by the production build. Generated, so gitignored.
+const output = join(root, "public/love");
 const assets = [
   "fonts/m6x11plus.ttf",
   "textures/2x/Enhancers.png",
@@ -65,7 +66,7 @@ try {
   );
   // The compiler copies the runtime with fs-extra, which unlinks the old file
   // first; a running Vite dev server sees the unlink but tends to miss the
-  // instant re-add and then serves index.html for /lua/love.js. Re-create
+  // instant re-add and then serves index.html for /love/love.js. Re-create
   // the two files with a pause between unlink and write so the watcher
   // registers them again.
   for (const name of ["love.js", "love.wasm"]) {
@@ -75,26 +76,12 @@ try {
     await new Promise((done) => setTimeout(done, 500));
     writeFileSync(path, bytes);
   }
-  for (const name of ["index.html", "host.js", "host.css"])
-    copyFileSync(join(here, "web", name), join(output, name));
-  // Also make the standalone WASM output usable outside the Vite dev server.
-  // The main app build emits this entry again with its own VITE_API_ORIGIN.
-  await build({
-    configFile: false,
-    root,
-    publicDir: false,
-    build: {
-      outDir: output,
-      emptyOutDir: false,
-      lib: {
-        entry: join(root, "src/features/lua/accountBridge.ts"),
-        formats: ["es"],
-        fileName: () => "account.js",
-      },
-    },
-  });
+  // The root index.html is the host page; drop the compiler's own page and theme.
+  rmSync(join(output, "index.html"), { force: true });
+  rmSync(join(output, "theme"), { recursive: true, force: true });
+  for (const name of ["host.js", "host.css"]) copyFileSync(join(here, "web", name), join(output, name));
   writeFileSync(join(output, "asset-manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
-  console.log("Luminous Lua home built → public/lua/");
+  console.log("Luminous Lua frontend built → public/love/");
 } finally {
   rmSync(stage, { recursive: true, force: true });
 }

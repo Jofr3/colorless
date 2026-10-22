@@ -26,6 +26,12 @@ to your task.
 4. Open only the **`workstreams/<area>.md`** you're working on, plus any
    **`reference/`** file it points to. Do **not** read the other workstreams.
 
+> **Code paths in older entries.** The web frontend is now the Lua (love.js)
+> app (`frontend/lua/README.md`, decision "2026-10-22 — The Lua frontend
+> replaces React"). The React app is deleted; `src/features/...` paths in
+> `progress.md`, `conventions.md` and the workstreams are historical, and the
+> surviving modules live in `src/{lua,game,decks,online,lib}`.
+
 ## File map
 
 | File | What it's for |

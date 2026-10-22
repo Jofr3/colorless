@@ -611,41 +611,6 @@ export const MUTANTS: Mutant[] = [
   // ⚠️ Both rows live under `src/**`, which at D215's commit is a live agent's
   // working tree — so they are expected to report SKIPPED-DIRTY until it lands.
   // That is the harness working: a skip is a stated non-answer, not a pass.
-  {
-    id: "D213-used-flag",
-    decision: "D213",
-    what: "the local HUD's Stadium row drops the per-turn used flag — `disabled={false}` on a second activation, D210's mutant at the other surface",
-    file: "src/features/game/GameHud.tsx",
-    // 🆕🆕🆕 RE-TRANSCRIBED AT D561 for D210-used-flag's reason, one surface over.
-    find: "    disabled: game.allowances.stadiumAbilityUsed || noTarget || costUnmet !== null,",
-    replace: "    disabled: noTarget || costUnmet !== null,",
-    expectKilledBy: ["src/features/game/GameHud.stadiumAbility.dom.test.tsx"],
-  },
-  {
-    id: "D213-programPlayable",
-    decision: "D213",
-    what: "the local fold's `!programPlayable` whiff gate is dropped — D213's ONE survivor, pinned as vacuity on D210's precedent (🆕🆕🆕 D606: no longer a survivor — Surfing Beach reaches the term and kills it)",
-    file: "src/features/game/GameHud.tsx",
-    // ⚠️ Anchored past `usableAbilities`, which spells the same line at a deeper
-    // indent 90 lines up — the same trap as D210-programPlayable, one file over.
-    // ⚠️ RE-TRANSCRIBED AT D222, which is the row working as designed: the call
-    // gained a fourth argument (`stadium.uid`), the `find` stopped matching, and
-    // the harness reported ERROR rather than skipping. *A line number rots
-    // silently, a unique string rots loudly* — this is what that sentence buys.
-    // 🆕🆕🆕 RE-TRANSCRIBED AT D561 (R-AN's `costUnmet` term), exactly as D222 did: the
-    // anchor now carries the D561 comment line that follows it; the mutation is unchanged.
-    find:
-      "  const noTarget = !programPlayable(game, ability.program, seat, stadium.uid);\n" +
-      "  // 🆕🆕🆕 D561 (R-AN) — `useStadiumAbility` now refuses an unpayable printed hand cost\n",
-    replace:
-      "  const noTarget = false;\n" +
-      "  // 🆕🆕🆕 D561 (R-AN) — `useStadiumAbility` now refuses an unpayable printed hand cost\n",
-    expectKilledBy: ["src/features/game/GameHud.stadiumAbility.dom.test.tsx"],
-    // 🆕🆕🆕 D606 — NO LONGER A DECLARED SURVIVOR ("If this is ever KILLED, a whiff-gated Stadium program
-    // has landed and BOTH pins need re-reading" — both were re-read). Surfing Beach greys the local row
-    // "No legal target" on a {W} Active with no Benched {W}: `GameHud.stadiumAbility.dom.test.tsx`'s D606
-    // block kills `noTarget = false`.
-  },
 
   // ── D221 · Teal Dance — the SELF target and the §9.2 slot on attachEnergyFrom ─
   // "5 mutants, 4 killed, 1 DECLARED survivor (the gate, whose false arm no
@@ -859,17 +824,6 @@ export const MUTANTS: Mutant[] = [
       "            state.allowances.supporterPlayed",
     replace: "          ? state.turn === 1 || state.allowances.supporterPlayed",
     expectKilledBy: ["packages/engine/src/carmine.test.ts"],
-  },
-  {
-    id: "D223-local-hud-ignores-flag",
-    decision: "D223",
-    what: "the LOCAL HUD's twin of the same mirror keeps the pre-D223 §4 term — the second of the two read sites the census row did not name, and the one that needs jsdom to see",
-    file: "src/features/game/GameHud.tsx",
-    find:
-      "          ? (game.turn === 1 && program.trainerFirstTurnExempt !== true) ||\n" +
-      "            game.allowances.supporterPlayed",
-    replace: "          ? game.turn === 1 || game.allowances.supporterPlayed",
-    expectKilledBy: ["src/features/game/GameHud.cardplay.dom.test.tsx"],
   },
   {
     id: "D223-professors-draw-count",
@@ -1109,10 +1063,10 @@ export const MUTANTS: Mutant[] = [
     id: "D226-projection-drops-rider",
     decision: "D226",
     what: "the wire-to-engine rebuild drops the rider — the THIRD client read site, which D190's row did not name, and whose own doc promises the round-trip is exact",
-    file: "src/features/game/projection.ts",
+    file: "src/game/projection.ts",
     find: "          ...(prompt.anySource === undefined ? {} : { anySource: prompt.anySource }),",
     replace: "",
-    expectKilledBy: ["src/features/game/projection.test.ts"],
+    expectKilledBy: ["src/game/projection.test.ts"],
   },
   {
     id: "D226-note-hardcodes-article",
@@ -1131,24 +1085,6 @@ export const MUTANTS: Mutant[] = [
     find: "      uids: [...group.uids],",
     replace: "      uids: groups.flatMap((g) => g.uids),",
     expectKilledBy: ["packages/engine/src/nsPlan.test.ts"],
-  },
-  {
-    id: "D226-local-hud-keeps-source-stage",
-    decision: "D226",
-    what: "the LOCAL dialog ignores the rider and keeps staging by source — the card is legal, the engine accepts the wide answer, and no player can build one",
-    file: "src/features/game/GameHud.tsx",
-    find: "  const anySource = prompt.anySource === true;",
-    replace: "  const anySource = false;",
-    expectKilledBy: ["src/features/game/GameHud.cardplay.dom.test.tsx"],
-  },
-  {
-    id: "D226-online-hud-keeps-source-stage",
-    decision: "D226",
-    what: "the ONLINE dialog ignores the rider and keeps staging by source — the same defect on the other HUD, which is why the price was two read sites and not one",
-    file: "src/features/online/components/OnlineHud.tsx",
-    find: "  const anySource = prompt.anySource === true;",
-    replace: "  const anySource = false;",
-    expectKilledBy: ["src/features/online/components/OnlineHud.dom.test.tsx"],
   },
 
   // ── D227 · the opponent-chosen switch-out ──────────────────────────────────
@@ -2726,15 +2662,6 @@ export const MUTANTS: Mutant[] = [
     find: "    attackLocked(state, active) ||\n    attackBarredByAbility(state, viewerSeat, active) !== undefined ||\n    attackAgainBarred(state, viewerSeat, active);",
     replace: "    attackLocked(state, active) ||\n    attackAgainBarred(state, viewerSeat, active);",
     expectKilledBy: ["packages/engine/src/abilityAttackGate.test.ts"],
-  },
-  {
-    id: "D242-hot-seat-panel-offers-the-barred-button",
-    decision: "D242",
-    what: "the SAME defect on the HOT-SEAT surface, which is the whole of P3 play and has no wire between it and the state. Two mirrors, one claim — and a build that fixed only one of them is the partial revert this pair exists to catch (D241's two-site rule)",
-    file: "src/features/game/GameHud.tsx",
-    find: "              attackLockedNow ||\n              abilityGateUnmet ||",
-    replace: "              attackLockedNow ||",
-    expectKilledBy: ["src/features/game/GameHud.abilityGate.dom.test.tsx"],
   },
   // ── D243 — ROW 14-B(b): the SEAT-WIDE PRE-W/R DAMAGE AURA. Six rows, and the
   // shape of the set is the point: FIVE of the six leave a live, plausible aura
@@ -4350,28 +4277,13 @@ export const MUTANTS: Mutant[] = [
   //    test — it is UNWRITABLE for want of a site, exactly as D293's barred-drop
   //    row was. The census assertion's guard is a REDERIVATION, not a mutant.
   {
-    id: "D303-stadium-drag-never-offered",
-    decision: "D303",
-    what: "\u{1F6D1} THE STADIUM DROP GATE STOPS OFFERING THE SHARED SLOT: `target.owner === \"global\"` becomes `!==`, so no Stadium can be dragged at all. **THIS IS THE LINE THE WHOLE D303 FINDING TURNS ON** — it is the fourth `sourceType` arm in `placement.ts`, three lines below the Tool's, and its existence is why the ACE SPEC DRAG population is **13** and not the **11** ten handoffs quoted. \u26a0\ufe0f **MEASURED BY PERFORMING IT: 5 of 6,213 repo-wide across TWO files \u2014 3 in `GameHud.aceSpecBar.dom.test.tsx` \u00a76 (the barred drag, its plain-Stadium control and its unarmed-board control) and 2 in `placement.test.ts` (the lockstep sweep and the \u00a77.3 routing `it`), ZERO elsewhere.** \ud83c\udd95 **AND THE 2 ARE THE FINDING AS MUCH AS THE 3**: the line was ALREADY pinned, by a suite that never mentions ACE SPEC \u2014 so the drag surface was always driven and only its INTERACTION with the bar was not. **THE CORPUS HELD NO `placement.ts` ROW AT ALL BEFORE THIS ONE**, which is why a file the client's whole drag story rests on had no mutant of its own",
-    file: "src/features/game/placement.ts",
-    find: '      return target.zone === "stadium" && target.owner === "global";',
-    replace: '      return target.zone === "stadium" && target.owner !== "global";',
-    expectKilledBy: [
-      "src/features/game/GameHud.aceSpecBar.dom.test.tsx",
-      "src/features/game/placement.test.ts",
-    ],
-  },
-  {
     id: "D303-tool-surface-drops-the-rarity-arm",
     decision: "D303",
     what: "\u{1F6D1} THE `attachTool` SURFACE STOPS ASKING ABOUT THE CARD: `handPlayBarred(state, action.seat, \"Tool\", card)` becomes `\u2026, undefined)`, so `isAceSpec` answers `false` and an ACE SPEC Tool attaches on a fully barred board. \u26a0\ufe0f **MEASURED: 2 of 6,213 repo-wide, ZERO elsewhere \u2014 `aceSpecBar.test.ts` \u00a74's `attachTool` gate and `GameHud.aceSpecBar.dom.test.tsx` \u00a76.6's end-to-end drag.** \ud83c\udd95 **THE CLIENT KILL IS NEW AND IT IS THE POINT OF THE ROW.** \u00a72 of that file asserts the ACE SPEC Tool has NO ROW in the Trainers list and every slice since read that as settling the Tool; it settles the BUTTON surface only. \u00a76.6 drives the DRAG \u2014 offered, translated to a real `attachTool`, refused `HAND_PLAY_BLOCKED` \u2014 so this row now crosses the package boundary the way `D292-energy-gate-never-fires` did, and for the same reason: **an absence asserted on one surface is not a measurement on another**",
     file: "packages/engine/src/cardplay.ts",
     find: '  if (handPlayBarred(state, action.seat, "Tool", card)) {',
     replace: '  if (handPlayBarred(state, action.seat, "Tool", undefined)) {',
-    expectKilledBy: [
-      "packages/engine/src/aceSpecBar.test.ts",
-      "src/features/game/GameHud.aceSpecBar.dom.test.tsx",
-    ],
+    expectKilledBy: ["packages/engine/src/aceSpecBar.test.ts"],
   },
 
   // ── D263 — THE ABILITY HALF OF BACKLOG ROW 9 (attach from the DISCARD PILE).
@@ -7701,34 +7613,6 @@ export const MUTANTS: Mutant[] = [
     replace: "            (",
     expectKilledBy: ["packages/engine/src/stadiumWireMirror.test.ts"],
   },
-  {
-    id: "D289-local-hud-ignores-hand-play-bar",
-    decision: "D289",
-    what: "🛑 THE WHOLE `barred` TERM LEAVES `playableTrainers`'s `disabled` CHAIN, so the LOCAL HUD lights every Item / Supporter / Stadium row for a seat the engine has barred — the afford-then-reject defect on the surface that could never report it. ⚠️ **THIS IS THE ROW THAT JUSTIFIES D289's WHOLE SLICE, AND THE NUMBER IS MEASURED RATHER THAN ARGUED: with the term deleted, ALL 5,889 PRE-D289 TESTS STAY GREEN.** The term shipped in D283, was measured in D286, widened in D287 and mirrored onto the wire in D288, and through all five slices deleting it reddened NOTHING. It moves 8 of this file's 18 `it`s. ⚠️ ANCHORED ON THE CHAIN'S TWO NEIGHBOURS — `noTarget ||` above and the `(isRareCandy` ternary's OPENING below — a structural boundary a growing chain pushes around, rather than on the comment block above it, which has grown in four consecutive slices",
-    file: "src/features/game/GameHud.tsx",
-    find: "      noTarget ||\n      barred ||\n      (isRareCandy",
-    replace: "      noTarget ||\n      (isRareCandy",
-    expectKilledBy: ["src/features/game/GameHud.handPlayBar.dom.test.tsx"],
-  },
-  {
-    id: "D289-local-hud-stadium-row-lit-under-the-bar",
-    decision: "D289",
-    what: '🆕 THE LOCAL TWIN OF `D288-wire-stadium-row-lit-under-the-bar`, one surface over: the `barred` term loses its `"Stadium"` arm — the exclusion D287 REMOVED — so a Copperajah-barred seat\'s Stadium row stays LIT, is clicked, and `playStadium` refuses it. ⚠️ IT IS KILLABLE AT RUNTIME AND NOT ONLY BY `tsc`: `klass` narrows to `"Item" | "Supporter"`, which `handPlayBarred` still accepts, so the mutant COMPILES and dies of the behaviour it names. Moves 2 `it`s (§4.1 and §6.1) — the smallest of D289\'s three rows, and deliberately kept beside the wider one because a lost ARM and a hard-wired CLASS are different defects that a single row would conflate',
-    file: "src/features/game/GameHud.tsx",
-    find: '      (klass === "Item" || klass === "Supporter" || klass === "Stadium") &&\n      // ⚠️ **THE CARD IS PASSED, AND WITH IT D291',
-    replace:
-      '      (klass === "Item" || klass === "Supporter") &&\n      // ⚠️ **THE CARD IS PASSED, AND WITH IT D291',
-    expectKilledBy: ["src/features/game/GameHud.handPlayBar.dom.test.tsx"],
-  },
-  {
-    id: "D289-local-hud-hardwires-the-item-class",
-    decision: "D289",
-    what: "the card's OWN field stops riding through: `handPlayBarred` is asked about `\"Item\"` whatever the row's class is, which is what a HUD written when Items were the only barred class would look like (D283 shipped exactly one class). ⚠️ **IT IS NOT A SUBSET OF THE ROW ABOVE AND THE MEASUREMENT SAYS SO**: both move 8 `it`s and the two SETS DIFFER — this one takes §4.4 (a Tyranitar board must leave the STADIUM row lit) and leaves §2.2 standing; `D289-local-hud-ignores-hand-play-bar` does the reverse. A single row would have reported one number for two defects. ⚠️ The bar becomes both too STRICT (a Supporter row greys under an Item bar) and too LOOSE (a Stadium row lights under a Stadium bar), which is why §3.3 and §4 are each two-sided",
-    file: "src/features/game/GameHud.tsx",
-    find: "      handPlayBarred(game, seat, klass, card);",
-    replace: '      handPlayBarred(game, seat, "Item", card);',
-    expectKilledBy: ["src/features/game/GameHud.handPlayBar.dom.test.tsx"],
-  },
   // 🆕 Card revision B04 — RETIRED: `D290-registry-folds-the-fourth-rare-candy` and
   //    `D290-registry-folds-a-printing-D190-never-sampled` added `"sv04.5-089": RARE_CANDY` /
   //    `"sv04.5-091": ULTRA_BALL` as the fold that must not happen while those printings had 0
@@ -7824,10 +7708,7 @@ export const MUTANTS: Mutant[] = [
     find: '  if (state.allowances.energyAttached) {\n    return err("ENERGY_ALREADY_ATTACHED", "only one energy attachment per turn (\u00a76.2)");\n  }',
     replace:
       '  if (\n    state.allowances.energyAttached &&\n    !aceSpecPlayBarred(state, action.seat, cardOfUid(state, action.uid))\n  ) {\n    return err("ENERGY_ALREADY_ATTACHED", "only one energy attachment per turn (\u00a76.2)");\n  }',
-    expectKilledBy: [
-      "packages/engine/src/aceSpecBar.test.ts",
-      "src/features/game/GameHud.aceSpecBar.dom.test.tsx",
-    ],
+    expectKilledBy: ["packages/engine/src/aceSpecBar.test.ts"],
   },
   // — 🆕 D293 — the CLIENT half of the same bar. TWO rows, and they are the
   // first two mutants in this corpus to be anchored in `src/features/game/` for
@@ -7847,25 +7728,6 @@ export const MUTANTS: Mutant[] = [
   // between a barred and a free board. **THE ROW IS NOT UNKILLABLE FOR WANT OF A
   // TEST — IT IS UNWRITABLE FOR WANT OF AN ARGUMENT**, which is exactly the
   // refusal D293 records, and it is a different finding from D288's.
-  {
-    id: "D293-local-hud-drops-the-rarity-arm",
-    decision: "D293",
-    what: "🛑 THE LOCAL TRAINERS LIST STOPS ASKING ABOUT THE CARD: `handPlayBarred(game, seat, klass, card)` becomes `…, undefined)`, so `isAceSpec` answers `false` for every row and an ACE SPEC Item or Stadium stays LIT, is clicked, and is refused by the engine — the afford-then-reject defect D287 closed for Stadiums, re-opened one axis over. ⚠️ **EVERY CLASS BAR KEEPS WORKING**, which is the whole point: the stamped and Active-keyed disjuncts are untouched, so `GameHud.handPlayBar.dom.test.tsx` — the nearest suite, whose every board is a CLASS bar — stays GREEN on all 18 of its `it`s. **MEASURED BY PERFORMING IT: 4 of 5,958 repo-wide, all 4 in `GameHud.aceSpecBar.dom.test.tsx` (4 of its 15), ZERO anywhere else.** ⚠️ The wire twin (`redact.ts:742`) is a SEPARATE line with the same shape, already pinned by `aceSpecBar.test.ts` §7 — which is why this row had to be anchored in `src/` and could not ride the engine's",
-    file: "src/features/game/GameHud.tsx",
-    find: "      handPlayBarred(game, seat, klass, card);",
-    replace: "      handPlayBarred(game, seat, klass, undefined);",
-    expectKilledBy: ["src/features/game/GameHud.aceSpecBar.dom.test.tsx"],
-  },
-  {
-    id: "D293-energy-hint-inverted",
-    decision: "D293",
-    what: '⚠️ THE §6.2 ALLOWANCE READOUT IS INVERTED: the HUD says *"drag an energy to attach"* exactly when the seat has ALREADY attached and *"energy attached ✓"* when it has not. **MEASURED: 2 of 5,958 repo-wide, both in `GameHud.aceSpecBar.dom.test.tsx`, ZERO elsewhere — and the zero is itself the finding**: a 2,600-line HUD had this string and no assertion about it in any suite until D293 went looking for a WRONG STRING on a barred board. 🛑 **IT IS NOT AN ACE SPEC ROW AND THAT IS WHY IT IS HERE.** D292\'s handoff suspected this string of being wrong *because* of the bar; driven, it reads `game.allowances.energyAttached` and nothing else, renders identically on a barred and a free board, and would render on a hand holding no Energy at all. Pinning it is what let the ACE SPEC question be answered separately from it',
-    file: "src/features/game/GameHud.tsx",
-    find: '          {game.allowances.energyAttached ? "energy attached ✓" : "drag an energy to attach"}',
-    replace:
-      '          {game.allowances.energyAttached ? "drag an energy to attach" : "energy attached ✓"}',
-    expectKilledBy: ["src/features/game/GameHud.aceSpecBar.dom.test.tsx"],
-  },
   // ── D294 — THE CROSS-SEAT DESTINATION (`bottomFromOpponentHand.dest`). D294
   //    shipped its code and its suite and authored NO corpus row; these three are
   //    written by D295 against the untouched build, each MEASURED against a green
@@ -11690,25 +11552,6 @@ export const MUTANTS: Mutant[] = [
     ],
   },
   {
-    id: "D328-evolve-park-inherits-the-take-verb",
-    decision: "D328",
-    what: "\u{1F6D1} THE COSMETIC DEFECT RESTORED, AS A CELL RATHER THAN AS A TERNARY: `evolve` renders `Take`. That is what the dialog did from D307 until this session — a Confirm reading `Take 1` over a heading that says `put it onto Pidove to evolve it` — and it is the exact value a fallback arm would have given it",
-    file: "src/features/game/GameHud.tsx",
-    find: '  evolve: { mandatory: "Evolve", upTo: "Evolve" },',
-    replace: '  evolve: { mandatory: "Take", upTo: "Take" },',
-    expectKilledBy: ["src/features/game/GameHud.chooseCardsVerb.dom.test.tsx"],
-  },
-  {
-    id: "D328-confirm-verb-back-to-a-ternary",
-    decision: "D328",
-    what: "the total record is bypassed and the `up to` branch goes back to `dest === 'deck' ? 'Shuffle' : 'Take'` — the CLOSED-WORLD read D222 names, restored on the exact line it was found on. Every dest but `deck` inherits `Take`, which is green on the search, retrieval and look-at-top boards and wrong on the two members added after the line was written",
-    file: "src/features/game/GameHud.tsx",
-    find: '              `${CHOOSE_CARDS_VERB[prompt.dest].upTo} ${picked.length === 0 ? "none" : picked.length}`}',
-    replace:
-      '              `${prompt.dest === "deck" ? "Shuffle" : "Take"} ${picked.length === 0 ? "none" : picked.length}`}',
-    expectKilledBy: ["src/features/game/GameHud.chooseCardsVerb.dom.test.tsx"],
-  },
-  {
     id: "D329-tie-guard-asks-the-wrong-seat-count",
     decision: "D329",
     what: "\u{1F6D1} THE ACCUMULATED \u00a714 GUARD IS GATED ON A ONE-SIDED BATCH INSTEAD OF A TWO-SIDED ONE. `koedSeats.size === 1` is the size the common batch really has, so the guard runs constantly and never on the batch it exists for - a tie spanning two passes goes back to falling through to the stage-by-stage checks, which cannot report a tie at all",
@@ -11946,15 +11789,6 @@ export const MUTANTS: Mutant[] = [
     find: '      also: { filter: { kind: "trainerCard" }, max: 1 },\n',
     replace: "",
     expectKilledBy: ["packages/engine/src/draytonWindow.test.ts"],
-  },
-  {
-    id: "D332-dialog-ignores-the-caps",
-    decision: "D332",
-    what: "the SECOND READER: `ChooseCardsDialog` goes back to refusing rows on the flat total alone, so it lets a player select two Pokemon and then hands the engine an answer `validateChoice` rejects - the caption contradicting its own gate. Invisible to `tsc` (a well-typed unread field) and invisible to every engine suite, because the engine is still right. Only a DOM test that clicks can see it",
-    file: "src/features/game/GameHud.tsx",
-    find: "          const refused = !selected && (picked.length >= prompt.max || cappedOut(uid, picked));",
-    replace: "          const refused = !selected && picked.length >= prompt.max;",
-    expectKilledBy: ["src/features/game/GameHud.chooseCardsCaps.dom.test.tsx"],
   },
 
   // ── D333 — the unbounded look and the union under one cap ──────────────────
@@ -14628,37 +14462,10 @@ export const MUTANTS: Mutant[] = [
     id: "D359-projection-drops-the-ceiling",
     decision: "D359",
     what: "🛑🛑 THE ROUND TRIP BACK — THE SITE D358's OWN PRICE DID NOT NAME, now with a number on it. The engine parks with a ceiling, `redactPrompt` puts it on the wire, and this rebuild drops it: the online dialog offers neither the decline nor any middle quantity while every engine case and every local-HUD case stays green. `D226-projection-drops-rider` is the same defect one prompt over, and the two are separate rows because the arms are",
-    file: "src/features/game/projection.ts",
+    file: "src/game/projection.ts",
     find: "          ...(prompt.upTo === undefined ? {} : { upTo: prompt.upTo }),\n          note: prompt.note,",
     replace: "          note: prompt.note,",
-    expectKilledBy: ["src/features/game/projection.test.ts"],
-  },
-  {
-    id: "D359-hud-collapses-the-quantity-rows",
-    decision: "D359",
-    what: "🛑 THE LOCAL DIALOG OFFERS ONE ROW PER BODY AGAIN, so the middle answers exist in the engine, on the wire and in the validator and CANNOT BE CLICKED. Every engine case stays green — this is the local half of what `D359-online-hud-collapses-the-quantity-rows` does to the other client, and both are needed because the two dialogs carry their own copy of the helper",
-    file: "src/features/game/GameHud.tsx",
-    find: "function takeOptions(upTo: number | undefined): (number | undefined)[] {\n  if (upTo === undefined || upTo <= 1) return [undefined];\n  return Array.from({ length: upTo }, (_, i) => i + 1);\n}\n\n/** Choose exactly one Pokémon",
-    replace: "function takeOptions(_upTo: number | undefined): (number | undefined)[] {\n  return [undefined];\n}\n\n/** Choose exactly one Pokémon",
-    expectKilledBy: ["src/features/game/GameHud.cardplay.dom.test.tsx"],
-  },
-  {
-    id: "D359-hud-offers-a-zero-quantity-row",
-    decision: "D359",
-    what: "🛑 THE ROW LIST STARTS AT ZERO, so a body is offered with 'attach 0' beside the dialog's own 'Take none' — the decline spelled twice in the UI, dispatching the frame `validateChoice` refuses. A player clicking it gets a rejected action and no explanation, which is the failure mode this repo's house rule (never offer a dispatch the engine rejects) exists to prevent",
-    file: "src/features/game/GameHud.tsx",
-    find: "  return Array.from({ length: upTo }, (_, i) => i + 1);\n}\n\n/** Choose exactly one Pokémon",
-    replace: "  return Array.from({ length: upTo }, (_, i) => i);\n}\n\n/** Choose exactly one Pokémon",
-    expectKilledBy: ["src/features/game/GameHud.cardplay.dom.test.tsx"],
-  },
-  {
-    id: "D359-online-hud-collapses-the-quantity-rows",
-    decision: "D359",
-    what: "🛑 THE ONLINE DIALOG'S COPY OF THE SAME HELPER, and the online half is the one no engine case and no local-HUD case can see. An answer one client can produce and the other cannot is a seat-dependent card, which is the reason the two copies are asserted separately rather than shared",
-    file: "src/features/online/components/OnlineHud.tsx",
-    find: "function takeOptions(upTo: number | undefined): (number | undefined)[] {\n  if (upTo === undefined || upTo <= 1) return [undefined];\n  return Array.from({ length: upTo }, (_, i) => i + 1);\n}",
-    replace: "function takeOptions(_upTo: number | undefined): (number | undefined)[] {\n  return [undefined];\n}",
-    expectKilledBy: ["src/features/online/components/OnlineHud.dom.test.tsx"],
+    expectKilledBy: ["src/game/projection.test.ts"],
   },
   // ── D362 — THE ex-ONLY ACTIVE BOARD PREDICATE. FIVE ROWS, ONE PER CLAIM.
   //    ⚠️ TWO OF THE FIVE ARE THE SAME ANCHOR'S TWO DEFENDING WORDS, AND THAT IS
@@ -18521,16 +18328,6 @@ export const MUTANTS: Mutant[] = [
     replace: "const SELF_CANT_RETREAT = /^During your next turn, this Pokémon can't retreat\\.$/;",
     expectKilledBy: ["packages/engine/src/clauseApostrophe.test.ts", "packages/engine/src/retreatLock.test.ts"],
   },
-  {
-    id: "D412-hud-reads-the-imposed-field-by-hand",
-    decision: "D412",
-    what: "🛑 C8 — **THE DEFECT THAT WAS ACTUALLY LIVE, AND IT WAS FOUND BY GREP RATHER THAN BY A RED TEST.** The local hot-seat HUD goes back to spelling `!active.retreatBlocked` by hand — the line it really carried until D412 — so a body locked by its OWN attack is offered a Retreat button that `retreat` then rejects with `RETREAT_PREVENTED`. **AN AFFORD-THEN-REJECT ON THE ONE BOARD WHERE THE PLAYER HAS THE CARD IN FRONT OF THEM SAYING IT SHOULD NOT BE THERE.** ⚠️ THIS IS THE THIRD READ SITE OF A TWO-FIELD FACT, and the engine gate and the wire projection were BOTH already routed through `retreatLocked` when this one was still wrong — so D213's rule is what this row pins: *the server-side twin passing proves nothing about the local panel.* The imposed half keeps working under the mutant, which is why the guard needs the STAMP board and not just a retreat-is-greyed board",
-    file: "src/features/game/retreat.ts",
-    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the HUD's retreat test moved to `retreat.ts` `retreatOptionForGame` (GameHud reads it); the patch is unchanged.
-    find: "      !retreatLocked(game, active) &&",
-    replace: "      !active.retreatBlocked &&",
-    expectKilledBy: ["src/features/game/GameHud.dom.test.tsx"],
-  },
 
   // ── D413 · the additive multi-coin fold ────────────────────────────────────
   // 🛑 C1 AND C2 ARE THE SLICE, AND THEY ARE THE SAME DEFECT FROM TWO SIDES: the
@@ -19438,7 +19235,7 @@ export const MUTANTS: Mutant[] = [
     replace: "        decider: ctx.seat,",
     expectKilledBy: [
       "packages/engine/src/opponentHandDiscard.test.ts",
-      "src/features/game/projection.test.ts",
+      "src/game/projection.test.ts",
     ],
   },
   {
@@ -19451,7 +19248,7 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: [
       "packages/engine/src/opponentHandDiscard.test.ts",
       "packages/engine/src/redact.test.ts",
-      "src/features/game/projection.test.ts",
+      "src/game/projection.test.ts",
     ],
   },
   {
@@ -21416,56 +21213,10 @@ export const MUTANTS: Mutant[] = [
     id: "D441-projection-drops-the-floor",
     decision: "D441",
     what: "🛑 C13 — the wire-to-engine REBUILD drops the floor, the THIRD read site and the one D226's work order did not name. Its own doc promises the round-trip is exact, so a prompt that crossed correctly is re-granted a decline on the way back in",
-    file: "src/features/game/projection.ts",
+    file: "src/game/projection.ts",
     find: "          ...(prompt.min === undefined ? {} : { min: prompt.min }),",
     replace: "",
-    expectKilledBy: ["src/features/game/projection.test.ts"],
-  },
-  {
-    id: "D441-local-hud-keeps-the-decline",
-    decision: "D441",
-    what: "🛑 C14 — the LOCAL dialog keeps offering 'Move none' (the pre-slice line verbatim): the card is legal, the engine refuses the answer, and the player is shown a button that can only produce an error. The afford-then-reject defect D222 named, on the one screen that tells the player what their pick does",
-    file: "src/features/game/GameHud.tsx",
-    // ⚠️ RE-TRANSCRIBED AT D442 — the local is a BOOLEAN now (`canDecline`), because the
-    // map answer's decline is `picks: []` and no longer needs a destination to name. The
-    // claim is unchanged and so is the killer: the dialog offers "Move none" on a prompt
-    // whose floor forbids the empty answer, and the dom rung asserting that button's
-    // ABSENCE at `min === max` is the only thing that can see it.
-    find: "  const canDecline = floor === 0;",
-    replace: "  const canDecline = true;",
-    expectKilledBy: ["src/features/game/GameHud.cardplay.dom.test.tsx"],
-  },
-  {
-    id: "D441-online-hud-keeps-the-decline",
-    decision: "D441",
-    what: "🛑 C15 — the ONLINE dialog keeps offering 'Move none' — the same defect on the other HUD, which is why the price was two read sites and not one (D226's pair, and D412's third-read-site rule)",
-    file: "src/features/online/components/OnlineHud.tsx",
-    // ⚠️ RE-TRANSCRIBED AT D442 — the local is a BOOLEAN now (`canDecline`), because the
-    // map answer's decline is `picks: []` and no longer needs a destination to name. The
-    // claim is unchanged and so is the killer: the dialog offers "Move none" on a prompt
-    // whose floor forbids the empty answer, and the dom rung asserting that button's
-    // ABSENCE at `min === max` is the only thing that can see it.
-    find: "  const canDecline = floor === 0;",
-    replace: "  const canDecline = true;",
-    expectKilledBy: ["src/features/online/components/OnlineHud.dom.test.tsx"],
-  },
-  {
-    id: "D441-local-hud-confirm-ignores-the-floor",
-    decision: "D441",
-    what: "⚠️ C16 — the LOCAL Confirm reverts to the family's standing `pickedUids.length > 0`, so a SHORT answer can be dispatched and the engine refuses it. ⚠️ IT IS INVISIBLE AT ONE MOVABLE ENERGY — the two readings agree there — which is why the local dom case fields TWO and asserts 'Move 1' is dead",
-    file: "src/features/game/GameHud.tsx",
-    find: "  const ready = pickedUids.length >= Math.max(1, floor) && dest !== null;",
-    replace: "  const ready = pickedUids.length > 0 && dest !== null;",
-    expectKilledBy: ["src/features/game/GameHud.cardplay.dom.test.tsx"],
-  },
-  {
-    id: "D441-online-hud-confirm-ignores-the-floor",
-    decision: "D441",
-    what: "⚠️ C17 — the ONLINE Confirm reverts to `pickedUids.length > 0` — C16 on the other HUD, and the same one-Energy blind spot: the online case fields two Energy for exactly that reason",
-    file: "src/features/online/components/OnlineHud.tsx",
-    find: "  const ready = pickedUids.length >= Math.max(1, floor) && dest !== null;",
-    replace: "  const ready = pickedUids.length > 0 && dest !== null;",
-    expectKilledBy: ["src/features/online/components/OnlineHud.dom.test.tsx"],
+    expectKilledBy: ["src/game/projection.test.ts"],
   },
   // ── D442 — THE DESTINATION AXIS OF THE MOVE-ENERGY FAMILY. Sixteen rows, and the
   //    SHAPE of the set is the finding: the slice's whole mechanism is that ONE
@@ -21564,10 +21315,10 @@ export const MUTANTS: Mutant[] = [
     id: "D442-projection-drops-the-destination-rider",
     decision: "D442",
     what: "⚠️ C10 — the wire-to-engine rebuild drops the rider — the FOURTH `moveEnergy` read site, whose own doc promises the round trip is EXACT, so a spread prompt rebuilds as a coupled one on the client that reconstructs it",
-    file: "src/features/game/projection.ts",
+    file: "src/game/projection.ts",
     find: "          ...(prompt.anyDest === undefined ? {} : { anyDest: prompt.anyDest }),",
     replace: "",
-    expectKilledBy: ["src/features/game/projection.test.ts"],
+    expectKilledBy: ["src/game/projection.test.ts"],
   },
   {
     id: "D442-validator-deletes-the-destination-coupling",
@@ -21604,24 +21355,6 @@ export const MUTANTS: Mutant[] = [
     find: "      let group = byDest.get(keyOf(to));",
     replace: "      let group = byDest.get(\"one\");",
     expectKilledBy: ["packages/engine/src/derivedSpreadEnergyMove.test.ts"],
-  },
-  {
-    id: "D442-local-hud-offers-a-picks-own-host",
-    decision: "D442",
-    what: "⚠️ C15 — the LOCAL spread dialog offers every destination to every pick, including the body the Energy is sitting on. The engine refuses that entry, so the player is shown a row that can only produce an error — the afford-then-reject D222 named, and the printed *\"other\"* it drops. Invisible on Kilowattrel's board (the Active is not a destination there), so the case that reads it is the FREE route, where a body is both",
-    file: "src/features/game/GameHud.tsx",
-    find: "    return prompt.destinations.filter((ref) => host === undefined || keyOf(ref) !== keyOf(host));",
-    replace: "    return prompt.destinations;",
-    expectKilledBy: ["src/features/game/GameHud.cardplay.dom.test.tsx"],
-  },
-  {
-    id: "D442-online-hud-offers-a-picks-own-host",
-    decision: "D442",
-    what: "⚠️ C16 — C15 on the ONLINE dialog, which is why the price was two read sites and not one (D226's pair, D412's third-read-site rule). The two HUDs answer the SAME wire prompt, so a destination one offers and the other withholds is a seat-dependent card",
-    file: "src/features/online/components/OnlineHud.tsx",
-    find: "    return prompt.destinations.filter((ref) => host === undefined || refKey(ref) !== refKey(host));",
-    replace: "    return prompt.destinations;",
-    expectKilledBy: ["src/features/online/components/OnlineHud.dom.test.tsx"],
   },
   {
     id: "D443-free-arm-drops-the-seat",
@@ -21766,24 +21499,6 @@ export const MUTANTS: Mutant[] = [
     find: "  /^You may move an Energy from your opponent['’]s Active Pokémon to 1 of their Benched Pokémon\\.$/;",
     replace: "  /^You may move an Energy from your opponent's Active Pokémon to 1 of their Benched Pokémon\\.$/;",
     expectKilledBy: ["packages/engine/src/derivedOpponentEnergyMove.test.ts", "packages/engine/src/clauseApostrophe.test.ts"],
-  },
-  {
-    id: "D443-local-hud-drops-the-side-marker",
-    decision: "D443",
-    what: "⚠️ C17 — THE LOCAL DIALOG DROPS THE SIDE MARKER: the SOURCE list's `ref.seat !== viewerSeat` becomes `false`, which is the code this dialog shipped with for eleven decisions and the only public-ref dialog family in the file without the marker. The board is right, the prompt is right, the wire is right, the answer is right — and in a mirror match the player is asked to pick between two identically-named rows on two different boards with nothing to tell them apart. D412's third-read-site shape: found by grepping the siblings, not by a red test",
-    file: "src/features/game/GameHud.tsx",
-    find: "                      by hand, found by grep rather than by a red test. */}\n                  {ref.seat !== viewerSeat && (",
-    replace: "                      by hand, found by grep rather than by a red test. */}\n                  {false && (",
-    expectKilledBy: ["src/features/game/GameHud.cardplay.dom.test.tsx"],
-  },
-  {
-    id: "D443-online-hud-marker-fires-on-every-row",
-    decision: "D443",
-    what: "⚠️ C18 — THE ONLINE DIALOG MARKS EVERYTHING: `ref.seat !== seat` becomes `true`, so the viewer's OWN bodies are labelled `opponent`. It is the OPPOSITE direction from C17 deliberately — a one-sided rung (\"the opponent rows say opponent\") is green under this build and a one-sided rung the other way (\"my rows say nothing\") is green under C17, so the killing case is the same-render PAIR. D424's refusal-needs-an-admission rule, read at a UI marker",
-    file: "src/features/online/components/OnlineHud.tsx",
-    find: "                    {/* \ud83c\udd95 D443 \u2014 the destination list's half of the same marker. */}\n                    {ref.seat !== seat && (",
-    replace: "                    {/* \ud83c\udd95 D443 \u2014 the destination list's half of the same marker. */}\n                    {true && (",
-    expectKilledBy: ["src/features/online/components/OnlineHud.dom.test.tsx"],
   },
   // ── 🆕🆕 D444 · THE FIRST DERIVED `attackGate`. Eight rows, and the SHAPE of the
   //    set is the finding: FIVE of the eight are on the clause→gate MAP, because the
@@ -23156,9 +22871,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "  const merged = stacking ? Math.max(existing.amount, floor) : floor;",
     replace: "  const merged = stacking ? Math.min(existing.amount, floor) : floor;",
-    expectKilledBy: [
-      "packages/engine/src/installedRecoil.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/installedRecoil.test.ts"],
   },
   {
     id: "D454-recoil-window-is-your-own-next-turn",
@@ -23449,9 +23162,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "  return { ...withSide(state, seat, { ...side, deck }), rngState };",
     replace: "  return withSide(state, seat, { ...side, deck });",
-    expectKilledBy: [
-      "packages/engine/src/torrentialPump.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/torrentialPump.test.ts"],
   },
   {
     id: "D455-the-printed-you-may-is-answered-by-the-opponent",
@@ -23563,9 +23274,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "      return { done: installRecoil(state, op.amount, ctx, events) };",
     replace: "      return {\n        done: installRecoil(\n          state,\n          op.amount === \"damageTaken\" ? (ctx.dealt ?? 0) : op.amount,\n          ctx,\n          events,\n        ),\n      };",
-    expectKilledBy: [
-      "packages/engine/src/installedRecoil.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/installedRecoil.test.ts"],
   },
   {
     id: "D456-read-site-ignores-the-channel",
@@ -23598,9 +23307,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/continuous.ts",
     find: "  return installed.ofDamageTaken === true\n    ? Math.max(installed.amount, damageTaken)\n    : installed.amount;",
     replace: "  return installed.ofDamageTaken === true ? damageTaken : installed.amount;",
-    expectKilledBy: [
-      "packages/engine/src/installedRecoil.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/installedRecoil.test.ts"],
   },
   {
     id: "D456-attack-site-forgets-the-third-argument",
@@ -23610,9 +23317,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D614 — RE-POINTED: the line subtracts Luminous Wing's refused Ability share now.
     find: "    const recoil =\n      defenderPassives.damageAttacker - refusedRecoil + installedRecoilOf(next, defender, dealt);",
     replace: "    const recoil =\n      defenderPassives.damageAttacker - refusedRecoil + installedRecoilOf(next, defender, 0);",
-    expectKilledBy: [
-      "packages/engine/src/installedRecoil.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/installedRecoil.test.ts"],
   },
   {
     id: "D456-interpreter-site-forgets-the-third-argument",
@@ -23622,9 +23327,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D614 — RE-POINTED: the fold is read once into `damagedPassives`, less the refused share.
     find: "    damagedPassives.damageAttacker - refusedRecoil + installedRecoilOf(next, damagedBody, damageTaken);",
     replace: "    damagedPassives.damageAttacker - refusedRecoil + installedRecoilOf(next, damagedBody, 0);",
-    expectKilledBy: [
-      "packages/engine/src/rehomedMainHit.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/rehomedMainHit.test.ts"],
   },
   {
     id: "D456-event-drops-the-flag",
@@ -23633,9 +23336,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "    ...(taken ? { ofDamageTaken: true } : {}),\n  });",
     replace: "  });",
-    expectKilledBy: [
-      "packages/engine/src/installedRecoil.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/installedRecoil.test.ts"],
   },
   {
     id: "D456-record-drops-the-flag",
@@ -23656,9 +23357,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "  if (stacking && merged === existing.amount && taken === wasTaken) return state;",
     replace: "  if (stacking && merged === existing.amount) return state;",
-    expectKilledBy: [
-      "packages/engine/src/installedRecoil.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/installedRecoil.test.ts"],
   },
   {
     id: "D456-stale-flag-read-ungated",
@@ -23667,9 +23366,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "  const taken = amount === \"damageTaken\" || wasTaken;",
     replace: "  const taken = amount === \"damageTaken\" || existing?.ofDamageTaken === true;",
-    expectKilledBy: [
-      "packages/engine/src/installedRecoil.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/installedRecoil.test.ts"],
   },
   {
     id: "D456-log-arm-always-prints-a-number",
@@ -23678,9 +23375,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/log.ts",
     find: "        event.ofDamageTaken === true",
     replace: "        false",
-    expectKilledBy: [
-      "packages/engine/src/installedRecoil.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/installedRecoil.test.ts"],
   },
   {
     id: "D457-one-target-rider-written-at-every-count",
@@ -23689,9 +23384,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "        ...(destination.batch || count === 1 ? {} : { oneTarget: true as const }),",
     replace: "        ...(destination.batch ? {} : { oneTarget: true as const }),",
-    expectKilledBy: [
-      "packages/engine/src/derivedDeckSearchAttach.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
   },
   {
     id: "D457-park-drops-the-rider",
@@ -23700,9 +23393,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "          ...(op.oneTarget === undefined ? {} : { oneTarget: op.oneTarget }),",
     replace: "          ...(op.oneTarget === undefined ? {} : {}),",
-    expectKilledBy: [
-      "packages/engine/src/derivedDeckSearchAttach.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
   },
   {
     id: "D457-validator-ignores-the-rider",
@@ -23711,9 +23402,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/cardplay.ts",
     find: "        if (prompt.oneTarget === true && perTarget.size > 1) {",
     replace: "        if (false && prompt.oneTarget === true && perTarget.size > 1) {",
-    expectKilledBy: [
-      "packages/engine/src/derivedDeckSearchAttach.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
   },
   {
     id: "D457-validator-caps-the-cards-not-the-targets",
@@ -23722,9 +23411,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/cardplay.ts",
     find: "        if (prompt.oneTarget === true && perTarget.size > 1) {",
     replace: "        if (prompt.oneTarget === true && choice.assignments.length > 1) {",
-    expectKilledBy: [
-      "packages/engine/src/derivedDeckSearchAttach.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
   },
   {
     id: "D457-offer-clamps-max-to-one-target",
@@ -23733,9 +23420,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "  const cap =\n    op.maxPerTarget === undefined ? op.max : Math.min(op.max, targets.length * op.maxPerTarget);",
     replace: "  const cap =\n    op.oneTarget === true\n      ? Math.min(op.max, 1)\n      : op.maxPerTarget === undefined\n        ? op.max\n        : Math.min(op.max, targets.length * op.maxPerTarget);",
-    expectKilledBy: [
-      "packages/engine/src/derivedDeckSearchAttach.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
   },
   {
     id: "D457-caption-keeps-in-any-way-you-like",
@@ -23744,9 +23429,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "  if (op.oneTarget === true) {\n    return `Search your deck for up to ${op.max} ${plural} and attach them to 1 of your ${where}.`;\n  }",
     replace: "",
-    expectKilledBy: [
-      "packages/engine/src/derivedDeckSearchAttach.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
   },
   {
     id: "D457-redact-drops-the-rider",
@@ -23755,42 +23438,16 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/redact.ts",
     find: "        oneTarget: prompt.oneTarget,",
     replace: "",
-    expectKilledBy: [
-      "packages/engine/src/redact.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/redact.test.ts"],
   },
   {
     id: "D457-projection-drops-the-rider",
     decision: "D457",
     what: "⚠ **THE CLIENT-SIDE PROJECTION LOSES THE KEY ON THE WAY BACK IN** — the same omission one hop later, where it is even quieter: the wire carries the constraint, `projectionFromRedacted` drops it, and the ONLINE HUD alone (which reads the projected prompt) starts offering a second body while the local one does not. The round-trip identity is the only thing that can see it",
-    file: "src/features/game/projection.ts",
+    file: "src/game/projection.ts",
     find: "          ...(prompt.oneTarget !== undefined ? { oneTarget: prompt.oneTarget } : {}),",
     replace: "",
-    expectKilledBy: [
-      "src/features/game/projection.test.ts",
-    ],
-  },
-  {
-    id: "D457-hud-target-full-ignores-one-target",
-    decision: "D457",
-    what: "⚠ **THE DIALOG STOPS CLOSING THE SECOND BODY** — the predicate goes back to its pre-D457 line, which is the shape an author restores when the two rules look like one. Every engine rung stays green (the SERVER still refuses the split); what breaks is the surface: the player builds a pairing the dialog offered, taps Confirm, and gets BAD_EFFECT_CHOICE surfaced as a pill that says nothing about WHICH pairing was illegal — the exact failure the `maxPerTarget` half of this predicate was written to prevent",
-    file: "src/features/game/GameHud.tsx",
-    find: "    (prompt.maxPerTarget !== undefined && assignedTo(ref) >= prompt.maxPerTarget) ||\n    (prompt.oneTarget === true && assignments.length > 0 && assignedTo(ref) === 0);\n  /** WHY a row is closed",
-    replace: "    prompt.maxPerTarget !== undefined && assignedTo(ref) >= prompt.maxPerTarget;\n  /** WHY a row is closed",
-    expectKilledBy: [
-      "src/features/game/GameHud.attachFromDeck.dom.test.tsx",
-    ],
-  },
-  {
-    id: "D457-hud-badge-says-already-has-one",
-    decision: "D457",
-    what: "\U0001F6D1 **THE CLOSED ROW IS GIVEN THE WRONG REASON** — one badge for two opposite rules, which is what the code said before this slice and what an author writes who sees only that both rules close a row. A Pokémon holding NOTHING is told it \"already has one\": the dialog stating a false fact about the board, on the surface the player reads. Nothing else moves — the row is disabled either way, the answer dispatched is identical, and only the badge lies",
-    file: "src/features/game/GameHud.tsx",
-    find: "      ? \"they all go on 1 Pokémon\"\n      : \"already has one\";",
-    replace: "      ? \"already has one\"\n      : \"already has one\";",
-    expectKilledBy: [
-      "src/features/game/GameHud.attachFromDeck.dom.test.tsx",
-    ],
+    expectKilledBy: ["src/game/projection.test.ts"],
   },
   // ── 🆕🆕 D458 — THE SECOND PRINTED NOUN (corpus line 410, 1 sentence / 2 legal
   //    printings). TEN rows, and the SHAPE of the set is the finding again: this
@@ -27493,9 +27150,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "  return filter === undefined\n    ? filed.length\n    : filed.filter((uid) => matchesFilter(cardOfUid(state, uid), filter)).length;",
     replace: "  return filed.length;",
-    expectKilledBy: [
-      "packages/engine/src/deckMillFilteredScale.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/deckMillFilteredScale.test.ts"],
   },
   {
     id: "D488-mill-does-not-record",
@@ -27504,9 +27159,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "      recordMoved(record, op.recordAs, filed);\n      return { done: milledState };",
     replace: "      return { done: milledState };",
-    expectKilledBy: [
-      "packages/engine/src/deckMillFilteredScale.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/deckMillFilteredScale.test.ts"],
   },
   {
     id: "D488-empty-answer-is-not-filed",
@@ -27515,9 +27168,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "      recordMoved(record, op.recordAs, filed);",
     replace: "      if (filed.length > 0) recordMoved(record, op.recordAs, filed);",
-    expectKilledBy: [
-      "packages/engine/src/deckMillFilteredScale.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/deckMillFilteredScale.test.ts"],
   },
   {
     id: "D488-noun-group-goes-greedy",
@@ -27526,9 +27177,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  /^Discard the top (\\d+) cards of your deck, and this attack does (\\d+) damage for each (.+?) (?:that )?you discarded in this way\\.$/;",
     replace: "  /^Discard the top (\\d+) cards of your deck, and this attack does (\\d+) damage for each (.+) (?:that )?you discarded in this way\\.$/;",
-    expectKilledBy: [
-      "packages/engine/src/deckMillFilteredScale.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/deckMillFilteredScale.test.ts"],
   },
   {
     id: "D488-unspellable-noun-counts-everything",
@@ -27537,9 +27186,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "    if (count >= 1 && per >= 1 && filter !== null) {",
     replace: "    if (count >= 1 && per >= 1) {",
-    expectKilledBy: [
-      "packages/engine/src/deckMillFilteredScale.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/deckMillFilteredScale.test.ts"],
   },
   {
     id: "D488-noun-resolver-loses-the-owner",
@@ -27548,9 +27195,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  const owner = IN_PLAY_OWNER_NOUN.exec(noun);\n  if (owner !== null && owner[1] !== undefined) return { kind: \"ownerPokemon\", owner: owner[1] };\n  return null;",
     replace: "  return null;",
-    expectKilledBy: [
-      "packages/engine/src/deckMillFilteredScale.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/deckMillFilteredScale.test.ts"],
   },
   {
     id: "D488-anchor-admits-the-additive-fold",
@@ -27571,9 +27216,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "        { op: \"discardDeckTop\", whose: \"self\" as const, count, recordAs: \"discarded\" as const },",
     replace: "        { op: \"discardDeckTop\", whose: \"opponent\" as const, count, recordAs: \"discarded\" as const },",
-    expectKilledBy: [
-      "packages/engine/src/deckMillFilteredScale.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/deckMillFilteredScale.test.ts"],
   },
   {
     id: "D488-scale-reads-the-wrong-slot",
@@ -27582,9 +27225,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "        { op: \"damageDefender\", per, count: \"discarded\" as const, countFilter: filter },",
     replace: "        { op: \"damageDefender\", per, count: \"moved\" as const, countFilter: filter },",
-    expectKilledBy: [
-      "packages/engine/src/deckMillFilteredScale.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/deckMillFilteredScale.test.ts"],
   },
   {
     id: "D489-arm-reads-the-shifted-group",
@@ -27593,9 +27234,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "    const cap = Number(match[1]);\n    const per = Number(match[2]);",
     replace: "    const cap = Number(match[2]);\n    const per = Number(match[1]);",
-    expectKilledBy: [
-      "packages/engine/src/handDiscardScaledSnipe.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/handDiscardScaledSnipe.test.ts"],
   },
   {
     id: "D489-arm-drops-the-payments-record-slot",
@@ -27628,9 +27267,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "          deals: true,\n          perRecorded: \"discarded\",\n        },",
     replace: "          deals: true,\n          perRecorded: \"paid\",\n        },",
-    expectKilledBy: [
-      "packages/engine/src/handDiscardScaledSnipe.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/handDiscardScaledSnipe.test.ts"],
   },
   {
     id: "D489-arm-drops-the-energy-filter",
@@ -27639,9 +27276,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "          to: \"discard\",\n          filter: { kind: \"anyEnergy\" },",
     replace: "          to: \"discard\",",
-    expectKilledBy: [
-      "packages/engine/src/handDiscardScaledSnipe.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/handDiscardScaledSnipe.test.ts"],
   },
   {
     id: "D489-ops-are-emitted-in-the-wrong-order",
@@ -27650,9 +27285,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "        {\n          op: \"payFromHand\",\n          count: \"any\",\n          cap,\n          to: \"discard\",\n          filter: { kind: \"anyEnergy\" },\n          recordAs: \"discarded\",\n        },\n        {\n          op: \"damageChosen\",\n          target: \"opponentAny\",\n          amount: per,\n          count: 1,\n          source: \"attack\",\n          deals: true,\n          perRecorded: \"discarded\",\n        },",
     replace: "        {\n          op: \"damageChosen\",\n          target: \"opponentAny\",\n          amount: per,\n          count: 1,\n          source: \"attack\",\n          deals: true,\n          perRecorded: \"discarded\",\n        },\n        {\n          op: \"payFromHand\",\n          count: \"any\",\n          cap,\n          to: \"discard\",\n          filter: { kind: \"anyEnergy\" },\n          recordAs: \"discarded\",\n        },",
-    expectKilledBy: [
-      "packages/engine/src/handDiscardScaledSnipe.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/handDiscardScaledSnipe.test.ts"],
   },
   {
     id: "D489-snipe-targets-the-bench-only",
@@ -27661,9 +27294,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "          op: \"damageChosen\",\n          target: \"opponentAny\",\n          amount: per,",
     replace: "          op: \"damageChosen\",\n          target: \"opponentBench\",\n          amount: per,",
-    expectKilledBy: [
-      "packages/engine/src/handDiscardScaledSnipe.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/handDiscardScaledSnipe.test.ts"],
   },
   {
     id: "D489-arm-drops-the-cap-positivity-guard",
@@ -27672,9 +27303,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "    if (cap >= 1 && per >= 1) {",
     replace: "    if (per >= 1) {",
-    expectKilledBy: [
-      "packages/engine/src/handDiscardScaledSnipe.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/handDiscardScaledSnipe.test.ts"],
   },
   {
     id: "D489-anchor-loses-its-caret",
@@ -27683,9 +27312,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  \"^Discard up to (\\\\d+) Energy cards from your hand\\\\. \" +",
     replace: "  \"Discard up to (\\\\d+) Energy cards from your hand\\\\. \" +",
-    expectKilledBy: [
-      "packages/engine/src/handDiscardScaledSnipe.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/handDiscardScaledSnipe.test.ts"],
   },
   {
     id: "D489-fold-ignores-the-slot-rider",
@@ -27694,9 +27321,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "  if (op.perRecorded !== undefined)\n    return op.amount * recorded(record, op.perRecorded).length;",
     replace: "  if (op.perRecorded === undefined)\n    return op.amount * recorded(record, op.perRecorded ?? \"discarded\").length;",
-    expectKilledBy: [
-      "packages/engine/src/handDiscardScaledSnipe.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/handDiscardScaledSnipe.test.ts"],
   },
   {
     id: "D489-fold-adds-instead-of-multiplying",
@@ -27705,9 +27330,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "    return op.amount * recorded(record, op.perRecorded).length;",
     replace: "    return op.amount + recorded(record, op.perRecorded).length;",
-    expectKilledBy: [
-      "packages/engine/src/handDiscardScaledSnipe.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/handDiscardScaledSnipe.test.ts"],
   },
   {
     id: "D489-collapse-ceiling-is-a-hard-one",
@@ -27717,9 +27340,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D617 — RE-POINTED: the line now also resolves `cap: "any"` (Naveen); the declinable arm's ceiling is 1.
     find: "  const keepPer = op.count !== \"any\" ? op.count : op.cap === \"any\" ? Number.POSITIVE_INFINITY : op.cap;",
     replace: "  const keepPer = op.count !== \"any\" ? op.count : 1;",
-    expectKilledBy: [
-      "packages/engine/src/handDiscardScaledSnipe.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/handDiscardScaledSnipe.test.ts"],
   },
   {
     id: "D489-declinable-cost-gates-the-wrong-arm",
@@ -27740,9 +27361,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "  if (op.count === \"any\") return `up to ${op.cap} ${other ? \"other \" : \"\"}${plural}`;",
     replace: "  if (op.count === \"any\") return `${op.cap} ${other ? \"other \" : \"\"}${plural}`;",
-    expectKilledBy: [
-      "packages/engine/src/handDiscardScaledSnipe.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/handDiscardScaledSnipe.test.ts"],
   },
   {
     id: "D489-declinable-park-refuses-the-decline",
@@ -27752,9 +27371,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D617 — RE-POINTED: a comment and the `cap: "any"` arm now sit between `min` and `max`.
     find: "            min: 0,\n            // 🆕🆕🆕 D617 — `cap: \"any\"`",
     replace: "            min: op.cap === \"any\" ? candidates.length : Math.min(op.cap, candidates.length),\n            // 🆕🆕🆕 D617 — `cap: \"any\"`",
-    expectKilledBy: [
-      "packages/engine/src/handDiscardScaledSnipe.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/handDiscardScaledSnipe.test.ts"],
   },
   {
     id: "D489-declinable-ceiling-is-the-whole-offer",
@@ -27764,9 +27381,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D617 — RE-POINTED: the line now also resolves `cap: "any"` (Naveen).
     find: "            max: op.cap === \"any\" ? candidates.length : Math.min(op.cap, candidates.length),",
     replace: "            max: candidates.length,",
-    expectKilledBy: [
-      "packages/engine/src/handDiscardScaledSnipe.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/handDiscardScaledSnipe.test.ts"],
   },
   {
     id: "D489-lone-candidate-resolves-inline",
@@ -27775,9 +27390,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "      if (op.count === \"any\") {\n        if (candidates.length === 0) {",
     replace: "      if (op.count === \"any\") {\n        if (candidates.length <= 1) {",
-    expectKilledBy: [
-      "packages/engine/src/handDiscardScaledSnipe.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/handDiscardScaledSnipe.test.ts"],
   },
   {
     id: "D489-escape-drops-the-declinable-test",
@@ -27786,9 +27399,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/handEnergyCancel.test.ts",
     find: "    if (cost.op !== \"payFromHand\" || cost.count !== \"any\" || cost.recordAs === undefined) {",
     replace: "    if (cost.op !== \"payFromHand\" || cost.recordAs === undefined) {",
-    expectKilledBy: [
-      "packages/engine/src/handEnergyCancel.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/handEnergyCancel.test.ts"],
   },
   {
     id: "D489-escape-drops-the-slot-match",
@@ -27797,9 +27408,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/handEnergyCancel.test.ts",
     find: "      (scale.op === \"damageChosen\" && scale.perRecorded === cost.recordAs) ||\n      (scale.op === \"damageDefender\" && scale.count === cost.recordAs);",
     replace: "      (scale.op === \"damageChosen\" && scale.perRecorded !== undefined) ||\n      (scale.op === \"damageDefender\" && scale.count !== undefined);",
-    expectKilledBy: [
-      "packages/engine/src/handEnergyCancel.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/handEnergyCancel.test.ts"],
   },
   {
     id: "D490-anchor-loses-its-caret",
@@ -27808,9 +27417,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "const EACH_DECK_MILL_SCALED_BOOST =\n  /^Discard the top card",
     replace: "const EACH_DECK_MILL_SCALED_BOOST =\n  /Discard the top card",
-    expectKilledBy: [
-      "packages/engine/src/eachDeckMillBoost.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachDeckMillBoost.test.ts"],
   },
   {
     id: "D490-anchor-loses-its-dollar",
@@ -27819,9 +27426,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "more damage for each Energy card discarded in this way\\.$/;",
     replace: "more damage for each Energy card discarded in this way\\./;",
-    expectKilledBy: [
-      "packages/engine/src/eachDeckMillBoost.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachDeckMillBoost.test.ts"],
   },
   {
     id: "D490-anchor-reads-the-wrong-noun",
@@ -27830,9 +27435,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "more damage for each Energy card discarded in this way\\.$/;",
     replace: "more damage for each Item card discarded in this way\\.$/;",
-    expectKilledBy: [
-      "packages/engine/src/eachDeckMillBoost.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachDeckMillBoost.test.ts"],
   },
   {
     id: "D490-anchor-drops-the-printed-more",
@@ -27841,9 +27444,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "deck\\. This attack does (\\d+) more damage for each Energy card discarded",
     replace: "deck\\. This attack does (\\d+) ?m?o?r?e? ?damage for each Energy card discarded",
-    expectKilledBy: [
-      "packages/engine/src/eachDeckMillBoost.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachDeckMillBoost.test.ts"],
   },
   {
     id: "D490-per-guard-admits-zero",
@@ -27852,9 +27453,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "    return perMilled < 1 ? null : { kind: \"eachDeckMill\", per: perMilled };",
     replace: "    return perMilled < 0 ? null : { kind: \"eachDeckMill\", per: perMilled };",
-    expectKilledBy: [
-      "packages/engine/src/eachDeckMillBoost.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachDeckMillBoost.test.ts"],
   },
   {
     id: "D490-assembler-mills-the-attackers-deck-only",
@@ -27863,9 +27462,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "        { op: \"discardDeckTop\", whose: \"eachPlayer\", count: 1, recordAs: \"discarded\" },",
     replace: "        { op: \"discardDeckTop\", whose: \"self\", count: 1, recordAs: \"discarded\" },",
-    expectKilledBy: [
-      "packages/engine/src/eachDeckMillBoost.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachDeckMillBoost.test.ts"],
   },
   {
     id: "D490-assembler-mills-the-opponents-deck-only",
@@ -27874,9 +27471,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "        { op: \"discardDeckTop\", whose: \"eachPlayer\", count: 1, recordAs: \"discarded\" },\n        // 🛑 THE PRINTED NOUN",
     replace: "        { op: \"discardDeckTop\", whose: \"opponent\", count: 1, recordAs: \"discarded\" },\n        // 🛑 THE PRINTED NOUN",
-    expectKilledBy: [
-      "packages/engine/src/eachDeckMillBoost.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachDeckMillBoost.test.ts"],
   },
   {
     id: "D490-assembler-drops-the-count-filter",
@@ -27888,9 +27483,7 @@ export const MUTANTS: Mutant[] = [
     //    case label instead. Same patch: the mill case drops its `countFilter`.
     find: "          count: \"discarded\",\n          countFilter: { kind: \"anyEnergy\" },\n        },\n      ];\n    case \"selfHandAttach\":",
     replace: "          count: \"discarded\",\n        },\n      ];\n    case \"selfHandAttach\":",
-    expectKilledBy: [
-      "packages/engine/src/eachDeckMillBoost.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachDeckMillBoost.test.ts"],
   },
   {
     id: "D490-assembler-drops-the-printed-base",
@@ -27899,9 +27492,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "          op: \"damageDefender\",\n          base,\n          per: reading.per,",
     replace: "          op: \"damageDefender\",\n          per: reading.per,",
-    expectKilledBy: [
-      "packages/engine/src/eachDeckMillBoost.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachDeckMillBoost.test.ts"],
   },
   {
     id: "D490-assembler-drops-the-record",
@@ -27910,9 +27501,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "whose: \"eachPlayer\", count: 1, recordAs: \"discarded\" },",
     replace: "whose: \"eachPlayer\", count: 1 },",
-    expectKilledBy: [
-      "packages/engine/src/eachDeckMillBoost.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachDeckMillBoost.test.ts"],
   },
   {
     id: "D490-assembler-reads-the-wrong-slot",
@@ -27921,9 +27510,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "          per: reading.per,\n          count: \"discarded\",\n          countFilter: { kind: \"anyEnergy\" },",
     replace: "          per: reading.per,\n          count: \"paid\",\n          countFilter: { kind: \"anyEnergy\" },",
-    expectKilledBy: [
-      "packages/engine/src/eachDeckMillBoost.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachDeckMillBoost.test.ts"],
   },
   {
     id: "D490-eachplayer-walks-the-attacker-only",
@@ -27932,9 +27519,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: '          case "opponent":\n            return [otherSeat(ctx.seat)];\n          case "eachPlayer":\n            return [ctx.seat, otherSeat(ctx.seat)];',
     replace: '          case "opponent":\n            return [otherSeat(ctx.seat)];\n          case "eachPlayer":\n            return [ctx.seat];',
-    expectKilledBy: [
-      "packages/engine/src/eachDeckMillBoost.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachDeckMillBoost.test.ts"],
   },
   {
     id: "D490-eachplayer-walks-the-opponent-only",
@@ -27943,9 +27528,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "            return [ctx.seat, otherSeat(ctx.seat)];\n        }\n      })();",
     replace: "            return [otherSeat(ctx.seat)];\n        }\n      })();",
-    expectKilledBy: [
-      "packages/engine/src/eachDeckMillBoost.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachDeckMillBoost.test.ts"],
   },
   {
     id: "D490-eachplayer-walks-the-absolute-seats",
@@ -27954,9 +27537,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "          case \"eachPlayer\":\n            return [ctx.seat, otherSeat(ctx.seat)];\n        }",
     replace: "          case \"eachPlayer\":\n            return [...SEATS];\n        }",
-    expectKilledBy: [
-      "packages/engine/src/eachDeckMillBoost.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachDeckMillBoost.test.ts"],
   },
   {
     id: "D490-walk-clobbers-the-first-mill",
@@ -27965,9 +27546,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "        milledState = withSide(milledState, victim, {",
     replace: "        milledState = withSide(state, victim, {",
-    expectKilledBy: [
-      "packages/engine/src/eachDeckMillBoost.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachDeckMillBoost.test.ts"],
   },
   {
     id: "D490-files-only-the-last-seat",
@@ -27988,9 +27567,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "        if (milled.length === 0) continue;",
     replace: "        if (milled.length === 0) return { done: milledState };",
-    expectKilledBy: [
-      "packages/engine/src/eachDeckMillBoost.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachDeckMillBoost.test.ts"],
   },
   {
     id: "D490-arm-order-swapped",
@@ -28015,9 +27592,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "const ATTACK_EACH_PLAYER_DRAW = /^Each player draws (\\d+) cards\\.$/;",
     replace: "const ATTACK_EACH_PLAYER_DRAW = /Each player draws (\\d+) cards\\.$/;",
-    expectKilledBy: [
-      "packages/engine/src/eachPlayerDraw.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachPlayerDraw.test.ts"],
   },
   {
     id: "D491-anchor-loses-its-terminator",
@@ -28026,9 +27601,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "const ATTACK_EACH_PLAYER_DRAW = /^Each player draws (\\d+) cards\\.$/;",
     replace: "const ATTACK_EACH_PLAYER_DRAW = /^Each player draws (\\d+) cards\\./;",
-    expectKilledBy: [
-      "packages/engine/src/eachPlayerDraw.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachPlayerDraw.test.ts"],
   },
   {
     id: "D491-anchor-admits-the-modal",
@@ -28037,9 +27610,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "const ATTACK_EACH_PLAYER_DRAW = /^Each player draws (\\d+) cards\\.$/;",
     replace: "const ATTACK_EACH_PLAYER_DRAW = /^Each player (?:draws|may draw) (\\d+) cards\\.$/;",
-    expectKilledBy: [
-      "packages/engine/src/eachPlayerDraw.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachPlayerDraw.test.ts"],
   },
   {
     id: "D491-arm-drops-the-seat-key",
@@ -28048,9 +27619,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: '    if (count >= 1) return [{ op: "drawCards", count, who: "eachPlayer" }];',
     replace: '    if (count >= 1) return [{ op: "drawCards", count }];',
-    expectKilledBy: [
-      "packages/engine/src/eachPlayerDraw.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachPlayerDraw.test.ts"],
   },
   {
     id: "D491-arm-invents-the-count",
@@ -28059,9 +27628,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: '    const count = Number(match[1]);\n    if (count >= 1) return [{ op: "drawCards", count, who: "eachPlayer" }];',
     replace: '    const count = 3;\n    if (count >= 1) return [{ op: "drawCards", count, who: "eachPlayer" }];',
-    expectKilledBy: [
-      "packages/engine/src/eachPlayerDraw.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachPlayerDraw.test.ts"],
   },
   {
     id: "D491-arm-admits-a-printed-zero",
@@ -28070,9 +27637,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: '    if (count >= 1) return [{ op: "drawCards", count, who: "eachPlayer" }];',
     replace: '    if (count >= 0) return [{ op: "drawCards", count, who: "eachPlayer" }];',
-    expectKilledBy: [
-      "packages/engine/src/eachPlayerDraw.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachPlayerDraw.test.ts"],
   },
   {
     id: "D491-walk-drops-the-opponent",
@@ -28081,9 +27646,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: '          case "eachPlayer":\n            return [ctx.seat, otherSeat(ctx.seat)];\n          case undefined:',
     replace: '          case "eachPlayer":\n            return [ctx.seat];\n          case undefined:',
-    expectKilledBy: [
-      "packages/engine/src/eachPlayerDraw.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachPlayerDraw.test.ts"],
   },
   {
     id: "D491-walk-is-absolute-seats",
@@ -28092,9 +27655,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: '          case "eachPlayer":\n            return [ctx.seat, otherSeat(ctx.seat)];\n          case undefined:',
     replace: '          case "eachPlayer":\n            return SEATS;\n          case undefined:',
-    expectKilledBy: [
-      "packages/engine/src/eachPlayerDraw.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachPlayerDraw.test.ts"],
   },
   {
     id: "D491-draw-uses-the-controllers-seat",
@@ -28103,9 +27664,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "        done = drawToHand(done, drawSeat, count, \"effect\", events, op.from ?? \"top\");",
     replace: "        done = drawToHand(done, ctx.seat, count, \"effect\", events, op.from ?? \"top\");",
-    expectKilledBy: [
-      "packages/engine/src/eachPlayerDraw.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachPlayerDraw.test.ts"],
   },
   {
     id: "D491-record-slices-the-controllers-deck",
@@ -28114,9 +27673,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "        const deck = done.players[drawSeat].deck;",
     replace: "        const deck = done.players[ctx.seat].deck;",
-    expectKilledBy: [
-      "packages/engine/src/eachPlayerDraw.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachPlayerDraw.test.ts"],
   },
   {
     id: "D491-record-files-only-the-last-seat",
@@ -28125,9 +27682,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "        drawn.push(",
     replace: "        drawn.length = 0;\n        drawn.push(",
-    expectKilledBy: [
-      "packages/engine/src/eachPlayerDraw.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/eachPlayerDraw.test.ts"],
   },
   {
     id: "D491-loud-control-keeps-the-built-sentence",
@@ -28136,9 +27691,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/testFixtures.ts",
     find: '        name: "Idle Drain",\n        damage: 10,\n        effect: "Heal 100 damage from 1 of your Benched Ancient Pokémon.",',
     replace: '        name: "Idle Drain",\n        damage: 10,\n        effect: "Each player draws 3 cards.",',
-    expectKilledBy: [
-      "packages/engine/src/takePrizeAttack.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/takePrizeAttack.test.ts"],
   },
   {
     id: "D492-anchor-loses-its-caret",
@@ -28147,9 +27700,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  `^This attack does (\\\\d+) damage to each of your opponent['’]s (${SPREAD_EACH_CLASS_NOUNS.join(",
     replace: "  `This attack does (\\\\d+) damage to each of your opponent['’]s (${SPREAD_EACH_CLASS_NOUNS.join(",
-    expectKilledBy: [
-      "packages/engine/src/classedBoardSpread.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/classedBoardSpread.test.ts"],
   },
   {
     id: "D492-anchor-loses-its-terminator",
@@ -28158,9 +27709,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  )})\\\\. This attack['’]s damage isn['’]t affected by Weakness or Resistance\\\\.$`,",
     replace: "  )})\\\\. This attack['’]s damage isn['’]t affected by Weakness or Resistance\\\\.`,",
-    expectKilledBy: [
-      "packages/engine/src/classedBoardSpread.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/classedBoardSpread.test.ts"],
   },
   {
     id: "D492-anchor-takes-the-parenthetical-tail-instead",
@@ -28169,9 +27718,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  )})\\\\. This attack['’]s damage isn['’]t affected by Weakness or Resistance\\\\.$`,",
     replace: "  )})\\\\.(?: \\\\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\\\.\\\\))?$`,",
-    expectKilledBy: [
-      "packages/engine/src/classedBoardSpread.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/classedBoardSpread.test.ts"],
   },
   {
     id: "D492-shortlist-widens-to-the-whole-map",
@@ -28180,9 +27727,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "const SPREAD_EACH_CLASS_NOUNS: readonly string[] = [\"Pokémon ex and Pokémon V\", \"Pokémon ex\"];",
     replace: "const SPREAD_EACH_CLASS_NOUNS: readonly string[] = [...IN_PLAY_BODY_NOUNS.keys()].sort(\n  (a, b) => b.length - a.length,\n);",
-    expectKilledBy: [
-      "packages/engine/src/classedBoardSpread.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/classedBoardSpread.test.ts"],
   },
   {
     id: "D492-arm-drops-the-ignorewr",
@@ -28191,9 +27736,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "          deals: true,\n          ignoreWR: true,\n          filter: classFilter,",
     replace: "          deals: true,\n          filter: classFilter,",
-    expectKilledBy: [
-      "packages/engine/src/classedBoardSpread.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/classedBoardSpread.test.ts"],
   },
   {
     id: "D492-arm-places-counters-instead-of-damage",
@@ -28202,9 +27745,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "          deals: true,\n          ignoreWR: true,\n          filter: classFilter,",
     replace: "          ignoreWR: true,\n          filter: classFilter,",
-    expectKilledBy: [
-      "packages/engine/src/classedBoardSpread.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/classedBoardSpread.test.ts"],
   },
   {
     id: "D492-arm-targets-the-bench-only",
@@ -28213,9 +27754,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "          op: \"damageChosen\",\n          target: \"opponentAny\",\n          amount,\n          count: \"all\",",
     replace: "          op: \"damageChosen\",\n          target: \"opponentBench\",\n          amount,\n          count: \"all\",",
-    expectKilledBy: [
-      "packages/engine/src/classedBoardSpread.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/classedBoardSpread.test.ts"],
   },
   {
     id: "D492-arm-arity-back-to-one",
@@ -28224,9 +27763,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "          target: \"opponentAny\",\n          amount,\n          count: \"all\",\n          source: \"attack\",",
     replace: "          target: \"opponentAny\",\n          amount,\n          count: 1,\n          source: \"attack\",",
-    expectKilledBy: [
-      "packages/engine/src/classedBoardSpread.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/classedBoardSpread.test.ts"],
   },
   {
     id: "D492-arm-drops-the-class-filter",
@@ -28235,9 +27772,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "          ignoreWR: true,\n          filter: classFilter,\n        },",
     replace: "          ignoreWR: true,\n        },",
-    expectKilledBy: [
-      "packages/engine/src/classedBoardSpread.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/classedBoardSpread.test.ts"],
   },
   {
     id: "D492-noun-resolver-hardcodes-the-singleton",
@@ -28246,9 +27781,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "    const classFilter = IN_PLAY_BODY_NOUNS.get(match[2] ?? \"\");",
     replace: "    const classFilter = IN_PLAY_BODY_NOUNS.get(\"Pokémon ex\");",
-    expectKilledBy: [
-      "packages/engine/src/classedBoardSpread.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/classedBoardSpread.test.ts"],
   },
   {
     id: "D492-arm-drops-the-amount-guard",
@@ -28257,9 +27790,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "    if (amount >= 1 && classFilter !== undefined) {",
     replace: "    if (classFilter !== undefined) {",
-    expectKilledBy: [
-      "packages/engine/src/classedBoardSpread.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/classedBoardSpread.test.ts"],
   },
   {
     id: "D492-interpreter-ceiling-is-one",
@@ -28268,9 +27799,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "      const ceiling = op.count === \"all\" ? candidates.length : op.count;",
     replace: "      const ceiling = op.count === \"all\" ? 1 : op.count;",
-    expectKilledBy: [
-      "packages/engine/src/classedBoardSpread.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/classedBoardSpread.test.ts"],
   },
   {
     id: "D493-suppression-arm-drops-the-multiplier-gate",
@@ -28279,9 +27808,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "    BENCH_COUNTER_FILTERED_SUPPRESSED.test(trimmed) &&\n    deriveAttackDamageMultiplier(trimmed) !== null\n  ) {",
     replace: "    BENCH_COUNTER_FILTERED_SUPPRESSED.test(trimmed)\n  ) {",
-    expectKilledBy: [
-      "packages/engine/src/benchCounterSuppressed.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/benchCounterSuppressed.test.ts"],
   },
   {
     id: "D493-suppression-arm-emits-the-neighbouring-pair",
@@ -28290,9 +27817,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  ) {\n    return { weakness: true };\n  }\n  const match = DAMAGE_SUPPRESSION.exec(trimmed);",
     replace: "  ) {\n    return { weakness: true, resistance: true };\n  }\n  const match = DAMAGE_SUPPRESSION.exec(trimmed);",
-    expectKilledBy: [
-      "packages/engine/src/benchCounterSuppressed.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/benchCounterSuppressed.test.ts"],
   },
   {
     id: "D493-suppression-arm-sets-the-wrong-boolean",
@@ -28301,9 +27826,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "    deriveAttackDamageMultiplier(trimmed) !== null\n  ) {\n    return { weakness: true };",
     replace: "    deriveAttackDamageMultiplier(trimmed) !== null\n  ) {\n    return { resistance: true };",
-    expectKilledBy: [
-      "packages/engine/src/benchCounterSuppressed.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/benchCounterSuppressed.test.ts"],
   },
   {
     id: "D493-multiply-arm-never-reaches-the-compound",
@@ -28312,9 +27835,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "    BENCH_COUNTER_FILTERED_MULTIPLY.exec(effect) ?? BENCH_COUNTER_FILTERED_SUPPRESSED.exec(effect);",
     replace: "    BENCH_COUNTER_FILTERED_MULTIPLY.exec(effect) ?? BENCH_COUNTER_FILTERED_MULTIPLY.exec(effect);",
-    expectKilledBy: [
-      "packages/engine/src/benchCounterSuppressed.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/benchCounterSuppressed.test.ts"],
   },
   {
     id: "D493-compound-anchor-loses-its-caret",
@@ -28323,9 +27844,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  /^This attack does (\\d+) damage for each damage counter on all of your Benched ([^.]+ Pokémon)\\. This attack['’]s damage isn['’]t affected by Weakness\\.$/;",
     replace: "  /This attack does (\\d+) damage for each damage counter on all of your Benched ([^.]+ Pokémon)\\. This attack['’]s damage isn['’]t affected by Weakness\\.$/;",
-    expectKilledBy: [
-      "packages/engine/src/benchCounterSuppressed.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/benchCounterSuppressed.test.ts"],
   },
   {
     id: "D493-compound-anchor-loses-its-terminator",
@@ -28334,9 +27853,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  /^This attack does (\\d+) damage for each damage counter on all of your Benched ([^.]+ Pokémon)\\. This attack['’]s damage isn['’]t affected by Weakness\\.$/;",
     replace: "  /^This attack does (\\d+) damage for each damage counter on all of your Benched ([^.]+ Pokémon)\\. This attack['’]s damage isn['’]t affected by Weakness\\./;",
-    expectKilledBy: [
-      "packages/engine/src/benchCounterSuppressed.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/benchCounterSuppressed.test.ts"],
   },
   {
     id: "D494-compound-anchor-loses-its-terminator",
@@ -28345,9 +27862,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  /^If (.+), this attack does (\\d+) more damage\\. This attack['’]s damage isn['’]t affected by Weakness\\.$/;",
     replace: "  /^If (.+), this attack does (\\d+) more damage\\. This attack['’]s damage isn['’]t affected by Weakness\\./;",
-    expectKilledBy: [
-      "packages/engine/src/energyInPlaySuppressed.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/energyInPlaySuppressed.test.ts"],
   },
   {
     id: "D494-compound-anchor-loses-its-caret",
@@ -28356,9 +27871,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  /^If (.+), this attack does (\\d+) more damage\\. This attack['’]s damage isn['’]t affected by Weakness\\.$/;",
     replace: "  /If (.+), this attack does (\\d+) more damage\\. This attack['’]s damage isn['’]t affected by Weakness\\.$/;",
-    expectKilledBy: [
-      "packages/engine/src/energyInPlaySuppressed.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/energyInPlaySuppressed.test.ts"],
   },
   {
     id: "D494-bonus-arm-never-reaches-the-compound",
@@ -28367,9 +27880,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "    CONDITIONAL_DAMAGE_BONUS.exec(effect) ?? CONDITIONAL_BONUS_SUPPRESSED.exec(effect);",
     replace: "    CONDITIONAL_DAMAGE_BONUS.exec(effect) ?? CONDITIONAL_DAMAGE_BONUS.exec(effect);",
-    expectKilledBy: [
-      "packages/engine/src/energyInPlaySuppressed.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/energyInPlaySuppressed.test.ts"],
   },
   {
     id: "D494-bonus-arms-swapped",
@@ -28382,9 +27893,7 @@ export const MUTANTS: Mutant[] = [
       kind: "equivalent",
       reason: "STRUCTURAL disjointness (D468's SECOND kind, the one that carries no guard). `CONDITIONAL_DAMAGE_BONUS` is `^If (.+), this attack does (\\d+) more damage\\.$` and `CONDITIONAL_BONUS_SUPPRESSED` is the same head followed by a SPACE and a further whole sentence before its own `\\.$`. Both are `^…$`; they disagree on a mandatory run of bytes at the same position, so NO string can match both and the `??` returns the same match object under either order. Asserted over all 640 corpus rows in `energyInPlaySuppressed.test.ts` §4 rather than argued. ⚠️ SELF-INVALIDATING (D427): the day either pattern loses an end anchor — which is exactly what C1 and C2 mutate — the two overlap and this row reports STALE-SURVIVOR.",
     },
-    expectKilledBy: [
-      "packages/engine/src/energyInPlaySuppressed.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/energyInPlaySuppressed.test.ts"],
   },
   {
     id: "D494-suppression-arm-drops-the-bonus-gate",
@@ -28393,9 +27902,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "    CONDITIONAL_BONUS_SUPPRESSED.test(trimmed) &&\n    deriveAttackDamageBonus(trimmed) !== null\n  ) {",
     replace: "    CONDITIONAL_BONUS_SUPPRESSED.test(trimmed)\n  ) {",
-    expectKilledBy: [
-      "packages/engine/src/energyInPlaySuppressed.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/energyInPlaySuppressed.test.ts"],
   },
   {
     id: "D494-suppression-arm-emits-the-neighbouring-pair",
@@ -28404,9 +27911,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "    deriveAttackDamageBonus(trimmed) !== null\n  ) {\n    return { weakness: true };",
     replace: "    deriveAttackDamageBonus(trimmed) !== null\n  ) {\n    return { weakness: true, resistance: true };",
-    expectKilledBy: [
-      "packages/engine/src/energyInPlaySuppressed.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/energyInPlaySuppressed.test.ts"],
   },
   {
     id: "D494-suppression-arm-sets-the-wrong-boolean",
@@ -28415,9 +27920,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "    deriveAttackDamageBonus(trimmed) !== null\n  ) {\n    return { weakness: true };",
     replace: "    deriveAttackDamageBonus(trimmed) !== null\n  ) {\n    return { resistance: true };",
-    expectKilledBy: [
-      "packages/engine/src/energyInPlaySuppressed.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/energyInPlaySuppressed.test.ts"],
   },
   {
     id: "D494-clause-row-narrows-to-the-neighbours-type",
@@ -28426,9 +27929,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  [\"you have 3 or more Energy in play\", { kind: \"yourEnergyInPlayAtLeast\", energy: null, count: 3 }],",
     replace: "  [\"you have 3 or more Energy in play\", { kind: \"yourEnergyInPlayAtLeast\", energy: \"Darkness\", count: 3 }],",
-    expectKilledBy: [
-      "packages/engine/src/energyInPlaySuppressed.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/energyInPlaySuppressed.test.ts"],
   },
   {
     id: "D494-clause-row-key-takes-the-siblings-quantifier",
@@ -28437,9 +27938,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  [\"you have 3 or more Energy in play\", { kind: \"yourEnergyInPlayAtLeast\", energy: null, count: 3 }],",
     replace: "  [\"you have at least 3 Energy in play\", { kind: \"yourEnergyInPlayAtLeast\", energy: null, count: 3 }],",
-    expectKilledBy: [
-      "packages/engine/src/energyInPlaySuppressed.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/energyInPlaySuppressed.test.ts"],
   },
   {
     id: "D494-energy-threshold-reads-the-opponents-side",
@@ -28474,9 +27973,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "      if (cond.energy === null) return `you have at least ${cond.count} Energy in play`;\n",
     replace: "",
-    expectKilledBy: [
-      "packages/engine/src/energyInPlaySuppressed.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/energyInPlaySuppressed.test.ts"],
   },
   {
     id: "D495-gate-dropped-lock-lands-unconditionally",
@@ -28485,9 +27982,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: \"preventAttack\", target: \"defender\" }],\n      },\n    ];\n  }",
     replace: "  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [{ op: \"preventAttack\", target: \"defender\" }];\n  }",
-    expectKilledBy: [
-      "packages/engine/src/flipDefenderAttackLock.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/flipDefenderAttackLock.test.ts"],
   },
   {
     id: "D495-gated-lock-loses-its-seat",
@@ -28508,9 +28003,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: \"preventAttack\", target: \"defender\" }],\n      },\n    ];\n  }",
     replace: "  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: \"coinFlipGate\",\n        onTails: true,\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: \"preventAttack\", target: \"defender\" }],\n      },\n    ];\n  }",
-    expectKilledBy: [
-      "packages/engine/src/flipDefenderAttackLock.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/flipDefenderAttackLock.test.ts"],
   },
   {
     id: "D495-arm-emits-the-neighbours-op",
@@ -28519,9 +28012,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: \"preventAttack\", target: \"defender\" }],\n      },\n    ];\n  }",
     replace: "  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: \"preventRetreat\" }],\n      },\n    ];\n  }",
-    expectKilledBy: [
-      "packages/engine/src/flipDefenderAttackLock.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/flipDefenderAttackLock.test.ts"],
   },
   {
     id: "D495-anchor-loses-its-caret",
@@ -28530,9 +28021,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "const FLIP_HEADS_DEFENDER_CANT_ATTACK =\n  /^Flip a coin\\. If heads, during your opponent['’]s next turn, the Defending Pokémon can['’]t attack\\.$/;",
     replace: "const FLIP_HEADS_DEFENDER_CANT_ATTACK =\n  /Flip a coin\\. If heads, during your opponent['’]s next turn, the Defending Pokémon can['’]t attack\\.$/;",
-    expectKilledBy: [
-      "packages/engine/src/flipDefenderAttackLock.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/flipDefenderAttackLock.test.ts"],
   },
   {
     id: "D495-anchor-loses-its-terminator",
@@ -28541,9 +28030,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "const FLIP_HEADS_DEFENDER_CANT_ATTACK =\n  /^Flip a coin\\. If heads, during your opponent['’]s next turn, the Defending Pokémon can['’]t attack\\.$/;",
     replace: "const FLIP_HEADS_DEFENDER_CANT_ATTACK =\n  /^Flip a coin\\. If heads, during your opponent['’]s next turn, the Defending Pokémon can['’]t attack/;",
-    expectKilledBy: [
-      "packages/engine/src/flipDefenderAttackLock.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/flipDefenderAttackLock.test.ts"],
   },
   {
     id: "D495-anchor-widens-the-verb",
@@ -28552,9 +28039,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "const FLIP_HEADS_DEFENDER_CANT_ATTACK =\n  /^Flip a coin\\. If heads, during your opponent['’]s next turn, the Defending Pokémon can['’]t attack\\.$/;",
     replace: "const FLIP_HEADS_DEFENDER_CANT_ATTACK =\n  /^Flip a coin\\. If heads, during your opponent['’]s next turn, the Defending Pokémon can['’]t (?:attack|use attacks)\\.$/;",
-    expectKilledBy: [
-      "packages/engine/src/flipDefenderAttackLock.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/flipDefenderAttackLock.test.ts"],
   },
   {
     id: "D495-anchor-drops-the-possessive-apostrophe-class",
@@ -28563,9 +28048,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "const FLIP_HEADS_DEFENDER_CANT_ATTACK =\n  /^Flip a coin\\. If heads, during your opponent['’]s next turn, the Defending Pokémon can['’]t attack\\.$/;",
     replace: "const FLIP_HEADS_DEFENDER_CANT_ATTACK =\n  /^Flip a coin\\. If heads, during your opponent's next turn, the Defending Pokémon can['’]t attack\\.$/;",
-    expectKilledBy: [
-      "packages/engine/src/flipDefenderAttackLock.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/flipDefenderAttackLock.test.ts"],
   },
   {
     id: "D495-anchor-drops-the-contraction-apostrophe-class",
@@ -28574,9 +28057,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "const FLIP_HEADS_DEFENDER_CANT_ATTACK =\n  /^Flip a coin\\. If heads, during your opponent['’]s next turn, the Defending Pokémon can['’]t attack\\.$/;",
     replace: "const FLIP_HEADS_DEFENDER_CANT_ATTACK =\n  /^Flip a coin\\. If heads, during your opponent['’]s next turn, the Defending Pokémon can't attack\\.$/;",
-    expectKilledBy: [
-      "packages/engine/src/flipDefenderAttackLock.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/flipDefenderAttackLock.test.ts"],
   },
   {
     id: "D495-census-built-attack-not-stepped",
@@ -28840,9 +28321,7 @@ export const MUTANTS: Mutant[] = [
     //    the previous slice's value, as at every step.
     find: "  attack: 1732,",
     replace: "  attack: 1731,",
-    expectKilledBy: [
-      "packages/engine/src/censusAtHead.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/censusAtHead.test.ts"],
   },
   {
     id: "D496-wide-anchor-loses-its-caret",
@@ -28851,9 +28330,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "const FLIP_PREVENT_DAMAGE_AND_EFFECTS =\n  /^Flip a coin\\. If heads, during your opponent['’]s next turn, prevent all damage from and effects of attacks done to this Pokémon\\.$/;",
     replace: "const FLIP_PREVENT_DAMAGE_AND_EFFECTS =\n  /Flip a coin\\. If heads, during your opponent['’]s next turn, prevent all damage from and effects of attacks done to this Pokémon\\.$/;",
-    expectKilledBy: [
-      "packages/engine/src/preventBlock.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/preventBlock.test.ts"],
   },
   {
     id: "D496-wide-anchor-loses-its-terminator",
@@ -28862,9 +28339,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "const FLIP_PREVENT_DAMAGE_AND_EFFECTS =\n  /^Flip a coin\\. If heads, during your opponent['’]s next turn, prevent all damage from and effects of attacks done to this Pokémon\\.$/;",
     replace: "const FLIP_PREVENT_DAMAGE_AND_EFFECTS =\n  /^Flip a coin\\. If heads, during your opponent['’]s next turn, prevent all damage from and effects of attacks done to this Pokémon/;",
-    expectKilledBy: [
-      "packages/engine/src/preventBlock.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/preventBlock.test.ts"],
   },
   {
     id: "D496-wide-anchor-drops-the-apostrophe-class",
@@ -28885,9 +28360,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "const FLIP_PREVENT_DAMAGE =\n  /^Flip a coin\\. If heads, during your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks\\.$/;",
     replace: "const FLIP_PREVENT_DAMAGE =\n  /Flip a coin\\. If heads, during your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks\\.$/;",
-    expectKilledBy: [
-      "packages/engine/src/preventBlock.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/preventBlock.test.ts"],
   },
   {
     id: "D496-narrow-anchor-loses-its-terminator",
@@ -28896,9 +28369,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "const FLIP_PREVENT_DAMAGE =\n  /^Flip a coin\\. If heads, during your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks\\.$/;",
     replace: "const FLIP_PREVENT_DAMAGE =\n  /^Flip a coin\\. If heads, during your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks/;",
-    expectKilledBy: [
-      "packages/engine/src/preventBlock.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/preventBlock.test.ts"],
   },
   {
     id: "D496-narrow-anchor-drops-the-apostrophe-class",
@@ -28919,9 +28390,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "const FLIP_TAILS_SELF_CANT_ATTACK =\n  /^Flip a coin\\. If tails, during your next turn, this Pokémon can['’]t attack\\.$/;",
     replace: "const FLIP_TAILS_SELF_CANT_ATTACK =\n  /Flip a coin\\. If tails, during your next turn, this Pokémon can['’]t attack\\.$/;",
-    expectKilledBy: [
-      "packages/engine/src/tailsGatedOp.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/tailsGatedOp.test.ts"],
   },
   {
     id: "D496-tails-anchor-loses-its-terminator",
@@ -28930,9 +28399,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "const FLIP_TAILS_SELF_CANT_ATTACK =\n  /^Flip a coin\\. If tails, during your next turn, this Pokémon can['’]t attack\\.$/;",
     replace: "const FLIP_TAILS_SELF_CANT_ATTACK =\n  /^Flip a coin\\. If tails, during your next turn, this Pokémon can['’]t attack/;",
-    expectKilledBy: [
-      "packages/engine/src/tailsGatedOp.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/tailsGatedOp.test.ts"],
   },
   {
     id: "D496-tails-anchor-drops-the-apostrophe-class",
@@ -28953,9 +28420,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "const FLIP_TAILS_SELF_CANT_ATTACK =\n  /^Flip a coin\\. If tails, during your next turn, this Pokémon can['’]t attack\\.$/;",
     replace: "const FLIP_TAILS_SELF_CANT_ATTACK =\n  /^Flip a coin\\. If heads, during your next turn, this Pokémon can['’]t attack\\.$/;",
-    expectKilledBy: [
-      "packages/engine/src/tailsGatedOp.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/tailsGatedOp.test.ts"],
   },
   {
     id: "D496-wide-arm-drops-the-effects-field",
@@ -28964,9 +28429,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  if (FLIP_PREVENT_DAMAGE_AND_EFFECTS.test(effect)) {\n    return [\n      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: \"preventDamage\", effects: true }],\n      },\n    ];\n  }",
     replace: "  if (FLIP_PREVENT_DAMAGE_AND_EFFECTS.test(effect)) {\n    return [\n      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: \"preventDamage\" }],\n      },\n    ];\n  }",
-    expectKilledBy: [
-      "packages/engine/src/preventBlock.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/preventBlock.test.ts"],
   },
   {
     id: "D496-wide-gate-gains-ontails",
@@ -28987,9 +28450,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  if (FLIP_PREVENT_DAMAGE_AND_EFFECTS.test(effect)) {\n    return [\n      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: \"preventDamage\", effects: true }],\n      },\n    ];\n  }",
     replace: "  if (FLIP_PREVENT_DAMAGE_AND_EFFECTS.test(effect)) {\n    return [{ op: \"preventDamage\", effects: true }];\n  }",
-    expectKilledBy: [
-      "packages/engine/src/preventBlock.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/preventBlock.test.ts"],
   },
   {
     id: "D496-narrow-arm-gains-the-effects-field",
@@ -29023,9 +28484,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  if (FLIP_TAILS_SELF_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: \"coinFlipGate\",\n        // The field, ABSENT on every heads sibling and `true` here — never\n        // `false`, so a heads-gated program stays `toEqual`-identical to the\n        // registry rows it is compared against (D135's absent-field rule).\n        onTails: true,\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: \"preventAttack\" }],\n      },\n    ];\n  }",
     replace: "  if (FLIP_TAILS_SELF_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: \"coinFlipGate\",\n        // The field, ABSENT on every heads sibling and `true` here — never\n        // `false`, so a heads-gated program stays `toEqual`-identical to the\n        // registry rows it is compared against (D135's absent-field rule).\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: \"preventAttack\" }],\n      },\n    ];\n  }",
-    expectKilledBy: [
-      "packages/engine/src/tailsGatedOp.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/tailsGatedOp.test.ts"],
   },
   {
     id: "D496-tails-arm-emits-the-neighbours-op",
@@ -29034,9 +28493,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  if (FLIP_TAILS_SELF_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: \"coinFlipGate\",\n        // The field, ABSENT on every heads sibling and `true` here — never\n        // `false`, so a heads-gated program stays `toEqual`-identical to the\n        // registry rows it is compared against (D135's absent-field rule).\n        onTails: true,\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: \"preventAttack\" }],\n      },\n    ];\n  }",
     replace: "  if (FLIP_TAILS_SELF_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: \"coinFlipGate\",\n        // The field, ABSENT on every heads sibling and `true` here — never\n        // `false`, so a heads-gated program stays `toEqual`-identical to the\n        // registry rows it is compared against (D135's absent-field rule).\n        onTails: true,\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: \"preventRetreat\" }],\n      },\n    ];\n  }",
-    expectKilledBy: [
-      "packages/engine/src/tailsGatedOp.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/tailsGatedOp.test.ts"],
   },
   {
     id: "D497-surface-admits-every-function",
@@ -29195,9 +28652,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "const ATTACK_COIN_CANCEL_THEN_PREVENT =\n  /^Flip a coin\\. If tails, this attack does nothing\\. If heads, during your opponent['’]s next turn, prevent all damage from and effects of attacks done to this Pokémon\\.$/;",
     replace: "const ATTACK_COIN_CANCEL_THEN_PREVENT =\n  /Flip a coin\\. If tails, this attack does nothing\\. If heads, during your opponent['’]s next turn, prevent all damage from and effects of attacks done to this Pokémon\\.$/;",
-    expectKilledBy: [
-      "packages/engine/src/cancelThenPrevent.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/cancelThenPrevent.test.ts"],
   },
   {
     id: "D499-anchor-loses-its-terminator",
@@ -29206,9 +28661,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "const ATTACK_COIN_CANCEL_THEN_PREVENT =\n  /^Flip a coin\\. If tails, this attack does nothing\\. If heads, during your opponent['’]s next turn, prevent all damage from and effects of attacks done to this Pokémon\\.$/;",
     replace: "const ATTACK_COIN_CANCEL_THEN_PREVENT =\n  /^Flip a coin\\. If tails, this attack does nothing\\. If heads, during your opponent['’]s next turn, prevent all damage from and effects of attacks done to this Pokémon\\./;",
-    expectKilledBy: [
-      "packages/engine/src/cancelThenPrevent.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/cancelThenPrevent.test.ts"],
   },
   {
     id: "D499-anchor-drops-the-apostrophe-class",
@@ -29217,9 +28670,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "const ATTACK_COIN_CANCEL_THEN_PREVENT =\n  /^Flip a coin\\. If tails, this attack does nothing\\. If heads, during your opponent['’]s next turn, prevent all damage from and effects of attacks done to this Pokémon\\.$/;",
     replace: "const ATTACK_COIN_CANCEL_THEN_PREVENT =\n  /^Flip a coin\\. If tails, this attack does nothing\\. If heads, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon\\.$/;",
-    expectKilledBy: [
-      "packages/engine/src/cancelThenPrevent.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/cancelThenPrevent.test.ts"],
   },
   {
     id: "D499-arm-drops-the-effects-field",
@@ -29228,9 +28679,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  if (ATTACK_COIN_CANCEL_THEN_PREVENT.test(effect)) {\n    return {\n      kind: \"cancelOnTailsElseProgram\",\n      ops: [{ op: \"preventDamage\", effects: true }],\n    };\n  }",
     replace: "  if (ATTACK_COIN_CANCEL_THEN_PREVENT.test(effect)) {\n    return {\n      kind: \"cancelOnTailsElseProgram\",\n      ops: [{ op: \"preventDamage\" }],\n    };\n  }",
-    expectKilledBy: [
-      "packages/engine/src/cancelThenPrevent.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/cancelThenPrevent.test.ts"],
   },
   {
     id: "D499-arm-loses-its-heads-program",
@@ -29239,9 +28688,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  if (ATTACK_COIN_CANCEL_THEN_PREVENT.test(effect)) {\n    return {\n      kind: \"cancelOnTailsElseProgram\",\n      ops: [{ op: \"preventDamage\", effects: true }],\n    };\n  }",
     replace: "  if (ATTACK_COIN_CANCEL_THEN_PREVENT.test(effect)) {\n    return { kind: \"cancelOnTails\" };\n  }",
-    expectKilledBy: [
-      "packages/engine/src/cancelThenPrevent.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/cancelThenPrevent.test.ts"],
   },
   {
     id: "D499-arm-emits-the-neighbours-op",
@@ -29250,9 +28697,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  if (ATTACK_COIN_CANCEL_THEN_PREVENT.test(effect)) {\n    return {\n      kind: \"cancelOnTailsElseProgram\",\n      ops: [{ op: \"preventDamage\", effects: true }],\n    };\n  }",
     replace: "  if (ATTACK_COIN_CANCEL_THEN_PREVENT.test(effect)) {\n    return {\n      kind: \"cancelOnTailsElseProgram\",\n      ops: [{ op: \"preventAttack\", target: \"defender\" }],\n    };\n  }",
-    expectKilledBy: [
-      "packages/engine/src/cancelThenPrevent.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/cancelThenPrevent.test.ts"],
   },
   {
     id: "D499-debt-bare-cancel-anchor-loses-its-terminator",
@@ -29285,9 +28730,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/attack.ts",
     find: "      if (coinFlip.kind === \"cancelOnTailsElseProgram\") {\n        program = [...(program ?? []), ...coinFlip.ops];\n      }",
     replace: "      // D499 mutant: the heads program is never appended.",
-    expectKilledBy: [
-      "packages/engine/src/cancelThenPrevent.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/cancelThenPrevent.test.ts"],
   },
   {
     id: "D499-flip-site-inverts-the-cancelling-face",
@@ -29375,9 +28818,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/continuous.ts",
     find: "  return pokemon.energy.filter((uid) => matchesFilter(cardOfUid(state, uid), BASIC_ENERGY_CARD));",
     replace: "  return pokemon.energy.filter((uid) => providesEnergyType(state, pokemon, uid, \"Water\"));",
-    expectKilledBy: [
-      "packages/engine/src/basicEnergyScaling.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/basicEnergyScaling.test.ts"],
   },
   {
     id: "D500-category-filter-widens-to-any-energy",
@@ -29386,9 +28827,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/continuous.ts",
     find: "const BASIC_ENERGY_CARD: CardFilter = { kind: \"basicEnergy\" };",
     replace: "const BASIC_ENERGY_CARD: CardFilter = { kind: \"anyEnergy\" };",
-    expectKilledBy: [
-      "packages/engine/src/basicEnergyScaling.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/basicEnergyScaling.test.ts"],
   },
   {
     id: "D500-board-arm-forgets-its-continue",
@@ -29397,9 +28836,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/continuous.ts",
     find: "      total += basicEnergyUids(state, holder).length;\n      continue;",
     replace: "      total += basicEnergyUids(state, holder).length;",
-    expectKilledBy: [
-      "packages/engine/src/basicEnergyScaling.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/basicEnergyScaling.test.ts"],
   },
   {
     id: "D500-clause-arm-tests-the-special-list",
@@ -29408,9 +28845,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/continuous.ts",
     find: "  if (energy === \"basic\") return basicEnergyUids(state, pokemon).length > 0;",
     replace: "  if (energy === \"basic\") return specialEnergyUids(state, pokemon).length > 0;",
-    expectKilledBy: [
-      "packages/engine/src/basicEnergyScaling.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/basicEnergyScaling.test.ts"],
   },
   {
     id: "D500-describer-falls-through-to-the-template",
@@ -29419,9 +28854,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "      if (cond.energy === \"basic\") return \"your Active Pok\u00e9mon has a Basic Energy attached\";",
     replace: "      if (cond.energy === \"basic\") return `your Active Pok\u00e9mon has ${cond.energy} Energy attached`;",
-    expectKilledBy: [
-      "packages/engine/src/basicEnergyScaling.test.ts",
-    ],
+    expectKilledBy: ["packages/engine/src/basicEnergyScaling.test.ts"],
   },
   // == D501 - THE RAISED CONFUSION SELF-HIT. Corpus FILE LINE 685, 1 sentence / 1
   //    legal printing. Every row below is a way of answering the WRONG NUMBER on a
@@ -30279,60 +29712,6 @@ export const MUTANTS: Mutant[] = [
   // `/Confused: attacking flips a coin/` — the LOCAL number is pinned by no dom
   // rung at all, so a `{30}` there dies to nothing. Named here, not fixed here:
   // this slice's scope is the online panel.
-  {
-    id: "D509-local-hud-hardcodes-the-confusion-number",
-    decision: "D509",
-    what: "\ud83d\uded1 THE DEFECT D501 DELETED, FREE TO COME BACK UNNOTICED FOR EIGHT DECISIONS. D501 found `GameHud` printing a hard-coded \u201ctails: 30 damage to itself\u201d off `rotation` alone \u2014 a FALSE NUMBER shown to a player at the exact moment they decide whether to attack \u2014 and replaced it with a read of the board. It then shipped NO rung on the rendered number: `GameHud.dom.test.tsx`\u2019s case stops its regex at `/Confused: attacking flips a coin/`, BEFORE the digits. Measured at D509: hard-coding the number back leaves that case GREEN and 14 of 15 passing. \u26a0\ufe0f So the panel could silently resume lying and every instrument in the repo would agree it was fine \u2014 D496\u2013D498\u2019s blind spot on a player-facing surface. The new rung separates \u201creads `confusionDamage`\u201d from \u201cgrabbed the neighbouring number\u201d with a board where confusion is 80 and poison is 20, so a kill proves the READ rather than the sentence.",
-    file: "src/features/game/GameHud.tsx",
-    find: "{conditions?.confusionDamage ?? 30}",
-    replace: "{30}",
-    expectKilledBy: ["src/features/game/GameHud.dom.test.tsx"],
-  },
-  {
-    id: "D509-online-hud-drops-the-confusion-hint",
-    decision: "D509",
-    what: "\ud83d\uded1 A1 \u2014 THE PANEL GOES BACK TO THE PRE-D509 BUILD, which is what this repo shipped for seven resume points and what a successor restores by \u201ctidying\u201d a hint that looks decorative. It is not decorative: a Confused body may still DECLARE an attack, so the button stays live and this line is the only thing on the online surface saying what pressing it risks. \u26a0\ufe0f NOTHING ELSE GOES RED UNDER IT \u2014 the engine is untouched, `redact.ts` still puts `confusionDamage` on the wire, and `GameHud`'s own rung is green, which is exactly how the gap survived D457, D501 and five resume points after them.",
-    file: "src/features/online/components/OnlineHud.tsx",
-    find: "{battle !== undefined && battle.conditions.rotation === \"confused\" && (",
-    replace: "{false && battle !== undefined && battle.conditions.rotation === \"confused\" && (",
-    expectKilledBy: ["src/features/online/components/OnlineHud.confusion.dom.test.tsx"],
-  },
-  {
-    id: "D509-online-hud-hardcodes-the-confusion-amount",
-    decision: "D509",
-    what: "\ud83d\uded1 A2 \u2014 THE NUMBER BECOMES THE LITERAL `30`, the exact defect D501 exists to fix, re-committed on the one surface D501 did not reach. Every board where no effect raised the amount is byte-identical under it, so only a board carrying the RAISED figure can separate the two \u2014 \u00a72 drives 80, the value D501's own printing produces. The claim is FALSE at the single moment it is read (a player deciding whether to attack through a Confusion), which is D421's rule that a rendered claim has the same standing as a predicate.",
-    file: "src/features/online/components/OnlineHud.tsx",
-    find: "{battle.conditions.confusionDamage} damage to",
-    replace: "{30} damage to",
-    expectKilledBy: ["src/features/online/components/OnlineHud.confusion.dom.test.tsx"],
-  },
-  {
-    id: "D509-online-hud-hint-reads-the-poison-number",
-    decision: "D509",
-    what: "\u26a0\ufe0f A3 \u2014 THE SIBLING FIELD. `conditions` carries TWO numbers and the hint grabs `poisonDamage` instead. A suite that drove only a raised-Confusion board stays green under it on every board where poison is 0, so \u00a73's second case is the board where BOTH numbers are non-default AND DIFFERENT \u2014 D427's one-axis rule applied to a pair of same-typed fields on one record.",
-    file: "src/features/online/components/OnlineHud.tsx",
-    find: "{battle.conditions.confusionDamage} damage to",
-    replace: "{battle.conditions.poisonDamage} damage to",
-    expectKilledBy: ["src/features/online/components/OnlineHud.confusion.dom.test.tsx"],
-  },
-  {
-    id: "D509-online-hud-hint-fires-on-every-rotation",
-    decision: "D509",
-    what: "\ud83d\uded1 A4 \u2014 THE GUARD WIDENS TO `!== \u201cnone\u201d`, so an ASLEEP or PARALYZED body is told that attacking flips a coin when it cannot attack at all \u2014 every attack row arrived `playable: false` from `redactedAttacksOf`. This is the row that makes the slice's SCOPE argument falsifiable: the stated reason for omitting the immobilizing rotations is that `banned` already carries them, and a guard that fires on all three contradicts it while every positive rung stays green.",
-    file: "src/features/online/components/OnlineHud.tsx",
-    find: "battle.conditions.rotation === \"confused\"",
-    replace: "battle.conditions.rotation !== \"none\"",
-    expectKilledBy: ["src/features/online/components/OnlineHud.confusion.dom.test.tsx"],
-  },
-  {
-    id: "D509-online-hud-drops-the-optional-battle-guard",
-    decision: "D509",
-    what: "\u26a0\ufe0f A5 \u2014 THE `battle !== undefined` CONJUNCT BECOMES A NON-NULL ASSERTION, the shape a reader writes once they notice `conditions` and `confusionDamage` are both REQUIRED and stop reading one field earlier. `redactedInPlaySchema.battle` is OPTIONAL \u2014 `hiddenInPlay` (redact.ts) omits it so a face-down setup back cannot leak a printed HP \u2014 so the panel THROWS rather than omitting a line. \ud83d\uded1 THIS ROW IS WHY THE HINT CARRIES NO `?? 30`: the totality the local HUD buys with a fallback is bought here by the conjunct, and a fallback that can print a wrong number is the defect D501 fixed.",
-    file: "src/features/online/components/OnlineHud.tsx",
-    find: "battle !== undefined && battle.conditions.rotation === \"confused\"",
-    replace: "battle!.conditions.rotation === \"confused\"",
-    expectKilledBy: ["src/features/online/components/OnlineHud.confusion.dom.test.tsx"],
-  },
   // ── D510 — THE DISCARD PILE NARROWED BY A PRINTED NAME FRAGMENT. Seven rows, and
   //    the SHAPE of the set is the finding: FOUR of them live in ONE `matchesFilter`
   //    arm and THREE in ONE regex, because that is the whole of the slice — the ANCHOR
@@ -33889,15 +33268,6 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: ["packages/engine/src/opponentHandShuffle.test.ts"],
   },
   {
-    id: "D542-online-mandatory-verb-falls-through",
-    decision: "D542",
-    what: "\ud83d\uded1 **THE APP-TIER DEFECT THIS SLICE FIXED, RE-INSTALLED AS THE TERNARY IT WAS.** `OnlineHud`'s mandatory Confirm branch tested ONE union member and let every other fall out of the wrong side, so this build's FIRST mandatory `dest: \"deck\"` park (`min = max = 3`) rendered **\u201cDiscard 0/3\u201d** under a heading reading *\u201cShuffle 3 cards from your hand into your deck.\u201d* \u26a0\ufe0f `tsc` says NOTHING about a ternary and no engine suite can see a label \u2014 the only thing that can is a dom rung, which is why `OnlineHud.chooseCardsVerb.dom.test.tsx` exists. The local `GameHud` had already been repaired with exactly this record and documented why; the online client had not.",
-    file: "src/features/online/components/OnlineHud.tsx",
-    find: "            ? `${CHOOSE_CARDS_VERB[prompt.dest].mandatory} ${picked.length}/${prompt.min}`",
-    replace: "            ? `${prompt.dest === \"deckBottom\" ? \"Put under deck\" : \"Discard\"} ${picked.length}/${prompt.min}`",
-    expectKilledBy: ["src/features/online/components/OnlineHud.chooseCardsVerb.dom.test.tsx"],
-  },
-  {
     id: "D543-anchor-loses-terminator",
     decision: "D543",
     what: "🛑 **THE REQUIRED TRAILING PERIOD GOES, AND THE ANCHOR STARTS CLAIMING PREFIXES.** With `$` gone the pattern matches *“Discard up to 2 Pokémon Tools from your opponent's Pokémon. Then, draw a card.”* and the engine authors a program for a card whose trailing clause it silently DROPPED — the half of the sentence nobody sees again. ⚠️ Only ONE of §1's two trailing near-misses can see this: the killer is the one that KEEPS the period and glues a clause on; the one that STRIPS it refuses a `$`-less pattern too, which is why both spellings are kept (D540(1a)).",
@@ -34067,84 +33437,6 @@ export const MUTANTS: Mutant[] = [
     find: "  z.object({ kind: z.literal(\"upTo\"), max: z.number() }),\n]);\nexport type RedactedDiscardScope",
     replace: "]);\nexport type RedactedDiscardScope",
     expectKilledBy: ["packages/engine/src/redactDiscardScope.test.ts"],
-  },
-  {
-    id: "D543-projection-rebuild-collapses-upto",
-    decision: "D543",
-    what: "🛑 **THE INVISIBLE HALF OF THE SAME DEFECT, ON THE WAY BACK IN.** Fixing only the redactor leaves this mirror rebuilding an `upTo` park as `{kind:\"each\"}`, with `tsc` silent before and after — an `else` branch is always type-correct for the member it forgot. The reconstructed decision then stops equalling the local one: the online dialog pre-answers rows, gates Confirm to one pick per host, and the decline becomes unreachable while the engine is still waiting for an answer it would have accepted.",
-    file: "src/features/game/projection.ts",
-    find: "      return { kind: \"upTo\", max: scope.max };",
-    replace: "      return { kind: \"each\" };",
-    expectKilledBy: ["src/features/game/GameHud.toolDiscard.dom.test.tsx"],
-  },
-  {
-    id: "D543-online-ready-demands-full-cap",
-    decision: "D543",
-    what: "⚠️ **CONFIRM DEMANDS THE FULL CEILING ON A DECLINABLE QUESTION.** `ready` falls back to the exact-count rule, so a *“you may discard any amount”* park cannot be answered with fewer than `max` picks — and cannot be DECLINED at all. `tsc` says nothing: this is one of the four sites the schema fix did NOT redden.",
-    file: "src/features/online/components/OnlineHud.tsx",
-    find: "  const ready = scope.kind === \"upTo\" || picked.length === required;",
-    replace: "  const ready = picked.length === required;",
-    expectKilledBy: ["src/features/online/components/OnlineHud.discardUpTo.dom.test.tsx"],
-  },
-  {
-    id: "D543-online-caption-says-each",
-    decision: "D543",
-    what: "⚠️ **THE CAPTION READS THE `each` STRING OVER AN `upTo` PROMPT** — *“Pick one Energy from each Pokémon (0/2).”* above a heading that says *any amount*. The dialog contradicting its own heading is D542's class one prompt over, and only a dom rung can see a label.",
-    file: "src/features/online/components/OnlineHud.tsx",
-    find: "        {scope.kind === \"each\"\n          ? `Pick one Energy from each Pokémon",
-    replace: "        {scope.kind !== \"total\"\n          ? `Pick one Energy from each Pokémon",
-    expectKilledBy: ["src/features/online/components/OnlineHud.discardUpTo.dom.test.tsx"],
-  },
-  {
-    id: "D543-online-cap-not-enforced",
-    decision: "D543",
-    what: "⚠️ **THE (max+1)th PICK IS ACCEPTED**, so the dialog builds an answer the server will refuse and the player is told nothing. The cap is also what makes the `aria-disabled` row marker true, so the mutation silently un-announces the closed rows as well.",
-    file: "src/features/online/components/OnlineHud.tsx",
-    find: "      if (scope.kind === \"upTo\") return prev.length < scope.max ? [...prev, uid] : prev;",
-    replace: "      if (scope.kind === \"upTo\") return [...prev, uid];",
-    expectKilledBy: ["src/features/online/components/OnlineHud.discardUpTo.dom.test.tsx"],
-    // 🆕🆕🆕 D647 — DECLARED A SURVIVOR at the merge of `main` (found by the merge's `--only` run: SURVIVED, undeclared).
-    survives: {
-      kind: "equivalent",
-      reason:
-        "main's dd3092ee (merged at D647) replaced the dialog's Energy rows with `DiscardEnergyChoices`, which computes the SAME `upTo` refusal and never calls `onPick` on a refused row (`if (!refused) onSelect()`), so `pick` is never asked for the (max+1)th uid and this cap is an unreachable belt. The refusal now lives one component down and is `D647-discard-choices-upto-cap-dropped`'s subject. If this is ever KILLED, a path that calls `pick` past the component's refusal has arrived and this reason needs re-reading.",
-    },
-  },
-  {
-    id: "D647-discard-choices-upto-cap-dropped",
-    decision: "D647",
-    what: "⚠️ **THE `upTo` CAP LEAVES THE SHARED ENERGY-DISCARD CHOICES** (main's `DiscardEnergyChoices`, merged at D647): past `max` a row is neither marked `aria-disabled` nor refused, so the (max+1)th pick reaches the dialog. D543-online-cap-not-enforced's guard, re-homed where both HUDs now read it. Killed by `OnlineHud.discardUpTo.dom.test.tsx`.",
-    file: "src/features/game/DiscardEnergyChoices.tsx",
-    find: "                    (scope.kind === \"upTo\" && picked.length >= scope.max));",
-    replace: "                    false);",
-    expectKilledBy: ["src/features/online/components/OnlineHud.discardUpTo.dom.test.tsx"],
-  },
-  {
-    id: "D543-online-preanswers-a-declinable-park",
-    decision: "D543",
-    what: "⚠️ **A DECLINABLE PARK OPENS WITH ROWS ALREADY PRESSED.** The `each` pre-answer seeds every single-candidate group, so *“you may discard any amount”* arrives pre-answered *“discard one from each”* — words put in the player's mouth on a question they may want to decline. The fourth of the four sites `tsc` did not name.",
-    file: "src/features/online/components/OnlineHud.tsx",
-    find: "  const [picked, setPicked] = useState<string[]>(() =>\n    scope.kind === \"each\"",
-    replace: "  const [picked, setPicked] = useState<string[]>(() =>\n    scope.kind !== \"total\"",
-    expectKilledBy: ["src/features/online/components/OnlineHud.discardUpTo.dom.test.tsx"],
-  },
-  {
-    id: "D543-tools-dialog-not-declinable",
-    decision: "D543",
-    what: "⚠️ **THE LOCAL TOOL DIALOG STOPS BEING DECLINABLE.** Confirm gates on the full ceiling, so the printed *“up to 2”* becomes *“exactly 2”* on the one surface whose engine would have accepted an empty pick — a park the player can neither answer nor escape when the board offers two Tools they do not want to take.",
-    file: "src/features/game/GameHud.tsx",
-    find: "  const ready = declinable || picked.length === cap;",
-    replace: "  const ready = picked.length === cap;",
-    expectKilledBy: ["src/features/game/GameHud.toolDiscard.dom.test.tsx"],
-  },
-  {
-    id: "D543-online-tools-named-off-the-energy-array",
-    decision: "D543",
-    what: "⚠️ **THE TOOL ROWS RENDER RAW UIDS.** `toolName` reads `attached.energies` instead of `attached.tools`, finds nothing, and falls back to the uid — so the player picks between `t1` and `t2`. It is the mistake a shared name-resolver invites, and the reason `toolName` is its own function beside `energyName` rather than a zone argument on it.",
-    file: "src/features/online/components/OnlineHud.tsx",
-    find: "?.attached?.tools.find((t) => t.id === uid)?.name ?? uid;",
-    replace: "?.attached?.energies.find((t) => t.id === uid)?.name ?? uid;",
-    expectKilledBy: ["src/features/online/components/OnlineHud.toolDiscard.dom.test.tsx"],
   },
   {
     id: "D543-offer-drops-the-shield",
@@ -34354,15 +33646,6 @@ export const MUTANTS: Mutant[] = [
     find: "    const effective = attackCostAt(state, viewerSeat, active, index, provided);",
     replace: "    const effective = printed;",
     expectKilledBy: ["packages/engine/src/attackCostClause.test.ts"],
-  },
-  {
-    id: "D545-gamehud-reverts-to-effective-cost",
-    decision: "D545",
-    what: "🛑 **GameHud's TurnPanel STOPS ASKING THE SEAM** — the swap at `GameHud.tsx` reverted. ⚠️ Spelled `attack.cost ?? []` and not `effectiveAttackCost(game, active, attack.cost ?? [])` because that name is no longer BOUND in `GameHud.tsx` (D533); no board in the killing file puts a continuous cost effect in play, so the two spellings are the same function of those boards. The local button greys an attack the engine accepts and the dots draw a cost the player is not charged. Killed by the DOM file's two condition-true rungs.",
-    file: "src/features/game/GameHud.tsx",
-    find: "            const effectiveCost = attackCostAt(game, viewerSeat, active, index, provided);",
-    replace: "            const effectiveCost = attack.cost ?? [];",
-    expectKilledBy: ["src/features/game/GameHud.costClause.dom.test.tsx"],
   },
   {
     id: "D545-blocking-exclusion-missing",
@@ -35934,56 +35217,29 @@ export const MUTANTS: Mutant[] = [
     id: "D551-local-projection-drops-face-up",
     decision: "D551",
     what: "the LOCAL projection drops the face-up prizes — `playerBoardOf` emits `faceUpPrizes: []`, so a Crescent Purge paints nothing on the local Playmat while the wire (and so the online board) still carries it: local != wire. Killed by the round-trip rung (the purged boards, both seats), the leak rung (the face-up uid must appear) and the DOM suite's local PlaymatView rungs.",
-    file: "src/features/game/projection.ts",
+    file: "src/game/projection.ts",
     find: "    faceUpPrizes: side.prizes.flatMap((uid, index) =>\n      side.faceUpPrizes.includes(uid) ? [{ index, card: cardModelOf(state, uid) }] : [],\n    ),",
     replace: "    faceUpPrizes: [],",
-    expectKilledBy: ["src/features/game/projection.test.ts", "src/features/playmat/PrizeGrid.faceUp.dom.test.tsx"],
+    expectKilledBy: ["src/game/projection.test.ts"],
   },
   {
     id: "D551-local-projection-leaks-face-down",
     decision: "D551",
     what: "🛑 THE LEAK: the LOCAL projection drops the `includes` filter and ships EVERY prize as face up — every face-down prize's uid, card id and name reach both viewers. Killed by the leak rung (a face-down prize uid must stay absent for both viewers) and the DOM suite (the declared face-down secret's name in the HTML).",
-    file: "src/features/game/projection.ts",
+    file: "src/game/projection.ts",
     find: "      side.faceUpPrizes.includes(uid) ? [{ index, card: cardModelOf(state, uid) }] : [],",
     replace: "      [{ index, card: cardModelOf(state, uid) }],",
-    expectKilledBy: ["src/features/game/projection.test.ts", "src/features/playmat/PrizeGrid.faceUp.dom.test.tsx"],
+    expectKilledBy: ["src/game/projection.test.ts"],
   },
   {
     id: "D551-wire-projection-drops-face-up",
     decision: "D551",
     what: "the WIRE projection drops the face-up prizes — `playerBoardFromRedacted` emits `faceUpPrizes: []` although `RedactedSide.faceUpPrizes` carries them, so the online board and a spectator paint a back where the public card is. Killed by the round-trip and spectator rungs and the DOM suite's OnlineMatch rungs.",
-    file: "src/features/game/projection.ts",
+    file: "src/game/projection.ts",
     // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the map wraps over four lines; the patch is unchanged.
     find: "    faceUpPrizes: side.faceUpPrizes.map((p) => ({\n      index: p.index,\n      card: cardModelFromRedacted(p.card),\n    })),",
     replace: "    faceUpPrizes: [],",
-    expectKilledBy: ["src/features/game/projection.test.ts", "src/features/playmat/PrizeGrid.faceUp.dom.test.tsx"],
-  },
-  {
-    id: "D551-slot-faces-ignore-flip",
-    decision: "D551",
-    what: "🛑 THE MAPPING IGNORES THE FLIP: the top side paints row index i at slot i instead of slot taken + i — invisible with six prizes present (taken 0), wrong the moment one is taken (a face on an empty slot, a back where the card is). Killed ONLY by the remaining < 6 rungs: piles.test.ts' mapping rungs, the descriptor rungs and the DOM suite's opponent-viewer rungs.",
-    file: "src/features/playmat/utils/piles.ts",
-    find: "    faces[offset + index] = { card };",
-    replace: "    faces[index] = { card };",
-    expectKilledBy: ["src/features/playmat/utils/piles.test.ts", "src/features/playmat/utils/cardDescriptors.test.ts", "src/features/playmat/PrizeGrid.faceUp.dom.test.tsx"],
-  },
-  {
-    id: "D551-slot-faces-always-back",
-    decision: "D551",
-    what: "the mapping ignores the face-up list: every present slot is a back, so the Playmat never shows a Crescent Purge (the pre-D551 Playmat). Killed by piles.test.ts, the descriptor rungs and the DOM suite (exactly one `data-prize-face=\"up\"` anchor).",
-    file: "src/features/playmat/utils/piles.ts",
-    find: "  for (const { index, card } of faceUp) {",
-    replace: "  for (const { index, card } of faceUp.slice(0, 0)) {",
-    expectKilledBy: ["src/features/playmat/utils/piles.test.ts", "src/features/playmat/utils/cardDescriptors.test.ts", "src/features/playmat/PrizeGrid.faceUp.dom.test.tsx"],
-  },
-  {
-    id: "D551-pixi-prize-paints-back",
-    decision: "D551",
-    what: "the Pixi layer paints the face-up slot with the card BACK: the descriptor keeps the card's id/name but takes `backImageUrl`, so the canvas (the only thing a sighted player sees — the DOM anchor is visibility:hidden) shows a back while the DOM says face up. Killed by the descriptor unit rungs (flipped and unflipped) and the DOM suite's driven descriptor rung.",
-    file: "src/features/playmat/utils/cardDescriptors.ts",
-    find: "            imageUrl: face.card.imageUrl,",
-    replace: "            imageUrl: backImageUrl,",
-    expectKilledBy: ["src/features/playmat/utils/cardDescriptors.test.ts", "src/features/playmat/PrizeGrid.faceUp.dom.test.tsx"],
+    expectKilledBy: ["src/game/projection.test.ts"],
   },
   // ── 🆕🆕🆕 D552 — THE PRE-DAMAGE SELF ATTACH BEHIND A MULTIPLIER HEAD (`censusAttackCorpus.ts` :569)
   //    AND THE WEAKNESS RETYPE (:629, the rider on the record bump). Every row was probed
@@ -37353,7 +36609,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/redact.ts",
     find: "        ...(prompt.labels === undefined\n          ? {}\n          : { labels: { yes: prompt.labels.yes, no: prompt.labels.no } }),",
     replace: "",
-    expectKilledBy: ["packages/engine/src/chooseOneTrainersD557.test.ts", "src/features/game/GameHud.confirm.dom.test.tsx"],
+    expectKilledBy: ["packages/engine/src/chooseOneTrainersD557.test.ts"],
   },
   {
     id: "D557-venture-heads-reads-ability",
@@ -39018,24 +38274,6 @@ export const MUTANTS: Mutant[] = [
     replace: "      : null,",
     expectKilledBy: ["packages/engine/src/stadiumsD561.test.ts"],
   },
-  {
-    id: "D561-academy-local-cost-term",
-    decision: "D561",
-    what: "The LOCAL fold drops R-AN's `costUnmet` term from `disabled`: the hot-seat Stadium row lights on an EMPTY hand and dispatches an action the engine refuses. Killed by the GameHud Stadium DOM suite's D561 block.",
-    file: "src/features/game/GameHud.tsx",
-    find: "    disabled: game.allowances.stadiumAbilityUsed || noTarget || costUnmet !== null,",
-    replace: "    disabled: game.allowances.stadiumAbilityUsed || noTarget,",
-    expectKilledBy: ["src/features/game/GameHud.stadiumAbility.dom.test.tsx"],
-  },
-  {
-    id: "D561-academy-local-cost-reason",
-    decision: "D561",
-    what: "The LOCAL fold greys the empty-hand row but leaves its `title` empty — the printed clause is unreachable to the player. Killed by the GameHud Stadium DOM suite's D561 block.",
-    file: "src/features/game/GameHud.tsx",
-    find: "      : costUnmet !== null\n        ? `Only if you ${handCostAction(costUnmet, false)}`\n        : undefined,",
-    replace: "      : undefined,",
-    expectKilledBy: ["src/features/game/GameHud.stadiumAbility.dom.test.tsx"],
-  },
   // ── 🆕🆕🆕 D562 — CONSUMABLE TOOLS, JAMMING TOWER AND FESTIVAL GROUNDS: 14 printings / 12
   //    texts / 12 objects. One row per new branch: `toolsInEffect` and every effect walk it
   //    now gates (five in continuous.ts, two in triggers.ts, the consumable scans); the three
@@ -40318,25 +39556,6 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
   },
   {
-    id: "D564-hud-gate-dropped",
-    decision: "D564",
-    what: "The LOCAL fold never reads the gate: an unlicensed Community Center row is lit on the hot-seat HUD. Killed by the D564 DOM block.",
-    file: "src/features/game/GameHud.tsx",
-    find: "    ability.playableIf !== undefined &&\n    !conditionHolds(game, seat, ability.playableIf)\n  ) {",
-    replace: "    ability.playableIf !== undefined &&\n    false\n  ) {",
-    expectKilledBy: ["src/features/game/GameHud.stadiumAbility.dom.test.tsx"],
-  },
-  {
-    id: "D564-hud-gate-enables",
-    decision: "D564",
-    what: "The local gated early return says `disabled: false`: a click the engine refuses is dispatched. Killed by the D564 DOM block.",
-    file: "src/features/game/GameHud.tsx",
-    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the return wraps over five lines; the patch is unchanged.
-    find: "    return {\n      label: ability.label,\n      disabled: true,\n      reason: `Only if ${conditionNote(ability.playableIf)}`,\n    };",
-    replace: "    return {\n      label: ability.label,\n      disabled: false,\n      reason: `Only if ${conditionNote(ability.playableIf)}`,\n    };",
-    expectKilledBy: ["src/features/game/GameHud.stadiumAbility.dom.test.tsx"],
-  },
-  {
     id: "D564-named-seat-guard-dropped",
     decision: "D564",
     what: "🛑 THE activeSeat GUARD: the new member reads the bag for ANY seat, so the opponent (a koTrigger/damagedTrigger `conditionGate`) is told it played the turn owner's Supporter. Killed by §2's two seat-guard rungs.",
@@ -40717,7 +39936,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/cardplay.ts",
     find: "  if (ability.benchOnly === true && action.target.spot !== \"bench\") {\n    return err(\"ABILITY_BENCH_ONLY\", `${ability.name} can only be used from the Bench (§9)`);\n  }\n",
     replace: "",
-    expectKilledBy: ["packages/engine/src/abilityBundleD565.test.ts", "src/features/game/GameHud.benchOnly.dom.test.tsx"],
+    expectKilledBy: ["packages/engine/src/abilityBundleD565.test.ts"],
   },
   {
     id: "D565-bench-only-code-reused",
@@ -40726,7 +39945,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/cardplay.ts",
     find: "    return err(\"ABILITY_BENCH_ONLY\", `${ability.name} can only be used from the Bench (§9)`);",
     replace: "    return err(\"ABILITY_ACTIVE_ONLY\", `${ability.name} can only be used from the Bench (§9)`);",
-    expectKilledBy: ["packages/engine/src/abilityBundleD565.test.ts", "src/features/game/GameHud.benchOnly.dom.test.tsx"],
+    expectKilledBy: ["packages/engine/src/abilityBundleD565.test.ts"],
   },
   {
     id: "D565-redact-bench-only-dropped",
@@ -40736,15 +39955,6 @@ export const MUTANTS: Mutant[] = [
     find: "        // 🆕🆕🆕 D565 — `benchOnly`, `activeOnly`'s mirror (Flustered Leap).\n        (ability.benchOnly === true && target.spot !== \"bench\") ||\n",
     replace: "",
     expectKilledBy: ["packages/engine/src/abilityBundleD565.test.ts"],
-  },
-  {
-    id: "D565-hud-bench-only-dropped",
-    decision: "D565",
-    what: "the local HUD row forgets `benchOnly`. Killed by `GameHud.benchOnly.dom.test.tsx`.",
-    file: "src/features/game/GameHud.tsx",
-    find: "        // 🆕🆕🆕 D565 — `benchOnly`, `activeOnly`'s mirror (Flustered Leap).\n        (ability.benchOnly === true && target.spot !== \"bench\") ||\n",
-    replace: "",
-    expectKilledBy: ["src/features/game/GameHud.benchOnly.dom.test.tsx"],
   },
   {
     id: "D565-simulated-tool-drops-triggered",
@@ -41323,7 +40533,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/cardplay.ts",
     find: "      if (\n        anyOf !== undefined &&\n        !anyOf.some(",
     replace: "      if (\n        anyOf === \"never\" &&\n        !anyOf.some(",
-    expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts", "src/features/game/GameHud.capsAnyOf.dom.test.tsx"],
+    expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts"],
   },
   {
     id: "D566-anyof-ceiling-ignored",
@@ -41350,7 +40560,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/cardplay.ts",
     find: "        !anyOf.some(\n          (entry) =>",
     replace: "        !anyOf.every(\n          (entry) =>",
-    expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts", "src/features/game/GameHud.capsAnyOf.dom.test.tsx"],
+    expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts"],
   },
   {
     id: "D566-orelse-branch-dropped",
@@ -41359,7 +40569,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "      if (op.orElse !== undefined) return searchDeckOrElse(state, op, op.orElse, ctx, record);\n",
     replace: "",
-    expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts", "src/features/game/GameHud.capsAnyOf.dom.test.tsx"],
+    expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts"],
   },
   {
     id: "D566-orelse-ceiling-summed",
@@ -41368,7 +40578,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "  const ceiling = Math.max(firstMax, alternative.max);",
     replace: "  const ceiling = firstMax + alternative.max;",
-    expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts", "src/features/game/GameHud.capsAnyOf.dom.test.tsx"],
+    expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts"],
   },
   {
     id: "D566-orelse-ceiling-alternative",
@@ -41377,7 +40587,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "  const ceiling = Math.max(firstMax, alternative.max);",
     replace: "  const ceiling = alternative.max;",
-    expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts", "src/features/game/GameHud.capsAnyOf.dom.test.tsx"],
+    expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts"],
   },
   {
     id: "D566-orelse-alternative-not-offered",
@@ -41386,7 +40596,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "  const offered = new Set(entries.flatMap((entry) => entry.uids));",
     replace: "  const offered = new Set(entries[0]?.uids ?? []);",
-    expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts", "src/features/game/GameHud.capsAnyOf.dom.test.tsx"],
+    expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts"],
   },
   {
     id: "D566-orelse-floor-one",
@@ -41404,7 +40614,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "      capsAnyOf: entries,\n",
     replace: "",
-    expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts", "src/features/game/GameHud.capsAnyOf.dom.test.tsx"],
+    expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts"],
   },
   {
     id: "D566-orelse-whiff-parks",
@@ -41594,7 +40804,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the map wraps; the patch still drops the whole spread.
     find: "        ...(prompt.capsAnyOf === undefined\n          ? {}\n          : {\n              capsAnyOf: prompt.capsAnyOf.map((entry) => ({\n                uids: [...entry.uids],\n                max: entry.max,\n              })),\n            }),\n",
     replace: "",
-    expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts", "src/features/game/GameHud.capsAnyOf.dom.test.tsx"],
+    expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts"],
   },
   {
     id: "D566-redact-anyof-aliased",
@@ -41605,72 +40815,6 @@ export const MUTANTS: Mutant[] = [
     find: "                uids: [...entry.uids],\n",
     replace: "                uids: entry.uids as string[],\n",
     expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts"],
-  },
-  {
-    id: "D566-schema-anyof-stripped",
-    decision: "D566",
-    what: "`packages/schema` does not name `capsAnyOf` — zod strips it silently and the parse still succeeds. Killed by the OnlineHud schema rung.",
-    file: "packages/schema/src/match/redacted.ts",
-    find: "    capsAnyOf: z.array(z.object({ uids: z.array(z.string()), max: z.number() })).optional(),\n",
-    replace: "",
-    expectKilledBy: ["src/features/online/components/OnlineHud.capsAnyOf.dom.test.tsx"],
-  },
-  {
-    id: "D566-schema-swap-dest-missing",
-    decision: "D566",
-    what: "the prompt dest enum lacks `\"swap\"` — Ogre's Mask's frame fails the parse. Killed by the OnlineHud schema rung.",
-    file: "packages/schema/src/match/redacted.ts",
-    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — the enum gained `"name"` (Tyme); the patch still drops `"swap"`.
-    // 🆕🆕🆕 D580 — RE-ANCHORED off the bytes (D540) — the enum gained `"use"` (Look-Alike Show); the patch still drops `"swap"`.
-    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the enum is one member per line (and gained `"reveal"` at D633); the patch still drops `"swap"`.
-    find: "      \"attach\",\n      \"swap\",\n      \"name\",\n",
-    replace: "      \"attach\",\n      \"name\",\n",
-    expectKilledBy: ["src/features/online/components/OnlineHud.capsAnyOf.dom.test.tsx"],
-  },
-  {
-    id: "D566-projection-anyof-dropped",
-    decision: "D566",
-    what: "the wire → local prompt rebuild drops `capsAnyOf` — the online GameHud re-opens the mixed answer. Killed by the HUD suite's projection rung.",
-    file: "src/features/game/projection.ts",
-    find: "          ...(prompt.capsAnyOf !== undefined ? { capsAnyOf: prompt.capsAnyOf } : {}),\n",
-    replace: "",
-    expectKilledBy: ["src/features/game/GameHud.capsAnyOf.dom.test.tsx"],
-  },
-  {
-    id: "D566-hud-anyof-dropped",
-    decision: "D566",
-    what: "`cappedOut` never reads `capsAnyOf` — an Evolution is clickable after a Basic (afford-then-reject, D222). Killed by the HUD suite.",
-    file: "src/features/game/GameHud.tsx",
-    find: "    (prompt.capsAnyOf !== undefined &&\n      !prompt.capsAnyOf.some(",
-    replace: "    (prompt.capsAnyOf === null &&\n      !prompt.capsAnyOf.some(",
-    expectKilledBy: ["src/features/game/GameHud.capsAnyOf.dom.test.tsx"],
-  },
-  {
-    id: "D566-hud-anyof-ceiling-ignored",
-    decision: "D566",
-    what: "`cappedOut` forgets the entry's ceiling — a second Evolution stays clickable. Killed by the HUD suite's Evolution rung.",
-    file: "src/features/game/GameHud.tsx",
-    find: "          prev.length + 1 <= entry.max &&\n",
-    replace: "",
-    expectKilledBy: ["src/features/game/GameHud.capsAnyOf.dom.test.tsx"],
-  },
-  {
-    id: "D566-hud-anyof-prev-ignored",
-    decision: "D566",
-    what: "`cappedOut` forgets the picks so far — an Evolution stays clickable after a Basic. Killed by the HUD suite's Basic rung.",
-    file: "src/features/game/GameHud.tsx",
-    find: "          entry.uids.includes(uid) &&\n          prev.every((u) => entry.uids.includes(u)),",
-    replace: "          entry.uids.includes(uid),",
-    expectKilledBy: ["src/features/game/GameHud.capsAnyOf.dom.test.tsx"],
-  },
-  {
-    id: "D566-online-swap-verb",
-    decision: "D566",
-    what: "the online dialog's `\"swap\"` verb reads \"Take\". Killed by the OnlineHud verb rung.",
-    file: "src/features/online/components/OnlineHud.tsx",
-    find: "  swap: { mandatory: \"Switch in\", upTo: \"Switch in\" },",
-    replace: "  swap: { mandatory: \"Take\", upTo: \"Take\" },",
-    expectKilledBy: ["src/features/online/components/OnlineHud.capsAnyOf.dom.test.tsx"],
   },
   {
     id: "D566-stadium-lock-not-collected",
@@ -41718,7 +40862,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/registry.ts",
     find: "      orElse: { filter: { kind: \"evolutionPokemon\" }, max: 1 },\n",
     replace: "",
-    expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts", "src/features/game/GameHud.capsAnyOf.dom.test.tsx"],
+    expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts"],
   },
   {
     id: "D566-brock-reveal-dropped",
@@ -42096,7 +41240,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "  return op.side === \"opponent\" ? otherSeat(ctx.seat) : ctx.seat;",
     replace: "  return ctx.seat;",
-    expectKilledBy: ["packages/engine/src/trainerBundleD567.test.ts", "src/features/game/GameHud.botherBot.dom.test.tsx"],
+    expectKilledBy: ["packages/engine/src/trainerBundleD567.test.ts"],
   },
   {
     id: "D567-prize-note-own-wording",
@@ -42105,7 +41249,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "        owner === ctx.seat\n          ? \"Choose 1 of your face-down Prize cards to turn face up.\"\n          : \"Choose 1 of your opponent's face-down Prize cards to turn face up.\",",
     replace: "        \"Choose 1 of your face-down Prize cards to turn face up.\",",
-    expectKilledBy: ["packages/engine/src/trainerBundleD567.test.ts", "src/features/game/GameHud.botherBot.dom.test.tsx"],
+    expectKilledBy: ["packages/engine/src/trainerBundleD567.test.ts"],
   },
   {
     id: "D567-turn-not-recorded",
@@ -43349,7 +42493,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "  return topUid(active) !== uid || !attackAgainLicensed(state, seat, active);",
     replace: "  return topUid(active) !== uid;",
-    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts", "src/features/game/GameHud.festivalLead.dom.test.tsx"],
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
   },
   {
     id: "D570-reread-skips-the-uid",
@@ -43495,52 +42639,6 @@ export const MUTANTS: Mutant[] = [
     find: "    attackBarredByAbility(state, viewerSeat, active) !== undefined ||\n    attackAgainBarred(state, viewerSeat, active);",
     replace: "    attackBarredByAbility(state, viewerSeat, active) !== undefined;",
     expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
-  },
-  {
-    id: "D570-hud-retreat-in-the-window",
-    decision: "D570",
-    what: "GameHud offers Retreat inside the window (the redact twin's `mainPhase` not mirrored). Killed by the HUD suite (b).",
-    file: "src/features/game/retreat.ts",
-    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the HUD's retreat test moved to `retreat.ts` and reads `attackAgainUid` directly; the patch still drops the window.
-    find: "      !game.allowances.retreated &&\n      game.allowances.attackAgainUid === null &&\n",
-    replace: "      !game.allowances.retreated &&\n",
-    expectKilledBy: ["src/features/game/GameHud.festivalLead.dom.test.tsx"],
-  },
-  {
-    id: "D570-hud-trainers-in-the-window",
-    decision: "D570",
-    what: "GameHud lists the hand's Trainers inside the window. Killed by the HUD suite (b).",
-    file: "src/features/game/GameHud.tsx",
-    find: "  const trainerOptions = attackAgainWindow ? [] : playableTrainers(game, viewerSeat);",
-    replace: "  const trainerOptions = playableTrainers(game, viewerSeat);",
-    expectKilledBy: ["src/features/game/GameHud.festivalLead.dom.test.tsx"],
-  },
-  {
-    id: "D570-hud-abilities-in-the-window",
-    decision: "D570",
-    what: "GameHud lists activated Abilities inside the window. Green on (b)'s board (no activated Ability) — killed only by the HUD suite's (d) (D570 review).",
-    file: "src/features/game/GameHud.tsx",
-    find: "  const abilityOptions = attackAgainWindow ? [] : usableAbilities(game, viewerSeat);",
-    replace: "  const abilityOptions = usableAbilities(game, viewerSeat);",
-    expectKilledBy: ["src/features/game/GameHud.festivalLead.dom.test.tsx"],
-  },
-  {
-    id: "D570-hud-stadium-in-the-window",
-    decision: "D570",
-    what: "GameHud draws the Stadium row inside the window. Green on (b)'s board (Festival Grounds has no activated ability) — killed only by the HUD suite's constructed (d) (D570 review).",
-    file: "src/features/game/GameHud.tsx",
-    find: "  const stadiumAbility = attackAgainWindow ? null : stadiumAbilityOption(game, viewerSeat);",
-    replace: "  const stadiumAbility = stadiumAbilityOption(game, viewerSeat);",
-    expectKilledBy: ["src/features/game/GameHud.festivalLead.dom.test.tsx"],
-  },
-  {
-    id: "D570-hud-second-declaration-not-greyed",
-    decision: "D570",
-    what: "GameHud drops the second-declaration bar: a lost licence still lights the attack row. Killed by the HUD suite (c).",
-    file: "src/features/game/GameHud.tsx",
-    find: "              attackAgainBarredNow ||\n",
-    replace: "",
-    expectKilledBy: ["src/features/game/GameHud.festivalLead.dom.test.tsx"],
   },
   {
     id: "D570-fresh-bag-opens-a-window",
@@ -43832,40 +42930,13 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: ["packages/engine/src/calmDiversD572.test.ts"],
   },
   {
-    id: "D572-online-absent-verb-is-move",
-    decision: "D572",
-    what: "an ABSENT `takeVerb` reads \"move\": every pre-D572 Energy park (Ethan's Ho-Oh ex, Archaludon ex …) captions its quantity rows \"move N\" — D441's absent-means-the-old-reading broken. Killed by OnlineHud.dom.test.tsx's \"attach 1\" / \"attach 2\" rungs.",
-    file: "src/features/online/components/OnlineHud.tsx",
-    find: "{take === undefined ? \"\" : ` — ${prompt.takeVerb ?? \"attach\"} ${take}`}",
-    replace: "{take === undefined ? \"\" : ` — ${prompt.takeVerb ?? \"move\"} ${take}`}",
-    expectKilledBy: ["src/features/online/components/OnlineHud.dom.test.tsx"],
-  },
-  {
-    id: "D572-online-verb-hardcoded",
-    decision: "D572",
-    what: "the online dialog ignores a PRESENT `takeVerb` and hard-codes \"attach\": Adrena-Brain's counter move reads \"attach N\" on the wire client. The PRESENT arm's twin of the row above (a review-round finding: no test built a `takeVerb: \"move\"` prompt for either HUD). Killed by OnlineHud.dom.test.tsx's D572 \"move N\" rung.",
-    file: "src/features/online/components/OnlineHud.tsx",
-    find: "{take === undefined ? \"\" : ` — ${prompt.takeVerb ?? \"attach\"} ${take}`}",
-    replace: "{take === undefined ? \"\" : ` — ${\"attach\"} ${take}`}",
-    expectKilledBy: ["src/features/online/components/OnlineHud.dom.test.tsx"],
-  },
-  {
-    id: "D572-local-verb-hardcoded",
-    decision: "D572",
-    what: "the LOCAL dialog ignores a PRESENT `takeVerb` and hard-codes \"attach\": Adrena-Brain's counter move reads \"attach N\" in a local match. Killed by GameHud.cardplay.dom.test.tsx's D572 \"move N\" rung.",
-    file: "src/features/game/GameHud.tsx",
-    find: "{take === undefined ? \"\" : ` — ${prompt.takeVerb ?? \"attach\"} ${take}`}",
-    replace: "{take === undefined ? \"\" : ` — ${\"attach\"} ${take}`}",
-    expectKilledBy: ["src/features/game/GameHud.cardplay.dom.test.tsx"],
-  },
-  {
     id: "D572-projection-drops-take-verb",
     decision: "D572",
     what: "`effectDecisionFromPrompt` forgets `takeVerb` on the way BACK (the D358/D359 forgotten-way-back hazard): the rebuilt prompt captions the counter move \"attach N\". Killed by projection.test.ts's round-trip `toEqual` over the D572 arm.",
-    file: "src/features/game/projection.ts",
+    file: "src/game/projection.ts",
     find: "          ...(prompt.takeVerb === undefined ? {} : { takeVerb: prompt.takeVerb }),\n",
     replace: "",
-    expectKilledBy: ["src/features/game/projection.test.ts"],
+    expectKilledBy: ["src/game/projection.test.ts"],
   },
   {
     id: "D572-moved-counter-ko-is-by-attack",
@@ -45365,7 +44436,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/continuous.ts",
     find: "  return widened !== undefined && teraInPlay ? widened : BENCH_MAX;",
     replace: "  return widened !== undefined ? widened : BENCH_MAX;",
-    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts", "src/features/game/areaZeroTymeD577.dom.test.tsx"],
+    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts"],
   },
   {
     id: "D577-limit-ignores-the-stadium",
@@ -45374,7 +44445,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/continuous.ts",
     find: "  return widened !== undefined && teraInPlay ? widened : BENCH_MAX;",
     replace: "  return teraInPlay ? 8 : BENCH_MAX;",
-    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts", "src/features/game/areaZeroTymeD577.dom.test.tsx"],
+    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts"],
   },
   {
     id: "D577-tera-read-off-the-active-only",
@@ -45647,33 +44718,6 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: ["packages/engine/src/tymeD577.test.ts"],
   },
   {
-    id: "D577-web-limit-board-wide",
-    decision: "D577",
-    what: "the playmat ignores the engine's per-seat limit: an Underdepths 8-Bench is drawn and gated at 5. Killed by the web suite's per-seat and 8-slot rungs.",
-    file: "src/features/playmat/constants.ts",
-    find: "  return board[owner].benchLimit ?? DEFAULT_BENCH_LIMIT;",
-    replace: "  return DEFAULT_BENCH_LIMIT;",
-    expectKilledBy: ["src/features/game/areaZeroTymeD577.dom.test.tsx"],
-  },
-  {
-    id: "D577-projection-drops-the-limit",
-    decision: "D577",
-    what: "the LOCAL projection never writes `benchLimit`: /play draws every Bench at 5. Killed by the web suite's local-projection rung.",
-    file: "src/features/game/projection.ts",
-    find: "    ...benchLimitField(benchLimitOf(state, seat)),",
-    replace: "",
-    expectKilledBy: ["src/features/game/areaZeroTymeD577.dom.test.tsx"],
-  },
-  {
-    id: "D577-online-projection-drops-the-limit",
-    decision: "D577",
-    what: "the ONLINE projection never writes `benchLimit`: the wire board draws every Bench at 5. Killed by the web suite's online-projection rungs (both chairs).",
-    file: "src/features/game/projection.ts",
-    find: "    ...benchLimitField(benchLimitForIds(stadiumCardId, inPlay)),",
-    replace: "",
-    expectKilledBy: ["src/features/game/areaZeroTymeD577.dom.test.tsx"],
-  },
-  {
     id: "D578-retype-ignores-the-lock",
     decision: "D578",
     what: "the §9 drop is deleted from `inPlayCardOf`: a locked Scovillain ex stays {G} and {R}. Killed by §5's Iron Thorns rungs (types and the Weakness hit).",
@@ -45788,7 +44832,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/continuous.ts",
     find: "        menu.push({ attack, card: lower, sourceIndex, origin: \"memoryDive\" });",
     replace: "        menu.unshift({ attack, card: lower, sourceIndex, origin: \"memoryDive\" });",
-    expectKilledBy: ["packages/engine/src/memoryDiveD578.test.ts", "src/features/game/GameHud.memoryDiveD578.dom.test.tsx"],
+    expectKilledBy: ["packages/engine/src/memoryDiveD578.test.ts"],
   },
   {
     id: "D578-dive-includes-the-top-card",
@@ -45797,7 +44841,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/continuous.ts",
     find: "    for (const uid of pokemon.stack.slice(0, -1)) {",
     replace: "    for (const uid of pokemon.stack) {",
-    expectKilledBy: ["packages/engine/src/memoryDiveD578.test.ts", "src/features/game/GameHud.memoryDiveD578.dom.test.tsx"],
+    expectKilledBy: ["packages/engine/src/memoryDiveD578.test.ts"],
   },
   {
     id: "D578-dive-top-to-bottom",
@@ -45962,25 +45006,6 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: ["packages/engine/src/memoryDiveD578.test.ts"],
   },
   {
-    id: "D578-web-menu-without-the-seat",
-    decision: "D578",
-    what: "the local HUD builds the menu without the viewer's seat: no borrowed button. Killed by the web suite's first rung.",
-    file: "src/features/game/GameHud.tsx",
-    find: "  const menu = attackMenuOf(game, viewerSeat, active);",
-    replace: "  const menu = attackMenuOf(game, undefined, active);",
-    expectKilledBy: ["src/features/game/GameHud.memoryDiveD578.dom.test.tsx"],
-  },
-  {
-    id: "D578-web-bar-per-flat-index",
-    decision: "D578",
-    what: "the local HUD drops the PRINTED-row conjunct and compares a bar against every row's SOURCE index: a bar on printed 0 greys the borrowed Low Strike (source index 0) too. Killed by the web suite's bar rung.",
-    file: "src/features/game/GameHud.tsx",
-    // 🆕🆕🆕 D647 — RE-ANCHORED off the bytes (D540) at the merge of `main`: the conjunction wraps over two lines; the patch is unchanged.
-    find: "              (menu[index]?.origin === \"printed\" &&\n                barredAttackIndexes.includes(menu[index].sourceIndex)) ||",
-    replace: "              barredAttackIndexes.includes(menu[index]?.sourceIndex ?? -1) ||",
-    expectKilledBy: ["src/features/game/GameHud.memoryDiveD578.dom.test.tsx"],
-  },
-  {
     id: "D578-registry-memory-dive-unauthored",
     decision: "D578",
     what: "Relicanth's row carries no `memoryDive`: no section is ever offered. Killed by MD §1-§2.",
@@ -46132,15 +45157,6 @@ export const MUTANTS: Mutant[] = [
     find: "        !barredNames.includes(attack.name) &&\n",
     replace: "",
     expectKilledBy: ["packages/engine/src/memoryDiveD578.test.ts"],
-  },
-  {
-    id: "D578-web-md4-ignores-names",
-    decision: "D578",
-    what: "the local HUD ignores the name-keyed bars: the borrowed row stays clickable on the turn the server refuses it. Killed by the web suite's name-keyed rung.",
-    file: "src/features/game/GameHud.tsx",
-    find: "              barredAttackNames.includes(attack.name) ||\n",
-    replace: "",
-    expectKilledBy: ["src/features/game/GameHud.memoryDiveD578.dom.test.tsx"],
   },
   {
     id: "D578-tre1-step-sweep-dropped",
@@ -46784,24 +45800,6 @@ export const MUTANTS: Mutant[] = [
     find: "      \"name\",\n      \"use\",\n      \"reveal\",\n",
     replace: "      \"name\",\n      \"reveal\",\n",
     expectKilledBy: ["packages/engine/src/lookAlikeShowD580.test.ts"],
-  },
-  {
-    id: "D580-gamehud-use-reads-take",
-    decision: "D580",
-    what: "GameHud's `use` cell says \"Take\" — a move the card never makes. Killed by the GameHud verb dom rung.",
-    file: "src/features/game/GameHud.tsx",
-    find: "  use: { mandatory: \"Use\", upTo: \"Use\" },",
-    replace: "  use: { mandatory: \"Take\", upTo: \"Take\" },",
-    expectKilledBy: ["src/features/game/GameHud.chooseCardsVerb.dom.test.tsx"],
-  },
-  {
-    id: "D580-onlinehud-use-reads-take",
-    decision: "D580",
-    what: "OnlineHud's `use` cell says \"Take\". Killed by the OnlineHud verb dom rungs.",
-    file: "src/features/online/components/OnlineHud.tsx",
-    find: "  use: { mandatory: \"Use\", upTo: \"Use\" },",
-    replace: "  use: { mandatory: \"Take\", upTo: \"Take\" },",
-    expectKilledBy: ["src/features/online/components/OnlineHud.chooseCardsVerb.dom.test.tsx"],
   },
   {
     id: "D580-census-built-ability-not-stepped",
@@ -56514,10 +55512,10 @@ export const MUTANTS: Mutant[] = [
     id: "D628-builder-reads-the-tag",
     decision: "D628",
     what: "the deck builder reads the raw tcgdex tag again (finding 0b): a \"Normal\"-tagged Special Energy is Basic. Killed by catalog.test.ts.",
-    file: "src/features/builder/catalog.ts",
+    file: "src/decks/catalog.ts",
     find: "  if (isSpecialEnergy(face)) return \"Special\";\n  return isBasicEnergy(face) ? \"Normal\" : card.energyType;",
     replace: "  return isBasicEnergy(face) ? \"Normal\" : card.energyType;",
-    expectKilledBy: ["src/features/builder/catalog.test.ts"],
+    expectKilledBy: ["src/decks/catalog.test.ts"],
   },
   {
     id: "D628-brief-reads-the-tag",
@@ -58431,10 +57429,10 @@ export const MUTANTS: Mutant[] = [
     id: "D636-trainer-coin-not-shown",
     decision: "D636",
     what: "the tabletop coin display skips Quaking Fist's coin. Killed by coinFlips.test.",
-    file: "src/features/game/coinFlips.ts",
+    file: "src/game/coinFlips.ts",
     find: "      case \"TRAINER_FLIP_LOCK_CHECK\":\n",
     replace: "",
-    expectKilledBy: ["src/features/game/coinFlips.test.ts"],
+    expectKilledBy: ["src/game/coinFlips.test.ts"],
   },
   {
     id: "D636-migration-v44-refused",
@@ -59713,24 +58711,6 @@ export const MUTANTS: Mutant[] = [
     replace: "            ((state.allowances.stadiumPlayed) ||",
     expectKilledBy: ["packages/engine/src/stadiumWatchedMeD642.test.ts"],
   },
-  {
-    id: "D642-hud-ange-gate-dropped",
-    decision: "D642",
-    what: "the local HUD row is not greyed with no Prism Tower in play. Killed by GameHud.angeFloette.dom.",
-    file: "src/features/game/GameHud.tsx",
-    find: "              card.name === inPlayStadium ||\n              stadiumPlayOverUnmet(game, card)));",
-    replace: "              card.name === inPlayStadium));",
-    expectKilledBy: ["src/features/game/GameHud.angeFloette.dom.test.tsx"],
-  },
-  {
-    id: "D642-hud-ange-not-lifted",
-    decision: "D642",
-    what: "the local HUD row is greyed the turn the player played Prism Tower. Killed by GameHud.angeFloette.dom.",
-    file: "src/features/game/GameHud.tsx",
-    find: "            ((game.allowances.stadiumPlayed && !stadiumSpentPlayLifted(game, seat, card)) ||",
-    replace: "            ((game.allowances.stadiumPlayed) ||",
-    expectKilledBy: ["src/features/game/GameHud.angeFloette.dom.test.tsx"],
-  },
   // ── 🆕🆕🆕 D643 — Y1a: Multi Adapter (continuous / flow / index / interpreter / cardplay / log), the Tool display
   //    (Card.tsx) and the v47 re-stamp (apps/api match.ts). ──
   {
@@ -59939,15 +58919,6 @@ export const MUTANTS: Mutant[] = [
     find: "        ...(event.when === \"trimmed\" ? [plain(\" — Multi Adapter no longer applies\")] : []),\n",
     replace: "",
     expectKilledBy: ["packages/engine/src/multiAdapterMeD643.test.ts"],
-  },
-  {
-    id: "D643-tool-anchor-not-stacked",
-    decision: "D643",
-    what: "the second Tool anchor sits on the first: every Tool gets stack 0. Killed by Card.toolStack.dom.",
-    file: "src/features/playmat/components/Card.tsx",
-    find: "            style={{ \"--attached-stack\": String(index) } as CSSProperties}",
-    replace: "            style={{ \"--attached-stack\": String(0) } as CSSProperties}",
-    expectKilledBy: ["src/features/playmat/components/Card.toolStack.dom.test.tsx"],
   },
   {
     id: "D643-migration-v47-refused",

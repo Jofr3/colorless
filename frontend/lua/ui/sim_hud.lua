@@ -6,7 +6,6 @@ local T=require('ui.theme')
 local Button=require('ui.button')
 local Dyna=require('ui.dynatext')
 local Motion=require('ui.motion')
-local Sprites=require('ui.sprites')
 local Hud={};Hud.__index=Hud
 local g=love.graphics
 -- Colours straight from globals.lua / Blind:change_colour for a non-boss blind:
@@ -21,7 +20,6 @@ local SMALL=mix(T.blue,BLACK,0.6)                          -- get_blind_main_col
 local SMALL_RED=mix(T.red,BLACK,0.6)                       -- same mix for the second seat
 local LIGHT={1,1,1,1}
 local MONEY={243/255,185/255,88/255,1}
-local IMPORTANT={1,154/255,0,1}
 local JOKER_GREY={191/255,199/255,213/255,1}
 -- Content height of the desktop column (turn panel to the counter grid); the
 -- column itself spans the room and the content sits centred like align 'cm'.

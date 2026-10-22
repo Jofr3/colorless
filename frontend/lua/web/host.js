@@ -301,7 +301,6 @@ try {
   if (stored?.version === 1) preferences = validatedPreferences(stored);
   else preferences.muted = localStorage.getItem("luminous.lua.muted") === "1" ? 1 : 0;
 } catch (_) {}
-const routes = new Set(["/play", "/simulator", "/lobby", "/decks", "/login", "/settings"]);
 
 function fail(message) {
   document.body.classList.add("failed");
@@ -329,6 +328,8 @@ function syncViewport(module) {
 }
 globalThis.Module = {
   arguments: ["./"],
+  // build:lua emits the runtime and game package under /love/ (public/love/).
+  locateFile: (path) => `/love/${path}`,
   INITIAL_MEMORY: 134217728,
   canvas: canvas,
   preRun: [
@@ -375,9 +376,6 @@ globalThis.Module = {
         publishName();
       } else if (command === "finish-edit") finishName();
       else accountCommand(command);
-    } else if (message.startsWith("LUMINOUS:navigate:")) {
-      const route = message.slice("LUMINOUS:navigate:".length);
-      if (routes.has(route)) location.assign(route);
     } else if (message.startsWith("LUMINOUS:announce:")) {
       document.getElementById("announcement").textContent = message.slice(
         "LUMINOUS:announce:".length,
@@ -439,7 +437,9 @@ globalThis.Module = {
     fail("The menu could not start. Reload to try again, or use the menu links.");
   },
 };
-globalThis.startLuminous = () => {
+// Every classic script (game package, runtime) has run by the window load event.
+addEventListener("load", () => {
+  if (typeof Love !== "function") return;
   Love(Module)
     .then((module) => {
       runtime = module;
@@ -447,9 +447,11 @@ globalThis.startLuminous = () => {
       void prepareTransitionArt();
       syncPage();
       if (accountSnapshot) writeMailbox("__account.txt", accountSnapshot);
-      if (new URLSearchParams(location.search).has("account")) {
+      // ?account and ?settings open the settings popup on the matching tab.
+      const params = new URLSearchParams(location.search);
+      if (params.has("account") || params.has("settings")) {
         settingsRequest++;
-        settingsTab = 4;
+        settingsTab = params.has("account") ? 4 : 1;
       }
       syncViewport(runtime);
     })
@@ -457,7 +459,7 @@ globalThis.startLuminous = () => {
       console.error(error);
       fail("Could not load the menu. Reload to try again.");
     });
-};
+});
 let resizeTimer;
 addEventListener("resize", () => {
   clearTimeout(resizeTimer);
@@ -503,10 +505,15 @@ document.getElementById("account-link").addEventListener("click", (event) => {
   canvas.focus({ preventScroll: true });
 });
 
-addEventListener("error", (event) => {
-  if (event.target instanceof HTMLScriptElement)
-    fail("Could not download the menu. Reload to try again.");
-});
+// Resource load errors don't bubble; listen in the capture phase.
+addEventListener(
+  "error",
+  (event) => {
+    if (event.target instanceof HTMLScriptElement)
+      fail("Could not download the menu. Reload to try again.");
+  },
+  true,
+);
 
 // Library transport: Lua owns the page; the browser supplies text input and API I/O.
 // The page id rides in a page-specific query parameter (a deck or lobby code).
@@ -561,6 +568,7 @@ function setPage(page, push = true, id = "", saved = false) {
   for (const param of Object.values(pageIds)) url.searchParams.delete(param);
   if (pageId) url.searchParams.set(pageIds[currentPage], pageId);
   url.searchParams.delete("account");
+  url.searchParams.delete("settings");
   if (push) history.pushState(null, "", url); else history.replaceState(null, "", url);
   syncPage();
 }
@@ -632,7 +640,7 @@ const lobbyAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const normalizeCode = value => [...value.toUpperCase()].filter(c => lobbyAlphabet.includes(c)).join("").slice(0, 4);
 libraryInput.addEventListener("input", () => {
   if (libraryInputOwner === "online" && libraryField === "code") {
-    // A pasted invite link (/lua/?lobby=CODE) yields its code.
+    // A pasted invite link (/?lobby=CODE) yields its code.
     const link = /[?&]lobby=([^&#\s]+)/i.exec(libraryInput.value);
     const value = normalizeCode(link ? link[1] : libraryInput.value);
     const caret = link ? value.length : normalizeCode(libraryInput.value.slice(0, libraryInput.selectionStart || 0)).length;

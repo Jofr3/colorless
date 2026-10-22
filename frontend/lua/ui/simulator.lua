@@ -25,7 +25,6 @@ local Fx=require('ui.sim_fx')
 local Popup=require('ui.popup')
 local Simulator={};Simulator.__index=Simulator
 local g=love.graphics
-local JOKER_GREY={191/255,199/255,213/255,1}
 local MONEY={243/255,185/255,88/255,1}
 local PURPLE={136/255,103/255,165/255,1}
 local CHANCE={75/255,194/255,146/255,1}
@@ -1651,9 +1650,7 @@ end
 function Simulator:drawBadges(c,rw)
   local item=c.item
   if item.hidden or not (item.zone=='active' or item.zone=='bench') then return end
-  local scale=c.baseScale*c.motion.VT.scale
-  local cw,ch=D.W*scale,D.H*scale
-  local bottom=c.y+ch/2
+  local ch=D.H*c.baseScale*c.motion.VT.scale
   if item.status~='' then
     local names={}
     for _,s in ipairs(Energy.split(item.status)) do names[#names+1]=s:sub(1,1):upper()..s:sub(2) end

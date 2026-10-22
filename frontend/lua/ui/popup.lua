@@ -6,7 +6,6 @@ local Button=require('ui.button')
 local Dyna=require('ui.dynatext')
 local Energy=require('ui.energy')
 local Popup={}
-local g=love.graphics
 local FRAME={0.5+191/255*0.5,0.5+199/255*0.5,0.5+213/255*0.5,1} -- lighten(JOKER_GREY,0.5)
 local BODY={55/255*0.9,66/255*0.9,68/255*0.9,0.8}                -- darken(BLACK,0.1) at 0.8
 local TEXT_DARK={79/255,99/255,103/255,1}

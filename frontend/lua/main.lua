@@ -31,9 +31,9 @@ local openSettings,closeSettings,applyPreferences,startWipe,applyPage,requestPag
 local wipe,pendingPage
 local scene, width, height, layoutScale, offsetX, offsetY, virtualWidth, virtualHeight
 local menu = {
-  {label='Sandbox', route='/simulator', colour=T.blue},
-  {label='Online', route='/lobby', colour=T.red},
-  {label='Decks', route='/decks', colour=T.paleGreen},
+  {label='Sandbox', action='sandbox', colour=T.blue},
+  {label='Online', action='online', colour=T.red},
+  {label='Decks', action='decks', colour=T.paleGreen},
 }
 local quiet={paper1=0.35,multhit1=0.7,multhit2=0.7,coin1=0.6,coin3=0.6,glass2=0.5,cardFan2=0.5,whoosh=0.5,win=0.7,tarot2=0.4}
 local function sound(name,pitch,volume,sourceVolume)
@@ -117,7 +117,7 @@ applyPage=function(page,deckId)
   if isTable(state.page) then simulator:command('close') end
   state.deckId=deckId
   if popup then closeSettings() end
-  state.page=page;state.leaving=nil;state.pressed=nil;state.focused=0
+  state.page=page;state.pressed=nil;state.focused=0
   love.window.setTitle(title(page))
   if page=='simulator' then
     library:command('close');simulator:open(state.reduced)
@@ -224,18 +224,16 @@ openSettings=function(keyboard,tab)
   announce('Settings. '..(popup.tab==4 and 'Account' or 'Game')..' tab. Tab moves between controls. Escape closes.')
 end
 local function activate(index)
-  if index==0 or state.leaving then return end
+  if index==0 then return end
   sound('button',1)
   room.jiggle=room.jiggle+0.5
   state.lastClicked={index=index,at=state.time}
   local item=index<=#menu and menu[index] or controls[index-#menu]
-  if item.route=='/simulator' then print('LUMINOUS:simulator:resume'); return end
-  if item.route=='/decks' then print('LUMINOUS:page:decks'); return end
-  if item.route=='/lobby' then print('LUMINOUS:page:online'); return end
-  if item.action=='settings' then openSettings(); return end
-  if item.action=='account' then openSettings(false,4); return end
-  state.leaving={route=item.route,at=state.time,index=index}
-  announce('Opening '..item.label)
+  if item.action=='sandbox' then print('LUMINOUS:simulator:resume')
+  elseif item.action=='decks' then print('LUMINOUS:page:decks')
+  elseif item.action=='online' then print('LUMINOUS:page:online')
+  elseif item.action=='settings' then openSettings()
+  elseif item.action=='account' then openSettings(false,4) end
 end
 function love.load()
   g.setDefaultFilter('nearest','nearest')
@@ -347,10 +345,6 @@ function love.update(dt)
     state.hovered=hovered
     love.mouse.setCursor(hovered>0 and state.handCursor or state.arrowCursor)
   end
-  if state.leaving and state.time-state.leaving.at>0.17 then
-    print('LUMINOUS:navigate:'..state.leaving.route)
-    state.leaving=nil
-  end
 end
 local function button(b,index)
   local active=state.hovered==index or state.focused==index
@@ -378,7 +372,7 @@ function love.draw()
   local portrait=virtualWidth<600
   -- Like Game:main_menu's SPLASH_LOGO, the lettering is a painted sprite.
   -- Draw inside the room/CRT pass so scanlines and fringing stay live.
-  local logoWidth,logoHeight=menuLogo:getDimensions()
+  local logoWidth=menuLogo:getDimensions()
   local logoScale=(portrait and 440 or 900)/logoWidth
   g.push(); g.translate(virtualWidth/2,portrait and 235 or 310)
   if not state.reduced then g.rotate(math.sin(state.time*0.6)*0.012) end

@@ -2,7 +2,7 @@
 // pushes server frames to the subscribers. Not a test file itself.
 
 import type { LobbyMessage } from "@luminous/schema";
-import type { LobbyChannel } from "../features/online/net/channel";
+import type { LobbyChannel } from "../online/channel";
 
 export function fakeLobbyChannel() {
   const posts: LobbyMessage[] = [];

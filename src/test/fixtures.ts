@@ -1,10 +1,10 @@
 // Shared wire-shape fixtures for the suites that stub the api, plus the
 // hand-built BuilderCard factory (`builderCard`) the pure builder suites use.
 
-import type { CardBrief, CatalogFacets, SerieBrief, SetBrief, User } from "@luminous/schema";
-import type { BuilderCard } from "../features/builder/cards";
+import type { CardBrief, CatalogFacets, User } from "@luminous/schema";
+import type { BuilderCard } from "../decks/cards";
 
-/** The signed-in account the DOM suites authenticate as. */
+/** The signed-in account the account suite authenticates as. */
 export const USER: User = {
   id: "user-1",
   email: "ash@example.com",
@@ -100,33 +100,3 @@ export const FACETS: CatalogFacets = {
       case override it explicitly rather than relying on this fixture. */
   suffixes: ["MEGA", "V", "ex"],
 };
-
-/** Set briefs across two series (release-date order, like GET /sets). */
-export const SETS: SetBrief[] = [
-  {
-    id: "swsh01",
-    serieId: "swsh",
-    name: "Sword & Shield",
-    logo: null,
-    symbol: null,
-    releaseDate: "2020-02-07",
-    cardCount: { total: 216, official: 202 },
-    abbreviation: "SSH",
-  },
-  {
-    id: "sv06",
-    serieId: "sv",
-    name: "Twilight Masquerade",
-    logo: null,
-    symbol: null,
-    releaseDate: "2024-05-24",
-    cardCount: { total: 226, official: 167 },
-    abbreviation: "TWM",
-  },
-];
-
-/** Serie options matching SETS (GET /series shape minus the nested sets). */
-export const SERIES: SerieBrief[] = [
-  { id: "swsh", name: "Sword & Shield", releaseDate: "2020-02-07" },
-  { id: "sv", name: "Scarlet & Violet", releaseDate: "2023-03-31" },
-];

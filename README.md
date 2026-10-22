@@ -1,41 +1,68 @@
 # luminous_ui_v2
 
-A React 19 + Vite + Tailwind 4 trading-card-game (TCG) playmat prototype with
-Balatro-style card physics: spring motion, perspective-mesh tilt, directional
-hover lift, press/juice pops, and pointer drag-and-drop between zones.
+Luminous: a trading-card-game (TCG) playmat with a deck builder, a hot-seat
+sandbox and online play. The web frontend is a LÖVE 11.4 application packaged
+with love.js (WebAssembly) and drawn in Balatro's visual language; the rules
+engine and the API are TypeScript.
 
 ## Stack
 
-- React 19 + TypeScript 6
-- Vite 8 (Rolldown) + Tailwind CSS 4 (`@tailwindcss/vite`)
-- PixiJS 8 for the animated card layer
-- GSAP 3 (+ PixiPlugin) for tween-driven juice
+- Frontend: Lua on LÖVE 11.4 via love.js (`frontend/lua/`), hosted by
+  `index.html` with a small TypeScript bridge (`src/lua/bridge.ts`) bundled by Vite 8
+- Rules engine and shared schemas: TypeScript 6 (`packages/engine`, `packages/schema`)
+- API: a Cloudflare Worker with Hono, D1 and Durable Objects (`apps/api`)
+- Hosting: a static-assets Cloudflare Worker (`wrangler.jsonc`) serves the built frontend
 
 ## Architecture
 
-The DOM renders the static board (slots, piles, HUD, hand) and doubles as the
-layout engine: every card/slot exposes `data-card-anchor` / `data-card-drop-zone`
-attributes and CSS-variable-driven sizing. A single PixiJS canvas overlay
-(`AnimatedCardsLayer`) measures those anchors and renders the *visible*,
-animated cards on top — the DOM card faces are `visibility: hidden`. One Pixi
-`Application`, one ticker, and one `CardView` per card drive all motion.
-
-Board state is a plain reducer (`utils/cardMovement.ts`): a drag emits a
-`CardMoveRequest` that `moveCardOnBoard` validates via `canPlace` and applies.
+The canvas renders every page; the page is picked by query string (`/`,
+`/?page=sandbox|simulator|online|match|decks|builder`, `/?lobby=CODE`,
+`/?account`, `/?settings`). `frontend/lua/web/host.js` boots love.js and moves
+messages between Lua and the browser through a file mailbox. The TypeScript
+adapters in `src/lua/` answer those messages: they call the API
+(`src/lib/api.ts`), run local games with the engine (`src/game/`), build decks
+(`src/decks/`) and hold the lobby WebSocket (`src/online/`). Lua never sees
+passwords or session cookies. See `frontend/lua/README.md` for the frontend in
+detail.
 
 ## Scripts
 
 ```bash
 bun install
-bun run dev        # vite dev server (127.0.0.1:5175)
-bun run dev:all    # frontend (5175) + API (8787); Ctrl+C stops both
+bun run dev         # build the Lua app, serve it at http://127.0.0.1:5175/
+bun run dev:all     # frontend (5175) + API (8787); Ctrl+C stops both
 bun run dev:tailnet # both servers over Tailnet HTTPS; selects available ports
-bun run build      # tsc -b && vite build
+bun run build:lua   # rebuild the Lua app into public/love/ (refresh the page)
+bun run build       # tsc -b, build:lua, vite build → dist/
+bun run deploy      # production build + publish dist/ to luminous.jofrescari.workers.dev
+bun run api:deploy  # publish the API Worker
 bun run preview
 bun run typecheck
-bun run lint       # biome
-bun run format     # biome --write
+bun run lint        # biome
+bun run format      # biome --write
+bun run test:run    # vitest (src, apps, packages)
+bun run check       # coverage guards, tsc, biome, vitest (the full gate)
 ```
+
+`build:lua` needs the sibling `../balatro-source` checkout (or
+`BALATRO_SOURCE`) with its installed `love.js` package. The Lua unit checks run
+with plain Lua from the repository root: `lua frontend/lua/tests/<name>.lua`.
+
+## Deployment
+
+| Worker | URL | Command |
+|---|---|---|
+| `luminous` (static assets, root `wrangler.jsonc`) | <https://luminous.jofrescari.workers.dev> | `bun run deploy` |
+| `luminous-api` (`apps/api/wrangler.jsonc`) | <https://luminous-api.jofrescari.workers.dev> | `bun run api:deploy` |
+
+`bun run deploy` builds in production mode, so the bundle and its CSP point at
+`VITE_API_ORIGIN` from `.env.production`. The frontend Worker has no script and
+no SPA fallback: unknown paths return 404. The API's `APP_ORIGIN` must equal the
+frontend's origin (CORS and the post-login redirect), so redeploy the API after
+changing it. `workers.dev` is a public suffix, which makes the two Workers
+different sites: the `SameSite=None` session cookie is a third-party cookie
+there, and browsers that block those cannot sign in until both share a custom
+domain.
 
 ## Google login
 
@@ -57,8 +84,9 @@ bunx wrangler secret put GOOGLE_CLIENT_ID
 bunx wrangler secret put GOOGLE_CLIENT_SECRET
 ```
 
-Set `APP_ORIGIN` to the deployed frontend's exact origin and build the frontend
-with `VITE_API_ORIGIN=https://luminous-api.jofrescari.workers.dev`.
+The deployed API's `APP_ORIGIN` (`apps/api/wrangler.jsonc`) is the deployed
+frontend's exact origin, `https://luminous.jofrescari.workers.dev`; the frontend's
+production build reads `VITE_API_ORIGIN` from `.env.production`.
 Google sign-in reports unavailable until both credentials are configured.
 
 The API dev command supplies the system CA bundle to Wrangler/workerd through
@@ -83,33 +111,16 @@ ports fail if occupied. Google credentials still come from `apps/api/.dev.vars`.
 ## Project structure
 
 ```text
+index.html               # love.js host page (canvas, loading bar, accessible links)
+frontend/lua/            # the LÖVE app: main.lua, ui/, web/ (host.js, host.css), tests/
 src/
-  App.tsx                  # app shell
-  main.tsx                 # React root
-  index.css                # Tailwind import + global theme/body CSS
-  lib/
-    pixi/createPixiApplication.ts
-    animation/gsapPixi.ts  # GSAP + PixiPlugin registration
-  features/playmat/
-    index.ts               # public feature export
-    Playmat.tsx            # feature orchestrator + turn/board state
-    constants.ts           # layout constants + shared class/style strings
-    types.ts               # domain types
-    playmat.css            # surface/card/attachment CSS
-    data/mockPlaymat.ts    # static board + log fixtures
-    pixi/
-      CardView.ts          # per-card Pixi display object (spring/juice/tilt)
-      cardBackTexture.ts   # procedural card-back textures
-    utils/                 # cardMovement, benchLayout, piles, players
-    components/            # Bench, Card, CardImage, GameLog, Hand, Piles,
-                           # PlayerSide, StadiumSlot, TurnHud, AnimatedCardsLayer
-```
-
-## Notes
-
-- Card faces load from remote image URLs (see `data/mockPlaymat.ts`); card
-  backs are generated procedurally in the Pixi layer.
-- The bench holds 5 Pokémon by default, or 8 while a bench-expanding stadium
-  (e.g. Lumiose City) is in play.
-- Respects `prefers-reduced-motion`: intro, idle, and juice animations are muted.
+  lua/                   # adapters between the Lua app and the browser; bridge.ts wires them
+  game/                  # local game host, board projection, game log, sandbox decks
+  decks/                 # card catalog, deck math, decklist text, deck saving
+  online/                # lobby WebSocket client and channel
+  lib/                   # API client, API origin, OAuth start, persisted state
+  test/                  # fixtures and fakes shared by the tests
+packages/engine          # the rules engine (shared with the API)
+packages/schema          # wire schemas (shared with the API)
+apps/api                 # Cloudflare Worker API
 ```

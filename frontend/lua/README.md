@@ -1,42 +1,39 @@
 # Luminous Lua frontend
 
-A separate LÖVE 11.4 application, packaged with love.js for WebAssembly. The React frontend remains at `/`; the new home is at `/lua/`. All visible menu content, layout, input handling, animation, audio, and rendering run in Lua. The small HTML/JS host boots LÖVE, passes viewport/preferences through a file mailbox, exposes native accessible links, and navigates to existing routes.
+Luminous's web frontend: a LÖVE 11.4 application packaged with love.js for WebAssembly and served at `/`. Pages are chosen by query string (`/?page=sandbox`, `/?lobby=CODE`, `/?account`, …). All visible menu content, layout, input handling, animation, audio, and rendering run in Lua. The small HTML/JS host boots LÖVE, passes viewport/preferences through a file mailbox, and exposes native accessible links.
 
 ## Run
 
-From the repository root:
+From the repository root (the API runs separately with `bun run api:dev`, or use `bun run dev:all` for both):
 
 ```sh
-bun run dev:lua
+bun run dev
 ```
 
-To build and run the Lua frontend and API over Tailscale HTTPS:
+This builds the Lua app and serves it at <http://127.0.0.1:5175/>. To build and run the frontend and API over Tailscale HTTPS:
 
 ```sh
-bun run dev:lua:tailnet
+bun run dev:tailnet
 ```
 
-Open the printed frontend URL ending in `/lua/`. Tailscale must be connected;
+Open the printed frontend URL. Tailscale must be connected;
 the command selects free ports. Ctrl+C stops both servers and its Tailnet proxies.
 
-If Vite is already running on port 5175, just build and visit <http://127.0.0.1:5175/lua/>:
+Rebuild after editing Lua or host files, then refresh (a running Vite dev server picks the new files up):
 
 ```sh
 bun run build:lua
 ```
 
-Rebuild after editing Lua or host files, then refresh. Generated files live in `public/lua/` and are ignored by Git. The normal React build copies this directory into `dist/lua/` if it exists. To build both from scratch:
+The root `index.html` is the host page. `build:lua` writes the love.js runtime, the game package, `web/host.js` and `web/host.css` into `public/love/` (ignored by Git), which Vite serves at `/love/` and copies into `dist/love/` on build. The page's one module script, `src/lua/bridge.ts`, is bundled by Vite with the configured `VITE_API_ORIGIN`. `bun run build` runs the Lua build and the Vite build; `bun run deploy` does the same in production mode (`.env.production` points at the deployed API) and publishes `dist/` to the static-assets Worker in the root `wrangler.jsonc` (`luminous.jofrescari.workers.dev`).
 
-```sh
-bun run build:lua
-bun run build
-```
+The production HTML carries a Content-Security-Policy (injected by `vite.config.ts`): same-origin scripts plus `'wasm-unsafe-eval'` for love.wasm, the API origin and its WebSocket twin for `connect-src`/`img-src`, and `data:`/`blob:` images and media.
 
 The build defaults to the sibling `../balatro-source` directory, including its installed `love.js` package. Override with `BALATRO_SOURCE=/absolute/path/to/balatro-source`. No changes are made to that source tree. The compiler uses compatibility mode with 128 MiB initial memory, as in the existing Balatro web build; cross-origin isolation headers are not required.
 
 ## This milestone
 
-- Three equally sized menu buttons: Sandbox (blue) → `/lua/?page=sandbox`, Online (red) → the Lua lobby modal at `/lua/?page=online`, Decks (pale green) → `/decks`.
+- Three equally sized menu buttons: Sandbox (blue) → `/?page=sandbox`, Online (red) → the lobby modal at `/?page=online`, Decks (pale green) → the deck library at `/?page=decks`.
 - Account opens the Account tab in the Lua settings popup. Game, Graphics, Audio and Account share Balatro's overlay, border, controls and Back button. The Account tab shows your email in a disabled input, edits your display name, saves to the shared API, and signs out. Sign-in and registration open a Lua modal with email/password fields and Google sign-in, then return to the Account tab. The modal uses the same border, buttons, motion and screen effects as Settings.
 - Settings apply immediately: screenshake (0–100), reduced motion, CRT strength (0–100), bloom, master/music/game-sound volume, and mute. They persist in browser storage across reloads. Reduced motion follows the device preference until explicitly changed. These settings currently apply to the Lua frontend.
 - Account and Settings use separate compact panels matching Balatro's grey Profile button and original projected shadow, without extra headings. The Sound button is removed; the M keyboard shortcut remains available.
@@ -48,11 +45,11 @@ The build defaults to the sibling `../balatro-source` directory, including its i
 - Effects share Balatro's menu clock starting at 12 seconds, with room motion updated before advancing the shader clock. Reduced motion uses the original frozen background time of 300; this frontend additionally freezes CRT noise and disables screen tilt for the system accessibility preference.
 - Horizontal desktop menu and stacked portrait buttons, viewport resizing, keyboard navigation, native accessible navigation, system reduced-motion preference, and persisted sound toggle.
 
-Click a button to navigate; releasing outside the pressed button cancels the action. Use arrow keys and Enter/Space while the canvas is focused; Tab also reaches native links. M toggles sound. Audio starts after the first gesture and pauses when the window loses focus.
+Click a button to open its page; releasing outside the pressed button cancels the action. Use arrow keys and Enter/Space while the canvas is focused; Tab also reaches native links. M toggles sound. Audio starts after the first gesture and pauses when the window loses focus.
 
-The Lua sandbox chooser opens the full gameplay page at `/lua/?page=simulator`. Online play runs in Lua too: the lobby modal at `/lua/?page=online` and the live table at `/lua/?page=match&lobby=<code>` (see Online below). The React `/lobby` pages still work and share the same lobby client and server. The account adapter reuses the existing API client and cookie session; passwords and session cookies never cross into Lua or local storage. The existing React pages remain available.
+The sandbox chooser opens the full gameplay page at `/?page=simulator`. Online play runs in Lua too: the lobby modal at `/?page=online` and the live table at `/?page=match&lobby=<code>` (see Online below). The account adapter uses the shared API client and cookie session; passwords and session cookies never cross into Lua or local storage.
 
-Inside Settings, Tab/Shift+Tab or up/down move between controls. Left/right switch tabs, cycle CRT Bloom, or adjust a focused slider by 5; Home/End set its minimum/maximum. Enter/Space activates toggles and buttons. Drag sliders with a mouse or touch. Select Display name to edit it; the canvas field uses a native input proxy for IME, selection, paste and mobile keyboards. Enter finishes editing and Escape cancels the edit. Profile changes require Save; the success message disappears after three seconds. In the authentication modal, Enter advances through the fields and submits from the last field, Tab/Shift+Tab moves between controls, and Back returns to Account settings. Passwords are masked in Lua and kept only in the native inputs/API request, then cleared on success or dismissal. Google redirects through the existing provider configuration and returns to `/lua/?account`. Escape or Back closes the popup and returns focus to Settings. The background menu cannot receive input while the popup is open. Native accessible navigation opens the same popup when WASM is running, with live control announcements; its fallback links to React settings if WASM fails.
+Inside Settings, Tab/Shift+Tab or up/down move between controls. Left/right switch tabs, cycle CRT Bloom, or adjust a focused slider by 5; Home/End set its minimum/maximum. Enter/Space activates toggles and buttons. Drag sliders with a mouse or touch. Select Display name to edit it; the canvas field uses a native input proxy for IME, selection, paste and mobile keyboards. Enter finishes editing and Escape cancels the edit. Profile changes require Save; the success message disappears after three seconds. In the authentication modal, Enter advances through the fields and submits from the last field, Tab/Shift+Tab moves between controls, and Back returns to Account settings. Passwords are masked in Lua and kept only in the native inputs/API request, then cleared on success or dismissal. Google redirects through the existing provider configuration and returns to `/?account`. Escape or Back closes the popup and returns focus to Settings. The background menu cannot receive input while the popup is open. Native accessible navigation opens the same popup when WASM is running, with live control announcements; its fallback links (`/?settings`, `/?account`) reload the page with that popup requested.
 
 ## Visual source and new work
 
@@ -74,24 +71,24 @@ The palette follows Balatro's `globals.lua`: red `#FE5F55`, blue `#009DFF`, gree
 
 ## Files
 
-- `main.lua`: home scene, routing intents, responsive layout, input/audio lifecycle.
+- `main.lua`: home scene, page intents, responsive layout, input/audio lifecycle.
 - `ui/button.lua`: shared main-menu and utility button rendering, press states and hit bounds.
 - `ui/room.lua`: original screen-motion equations and inverse transform for pointer input.
 - `ui/screen.lua`: original CRT uniforms, screen compositing, and perspective/lens mapping for pointer input.
 - `ui/settings.lua`: responsive settings overlay, tab/slider/toggle rendering, modal pointer and keyboard input.
 - `ui/account.lua`: account snapshot, draft, text-input state and transient save confirmation.
 - `ui/auth.lua`: authentication form display state; `ui/text_input.lua` shares field, selection and caret rendering.
-- `src/features/lua/`: browser adapter sharing the React API client, including session, profile, sign-in, registration and Google authentication errors. Vite serves/bundles it as `/lua/account.js`, using the same `VITE_API_ORIGIN`.
+- `src/lua/`: browser adapters over the shared API client, including session, profile, sign-in, registration and Google authentication errors. `bridge.ts` wires them to the host's events; Vite bundles it with the configured `VITE_API_ORIGIN`.
 - `ui/preferences.lua`: defaults, bounds validation, reduced-motion policy, and persistence serialization.
 - `ui/card.lua`: generated card faces, original hover hit buffer, pointer/ambient tilt and edition/shadow passes.
 - `ui/motion.lua`: tile-space target/visible transforms and original movement equations.
 - `ui/theme.lua`: palette, font cache, text and stepped pixel panels.
 - `ui/online.lua`: the online lobby modal (create/join, code pill, versus seats, deck picker with the regulation filter, countdown, info steps).
 - `ui/simulator.lua`, `ui/sim_overlay.lua`, `ui/sim_hud.lua`: the game table; online mode adds the `L` row, the away banner, flag-driven Options/game-over buttons and the press-again Leave.
-- `src/features/online/net/lobbyClient.ts`: the framework-free lobby WebSocket client shared by React `useLobby` and the Lua adapters; `createLobby.ts` mints a code.
-- `src/features/lua/online.ts` (`LuaOnline`), `onlineTable.ts` (`LuaOnlineMatch`) and `tableSource.ts` (`TableSource`, `LocalTableSource`): the online modal adapter, the online table source and the seam that lets one `LuaSimulator` drive local and online games.
-- `web/`: browser bootstrap, navigation allowlist, accessible fallback, viewport/reduced-motion bridge.
-- `build.mjs`: stages the application and local resources, then invokes love.js.
+- `src/online/lobbyClient.ts`: the framework-free lobby WebSocket client used by the Lua adapters; `createLobby.ts` mints a code.
+- `src/lua/online.ts` (`LuaOnline`), `onlineTable.ts` (`LuaOnlineMatch`) and `tableSource.ts` (`TableSource`, `LocalTableSource`): the online modal adapter, the online table source and the seam that lets one `LuaSimulator` drive local and online games.
+- `web/`: browser bootstrap (`host.js`, `host.css`; the page itself is the root `index.html`), accessible fallback, viewport/reduced-motion bridge.
+- `build.mjs`: stages the application and local resources, then invokes love.js into `public/love/`.
 
 Card render textures are recreated after viewport changes because love.js clears canvas contents when resizing its WebGL backbuffer. Keep that behavior when adding future card artwork.
 
@@ -124,7 +121,7 @@ Game entry, same-deck New game, and leaving the simulator use
 square grows and contracts with the original triangular 40-tile, 1.7-second
 envelope. Its colour follows the scene's background colour over 0.6 seconds.
 Artwork loaded while browsing/editing decks or playing is saved as resized PNGs
-in IndexedDB (`src/features/lua/artworkCache.ts`). The disk pool and shuffle
+in IndexedDB (`src/lua/artworkCache.ts`). The disk pool and shuffle
 history survive page reloads. Its 128 MiB byte budget evicts the least recently
 used artwork when necessary; there is no 64-card limit on this pool. The existing
 64-image WASM working cache remains separate. Builder/game loads reuse disk
@@ -153,31 +150,31 @@ Reduced Motion skips the animation and its sounds. Resizing preserves progress.
 `frontend/lua/tests/artwork_cache.js` exercises real browser IndexedDB with 80
 cards, reopening, persistent shuffle history, concurrent downloads, byte-budget
 eviction, replacements and blocked storage. With Vite running, open
-`http://127.0.0.1:5175/lua/host.css` in an isolated agent-browser session and run
+`http://127.0.0.1:5175/love/host.css` in an isolated agent-browser session and run
 `agent-browser --session <name> eval --stdin < frontend/lua/tests/artwork_cache.js`.
 The plain-text page avoids running the game loop during this storage-only test.
 
-`luajit frontend/lua/tests/transition_art.lua` checks cached selection, shuffle
+`lua frontend/lua/tests/transition_art.lua` checks cached selection, shuffle
 cycles, new arrivals, eviction and the bundled fallback.
-`luajit frontend/lua/tests/screen_wipe.lua` executes the original event and
+`lua frontend/lua/tests/screen_wipe.lua` executes the original event and
 particle code at 30/60/120/144 FPS and checks timing, square motion, viewport
 coverage, resize and reduced motion. Run
-`luajit frontend/lua/tests/screen_wipe_navigation.lua` for covered page changes,
+`lua frontend/lua/tests/screen_wipe_navigation.lua` for covered page changes,
 input locking and history routing; the simulator tests also cover deferred
 same-deck restarts and replacement snapshots. The scans are bundled so the first
 transition works without a network request; their source URLs are recorded in
 `assets/transition_cards/SOURCES.md` and their hashes in the build manifest.
 
-With LuaJIT installed, run from the repository root:
+Run from the repository root with Lua 5.2 or later (LuaJIT also works):
 
 ```sh
-luajit frontend/lua/tests/motion.lua
-luajit frontend/lua/tests/card_render.lua
-luajit frontend/lua/tests/room.lua
-luajit frontend/lua/tests/screen.lua
-luajit frontend/lua/tests/settings.lua
-luajit frontend/lua/tests/account.lua
-luajit frontend/lua/tests/auth.lua
+lua frontend/lua/tests/motion.lua
+lua frontend/lua/tests/card_render.lua
+lua frontend/lua/tests/room.lua
+lua frontend/lua/tests/screen.lua
+lua frontend/lua/tests/settings.lua
+lua frontend/lua/tests/account.lua
+lua frontend/lua/tests/auth.lua
 ```
 
 The motion check executes the local Balatro `engine/moveable.lua` as the reference and compares 9,602 values across hover, juice, dragging, return-to-slot and 30/60/120/144 FPS plus long frames. `BALATRO_SOURCE` selects a different reference source directory. The render check covers centre/corner cursor positions at four screen scales, matching base/edition geometry, un-tilted shadows, hover hysteresis, and reduced motion.
@@ -188,11 +185,11 @@ The screen check executes the original `love.resize` and CRT uniform block from 
 
 The shader mouse position and tile size are transformed into actual framebuffer coordinates. Hover uses Balatro's 0.02 scale/0.012 rotation impulse and +0.05 scale, with +0.1 drag zoom. Desktop dragging suspends hover and uses the ambient tilt, just as the original controller does (touch can combine both states). There is no added hover lift or whole-card idle rotation: idle motion comes from Balatro's synthetic cursor orbit. Shader `time` is the per-card seed, while the edition's second input is elapsed time, as in the source. Shadows are un-tilted and grow farther from the card when dragged.
 
-The Decks menu opens the Lua library as a modal over Home (`/lua/?page=decks`),
+The Decks menu opens the Lua library as a modal over Home (`/?page=decks`),
 using Settings’ entrance animation and full-screen backdrop. Back or Escape
 closes it, and background controls remain inactive while it is open. It shares the
 existing account/session and decks API. Search includes all decks, including those
-assigned to folders in the React app. Folder controls are absent; existing folder
+assigned to folders by the former React app. Folder controls are absent; existing folder
 records and memberships are preserved. Sort cycles through Name A–Z (the default), Name Z–A and card
 count ordering. Desktop pages hold twelve decks in two rows of six; portrait pages hold four. Red
 Page X/Y arrows, Page Up/Down and the mouse wheel wrap through pages. A full-width
@@ -203,7 +200,7 @@ constructor position and the shared Moveable physics. The paginator uses the
 original DynaText character pop-in (rate 8) and ongoing bump motion; it stays
 silent and respects Reduced Motion.
 
-Click a deck to open its Lua builder (`/lua/?page=builder&deck=<id>`). The React editor remains available at `/decks/<id>/edit`. Compact deck rows show the name above each pile and a right-aligned count
+Click a deck to open its Lua builder (`/?page=builder&deck=<id>`). Compact deck rows show the name above each pile and a right-aligned count
 (e.g. 60/60) beneath it. Dragging a top card returns it to its pile without changing the sort order. Failed writes reconcile with the server.
 New decks are created without a folder.
 
@@ -224,19 +221,19 @@ back. The library does not download or display Pokémon cover art.
 Text editing stays in native browser proxies for IME, selection, paste and mobile
 keyboards; rendering stays in Lua.
 
-Library checks: `bunx vitest run src/features/lua/library.test.ts`,
-`luajit frontend/lua/tests/library.lua` and
-`luajit frontend/lua/tests/deck_pile.lua` and
-`luajit frontend/lua/tests/deck_labels.lua` and
-`luajit frontend/lua/tests/page_text.lua`. These checks execute the original
+Library checks: `bunx vitest run src/lua/library.test.ts`,
+`lua frontend/lua/tests/library.lua` and
+`lua frontend/lua/tests/deck_pile.lua` and
+`lua frontend/lua/tests/deck_labels.lua` and
+`lua frontend/lua/tests/page_text.lua`. These checks execute the original
 CardArea alignment, collection page callback, UIBox counter/badge layout and
 DynaText letter-animation functions. Browser QA uses isolated in-memory API fixtures
 with populated, empty and formerly folder-assigned decks and multiple pages.
 
 The Lua builder uses a four-by-two card catalog on desktop and two-by-two on
 portrait screens. It shares card search, live facet vocabularies, copy limits,
-format validation, decklist import/export, and the serialized autosaver with the
-React builder. Click a card to inspect it, use its Add button, or drag it into the
+format validation, decklist import/export, and the serialized autosaver from
+`src/decks/`. Click a card to inspect it, use its Add button, or drag it into the
 deck tray. Drag a deck row out of the tray to remove one copy. Portrait mode has
 Browse/Deck tabs and a bottom drop target. Card art is decoded by the browser into
 a bounded PNG cache; Lua renders it at double atlas resolution with the original
@@ -250,7 +247,7 @@ remain visible until the original Moveable motion returns them to their origin.
 Deck information follows `create_UIBox_high_scores_row` and `create_progress_box`
 from Balatro: darkened JOKER_GREY labels, BLACK values, solid 0.05-tile emboss,
 clipped half-alpha blue fills, and the original static/DynaText shadow and float
-formulas. `luajit frontend/lua/tests/deck_stats.lua` compares its palette and fill
+formulas. `lua frontend/lua/tests/deck_stats.lua` compares its palette and fill
 geometry directly with the sibling game's source.
 
 The name, format, cards and cover choice autosave together. Back waits for an
@@ -267,8 +264,8 @@ rendered in Lua.
 The host matches Lua's scene dimensions to the full browser viewport without a
 device-pixel-ratio multiplier, keeping the CRT pass and pointer mapping aligned.
 
-Builder checks: `bunx vitest run src/features/lua/builder.test.ts` and
-`luajit frontend/lua/tests/builder.lua`. They cover shared copy limits, delayed and
+Builder checks: `bunx vitest run src/lua/builder.test.ts` and
+`lua frontend/lua/tests/builder.lua`. They cover shared copy limits, delayed and
 failed saves, navigation, stale searches and sessions, atomic imports, modal
 geometry and drag targets. Browser QA uses mocked deck writes with the live
 read-only catalog, including desktop/portrait layouts, artwork, drag add/remove,
@@ -279,7 +276,7 @@ return animation and texture cleanup, and decklist editing/confirmation.
 
 ## Sandbox deck selection
 
-Sandbox resumes a saved Lua game when available; otherwise it opens `/lua/?page=sandbox`. Player 1 / Player 2 tabs select the active
+Sandbox resumes a saved Lua game when available; otherwise it opens `/?page=sandbox`. Player 1 / Player 2 tabs select the active
 seat. The search field and deck grid use the library's input, embossed collection
 tray, generic back piles, title/count styling and animated red paginator. Desktop
 pages hold ten decks in two rows of five; portrait pages hold four. Clicking a
@@ -291,20 +288,20 @@ the builder validation (size, Basic Pokémon, copy limits, special-card limits,
 missing catalog cards, and legality in the saved format). Deck and catalog requests
 are bounded; transient failures show a retry state instead of hiding decks.
 Play refetches and revalidates both decks before starting.
-`prepareSandbox.ts` is shared by the Lua and React setup screens. The host saves
+`src/game/prepareSandbox.ts` prepares the game. The host saves
 the validated game and initial log in the existing simulator format before
 navigation; unavailable storage keeps the chooser open with an error. Leaving
 or changing accounts cancels pending loads and prevents late game launches.
 
-Checks: `bun run test:run src/features/lua/sandbox.test.ts` and
-`luajit frontend/lua/tests/sandbox.lua`. These cover independent selection,
+Checks: `bun run test:run src/lua/sandbox.test.ts` and
+`lua frontend/lua/tests/sandbox.lua`. These cover independent selection,
 search, pagination, responsive bounds, disabled/busy controls, and modal hit testing.
 The shared pile's original CardArea comparison lives in `tests/deck_pile.lua`.
 
 
 ## Sandbox gameplay
 
-`/lua/?page=simulator` is a full page built like Balatro's run screen. The
+`/?page=simulator` is a full page built like Balatro's run screen. The
 original `background.fs` runs with `ease_background_colour` palettes (the Small
 Blind green on your turn, the grey-blue won palette on the opponent's, the boss
 red or chips blue when the game ends). The left column ports
@@ -419,7 +416,7 @@ handing setup to the other player does not replay the entrance.
 the original room equations and inverse input coordinates across frame rates,
 viewport scales, both impulses and reduced-motion settings.
 
-Checks: `bun run test:run src/features/lua/simulator.test.ts`,
+Checks: `bun run test:run src/lua/simulator.test.ts`,
 `lua frontend/lua/tests/simulator.lua` and
 `lua frontend/lua/tests/simulator_draw.lua`. They exercise real setup and
 hot-seat flips, redaction, stale actions, attachment drops, card-row prompts,
@@ -429,18 +426,18 @@ layouts, with the draw paths rendered against a stub LÖVE.
 
 ## Online
 
-Online (home) opens `/lua/?page=online`, a page drawn as a modal over Home with
+Online (home) opens `/?page=online`, a page drawn as a modal over Home with
 Settings' backdrop, entrance and generic-options frame. Page ids keep browser
-history, reload and sign-in returns working: `/lua/?lobby=CODE` is the short
-invite link (it boots `online`), `/lua/?page=online&lobby=CODE` resumes or joins
-that lobby, and `/lua/?page=match&lobby=CODE` is the live table. Create and the
+history, reload and sign-in returns working: `/?lobby=CODE` is the short
+invite link (it boots `online`), `/?page=online&lobby=CODE` resumes or joins
+that lobby, and `/?page=match&lobby=CODE` is the live table. Create and the
 online/match hand-offs use `history.replaceState`, so Back from either page goes
-Home, which leaves the lobby (React parity: a live match is forfeited).
+Home, which leaves the lobby (a live match is forfeited).
 
 Steps: **menu** (Create / Join tabs; the code field is a native proxy that
 upper-cases and drops look-alike characters; Join stays disabled until four
 characters), **joining**, **waiting** (code pill, Copy code, Copy link =
-`<origin>/lua/?lobby=CODE`, the label flashes Copied), **versus** (your seat
+`<origin>/?lobby=CODE`, the label flashes Copied), **versus** (your seat
 and the opponent's, presence pip, Waiting / Choosing deck / Ready / Away pills,
 Choose deck, Ready / Cancel ready; the Lua host has no Kick), the deck **picker**
 (search, 5×2 or 2×2 pile grid, pages and a regulation cycle: All decks, Standard
@@ -493,7 +490,7 @@ closes the picker, is ignored during the countdown and otherwise
 acts as the Back slot. Page Up/Down and the wheel turn picker pages. Steps, joins, ready changes, copies and countdown ticks
 are announced through `#announcement`.
 
-Online checks: `bunx vitest run src/features/online src/features/lua`,
+Online checks: `bunx vitest run src/online src/lua`,
 `lua frontend/lua/tests/online.lua`, `lua frontend/lua/tests/simulator_online.lua`,
 `lua frontend/lua/tests/options.lua` and
 `lua frontend/lua/tests/screen_wipe_navigation.lua`. Browser QA uses two

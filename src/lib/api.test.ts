@@ -11,9 +11,7 @@ import {
   login,
   logout,
   me,
-  setAssetUrl,
   setSessionRecoveryHandler,
-  unknownCardIdsOf,
   updateProfile,
 } from "./api";
 
@@ -208,36 +206,13 @@ describe("session recovery", () => {
   });
 });
 
-describe("unknownCardIdsOf", () => {
-  it("extracts the ids from the api's unknown-card 400 payload", () => {
-    expect(unknownCardIdsOf({ error: "unknown card id(s)", cardIds: ["a", "b"] })).toEqual([
-      "a",
-      "b",
-    ]);
-  });
-
-  it("returns null for anything else", () => {
-    expect(unknownCardIdsOf(undefined)).toBeNull();
-    expect(unknownCardIdsOf({ error: "empty patch" })).toBeNull();
-    expect(unknownCardIdsOf({ cardIds: "fake-1" })).toBeNull();
-    expect(unknownCardIdsOf({ cardIds: ["a", 1] })).toBeNull();
-  });
-});
-
-describe("asset url helpers", () => {
+describe("cardImageUrl", () => {
   it("builds card image urls, defaulting the extension to webp", () => {
     expect(cardImageUrl("sv06.5-001", "high")).toBe(
       "http://localhost:8787/assets/cards/sv06.5-001/high.webp",
     );
     expect(cardImageUrl("sv06.5-001", "low", "png")).toBe(
       "http://localhost:8787/assets/cards/sv06.5-001/low.png",
-    );
-  });
-
-  it("builds set asset urls, defaulting the extension to png", () => {
-    expect(setAssetUrl("sv06", "symbol")).toBe("http://localhost:8787/assets/sets/sv06/symbol.png");
-    expect(setAssetUrl("sv06", "logo", "webp")).toBe(
-      "http://localhost:8787/assets/sets/sv06/logo.webp",
     );
   });
 });

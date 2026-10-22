@@ -1,29 +1,26 @@
 /// <reference types="vitest/config" />
-import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, loadEnv, type Plugin } from "vite";
 
 // Content-Security-Policy for the production HTML only. It's injected at build
 // time (not kept in index.html) so it can't strangle the dev server, whose HMR
-// needs inline scripts, eval and a websocket. Allowlist: our own origin; the
-// api origin (card/set images off its R2 asset mirror as <img> and Pixi
-// textures, fetch for the api client, and its ws(s) twin for the lobby
-// WebSocket); Google Fonts (stylesheet on googleapis, files on gstatic);
-// data:/blob: for the SVG favicon, procedural card-back data-URLs and Pixi's
-// bitmap decode. Inline styles are load-bearing (every animated transform is a
-// style attribute), so style-src keeps 'unsafe-inline'; scripts do not (the
-// build emits one external module, no inline script), so script-src stays
-// tight. The api origin mirrors src/lib/apiOrigin.ts: `VITE_API_ORIGIN` (from
-// the environment or a .env file, via loadEnv), falling back to wrangler dev's
+// needs inline scripts and a websocket. Allowlist: our own origin (the page,
+// the bundled bridge and the love.js runtime under /love/); the api origin
+// (card images fetched for the Lua artwork cache, the api client, and its
+// ws(s) twin for the lobby WebSocket); 'wasm-unsafe-eval' to compile
+// love.wasm; data:/blob: for the SVG favicon and the runtime's decoded
+// images and audio. Scripts stay tight: the build emits external scripts
+// only, no inline script or handler. The api origin mirrors
+// src/lib/apiOrigin.ts: `VITE_API_ORIGIN` (from the environment or a .env
+// file such as .env.production, via loadEnv), falling back to wrangler dev's
 // default port.
 function buildCsp(apiOrigin: string): string {
   const apiWsOrigin = apiOrigin.replace(/^http/, "ws");
   return [
     "default-src 'self'",
-    "script-src 'self'",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
+    "script-src 'self' 'wasm-unsafe-eval'",
+    "style-src 'self'",
     `img-src 'self' data: blob: ${apiOrigin}`,
+    "media-src 'self' data: blob:",
     `connect-src 'self' ${apiOrigin} ${apiWsOrigin}`,
     "worker-src 'self' blob:",
     "object-src 'none'",
@@ -45,42 +42,23 @@ function cspPlugin(csp: string): Plugin {
   };
 }
 
+// index.html is the love.js host page. `bun run build:lua` generates the
+// runtime, game package and host script/styles into public/love/, which Vite
+// serves at /love/ in dev and copies into dist/love/ on build; the page's one
+// module script (src/lua/bridge.ts) is bundled with the configured api origin.
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd());
   const apiOrigin = (env.VITE_API_ORIGIN ?? "http://localhost:8787").replace(/\/+$/, "");
   return {
-    plugins: [
-      {
-        name: "lua-home",
-        configureServer(server) {
-          server.middlewares.use((req, res, next) => {
-            const [path, query] = (req.url ?? "").split("?");
-            const search = query ? `?${query}` : "";
-            if (path === "/lua") {
-              res.writeHead(302, { Location: `/lua/${search}` });
-              res.end();
-              return;
-            }
-            if (path === "/lua/") req.url = `/lua/index.html${search}`;
-            if (path === "/lua/account.js") req.url = "/src/features/lua/accountBridge.ts";
-            next();
-          });
-        },
-      },
-      react(),
-      tailwindcss(),
-      cspPlugin(buildCsp(apiOrigin)),
-    ],
+    plugins: [cspPlugin(buildCsp(apiOrigin))],
     test: {
-      // Default to the fast Node environment for the pure-logic suites (reducers,
-      // deck/z-index math, parsing). Component/DOM tests opt into jsdom per file
-      // with a `// @vitest-environment jsdom` docblock — see the *.dom.test.tsx
-      // files (React Testing Library), so the many pure tests keep the lean env.
+      // Every suite is pure logic (adapters, reducers, parsing), so the fast
+      // Node environment covers them all.
       environment: "node",
       include: [
-        "src/**/*.{test,spec}.{ts,tsx}",
-        "apps/*/src/**/*.{test,spec}.{ts,tsx}",
-        "packages/*/src/**/*.{test,spec}.{ts,tsx}",
+        "src/**/*.{test,spec}.ts",
+        "apps/*/src/**/*.{test,spec}.ts",
+        "packages/*/src/**/*.{test,spec}.ts",
       ],
     },
     build: {
@@ -89,23 +67,12 @@ export default defineConfig(({ mode }) => {
       // Emit source maps but don't reference them from the bundles ("hidden"), so
       // production stack traces stay resolvable (error reporting) without shipping
       // a //# sourceMappingURL that exposes source in end-users' devtools.
+      // public/.assetsignore keeps the maps out of the deployed assets.
       sourcemap: "hidden",
-      rollupOptions: {
-        input: { main: "index.html", "lua-account": "src/features/lua/accountBridge.ts" },
-        output: {
-          entryFileNames: (chunk) =>
-            chunk.name === "lua-account" ? "lua/account.js" : "assets/[name]-[hash].js",
-          // Split the large, rarely-changing vendor libs into their own chunks so
-          // an app-code edit doesn't bust the Pixi/GSAP/React cache entries.
-          manualChunks(id: string) {
-            if (!id.includes("node_modules")) return undefined;
-            if (id.includes("/pixi.js")) return "pixi";
-            if (id.includes("/gsap")) return "gsap";
-            if (id.includes("/react") || id.includes("/scheduler")) return "react";
-            return undefined;
-          },
-        },
-      },
+      // The page has one module script, the bridge, and it bundles the whole
+      // rules engine for local play (~780 kB, ~195 kB gzipped). There is no
+      // other entry to split it against, so the default 500 kB warning is noise.
+      chunkSizeWarningLimit: 1000,
     },
   };
 });

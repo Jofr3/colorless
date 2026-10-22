@@ -36,22 +36,30 @@
     "rules": {
       "recommended": true,
       "suspicious": {
-        "noExplicitAny": "error",
-        "noArrayIndexKey": "off"
+        "noExplicitAny": "error"
       },
       "style": {
         "noNonNullAssertion": "error",
         "useExponentiationOperator": "off"
       },
-      "a11y": {
-        "noSvgWithoutTitle": "off"
-      },
       "correctness": {
-        "useExhaustiveDependencies": "warn",
         "noUnusedVariables": "error"
       }
     }
   },
+  "overrides": [
+    {
+      "include": ["frontend/lua/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useSingleVarDeclarator": "off",
+            "useNumberNamespace": "off"
+          }
+        }
+      }
+    }
+  ],
   "organizeImports": {
     "enabled": false
   }
