@@ -25,6 +25,22 @@ adapters in `src/lua/` answer those messages: they call the API
 passwords or session cookies. See `frontend/lua/README.md` for the frontend in
 detail.
 
+## Caching
+
+| What | Where | Policy |
+|---|---|---|
+| `/assets/*` (Vite bundle), `/love/*` (runtime, game package) | browser | immutable for a year; `/love/` URLs carry a `?v=` content hash (`frontend/lua/build.mjs`, `vite.config.ts`), headers in `public/_headers` |
+| Pages (`index.html` on every route) | browser | revalidated on each load, so a deploy shows up immediately |
+| `game.data` | IndexedDB | love.js preload cache, keyed by package |
+| Card artwork | IndexedDB (`ArtworkCache`), memory | 128 MB LRU of resized PNGs |
+| Catalog reads (`/cards`, `/sets`, `/series`, `/facets`) | KV + browser | KV 1 h; browser 5 min fresh + 1 h stale-while-revalidate, ETag/304 |
+| Card images (`/assets/cards/…` on the API) | R2 + browser | mirrored once from tcgdex; immutable |
+| `/decks`, `/folders`, `/auth/me` | browser | ETag with `private, no-cache`: always revalidated, 304 when unchanged |
+| CORS preflights | browser | `Access-Control-Max-Age` one day (Chromium caps at 2 h) |
+
+`workers.dev` has no edge Cache API, so nothing is cached at Cloudflare's edge
+beyond the static assets themselves.
+
 ## Scripts
 
 ```bash

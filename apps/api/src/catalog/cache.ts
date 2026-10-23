@@ -7,9 +7,15 @@
 // 200, store the body and tag the response `miss`. Non-200s (400 bad params,
 // 404 unknown id) are never cached. Values are response BODIES — headers are
 // rebuilt on a hit, which is safe because every catalog response is JSON.
+//
+// Wrapped in the browser layer (../httpCache.ts): every 200 also leaves with
+// an ETag and a public `Cache-Control`, so a repeat query within minutes
+// never leaves the browser and a later one costs a 304.
 
 import type { MiddlewareHandler } from "hono";
+import { every } from "hono/combine";
 import type { Env } from "../env";
+import { cacheControl, conditionalGet, PUBLIC_CATALOG_CACHE } from "../httpCache";
 
 /** 1 hour — long enough to absorb hot traffic, short enough that a re-ingest
     shows up without a manual purge. */
@@ -18,6 +24,9 @@ const CACHE_TTL_SECONDS = 3600;
 /** Bump when a cached response SHAPE — or its VALUES for already-ingested
     rows — changes, so stale KV entries from the previous deploy can't serve
     the old answer for up to a TTL; old-version keys just expire.
+
+    A bump reaches KV only: browsers keep what they already hold for up to
+    `PUBLIC_CATALOG_CACHE` (../httpCache.ts) past the deploy without asking.
 
     THE TRIGGER IS A DEPLOY, NOT THE DATA. A pure data change — a re-ingest
     rewriting rows, the pending `cards.suffix` backfill — does NOT bump this:
@@ -114,7 +123,7 @@ export function catalogCacheKey(url: URL): string {
     per-deck id lists barely repeat, so they'd be cache misses anyway. */
 const KV_MAX_KEY_BYTES = 512;
 
-export const catalogCache: MiddlewareHandler<{ Bindings: Env }> = async (c, next) => {
+const kvCache: MiddlewareHandler<{ Bindings: Env }> = async (c, next) => {
   const url = new URL(c.req.url);
   const key = catalogCacheKey(url);
   // Guaranteed-miss shapes skip KV entirely (no read, no write): keys past
@@ -144,3 +153,7 @@ export const catalogCache: MiddlewareHandler<{ Bindings: Env }> = async (c, next
     });
   }
 };
+
+/** The middleware every catalog route mounts: browser revalidation and
+    freshness outside, the KV cache-aside inside. */
+export const catalogCache = every(conditionalGet, cacheControl(PUBLIC_CATALOG_CACHE), kvCache);

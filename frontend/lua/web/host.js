@@ -326,10 +326,14 @@ function syncViewport(module) {
   );
   preferencesMailboxCreated = true;
 }
+// build:lua replaces the empty object with each /love/ file's content hash;
+// the `?v=` it adds changes the URL whenever the bytes do, which is what lets
+// the deployed /love/ files be cached as immutable (public/_headers).
+const loveVersions = /* love-versions */ {};
 globalThis.Module = {
   arguments: ["./"],
   // build:lua emits the runtime and game package under /love/ (public/love/).
-  locateFile: (path) => `/love/${path}`,
+  locateFile: (path) => `/love/${path}${loveVersions[path] ? `?v=${loveVersions[path]}` : ""}`,
   INITIAL_MEMORY: 134217728,
   canvas: canvas,
   preRun: [

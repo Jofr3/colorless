@@ -4,7 +4,9 @@
 // validate.ts, unit-tested); this file owns request validation, the D1
 // queries, and response shaping — every payload boundary-parsed through the
 // @colorless/schema deck/folder schemas. NO KV cache on any of it: user data
-// must read fresh (§6).
+// must read fresh (§6). The GETs do carry an ETag with `private, no-cache`
+// (../httpCache.ts): the browser always asks, and an unchanged library comes
+// back as a bodiless 304.
 //
 // Per-route chain order is zValidator → requireUser → handler: body shape
 // checks are pure (testable with no DB at all), then the session gate, then
@@ -34,6 +36,7 @@ import { z } from "zod";
 import { requireUser } from "../auth/requireUser";
 import { cards, deckCards, decks, folders } from "../db/schema";
 import type { Env } from "../env";
+import { privateRevalidate } from "../httpCache";
 import { type CoverCandidate, effectiveCoverCardId } from "./cover";
 import { type DeckRow, type FolderRow, mapDeckRow, mapDeckSummaryRow, mapFolderRow } from "./map";
 import { chunk, createsCycle, D1_MAX_BOUND_PARAMS, unknownIds } from "./validate";
@@ -177,7 +180,7 @@ function selectDeckCards(db: Db, deckId: string) {
 
 // --- decks -------------------------------------------------------------------
 
-deckRoutes.get("/", requireUser, async (c) => {
+deckRoutes.get("/", privateRevalidate, requireUser, async (c) => {
   const db = drizzle(c.env.DB);
   const userId = c.get("user").id;
   const rows = await db
@@ -234,7 +237,7 @@ deckRoutes.get("/", requireUser, async (c) => {
   );
 });
 
-deckRoutes.get("/:id", requireUser, async (c) => {
+deckRoutes.get("/:id", privateRevalidate, requireUser, async (c) => {
   const deckId = c.req.param("id");
   const db = drizzle(c.env.DB);
   const [deckRows, cardRows] = await db.batch([
@@ -384,7 +387,7 @@ deckRoutes.delete("/:id", requireUser, async (c) => {
 
 // --- folders -----------------------------------------------------------------
 
-folderRoutes.get("/", requireUser, async (c) => {
+folderRoutes.get("/", privateRevalidate, requireUser, async (c) => {
   const rows = await drizzle(c.env.DB)
     .select()
     .from(folders)

@@ -1,0 +1,16 @@
+# Cloudflare static-asset response headers (copied into dist/ by Vite).
+#
+# /love/* and /assets/* never change under a URL: Vite fingerprints
+# /assets/ file names, and every /love/ reference carries its content hash as
+# `?v=` (vite.config.ts, frontend/lua/build.mjs). Pages (index.html for every
+# route) keep the platform default, `max-age=0, must-revalidate`, so a deploy
+# shows up on the next load.
+
+/love/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/favicon.svg
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800

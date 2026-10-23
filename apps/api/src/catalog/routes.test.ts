@@ -161,3 +161,57 @@ describe("catalog KV cache middleware", () => {
     expect(await res.json()).toEqual(facets);
   });
 });
+
+describe("catalog browser cache", () => {
+  const body = JSON.stringify({ items: [], page: 1, pageSize: 50, total: 0 });
+  const origin = "http://localhost:5175";
+
+  it("stamps a public Cache-Control and an ETag on a 200", async () => {
+    const { kv } = fakeKv({ "catalog:v12:/cards?set=sv01": body });
+    const res = await app.request("/cards?set=sv01", {}, envWith(kv));
+    expect(res.status).toBe(200);
+    expect(res.headers.get("cache-control")).toBe(
+      "public, max-age=300, stale-while-revalidate=3600",
+    );
+    expect(res.headers.get("etag")).toMatch(/^"[0-9a-f]+"$/);
+  });
+
+  it("answers a matching If-None-Match with a 304 that keeps its CORS headers", async () => {
+    const { kv } = fakeKv({ "catalog:v12:/cards?set=sv01": body });
+    const first = await app.request(
+      "/cards?set=sv01",
+      { headers: { Origin: origin } },
+      envWith(kv),
+    );
+    const tag = first.headers.get("etag") ?? "";
+    const res = await app.request(
+      "/cards?set=sv01",
+      { headers: { Origin: origin, "If-None-Match": tag } },
+      envWith(kv),
+    );
+    expect(res.status).toBe(304);
+    expect(await res.text()).toBe("");
+    expect(res.headers.get("etag")).toBe(tag);
+    expect(res.headers.get("access-control-allow-origin")).toBe(origin);
+    expect(res.headers.get("access-control-allow-credentials")).toBe("true");
+    expect(res.headers.get("cache-control")).toContain("max-age=300");
+  });
+
+  it("serves the full body when the ETag no longer matches", async () => {
+    const { kv } = fakeKv({ "catalog:v12:/cards?set=sv01": body });
+    const res = await app.request(
+      "/cards?set=sv01",
+      { headers: { "If-None-Match": '"stale"' } },
+      envWith(kv),
+    );
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe(body);
+  });
+
+  it("leaves errors without a Cache-Control", async () => {
+    const { kv } = fakeKv();
+    const res = await app.request("/cards?pageSize=1000", {}, envWith(kv));
+    expect(res.status).toBe(400);
+    expect(res.headers.get("cache-control")).toBeNull();
+  });
+});

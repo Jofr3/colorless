@@ -1,4 +1,5 @@
 /// <reference types="vitest/config" />
+import { existsSync, readFileSync } from "node:fs";
 import { defineConfig, loadEnv, type Plugin } from "vite";
 
 // Content-Security-Policy for the production HTML only. It's injected at build
@@ -41,6 +42,37 @@ function cspPlugin(csp: string): Plugin {
   };
 }
 
+// The /love/ files keep fixed names (love.js and game.js locate their
+// siblings by name), so they are versioned by query string instead:
+// `build:lua` writes public/love/versions.json, and this appends each file's
+// hash to index.html's /love/ references (host.js versions the rest itself).
+// Production serves /love/* as immutable (public/_headers), so the build
+// refuses a reference it can't version; dev only warns, since a missing file
+// there just means `build:lua` hasn't run.
+function loveVersionsPlugin(): Plugin {
+  const manifest = "public/love/versions.json";
+  let building = false;
+  return {
+    name: "love-versions",
+    configResolved(config) {
+      building = config.command === "build";
+    },
+    transformIndexHtml(html) {
+      const versions: Record<string, string> = existsSync(manifest)
+        ? JSON.parse(readFileSync(manifest, "utf8"))
+        : {};
+      return html.replace(/(src|href)="\/love\/([^"?]+)"/g, (match, attribute, name) => {
+        const version = versions[name];
+        if (version) return `${attribute}="/love/${name}?v=${version}"`;
+        const problem = `no content hash for /love/${name} in ${manifest}; run \`bun run build:lua\``;
+        if (building) throw new Error(problem);
+        console.warn(problem);
+        return match;
+      });
+    },
+  };
+}
+
 // index.html is the love.js host page. `bun run build:lua` generates the
 // runtime, game package and host script/styles into public/love/, which Vite
 // serves at /love/ in dev and copies into dist/love/ on build; the page's one
@@ -49,7 +81,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd());
   const apiOrigin = (env.VITE_API_ORIGIN ?? "http://localhost:8787").replace(/\/+$/, "");
   return {
-    plugins: [cspPlugin(buildCsp(apiOrigin))],
+    plugins: [loveVersionsPlugin(), cspPlugin(buildCsp(apiOrigin))],
     test: {
       // Every suite is pure logic (adapters, reducers, parsing), so the fast
       // Node environment covers them all.

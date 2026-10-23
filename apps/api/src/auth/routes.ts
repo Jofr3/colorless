@@ -22,6 +22,7 @@ import { type Context, Hono } from "hono";
 import type { z } from "zod";
 import { decks, oauthIdentities, sessions, users } from "../db/schema";
 import { appOrigin, type Env } from "../env";
+import { privateRevalidate } from "../httpCache";
 import { avatarSeedOf } from "./avatar";
 import {
   buildAuthorizeUrl,
@@ -215,7 +216,11 @@ authRoutes.post(
 // Session resolution (cookie → user, expiry-on-read, lazy dead-row delete)
 // lives in requireUser — shared with /decks and /folders (milestone 7); /me
 // is just "echo the resolved caller".
-authRoutes.get("/me", requireUser, (c) => c.json(userSchema.parse(mapUserRow(c.get("user")))));
+// ETagged `private, no-cache` (../httpCache.ts): the boot probe revalidates
+// to a 304 while the profile is unchanged.
+authRoutes.get("/me", privateRevalidate, requireUser, (c) =>
+  c.json(userSchema.parse(mapUserRow(c.get("user")))),
+);
 
 // Editing your own account (P5-5 — polish.md "Profiles"). The name P5-1 made
 // authoritative was, until now, whatever register chose: the lobby broadcasts

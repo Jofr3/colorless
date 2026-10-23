@@ -15,3 +15,18 @@ describe("GET /health", () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe("CORS", () => {
+  it("lets browsers cache a preflight", async () => {
+    const res = await app.request("/decks", {
+      method: "OPTIONS",
+      headers: {
+        Origin: "http://localhost:5175",
+        "Access-Control-Request-Method": "PATCH",
+        "Access-Control-Request-Headers": "content-type",
+      },
+    });
+    expect(res.status).toBe(204);
+    expect(res.headers.get("access-control-max-age")).toBe("86400");
+  });
+});
