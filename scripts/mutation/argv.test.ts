@@ -4,8 +4,8 @@ import { BOOLEAN_FLAGS, KNOWN_FLAGS, VALUE_FLAGS, argvProblems, knownFlagsUsage 
 const sorted = (xs: Iterable<string>): string[] => [...xs].sort();
 
 describe("the mutation harness rejects a command line it does not understand (D511)", () => {
-  it("(0) anti-vacuity — the validator and the harness source are both really here", () => {
-    // Every case below is satisfied by an empty flag list and an empty source.
+  it("(0) anti-vacuity — the validator's flag lists are really here", () => {
+    // Every case below is satisfied by an empty flag list.
     expect(KNOWN_FLAGS.length).toBeGreaterThan(0);
     expect(sorted(KNOWN_FLAGS)).toEqual(sorted([...BOOLEAN_FLAGS, ...VALUE_FLAGS]));
     expect(

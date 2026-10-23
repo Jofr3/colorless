@@ -52,12 +52,8 @@ export function isPartitioned(rows: readonly Mutant[]): boolean {
 }
 
 /**
- * The NEAR-MISS population: rows that apply a byte-identical patch to the same
- * file and are distinguished ONLY by their killers. Reported on the green path,
- * asserted nowhere — splice-gate's rule, for splice-gate's reason: a guard
- * whose subject can drift to zero without saying so is one refactor away from
- * vacuous, and this number moving is the cheapest signal that the shared-arm
- * idiom above is being used somewhere new.
+ * Rows that apply a byte-identical patch to the same file and differ only in their killers.
+ * Reported on the green path but never asserted, so a drift in the count stays visible.
  */
 export function sharedPatchGroups(rows: readonly Mutant[]): Mutant[][] {
   const byPatch = new Map<string, Mutant[]>();
