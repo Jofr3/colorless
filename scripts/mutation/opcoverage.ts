@@ -7,25 +7,19 @@
  * whether a row is any good. Env: `FANIN` (default 4), `LEV` (default 2).
  */
 
-import { readFileSync } from "node:fs";
+import { envInt } from "../lib/cli";
+import { sourceCache } from "../lib/repo";
 import { type Mutant, MUTANTS } from "./mutants";
 
-const FANIN = Number(process.env.FANIN ?? 4);
-const LEV = Number(process.env.LEV ?? 2);
+const FANIN = envInt("FANIN", 4);
+const LEV = envInt("LEV", 2);
 
 const EFFECT_TYPES = "packages/engine/src/effectTypes.ts";
 const EFFECTS = "packages/engine/src/effects.ts";
 const REGISTRY = "packages/engine/src/registry.ts";
 const INTERP = "packages/engine/src/interpreter.ts";
 
-const sourceCache = new Map<string, string>();
-function source(file: string): string {
-  const hit = sourceCache.get(file);
-  if (hit !== undefined) return hit;
-  const text = readFileSync(file, "utf8");
-  sourceCache.set(file, text);
-  return text;
-}
+const source = sourceCache();
 
 /** Byte offset of the first character of each 0-based line. */
 function lineStarts(text: string): number[] {

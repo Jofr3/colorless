@@ -6,17 +6,22 @@
 
 import { spawnSync } from "node:child_process";
 import { readdirSync } from "node:fs";
+import { REPO_ROOT, repoPath } from "./lib/repo";
 
 const TESTS = "frontend/lua/tests";
 const BROWSER_ONLY = new Set(["effects_gpu.lua"]);
 const lua = process.env.LUA ?? "lua";
 
-const files = readdirSync(TESTS)
+const files = readdirSync(repoPath(TESTS))
   .filter((f) => f.endsWith(".lua") && !BROWSER_ONLY.has(f))
   .sort();
 const failed: string[] = [];
 for (const file of files) {
-  const run = spawnSync(lua, [`${TESTS}/${file}`], { encoding: "utf8", timeout: 60_000 });
+  const run = spawnSync(lua, [`${TESTS}/${file}`], {
+    cwd: REPO_ROOT,
+    encoding: "utf8",
+    timeout: 60_000,
+  });
   if (run.error !== undefined) throw run.error;
   if (run.status !== 0) {
     failed.push(file);

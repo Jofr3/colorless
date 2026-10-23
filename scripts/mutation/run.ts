@@ -14,20 +14,38 @@
  *   bun run mutants --verbose       # stream vitest output
  *   bun run mutants --allow-dirty   # mutate files with your own uncommitted changes
  *
- * Any other argument is rejected. Exit 0 when every mutant matched its declaration; 2 when a dead
- * run's journal was recovered; 3 when another run is in flight; 4 when the command line was
- * rejected.
+ * Any other argument is rejected. Exit codes are in `EXIT`.
  */
 
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { isRecord, parseJson } from "../lib/cli.ts";
+import { REPO_ROOT } from "../lib/repo.ts";
+import { applyMutant } from "./apply.ts";
 import { argvProblems, knownFlagsUsage } from "./argv.ts";
 import { MUTANTS, type Mutant } from "./mutants.ts";
 
-const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
+/**
+ * Process exit codes. `noSelection` shares 2 with `recovered`; recovery-gate tells them apart by
+ * the restored bytes.
+ */
+const EXIT = {
+  /** Every mutant matched its declaration. */
+  ok: 0,
+  /** A gap, stale survivor, error, skip or clobber. */
+  findings: 1,
+  /** A dead run's journal was recovered; nothing else ran. */
+  recovered: 2,
+  noSelection: 2,
+  /** Another run is in flight; nothing was touched. */
+  inFlight: 3,
+  /** The command line was rejected; nothing ran. */
+  badArgv: 4,
+  /** Interrupted by a signal, after restoring every file. */
+  interrupted: 130,
+} as const;
+
 /**
  * Overridable so `recovery-gate.ts` can use a private journal path while a real harness run holds
  * its own.
@@ -45,6 +63,18 @@ const inFlight = new Map<string, Buffer>();
 
 type Journal = { startedAt: string; pid: number; files: { path: string; originalB64: string }[] };
 
+function isJournal(v: unknown): v is Journal {
+  return (
+    isRecord(v) &&
+    typeof v.startedAt === "string" &&
+    typeof v.pid === "number" &&
+    Array.isArray(v.files) &&
+    v.files.every(
+      (f) => isRecord(f) && typeof f.path === "string" && typeof f.originalB64 === "string",
+    )
+  );
+}
+
 function writeJournal(): void {
   mkdirSync(dirname(JOURNAL), { recursive: true });
   const journal: Journal = {
@@ -52,7 +82,10 @@ function writeJournal(): void {
     pid: process.pid,
     files: [...inFlight].map(([path, buf]) => ({ path, originalB64: buf.toString("base64") })),
   };
-  writeFileSync(JOURNAL, JSON.stringify(journal, null, 2));
+  // Written then renamed, so a crash mid-write never leaves a truncated journal.
+  const partial = `${JOURNAL}.partial`;
+  writeFileSync(partial, JSON.stringify(journal, null, 2));
+  renameSync(partial, JOURNAL);
 }
 
 function clearJournal(): void {
@@ -104,7 +137,7 @@ type JournalDisposition = "none" | "in-flight" | "recovered";
  */
 function recoverFromJournal(): JournalDisposition {
   if (!existsSync(JOURNAL)) return "none";
-  const journal = JSON.parse(readFileSync(JOURNAL, "utf8")) as Journal;
+  const journal = parseJson(readFileSync(JOURNAL, "utf8"), JOURNAL, isJournal);
 
   // `journal.pid !== process.pid` is not paranoia about our own run — we have
   // written no journal yet — it is the pid-reuse case landing on US, where
@@ -171,20 +204,20 @@ function installNets(): void {
       process.stderr.write(`\n[${sig}] restoring ${inFlight.size} file(s) before exit…\n`);
       child?.kill("SIGKILL");
       restoreAll();
-      process.exit(130);
+      process.exit(EXIT.interrupted);
     });
   }
   process.on("uncaughtException", (err) => {
     process.stderr.write(`\n[uncaught] ${String(err)}\n`);
     child?.kill("SIGKILL");
     restoreAll();
-    process.exit(1);
+    process.exit(EXIT.findings);
   });
   process.on("unhandledRejection", (err) => {
     process.stderr.write(`\n[unhandled rejection] ${String(err)}\n`);
     child?.kill("SIGKILL");
     restoreAll();
-    process.exit(1);
+    process.exit(EXIT.findings);
   });
 }
 
@@ -274,6 +307,21 @@ type Verdict =
   | "CLOBBER" // something wrote the file while it was mutated
   | "ERROR"; // the row itself is broken: stale `find`, or a red baseline
 
+/** The verdict once a mutant has run, keyed by [declared survivor][suite went red]. */
+const OUTCOME = {
+  declared: { killed: "STALE-SURVIVOR", green: "SURVIVES(known)" },
+  undeclared: { killed: "KILLED", green: "SURVIVED" },
+} as const satisfies Record<string, Record<string, Verdict>>;
+
+type RunOptions = {
+  /** Ignore `expectKilledBy` and run the whole suite. */
+  full: boolean;
+  /** Stream the suite's output. */
+  verbose: boolean;
+  /** Mutate files that have uncommitted changes. */
+  allowDirty: boolean;
+};
+
 type Row = {
   mutant: Mutant;
   verdict: Verdict;
@@ -281,12 +329,7 @@ type Row = {
   note: string;
 };
 
-async function runMutant(
-  mutant: Mutant,
-  full: boolean,
-  verbose: boolean,
-  allowDirty: boolean,
-): Promise<Row> {
+async function runMutant(mutant: Mutant, { full, verbose, allowDirty }: RunOptions): Promise<Row> {
   const absolute = resolve(REPO_ROOT, mutant.file);
   if (!absolute.startsWith(`${REPO_ROOT}/`)) {
     return { mutant, verdict: "ERROR", ms: 0, note: `path escapes the repo: ${mutant.file}` };
@@ -298,9 +341,9 @@ async function runMutant(
   const original = readFileSync(absolute);
   const text = original.toString("utf8");
 
-  // Dirty-file refusal. The uniqueness check below still runs read-only first, so a skipped row
-  // still reports a stale `find`.
-  const occurrencesNow = text.split(mutant.find).length - 1;
+  const occurrences = text.split(mutant.find).length - 1;
+
+  // Dirty-file refusal, which still reports the `find` count so a skipped row shows a stale one.
   if (!allowDirty && dirtyPathsAmong([mutant.file]).length > 0) {
     return {
       mutant,
@@ -310,7 +353,7 @@ async function runMutant(
       // prose.
       note: [
         `${mutant.file} has uncommitted working-tree changes — another agent may be mid-edit, `,
-        `so this harness will not write to it. (\`find\` currently occurs ${occurrencesNow}×.) `,
+        `so this harness will not write to it. (\`find\` currently occurs ${occurrences}×.) `,
         "Commit or set the file aside, or re-run with --allow-dirty if the changes are yours.",
       ].join(""),
     };
@@ -318,7 +361,6 @@ async function runMutant(
 
   // Zero matches means the row is stale (an error, never a skip); two or more means the site is
   // ambiguous.
-  const occurrences = text.split(mutant.find).length - 1;
   if (occurrences !== 1) {
     return {
       mutant,
@@ -347,7 +389,7 @@ async function runMutant(
       mutant,
       verdict: "ERROR",
       ms: baseline.ms,
-      note: `baseline is RED before mutating — no verdict is meaningful. Suites: ${command?.join(" ") ?? files.join(" ") ?? ""}`,
+      note: `baseline is RED before mutating — no verdict is meaningful. Suites: ${command?.join(" ") ?? files.join(" ")}`,
     };
   }
 
@@ -361,9 +403,7 @@ async function runMutant(
     };
   }
 
-  // A function replacement, because a string replacement would interpret `$&`, `` $` ``, `$'` and
-  // `$1` in a row's `replace` text.
-  const mutatedText = text.replace(mutant.find, () => mutant.replace);
+  const mutatedText = applyMutant(text, mutant.find, mutant.replace);
   let mutated: SuiteResult;
   let clobberedTo: string | null = null;
   try {
@@ -409,15 +449,10 @@ async function runMutant(
     };
   }
 
-  const killed = !mutated.green;
-  const declaredSurvivor = mutant.survives !== undefined;
-  const verdict: Verdict = declaredSurvivor
-    ? killed
-      ? "STALE-SURVIVOR"
-      : "SURVIVES(known)"
-    : killed
-      ? "KILLED"
-      : "SURVIVED";
+  const verdict: Verdict =
+    OUTCOME[mutant.survives === undefined ? "undeclared" : "declared"][
+      mutated.green ? "green" : "killed"
+    ];
 
   return {
     mutant,
@@ -446,14 +481,14 @@ async function main(): Promise<void> {
   const argv = process.argv.slice(2);
 
   // Argument validation runs first, before `--list` and journal recovery, so a bad command line
-  // reads and writes nothing. Exit 4 distinguishes it from the other exit codes.
+  // reads and writes nothing.
   const problems = argvProblems(argv);
   if (problems.length > 0) {
     console.error("\n🛑 mutation harness: the command line was REJECTED. Nothing ran.\n");
     for (const problem of problems) console.error(`   • ${problem}`);
     console.error(`\n   valid flags: ${knownFlagsUsage()}`);
     console.error("   rows are selected with `--only <id>[,<id>…]` or `--decision D<nnn>`.\n");
-    process.exit(4);
+    process.exit(EXIT.badArgv);
   }
 
   // `--list` is read-only, so it is answered before journal recovery, which writes.
@@ -462,22 +497,24 @@ async function main(): Promise<void> {
       const tag =
         mutant.survives === undefined ? "" : `  [known survivor: ${mutant.survives.kind}]`;
       console.log(`${mutant.id.padEnd(22)} ${mutant.decision.padEnd(22)} ${mutant.what}${tag}`);
-      console.log(`${" ".repeat(22)} ${mutant.file} → ${mutant.expectKilledBy.join(", ")}`);
+      const killers = mutant.killedByCommand?.join(" ") ?? mutant.expectKilledBy.join(", ");
+      console.log(`${" ".repeat(22)} ${mutant.file} → ${killers}`);
     }
     return;
   }
 
-  // 2 means a dead run's files were restored; 3 means another run is in flight and nothing was
-  // touched.
   const journalState = recoverFromJournal();
-  if (journalState === "in-flight") process.exit(3);
-  if (journalState === "recovered") process.exit(2);
+  if (journalState === "in-flight") process.exit(EXIT.inFlight);
+  if (journalState === "recovered") process.exit(EXIT.recovered);
 
   const only = flagValue(argv, "--only")?.split(",");
   const decision = flagValue(argv, "--decision");
-  const full = argv.includes("--full");
-  const verbose = argv.includes("--verbose");
-  const allowDirty = argv.includes("--allow-dirty");
+  const options: RunOptions = {
+    full: argv.includes("--full"),
+    verbose: argv.includes("--verbose"),
+    allowDirty: argv.includes("--allow-dirty"),
+  };
+  const { full, allowDirty } = options;
 
   const selected = MUTANTS.filter(
     (m) =>
@@ -486,7 +523,7 @@ async function main(): Promise<void> {
   );
   if (selected.length === 0) {
     console.error("No mutants selected.");
-    process.exit(2);
+    process.exit(EXIT.noSelection);
   }
 
   installNets();
@@ -511,7 +548,7 @@ async function main(): Promise<void> {
   const started = Date.now();
   for (const mutant of selected) {
     process.stdout.write(`  ${mutant.id.padEnd(26)} … `);
-    const row = await runMutant(mutant, full, verbose, allowDirty);
+    const row = await runMutant(mutant, options);
     rows.push(row);
     console.log(`${row.verdict.padEnd(16)} ${(row.ms / 1000).toFixed(1)}s`);
   }
@@ -530,13 +567,14 @@ async function main(): Promise<void> {
   }
   console.log("─".repeat(84));
 
-  const killed = rows.filter((r) => r.verdict === "KILLED");
-  const known = rows.filter((r) => r.verdict === "SURVIVES(known)");
-  const gaps = rows.filter((r) => r.verdict === "SURVIVED");
-  const stale = rows.filter((r) => r.verdict === "STALE-SURVIVOR");
-  const skipped = rows.filter((r) => r.verdict === "SKIPPED-DIRTY");
-  const clobbered = rows.filter((r) => r.verdict === "CLOBBER");
-  const errors = rows.filter((r) => r.verdict === "ERROR");
+  const byVerdict = (verdict: Verdict): Row[] => rows.filter((r) => r.verdict === verdict);
+  const killed = byVerdict("KILLED");
+  const known = byVerdict("SURVIVES(known)");
+  const gaps = byVerdict("SURVIVED");
+  const stale = byVerdict("STALE-SURVIVOR");
+  const skipped = byVerdict("SKIPPED-DIRTY");
+  const clobbered = byVerdict("CLOBBER");
+  const errors = byVerdict("ERROR");
 
   console.log(
     `${killed.length} killed · ${known.length} known survivor(s) · ${gaps.length} GAP(S) · ${stale.length} stale · ${skipped.length} skipped(dirty) · ${clobbered.length} clobber(s) · ${errors.length} error(s) · ${(totalMs / 1000).toFixed(1)}s total\n`,
@@ -572,9 +610,8 @@ async function main(): Promise<void> {
   }
 
   // Skipped mutants count against the run.
-  process.exit(
-    gaps.length + stale.length + errors.length + skipped.length + clobbered.length === 0 ? 0 : 1,
-  );
+  const findings = gaps.length + stale.length + errors.length + skipped.length + clobbered.length;
+  process.exit(findings === 0 ? EXIT.ok : EXIT.findings);
 }
 
 await main();

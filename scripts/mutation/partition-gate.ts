@@ -6,7 +6,7 @@
  *   bun scripts/mutation/partition-gate.ts
  */
 
-import { readFileSync } from "node:fs";
+import { linesWithOverflow, runReport, wiringProblems } from "../lib/cli";
 import type { Mutant } from "./mutants";
 import { MUTANTS } from "./mutants";
 
@@ -52,12 +52,8 @@ export function isPartitioned(rows: readonly Mutant[]): boolean {
 }
 
 /**
- * The NEAR-MISS population: rows that apply a byte-identical patch to the same
- * file and are distinguished ONLY by their killers. Reported on the green path,
- * asserted nowhere — splice-gate's rule, for splice-gate's reason: a guard
- * whose subject can drift to zero without saying so is one refactor away from
- * vacuous, and this number moving is the cheapest signal that the shared-arm
- * idiom above is being used somewhere new.
+ * Rows that apply a byte-identical patch to the same file and differ only in their killers.
+ * Reported on the green path but never asserted, so a drift in the count stays visible.
  */
 export function sharedPatchGroups(rows: readonly Mutant[]): Mutant[][] {
   const byPatch = new Map<string, Mutant[]>();
@@ -79,11 +75,6 @@ export type PartitionReport = {
   sharedPatchRows: number;
 };
 
-function fail(message: string): never {
-  console.error(message);
-  process.exit(1);
-}
-
 /** One synthetic row, so a self-check case is a single named difference. */
 function row(over: Partial<Mutant>): Mutant {
   return {
@@ -100,16 +91,13 @@ function row(over: Partial<Mutant>): Mutant {
 
 /**
  * Self-check on synthetic pairs that differ in exactly one field, so a key that stops reading a
- * field fails here.
+ * field fails here. Returns the problems found; empty means the guard can be trusted.
  */
-export function selfCheck(): void {
-  const bad = (why: string): never =>
-    fail(
-      [
-        `partition-gate: SELF-CHECK FAILED — ${why}\n`,
-        "The guard cannot be trusted about the real corpus, so its verdict means nothing.",
-      ].join(""),
-    );
+export function selfCheck(): string[] {
+  const problems: string[] = [];
+  const bad = (why: string): void => {
+    problems.push(`partition-gate: SELF-CHECK FAILED — ${why}`);
+  };
 
   // 1. The positive case: two rows identical in every runner-visible field.
   //    Different LABELS must not save them — that is the whole point of the key.
@@ -179,27 +167,22 @@ export function selfCheck(): void {
   ) {
     bad("the shared-patch population counted two rows that patch different text.");
   }
-}
-
-/**
- * Asserts precheck.ts calls this gate; an uncalled gate is indistinguishable from a passing one.
- */
-export function checkWiring(): void {
-  const text = readFileSync(WIRING_SITE, "utf8");
-  if (!text.includes(WIRING_CALL)) {
-    fail(
-      [
-        `partition-gate: FAIL — \`${WIRING_SITE}\` does not call \`${WIRING_CALL}\`.\n`,
-        "This gate would then run only when someone runs it by hand, which is never.\n",
-        "Re-add the call (NOT by deleting this rung).",
-      ].join(""),
+  if (problems.length > 0) {
+    problems.push(
+      "The guard cannot be trusted about the real corpus, so its verdict means nothing.",
     );
   }
+  return problems;
+}
+
+/** Asserts precheck.ts calls this gate. */
+export function checkWiring(): string[] {
+  return wiringProblems("partition-gate", WIRING_SITE, WIRING_CALL);
 }
 
 export function partitionReport(): PartitionReport {
-  selfCheck();
-  checkWiring();
+  const problems = [...selfCheck(), ...checkWiring()];
+  if (problems.length > 0) return { ok: false, lines: problems, sharedPatchRows: 0 };
 
   const groups = indistinguishableGroups(MUTANTS);
   const sharedPatchRows = sharedPatchGroups(MUTANTS).reduce((n, g) => n + g.length, 0);
@@ -214,19 +197,21 @@ export function partitionReport(): PartitionReport {
     };
   }
 
-  const named: string[] = [];
-  for (const group of groups.slice(0, MAX_NAMED)) {
-    const first = group[0];
-    if (first === undefined) continue;
-    named.push(`   ${first.file}`);
-    named.push(`     find:    ${JSON.stringify(first.find)}`);
-    named.push(`     replace: ${JSON.stringify(first.replace)}`);
-    for (const m of group) named.push(`       - ${m.id}  (${m.decision})`);
-  }
-  const more =
-    groups.length > MAX_NAMED
-      ? [`   … and ${String(groups.length - MAX_NAMED)} more group(s).`]
-      : [];
+  const named = linesWithOverflow(
+    groups,
+    MAX_NAMED,
+    (group) => {
+      const first = group[0];
+      if (first === undefined) return [];
+      return [
+        `   ${first.file}`,
+        `     find:    ${JSON.stringify(first.find)}`,
+        `     replace: ${JSON.stringify(first.replace)}`,
+        ...group.map((m) => `       - ${m.id}  (${m.decision})`),
+      ];
+    },
+    (hidden) => `   … and ${String(hidden)} more group(s).`,
+  );
 
   return {
     ok: false,
@@ -239,7 +224,6 @@ export function partitionReport(): PartitionReport {
       "   KILLED, and the arm one of them named had no row at all.",
       "",
       ...named,
-      ...more,
       "",
       "   Fix by re-pointing the row whose `what` no longer matches its `find`",
       "   (read all three fields), NOT by deleting one of the rows.",
@@ -249,15 +233,4 @@ export function partitionReport(): PartitionReport {
   };
 }
 
-function main(): void {
-  const report = partitionReport();
-  if (!report.ok) {
-    for (const line of report.lines) console.error(line);
-    process.exit(1);
-  }
-  console.log(`partition-gate: OK — ${report.lines[0] ?? ""}.`);
-}
-
-// Only when RUN, never when IMPORTED — `precheck.ts` calls `partitionReport()`
-// and must not inherit this file's console output or its exit.
-if (import.meta.main) main();
+if (import.meta.main) runReport("partition-gate", partitionReport);

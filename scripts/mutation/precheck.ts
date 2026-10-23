@@ -5,20 +5,14 @@
 //
 // Run it before `bun run mutants` and after any formatter pass over a file in `MUTANTS`.
 
-import { readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
+import { repoPath, sourceCache } from "../lib/repo";
 import { bindingReport } from "./binding-gate";
 import { MUTANTS } from "./mutants";
 import { partitionReport } from "./partition-gate";
 import { spliceReport } from "./splice-gate";
 
-const sources = new Map<string, string>();
-function sourceOf(file: string): string {
-  const cached = sources.get(file);
-  if (cached !== undefined) return cached;
-  const text = readFileSync(file, "utf8");
-  sources.set(file, text);
-  return text;
-}
+const sourceOf = sourceCache();
 
 function occurrences(haystack: string, needle: string): number {
   let count = 0;
@@ -32,6 +26,10 @@ function occurrences(haystack: string, needle: string): number {
 
 const broken: string[] = [];
 for (const mutant of MUTANTS) {
+  if (!existsSync(repoPath(mutant.file))) {
+    broken.push(`${mutant.id}: ${mutant.file} does not exist`);
+    continue;
+  }
   const n = occurrences(sourceOf(mutant.file), mutant.find);
   if (n !== 1) broken.push(`${mutant.id}: find occurs ${String(n)}× in ${mutant.file}`);
 }

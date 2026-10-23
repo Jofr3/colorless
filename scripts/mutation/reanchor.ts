@@ -13,19 +13,12 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import ts from "typescript";
+import { REPO_ROOT, repoPath, sourceCache } from "../lib/repo";
 import { MUTANTS, type Mutant } from "./mutants";
 
 const CORPUS = "scripts/mutation/mutants.ts";
 
-const sources = new Map<string, string>();
-function sourceOf(file: string): string {
-  let text = sources.get(file);
-  if (text === undefined) {
-    text = readFileSync(file, "utf8");
-    sources.set(file, text);
-  }
-  return text;
-}
+const sourceOf = sourceCache();
 
 function occurrences(haystack: string, needle: string): number {
   return haystack.split(needle).length - 1;
@@ -126,9 +119,7 @@ function siblingsOf(file: string): string[] {
   const listed = execFileSync(
     "git",
     ["ls-files", "--cached", "--others", "--exclude-standard", root],
-    {
-      encoding: "utf8",
-    },
+    { cwd: REPO_ROOT, encoding: "utf8" },
   );
   return listed
     .split("\n")
@@ -169,7 +160,7 @@ function reanchor(mutant: Mutant): Fix | null {
 
 /** Rewrites the `file`, `find` and `replace` initializers of each fixed row. */
 function rewriteCorpus(fixes: Fix[]): void {
-  const text = readFileSync(CORPUS, "utf8");
+  const text = readFileSync(repoPath(CORPUS), "utf8");
   const sf = ts.createSourceFile(CORPUS, text, ts.ScriptTarget.Latest, true);
   const byId = new Map(fixes.map((f) => [f.mutant.id, f]));
   const edits: { start: number; end: number; text: string }[] = [];
@@ -201,13 +192,13 @@ function rewriteCorpus(fixes: Fix[]): void {
   edits.sort((a, b) => b.start - a.start);
   let out = text;
   for (const e of edits) out = out.slice(0, e.start) + e.text + out.slice(e.end);
-  writeFileSync(CORPUS, out);
+  writeFileSync(repoPath(CORPUS), out);
 }
 
 /** Deletes whole rows (with their leading comments) from the corpus. Used for
     rows whose code or killing test no longer exists. */
 function retireRows(ids: Set<string>): void {
-  const text = readFileSync(CORPUS, "utf8");
+  const text = readFileSync(repoPath(CORPUS), "utf8");
   const sf = ts.createSourceFile(CORPUS, text, ts.ScriptTarget.Latest, true);
   const cuts: { start: number; end: number }[] = [];
   const visit = (node: ts.Node) => {
@@ -233,7 +224,7 @@ function retireRows(ids: Set<string>): void {
   cuts.sort((a, b) => b.start - a.start);
   let out = text;
   for (const c of cuts) out = out.slice(0, c.start) + out.slice(c.end);
-  writeFileSync(CORPUS, out);
+  writeFileSync(repoPath(CORPUS), out);
   console.log(`retired ${cuts.length} row(s)`);
 }
 
