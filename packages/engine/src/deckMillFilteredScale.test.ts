@@ -21,6 +21,7 @@ import {
   types,
   findEvent,
   driveSetup,
+  mustDerive,
 } from "./testFixtures";
 
 const MILL_ENERGY =
@@ -348,8 +349,8 @@ describe("D488 §2 — AXIS DELETION: are these two rows really one row?", () =>
   });
 
   it("the verdict: ONE mechanism serves both, and the two filters are free", () => {
-    const a = deriveAttackEffect(MILL_ENERGY) as EffectOp[];
-    const b = deriveAttackEffect(MILL_MISTY) as EffectOp[];
+    const a = mustDerive(deriveAttackEffect, MILL_ENERGY);
+    const b = mustDerive(deriveAttackEffect, MILL_MISTY);
     expect(a).toEqual(ENERGY_PROGRAM);
     expect(b).toEqual(MISTY_PROGRAM);
     expect(a.map((op) => op.op)).toEqual(b.map((op) => op.op));
@@ -396,7 +397,7 @@ describe("D488 §3 — the parse: every capture is a field, and the noun group i
       /^Discard the top (\d+) cards of your deck, and this attack does (\d+) damage for each (.+) (?:that )?you discarded in this way\.$/;
     expect(greedy.exec(MILL_MISTY)?.[3]).toBe("Misty's Pokémon that");
     expect(greedy.exec(MILL_ENERGY)?.[3]).toBe("Energy card");
-    const scale = deriveAttackEffect(MILL_MISTY) as EffectOp[];
+    const scale = mustDerive(deriveAttackEffect, MILL_MISTY);
     const op = scale[1];
     if (op === undefined || op.op !== "damageDefender") throw new Error("not a damageDefender");
     expect(op.countFilter).toEqual({ kind: "ownerPokemon", owner: "Misty" });
@@ -463,13 +464,13 @@ describe("D488 §3 — the parse: every capture is a field, and the noun group i
       ([, s]) =>
         s.includes("discarded in this way") && deriveAttackEffect(s) !== null && !MILL_HEAD.test(s),
     )) {
-      for (const op of deriveAttackEffect(text) as EffectOp[]) {
+      for (const op of mustDerive(deriveAttackEffect, text)) {
         if (op.op === "damageDefender") expect(Object.keys(op), text).not.toContain("countFilter");
         if (op.op === "discardDeckTop") expect(Object.keys(op), text).not.toContain("recordAs");
       }
     }
     // …and the bare mill, which is the same claim at the other op.
-    expect(Object.keys((deriveAttackEffect(BARE_MILL) as EffectOp[])[0] ?? {})).toEqual([
+    expect(Object.keys(mustDerive(deriveAttackEffect, BARE_MILL)[0] ?? {})).toEqual([
       "op",
       "whose",
       "count",

@@ -24,6 +24,7 @@ import {
   types,
   walkProgram,
   findEvent,
+  mustDerive,
 } from "./testFixtures";
 
 /** Sentence ONE at each printed amount — the majority spelling (3 of 5). */
@@ -257,7 +258,7 @@ describe("the attacker-side debuff — derived, not authored", () => {
   });
 
   it("is UNGATED — no coin is printed on any of the five", () => {
-    expect((deriveAttackEffect(possessive(20)) as EffectOp[]).map((op) => op.op)).toEqual([
+    expect(mustDerive(deriveAttackEffect, possessive(20)).map((op) => op.op)).toEqual([
       "weakenDefenderAttacks",
     ]);
     // And a coin prefix must not ride in front of either anchor and install

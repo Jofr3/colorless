@@ -14,6 +14,7 @@ import {
   toDeckTop,
   types,
   findEvent,
+  mustDerive,
 } from "./testFixtures";
 
 interface Clause {
@@ -240,14 +241,14 @@ describe("the anchors — four printed sentences, THREE arms", () => {
 
   it("the BENCH filter is welded to the printed noun, so the benchable guard has nothing to do", () => {
     for (const clause of [BENCH_8, BENCH_10]) {
-      const [look] = deriveAttackEffect(clause.text) as EffectOp[];
+      const [look] = mustDerive(deriveAttackEffect, clause.text);
       expect(look).toMatchObject({ op: "lookAtTopN", filter: { kind: "anyPokemon" } });
     }
   });
 
   it('D333 — "any number of" is the printed WORDS, and D241 spelled it as the window', () => {
-    const [look8] = deriveAttackEffect(BENCH_8.text) as EffectOp[];
-    const [look10] = deriveAttackEffect(BENCH_10.text) as EffectOp[];
+    const [look8] = mustDerive(deriveAttackEffect, BENCH_8.text);
+    const [look10] = mustDerive(deriveAttackEffect, BENCH_10.text);
     expect(look8).toMatchObject({ n: 8, max: "any" });
     expect(look10).toMatchObject({ n: 10, max: "any" });
   });

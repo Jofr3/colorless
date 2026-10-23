@@ -42,6 +42,7 @@ import {
   types,
   driveSetup,
   roundTrip,
+  mustDerive,
 } from "./testFixtures";
 
 const PRINTED =
@@ -234,7 +235,7 @@ describe("D522 §1 — the printed row derives to EXACTLY arm 43's shape minus t
   });
 
   it("the gate's sorted KEY SET is exactly [cond, op, then] — no `otherwise` (D135), and the spread carries no `damagedOnly` (D507's rider is not printed)", () => {
-    const gate = (deriveAttackEffect(PRINTED) as EffectOp[])[0];
+    const gate = mustDerive(deriveAttackEffect, PRINTED)[0];
     if (gate?.op !== "conditionGate") throw new Error("op 0 is not a conditionGate");
     expect(Object.keys(gate).sort()).toEqual(["cond", "op", "then"]);
     expect(gate.otherwise).toBeUndefined();
@@ -247,14 +248,14 @@ describe("D522 §1 — the printed row derives to EXACTLY arm 43's shape minus t
   });
 
   it("the `then` is BYTE-EQUAL to the two bare halves' OWN derivations, concatenated in printed order (measured, not quoted)", () => {
-    const gate = (deriveAttackEffect(PRINTED) as EffectOp[])[0];
+    const gate = mustDerive(deriveAttackEffect, PRINTED)[0];
     if (gate?.op !== "conditionGate") throw new Error("op 0 is not a conditionGate");
     const spread = deriveAttackEffect(BARE_SPREAD);
     const discard = deriveAttackEffect(BARE_DISCARD);
     expect(spread).toEqual([{ op: "spreadDamage", target: "opponentBench", amount: 30 }]);
     expect(discard).toEqual([{ op: "discardStadium" }]);
     expect(gate.then).toEqual([...(spread as EffectOp[]), ...(discard as EffectOp[])]);
-    const may = (deriveAttackEffect("You may discard a Stadium in play.") as EffectOp[])[0];
+    const may = mustDerive(deriveAttackEffect, "You may discard a Stadium in play.")[0];
     if (may?.op !== "conditionGate") throw new Error("arm 43's op 0 is not a conditionGate");
     expect(gate.cond).toEqual(may.cond);
     expect(gate.cond).toEqual({ kind: "stadiumInPlay" });

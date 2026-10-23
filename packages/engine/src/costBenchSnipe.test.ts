@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
 import { engineVersion } from "./index";
-import type { EffectOp, GameEvent, GameState, PokemonRef, Seat } from "./index";
+import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
 import {
   FIXTURE_POOL,
   attachFromDeck,
@@ -18,6 +18,7 @@ import {
   setBenchDamage,
   setDamage,
   driveSetup,
+  mustDerive,
 } from "./testFixtures";
 
 const PURGE_SEED = 477_0477;
@@ -229,14 +230,14 @@ describe("§1 — three printed rows, and the family they belong to", () => {
   });
 
   it("the row that WAS left is built, and D477's own price is graded here", () => {
-    const program = deriveAttackEffect(EX_THEN_210) as EffectOp[];
+    const program = mustDerive(deriveAttackEffect, EX_THEN_210);
     expect(program).toHaveLength(2);
     const snipe = program[1];
     if (snipe?.op !== "damageChosen") throw new Error("expected a damageChosen");
     expect(snipe.filter).toEqual({ kind: "suffixPokemon", suffix: "ex" });
     expect(corpusRows().some(([, s]) => s === EX_THEN_210)).toBe(true);
     const stripped = EX_THEN_210.replace("Benched Pokémon ex.", "Benched Pokémon.");
-    const bare = deriveAttackEffect(stripped) as EffectOp[];
+    const bare = mustDerive(deriveAttackEffect, stripped);
     expect(bare).not.toBeNull();
     expect(bare[1]).not.toEqual(snipe);
     expect((bare[1] as { filter?: unknown }).filter).toBeUndefined();
@@ -286,26 +287,24 @@ describe("§2 — two ops in printed order, and each half is the bare anchor's o
   });
 
   it("D132's INVENTORY RULE: each half is BYTE-IDENTICAL to the bare anchor's output", () => {
-    const two = deriveAttackEffect(TWO_THEN_120) as EffectOp[];
+    const two = mustDerive(deriveAttackEffect, TWO_THEN_120);
     expect(two[0]).toEqual(
-      (deriveAttackEffect("Discard 2 Energy from this Pokémon.") as EffectOp[])[0],
+      mustDerive(deriveAttackEffect, "Discard 2 Energy from this Pokémon.")[0],
     );
     expect(two[1]).toEqual(
-      (
-        deriveAttackEffect(
-          "This attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
-        ) as EffectOp[]
+      mustDerive(
+        deriveAttackEffect,
+        "This attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       )[0],
     );
-    const typed = deriveAttackEffect(TYPED_THEN_180) as EffectOp[];
+    const typed = mustDerive(deriveAttackEffect, TYPED_THEN_180);
     expect(typed[0]).toEqual(
-      (deriveAttackEffect("Discard all {R} Energy from this Pokémon.") as EffectOp[])[0],
+      mustDerive(deriveAttackEffect, "Discard all {R} Energy from this Pokémon.")[0],
     );
     expect(typed[1]).toEqual(
-      (
-        deriveAttackEffect(
-          "This attack does 180 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
-        ) as EffectOp[]
+      mustDerive(
+        deriveAttackEffect,
+        "This attack does 180 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       )[0],
     );
   });
@@ -317,7 +316,7 @@ describe("§2 — two ops in printed order, and each half is the bare anchor's o
       "Discard all Energy from this Pokémon. This attack does 110 damage to 3 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       "Discard all Energy from this Pokémon. This attack does 120 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
     ]) {
-      const program = deriveAttackEffect(printed) as EffectOp[];
+      const program = mustDerive(deriveAttackEffect, printed);
       const snipe = program[1];
       if (snipe?.op !== "damageChosen") throw new Error(`not a damageChosen: ${printed}`);
       expect(snipe.target, printed).toBe("opponentAny");
@@ -366,12 +365,12 @@ describe("§3 — the anchor's generalisations claim nothing extra, and that is 
   it("the SIDE is read off the printed possessive, on a CONSTRUCTED own-side compound", () => {
     const ownSide = ALL_THEN_90.replace("1 of your opponent's Benched", "1 of your Benched");
     expect(corpusRows().some(([, s]) => s === ownSide)).toBe(false);
-    const program = deriveAttackEffect(ownSide) as EffectOp[];
+    const program = mustDerive(deriveAttackEffect, ownSide);
     expect(program).toHaveLength(2);
     const snipe = program[1];
     if (snipe?.op !== "damageChosen") throw new Error("expected a damageChosen");
     expect(snipe.target).toBe("yourBench");
-    const printed = deriveAttackEffect(ALL_THEN_90) as EffectOp[];
+    const printed = mustDerive(deriveAttackEffect, ALL_THEN_90);
     const printedSnipe = printed[1];
     if (printedSnipe?.op !== "damageChosen") throw new Error("expected a damageChosen");
     expect(printedSnipe.target).toBe("opponentBench");
@@ -422,7 +421,7 @@ describe("§4 — what the anchor refuses, and why the two anchors cannot collid
     const one =
       "Discard 2 Energy from this Pokémon. This attack also does 120 damage to 1 of your opponent's Benched Pokémon that has any damage counters on it. (Don't apply Weakness and Resistance for Benched Pokémon.)";
     const two = one.replace("to 1 of", "to 2 of");
-    const narrowed = deriveAttackEffect(one) as EffectOp[];
+    const narrowed = mustDerive(deriveAttackEffect, one);
     const snipe = narrowed[1];
     if (snipe?.op !== "damageChosen") throw new Error("expected a damageChosen");
     expect(snipe.damagedOnly).toBe(true);
@@ -451,13 +450,13 @@ describe("§4 — what the anchor refuses, and why the two anchors cannot collid
     const benchOnes = [TWO_THEN_120, ALL_THEN_90, TYPED_THEN_180];
     const anyOnes = [ALL_THEN_ANY_120];
     for (const printed of benchOnes) {
-      const program = deriveAttackEffect(printed) as EffectOp[];
+      const program = mustDerive(deriveAttackEffect, printed);
       const snipe = program[1];
       if (snipe?.op !== "damageChosen") throw new Error(`not a damageChosen: ${printed}`);
       expect(snipe.target, printed).toBe("opponentBench");
     }
     for (const printed of anyOnes) {
-      const program = deriveAttackEffect(printed) as EffectOp[];
+      const program = mustDerive(deriveAttackEffect, printed);
       const snipe = program[1];
       if (snipe?.op !== "damageChosen") throw new Error(`not a damageChosen: ${printed}`);
       expect(snipe.target, printed).toBe("opponentAny");

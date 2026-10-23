@@ -33,6 +33,7 @@ import {
   itemTrainer,
   driveSetup,
   roundTrip,
+  mustDerive,
 } from "./testFixtures";
 import { makeInPlay } from "./types";
 
@@ -200,7 +201,7 @@ describe("D515 §2 — the program, and every refusal pinned on ONE printed byte
   });
 
   it("the GATE's slot is the PAYMENT's slot — the two halves cannot drift apart", () => {
-    const [cost, gate] = deriveAttackEffect(GATED_DISCARD) as EffectOp[];
+    const [cost, gate] = mustDerive(deriveAttackEffect, GATED_DISCARD);
     expect(cost?.op === "payFromHand" ? cost.recordAs : undefined).toBe("paid");
     expect(gate?.op === "recordGate" ? gate.slot : undefined).toBe("paid");
     expect(gate?.op === "recordGate" ? gate.slot : "gate").toBe(
@@ -497,7 +498,7 @@ describe("D515 §4 — what the column now holds, measured rather than claimed",
     // The derived program run end to end against the hand-written one: if the anchor
     // ever derived a different program this diverges on cards moved rather than on JSON.
     const board = handOfIds(handOfIds(fielded(15), "p1", THREE), "p2", THREE);
-    const viaSentence = settle(board, deriveAttackEffect(GATED_DISCARD) as EffectOp[]);
+    const viaSentence = settle(board, mustDerive(deriveAttackEffect, GATED_DISCARD));
     const viaProgram = settle(board, program(1));
     expect(hands(viaSentence)).toEqual([2, 2]);
     expect(hands(viaSentence)).toEqual(hands(viaProgram));

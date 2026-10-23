@@ -35,6 +35,7 @@ import {
   findEvent,
   driveSetup,
   roundTrip,
+  mustDerive,
 } from "./testFixtures";
 import { makeInPlay } from "./types";
 
@@ -149,7 +150,7 @@ describe("D473 §2 — the program, and every refusal pinned on ONE printed byte
   });
 
   it("the GATE's slot is the PAYMENT's slot — the two halves cannot drift apart", () => {
-    const [cost, gate] = deriveAttackEffect(DRAW2) as EffectOp[];
+    const [cost, gate] = mustDerive(deriveAttackEffect, DRAW2);
     expect(cost?.op === "payFromHand" ? cost.recordAs : undefined).toBe("paid");
     expect(gate?.op === "recordGate" ? gate.slot : undefined).toBe("paid");
     expect(gate?.op === "recordGate" ? gate.slot : "gate").toBe(

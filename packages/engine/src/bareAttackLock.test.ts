@@ -16,6 +16,7 @@ import {
   mustApply,
   setActiveFromDeck,
   findEvent,
+  mustDerive,
 } from "./testFixtures";
 
 const DEFENDER_BARE = "During your opponent's next turn, the Defending Pokémon can't attack.";
@@ -319,7 +320,7 @@ describe("§5 — anchored end to end, and every refusal is a warrant", () => {
         then: [{ op: "preventAttack", target: "defender" }],
       },
     ]);
-    const gate = (deriveAttackEffect(PRINTED) as EffectOp[])[0] as { then: EffectOp[] };
+    const gate = mustDerive(deriveAttackEffect, PRINTED)[0] as { then: EffectOp[] };
     expect(gate.then).toEqual(deriveAttackEffect(DEFENDER_BARE));
     expect(
       deriveAttackEffect(

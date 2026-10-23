@@ -20,7 +20,6 @@ import {
   deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
-import type { EffectOp } from "./effects";
 import type { GameState } from "./index";
 import {
   DISCARD_SCALED_DECK,
@@ -33,6 +32,7 @@ import {
   setActiveFromDeck,
   types,
   findEvent,
+  mustDerive,
 } from "./testFixtures";
 
 const attack = { type: "attack", seat: "p1", index: 0 } as const;
@@ -223,7 +223,7 @@ describe("D402 §1 — the family, split by its FOLD, measured live over the col
     expect(built).toHaveLength(2);
     expect(units(built)).toBe(2);
     for (const [, s] of built) {
-      const program = deriveAttackEffect(s) as EffectOp[];
+      const program = mustDerive(deriveAttackEffect, s);
       expect(program, s).toHaveLength(2);
       expect(program[0], s).toMatchObject({
         op: "discardDeckTop",

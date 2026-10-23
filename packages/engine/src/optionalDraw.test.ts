@@ -21,6 +21,7 @@ import {
   findEvent,
   driveSetup,
   roundTrip,
+  mustDerive,
 } from "./testFixtures";
 
 const CLAUSES = [
@@ -544,7 +545,7 @@ describe("end to end — a printed card asks, and the answer is the effect", () 
 
   it("the attack is DECLARABLE — programPlayable does not descend into `then`", () => {
     const state = matchup(13, "fix-may-return", "fix-bigbody");
-    const program = deriveAttackEffect(CLAUSES[UNTIL].text) as EffectOp[];
+    const program = mustDerive(deriveAttackEffect, CLAUSES[UNTIL].text);
     const empty: GameState = {
       ...state,
       players: { ...state.players, p1: { ...state.players.p1, deck: [] } },

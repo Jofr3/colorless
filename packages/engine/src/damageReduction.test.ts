@@ -24,6 +24,7 @@ import {
   setPrizes,
   types,
   findEvent,
+  mustDerive,
 } from "./testFixtures";
 
 /** The bare sentence at each printed amount — one anchor, one capture. */
@@ -197,7 +198,7 @@ describe("the durated damage reduction — derived, not authored", () => {
   });
 
   it("is UNGATED — no coin is printed on any of the fourteen", () => {
-    const derived = deriveAttackEffect(bare(30)) as EffectOp[];
+    const derived = mustDerive(deriveAttackEffect, bare(30));
     expect(derived.map((op) => op.op)).toEqual(["reduceDamage"]);
     // And a coin prefix must not ride in front of the anchor and install silently:
     // the anchor starts at "During", so this is a property of `^` rather than luck.
@@ -230,7 +231,7 @@ describe("the durated damage reduction — derived, not authored", () => {
   it("refuses the ATTACKER-side family — the OTHER parenthetical", () => {
     for (const text of BEFORE_WR_ATTACKS) {
       expect(deriveAttackEffect(text)).not.toBeNull();
-      expect((deriveAttackEffect(text) as EffectOp[])[0]?.op).toBe("weakenDefenderAttacks");
+      expect(mustDerive(deriveAttackEffect, text)[0]?.op).toBe("weakenDefenderAttacks");
       expect(deriveAttackEffect(text)).not.toEqual([{ op: "reduceDamage", amount: 100 }]);
     }
     expect(deriveAttackEffect(BEFORE_WR_ABILITY)).toBeNull();
@@ -250,19 +251,19 @@ describe("the durated damage reduction — derived, not authored", () => {
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
       { op: "reduceDamage", amount: 100 },
     ]);
-    const compound = deriveAttackEffect(COMPOUND) as EffectOp[];
+    const compound = mustDerive(deriveAttackEffect, COMPOUND);
     expect(compound[0]).toEqual(
-      (deriveAttackEffect("Discard all Energy from this Pokémon.") as EffectOp[])[0],
+      mustDerive(deriveAttackEffect, "Discard all Energy from this Pokémon.")[0],
     );
     // …and the reduction half is byte-identical to the bare reduction anchor's.
-    expect(compound[1]).toEqual((deriveAttackEffect(bare(100)) as EffectOp[])[0]);
+    expect(compound[1]).toEqual(mustDerive(deriveAttackEffect, bare(100))[0]);
   });
 
   it("keeps the two anchors mutually exclusive in BOTH directions", () => {
     // The bare anchor must REFUSE the compound — otherwise it would ship the
     // shield without the cost that buys it…
     expect(deriveAttackEffect(bare(100))).not.toEqual(deriveAttackEffect(COMPOUND));
-    expect((deriveAttackEffect(COMPOUND) as EffectOp[]).length).toBe(2);
+    expect(mustDerive(deriveAttackEffect, COMPOUND).length).toBe(2);
     // …and the compound anchor must refuse the bare sentence, which is the
     // direction a session only checks when it is told to: a compound anchor that
     // matched the bare string would silently discard a board's whole attachment.

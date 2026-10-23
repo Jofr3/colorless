@@ -17,6 +17,7 @@ import {
   setActiveFromDeck,
   driveSetup,
   roundTrip,
+  mustDerive,
 } from "./testFixtures";
 
 const SPREAD_SEED = 492_0492;
@@ -384,7 +385,7 @@ describe("D492 §2 — one op, exactly these bytes", () => {
   });
 
   it("the filter values are the SHIPPED map's, byte for byte — one noun, one answer", () => {
-    const spread = deriveAttackEffect(EX_V_100) as EffectOp[];
+    const spread = mustDerive(deriveAttackEffect, EX_V_100);
     const hit = spread[0];
     if (hit?.op !== "damageChosen") throw new Error("expected a damageChosen");
     const counted = deriveAttackDamageMultiplier(FOR_EACH_EX_V_60);
@@ -393,7 +394,7 @@ describe("D492 §2 — one op, exactly these bytes", () => {
     expect(countSource.kind).toBe("pokemonInPlay");
     expect(hit.filter).toEqual(countSource.filter);
     // …and the same for the singleton noun.
-    const exSpread = deriveAttackEffect(EX_60) as EffectOp[];
+    const exSpread = mustDerive(deriveAttackEffect, EX_60);
     const exHit = exSpread[0];
     if (exHit?.op !== "damageChosen") throw new Error("expected a damageChosen");
     const exCounted = deriveAttackDamageMultiplier(FOR_EACH_EX_60);
@@ -642,7 +643,7 @@ describe("D492 §9 — the widened quantifier over a v29 record", () => {
   } as unknown as EffectOp;
 
   it("the two ops differ in exactly ONE key, which is what makes this a claim about the quantifier ( D622 (D539): and in `wrOnly`, which no v29 writer wrote)", () => {
-    const derived = (deriveAttackEffect(EX_V_100) as EffectOp[])[0];
+    const derived = mustDerive(deriveAttackEffect, EX_V_100)[0];
     if (derived === undefined) throw new Error("expected a program");
     const differing = Object.keys(derived).filter(
       (k) =>
@@ -667,7 +668,7 @@ describe("D492 §9 — the widened quantifier over a v29 record", () => {
   it("and the NEW byte on the SAME board answers differently — the control for both", () => {
     const state = spreadTable("d492-wall-ex", MIXED_BENCH);
     const events: GameEvent[] = [];
-    const run = runProgram(state, deriveAttackEffect(EX_V_100) as EffectOp[], ctx, events);
+    const run = runProgram(state, mustDerive(deriveAttackEffect, EX_V_100), ctx, events);
     expect(run.kind).toBe("done");
     if (run.kind !== "done") throw new Error("expected done");
     expect(damageVector(run.state, "p2")).toEqual([100, 100, 100, 0, 100]);

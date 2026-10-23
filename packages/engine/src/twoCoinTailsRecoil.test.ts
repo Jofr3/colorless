@@ -41,6 +41,7 @@ import {
   types,
   driveSetup,
   roundTrip,
+  mustDerive,
 } from "./testFixtures";
 
 const PRINTED =
@@ -216,17 +217,17 @@ describe("D521 §1 — the printed row derives to EXACTLY the one-op program", (
   });
 
   it("the gate's sorted KEY SET is exactly [coins, onTails, op, then] — no stray field, no missing one", () => {
-    const op = (deriveAttackEffect(PRINTED) as EffectOp[])[0] as object;
+    const op = mustDerive(deriveAttackEffect, PRINTED)[0] as object;
     expect(Object.keys(op).sort()).toEqual(["coins", "onTails", "op", "then"]);
   });
 
   it("the `then` is BYTE-EQUAL to what the bare recoil anchor derives — one action, the coins in front of it", () => {
-    const gate = (deriveAttackEffect(PRINTED) as EffectOp[])[0];
+    const gate = mustDerive(deriveAttackEffect, PRINTED)[0];
     if (gate?.op !== "coinFlipGate") throw new Error("op 0 is not a coinFlipGate");
     expect(gate.then).toEqual(deriveAttackEffect(BARE));
     expect(deriveAttackEffect(BARE)).toEqual([{ op: "damageSelf", amount: 90 }]);
     // …and the one-coin sibling's `then` is the SAME bytes — the family claim at N=1 and N=2.
-    const one = (deriveAttackEffect(ONE_COIN) as EffectOp[])[0];
+    const one = mustDerive(deriveAttackEffect, ONE_COIN)[0];
     if (one?.op !== "coinFlipGate") throw new Error("sibling op 0 is not a coinFlipGate");
     expect(one.then).toEqual(gate.then);
     expect(Object.keys(one).sort()).toEqual(["onTails", "op", "then"]);

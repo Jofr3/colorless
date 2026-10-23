@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackEffect, deriveAttackOptionalCostBoost } from "./effects";
 import { engineVersion } from "./index";
-import type { EffectOp, GameEvent, GameState, PokemonRef, Seat } from "./index";
+import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
 import {
   FIXTURE_POOL,
   attachFromDeck,
@@ -17,6 +17,7 @@ import {
   setBenchDamage,
   setDamage,
   driveSetup,
+  mustDerive,
 } from "./testFixtures";
 
 const CLASS_SEED = 483_0483;
@@ -231,7 +232,7 @@ describe("§1 — the printed `ex`/`V` class over the whole column, and what blo
   });
 
   it("the SPREADS' composition candidate exists, is spellable TODAY, and is refused", () => {
-    const narrowed = deriveAttackEffect(EX_THEN_210) as EffectOp[];
+    const narrowed = mustDerive(deriveAttackEffect, EX_THEN_210);
     const snipe = narrowed[1];
     if (snipe?.op !== "damageChosen") throw new Error("expected a damageChosen");
     expect(snipe.filter).toEqual({ kind: "suffixPokemon", suffix: "ex" });
@@ -239,7 +240,7 @@ describe("§1 — the printed `ex`/`V` class over the whole column, and what blo
       [SPREAD_EX_60, 60],
       [SPREAD_EX_V_100, 100],
     ] as const) {
-      const spread = deriveAttackEffect(text) as EffectOp[];
+      const spread = mustDerive(deriveAttackEffect, text);
       expect(spread, text).toHaveLength(1);
       const hit = spread[0];
       if (hit?.op !== "damageChosen") throw new Error(`expected a damageChosen for ${text}`);
@@ -286,8 +287,8 @@ describe("§2 — two programs, exactly these bytes, and each half is the bare a
   });
 
   it("D132's INVENTORY RULE: the narrowed op differs from the bare one in ONE key", () => {
-    const narrowed = (deriveAttackEffect(EX_OR_V_60) as EffectOp[])[0];
-    const bare = (deriveAttackEffect(PLAIN_60) as EffectOp[])[0];
+    const narrowed = mustDerive(deriveAttackEffect, EX_OR_V_60)[0];
+    const bare = mustDerive(deriveAttackEffect, PLAIN_60)[0];
     if (narrowed?.op !== "damageChosen" || bare?.op !== "damageChosen") {
       throw new Error("expected two damageChosen ops");
     }
@@ -301,14 +302,14 @@ describe("§2 — two programs, exactly these bytes, and each half is the bare a
   });
 
   it("the compound's COST half is byte-identical to the bare discard anchor's output", () => {
-    const compound = deriveAttackEffect(EX_THEN_210) as EffectOp[];
+    const compound = mustDerive(deriveAttackEffect, EX_THEN_210);
     expect(compound[0]).toEqual(
-      (deriveAttackEffect("Discard all Energy from this Pokémon.") as EffectOp[])[0],
+      mustDerive(deriveAttackEffect, "Discard all Energy from this Pokémon.")[0],
     );
   });
 
   it("the two printed nouns map to filters `matchesFilter` already understood (D446)", () => {
-    const pair = (deriveAttackEffect(EX_OR_V_60) as EffectOp[])[0];
+    const pair = mustDerive(deriveAttackEffect, EX_OR_V_60)[0];
     if (pair?.op !== "damageChosen" || pair.filter?.kind !== "anyOf") {
       throw new Error("expected an anyOf filter");
     }
@@ -395,7 +396,7 @@ describe("§3 — the class group is a MAP, and the two wider forms are measured
     expect(byShortest.map(([, s]) => s)).toContain(EX_OR_V_60);
     // …and the shipped arm still answers the `anyOf`, which is what the old rung asserted and
     // is kept because it is true and cheap — just not a statement about the ORDER.
-    const pair = deriveAttackEffect(EX_OR_V_60) as EffectOp[];
+    const pair = mustDerive(deriveAttackEffect, EX_OR_V_60);
     const snipe = pair[0];
     if (snipe?.op !== "damageChosen") throw new Error("expected a damageChosen");
     expect(snipe.filter?.kind).toBe("anyOf");
@@ -547,8 +548,8 @@ describe("§7 — what the class group refuses, and what it must not have moved"
       [EX_OR_V_60, EX_OR_V_60.replace(" ex or Benched Pokémon V", "")],
       [EX_THEN_210, EX_THEN_210.replace("Benched Pokémon ex.", "Benched Pokémon.")],
     ] as const) {
-      const a = deriveAttackEffect(narrowed) as EffectOp[];
-      const b = deriveAttackEffect(stripped) as EffectOp[];
+      const a = mustDerive(deriveAttackEffect, narrowed);
+      const b = mustDerive(deriveAttackEffect, stripped);
       expect(b, stripped).not.toBeNull();
       expect(a.length, narrowed).toBe(b.length);
       expect(a, narrowed).not.toEqual(b);
@@ -584,7 +585,7 @@ describe("§7 — what the class group refuses, and what it must not have moved"
   it("the CLASS noun is number-INVARIANT, unlike the window beside it", () => {
     const two =
       "This attack does 60 damage to 2 of your opponent's Benched Pokémon ex. (Don't apply Weakness and Resistance for Benched Pokémon.)";
-    const program = deriveAttackEffect(two) as EffectOp[];
+    const program = mustDerive(deriveAttackEffect, two);
     const snipe = program[0];
     if (snipe?.op !== "damageChosen") throw new Error("expected a damageChosen");
     expect(snipe.count).toBe(2);
@@ -626,9 +627,10 @@ describe("§7 — what the class group refuses, and what it must not have moved"
         ],
       },
     ]);
-    const gatedClass = deriveAttackEffect(
+    const gatedClass = mustDerive(
+      deriveAttackEffect,
       "If there are 3 or fewer cards in your deck, this attack also does 120 damage to 1 of your opponent's Benched Pokémon ex. (Don't apply Weakness and Resistance for Benched Pokémon.)",
-    ) as EffectOp[];
+    );
     const gate = gatedClass[0];
     if (gate?.op !== "conditionGate") throw new Error("expected a conditionGate");
     const inner = gate.then[0];

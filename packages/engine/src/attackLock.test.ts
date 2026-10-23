@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
-import type { EffectOp } from "./effects";
 import { applyAction, programFor, redactGame } from "./index";
 import type { GameState, InPlayPokemon, Seat } from "./index";
 import {
@@ -20,6 +19,7 @@ import {
   setDamage,
   types,
   findEvent,
+  mustDerive,
 } from "./testFixtures";
 
 const BARE_TEXT = "During your next turn, this Pokémon can't attack.";
@@ -89,7 +89,7 @@ function refusal(state: GameState, seat: Seat, index: number): string {
 describe("the self-lock — derived, not authored", () => {
   it("derives the BARE sentence to a bare `preventAttack`", () => {
     expect(deriveAttackEffect(BARE_TEXT)).toEqual([{ op: "preventAttack" }]);
-    const op = (deriveAttackEffect(BARE_TEXT) as EffectOp[])[0] as object;
+    const op = mustDerive(deriveAttackEffect, BARE_TEXT)[0] as object;
     expect(Object.keys(op)).toEqual(["op"]);
     expect(deriveAttackEffect(BARE_TEXT.replace(/'/g, "’"))).toEqual([{ op: "preventAttack" }]);
   });
@@ -111,15 +111,15 @@ describe("the self-lock — derived, not authored", () => {
   });
 
   it("the compound's SECOND op is byte-identical to the bare sentence's only op", () => {
-    const compound = deriveAttackEffect(COMPOUND_TEXT) as EffectOp[];
-    expect(compound[1]).toEqual((deriveAttackEffect(BARE_TEXT) as EffectOp[])[0]);
+    const compound = mustDerive(deriveAttackEffect, COMPOUND_TEXT);
+    expect(compound[1]).toEqual(mustDerive(deriveAttackEffect, BARE_TEXT)[0]);
   });
 
   it("reads the compound's FIRST SENTENCE alone as ONE op — the anchor is not a prefix", () => {
     expect(deriveAttackEffect(PUT_HALF_ONLY)).toHaveLength(1);
     expect(deriveAttackEffect(COMPOUND_TEXT)).toHaveLength(2);
-    expect((deriveAttackEffect(PUT_HALF_ONLY) as EffectOp[])[0]).toEqual(
-      (deriveAttackEffect(COMPOUND_TEXT) as EffectOp[])[0],
+    expect(mustDerive(deriveAttackEffect, PUT_HALF_ONLY)[0]).toEqual(
+      mustDerive(deriveAttackEffect, COMPOUND_TEXT)[0],
     );
     expect(deriveAttackEffect(PUT_HALF_ONLY)).not.toContainEqual({ op: "preventAttack" });
     expect(

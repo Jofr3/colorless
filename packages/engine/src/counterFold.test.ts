@@ -16,6 +16,7 @@ import {
   setDamage,
   findEvent,
   roundTrip,
+  mustDerive,
 } from "./testFixtures";
 
 function placements(
@@ -207,8 +208,8 @@ describe("§2 — the anchors derive their own ops, and the prefix pair stays di
   it("the two opponent anchors are a PREFIX PAIR and the `$` is the whole of the fence", () => {
     expect(deriveAttackEffect(BOARD_FOLD)).not.toEqual(deriveAttackEffect(WOUNDED_FOLD));
     // …and the difference is exactly one key, which is what makes the pair a hazard.
-    const bare = (deriveAttackEffect(BOARD_FOLD) as EffectOp[])[0] as EffectOp;
-    const windowed = (deriveAttackEffect(WOUNDED_FOLD) as EffectOp[])[0] as EffectOp;
+    const bare = mustDerive(deriveAttackEffect, BOARD_FOLD)[0] as EffectOp;
+    const windowed = mustDerive(deriveAttackEffect, WOUNDED_FOLD)[0] as EffectOp;
     expect(Object.keys(windowed).filter((k) => !Object.keys(bare).includes(k))).toEqual([
       "damagedOnly",
     ]);
@@ -305,7 +306,7 @@ describe("§3 — TWO REQUIRED fields on a shipped op, and the record version do
     // **DIRECTION 1 — FORWARD: the literal this deploy writes, whole.** Key sets are
     // asserted rather than eyeballed, because "the object looked right" is how an
     // optional key goes missing.
-    const fresh = (deriveAttackEffect(BOARD_FOLD) as EffectOp[])[0] as EffectOp;
+    const fresh = mustDerive(deriveAttackEffect, BOARD_FOLD)[0] as EffectOp;
     expect(JSON.stringify(fresh)).toBe(
       '{"op":"counterEachAll","amount":20,"filter":{"kind":"anyPokemon"},"side":"opponent","source":"attack"}',
     );

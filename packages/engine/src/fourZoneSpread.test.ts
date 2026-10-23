@@ -39,6 +39,7 @@ import {
   types,
   driveSetup,
   roundTrip,
+  mustDerive,
 } from "./testFixtures";
 
 const FOUR_ZONE =
@@ -305,7 +306,7 @@ describe("D520 §2 — the program, spelled whole, and the base rule's witnesses
   });
 
   it("per-op fields: a one-body gate with NO `otherwise`, a flat hit, two damagedOnly spreads", () => {
-    const ops = deriveAttackEffect(FOUR_ZONE) as EffectOp[];
+    const ops = mustDerive(deriveAttackEffect, FOUR_ZONE);
     expect(ops).toHaveLength(3);
     const [gate, own, foe] = ops;
     if (gate?.op !== "conditionGate") throw new Error("op 0 is not a conditionGate");
@@ -325,7 +326,7 @@ describe("D520 §2 — the program, spelled whole, and the base rule's witnesses
   });
 
   it("the TOP LEVEL has no `damageDefender` — so `attack.ts`'s `programDamage` is false and the base lands pre-program", () => {
-    const ops = deriveAttackEffect(FOUR_ZONE) as EffectOp[];
+    const ops = mustDerive(deriveAttackEffect, FOUR_ZONE);
     expect(ops.some((o) => o.op === "damageDefender")).toBe(false);
     expect(ops.map((o) => o.op)).toEqual(["conditionGate", "spreadDamage", "spreadDamage"]);
   });
@@ -501,7 +502,7 @@ describe("D520 §5 — the order is Active → own Bench → opponent Bench, and
 
   it("the derived program runs to the SAME state and log as a hand-built Active → own → opponent sequence (D258/D482)", () => {
     const state = table("d520-wall", CANONICAL);
-    const derived = run(state, deriveAttackEffect(FOUR_ZONE) as EffectOp[]);
+    const derived = run(state, mustDerive(deriveAttackEffect, FOUR_ZONE));
     const hand = run(state, [
       {
         op: "conditionGate",
@@ -526,7 +527,7 @@ describe("D520 §5 — the order is Active → own Bench → opponent Bench, and
   });
 
   it("the ORDER survives into the derived program, where a mutant can be seen without a board", () => {
-    const ops = deriveAttackEffect(FOUR_ZONE) as EffectOp[];
+    const ops = mustDerive(deriveAttackEffect, FOUR_ZONE);
     expect(ops.map((o) => (o.op === "spreadDamage" ? o.target : o.op))).toEqual([
       "conditionGate",
       "yourBench",

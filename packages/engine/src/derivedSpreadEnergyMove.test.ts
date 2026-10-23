@@ -13,6 +13,7 @@ import {
   mustApply,
   setActiveFromDeck,
   roundTrip,
+  mustDerive,
 } from "./testFixtures";
 
 const SPREAD_ALL = "Move all Energy from this Pokémon to your Benched Pokémon in any way you like.";
@@ -103,8 +104,8 @@ describe("§1 — the deriver: two anchors, three sentences, and the edges they 
   });
 
   it("the COUPLED sibling still derives WITHOUT the rider — the one-axis control", () => {
-    const coupled = deriveAttackEffect(COUPLED_SIBLING) as EffectOp[];
-    const spread = deriveAttackEffect(SPREAD_ALL) as EffectOp[];
+    const coupled = mustDerive(deriveAttackEffect, COUPLED_SIBLING);
+    const spread = mustDerive(deriveAttackEffect, SPREAD_ALL);
     expect(coupled).toEqual([
       { op: "moveEnergy", filter: { kind: "anyEnergy" }, max: "all", route: "selfToBench" },
     ]);
@@ -116,8 +117,8 @@ describe("§1 — the deriver: two anchors, three sentences, and the edges they 
   });
 
   it("the TYPED and UNTYPED spreads differ in their FILTER and in nothing else", () => {
-    const untyped = deriveAttackEffect(SPREAD_ANY) as EffectOp[];
-    const typed = deriveAttackEffect(SPREAD_TYPED) as EffectOp[];
+    const untyped = mustDerive(deriveAttackEffect, SPREAD_ANY);
+    const typed = mustDerive(deriveAttackEffect, SPREAD_TYPED);
     expect({ ...(untyped[0] as object), filter: undefined }).toEqual({
       ...(typed[0] as object),
       filter: undefined,

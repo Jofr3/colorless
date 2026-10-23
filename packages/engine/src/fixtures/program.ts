@@ -40,3 +40,10 @@ export function programBranchCarriers(ops: readonly EffectOp[]): Map<string, Set
   }
   return carriers;
 }
+
+/** `derive(text)`, failing loudly when the deriver refuses the text. */
+export function mustDerive<T>(derive: (text: string) => T | null, text: string): T {
+  const derived = derive(text);
+  if (derived === null) throw new Error(`deriver refused: ${text}`);
+  return derived;
+}

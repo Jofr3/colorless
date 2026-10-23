@@ -18,6 +18,7 @@ import {
   setPrizes,
   driveSetup,
   roundTrip,
+  mustDerive,
 } from "./testFixtures";
 
 const PRINTED =
@@ -221,7 +222,7 @@ describe("D505 §2 — the rider is read, and every neighbour is read WITHOUT it
       { op: "spreadDamage", target: "yourBench", amount: 10 },
     ]);
     for (const flat of [FLAT_OPP, FLAT_OPP_50, OWN_FLAT]) {
-      const ops = deriveAttackEffect(flat) as EffectOp[];
+      const ops = mustDerive(deriveAttackEffect, flat);
       expect(Object.hasOwn(ops[0] ?? {}, "perTakenPrize")).toBe(false);
     }
   });
@@ -535,7 +536,7 @@ describe("D505 §7 — the record constant, argued at the address and driven ove
   } as unknown as EffectOp;
 
   it("the two ops differ in exactly ONE key, and the v30 bytes survive a JSON round trip", () => {
-    const derived = (deriveAttackEffect(PRINTED) as EffectOp[])[0];
+    const derived = mustDerive(deriveAttackEffect, PRINTED)[0];
     if (derived === undefined) throw new Error("expected a program");
     const differing = Object.keys(derived).filter(
       (k) =>
@@ -553,7 +554,7 @@ describe("D505 §7 — the record constant, argued at the address and driven ove
     // vacuous on an empty bench.
     const state = table(3);
     const events: GameEvent[] = [];
-    const run = runProgram(state, deriveAttackEffect(PRINTED) as EffectOp[], ctx, events);
+    const run = runProgram(state, mustDerive(deriveAttackEffect, PRINTED), ctx, events);
     expect(run.kind).toBe("done");
     // …and the whole attack resolves without an `effect:choose` phase either.
     expect(swing(state, AT.scaled).state.phase.kind).not.toBe("effect:choose");
@@ -572,7 +573,7 @@ describe("D505 §7 — the record constant, argued at the address and driven ove
   it("…and the NEW bytes on the SAME board answer differently — both directions or neither (D441)", () => {
     const state = table(3);
     const events: GameEvent[] = [];
-    const run = runProgram(state, deriveAttackEffect(PRINTED) as EffectOp[], ctx, events);
+    const run = runProgram(state, mustDerive(deriveAttackEffect, PRINTED), ctx, events);
     if (run.kind !== "done") throw new Error("expected done");
     expect(damageVector(run.state, "p2")).toEqual([0, 30, 30, 30]);
   });
@@ -603,7 +604,7 @@ describe("D505 §8 — the residue, the surface, the version, and what stands st
 
   it("what this slice does NOT move, stated as zeroes (D496)", () => {
     expect(Object.keys(SPREAD_CARDS).every((id) => FIXTURE_POOL[id] === undefined)).toBe(true);
-    const ops = deriveAttackEffect(PRINTED) as EffectOp[];
+    const ops = mustDerive(deriveAttackEffect, PRINTED);
     expect(ops.map((o) => o.op)).toEqual(["spreadDamage"]);
   });
 });

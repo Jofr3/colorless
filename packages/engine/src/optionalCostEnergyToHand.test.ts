@@ -40,6 +40,7 @@ import {
   types,
   driveSetup,
   roundTrip,
+  mustDerive,
 } from "./testFixtures";
 
 const PRINTED =
@@ -231,7 +232,7 @@ describe("D524 §1 — the printed row derives to EXACTLY D405's op at `all` beh
     expect(Object.keys(got.ops[0] ?? {}).sort()).toEqual(["count", "filter", "from", "op", "to"]);
     expect(got.cond).toEqual(GATE);
     expect(got.payoff).toEqual({ kind: "moreDamage", bonus: 80 });
-    const [d405] = deriveAttackEffect(D405_TAKEN) as EffectOp[];
+    const [d405] = mustDerive(deriveAttackEffect, D405_TAKEN);
     expect(got.ops[0]).toEqual({ ...d405, count: "all" });
   });
 

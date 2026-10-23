@@ -39,6 +39,7 @@ import {
   types,
   driveSetup,
   roundTrip,
+  mustDerive,
 } from "./testFixtures";
 
 const PRINTED = "Shuffle up to 3 Basic {W} Energy cards from your discard pile into your deck.";
@@ -201,14 +202,14 @@ describe("D523 §1 — the printed row derives to EXACTLY Pal Pad's shape with t
   it("file line 485 derives to [retrieval to deck, shuffleDeck] — and this `toEqual` is what pins the printed ORDER (`D523-shuffle-back-arm-order-swapped`) and the second op (`-arm-drops-the-shuffle`)", () => {
     expect(deriveAttackEffect(PRINTED)).toEqual(PROGRAM);
     expect(deriveAttackEffect(PRINTED)).toHaveLength(2);
-    expect((deriveAttackEffect(PRINTED) as EffectOp[]).map((o) => o.op)).toEqual([
+    expect(mustDerive(deriveAttackEffect, PRINTED).map((o) => o.op)).toEqual([
       "discardPileRetrieval",
       "shuffleDeck",
     ]);
   });
 
   it("op 0's sorted KEY SET is exactly [dest, filter, max, op] — no `recordAs`, no `exclude` (D135) — and op 1 is the bare shuffle", () => {
-    const [retrieval, shuffle] = deriveAttackEffect(PRINTED) as EffectOp[];
+    const [retrieval, shuffle] = mustDerive(deriveAttackEffect, PRINTED);
     if (retrieval?.op !== "discardPileRetrieval")
       throw new Error("op 0 is not a discardPileRetrieval");
     if (shuffle?.op !== "shuffleDeck") throw new Error("op 1 is not a shuffleDeck");
@@ -237,7 +238,7 @@ describe("D523 §1 — the printed row derives to EXACTLY Pal Pad's shape with t
       { op: "shuffleDeck" },
     ]);
     // …and the two filters are the SAME bytes: the shared plural table / brace pattern.
-    const [mine] = deriveAttackEffect(PRINTED) as EffectOp[];
+    const [mine] = mustDerive(deriveAttackEffect, PRINTED);
     if (mine?.op !== "discardPileRetrieval") throw new Error("op 0 is not a discardPileRetrieval");
     expect(mine.filter).toEqual(twinOp.filter);
     expect(mine.max).toBe(twinOp.max);
@@ -326,7 +327,7 @@ describe("D523 §1 — the printed row derives to EXACTLY Pal Pad's shape with t
   });
 
   it("the noun goes through the brace pattern with the PLURAL flag — the singular flag would refuse `Energy cards` (`D523-shuffle-back-arm-reads-the-singular-flag`)", () => {
-    const [mine] = deriveAttackEffect(PRINTED) as EffectOp[];
+    const [mine] = mustDerive(deriveAttackEffect, PRINTED);
     if (mine?.op !== "discardPileRetrieval") throw new Error("op 0 is not a discardPileRetrieval");
     expect(mine.filter).toEqual({ kind: "basicEnergy", energyType: "Water" });
     // The other typed code the table admits, the same way.
