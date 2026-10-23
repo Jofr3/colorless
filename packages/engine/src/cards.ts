@@ -19,9 +19,9 @@ import type { GameState, InPlayPokemon, Seat } from "./types";
 // the fossil-id test runs first so other lookups pay one `Set.has`. Every face is read through the
 // markup normaliser, so a persisted raw face reads the same as a re-ingested one.
 export function cardOfUid(state: GameState, uid: string): Card | undefined {
-  const id = state.cardIdByUid[uid];
+  const id = Object.hasOwn(state.cardIdByUid, uid) ? state.cardIdByUid[uid] : undefined;
   if (id === undefined) return undefined;
-  const pooled = state.cardPool[id];
+  const pooled = Object.hasOwn(state.cardPool, id) ? state.cardPool[id] : undefined;
   const card = pooled === undefined ? undefined : normalizedFace(pooled);
   if (card === undefined || !FOSSIL_IDS.has(id)) return card;
   return uidInPlayStack(state, uid) ? fossilPokemonCard(card) : card;

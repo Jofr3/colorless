@@ -11202,7 +11202,7 @@ const REGISTRY: Record<string, CardProgram> = {
     none (an unsimulated Trainer/Ability, or a Pokémon whose attacks are wholly
     text-derived). */
 export function programFor(cardId: string): CardProgram | undefined {
-  return REGISTRY[cardId];
+  return Object.hasOwn(REGISTRY, cardId) ? REGISTRY[cardId] : undefined;
 }
 
 /**

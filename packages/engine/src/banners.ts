@@ -207,5 +207,9 @@ export const BANNER_BY_ID: Readonly<Record<string, Banner>> = {
  * no banner.
  */
 export function bannerOf(card: Card | undefined): Banner | undefined {
-  return card === undefined ? undefined : BANNER_BY_ID[card.id];
+  return card === undefined ? undefined : bannerOfId(card.id);
+}
+
+export function bannerOfId(id: string): Banner | undefined {
+  return Object.hasOwn(BANNER_BY_ID, id) ? BANNER_BY_ID[id] : undefined;
 }

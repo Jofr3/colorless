@@ -22,7 +22,7 @@ import {
   topUid,
 } from "./cards";
 import type { DamageModifier, PokemonSuffix, PreventedAttackerClass } from "./cards";
-import { type Banner, bannerOf } from "./banners";
+import { type Banner, bannerOf, bannerOfId } from "./banners";
 import type { Attack, BasicEnergyType, Card } from "@colorless/schema";
 import type {
   AttackerClass,
@@ -129,7 +129,7 @@ export function benchLimitForIds(
 ): number {
   return benchLimitFrom(
     stadiumCardId,
-    inPlayCardIds.some((id) => bannerOf({ id } as Card) === "Tera"),
+    inPlayCardIds.some((id) => bannerOfId(id) === "Tera"),
   );
 }
 
