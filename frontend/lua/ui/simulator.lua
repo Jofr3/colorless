@@ -6,6 +6,7 @@ local D=require('ui.card_dimensions')
 -- juice for damage and prizes, and generic-options overlays for prompts.
 -- The browser host (LuaSimulator) owns the rules; Lua owns everything seen.
 local T=require('ui.theme')
+local Controls=require('ui.controls')
 local Button=require('ui.button')
 local Card=require('ui.card')
 local CardFrame=require('ui.card_frame')
@@ -1613,11 +1614,14 @@ function Simulator:keypressed(key)
   if key=='tab' or key=='left' or key=='right' or key=='up' or key=='down' then
     local cardCount=#self.cards
     local total=#self.controls+cardCount;if total==0 then return end
-    local delta=(key=='left' or key=='up' or (key=='tab' and love.keyboard.isDown('lshift','rshift'))) and -1 or 1
-    for _=1,total do
-      self.focus=(self.focus-1+delta+total)%total+1
+    local found
+    self.focus,found=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,total,function(i)
+      local b=self.controls[i];local c=self.cards[i-#self.controls]
+      return not ((b and not b.disabled and not b.invisible) or (c and not c.item.hidden and not c.drawAfterPromotion))
+    end)
+    if found then
       local b=self.controls[self.focus];local c=self.cards[self.focus-#self.controls]
-      if (b and not b.disabled and not b.invisible) or (c and not c.item.hidden and not c.drawAfterPromotion) then self.focusCard=c;self.callbacks.announce(b and b.label or c.item.name);break end
+      self.focusCard=c;self.callbacks.announce(b and b.label or c.item.name)
     end
   elseif key=='return' or key=='space' then
     if self.focusCard then

@@ -6,6 +6,7 @@ local WheelPager=require('ui.wheel_pager')
 -- with a create_option_cycle filter and an
 -- attention_text countdown. src/lua/online.ts owns the socket.
 local T=require('ui.theme')
+local Controls=require('ui.controls')
 local Button=require('ui.button')
 local Modal=require('ui.modal')
 local Motion=require('ui.motion')
@@ -490,11 +491,7 @@ function Online:keypressed(key)
   if (key=='left' or key=='right') and item and item.kind=='cycle' then self:activate(self.focus,key=='left' and -1 or 1)
   elseif (key=='left' or key=='right') and self.step=='menu' then self:activate(self.tab==1 and 2 or 1)
   elseif key=='tab' or key=='up' or key=='down' or key=='left' or key=='right' then
-    local direction=(key=='up' or key=='left' or (key=='tab' and love.keyboard.isDown('lshift','rshift'))) and -1 or 1
-    for _=1,#self.items do
-      self.focus=(self.focus-1+direction)%#self.items+1
-      if not self.items[self.focus].disabled then break end
-    end
+    self.focus=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,#self.items,function(i) return self.items[i].disabled end)
     self.callbacks.announce(self:describe(self.items[self.focus]))
   elseif key=='pageup' or key=='pagedown' then self:changePage(key=='pageup' and -1 or 1)
   elseif key=='return' or key=='space' then self:activate(self.focus)

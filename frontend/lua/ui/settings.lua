@@ -1,6 +1,7 @@
 -- Layout and controls follow create_UIBox_settings/create_UIBox_generic_options,
 -- create_slider and create_toggle. Only settings supported by this home appear.
 local T=require('ui.theme')
+local Controls=require('ui.controls')
 local Button=require('ui.button')
 local Modal=require('ui.modal')
 local Account=require('ui.account')
@@ -261,7 +262,7 @@ function Settings:keypressed(key)
   elseif (key=='left' or key=='right') and item and item.kind=='tab' then
     self:activate((item.tab-1+(key=='left' and -1 or 1))%#tabs+1)
   elseif key=='tab' or key=='down' or key=='up' or key=='left' or key=='right' then
-    local backward=key=='up' or key=='left' or (key=='tab' and love.keyboard.isDown('lshift','rshift'))
+    local backward=Controls.backward(key)
     self.focus=self.focus==0 and (backward and #self.items or 1)
       or ((self.focus-1+(backward and -1 or 1))%#self.items)+1
     self.callbacks.announce(self:describe(self.items[self.focus]))

@@ -3,6 +3,7 @@ local WheelPager=require('ui.wheel_pager')
 -- Shared library elements: text input, collection tray, deck piles/counts and
 -- animated red pagination. Player tabs and the sandbox launch remain outside.
 local T=require('ui.theme')
+local Controls=require('ui.controls')
 local Button=require('ui.button')
 local Modal=require('ui.modal')
 local Codec=require('ui.codec')
@@ -177,11 +178,9 @@ end
 function Sandbox:keypressed(key)
   if key=='escape' then self:leave('home');return end
   if key=='tab' or key=='up' or key=='down' or key=='left' or key=='right' then
-    local direction=(key=='up' or key=='left' or (key=='tab' and love.keyboard.isDown('lshift','rshift'))) and -1 or 1
-    for _=1,#self.controls do
-      self.focus=(self.focus-1+direction)%#self.controls+1
-      if not self.controls[self.focus].disabled then self.callbacks.announce(self.controls[self.focus].label~='' and self.controls[self.focus].label or 'Search decks');break end
-    end
+    local found
+    self.focus,found=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,#self.controls,function(i) return self.controls[i].disabled end)
+    if found then self.callbacks.announce(self.controls[self.focus].label~='' and self.controls[self.focus].label or 'Search decks') end
   elseif key=='pageup' or key=='pagedown' then self:changePage(key=='pageup' and -1 or 1)
   elseif key=='return' or key=='space' then self:activate(self.focus) end
 end

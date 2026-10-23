@@ -7,6 +7,7 @@ local WheelPager=require('ui.wheel_pager')
 -- inspector and the game-over screen (create_UIBox_game_over). Online, Leave
 -- match uses delete_profile's press-again confirm because leaving forfeits.
 local T=require('ui.theme')
+local Controls=require('ui.controls')
 local Button=require('ui.button')
 local Modal=require('ui.modal')
 local Dyna=require('ui.dynatext')
@@ -431,8 +432,7 @@ function Overlay:keypressed(key)
   end
   if key=='tab' or key=='left' or key=='right' or key=='up' or key=='down' then
     local total=#self.controls;if total==0 then return true end
-    local delta=(key=='left' or key=='up' or (key=='tab' and love.keyboard.isDown('lshift','rshift'))) and -1 or 1
-    for _=1,total do self.focus=(self.focus-1+delta+total)%total+1;if not self.controls[self.focus].disabled then break end end
+    self.focus=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,total,function(i) return self.controls[i].disabled end)
     local b=self.controls[self.focus]
     if self.armed and (not b or b.action~='leave') then self:disarm() end
     if b then

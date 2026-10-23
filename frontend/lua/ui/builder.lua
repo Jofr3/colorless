@@ -1,6 +1,7 @@
 local D=require('ui.card_dimensions')
 local WheelPager=require('ui.wheel_pager')
 local T=require('ui.theme')
+local Controls=require('ui.controls')
 local Button=require('ui.button')
 local Card=require('ui.card')
 local Collection=require('ui.collection_motion')
@@ -528,9 +529,8 @@ function Builder:keypressed(key)
     self.callbacks.announce(control.label..': '..((self.fields[control.arg] or '')~='' and self.fields[control.arg] or 'Any'))
   elseif key=='escape' then if self.modal then local choices=self.modal.mode=='choices';self:closeModal();if choices then self:openModal('filters')end else self:command('leave')end
   elseif key=='tab' or key=='right' or key=='down' or key=='left' or key=='up' then
-    local back=key=='left' or key=='up' or key=='tab' and love.keyboard.isDown('lshift','rshift')
     if #self.controls==0 then return end
-    repeat self.focus=(self.focus-1+(back and -1 or 1))%#self.controls+1 until not self.controls[self.focus].disabled and not self.controls[self.focus].inert
+    self.focus=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,#self.controls,function(i) return self.controls[i].disabled or self.controls[i].inert end)
     self.callbacks.announce(self.controls[self.focus].label)
   elseif key=='return' or key=='space'then self:activate(self.focus)
   elseif not self.modal and (key=='pagedown' or key=='pageup')then self:command('page',key=='pageup' and -1 or 1)end

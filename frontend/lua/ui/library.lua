@@ -1,6 +1,7 @@
 local D=require('ui.card_dimensions')
 local WheelPager=require('ui.wheel_pager')
 local T=require('ui.theme')
+local Controls=require('ui.controls')
 local Button=require('ui.button')
 local Pile=require('ui.deck_pile')
 local Alert=require('ui.card_alert')
@@ -270,11 +271,7 @@ function Library:keypressed(key)
     if self.modal then self:closeModal()
     else self.callbacks.home() end
   elseif key=='tab' or key=='right' or key=='down' or key=='left' or key=='up' then
-    local backwards=key=='left' or key=='up' or (key=='tab' and love.keyboard.isDown('lshift','rshift'))
-    for _=1,#self.controls do
-      self.focus=(self.focus-1+(backwards and -1 or 1))%#self.controls+1
-      if not self.controls[self.focus].disabled then break end
-    end
+    self.focus=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,#self.controls,function(i) return self.controls[i].disabled end)
     local b=self.controls[self.focus]; if b then self.callbacks.announce((b.action=='manage' and 'Manage '..self.items[b.card].name) or b.label~='' and b.label or 'Search decks') end
   elseif key=='return' or key=='space' then self:activate(self.focus)
   elseif key=='pageup' or key=='pagedown' then if not self.modal then self:command('page',key=='pageup' and -1 or 1) end end
