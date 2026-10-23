@@ -81,6 +81,7 @@ The palette follows Balatro's `globals.lua`: red `#FE5F55`, blue `#009DFF`, gree
 - `ui/text_fit.lua`: shrink-then-ellipsize fitting of single-line text on UTF-8 boundaries.
 - `ui/controls.lua`: keyboard focus direction and bounded focus cycling over a screen's controls.
 - `ui/mailbox.lua`: reads the host-written mailbox files and parses the shared card-art map.
+- `ui/limits.lua` and `web/limits.json`: deck sizes and name-length caps generated from the TypeScript constants by `bun scripts/lua-constants.ts` (`--check` runs in `bun run check` and CI); `build:lua` inlines the JSON into host.js.
 - `ui/auth.lua`: authentication form display state; `ui/text_input.lua` shares field, selection and caret rendering.
 - `src/lua/`: browser adapters over the shared API client, including session, profile, sign-in, registration and Google authentication errors. `bridge.ts` wires them to the host's events; Vite bundles it with the configured `VITE_API_ORIGIN`.
 - `ui/preferences.lua`: defaults, bounds validation, reduced-motion policy, and persistence serialization.
