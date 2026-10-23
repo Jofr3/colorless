@@ -7,6 +7,8 @@ import {
   SESSION_COOKIE,
   SESSION_TTL_SECONDS,
   sessionCookie,
+  sessionExpired,
+  sessionIdFromCookie,
 } from "./session";
 
 describe("generateSessionToken", () => {
@@ -69,5 +71,23 @@ describe("readCookie", () => {
   it("does not confuse prefixed names or values containing '='", () => {
     expect(readCookie("xsession=nope; session=yes", "session")).toBe("yes");
     expect(readCookie("session=a=b", "session")).toBe("a=b");
+  });
+});
+
+describe("sessionIdFromCookie", () => {
+  it("hashes the session token, and is null without one", async () => {
+    const token = generateSessionToken();
+    expect(await sessionIdFromCookie(`theme=dark; ${SESSION_COOKIE}=${token}`)).toBe(
+      await hashSessionToken(token),
+    );
+    expect(await sessionIdFromCookie("theme=dark")).toBeNull();
+    expect(await sessionIdFromCookie(undefined)).toBeNull();
+  });
+});
+
+describe("sessionExpired", () => {
+  it("counts the expiry instant itself as expired", () => {
+    expect(sessionExpired(new Date(1000), 999)).toBe(false);
+    expect(sessionExpired(new Date(1000), 1000)).toBe(true);
   });
 });

@@ -7,6 +7,7 @@ import {
   MATCH_RECORD_VERSION,
   MATCH_ACTION_DISPOSITION,
   matchSeatOf,
+  playerIdOfSeat,
   type MatchRecord,
   readMatchRecord,
   rematchChooser,
@@ -151,6 +152,12 @@ describe("matchSeatOf — which redacted view a socket receives", () => {
   it("returns null for a player not seated in the lobby", () => {
     expect(matchSeatOf(snapshot, "stranger")).toBeNull();
     expect(matchSeatOf({ ...snapshot, guest: null }, "g")).toBeNull();
+  });
+
+  it("inverts through playerIdOfSeat, null for an empty guest seat", () => {
+    expect(playerIdOfSeat(snapshot, "p1")).toBe("h");
+    expect(playerIdOfSeat(snapshot, "p2")).toBe("g");
+    expect(playerIdOfSeat({ ...snapshot, guest: null }, "p2")).toBeNull();
   });
 });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildUpsertSql, chunk, escapeSqlText, type SqlColumnSpec, sqlLiteral } from "./sql";
+import { buildUpsertSql, escapeSqlText, type SqlColumnSpec, sqlLiteral } from "./sql";
 
 describe("escapeSqlText", () => {
   it("wraps plain text in single quotes", () => {
@@ -116,24 +116,5 @@ ON CONFLICT("id") DO UPDATE SET
   it("names the offending table.column when a value mismatches its kind", () => {
     const row = { id: "a", name: "n", count: Number.NaN, active: true, tags: null };
     expect(() => buildUpsertSql("demo", DEMO_COLUMNS, [row])).toThrow(/demo\.count/);
-  });
-});
-
-describe("chunk", () => {
-  it("splits into consecutive chunks with a short tail", () => {
-    expect(chunk([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
-  });
-
-  it("returns one chunk when everything fits", () => {
-    expect(chunk([1, 2], 5)).toEqual([[1, 2]]);
-  });
-
-  it("returns no chunks for no items", () => {
-    expect(chunk([], 3)).toEqual([]);
-  });
-
-  it("rejects non-positive or fractional sizes", () => {
-    expect(() => chunk([1], 0)).toThrow(/positive integer/);
-    expect(() => chunk([1], 2.5)).toThrow(/positive integer/);
   });
 });

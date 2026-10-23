@@ -38,17 +38,3 @@ export function unknownIds(requested: string[], known: Iterable<string>): string
   }
   return missing;
 }
-
-/** D1 caps bound parameters at 100 per statement — statements over dynamic
-    lists must chunk. (A 200-entry card list is 200 params as an IN query and
-    600 as an insert; both split here and run inside ONE db.batch.) */
-export const D1_MAX_BOUND_PARAMS = 100;
-
-/** Split `items` into runs of at most `size` (the last may be shorter). */
-export function chunk<T>(items: readonly T[], size: number): T[][] {
-  const chunks: T[][] = [];
-  for (let start = 0; start < items.length; start += size) {
-    chunks.push(items.slice(start, start + size));
-  }
-  return chunks;
-}

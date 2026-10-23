@@ -19,6 +19,19 @@ export async function hashSessionToken(token: string): Promise<string> {
   return toBase64Url(new Uint8Array(digest));
 }
 
+/** The sessions row id named by a Cookie request header, or null when it carries no session. */
+export async function sessionIdFromCookie(
+  header: string | null | undefined,
+): Promise<string | null> {
+  const token = readCookie(header, SESSION_COOKIE);
+  return token === null ? null : hashSessionToken(token);
+}
+
+/** Expiry is enforced on read: a session is dead from its `expiresAt` instant on. */
+export function sessionExpired(expiresAt: Date, now: number = Date.now()): boolean {
+  return expiresAt.getTime() <= now;
+}
+
 const SESSION_COOKIE_ATTRIBUTES = "Path=/; HttpOnly; Secure; SameSite=None";
 
 /** Set-Cookie value that installs a session token for 30 days. */

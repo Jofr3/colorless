@@ -6,6 +6,9 @@ import type { MiddlewareHandler } from "hono";
 import { every } from "hono/combine";
 import { etag, RETAINED_304_HEADERS } from "hono/etag";
 
+/** Says whether a catalog or asset response came from the KV/R2 cache: hit, miss or bypass. */
+export const CACHE_STATUS_HEADER = "x-colorless-cache";
+
 /** Public catalog freshness: 5 minutes fresh, then up to an hour more served
     stale while one background revalidation refreshes it. The KV entry behind
     it lives an hour too, so a re-ingest or a CACHE_VERSION bump reaches a
@@ -22,7 +25,7 @@ const RETAINED_HEADERS = [
   ...RETAINED_304_HEADERS,
   "access-control-allow-origin",
   "access-control-allow-credentials",
-  "x-colorless-cache",
+  CACHE_STATUS_HEADER,
 ];
 
 /** ETag every response from the body's digest and answer a matching

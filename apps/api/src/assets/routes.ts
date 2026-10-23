@@ -12,6 +12,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { cards, sets } from "../db/schema";
 import type { Env } from "../env";
+import { CACHE_STATUS_HEADER } from "../httpCache";
 import {
   cardAssetKey,
   cardOriginUrl,
@@ -37,19 +38,18 @@ function assetResponse(
     headers: {
       "Content-Type": contentType,
       "Cache-Control": CACHE_FOREVER,
-      "x-colorless-cache": cache,
+      [CACHE_STATUS_HEADER]: cache,
     },
   });
 }
 
 /**
- * The shared R2-then-origin flow. `resolveOriginUrl` is only consulted on an
- * R2 miss; returning null (unknown row / no asset URL) yields a 404 upstream,
- * as does a non-200 origin response. Returns null instead of a Response for
- * "not found" so the route keeps Hono's own 404 shape.
+ * The shared R2-then-origin flow. `resolveOriginUrl` is only consulted on an R2 miss. An unknown
+ * row, a missing asset URL or an origin 404 is `null` (the app's 404); an origin 5xx or a network
+ * error is a 502, so an upstream outage does not read as a missing image.
  */
-async function serveMirroredAsset(
-  env: Env,
+export async function serveMirroredAsset(
+  env: Pick<Env, "ASSETS">,
   key: string,
   contentType: string,
   resolveOriginUrl: () => Promise<string | null>,
@@ -62,7 +62,15 @@ async function serveMirroredAsset(
   if (originUrl === null) {
     return null;
   }
-  const origin = await fetch(originUrl);
+  let origin: Response;
+  try {
+    origin = await fetch(originUrl);
+  } catch {
+    return upstreamFailure();
+  }
+  if (origin.status >= 500) {
+    return upstreamFailure();
+  }
   if (origin.status !== 200) {
     return null;
   }
@@ -71,6 +79,10 @@ async function serveMirroredAsset(
   const bytes = await origin.arrayBuffer();
   await env.ASSETS.put(key, bytes, { httpMetadata: { contentType } });
   return assetResponse(bytes, contentType, "miss");
+}
+
+function upstreamFailure(): Response {
+  return Response.json({ error: "asset origin unavailable" }, { status: 502 });
 }
 
 assetsRoutes.get("/cards/:cardId/:file", async (c) => {

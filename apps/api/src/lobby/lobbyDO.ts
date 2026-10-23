@@ -12,6 +12,7 @@ import {
   isValidLobbyCode,
   LOBBY_WS_PING,
   LOBBY_WS_PONG,
+  type LobbyClientMessage,
   type LobbyServerMessage,
   type LobbySnapshot,
   makePlayer,
@@ -25,7 +26,7 @@ import {
   redactGame,
   type Seat,
 } from "@colorless/engine";
-import { drizzle } from "drizzle-orm/d1";
+import { type DrizzleD1Database, drizzle } from "drizzle-orm/d1";
 import type { Env } from "../env";
 import { avatarSeedFrom } from "../auth/avatar";
 import { resolveUserIdFromCookie } from "../auth/resolveSession";
@@ -40,6 +41,7 @@ import {
 import { loadCardPool } from "./cardPool";
 import { loadPlayerDeck } from "./deckLoad";
 import { loadDisplayName } from "./displayName";
+import { DO_CREATE_PATH, DO_WS_PATH, isWebSocketUpgrade, LOBBY_CODE_HEADER } from "./doProtocol";
 import {
   ABANDON_GRACE_MS,
   abandonsMatch,
@@ -49,6 +51,7 @@ import {
   DISCONNECT_GRACE_MS,
   EMPTY_LOBBY_TTL_MS,
   forfeitDeadlines,
+  type HelloDecision,
   helloDecision,
   LIVENESS_SWEEP_MS,
   parseClientMessage,
@@ -74,6 +77,7 @@ import {
   type MatchLoad,
   type MatchRecord,
   matchSeatOf,
+  playerIdOfSeat,
   SEAT_OF_SLOT,
   rematchChooser,
   settleFirstPlayer,
@@ -106,6 +110,12 @@ const SEAT_USERS_KEY = "seatUsers";
     the lobby's own host/guest order. It carries no privilege: the seatless
     redaction withholds both sides' hands either way. */
 const SPECTATOR_SIDE = "p1" as const;
+
+/** One validated client frame of the given kind. */
+type ClientFrame<Kind extends LobbyClientMessage["kind"]> = Extract<
+  LobbyClientMessage,
+  { kind: Kind }
+>;
 
 /** Whether the match handoff started a real game, or why it couldn't (P4
     increment 3) — a failed deck resolution surfaces `reason` to the players
@@ -140,6 +150,10 @@ export class LobbyDO {
   /** In-memory mirror of SNAPSHOT_KEY; undefined = not read since last wake. */
   private snapshot: LobbySnapshot | null | undefined;
 
+  private get db(): DrizzleD1Database {
+    return drizzle(this.env.DB);
+  }
+
   constructor(state: DurableObjectState, env: Env) {
     this.state = state;
     this.env = env;
@@ -154,8 +168,8 @@ export class LobbyDO {
   async fetch(request: Request): Promise<Response> {
     const path = new URL(request.url).pathname;
 
-    if (request.method === "POST" && path === "/create") {
-      const code = request.headers.get("x-lobby-code");
+    if (request.method === "POST" && path === DO_CREATE_PATH) {
+      const code = request.headers.get(LOBBY_CODE_HEADER);
       if (code === null || !isValidLobbyCode(code)) {
         return Response.json({ error: "invalid lobby code" }, { status: 400 });
       }
@@ -168,8 +182,8 @@ export class LobbyDO {
       return Response.json({ code }, { status: 201 });
     }
 
-    if (request.method === "GET" && path === "/ws") {
-      if (request.headers.get("Upgrade")?.toLowerCase() !== "websocket") {
+    if (request.method === "GET" && path === DO_WS_PATH) {
+      if (!isWebSocketUpgrade(request.headers.get("Upgrade"))) {
         return Response.json({ error: "expected a websocket upgrade" }, { status: 426 });
       }
       if ((await this.state.storage.get(CREATED_KEY)) === undefined) {
@@ -182,10 +196,7 @@ export class LobbyDO {
       // handoff can owner-scope this player's deck read. Anonymous (no/expired
       // cookie) leaves it null — the lobby still works, but that socket can't
       // start a match with a saved deck. Only the DO ever reads it.
-      const userId = await resolveUserIdFromCookie(
-        drizzle(this.env.DB),
-        request.headers.get("Cookie"),
-      );
+      const userId = await resolveUserIdFromCookie(this.db, request.headers.get("Cookie"));
       if (userId !== null) attachUserId(pair[1], userId);
       // A live socket parks any pending empty-lobby expiry.
       await this.scheduleMaintenance();
@@ -202,163 +213,195 @@ export class LobbyDO {
     const snapshot = await this.loadSnapshot();
 
     switch (frame.kind) {
-      case "hello": {
-        const decision = helloDecision(snapshot, frame.from);
-        if (decision === "reject-full") return await this.refuseSeat(ws, frame.from);
-        // Seat authentication (3a-sec): once a playerId is claimed by an account,
-        // only that account may re-adopt it — so a socket replaying the seat's
-        // PUBLIC playerId without its session can't take the seat (nor be handed
-        // its redacted in-game hand). An unbound (anonymous) seat is unaffected.
-        const seatUsers = await this.seatUsers();
-        const boundUserId = seatUsers[frame.from] ?? null;
-        const userId = attachedUserId(ws);
-        if (!seatClaimAllowed(boundUserId, userId)) return await this.refuseSeat(ws, frame.from);
-        // Bind the seat to the account on its FIRST authenticated claim.
-        if (boundUserId === null && userId !== null) {
-          await this.state.storage.put(SEAT_USERS_KEY, { ...seatUsers, [frame.from]: userId });
-        }
-        // The seat's name comes from the account, not the frame. Anonymous sockets keep their
-        // announced name. The read happens after the refusal branches so a refused socket costs no
-        // D1 query.
-        const name = (await loadDisplayName(drizzle(this.env.DB), userId)) ?? frame.name;
-        // …and the face, from the same account (P5-2). Derived, not stored and
-        // not read: it costs nothing beyond the userId the socket already holds.
-        const avatarSeed = avatarSeedFrom(userId);
-        switch (decision) {
-          case "claim-host": {
-            const code = await this.state.storage.get<string>(CODE_KEY);
-            if (code === undefined) return; // unreachable: /ws 404s before create
-            attachPlayer(ws, frame.from);
-            await this.clearDisconnectGrace(frame.from);
-            await this.commit(createSnapshot(code, makePlayer(frame.from, name, avatarSeed)));
-            await this.sendMatchIfInGame(ws);
-            return;
-          }
-          case "reseat-host": {
-            if (snapshot === null) return; // narrowing; decision implies non-null
-            attachPlayer(ws, frame.from);
-            await this.clearDisconnectGrace(frame.from);
-            await this.commit(reseatHost(snapshot, name, avatarSeed));
-            await this.sendMatchIfInGame(ws);
-            return;
-          }
-          case "seat-guest": {
-            if (snapshot === null) return;
-            attachPlayer(ws, frame.from);
-            await this.clearDisconnectGrace(frame.from);
-            await this.commit(seatGuest(snapshot, frame.from, name, avatarSeed));
-            await this.sendMatchIfInGame(ws);
-            return;
-          }
-        }
-        return;
-      }
-
-      case "intent": {
-        // The socket must be bound to the id it claims — a guest can't steer
-        // the host's seat by forging `from`.
-        if (snapshot === null || attachedPlayer(ws) !== frame.from) return;
-        const slot = slotOf(snapshot, frame.from);
-        if (slot === null) return;
-        const next = applyIntent(snapshot, slot, frame.intent);
-        if (next !== snapshot) await this.commit(next);
-        return;
-      }
-
-      case "action": {
-        // A game action for the running match (P4). Authority is the socket's
-        // OWN bound seat — never the client-claimed action.seat — so a client
-        // can never act for its opponent. Only a seated player in an in-game
-        // lobby with a persisted match may act.
-        if (snapshot === null || snapshot.phase !== "in-game") return;
-        const playerId = attachedPlayer(ws);
-        if (playerId === null) return;
-        const seat = matchSeatOf(snapshot, playerId);
-        if (seat === null) return;
-        const load = await this.peekMatch();
-        // A record this deploy can't read is retired here rather than silently
-        // swallowing every action for the rest of the lobby's life.
-        if (load.kind === "stale") return await this.retireStaleMatch();
-        if (load.kind === "none") return;
-        const record = load.record;
-        // Bind the action to the socket's seat (a client can't act for the
-        // opponent) and run the engine's total applyAction. A rejected action
-        // changes nothing (the client's optimistic gesture already sprang back);
-        // the actor's socket gets a transient `reject-action` pill with the
-        // engine's own reason (2b-iii-d). On accept, persist BEFORE broadcasting
-        // (crash-safe, mirroring the handoff) and fan each socket its redacted view.
-        // Date.now() stamps the appended log rows' elapsed time (2b-iii-d-ii).
-        const outcome = applyMatchAction(record, seat, frame.action, Date.now());
-        if (!outcome.ok) {
-          this.send(ws, { kind: "reject-action", reason: outcome.reason });
-          return;
-        }
-        await this.state.storage.put(MATCH_KEY, outcome.record);
-        this.broadcastMatch(outcome.record, snapshot);
-        return;
-      }
-
-      case "reject": {
-        // The host's kick — the exact frame the BroadcastChannel host posted
-        // at its guest. Valid only from the host's socket, aimed at the seated
-        // guest. Relay it first (the sticky "you were removed"), then free the
-        // seat and broadcast the now-waiting lobby.
-        if (snapshot === null || snapshot.guest === null) return;
-        if (attachedPlayer(ws) !== snapshot.host.id || frame.to !== snapshot.guest.id) return;
-        this.sendToPlayer(frame.to, frame);
-        await this.commit(removeGuest(snapshot));
-        return;
-      }
-
-      case "bye": {
-        if (snapshot === null || attachedPlayer(ws) !== frame.from) return;
-        const slot = slotOf(snapshot, frame.from);
-        if (slot === null) return;
-        // Walking out of a RUNNING match FORFEITS it (P4 3c-iv) instead of
-        // voiding it: the opponent gets a real result — the same one the Concede
-        // button and the 90s abandonment timer produce — down the same
-        // applyMatchAction → persist → broadcastMatch path. A no-op once the game
-        // is over (the engine refuses a concede then), which is what makes a
-        // double `bye` — an explicit leave() plus the unmount's — harmless.
-        const seat = snapshot.phase === "in-game" ? matchSeatOf(snapshot, frame.from) : null;
-        if (seat !== null) await this.concedeSeat(snapshot, seat, Date.now());
-        // …and only THEN the lobby change, which in-game keeps the seat (so the
-        // result the concede just broadcast stays on the winner's screen) and
-        // otherwise frees a guest's / parks the host's (applyBye).
-        await this.commit(applyBye(snapshot, slot));
-        return;
-      }
-
-      case "rematch": {
-        // Play again in this same lobby (P4 3c-vi) — the exit 3c-iv deliberately
-        // left out, since an in-game lobby otherwise has no route back except the
-        // host's kick. Legality is the SERVER's to judge, which is why this is a
-        // frame and not a seat `intent`: only the DO can see whether the match it
-        // holds has finished, and a rematch mid-game must be refused (conceding is
-        // how you leave a live one).
-        if (snapshot === null || attachedPlayer(ws) !== frame.from) return;
-        if (snapshot.phase !== "in-game") return;
-        const slot = slotOf(snapshot, frame.from);
-        if (slot === null) return;
-        const load = await this.peekMatch();
-        if (load.kind === "stale") return await this.retireStaleMatch();
-        // No record, or a game still in progress: nothing to replay yet. Silent —
-        // the client only offers the control on a finished board, so reaching this
-        // means a crafted frame, and it changes nothing.
-        if (load.kind !== "ok" || load.record.state.phase.kind !== "gameOver") return;
-        // The loser picks who goes first next time; a tie goes back to the coin.
-        const loser = rematchChooser(load.record.state);
-        const loserId =
-          loser === "p1" ? snapshot.host.id : loser === "p2" ? snapshot.guest?.id : undefined;
-        if (loserId === undefined) await this.state.storage.delete(CHOOSER_KEY);
-        else await this.state.storage.put(CHOOSER_KEY, loserId);
-        // `commit` sees the lobby leave in-game (`abandonsMatch`) and drops
-        // MATCH_KEY with it — which is precisely what makes the next handoff mint
-        // a FRESH game rather than hitting its idempotency guard on this one.
-        await this.commit(rematch(snapshot, slot));
-        return;
-      }
+      case "hello":
+        return this.onHello(ws, frame, snapshot);
+      case "intent":
+        return this.onIntent(ws, frame, snapshot);
+      case "action":
+        return this.onAction(ws, frame, snapshot);
+      case "reject":
+        return this.onReject(ws, frame, snapshot);
+      case "bye":
+        return this.onBye(ws, frame, snapshot);
+      case "rematch":
+        return this.onRematch(ws, frame, snapshot);
     }
+  }
+
+  private async onHello(
+    ws: WebSocket,
+    frame: ClientFrame<"hello">,
+    snapshot: LobbySnapshot | null,
+  ): Promise<void> {
+    const decision = helloDecision(snapshot, frame.from);
+    if (decision === "reject-full") return await this.refuseSeat(ws, frame.from);
+    // Seat authentication (3a-sec): once a playerId is claimed by an account,
+    // only that account may re-adopt it — so a socket replaying the seat's
+    // PUBLIC playerId without its session can't take the seat (nor be handed
+    // its redacted in-game hand). An unbound (anonymous) seat is unaffected.
+    const seatUsers = await this.seatUsers();
+    const boundUserId = seatUsers[frame.from] ?? null;
+    const userId = attachedUserId(ws);
+    if (!seatClaimAllowed(boundUserId, userId)) return await this.refuseSeat(ws, frame.from);
+    // Bind the seat to the account on its FIRST authenticated claim.
+    if (boundUserId === null && userId !== null) {
+      await this.state.storage.put(SEAT_USERS_KEY, { ...seatUsers, [frame.from]: userId });
+    }
+    // The seat's name comes from the account, not the frame. Anonymous sockets keep their
+    // announced name. The read happens after the refusal branches so a refused socket costs no
+    // D1 query.
+    const name = (await loadDisplayName(this.db, userId)) ?? frame.name;
+    // …and the face, from the same account (P5-2). Derived, not stored and
+    // not read: it costs nothing beyond the userId the socket already holds.
+    const avatarSeed = avatarSeedFrom(userId);
+    const next = await this.seatedSnapshot(decision, snapshot, frame.from, name, avatarSeed);
+    if (next === null) return;
+    attachPlayer(ws, frame.from);
+    await this.clearDisconnectGrace(frame.from);
+    await this.commit(next);
+    await this.sendMatchOrRetireStale(ws);
+  }
+
+  /** The snapshot with `playerId` seated as `decision` says, or null when there is nothing to
+      seat into (unreachable: /ws 404s before create, and the decision implies a snapshot). */
+  private async seatedSnapshot(
+    decision: Exclude<HelloDecision, "reject-full">,
+    snapshot: LobbySnapshot | null,
+    playerId: string,
+    name: string,
+    avatarSeed: string | null,
+  ): Promise<LobbySnapshot | null> {
+    switch (decision) {
+      case "claim-host": {
+        const code = await this.state.storage.get<string>(CODE_KEY);
+        return code === undefined
+          ? null
+          : createSnapshot(code, makePlayer(playerId, name, avatarSeed));
+      }
+      case "reseat-host":
+        return snapshot === null ? null : reseatHost(snapshot, name, avatarSeed);
+      case "seat-guest":
+        return snapshot === null ? null : seatGuest(snapshot, playerId, name, avatarSeed);
+    }
+  }
+
+  private async onIntent(
+    ws: WebSocket,
+    frame: ClientFrame<"intent">,
+    snapshot: LobbySnapshot | null,
+  ): Promise<void> {
+    // The socket must be bound to the id it claims — a guest can't steer
+    // the host's seat by forging `from`.
+    if (snapshot === null || attachedPlayer(ws) !== frame.from) return;
+    const slot = slotOf(snapshot, frame.from);
+    if (slot === null) return;
+    const next = applyIntent(snapshot, slot, frame.intent);
+    if (next !== snapshot) await this.commit(next);
+  }
+
+  private async onAction(
+    ws: WebSocket,
+    frame: ClientFrame<"action">,
+    snapshot: LobbySnapshot | null,
+  ): Promise<void> {
+    // A game action for the running match (P4). Authority is the socket's
+    // OWN bound seat — never the client-claimed action.seat — so a client
+    // can never act for its opponent. Only a seated player in an in-game
+    // lobby with a persisted match may act.
+    if (snapshot === null || snapshot.phase !== "in-game") return;
+    const playerId = attachedPlayer(ws);
+    if (playerId === null) return;
+    const seat = matchSeatOf(snapshot, playerId);
+    if (seat === null) return;
+    const load = await this.loadOrMigrateMatch();
+    // A record this deploy can't read is retired here rather than silently
+    // swallowing every action for the rest of the lobby's life.
+    if (load.kind === "stale") return await this.retireStaleMatch();
+    if (load.kind === "none") return;
+    const record = load.record;
+    // Bind the action to the socket's seat (a client can't act for the
+    // opponent) and run the engine's total applyAction. A rejected action
+    // changes nothing (the client's optimistic gesture already sprang back);
+    // the actor's socket gets a transient `reject-action` pill with the
+    // engine's own reason (2b-iii-d). On accept, persist BEFORE broadcasting
+    // (crash-safe, mirroring the handoff) and fan each socket its redacted view.
+    // Date.now() stamps the appended log rows' elapsed time (2b-iii-d-ii).
+    const outcome = applyMatchAction(record, seat, frame.action, Date.now());
+    if (!outcome.ok) {
+      this.send(ws, { kind: "reject-action", reason: outcome.reason });
+      return;
+    }
+    await this.state.storage.put(MATCH_KEY, outcome.record);
+    this.broadcastMatch(outcome.record, snapshot);
+  }
+
+  private async onReject(
+    ws: WebSocket,
+    frame: ClientFrame<"reject">,
+    snapshot: LobbySnapshot | null,
+  ): Promise<void> {
+    // The host's kick — the exact frame the BroadcastChannel host posted
+    // at its guest. Valid only from the host's socket, aimed at the seated
+    // guest. Relay it first (the sticky "you were removed"), then free the
+    // seat and broadcast the now-waiting lobby.
+    if (snapshot === null || snapshot.guest === null) return;
+    if (attachedPlayer(ws) !== snapshot.host.id || frame.to !== snapshot.guest.id) return;
+    this.sendToPlayer(frame.to, frame);
+    await this.commit(removeGuest(snapshot));
+  }
+
+  private async onBye(
+    ws: WebSocket,
+    frame: ClientFrame<"bye">,
+    snapshot: LobbySnapshot | null,
+  ): Promise<void> {
+    if (snapshot === null || attachedPlayer(ws) !== frame.from) return;
+    const slot = slotOf(snapshot, frame.from);
+    if (slot === null) return;
+    // Walking out of a RUNNING match FORFEITS it (P4 3c-iv) instead of
+    // voiding it: the opponent gets a real result — the same one the Concede
+    // button and the 90s abandonment timer produce — down the same
+    // applyMatchAction → persist → broadcastMatch path. A no-op once the game
+    // is over (the engine refuses a concede then), which is what makes a
+    // double `bye` — an explicit leave() plus the unmount's — harmless.
+    const seat = snapshot.phase === "in-game" ? matchSeatOf(snapshot, frame.from) : null;
+    if (seat !== null) await this.concedeSeat(snapshot, seat, Date.now());
+    // …and only THEN the lobby change, which in-game keeps the seat (so the
+    // result the concede just broadcast stays on the winner's screen) and
+    // otherwise frees a guest's / parks the host's (applyBye).
+    await this.commit(applyBye(snapshot, slot));
+  }
+
+  private async onRematch(
+    ws: WebSocket,
+    frame: ClientFrame<"rematch">,
+    snapshot: LobbySnapshot | null,
+  ): Promise<void> {
+    // Play again in this same lobby (P4 3c-vi) — the exit 3c-iv deliberately
+    // left out, since an in-game lobby otherwise has no route back except the
+    // host's kick. Legality is the SERVER's to judge, which is why this is a
+    // frame and not a seat `intent`: only the DO can see whether the match it
+    // holds has finished, and a rematch mid-game must be refused (conceding is
+    // how you leave a live one).
+    if (snapshot === null || attachedPlayer(ws) !== frame.from) return;
+    if (snapshot.phase !== "in-game") return;
+    const slot = slotOf(snapshot, frame.from);
+    if (slot === null) return;
+    const load = await this.loadOrMigrateMatch();
+    if (load.kind === "stale") return await this.retireStaleMatch();
+    // No record, or a game still in progress: nothing to replay yet. Silent —
+    // the client only offers the control on a finished board, so reaching this
+    // means a crafted frame, and it changes nothing.
+    if (load.kind !== "ok" || load.record.state.phase.kind !== "gameOver") return;
+    // The loser picks who goes first next time; a tie goes back to the coin.
+    const loser = rematchChooser(load.record.state);
+    const loserId = loser === null ? null : playerIdOfSeat(snapshot, loser);
+    if (loserId === null) await this.state.storage.delete(CHOOSER_KEY);
+    else await this.state.storage.put(CHOOSER_KEY, loserId);
+    // `commit` sees the lobby leave in-game (`abandonsMatch`) and drops
+    // MATCH_KEY with it — which is precisely what makes the next handoff mint
+    // a FRESH game rather than hitting its idempotency guard on this one.
+    await this.commit(rematch(snapshot, slot));
   }
 
   async webSocketClose(ws: WebSocket): Promise<void> {
@@ -464,7 +507,7 @@ export class LobbyDO {
         // the stale arm is unreachable here — read through the same guard anyway
         // (one door onto MATCH_KEY), and skip rather than retire: retiring inside
         // the alarm would commit a second snapshot mid-flip.
-        const load = await this.peekMatch();
+        const load = await this.loadOrMigrateMatch();
         if (load.kind === "ok") this.broadcastMatch(load.record, next);
       }
 
@@ -532,9 +575,9 @@ export class LobbyDO {
     // read doesn't count as live — the lobby is starting a match right now, so
     // the fresh write below simply replaces it (no retirement needed, and no
     // reset: the players are about to be in-game either way).
-    if ((await this.peekMatch()).kind === "ok") return { ok: true };
+    if ((await this.loadOrMigrateMatch()).kind === "ok") return { ok: true };
     if (snapshot.guest === null) return { ok: false, reason: "The lobby needs two players." };
-    const db = drizzle(this.env.DB);
+    const db = this.db;
     // Resolve each player's CHOSEN deck (P4 increment 3), owner-scoped by the
     // account the socket authenticated at /ws — a crafted `select-deck` naming
     // someone else's deck id resolves to nothing. host → p1, guest → p2.
@@ -566,8 +609,7 @@ export class LobbyDO {
     if (!result.ok) return { ok: false, reason: matchStartReason(result.error.code) };
     // A player no longer seated (a new guest since the rematch) falls back to the coin.
     const chooserId = await this.state.storage.get<string>(CHOOSER_KEY);
-    const chooser: Seat | null =
-      chooserId === snapshot.host.id ? "p1" : chooserId === snapshot.guest.id ? "p2" : null;
+    const chooser = chooserId === undefined ? null : matchSeatOf(snapshot, chooserId);
     const opening = settleFirstPlayer(result.state, result.events, chooser);
     // Seat display names for the game log's system rows (host → p1, guest → p2,
     // the SEAT_OF_SLOT mapping startMatch itself uses).
@@ -751,11 +793,12 @@ export class LobbyDO {
   /** A (re)connecting socket that lands in an already-in-game lobby gets the
       current match view at once — the `state` broadcast alone would leave it on
       the placeholder. No-op outside in-game or before the handoff wrote a
-      record (the load-failure wedge, online.md). */
-  private async sendMatchIfInGame(ws: WebSocket): Promise<void> {
+      record (the load-failure wedge, online.md). A record this deploy can't
+      read is retired instead, which ends the match and resets the lobby. */
+  private async sendMatchOrRetireStale(ws: WebSocket): Promise<void> {
     const snapshot = await this.loadSnapshot();
     if (snapshot === null || snapshot.phase !== "in-game") return;
-    const load = await this.peekMatch();
+    const load = await this.loadOrMigrateMatch();
     if (load.kind === "ok") this.broadcastMatch(load.record, snapshot, ws);
     else if (load.kind === "stale") await this.retireStaleMatch();
   }
@@ -769,7 +812,7 @@ export class LobbyDO {
     this.send(ws, { kind: "reject", to, reason: "full" });
     const snapshot = await this.loadSnapshot();
     if (snapshot === null || snapshot.phase !== "in-game") return;
-    const load = await this.peekMatch();
+    const load = await this.loadOrMigrateMatch();
     if (load.kind !== "ok") return;
     attachSpectator(ws);
     // The snapshot as well as the board. `state` frames only go out on a lobby
@@ -787,7 +830,7 @@ export class LobbyDO {
    * nothing if there is no readable record or the game is already over.
    */
   private async concedeSeat(snapshot: LobbySnapshot, seat: Seat, now: number): Promise<void> {
-    const load = await this.peekMatch();
+    const load = await this.loadOrMigrateMatch();
     if (load.kind !== "ok") return;
     const outcome = applyMatchAction(load.record, seat, { type: "concede" }, now);
     if (!outcome.ok) return;
@@ -797,10 +840,10 @@ export class LobbyDO {
 
   /**
    * Read the persisted match: absent, usable, or unreadable by this build. Every `MATCH_KEY` read
-   * goes through here. Older migratable records are migrated and persisted before any caller uses
-   * them.
+   * goes through here. An older migratable record is migrated and WRITTEN BACK before it is
+   * returned, so this is not a pure read.
    */
-  private async peekMatch(): Promise<MatchLoad> {
+  private async loadOrMigrateMatch(): Promise<MatchLoad> {
     // The D1 read opens the DO's input gate, which is why `loadMatchRecord` re-reads before
     // writing.
     return loadMatchRecord(
@@ -808,7 +851,7 @@ export class LobbyDO {
         get: () => this.state.storage.get(MATCH_KEY),
         put: (record) => this.state.storage.put(MATCH_KEY, record),
       },
-      (ids) => loadCardPool(drizzle(this.env.DB), ids),
+      (ids) => loadCardPool(this.db, ids),
     );
   }
 

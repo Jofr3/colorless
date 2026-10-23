@@ -4,7 +4,12 @@
 import type { MiddlewareHandler } from "hono";
 import { every } from "hono/combine";
 import type { Env } from "../env";
-import { cacheControl, conditionalGet, PUBLIC_CATALOG_CACHE } from "../httpCache";
+import {
+  CACHE_STATUS_HEADER,
+  cacheControl,
+  conditionalGet,
+  PUBLIC_CATALOG_CACHE,
+} from "../httpCache";
 
 /** 1 hour — long enough to absorb hot traffic, short enough that a re-ingest
     shows up without a manual purge. */
@@ -48,7 +53,7 @@ const kvCache: MiddlewareHandler<{ Bindings: Env }> = async (c, next) => {
   if (key.length > KV_MAX_KEY_BYTES || url.searchParams.has("id")) {
     await next();
     if (c.res.status === 200) {
-      c.res.headers.set("x-colorless-cache", "bypass");
+      c.res.headers.set(CACHE_STATUS_HEADER, "bypass");
     }
     return;
   }
@@ -56,12 +61,12 @@ const kvCache: MiddlewareHandler<{ Bindings: Env }> = async (c, next) => {
   if (cached !== null) {
     return c.body(cached, 200, {
       "Content-Type": "application/json",
-      "x-colorless-cache": "hit",
+      [CACHE_STATUS_HEADER]: "hit",
     });
   }
   await next();
   if (c.res.status === 200) {
-    c.res.headers.set("x-colorless-cache", "miss");
+    c.res.headers.set(CACHE_STATUS_HEADER, "miss");
     await c.env.CACHE.put(key, await c.res.clone().text(), {
       expirationTtl: CACHE_TTL_SECONDS,
     });

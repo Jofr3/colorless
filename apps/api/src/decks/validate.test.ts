@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chunk, createsCycle, type ParentById, unknownIds } from "./validate";
+import { createsCycle, type ParentById, unknownIds } from "./validate";
 
 describe("createsCycle", () => {
   // root ─ a ─ b ─ c (a chain), plus root-level sibling `s`.
@@ -55,22 +55,5 @@ describe("unknownIds", () => {
 
   it("reports each missing id once", () => {
     expect(unknownIds(["a", "a", "b"], ["b"])).toEqual(["a"]);
-  });
-});
-
-describe("chunk", () => {
-  it("splits into runs of the given size, last one shorter", () => {
-    expect(chunk([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
-  });
-
-  it("keeps an exact multiple intact", () => {
-    expect(chunk([1, 2, 3, 4], 2)).toEqual([
-      [1, 2],
-      [3, 4],
-    ]);
-  });
-
-  it("returns [] for an empty list", () => {
-    expect(chunk([], 10)).toEqual([]);
   });
 });

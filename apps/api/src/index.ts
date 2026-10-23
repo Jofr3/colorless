@@ -4,6 +4,7 @@
 import { type HealthResponse, healthResponseSchema } from "@colorless/schema";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { HTTPException } from "hono/http-exception";
 import { assetsRoutes } from "./assets/routes";
 import { authRoutes } from "./auth/routes";
 import { catalogRoutes } from "./catalog/routes";
@@ -12,6 +13,14 @@ import { appCorsOrigins, type Env } from "./env";
 import { lobbyRoutes, lobbySocketRoutes } from "./lobby/routes";
 
 const app = new Hono<{ Bindings: Env }>();
+
+// Every error body is JSON `{ error, ...extras }`, including unmatched routes and uncaught throws.
+app.notFound((c) => c.json({ error: "not found" }, 404));
+app.onError((error, c) => {
+  if (error instanceof HTTPException) return error.getResponse();
+  console.error(error);
+  return c.json({ error: "internal error" }, 500);
+});
 
 // The lobby WebSocket upgrade (§3.6) mounts BEFORE the CORS middleware:
 // WebSocket handshakes aren't subject to CORS, and hono/cors would throw

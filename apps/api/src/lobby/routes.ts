@@ -10,6 +10,13 @@
 import { generateLobbyCode, isValidLobbyCode } from "@colorless/schema";
 import { Hono } from "hono";
 import type { Env } from "../env";
+import {
+  DO_CREATE_PATH,
+  DO_WS_PATH,
+  doUrl,
+  isWebSocketUpgrade,
+  LOBBY_CODE_HEADER,
+} from "./doProtocol";
 
 const CREATE_ATTEMPTS = 5;
 
@@ -23,9 +30,9 @@ lobbyRoutes.post("/", async (c) => {
   for (let attempt = 0; attempt < CREATE_ATTEMPTS; attempt++) {
     const code = generateLobbyCode();
     const stub = c.env.LOBBY.get(c.env.LOBBY.idFromName(code));
-    const res = await stub.fetch("https://lobby-do/create", {
+    const res = await stub.fetch(doUrl(DO_CREATE_PATH), {
       method: "POST",
-      headers: { "x-lobby-code": code },
+      headers: { [LOBBY_CODE_HEADER]: code },
     });
     if (res.status === 201) return c.json({ code }, 201);
   }
@@ -46,11 +53,11 @@ lobbySocketRoutes.get("/:code/ws", async (c) => {
   if (!isValidLobbyCode(code)) {
     return c.json({ error: "no such lobby" }, 404);
   }
-  if (c.req.header("Upgrade")?.toLowerCase() !== "websocket") {
+  if (!isWebSocketUpgrade(c.req.header("Upgrade"))) {
     return c.json({ error: "expected a websocket upgrade" }, 426);
   }
   const stub = c.env.LOBBY.get(c.env.LOBBY.idFromName(code));
   // Forward the original upgrade request, re-addressed to the DO's internal
   // /ws path; the 101 (or the DO's 404 for an expired code) flows back as-is.
-  return stub.fetch(new Request("https://lobby-do/ws", c.req.raw));
+  return stub.fetch(new Request(doUrl(DO_WS_PATH), c.req.raw));
 });

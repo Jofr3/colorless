@@ -10,10 +10,13 @@ import {
   lobbyClientMessageSchema,
   type LobbySlot,
   type LobbySnapshot,
+  lobbySnapshotSchema,
+  playerStateSchema,
   recomputePhase,
   removeGuest,
   setGuestConnected,
 } from "@colorless/schema";
+import { z } from "zod";
 
 /** The old model's reconnect grace (its PRESENCE_TIMEOUT_MS): a lost socket
     only shows as a disconnected seat if the player hasn't come back within
@@ -180,30 +183,24 @@ export function reseatHost(
  * live lobbies on every such deploy.
  */
 export function readSnapshot(raw: unknown): LobbySnapshot | null {
-  if (typeof raw !== "object" || raw === null) return null;
-  const snapshot = raw as LobbySnapshot;
-  // A shallow shape check for the same reason `readMatchRecord` has one: the DO
-  // is the only writer, so this can't fire in practice, and that is exactly why
-  // it must not throw if it somehow does.
-  if (typeof snapshot.host !== "object" || snapshot.host === null) return null;
-  return {
-    ...snapshot,
-    host: withSeatDefaults(snapshot.host),
-    guest: snapshot.guest ? withSeatDefaults(snapshot.guest) : null,
-  };
+  // Never throws: the DO is the only writer, so a malformed blob is impossible in practice and
+  // must not take the lobby down if it happens anyway.
+  const parsed = storedSnapshotSchema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
 }
 
-/** Fields added to a seat since the stored snapshot was written: `forfeitAt`
-    (3c-v) and `avatarSeed` (P5-2). `forfeitAt` is guarded on the TYPE rather than
-    `?? null` because it feeds `Math.min` in the alarm scheduler, where an
-    `undefined` that slipped through would set NaN. */
-function withSeatDefaults(seat: LobbySnapshot["host"]): LobbySnapshot["host"] {
-  return {
-    ...seat,
-    avatarSeed: typeof seat.avatarSeed === "string" ? seat.avatarSeed : null,
-    forfeitAt: typeof seat.forfeitAt === "number" ? seat.forfeitAt : null,
-  };
-}
+/** A seat as stored by any deploy. `avatarSeed` and `forfeitAt` were added after the first lobbies
+    were written, so a missing or malformed value reads as null; `forfeitAt` feeds `Math.min` in the
+    alarm scheduler, where an undefined would set NaN. */
+const storedSeatSchema = playerStateSchema.extend({
+  avatarSeed: z.string().nullable().catch(null),
+  forfeitAt: z.number().nullable().catch(null),
+});
+
+const storedSnapshotSchema = lobbySnapshotSchema.extend({
+  host: storedSeatSchema,
+  guest: storedSeatSchema.nullable(),
+});
 
 /** The countdown ended but the match couldn't START (a chosen deck wouldn't
     resolve, P4 increment 3): un-ready both seats and re-derive the phase, so the

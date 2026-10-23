@@ -9,14 +9,12 @@
 
 import type { Card } from "@colorless/schema";
 import { inArray } from "drizzle-orm";
-import type { BatchItem } from "drizzle-orm/batch";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { type CardRow, mapCardRow } from "../catalog/map";
 import { cards } from "../db/schema";
-import { chunk, D1_MAX_BOUND_PARAMS } from "../decks/validate";
+import { chunk, D1_MAX_BOUND_PARAMS, nonEmpty } from "../db/batch";
 
 type Db = DrizzleD1Database;
-type Batch = [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]];
 
 /** Fold catalog rows into the engine's `id → Card` pool. Pure — the query half
     lives in `loadCardPool`. A duplicate id keeps the last row (rows come from a
@@ -37,9 +35,9 @@ export async function loadCardPool(db: Db, ids: readonly string[]): Promise<Reco
   if (distinct.length === 0) {
     return {};
   }
-  const queries: BatchItem<"sqlite">[] = chunk(distinct, D1_MAX_BOUND_PARAMS).map((group) =>
+  const queries = chunk(distinct, D1_MAX_BOUND_PARAMS).map((group) =>
     db.select().from(cards).where(inArray(cards.id, group)),
   );
-  const results = (await db.batch(queries as Batch)) as CardRow[][];
+  const results = await db.batch(nonEmpty(queries));
   return poolFromRows(results.flat());
 }

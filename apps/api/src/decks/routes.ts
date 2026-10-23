@@ -2,7 +2,6 @@
 // the user, so another user's resource returns the same 404 as a missing one, while a referenced
 // folder you do not own is a 400.
 
-import { zValidator } from "@hono/zod-validator";
 import {
   createDeckRequestSchema,
   createFolderRequestSchema,
@@ -21,36 +20,24 @@ import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
 import { type Context, Hono } from "hono";
 import { z } from "zod";
 import { requireUser } from "../auth/requireUser";
+import { chunk, D1_MAX_BOUND_PARAMS, nonEmpty } from "../db/batch";
+import { ownedBy } from "../db/owned";
 import { cards, deckCards, decks, folders } from "../db/schema";
 import type { Env } from "../env";
+import { validate } from "../http/validation";
 import { privateRevalidate } from "../httpCache";
 import { type CoverCandidate, effectiveCoverCardId } from "./cover";
 import { type DeckRow, type FolderRow, mapDeckRow, mapDeckSummaryRow, mapFolderRow } from "./map";
-import { chunk, createsCycle, D1_MAX_BOUND_PARAMS, unknownIds } from "./validate";
+import { createsCycle, unknownIds } from "./validate";
 
 export const deckRoutes = new Hono<{ Bindings: Env }>();
 export const folderRoutes = new Hono<{ Bindings: Env }>();
 
 type Db = DrizzleD1Database;
-type Batch = [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]];
 
 // Response schemas — the domain shapes each route parses itself against.
 const deckSummariesResponseSchema = z.array(deckSummarySchema);
 const foldersResponseSchema = z.array(folderSchema);
-
-/** Terse 400 for bad request bodies (the auth/catalog shape). zValidator
-    surfaces the zod-core error type, hence z.core.$ZodError. */
-function invalidBody(c: Context, error: z.core.$ZodError) {
-  const issues = error.issues.map(
-    (issue) => `${issue.path.map(String).join(".") || "body"}: ${issue.message}`,
-  );
-  return c.json({ error: "invalid body", issues }, 400);
-}
-
-const validateBody = <Schema extends z.ZodType>(schema: Schema) =>
-  zValidator("json", schema, (result, c) =>
-    result.success ? undefined : invalidBody(c, result.error),
-  );
 
 /** 400 when `folderId` names a folder the CALLER doesn't own — a folder that
     doesn't exist at all gets the same answer, so nothing about other users'
@@ -67,7 +54,7 @@ async function guardFolderRef(
   const row = await db
     .select({ id: folders.id })
     .from(folders)
-    .where(and(eq(folders.id, folderId), eq(folders.userId, userId)))
+    .where(ownedBy(folders, folderId, userId))
     .get();
   return row === undefined ? c.json({ error: "unknown folder" }, 400) : null;
 }
@@ -84,10 +71,10 @@ async function guardUnknownCards(
     return null;
   }
   const ids = entries.map((entry) => entry.cardId);
-  const queries: BatchItem<"sqlite">[] = chunk(ids, D1_MAX_BOUND_PARAMS).map((group) =>
+  const queries = chunk(ids, D1_MAX_BOUND_PARAMS).map((group) =>
     db.select({ id: cards.id }).from(cards).where(inArray(cards.id, group)),
   );
-  const results = (await db.batch(queries as Batch)) as { id: string }[][];
+  const results = await db.batch(nonEmpty(queries));
   const unknown = unknownIds(
     ids,
     results.flat().map((row) => row.id),
@@ -127,13 +114,13 @@ async function reorderRows(
   positions: ReorderRequest["positions"],
 ): Promise<Response> {
   const ids = positions.map((entry) => entry.id);
-  const queries: BatchItem<"sqlite">[] = chunk(ids, D1_MAX_BOUND_PARAMS - 1).map((group) =>
+  const queries = chunk(ids, D1_MAX_BOUND_PARAMS - 1).map((group) =>
     db
       .select({ id: table.id })
       .from(table)
       .where(and(eq(table.userId, userId), inArray(table.id, group))),
   );
-  const owned = (await db.batch(queries as Batch)) as { id: string }[][];
+  const owned = await db.batch(nonEmpty(queries));
   const unknown = unknownIds(
     ids,
     owned.flat().map((row) => row.id),
@@ -141,10 +128,10 @@ async function reorderRows(
   if (unknown.length > 0) {
     return c.json({ error: `unknown ${noun} id(s)`, ids: unknown }, 400);
   }
-  const updates: BatchItem<"sqlite">[] = positions.map(({ id, position }) =>
+  const updates = positions.map(({ id, position }) =>
     db.update(table).set({ position }).where(eq(table.id, id)),
   );
-  await db.batch(updates as Batch);
+  await db.batch(nonEmpty(updates));
   return c.body(null, 204);
 }
 
@@ -231,7 +218,7 @@ deckRoutes.get("/:id", privateRevalidate, requireUser, async (c) => {
     db
       .select()
       .from(decks)
-      .where(and(eq(decks.id, deckId), eq(decks.userId, c.get("user").id))),
+      .where(ownedBy(decks, deckId, c.get("user").id)),
     selectDeckCards(db, deckId),
   ]);
   const row = deckRows[0];
@@ -241,7 +228,7 @@ deckRoutes.get("/:id", privateRevalidate, requireUser, async (c) => {
   return c.json(deckSchema.parse(mapDeckRow(row, cardRows)));
 });
 
-deckRoutes.post("/", validateBody(createDeckRequestSchema), requireUser, async (c) => {
+deckRoutes.post("/", validate("json", createDeckRequestSchema), requireUser, async (c) => {
   const body = c.req.valid("json");
   const user = c.get("user");
   const db = drizzle(c.env.DB);
@@ -266,14 +253,11 @@ deckRoutes.post("/", validateBody(createDeckRequestSchema), requireUser, async (
     position: await nextPrependPosition(db, decks, user.id),
     updated: new Date(),
   };
-  await db.batch([
-    db.insert(decks).values(row),
-    ...deckCardInserts(db, row.id, body.cards),
-  ] as Batch);
+  await db.batch([db.insert(decks).values(row), ...deckCardInserts(db, row.id, body.cards)]);
   return c.json(deckSchema.parse(mapDeckRow(row, body.cards)), 201);
 });
 
-deckRoutes.patch("/:id", validateBody(patchDeckRequestSchema), requireUser, async (c) => {
+deckRoutes.patch("/:id", validate("json", patchDeckRequestSchema), requireUser, async (c) => {
   const body = c.req.valid("json");
   const user = c.get("user");
   const deckId = c.req.param("id");
@@ -281,7 +265,7 @@ deckRoutes.patch("/:id", validateBody(patchDeckRequestSchema), requireUser, asyn
   const existing = await db
     .select()
     .from(decks)
-    .where(and(eq(decks.id, deckId), eq(decks.userId, user.id)))
+    .where(ownedBy(decks, deckId, user.id))
     .get();
   if (existing === undefined) {
     return c.json({ error: "deck not found" }, 404);
@@ -344,12 +328,12 @@ deckRoutes.patch("/:id", validateBody(patchDeckRequestSchema), requireUser, asyn
     statements.push(db.delete(deckCards).where(eq(deckCards.deckId, deckId)));
     statements.push(...deckCardInserts(db, deckId, body.cards));
   }
-  await db.batch(statements as Batch);
+  await db.batch(nonEmpty(statements));
   const cardsAfter = body.cards ?? (await selectDeckCards(db, deckId).all());
   return c.json(deckSchema.parse(mapDeckRow(next, cardsAfter)));
 });
 
-deckRoutes.post("/reorder", validateBody(reorderRequestSchema), requireUser, async (c) => {
+deckRoutes.post("/reorder", validate("json", reorderRequestSchema), requireUser, async (c) => {
   return reorderRows(
     c,
     drizzle(c.env.DB),
@@ -363,7 +347,7 @@ deckRoutes.post("/reorder", validateBody(reorderRequestSchema), requireUser, asy
 deckRoutes.delete("/:id", requireUser, async (c) => {
   const deleted = await drizzle(c.env.DB)
     .delete(decks)
-    .where(and(eq(decks.id, c.req.param("id")), eq(decks.userId, c.get("user").id)))
+    .where(ownedBy(decks, c.req.param("id"), c.get("user").id))
     .returning({ id: decks.id });
   if (deleted.length === 0) {
     return c.json({ error: "deck not found" }, 404);
@@ -384,7 +368,7 @@ folderRoutes.get("/", privateRevalidate, requireUser, async (c) => {
   return c.json(foldersResponseSchema.parse(rows.map(mapFolderRow)));
 });
 
-folderRoutes.post("/", validateBody(createFolderRequestSchema), requireUser, async (c) => {
+folderRoutes.post("/", validate("json", createFolderRequestSchema), requireUser, async (c) => {
   const body = c.req.valid("json");
   const user = c.get("user");
   const db = drizzle(c.env.DB);
@@ -403,7 +387,7 @@ folderRoutes.post("/", validateBody(createFolderRequestSchema), requireUser, asy
   return c.json(folderSchema.parse(mapFolderRow(row)), 201);
 });
 
-folderRoutes.patch("/:id", validateBody(patchFolderRequestSchema), requireUser, async (c) => {
+folderRoutes.patch("/:id", validate("json", patchFolderRequestSchema), requireUser, async (c) => {
   const body = c.req.valid("json");
   const user = c.get("user");
   const folderId = c.req.param("id");
@@ -436,7 +420,7 @@ folderRoutes.patch("/:id", validateBody(patchFolderRequestSchema), requireUser, 
   return c.json(folderSchema.parse(mapFolderRow(next)));
 });
 
-folderRoutes.post("/reorder", validateBody(reorderRequestSchema), requireUser, async (c) => {
+folderRoutes.post("/reorder", validate("json", reorderRequestSchema), requireUser, async (c) => {
   return reorderRows(
     c,
     drizzle(c.env.DB),
@@ -450,7 +434,7 @@ folderRoutes.post("/reorder", validateBody(reorderRequestSchema), requireUser, a
 folderRoutes.delete("/:id", requireUser, async (c) => {
   const deleted = await drizzle(c.env.DB)
     .delete(folders)
-    .where(and(eq(folders.id, c.req.param("id")), eq(folders.userId, c.get("user").id)))
+    .where(ownedBy(folders, c.req.param("id"), c.get("user").id))
     .returning({ id: folders.id });
   if (deleted.length === 0) {
     return c.json({ error: "folder not found" }, 404);

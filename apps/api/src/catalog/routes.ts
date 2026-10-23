@@ -7,7 +7,6 @@
 // loudly instead of leaking. Paired queries (page + count, set + its cards)
 // go through db.batch() — one D1 round trip.
 
-import { zValidator } from "@hono/zod-validator";
 import {
   type CardBrief,
   cardBriefSchema,
@@ -22,10 +21,12 @@ import {
 } from "@colorless/schema";
 import { asc, count, eq, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
-import { type Context, Hono } from "hono";
+import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
+import { Hono } from "hono";
 import { z } from "zod";
 import { cards, series, sets } from "../db/schema";
 import type { Env } from "../env";
+import { validate } from "../http/validation";
 import { facetVocabulary } from "../sentinel";
 import { catalogCache } from "./cache";
 import {
@@ -45,44 +46,28 @@ const cardsResponseSchema = paginatedSchema(cardBriefSchema);
 const setsResponseSchema = z.array(setBriefSchema);
 const seriesResponseSchema = z.array(serieSchema);
 
-/** Terse 400 for bad query params, e.g. `{"error":"invalid query","issues":["pageSize: …"]}`. */
-// zValidator surfaces the zod-core error type, hence z.core.$ZodError here.
-function invalidQuery(c: Context, error: z.core.$ZodError) {
-  const issues = error.issues.map(
-    (issue) => `${issue.path.map(String).join(".") || "query"}: ${issue.message}`,
-  );
-  return c.json({ error: "invalid query", issues }, 400);
-}
-
-catalogRoutes.get(
-  "/cards",
-  catalogCache,
-  zValidator("query", cardsQuerySchema, (result, c) =>
-    result.success ? undefined : invalidQuery(c, result.error),
-  ),
-  async (c) => {
-    const query = c.req.valid("query");
-    const db = drizzle(c.env.DB);
-    const where = buildCardsWhere(query);
-    const [rows, totals] = await db.batch([
-      db
-        .select(cardBriefColumns)
-        .from(cards)
-        .where(where)
-        .orderBy(...cardsOrder(query.sort))
-        .limit(query.pageSize)
-        .offset((query.page - 1) * query.pageSize),
-      db.select({ total: count() }).from(cards).where(where),
-    ]);
-    const payload: Paginated<CardBrief> = {
-      items: rows.map(mapCardBriefRow),
-      page: query.page,
-      pageSize: query.pageSize,
-      total: totals[0]?.total ?? 0,
-    };
-    return c.json(cardsResponseSchema.parse(payload));
-  },
-);
+catalogRoutes.get("/cards", catalogCache, validate("query", cardsQuerySchema), async (c) => {
+  const query = c.req.valid("query");
+  const db = drizzle(c.env.DB);
+  const where = buildCardsWhere(query);
+  const [rows, totals] = await db.batch([
+    db
+      .select(cardBriefColumns)
+      .from(cards)
+      .where(where)
+      .orderBy(...cardsOrder(query.sort))
+      .limit(query.pageSize)
+      .offset((query.page - 1) * query.pageSize),
+    db.select({ total: count() }).from(cards).where(where),
+  ]);
+  const payload: Paginated<CardBrief> = {
+    items: rows.map(mapCardBriefRow),
+    page: query.page,
+    pageSize: query.pageSize,
+    total: totals[0]?.total ?? 0,
+  };
+  return c.json(cardsResponseSchema.parse(payload));
+});
 
 catalogRoutes.get("/cards/:id", catalogCache, async (c) => {
   const row = await drizzle(c.env.DB)
@@ -96,23 +81,16 @@ catalogRoutes.get("/cards/:id", catalogCache, async (c) => {
   return c.json(cardSchema.parse(mapCardRow(row)));
 });
 
-catalogRoutes.get(
-  "/sets",
-  catalogCache,
-  zValidator("query", setsQuerySchema, (result, c) =>
-    result.success ? undefined : invalidQuery(c, result.error),
-  ),
-  async (c) => {
-    const { serie } = c.req.valid("query");
-    const rows = await drizzle(c.env.DB)
-      .select()
-      .from(sets)
-      .where(serie === undefined ? undefined : eq(sets.serieId, serie))
-      .orderBy(asc(sets.releaseDate), asc(sets.id))
-      .all();
-    return c.json(setsResponseSchema.parse(rows.map(mapSetBriefRow)));
-  },
-);
+catalogRoutes.get("/sets", catalogCache, validate("query", setsQuerySchema), async (c) => {
+  const { serie } = c.req.valid("query");
+  const rows = await drizzle(c.env.DB)
+    .select()
+    .from(sets)
+    .where(serie === undefined ? undefined : eq(sets.serieId, serie))
+    .orderBy(asc(sets.releaseDate), asc(sets.id))
+    .all();
+  return c.json(setsResponseSchema.parse(rows.map(mapSetBriefRow)));
+});
 
 catalogRoutes.get("/sets/:id", catalogCache, async (c) => {
   const setId = c.req.param("id");
@@ -164,6 +142,8 @@ const facetValues = (rows: { value: string | null }[]): string[] =>
 // never from a constant: the suffix filter stays unreachable until rows carry a suffix.
 catalogRoutes.get("/facets", catalogCache, async (c) => {
   const db = drizzle(c.env.DB);
+  const distinctOf = <Column extends SQLiteColumn>(column: Column) =>
+    db.selectDistinct({ value: column }).from(cards).where(isNotNull(column)).orderBy(asc(column));
   const [
     rarityRows,
     typeRows,
@@ -174,42 +154,14 @@ catalogRoutes.get("/facets", catalogCache, async (c) => {
     markRows,
     suffixRows,
   ] = await db.batch([
-    db
-      .selectDistinct({ value: cards.rarity })
-      .from(cards)
-      .where(isNotNull(cards.rarity))
-      .orderBy(asc(cards.rarity)),
+    distinctOf(cards.rarity),
     db.selectDistinct({ value: cards.typesJson }).from(cards).where(isNotNull(cards.typesJson)),
-    db
-      .selectDistinct({ value: cards.stage })
-      .from(cards)
-      .where(isNotNull(cards.stage))
-      .orderBy(asc(cards.stage)),
-    db
-      .selectDistinct({ value: cards.trainerType })
-      .from(cards)
-      .where(isNotNull(cards.trainerType))
-      .orderBy(asc(cards.trainerType)),
-    db
-      .selectDistinct({ value: cards.energyType })
-      .from(cards)
-      .where(isNotNull(cards.energyType))
-      .orderBy(asc(cards.energyType)),
-    db
-      .selectDistinct({ value: cards.illustrator })
-      .from(cards)
-      .where(isNotNull(cards.illustrator))
-      .orderBy(asc(cards.illustrator)),
-    db
-      .selectDistinct({ value: cards.regulationMark })
-      .from(cards)
-      .where(isNotNull(cards.regulationMark))
-      .orderBy(asc(cards.regulationMark)),
-    db
-      .selectDistinct({ value: cards.suffix })
-      .from(cards)
-      .where(isNotNull(cards.suffix))
-      .orderBy(asc(cards.suffix)),
+    distinctOf(cards.stage),
+    distinctOf(cards.trainerType),
+    distinctOf(cards.energyType),
+    distinctOf(cards.illustrator),
+    distinctOf(cards.regulationMark),
+    distinctOf(cards.suffix),
   ]);
   const payload: CatalogFacets = {
     rarities: facetValues(rarityRows),
