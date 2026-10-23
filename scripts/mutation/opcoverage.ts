@@ -2,9 +2,9 @@
 /**
  * Op-coverage instrument (`bun scripts/mutation/opcoverage.ts`): for each `EffectOp` kind, counts
  * corpus rows quoting its producer region (effects.ts, registry.ts) and its implementation region
- * (interpreter.ts case arms plus helpers with fan-in ≤ FANIN), and reports seat-line coverage. It
- * cannot see implementations outside interpreter.ts, resume-side code such as `continuationOps`, or
- * whether a row is any good. Env: `FANIN` (default 4), `LEV` (default 2).
+ * (stepOp's case arms plus helpers with fan-in ≤ FANIN, across interpreter.ts and the modules split
+ * out of it), and reports seat-line coverage. It cannot see resume-side code such as
+ * `continuationOps`, or whether a row is any good. Env: `FANIN` (default 4), `LEV` (default 2).
  */
 
 import { envInt } from "../lib/cli";
@@ -18,6 +18,19 @@ const EFFECT_TYPES = "packages/engine/src/effectTypes.ts";
 const EFFECTS = "packages/engine/src/effects.ts";
 const REGISTRY = "packages/engine/src/registry.ts";
 const INTERP = "packages/engine/src/interpreter.ts";
+/** interpreter.ts and the modules split out of it, read as one text. */
+const IMPL_FILES = [
+  INTERP,
+  "packages/engine/src/effectTargets.ts",
+  "packages/engine/src/boardCondition.ts",
+  "packages/engine/src/effectPrompt.ts",
+  "packages/engine/src/promptText.ts",
+  "packages/engine/src/ops/board.ts",
+  "packages/engine/src/ops/cards.ts",
+  "packages/engine/src/ops/damage.ts",
+  "packages/engine/src/ops/energy.ts",
+  "packages/engine/src/ops/locks.ts",
+];
 
 const source = sourceCache();
 
@@ -63,11 +76,16 @@ function effectOpKinds(): { kinds: string[]; declarations: number } {
 
 const { kinds: KINDS, declarations: DECLARATIONS } = effectOpKinds();
 
-// ─── 2. TOP-LEVEL FUNCTIONS OF interpreter.ts, AND WHO CALLS WHOM ────────────
+// ─── 2. TOP-LEVEL FUNCTIONS OF THE IMPLEMENTATION FILES, AND WHO CALLS WHOM ──
 type Fn = { name: string; start: number; end: number; body: string };
 
-const interpLines = source(INTERP).split("\n");
-const interpStarts = lineStarts(source(INTERP));
+/** First line of each implementation file within `interpLines`. */
+const IMPL_OFFSET = new Map<string, number>();
+const interpLines: string[] = [];
+for (const file of IMPL_FILES) {
+  IMPL_OFFSET.set(file, interpLines.length);
+  interpLines.push(...source(file).split("\n"));
+}
 
 function topLevelFunctions(lines: string[]): Fn[] {
   const out: Fn[] = [];
@@ -172,7 +190,7 @@ for (const f of FNS) {
   FAN_IN.set(f.name, KINDS.filter((k) => REACH.get(k)?.has(f.name) === true).length);
 }
 
-/** Implementation region as a set of 0-based line numbers in `interpreter.ts`. */
+/** Implementation region as a set of 0-based line numbers in `interpLines`. */
 const IMPL_LINES = new Map<string, Set<number>>();
 for (const k of KINDS) IMPL_LINES.set(k, new Set<number>());
 for (const arm of ARMS) {
@@ -251,15 +269,18 @@ const PRODUCERS = new Map<string, Span[]>([
 // ─── 6. ATTRIBUTE THE CORPUS ─────────────────────────────────────────────────
 /** The 0-based line span a row's `find` occupies, or undefined when absent. */
 function findLineSpan(row: Mutant): { first: number; last: number } | undefined {
-  if (row.file !== INTERP) return undefined;
-  const at = source(INTERP).indexOf(row.find);
+  const offset = IMPL_OFFSET.get(row.file);
+  if (offset === undefined) return undefined;
+  const text = source(row.file);
+  const at = text.indexOf(row.find);
   if (at < 0) return undefined;
   const stop = at + row.find.length;
+  const starts = lineStarts(text);
   let first = 0;
-  while (first + 1 < interpStarts.length && (interpStarts[first + 1] ?? 0) <= at) first++;
+  while (first + 1 < starts.length && (starts[first + 1] ?? 0) <= at) first++;
   let last = first;
-  while (last + 1 < interpStarts.length && (interpStarts[last + 1] ?? 0) < stop) last++;
-  return { first, last };
+  while (last + 1 < starts.length && (starts[last + 1] ?? 0) < stop) last++;
+  return { first: offset + first, last: offset + last };
 }
 
 const PROD_ROWS = new Map<string, Set<string>>();
@@ -274,7 +295,8 @@ for (const k of KINDS) {
 let absent = 0;
 for (const row of MUTANTS) {
   const span = findLineSpan(row);
-  if (row.file === INTERP && span !== undefined) {
+  const implementation = IMPL_OFFSET.has(row.file);
+  if (implementation && span !== undefined) {
     for (const k of KINDS) {
       const region = IMPL_LINES.get(k);
       const quoted = QUOTED_LINES.get(k);
@@ -294,7 +316,7 @@ for (const row of MUTANTS) {
       const stop = at + row.find.length;
       for (const s of spans) if (at < s.to && stop > s.from) PROD_ROWS.get(s.kind)?.add(row.id);
     }
-  } else if (row.file === INTERP && span === undefined) absent++;
+  } else if (implementation && span === undefined) absent++;
 }
 
 // ─── 7. REPORT ───────────────────────────────────────────────────────────────

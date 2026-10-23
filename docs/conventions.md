@@ -51,6 +51,20 @@ only the conclusion.
   `bun scripts/mutation/reanchor.ts --write`: it re-points rows whose `find` moved
   (whitespace, comments and file splits are ignored when matching) and lists the
   rest for manual re-anchoring or retirement (`--retire <file of ids>`).
+- Reuse the shared engine helpers instead of re-spelling them: `inPlayOf`,
+  `bodyAt`/`pokemonAt`, `relativeSeat`, `turnOwnerOf`, `clearedAttackEffects`,
+  `HP_PER_COUNTER`/`damageCountersOn` (`types.ts`); `OpOf<K>` for one `EffectOp`
+  variant (`effectTypes.ts`); `positiveInt`, `printedFlipCount` and the gate
+  builders in `effects.ts`; `searchThenShuffle`/`activated`/`berry`
+  (`registryBuilders.ts`). The op contract lives in `effectTypes.ts`, program
+  types in `programTypes.ts`, and stepOp's arm bodies in `ops/*.ts`,
+  `effectTargets.ts`, `boardCondition.ts`, `effectPrompt.ts` and `promptText.ts`;
+  `interpreter.ts` keeps runProgram, stepOp, applyChoice and resume. Test
+  helpers live in `fixtures/` behind the `testFixtures.ts` barrel (`driveSetup`,
+  `patchSide`, `roundTrip`, `mustDerive`, `seedForFlips`).
+- `scripts/residue-census*.ts` and `scripts/opaque-anatomy*.ts` were deleted
+  (2026-10-23) after measuring zero residue; sections below that describe them
+  are history.
 - Pure logic gets unit tests (see the many `*.test.ts` in the repo); DOM tests
   opt into jsdom per-file (`// @vitest-environment jsdom`).
 - **Never inherit a suite figure from prose — six were stale in one session**
