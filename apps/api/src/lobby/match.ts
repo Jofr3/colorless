@@ -21,6 +21,7 @@ import {
   logFromEvents,
 } from "@colorless/engine";
 import type { Card, LobbySnapshot, SeatLogEntry, WireAction } from "@colorless/schema";
+import { z } from "zod";
 import { slotOf } from "./logic";
 
 /** The one place the lobby's seats map to the engine's: host → p1, guest → p2. */
@@ -350,20 +351,13 @@ export async function loadMatchRecord(
 }
 
 /**
- * A migratable record that passed `readMatchRecord`'s shape checks, or `null`. The result keeps its
- * own version, which `migrateMatchRecord` branches on.
+ * A migratable record, or `null`. It needs the envelope `readMatchRecord` checks, at one of the
+ * versions in `MIGRATION_STEPS`, and the pool its steps rewrite. The result keeps its own version,
+ * which `migrateMatchRecord` branches on.
  */
 function readMigratableRecord(raw: unknown): MatchRecord | null {
-  if (typeof raw !== "object" || raw === null) return null;
-  const version = (raw as { version?: unknown }).version;
-  if (typeof version !== "number" || !MIGRATION_STEPS.has(version)) return null;
-  const record = readMatchRecord({ ...raw, version: MATCH_RECORD_VERSION });
-  if (record === null) return null;
-  const pool = (record.state as { cardPool?: unknown }).cardPool;
-  if (typeof pool !== "object" || pool === null) return null;
-  const players = (record.state as { players?: unknown }).players;
-  if (typeof players !== "object" || players === null) return null;
-  return { ...record, version };
+  const parsed = migratableRecordSchema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
 }
 
 /** How a persisted match read back: absent, usable, or written by an
@@ -372,22 +366,40 @@ export type MatchLoad = { kind: "none" } | { kind: "ok"; record: MatchRecord } |
 
 /**
  * Read a raw storage value back as a `MatchRecord`, or `null` when this deploy cannot trust it. The
- * check is deliberately shallow: the version gate decides compatibility, and the field checks only
- * keep the DO's own reads from throwing on a truncated blob. The embedded `GameState` is not
- * re-validated.
+ * version gate decides compatibility; the envelope checks only keep the DO's own reads from
+ * throwing on a truncated blob. The embedded `GameState` is not re-validated beyond its top level.
  */
 export function readMatchRecord(raw: unknown): MatchRecord | null {
-  if (typeof raw !== "object" || raw === null) return null;
-  const record = raw as Partial<MatchRecord>;
-  if (record.version !== MATCH_RECORD_VERSION) return null;
-  if (typeof record.seed !== "number" || typeof record.startedAt !== "number") return null;
-  if (typeof record.state !== "object" || record.state === null) return null;
-  if (!Array.isArray(record.log)) return null;
-  const names = record.names;
-  if (typeof names !== "object" || names === null) return null;
-  if (typeof names.p1 !== "string" || typeof names.p2 !== "string") return null;
-  return record as MatchRecord;
+  const parsed = currentRecordSchema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
 }
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+/** The persisted `GameState`, checked only for the keys every reader touches first. */
+const storedStateSchema = z.custom<GameState>(
+  (value) => isObject(value) && isObject(value.phase) && isObject(value.players),
+);
+
+function matchRecordSchema(version: z.ZodType<number>, state: z.ZodType<GameState>) {
+  return z.object({
+    version,
+    seed: z.number(),
+    startedAt: z.number(),
+    names: z.object({ p1: z.string(), p2: z.string() }),
+    state,
+    log: z.array(z.custom<SeatLogEntry>(isObject)),
+  }) satisfies z.ZodType<MatchRecord>;
+}
+
+const currentRecordSchema = matchRecordSchema(z.literal(MATCH_RECORD_VERSION), storedStateSchema);
+
+const migratableRecordSchema = matchRecordSchema(
+  z.number().refine((version) => MIGRATION_STEPS.has(version)),
+  storedStateSchema.refine((state) => isObject(state.cardPool)),
+);
 
 /**
  * Every engine `GameAction` type and whether the online client may send it.
