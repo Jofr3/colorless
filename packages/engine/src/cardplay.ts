@@ -28,7 +28,7 @@ import {
   toolCapOf,
   countersMoveLocked,
 } from "./continuous";
-import type { EffectOp } from "./effects";
+import type { EffectOp, OpOf } from "./effects";
 import type { GameEvent } from "./events";
 import { recoverStatuses, resolveMidTurnKnockOuts, settleProgram } from "./flow";
 import type { EffectChoice, EffectPrompt, PokemonRef } from "./interpreter";
@@ -965,7 +965,7 @@ function attachAlternativesAllWhiff(
   // Crispin's `oneOfRecorded` attach uses the Energy its own search puts in hand, so the hand at
   // play time says nothing about it.
   const attaches = program.filter(
-    (op): op is Extract<EffectOp, { op: "attachEnergyFrom" }> =>
+    (op): op is OpOf<"attachEnergyFrom"> =>
       op.op === "attachEnergyFrom" && op.oneOfRecorded === undefined,
   );
   if (attaches.length === 0) return false;

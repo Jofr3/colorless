@@ -105,6 +105,7 @@ import type {
   BoardCondition,
   CardFilter,
   EffectOp,
+  OpOf,
   EffectSlot,
   StampedPlayLockKey,
   HandRefreshDraw,
@@ -663,7 +664,7 @@ function recorded(record: EffectRecord, slot: EffectSlot): readonly string[] {
 export function discardRetrievalCandidates(
   state: GameState,
   seat: Seat,
-  op: Extract<EffectOp, { op: "discardPileRetrieval" }>,
+  op: OpOf<"discardPileRetrieval">,
   record: EffectRecord = {},
 ): string[] {
   const barred = new Set(op.exclude === undefined ? [] : recorded(record, op.exclude));
@@ -732,7 +733,7 @@ function recordSlotOf(op: EffectOp): EffectSlot | undefined {
 function recordGateHolds(
   state: GameState,
   ctx: EffectContext,
-  op: Extract<EffectOp, { op: "recordGate" }>,
+  op: OpOf<"recordGate">,
   record: EffectRecord,
 ): boolean {
   const filed = recorded(record, op.slot);
@@ -795,10 +796,7 @@ function withCountersConsequence(
  * needs wording specific to the recording op; an op without such wording yields null, dropping the
  * clause rather than describing a narrow gate in broad words.
  */
-function describeCondition(
-  op: EffectOp,
-  gate: Extract<EffectOp, { op: "recordGate" }>,
-): string | null {
+function describeCondition(op: EffectOp, gate: OpOf<"recordGate">): string | null {
   // Ortega prints its gate in long form, so its exact text is used, checked before the plain
   // default. The `contains === undefined` and `dest === undefined` checks keep the phrase from
   // being used for a narrowed gate or a bench destination, where it would be untrue.
@@ -984,10 +982,7 @@ function carriedRecord(record: EffectRecord): { record?: EffectRecord } {
  * known, so its second question can be asked. Shared by the forced and parked endings so both
  * resolve identically. It tests the zone, not the seat.
  */
-function counterSourceAnswered(
-  op: Extract<EffectOp, { op: "moveCountersChosen" }>,
-  ref: PokemonRef,
-): EffectOp[] {
+function counterSourceAnswered(op: OpOf<"moveCountersChosen">, ref: PokemonRef): EffectOp[] {
   if (ref.spot.spot !== "bench") return [];
   return [{ ...op, fromBench: ref.spot.index }];
 }
@@ -1021,7 +1016,7 @@ function evolveBodyAnswered(
 function chainedEvolveAnswered(
   before: GameState,
   cont: EffectContinuation,
-  op: Extract<EffectOp, { op: "evolveFromDeck" }>,
+  op: OpOf<"evolveFromDeck">,
   choice: EffectChoice,
 ): EffectOp[] {
   if (choice.kind !== "cards" || op.onto === undefined) return [];
@@ -1050,11 +1045,7 @@ function healedDiscardAnswered(state: GameState, ref: PokemonRef): EffectOp[] {
  * Pokémon Center Lady's status recovery (only when the pick is the Active) and Wally's Compassion's
  * Energy to hand. `state` is the board before the heal.
  */
-function healedRiderOps(
-  state: GameState,
-  ref: PokemonRef,
-  op: Extract<EffectOp, { op: "healChosen" }>,
-): EffectOp[] {
+function healedRiderOps(state: GameState, ref: PokemonRef, op: OpOf<"healChosen">): EffectOp[] {
   const discard = op.discardEnergyFromHealed === true ? healedDiscardAnswered(state, ref) : [];
   const recover: EffectOp[] =
     op.recoverHealed === true && ref.spot.spot === "active" ? [{ op: "clearStatus" }] : [];
@@ -1088,10 +1079,7 @@ function healedEnergyToHandAnswered(state: GameState, ref: PokemonRef): EffectOp
  * Rocket Brain's first answer: the same op with the source now known, shared by the forced and
  * parked endings.
  */
-function counterOwnSourceAnswered(
-  op: Extract<EffectOp, { op: "moveCounterOwnChosen" }>,
-  ref: PokemonRef,
-): EffectOp[] {
+function counterOwnSourceAnswered(op: OpOf<"moveCounterOwnChosen">, ref: PokemonRef): EffectOp[] {
   return [{ ...op, from: ref.spot }];
 }
 
@@ -1121,7 +1109,7 @@ function ruffianBodyAnswered(state: GameState, ref: PokemonRef): EffectOp[] {
  */
 function oneOfRecordedChoice(
   state: GameState,
-  op: Extract<EffectOp, { op: "attachEnergyFrom" }>,
+  op: OpOf<"attachEnergyFrom">,
   record: EffectRecord,
   seat: Seat,
 ): EffectOp[] {
@@ -5415,7 +5403,7 @@ function assertNoOpLeft(_op: never): void {}
  */
 export function applyStatus(
   state: GameState,
-  op: Extract<EffectOp, { op: "applyStatus" }>,
+  op: OpOf<"applyStatus">,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -5530,7 +5518,7 @@ function clearStatus(
     every other defender-relative op treats it. */
 function preventRetreat(
   state: GameState,
-  op: Extract<EffectOp, { op: "preventRetreat" }>,
+  op: OpOf<"preventRetreat">,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -5653,7 +5641,7 @@ function sameAttackerClass(a: AttackBlock["fromClass"], b: AttackBlock["fromClas
  */
 function preventAttack(
   state: GameState,
-  op: Extract<EffectOp, { op: "preventAttack" }>,
+  op: OpOf<"preventAttack">,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -5722,7 +5710,7 @@ function flipLockTrainerPlay(state: GameState, ctx: EffectContext, events: GameE
  */
 function lockSideAttacks(
   state: GameState,
-  op: Extract<EffectOp, { op: "lockSideAttacks" }>,
+  op: OpOf<"lockSideAttacks">,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -5748,7 +5736,7 @@ function lockSideAttacks(
  */
 function boostSideAttacksThisTurn(
   state: GameState,
-  op: Extract<EffectOp, { op: "boostSideAttacksThisTurn" }>,
+  op: OpOf<"boostSideAttacksThisTurn">,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -5778,7 +5766,7 @@ function boostSideAttacksThisTurn(
  */
 function installSideDamageReductionNextTurn(
   state: GameState,
-  op: Extract<EffectOp, { op: "installSideDamageReductionNextTurn" }>,
+  op: OpOf<"installSideDamageReductionNextTurn">,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -5806,7 +5794,7 @@ function installSideDamageReductionNextTurn(
 function installChosenAttackShield(
   state: GameState,
   ref: PokemonRef,
-  op: Extract<EffectOp, { op: "installChosenAttackShield" }>,
+  op: OpOf<"installChosenAttackShield">,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -5827,9 +5815,7 @@ function installChosenAttackShield(
 }
 
 /** Acerola's Mischief dialog caption: the printed sentence with the class spelled as printed. */
-function chosenAttackShieldNote(
-  op: Extract<EffectOp, { op: "installChosenAttackShield" }>,
-): string {
+function chosenAttackShieldNote(op: OpOf<"installChosenAttackShield">): string {
   const noun = {
     ex: "Pokémon ex",
     basic: "Basic Pokémon",
@@ -5847,7 +5833,7 @@ function chosenAttackShieldNote(
  */
 function lockSideRetreat(
   state: GameState,
-  op: Extract<EffectOp, { op: "lockSideRetreat" }>,
+  op: OpOf<"lockSideRetreat">,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -5866,7 +5852,7 @@ function lockSideRetreat(
  */
 function installSideAttackBlock(
   state: GameState,
-  op: Extract<EffectOp, { op: "installSideAttackBlock" }>,
+  op: OpOf<"installSideAttackBlock">,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -5898,7 +5884,7 @@ function installSideAttackBlock(
  */
 function markHandAttach(
   state: GameState,
-  op: Extract<EffectOp, { op: "markHandAttach" }>,
+  op: OpOf<"markHandAttach">,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -5938,7 +5924,7 @@ function markHandAttach(
  */
 function lookAtPrize(
   state: GameState,
-  op: Extract<EffectOp, { op: "lookAtPrize" }>,
+  op: OpOf<"lookAtPrize">,
   ctx: EffectContext,
   events: GameEvent[],
 ): { done: GameState } | { park: EffectPrompt } {
@@ -5986,7 +5972,7 @@ function winGame(state: GameState, ctx: EffectContext, events: GameEvent[]): Gam
  */
 function scheduleEndOfTurnHandDiscard(
   state: GameState,
-  op: Extract<EffectOp, { op: "scheduleEndOfTurnHandDiscard" }>,
+  op: OpOf<"scheduleEndOfTurnHandDiscard">,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -7003,7 +6989,7 @@ function flipCoinsFor(
  */
 function perHeadsHit(
   state: GameState,
-  op: Extract<EffectOp, { op: "damageChosen" }>,
+  op: OpOf<"damageChosen">,
   filter: CardFilter,
   refs: readonly PokemonRef[],
   amount: number,
@@ -7876,7 +7862,7 @@ function healedBody(pokemon: InPlayPokemon, healed: number, turn: number): InPla
  */
 function healEach(
   state: GameState,
-  op: Extract<EffectOp, { op: "healEach" }>,
+  op: OpOf<"healEach">,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -7984,7 +7970,7 @@ function healEachAll(state: GameState, amount: number, events: GameEvent[]): Gam
  */
 function counterEachAll(
   state: GameState,
-  op: Extract<EffectOp, { op: "counterEachAll" }>,
+  op: OpOf<"counterEachAll">,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -8040,7 +8026,7 @@ function counterEachAll(
  */
 function counterUntilRemainingHp(
   state: GameState,
-  op: Extract<EffectOp, { op: "counterUntilRemainingHp" }>,
+  op: OpOf<"counterUntilRemainingHp">,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -8110,7 +8096,7 @@ function damageActive(
  */
 function countersOnRecordedBody(
   state: GameState,
-  op: Extract<EffectOp, { op: "countersOnRecordedBody" }>,
+  op: OpOf<"countersOnRecordedBody">,
   ctx: EffectContext,
   events: GameEvent[],
   record: EffectRecord,
@@ -8484,7 +8470,7 @@ function anyWaySources(state: GameState, ctx: EffectContext, zone: "bench" | "an
  */
 function anyWaySourceAnswered(
   before: GameState,
-  op: Extract<EffectOp, { op: "moveCountersOpponentAnyWay" }>,
+  op: OpOf<"moveCountersOpponentAnyWay">,
   ref: PokemonRef,
   take: number | undefined,
 ): EffectOp {
@@ -8494,7 +8480,7 @@ function anyWaySourceAnswered(
 }
 
 /** The next round: the same op with the budget reduced by what this round moved. */
-function nextAnyWayRound(op: Extract<EffectOp, { op: "moveCountersOpponentAnyWay" }>): EffectOp {
+function nextAnyWayRound(op: OpOf<"moveCountersOpponentAnyWay">): EffectOp {
   return {
     op: "moveCountersOpponentAnyWay",
     from: op.from,
@@ -8702,7 +8688,7 @@ export function swapDiscardCards(state: GameState, seat: Seat, filter: CardFilte
  */
 function swapBodyAnswered(
   state: GameState,
-  op: Extract<EffectOp, { op: "switchWithDiscardNamed" }>,
+  op: OpOf<"switchWithDiscardNamed">,
   ref: PokemonRef,
 ): EffectOp[] {
   const body = refPokemon(state, ref);
@@ -8869,7 +8855,7 @@ export function discardHand(state: GameState, ctx: EffectContext, events: GameEv
 function shuffleDeck(
   state: GameState,
   ctx: EffectContext,
-  op: Extract<EffectOp, { op: "shuffleDeck" }>,
+  op: OpOf<"shuffleDeck">,
   events: GameEvent[],
 ): GameState {
   const seat = op.whose === "opponent" ? otherSeat(ctx.seat) : ctx.seat;
@@ -8912,7 +8898,7 @@ function bottomDeckTop(
  */
 function handRefresh(
   state: GameState,
-  op: Extract<EffectOp, { op: "handRefresh" }>,
+  op: OpOf<"handRefresh">,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -9339,7 +9325,7 @@ function retrieveMove(
  * must be absent keys, not `undefined`.
  */
 function pushDeckTopLook(
-  op: Extract<EffectOp, { op: "lookAtTopN" }>,
+  op: OpOf<"lookAtTopN">,
   moved: readonly string[],
   ctx: EffectContext,
   events: GameEvent[],
@@ -9363,7 +9349,7 @@ function pushDeckTopLook(
  * Whose deck `lookAtTopN` reads: the controller's by default, or the opponent's (Accompanying
  * Flute).
  */
-function lookOwner(op: Extract<EffectOp, { op: "lookAtTopN" }>, ctx: EffectContext): Seat {
+function lookOwner(op: OpOf<"lookAtTopN">, ctx: EffectContext): Seat {
   return op.whose === "opponent" ? otherSeat(ctx.seat) : ctx.seat;
 }
 
@@ -9371,10 +9357,7 @@ function lookOwner(op: Extract<EffectOp, { op: "lookAtTopN" }>, ctx: EffectConte
  * The looked-at window: the top `n` by default, or the last `n` for `"bottom"`. A short deck yields
  * the whole deck.
  */
-function lookWindow(
-  deck: readonly string[],
-  op: Extract<EffectOp, { op: "lookAtTopN" }>,
-): string[] {
+function lookWindow(deck: readonly string[], op: OpOf<"lookAtTopN">): string[] {
   const n = Math.max(0, op.n);
   return op.from === "bottom" ? deck.slice(Math.max(0, deck.length - n)) : deck.slice(0, n);
 }
@@ -9390,7 +9373,7 @@ function lookWindow(
 function revealFromTop(
   state: GameState,
   uids: readonly string[],
-  op: Extract<EffectOp, { op: "lookAtTopN" }>,
+  op: OpOf<"lookAtTopN">,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -9451,7 +9434,7 @@ function revealFromTop(
 function payFromHandApply(
   state: GameState,
   uids: readonly string[],
-  op: Extract<EffectOp, { op: "payFromHand" }>,
+  op: OpOf<"payFromHand">,
   ctx: EffectContext,
   events: GameEvent[],
 ): { state: GameState; paid: string[] } {
@@ -9517,7 +9500,7 @@ function payFromHandApply(
 function bottomFromOpponentHandOffer(
   state: GameState,
   ctx: EffectContext,
-  op: Extract<EffectOp, { op: "bottomFromOpponentHand" }>,
+  op: OpOf<"bottomFromOpponentHand">,
 ): string[] {
   // A bench destination into a full opponent Bench offers nothing, so the offer matches what can
   // land.
@@ -9710,7 +9693,7 @@ function revealHand(state: GameState, seat: Seat, events: GameEvent[]): void {
  */
 function randomFromOpponentHand(
   state: GameState,
-  op: Extract<EffectOp, { op: "randomFromOpponentHand" }>,
+  op: OpOf<"randomFromOpponentHand">,
   ctx: EffectContext,
   events: GameEvent[],
   record: EffectRecord,
@@ -9746,13 +9729,13 @@ function randomFromOpponentHand(
  */
 function randomDiscardDownTo(
   state: GameState,
-  op: Extract<EffectOp, { op: "randomFromOpponentHand" }>,
+  op: OpOf<"randomFromOpponentHand">,
   size: number,
   ctx: EffectContext,
   events: GameEvent[],
   record: EffectRecord,
 ): GameState {
-  const single: Extract<EffectOp, { op: "randomFromOpponentHand" }> = {
+  const single: OpOf<"randomFromOpponentHand"> = {
     op: "randomFromOpponentHand",
     to: op.to,
   };
@@ -9771,7 +9754,7 @@ function randomDiscardDownTo(
 function returnBenched(
   state: GameState,
   ref: PokemonRef,
-  op: Extract<EffectOp, { op: "returnBenched" }>,
+  op: OpOf<"returnBenched">,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -9810,7 +9793,7 @@ function returnBenched(
 function returnOwnActive(
   state: GameState,
   owner: Seat,
-  op: Extract<EffectOp, { op: "returnBenched" }>,
+  op: OpOf<"returnBenched">,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -9904,7 +9887,7 @@ export function handPokemonUids(state: GameState, seat: Seat): string[] {
  */
 function hpGuessApply(
   state: GameState,
-  op: Extract<EffectOp, { op: "opponentGuessesHp" }>,
+  op: OpOf<"opponentGuessesHp">,
   uid: string,
   guess: number,
   ctx: EffectContext,
@@ -10015,7 +9998,7 @@ function discardBenchedRefs(
  */
 function returnSelf(
   state: GameState,
-  op: Extract<EffectOp, { op: "returnSelf" }>,
+  op: OpOf<"returnSelf">,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -10399,7 +10382,7 @@ export function ownDevolveAvailable(
   );
 }
 
-function ownDevolveNote(op: Extract<EffectOp, { op: "devolveChosen" }>): string {
+function ownDevolveNote(op: OpOf<"devolveChosen">): string {
   const typed = op.pokemonType === undefined ? "" : `${op.pokemonType} `;
   return `Devolve which of your evolved ${typed}Pokémon? Its Evolution cards go into your hand, and it can't evolve this turn.`;
 }
@@ -10411,7 +10394,7 @@ function ownDevolveNote(op: Extract<EffectOp, { op: "devolveChosen" }>): string 
 function ownDevolveAnswered(
   state: GameState,
   ref: PokemonRef,
-  op: Extract<EffectOp, { op: "devolveChosen" }>,
+  op: OpOf<"devolveChosen">,
 ): EffectOp[] {
   const body = refPokemon(state, ref);
   const uid = body === undefined ? undefined : topUid(body);
@@ -10486,7 +10469,7 @@ function shedOwnBody(
 export function offeredBranches(
   state: GameState,
   seat: Seat,
-  op: Extract<EffectOp, { op: "chooseOneOffered" }>,
+  op: OpOf<"chooseOneOffered">,
 ): { label: string; op: EffectOp }[] {
   const acts = (branch: EffectOp): boolean => {
     if (branch.op === "discardTools")
@@ -10680,7 +10663,7 @@ function queueTakePrize(
  */
 function turnPrizeFaceUp(
   state: GameState,
-  op: Extract<EffectOp, { op: "turnPrizeFaceUp" }>,
+  op: OpOf<"turnPrizeFaceUp">,
   ctx: EffectContext,
   events: GameEvent[],
   record: EffectRecord,
@@ -10704,7 +10687,7 @@ function turnPrizeFaceUp(
 }
 
 /** Whose prize row `turnPrizeFaceUp` turns, shared by the park, forced pick and answer. */
-function prizeRowOwner(op: Extract<EffectOp, { op: "turnPrizeFaceUp" }>, ctx: EffectContext): Seat {
+function prizeRowOwner(op: OpOf<"turnPrizeFaceUp">, ctx: EffectContext): Seat {
   return op.side === "opponent" ? otherSeat(ctx.seat) : ctx.seat;
 }
 
@@ -10725,7 +10708,7 @@ function faceDownPrizeIndices(state: GameState, seat: Seat): number[] {
 function turnPrizeFaceUpAt(
   state: GameState,
   index: number,
-  op: Extract<EffectOp, { op: "turnPrizeFaceUp" }>,
+  op: OpOf<"turnPrizeFaceUp">,
   ctx: EffectContext,
   events: GameEvent[],
   record: EffectRecord,
@@ -10810,7 +10793,7 @@ function swapTurnedPrizeWithRevealed(
     anaphora — the `retrieveNoun` rule (one phrasing per printed shape, never a
     guessed one). The DESTINATION picks the verb because the printings do:
     nothing in this pool "shuffles" into a hand or "puts" into a deck. */
-function returnBenchedNote(op: Extract<EffectOp, { op: "returnBenched" }>): string {
+function returnBenchedNote(op: OpOf<"returnBenched">): string {
   // Reversing Gust: Active included.
   if (op.whose === "opponent" && op.includeActive === true) {
     return "Shuffle which of your opponent's Pokémon and all attached cards into their deck?";
@@ -10827,7 +10810,7 @@ function returnBenchedNote(op: Extract<EffectOp, { op: "returnBenched" }>): stri
 }
 
 /** Prompt for `returnBenchedRest`: names the bodies that stay. Uses the printed number. */
-function returnBenchedRestNote(op: Extract<EffectOp, { op: "returnBenchedRest" }>): string {
+function returnBenchedRestNote(op: OpOf<"returnBenchedRest">): string {
   return `Choose ${op.keep} of your opponent's Benched Pokémon to leave in play.`;
 }
 
@@ -10844,9 +10827,7 @@ function returnBenchedChosenNote(count: number): string {
     (the retrieveNoun rule): bare = Ortega's, `supporter` = Greavard's. An
     unphrased future filter gets the bare form's structure with no guessed
     noun — "a card" is never a lie, merely less than the card prints. */
-function bottomFromOpponentHandNote(
-  op: Extract<EffectOp, { op: "bottomFromOpponentHand" }>,
-): string {
+function bottomFromOpponentHandNote(op: OpOf<"bottomFromOpponentHand">): string {
   // Check the destination before the filter, since it changes the verb.
   if (op.dest === "bench") {
     // One printed form per card, so the caption matches the card text: Lickitung's "up to" and
@@ -10884,7 +10865,7 @@ function bottomFromOpponentHandNote(
 /** The mayDraw prompt speaks to its ANSWERER — the opponent of the seat that
     played the card — so the printed "your opponent may draw a card" turns
     around into the second person, the way it is said across a table. */
-function mayDrawNote(op: Extract<EffectOp, { op: "opponentMayDraw" }>): string {
+function mayDrawNote(op: OpOf<"opponentMayDraw">): string {
   return op.count === 1 ? "You may draw a card." : `You may draw ${op.count} cards.`;
 }
 
@@ -10895,10 +10876,7 @@ function mayDrawNote(op: Extract<EffectOp, { op: "opponentMayDraw" }>): string {
  * Whose hand `opponentDiscardsFromHand` targets: the controller's under Hand Trimmer's `whose:
  * "self"`, otherwise the opponent's.
  */
-function discardHandOwner(
-  op: Extract<EffectOp, { op: "opponentDiscardsFromHand" }>,
-  seat: Seat,
-): Seat {
+function discardHandOwner(op: OpOf<"opponentDiscardsFromHand">, seat: Seat): Seat {
   return op.whose === "self" ? seat : otherSeat(seat);
 }
 
@@ -10908,7 +10886,7 @@ function discardHandOwner(
  */
 function selfDiscardDownTo(
   state: GameState,
-  op: Extract<EffectOp, { op: "opponentDiscardsFromHand" }>,
+  op: OpOf<"opponentDiscardsFromHand">,
   seat: Seat,
   events: GameEvent[],
 ): { done: GameState } | { park: EffectPrompt } {
@@ -10928,7 +10906,7 @@ function selfDiscardDownTo(
   };
 }
 
-function opponentDiscardNote(op: Extract<EffectOp, { op: "opponentDiscardsFromHand" }>): string {
+function opponentDiscardNote(op: OpOf<"opponentDiscardsFromHand">): string {
   // Xerosic's Machinations, phrased for the player holding the hand.
   if (op.untilHandSize !== undefined) {
     return `Discard cards from your hand until you have ${op.untilHandSize} cards in your hand.`;
@@ -11011,7 +10989,7 @@ function deckChosenFromHand(
 function handCostCandidates(
   state: GameState,
   seat: Seat,
-  op: Extract<EffectOp, { op: "payFromHand" }>,
+  op: OpOf<"payFromHand">,
   excludeUid?: string,
 ): string[] {
   const kept = new Map<string, number>();
@@ -11045,7 +11023,7 @@ export function handCostUnmet(
   seat: Seat,
   program: readonly EffectOp[],
   excludeUid?: string,
-): Extract<EffectOp, { op: "payFromHand" }> | null {
+): OpOf<"payFromHand"> | null {
   for (const op of program) {
     if (op.op !== "payFromHand") continue;
     // A declinable "up to N" payment can always be met (paying nothing is legal), so it never
@@ -11065,10 +11043,7 @@ export function handCostUnmet(
     board (see effects.ts). Shared by the prompt heading (`other: false` — by then
     the played card has already left the hand, so every offered card IS another
     one) and by both rejection messages (`other` as printed). */
-export function handCostPhrase(
-  op: Extract<EffectOp, { op: "payFromHand" }>,
-  other: boolean,
-): string {
+export function handCostPhrase(op: OpOf<"payFromHand">, other: boolean): string {
   const { singular, plural } =
     op.filter === undefined ? { singular: "a card", plural: "cards" } : retrieveNoun(op.filter);
   // The declinable arm's caption prints its ceiling, always plural; Naveen's uncapped arm prints
@@ -11089,10 +11064,7 @@ export function handCostPhrase(
     heading, both rejection messages (cardplay.ts) and the HUD's disabled-card
     hint. Lower-case and verb-first, so a caller can say "can only be used if you
     …", "Only if you …" or capitalize it into a sentence of its own. */
-export function handCostAction(
-  op: Extract<EffectOp, { op: "payFromHand" }>,
-  other: boolean,
-): string {
+export function handCostAction(op: OpOf<"payFromHand">, other: boolean): string {
   const phrase = handCostPhrase(op, other);
   // Evidence Gathering's printed verb, ahead of the plain top-of-deck payment.
   if (op.swapWithTop === true)
@@ -11112,7 +11084,7 @@ export function handCostAction(
     your hand." / "Put a card from your hand on the bottom of your deck."). The
     played Trainer has already left the hand by the time this is asked, so every
     offered card IS another one and the printed "other" is not repeated here. */
-function payFromHandNote(op: Extract<EffectOp, { op: "payFromHand" }>): string {
+function payFromHandNote(op: OpOf<"payFromHand">): string {
   const action = handCostAction(op, false);
   return `${action.charAt(0).toUpperCase()}${action.slice(1)}.`;
 }
@@ -11175,7 +11147,7 @@ function switchRecording(
 export function switchActiveTargets(
   state: GameState,
   seat: Seat,
-  op: Extract<EffectOp, { op: "switchActive" }>,
+  op: OpOf<"switchActive">,
   sourceUid?: string,
 ): PokemonRef[] {
   if (op.fromSource === true) {
@@ -11206,11 +11178,7 @@ export function switchActiveTargets(
  * `programPlayable` checks the same set. The §11 shield is applied at the call site, since
  * `unshieldedRefs` announces refusals.
  */
-export function gustTargets(
-  state: GameState,
-  seat: Seat,
-  op: Extract<EffectOp, { op: "gust" }>,
-): PokemonRef[] {
+export function gustTargets(state: GameState, seat: Seat, op: OpOf<"gust">): PokemonRef[] {
   const bench = oppBenchRefs(state, seat);
   // Remaining-HP rider, read from the body; refs with no body are dropped.
   const inWindow =
@@ -11252,7 +11220,7 @@ function hasAnyDamageCounters(pokemon: InPlayPokemon): boolean {
 export function knockOutChosenTargets(
   state: GameState,
   seat: Seat,
-  op: Extract<EffectOp, { op: "knockOutChosen" }>,
+  op: OpOf<"knockOutChosen">,
   /** The attacker's top-card uid, excluded by `anyExceptSelf`. */
   sourceUid?: string,
 ): PokemonRef[] {
@@ -11305,7 +11273,7 @@ function leastHpRemainingRefs(state: GameState, scope: readonly PokemonRef[]): P
 }
 
 /** The printed noun for `knockOutChosen` candidates, matching the set offered. */
-function knockOutChosenNote(op: Extract<EffectOp, { op: "knockOutChosen" }>): string {
+function knockOutChosenNote(op: OpOf<"knockOutChosen">): string {
   // Bring Down's own sentence.
   if (op.target === "anyExceptSelf") {
     return "Choose a Pokémon in play (yours or your opponent's) that has the least HP remaining, except for this Pokémon, and it is Knocked Out.";
@@ -11325,7 +11293,7 @@ function knockOutChosenNote(op: Extract<EffectOp, { op: "knockOutChosen" }>): st
 }
 
 /** The printed noun for `gust` candidates, matching the set `gustTargets` offers. */
-function gustTargetNoun(op: Extract<EffectOp, { op: "gust" }>): string {
+function gustTargetNoun(op: OpOf<"gust">): string {
   const stage = op.basicOnly === true ? "Basic " : "";
   // The remaining-HP window goes after the noun, as printed.
   const window =
@@ -11342,7 +11310,7 @@ function gustTargetNoun(op: Extract<EffectOp, { op: "gust" }>): string {
 export function healChosenTargets(
   state: GameState,
   seat: Seat,
-  op: Extract<EffectOp, { op: "healChosen" }>,
+  op: OpOf<"healChosen">,
   /** The program's record, read only by `targetRecorded`. Callers without one see no candidates. */
   record?: EffectRecord,
 ): PokemonRef[] {
@@ -11384,7 +11352,7 @@ function filteredRefs(
 }
 
 /** The printed noun for `healChosen` candidates, matching the set `healChosenTargets` offers. */
-function healTargetNoun(op: Extract<EffectOp, { op: "healChosen" }>): string {
+function healTargetNoun(op: OpOf<"healChosen">): string {
   const zoneWord = op.zone === "bench" ? "Benched " : "";
   const window =
     op.remainingHpAtMost === undefined
@@ -11584,10 +11552,7 @@ function attachableEnergies(
  * How many cards an attach moves once its target is answered: the answered `take` clamped to the
  * printed count, or the whole printed batch when no take was sent.
  */
-function attachTake(
-  op: Extract<EffectOp, { op: "attachEnergyFrom" }>,
-  take: number | undefined,
-): number {
+function attachTake(op: OpOf<"attachEnergyFrom">, take: number | undefined): number {
   const printed = op.count ?? 1;
   return take === undefined ? printed : Math.min(take, printed);
 }
@@ -11599,7 +11564,7 @@ function attachTake(
  */
 function energyPickOffer(
   state: GameState,
-  op: Extract<EffectOp, { op: "attachEnergyFrom" }>,
+  op: OpOf<"attachEnergyFrom">,
   seat: Seat,
   take: number,
 ): { candidates: string[]; take: number } | undefined {
@@ -11799,7 +11764,7 @@ function sourceRef(state: GameState, ctx: Pick<EffectContext, "seat" | "sourceUi
 function attachFromTopOffer(
   state: GameState,
   seat: Seat,
-  op: Extract<EffectOp, { op: "attachFromTop" }>,
+  op: OpOf<"attachFromTop">,
 ): { candidates: string[]; targets: PokemonRef[]; max: number } {
   const top = state.players[seat].deck.slice(0, Math.max(0, op.n));
   const candidates = top.filter((uid) => matchesFilter(cardOf(state, uid), op.filter));
@@ -11821,7 +11786,7 @@ function attachFromTopOffer(
 function attachFromDeckOffer(
   state: GameState,
   ctx: EffectContext,
-  op: Extract<EffectOp, { op: "attachFromDeck" }>,
+  op: OpOf<"attachFromDeck">,
 ): { candidates: string[]; targets: PokemonRef[]; max: number } {
   const seat = ctx.seat;
   const targets = op.toSelf === true ? sourceRef(state, ctx) : attachEnergyTargets(state, seat, op);
@@ -11855,8 +11820,8 @@ function attachFromDeckOffer(
 function perBodyDeckOp(
   state: GameState,
   ctx: EffectContext,
-  op: Extract<EffectOp, { op: "attachFromDeck" }>,
-): Extract<EffectOp, { op: "attachFromDeck" }> {
+  op: OpOf<"attachFromDeck">,
+): OpOf<"attachFromDeck"> {
   if (op.each !== true) return op;
   const bodies = attachEnergyTargets(state, ctx.seat, op).length;
   return { ...op, max: op.max * bodies, maxPerTarget: op.max };
@@ -11870,7 +11835,7 @@ function perBodyDeckOp(
 export function attachFromDiscardOffer(
   state: GameState,
   seat: Seat,
-  op: Extract<EffectOp, { op: "attachFromDiscard" }>,
+  op: OpOf<"attachFromDiscard">,
 ): { candidates: string[]; targets: PokemonRef[]; max: number } {
   const targets = attachEnergyTargets(state, seat, op);
   const ceiling = discardAttachCeiling(state, seat, op);
@@ -11900,11 +11865,7 @@ export function attachFromDiscardOffer(
  * An `attachFromDiscard`'s printed ceiling as a number: the printed count, or Tail Generator's
  * energy count over the opponent's board, read when the op runs.
  */
-function discardAttachCeiling(
-  state: GameState,
-  seat: Seat,
-  op: Extract<EffectOp, { op: "attachFromDiscard" }>,
-): number {
+function discardAttachCeiling(state: GameState, seat: Seat, op: OpOf<"attachFromDiscard">): number {
   return op.max === "opponentEnergyInPlay"
     ? countEnergyInPlay(state, otherSeat(seat), null)
     : op.max;
@@ -11917,7 +11878,7 @@ function discardAttachCeiling(
  */
 function eachAttachTopUp(
   state: GameState,
-  op: Extract<EffectOp, { op: "attachFromDiscard" }>,
+  op: OpOf<"attachFromDiscard">,
   assignments: readonly { uid: string; to: PokemonRef }[],
   ctx: EffectContext,
   events: GameEvent[],
@@ -11951,7 +11912,7 @@ function eachAttachTopUp(
 function attachFromHandOffer(
   state: GameState,
   ctx: EffectContext,
-  op: Extract<EffectOp, { op: "attachFromHand" }>,
+  op: OpOf<"attachFromHand">,
 ): { candidates: string[]; targets: PokemonRef[]; max: number } {
   // Takes the context because "to this Pokémon" needs `ctx.sourceUid`.
   const seat = ctx.seat;
@@ -12001,7 +11962,7 @@ function attachFromHandOffer(
 function handTopUp(
   state: GameState,
   ctx: EffectContext,
-  op: Extract<EffectOp, { op: "attachFromHand" }>,
+  op: OpOf<"attachFromHand">,
 ): { uid: string; to: PokemonRef }[] {
   const offer = attachFromHandOffer(state, ctx, op);
   const [uid] = offer.candidates;
@@ -12016,7 +11977,7 @@ function handTopUp(
 export function attachFromHandPlayable(
   state: GameState,
   seat: Seat,
-  op: Extract<EffectOp, { op: "attachFromHand" }>,
+  op: OpOf<"attachFromHand">,
   sourceUid?: string,
 ): boolean {
   const offer = attachFromHandOffer(
@@ -12188,7 +12149,7 @@ function attachFromZoneApply(
  */
 function attachEnergyFrom(
   state: GameState,
-  op: Extract<EffectOp, { op: "attachEnergyFrom" }>,
+  op: OpOf<"attachEnergyFrom">,
   ref: PokemonRef,
   ctx: EffectContext,
   events: GameEvent[],
@@ -12302,7 +12263,7 @@ function attachEnergyFrom(
 function attachFromTopApply(
   state: GameState,
   assignments: readonly { uid: string; to: PokemonRef }[],
-  op: Extract<EffectOp, { op: "attachFromTop" }>,
+  op: OpOf<"attachFromTop">,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -12372,7 +12333,7 @@ function attachFromTopApply(
 function moveEnergyApply(
   state: GameState,
   picks: readonly { uid: string; dest: PokemonRef }[],
-  op: Extract<EffectOp, { op: "moveEnergy" }>,
+  op: OpOf<"moveEnergy">,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -12474,7 +12435,7 @@ function moveEnergyApply(
 function discardEnergyApply(
   state: GameState,
   uids: readonly string[],
-  op: Extract<EffectOp, { op: "discardEnergy" }>,
+  op: OpOf<"discardEnergy">,
   ctx: EffectContext,
   events: GameEvent[],
 ): { state: GameState; discarded: string[] } {
@@ -12638,7 +12599,7 @@ function toolDiscardApply(
  * The `discardTools` prompt string, reproducing the printed sentence. The number is the printed
  * ceiling, not the board-clamped one; the clamp lives on `scope.max`.
  */
-function toolDiscardNote(op: Extract<EffectOp, { op: "discardTools" }>): string {
+function toolDiscardNote(op: OpOf<"discardTools">): string {
   // Tool Scrapper's printed sentence when the offer spans both boards. `"all"` never parks; the
   // branch exists for totality.
   const count = op.count === "all" ? "all" : `up to ${op.count}`;
@@ -12702,7 +12663,7 @@ function matchesAttached(
  * opponent's for the hammer arms. One helper so the candidate scan, the apply and the §11
  * attack-block guard agree.
  */
-function discardVictimSeat(seat: Seat, op: Extract<EffectOp, { op: "discardEnergy" }>): Seat {
+function discardVictimSeat(seat: Seat, op: OpOf<"discardEnergy">): Seat {
   return op.from === "yourActive" ||
     op.from === "yours" ||
     op.from === "yourBench" ||
@@ -12720,7 +12681,7 @@ function discardVictimSeat(seat: Seat, op: Extract<EffectOp, { op: "discardEnerg
 export function discardableEnergies(
   state: GameState,
   seat: Seat,
-  op: Extract<EffectOp, { op: "discardEnergy" }>,
+  op: OpOf<"discardEnergy">,
   sourceUid?: string,
 ): { uid: string; from: PokemonRef }[] {
   if (op.from === "self") {
@@ -12773,7 +12734,7 @@ export function discardableEnergies(
 function reservedDiscards(
   state: GameState,
   seat: Seat,
-  from: Exclude<Extract<EffectOp, { op: "discardEnergy" }>["from"], "opponentEach">,
+  from: Exclude<OpOf<"discardEnergy">["from"], "opponentEach">,
   offered: readonly { uid: string; from: PokemonRef }[],
   reserve: readonly BasicEnergyType[],
 ): { uid: string; from: PokemonRef }[] {
@@ -12930,7 +12891,7 @@ export function refKeyOf(ref: PokemonRef): string {
  * movable set for "any amount". Shared by the play gate and the park so they agree on `max`, and
  * keeps the prompt's `max` a number.
  */
-function moveCap(op: Extract<EffectOp, { op: "moveEnergy" }>, movable: number): number {
+function moveCap(op: OpOf<"moveEnergy">, movable: number): number {
   // `"all"` clamps like `"any"`; they differ only in the floor. Tested by membership over the
   // literal words so a new quantifier cannot fall onto the numeric side.
   return op.max === "any" || op.max === "all" ? movable : op.max;
@@ -12940,7 +12901,7 @@ function moveCap(op: Extract<EffectOp, { op: "moveEnergy" }>, movable: number): 
  * How few Energy a `moveEnergy` answer may carry: 0, or the whole cap for Castform's "Move all
  * Energy". Only the park asks the floor; the play gate deliberately does not.
  */
-function moveFloor(op: Extract<EffectOp, { op: "moveEnergy" }>, cap: number): number {
+function moveFloor(op: OpOf<"moveEnergy">, cap: number): number {
   return op.max === "all" ? cap : 0;
 }
 
@@ -12949,7 +12910,7 @@ function moveFloor(op: Extract<EffectOp, { op: "moveEnergy" }>, cap: number): nu
  * "opponent"`. Shared by the park, the play gate and the apply so they agree. Controller-relative
  * like every seat field in this vocabulary.
  */
-function moveBoardSeat(op: Extract<EffectOp, { op: "moveEnergy" }>, seat: Seat): Seat {
+function moveBoardSeat(op: OpOf<"moveEnergy">, seat: Seat): Seat {
   // Spelled off the absent key on purpose: a record with no `side` means the controller's own
   // board.
   return op.side === undefined ? seat : otherSeat(seat);
@@ -12963,7 +12924,7 @@ function moveBoardSeat(op: Extract<EffectOp, { op: "moveEnergy" }>, seat: Seat):
 export function moveEnergyPlayable(
   state: GameState,
   seat: Seat,
-  op: Extract<EffectOp, { op: "moveEnergy" }>,
+  op: OpOf<"moveEnergy">,
   sourceUid?: string,
 ): boolean {
   // Asks about the op's board, not the controller's. It deliberately does not consult the §11
@@ -12985,7 +12946,7 @@ export function moveEnergyPlayable(
 function moveEndpoints(
   state: GameState,
   seat: Seat,
-  op: Extract<EffectOp, { op: "moveEnergy" }>,
+  op: OpOf<"moveEnergy">,
   sourceUid?: string,
 ): { movable: { uid: string; from: PokemonRef }[]; destinations: PokemonRef[]; needed: number } {
   const benchToActive = op.route === "benchToActive";
@@ -13063,7 +13024,7 @@ function toolHolderRef(state: GameState, seat: Seat, toolUid: string): PokemonRe
 export function discardEnergyPlayable(
   state: GameState,
   seat: Seat,
-  op: Extract<EffectOp, { op: "discardEnergy" }>,
+  op: OpOf<"discardEnergy">,
   sourceUid?: string,
 ): boolean {
   // A `to: "hand"` move wholly blocked by the Milotic lock can only whiff, so the play is refused.
@@ -13101,11 +13062,7 @@ function oppAnyRefs(state: GameState, seat: Seat): PokemonRef[] {
  * empty (silent no-op), a set of one is forced, and the §11 shield is asked only of bodies that
  * survive the narrowing. It applies to whichever scope `target` names.
  */
-export function snipeTargets(
-  state: GameState,
-  seat: Seat,
-  op: Extract<EffectOp, { op: "damageChosen" }>,
-): PokemonRef[] {
+export function snipeTargets(state: GameState, seat: Seat, op: OpOf<"damageChosen">): PokemonRef[] {
   // A total `switch` so a new target member fails to compile instead of falling into an else
   // branch.
   const scope = ((): PokemonRef[] => {
@@ -13178,7 +13135,7 @@ function cardOf(state: GameState, uid: string): Card | undefined {
  *
  * `searchDeck.max`'s union, named once off the op.
  */
-type SearchDeckMax = Extract<EffectOp, { op: "searchDeck" }>["max"];
+type SearchDeckMax = OpOf<"searchDeck">["max"];
 
 /**
  * The disjunctive search (Brock's Scouting: "up to 2 Basic Pokémon or 1 Evolution Pokémon"): one
@@ -13188,7 +13145,7 @@ type SearchDeckMax = Extract<EffectOp, { op: "searchDeck" }>["max"];
  */
 function searchDeckOrElse(
   state: GameState,
-  op: Extract<EffectOp, { op: "searchDeck" }>,
+  op: OpOf<"searchDeck">,
   alternative: { filter: CardFilter; max: number },
   ctx: EffectContext,
   record: EffectRecord,
@@ -13243,7 +13200,7 @@ function searchOrElseNote(
   filter: CardFilter,
   max: number,
   alternative: { filter: CardFilter; max: number },
-  dest: Extract<EffectOp, { op: "searchDeck" }>["dest"],
+  dest: OpOf<"searchDeck">["dest"],
 ): string {
   return `Search your deck for up to ${max} ${retrieveNoun(filter).plural} or ${alternative.max} ${
     retrieveNoun(alternative.filter).plural
@@ -13251,7 +13208,7 @@ function searchOrElseNote(
 }
 
 /** `searchOrElseNote`'s place phrase, keyed as a total record on `dest`. */
-const SEARCH_OR_ELSE_PLACE: Record<Extract<EffectOp, { op: "searchDeck" }>["dest"], string> = {
+const SEARCH_OR_ELSE_PLACE: Record<OpOf<"searchDeck">["dest"], string> = {
   bench: "onto your Bench",
   hand: "into your hand",
   deckTop: "on top of your deck",
@@ -13386,7 +13343,7 @@ function retrieveNote(
  *
  * Whose deck a `reorderTop` is ordering, shared so the park and the apply cannot disagree.
  */
-function reorderTopOwner(seat: Seat, op: Extract<EffectOp, { op: "reorderTop" }>): Seat {
+function reorderTopOwner(seat: Seat, op: OpOf<"reorderTop">): Seat {
   return op.side === "opponent" ? otherSeat(seat) : seat;
 }
 
@@ -13395,10 +13352,7 @@ function reorderTopOwner(seat: Seat, op: Extract<EffectOp, { op: "reorderTop" }>
  * window in deck order, so index 0 is nearest the top and one prompt serves both ends. The bottom
  * arm's `Math.max(0, …)` is for symmetry only; `slice` already clamps a negative start.
  */
-function reorderWindow(
-  deck: readonly string[],
-  op: Extract<EffectOp, { op: "reorderTop" }>,
-): string[] {
+function reorderWindow(deck: readonly string[], op: OpOf<"reorderTop">): string[] {
   return op.from === "bottom"
     ? deck.slice(Math.max(0, deck.length - Math.max(0, op.n)))
     : deck.slice(0, Math.max(0, op.n));
@@ -13410,7 +13364,7 @@ function reorderWindow(
  * than "back", since those cards came from the hand. There is no opponent-bottom caption because no
  * card prints it.
  */
-function reorderNote(op: Extract<EffectOp, { op: "reorderTop" }>): string {
+function reorderNote(op: OpOf<"reorderTop">): string {
   // One card is not "these cards … in any order": a one-card window parks only when a printed
   // alternative exists (Inkay), so the caption names the two answers. Checked before `side`.
   if (op.n === 1) {
@@ -13567,7 +13521,7 @@ function refPokemon(state: GameState, ref: PokemonRef): InPlayPokemon | undefine
 function switchBenchNarrowing(
   state: GameState,
   refs: PokemonRef[],
-  op: Extract<EffectOp, { op: "switchActive" }>,
+  op: OpOf<"switchActive">,
 ): PokemonRef[] {
   if (op.targetType === undefined && op.exceptNamed === undefined) return refs;
   return refs.filter((ref) => {
@@ -13585,13 +13539,13 @@ function switchBenchNarrowing(
  * The printed noun for a `switchActive`'s eligible bench targets; it must name exactly the set
  * `switchActiveTargets` offers. An unmarked op reads "Benched Pokémon".
  */
-function switchTargetNoun(op: Extract<EffectOp, { op: "switchActive" }>): string {
+function switchTargetNoun(op: OpOf<"switchActive">): string {
   const type = op.targetType === undefined ? "" : `${op.targetType} `;
   const except = op.exceptNamed === undefined ? "" : `, except any ${op.exceptNamed}`;
   return `Benched ${type}${ownerNoun(op.ownerPokemon)}Pokémon${except}`;
 }
 
-function attachNote(op: Extract<EffectOp, { op: "attachFromTop" }>): string {
+function attachNote(op: OpOf<"attachFromTop">): string {
   const { plural } = retrieveNoun(op.filter);
   const how = op.max === "any" ? "any number of" : `up to ${op.max}`;
   const where = attachTargetNoun(op);
@@ -13604,7 +13558,7 @@ function attachNote(op: Extract<EffectOp, { op: "attachFromTop" }>): string {
  * caption says "in any way you like" (several Energy may go on one Pokémon, §15.E); with it, that
  * phrase would contradict the validator, so Janine's "for each of those Pokémon" is used.
  */
-function attachFromDeckNote(op: Extract<EffectOp, { op: "attachFromDeck" }>): string {
+function attachFromDeckNote(op: OpOf<"attachFromDeck">): string {
   const { singular, plural } = retrieveNoun(op.filter);
   if (op.toSelf === true) {
     return op.max > 1
@@ -13637,10 +13591,7 @@ function attachFromDeckNote(op: Extract<EffectOp, { op: "attachFromDeck" }>): st
 }
 
 /** Glass Trumpet's caption: the printed sentence with the brace code written out. */
-function attachFromDiscardNote(
-  op: Extract<EffectOp, { op: "attachFromDiscard" }>,
-  ceiling: number,
-): string {
+function attachFromDiscardNote(op: OpOf<"attachFromDiscard">, ceiling: number): string {
   const { singular, plural } = retrieveNoun(op.filter);
   // Tail Generator's printed sentence, with the resolved ceiling.
   if (op.max === "opponentEnergyInPlay") {
@@ -13653,7 +13604,7 @@ function attachFromDiscardNote(
  * Reboot Pod's caption. Any body left without a card is topped up at apply time
  * (`eachAttachTopUp`).
  */
-function attachEachFromDiscardNote(op: Extract<EffectOp, { op: "attachFromDiscard" }>): string {
+function attachEachFromDiscardNote(op: OpOf<"attachFromDiscard">): string {
   const { singular } = retrieveNoun(op.filter);
   return `Attach ${singular} from your discard pile to each of your ${attachTargetNoun(op)}.`;
 }
@@ -13664,7 +13615,7 @@ function attachEachFromDiscardNote(op: Extract<EffectOp, { op: "attachFromDiscar
  * one Pokémon (§15.E). There is no "up to N" because the op carries no `max`; the printed "You may"
  * is dropped because the prompt itself is the offer.
  */
-function attachFromHandNote(op: Extract<EffectOp, { op: "attachFromHand" }>): string {
+function attachFromHandNote(op: OpOf<"attachFromHand">): string {
   // The printed "to this Pokémon": a single target row cannot convey that the destination is not a
   // choice, and "in any way you like" would describe a split the validator cannot produce.
   if (op.toSelf === true) {
@@ -13686,7 +13637,7 @@ function attachFromHandNote(op: Extract<EffectOp, { op: "attachFromHand" }>): st
  * The moveEnergy prompt (Energy Switch / Poppy): "Move [up to N] {noun} from [1 of] your Pokémon to
  * another of your Pokémon". The "1 of" comes from `anySource`.
  */
-function moveNote(op: Extract<EffectOp, { op: "moveEnergy" }>): string {
+function moveNote(op: OpOf<"moveEnergy">): string {
   const noun = energyNoun(op.filter);
   // "1 of" marks single-source coupling: every coupled printing says "from 1 of your …", while N's
   // Plan says "from your Benched Pokémon".
@@ -13767,7 +13718,7 @@ function energyNoun(filter: CardFilter): string {
     Only the two filters those cards use are spelled; any other reads as the
     generic "an Energy". `count: "all"` never reaches here — that arm asks
     nothing, so it has no prompt to caption. */
-function discardNote(op: Extract<EffectOp, { op: "discardEnergy" }>): string {
+function discardNote(op: OpOf<"discardEnergy">): string {
   const noun = energyNoun(op.filter);
   // A numeric count is printed as the bare number ("Discard 2 Energy…"), one as
   // the article ("Discard an Energy…"), and `"any"` as the printed "any amount

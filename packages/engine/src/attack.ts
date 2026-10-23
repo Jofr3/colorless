@@ -119,6 +119,7 @@ import type {
   AttackPreDamage,
   CardFilter,
   EffectOp,
+  OpOf,
   ResolvedAttackCopy,
 } from "./effects";
 import type { GameEvent } from "./events";
@@ -1762,7 +1763,7 @@ function parkCopy(
   state: GameState,
   seat: Seat,
   attackerUid: string,
-  op: Extract<EffectOp, { op: "useAttackAs" }>,
+  op: OpOf<"useAttackAs">,
   prompt: EffectPrompt,
 ): ApplyResult {
   return settleProgram(
@@ -1819,7 +1820,7 @@ function declareAttackCopy(
     return attack(state, action, { empty: true, ...(copy.flip === true ? { flip: true } : {}) });
   if (only !== undefined)
     return attack(state, action, copiedOverride(only.source, only.picked, copy.flip));
-  const op: Extract<EffectOp, { op: "useAttackAs" }> = {
+  const op: OpOf<"useAttackAs"> = {
     op: "useAttackAs",
     from: copy.from,
     ...(copy.owner === undefined ? {} : { owner: copy.owner }),
@@ -1852,7 +1853,7 @@ function declareAttackCopy(
 export function resolveCopiedAttack(
   state: GameState,
   phase: Extract<Phase, { kind: "effect:choose" }>,
-  op: Extract<EffectOp, { op: "useAttackAs" }>,
+  op: OpOf<"useAttackAs">,
   choice: EffectChoice,
 ): ApplyResult {
   const seat = phase.seat;
@@ -1996,7 +1997,7 @@ function declareInPlayAttackCopy(
 export function resolveInPlayCopiedAttack(
   state: GameState,
   phase: Extract<Phase, { kind: "effect:choose" }>,
-  op: Extract<EffectOp, { op: "useInPlayAttackAs" }>,
+  op: OpOf<"useInPlayAttackAs">,
   choice: EffectChoice,
 ): ApplyResult {
   const seat = phase.seat;
@@ -2076,7 +2077,7 @@ function parkFoundCopy(
   seat: Seat,
   attackerUid: string,
   copierName: string,
-  op: Extract<EffectOp, { op: "useFoundAttackAs" }>,
+  op: OpOf<"useFoundAttackAs">,
   prompt: EffectPrompt,
 ): ApplyResult {
   const epilogue: PendingStage = {
@@ -2204,7 +2205,7 @@ function reenterFound(state: GameState, action: AttackAction, pair: FoundPair): 
 export function resolveFoundAttack(
   state: GameState,
   phase: Extract<Phase, { kind: "effect:choose" }>,
-  op: Extract<EffectOp, { op: "useFoundAttackAs" }>,
+  op: OpOf<"useFoundAttackAs">,
   choice: EffectChoice,
 ): ApplyResult {
   const seat = phase.seat;
@@ -2269,7 +2270,7 @@ function parkCoinRedo(
   seat: Seat,
   attackerUid: string,
   attackName: string,
-  op: Extract<EffectOp, { op: "reflipAttackCoins" }>,
+  op: OpOf<"reflipAttackCoins">,
 ): ApplyResult {
   const epilogue: PendingStage = {
     kind: "attackEpilogue",
@@ -2302,7 +2303,7 @@ function parkCoinRedo(
 export function resolveCoinRedo(
   state: GameState,
   phase: Extract<Phase, { kind: "effect:choose" }>,
-  op: Extract<EffectOp, { op: "reflipAttackCoins" }>,
+  op: OpOf<"reflipAttackCoins">,
   choice: EffectChoice,
 ): ApplyResult {
   if (choice.kind !== "confirm") return err("BAD_EFFECT_CHOICE", "expected a yes or a no");

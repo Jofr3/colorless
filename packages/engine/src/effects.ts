@@ -629,6 +629,9 @@ export interface AttachTargetRiders {
   whose?: "opponent";
 }
 
+/** The EffectOp variant with the given `op` tag. */
+export type OpOf<K extends EffectOp["op"]> = Extract<EffectOp, { op: K }>;
+
 /** One effect operation — the engine's instruction set (D8). Attack-derived
     programs use the first three (targets are relative to the attacker: "self"
     = the attacker's Active, "defender" = the Defending Pokémon); Trainer /
@@ -2422,7 +2425,7 @@ const OWN_BOARD_HEAL_NARROWED =
   /^Heal (\d+) damage from each of your ((?!opponent)[^.]+) Pokémon\.$/;
 /** The two riders the printed adjective can set, taken OFF the op with `Pick` rather
     than re-declared, so a field rename cannot leave this map behind still compiling. */
-type HealEachScope = Pick<Extract<EffectOp, { op: "healEach" }>, "basicOnly" | "benchOnly">;
+type HealEachScope = Pick<OpOf<"healEach">, "basicOnly" | "benchOnly">;
 /**
  * Printed adjectives accepted by `OWN_BOARD_HEAL_NARROWED`. `Basic` narrows by card and `Benched`
  * by board position, so they set different fields.
@@ -5323,7 +5326,7 @@ function attachFromZoneProgram(
   // spread, so both are refused.
   if (destination.toEach === true && count > 1) return null;
   if (destination.toEach === true && heal !== undefined) return null;
-  const base: Extract<EffectOp, { op: "attachEnergyFrom" }> = {
+  const base: OpOf<"attachEnergyFrom"> = {
     op: "attachEnergyFrom",
     source,
     ...(energyType === undefined ? {} : { energyType }),
@@ -8770,7 +8773,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           destination.batch &&
           match[7] === undefined))
     ) {
-      const attach: Extract<EffectOp, { op: "attachFromDeck" }> = {
+      const attach: OpOf<"attachFromDeck"> = {
         op: "attachFromDeck",
         filter: { kind: "basicEnergy", ...(energyType === undefined ? {} : { energyType }) },
         max: count,
