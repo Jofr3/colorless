@@ -93,6 +93,15 @@ const account = new LuaAccount((snapshot) => {
   sandbox.session(fields[1] ?? "loading", fields[4] ?? "");
   online.session(fields[1] ?? "loading", fields[4] ?? "");
 });
+{
+  const url = new URL(location.href);
+  const authError = url.searchParams.get("authError");
+  if (authError !== null) {
+    account.noteAuthError(authError);
+    url.searchParams.delete("authError");
+    history.replaceState(history.state, "", url);
+  }
+}
 setSessionRecoveryHandler(async () => {
   await account.refresh();
   return account.status === "authenticated";

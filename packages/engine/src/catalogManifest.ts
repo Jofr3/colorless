@@ -22,10 +22,10 @@ export const CATALOG_MANIFEST = {
       NOT the day the manifest was generated — the catalog is ingest output and
       does not drift on its own, so the mtime is the honest provenance. */
   source: {
-    path: "apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/8437d86672ef67002c76a06d8e29643de1a9c95e9422816cce0e554c6c5b7286.sqlite",
-    mtime: "2026-10-20T05:54:34.918Z",
+    path: "apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/8d5f78350c10a9b5a03c32a89d7650715915d7d08c8432216859a4839915f2a8.sqlite",
+    mtime: "2026-10-23T09:10:18.926Z",
     bytes: 3805184,
-    generated: "2026-10-20",
+    generated: "2026-10-23",
   },
   /** `select count(*) from cards`. */
   rows: 5084,

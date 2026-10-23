@@ -2,6 +2,15 @@ import type { User } from "@colorless/schema";
 import { ApiError, login, register, logout, me, updateProfile } from "../lib/api";
 import { startOAuth } from "../lib/startOAuth";
 
+/** Messages for the OAuth callback's `?authError=` codes (apps/api auth routes). */
+const OAUTH_ERROR_MESSAGES: Record<string, string> = {
+  state: "Google sign-in expired. Try again.",
+  exchange: "Google sign-in failed. Try again.",
+  profile: "Google sign-in failed. Try again.",
+  "no-email": "Google did not share an email address.",
+  "email-in-use": "That email already has an account. Sign in with your password.",
+};
+
 export const encodeFields = (fields: (string | number)[]) =>
   fields.map((v) => encodeURIComponent(String(v))).join("\t");
 
@@ -14,6 +23,8 @@ export class LuaAccount {
   message = "";
   private operation = 0;
   private revision = 0;
+  /** A failed Google sign-in, shown once by the next anonymous refresh. */
+  private authNotice = "";
   constructor(private publish: (snapshot: string) => void) {}
 
   private emit() {
@@ -46,13 +57,21 @@ export class LuaAccount {
       if (op !== this.operation) return;
       this.user = null;
       this.status = error instanceof ApiError && error.status === 401 ? "anonymous" : "error";
-      this.message = this.status === "error" ? "Could not reach the server. Try again." : "";
+      this.message =
+        this.status === "error" ? "Could not reach the server. Try again." : this.authNotice;
+      this.authNotice = "";
     } finally {
       if (op === this.operation) {
         this.busy = false;
         this.emit();
       }
     }
+  }
+
+  noteAuthError(code: string) {
+    this.authNotice = Object.hasOwn(OAUTH_ERROR_MESSAGES, code)
+      ? (OAUTH_ERROR_MESSAGES[code] ?? "")
+      : "Google sign-in failed. Try again.";
   }
 
   async save(name: string) {

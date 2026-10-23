@@ -314,6 +314,18 @@ authRoutes.get("/oauth/:provider", (c) => {
   return c.redirect(buildAuthorizeUrl(config, callbackUrl(c, provider), state), 302);
 });
 
+/** Failure codes the callback hands back to the app as `?authError=`; the
+    app maps each to a message (src/lua/account.ts). */
+type OAuthFailure = "state" | "exchange" | "profile" | "no-email" | "email-in-use";
+
+/** The callback is a top-level browser navigation, so failures go back to the
+    app page with a code rather than rendering JSON at the API origin. */
+function oauthFailureRedirect(env: Env, redirect: string, failure: OAuthFailure): string {
+  const url = new URL(redirect, appOrigin(env));
+  url.searchParams.set("authError", failure);
+  return url.toString();
+}
+
 authRoutes.get("/oauth/:provider/callback", async (c) => {
   const provider = parseProvider(c.req.param("provider"));
   if (provider === null) {
@@ -329,7 +341,7 @@ authRoutes.get("/oauth/:provider/callback", async (c) => {
   const state = c.req.query("state");
   const code = c.req.query("code");
   if (!code || !state || packed === null || packed.state !== state) {
-    return c.json({ error: "invalid oauth state" }, 400);
+    return c.redirect(oauthFailureRedirect(c.env, packed?.redirect ?? "/?account", "state"), 302);
   }
 
   // Code → access token.
@@ -341,7 +353,7 @@ authRoutes.get("/oauth/:provider/callback", async (c) => {
   });
   const accessToken = tokenResponse.ok ? parseTokenResponse(await tokenResponse.json()) : null;
   if (accessToken === null) {
-    return c.json({ error: "oauth code exchange failed" }, 502);
+    return c.redirect(oauthFailureRedirect(c.env, packed.redirect, "exchange"), 302);
   }
 
   // Access token → normalized profile.
@@ -352,19 +364,16 @@ authRoutes.get("/oauth/:provider/callback", async (c) => {
     ? parseOAuthProfile(await profileResponse.json())
     : null;
   if (profile === null) {
-    return c.json({ error: "oauth profile fetch failed" }, 502);
+    return c.redirect(oauthFailureRedirect(c.env, packed.redirect, "profile"), 302);
   }
 
   const db = drizzle(c.env.DB);
   const result = await findOrCreateOAuthUser(db, provider, profile);
-  if (result === "no-email") {
-    return c.json({ error: "provider did not supply an email" }, 400);
-  }
-  if (result === "email-in-use") {
-    // The provider email matches an existing account but is NOT provider-
-    // verified — linking would let anyone with an unverified alias take the
-    // account over.
-    return c.json({ error: "email already in use" }, 409);
+  if (result === "no-email" || result === "email-in-use") {
+    // email-in-use: the provider email matches an existing account but is NOT
+    // provider-verified — linking would let anyone with an unverified alias
+    // take the account over.
+    return c.redirect(oauthFailureRedirect(c.env, packed.redirect, result), 302);
   }
   const session = await newSession(result.id);
   await db.insert(sessions).values(session.row);
@@ -375,6 +384,21 @@ authRoutes.get("/oauth/:provider/callback", async (c) => {
 /** §3.5 find-or-create: linked identity → that user; verified-email match →
     link identity to the existing user; otherwise a fresh user + identity. */
 async function findOrCreateOAuthUser(
+  db: Db,
+  provider: OAuthProvider,
+  profile: OAuthProfile,
+): Promise<UserRow | "no-email" | "email-in-use"> {
+  try {
+    return await linkOrCreateOAuthUser(db, provider, profile);
+  } catch (error) {
+    // A concurrent callback for the same identity won the insert: retry once,
+    // which now finds the identity it linked.
+    if (!isUniqueViolation(error)) throw error;
+    return linkOrCreateOAuthUser(db, provider, profile);
+  }
+}
+
+async function linkOrCreateOAuthUser(
   db: Db,
   provider: OAuthProvider,
   profile: OAuthProfile,

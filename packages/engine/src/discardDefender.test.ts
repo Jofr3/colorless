@@ -824,7 +824,7 @@ describe("D536 §9 — the MEASUREMENT that turned a PRICED CONTINGENCY into an 
     // TWO `case "discardDefender":` labels now — `stepOp`'s exhaustive switch and
     // `describeBranch`'s. COUNTED rather than merely present, because a THIRD would
     // mean somebody answered this question in two places.
-    expect(src.split('case "discardDefender":')).toHaveLength(3);
+    expect(src.split('case "discardDefender":')).toHaveLength(4);
     const branch = src.indexOf("function describeBranch");
     expect(branch).toBeGreaterThan(0);
     expect(src.slice(branch, src.indexOf("\n}\n", branch))).toContain("discardDefender");

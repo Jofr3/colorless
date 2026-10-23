@@ -23180,23 +23180,6 @@ export const MUTANTS: Mutant[] = [
     ],
   },
   {
-    id: "D455-optional-apply-arm-deleted",
-    decision: "D455",
-    what: "🛑 **THE ARM THE SHIPPED COMMENT SAYS IS \"recorded as an equivalent mutant\" — AND, UNTIL THIS ROW, WAS NOT.** The `optional` apply arm is behaviourally equal to deleting it, because the `default` 180 lines down also returns the state; it is kept only because the default's stated REASON (*\"synchronous ops never park, so never reach the choice path\"*) is FALSE of an op that parks on every board. That claim about `scripts/mutation/mutants.ts` was written into `interpreter.ts` and nothing ever checked it — D453 found the identical unrecorded claim on `moveCountersChosen`. DECLARED rather than deleted because it SELF-INVALIDATES: the day `resumeProgram` needs this arm to do anything, or the day the `default` stops returning the state, the row is KILLED and the run reports STALE-SURVIVOR. ⚠ It is a real source deletion, not a type erasure (D420): the arm is gone from the emitted program, and the equality is a fact about the `default`, not about the compiler",
-    file: "packages/engine/src/interpreter.ts",
-    find: "    case \"optional\":\n      // THE ONE APPLY ARM THAT IS INTENTIONALLY EMPTY ON BOTH ANSWERS. A yes\n      // buys the `then` branch, and a branch is spliced into the WORK QUEUE, which\n      // this function cannot see — it returns a `GameState` and knows nothing of\n      // `rest`. `resumeProgram` owns both halves (this call and the `runProgram`\n      // that follows it) and does the splice there, exactly as `runProgram`'s\n      // three gates `unshift` their own branches. So a decline is not \"the empty\n      // arm of the apply\"; a decline is the ABSENCE of the splice, and both\n      // answers pass through here identically.\n      //\n      // ⚠️ BEHAVIOURALLY EQUIVALENT TO DELETING IT — the `default` below already\n      // returns the state — and kept anyway, because the default's REASON is\n      // false about this op: it reads \"synchronous ops never park, so never reach\n      // the choice path\", and `optional` parks on every board. An arm that states\n      // the true thing beats one inherited for a wrong reason. Recorded as an\n      // equivalent mutant rather than passed off as a tested line.\n      return state;\n",
-    replace: "",
-    expectKilledBy: [
-      "packages/engine/src/optionalConfirm.test.ts",
-      "packages/engine/src/optionalDraw.test.ts",
-      "packages/engine/src/optionalDamageBoost.test.ts",
-    ],
-    survives: {
-      kind: "equivalent",
-      reason: "The `default` arm of the same switch returns `state` unchanged, so removing this case changes no reachable behaviour — which is what the shipped comment on the arm claims and what no row had ever recorded. It stops being true the moment either half moves: an `optional` apply that must do work, or a `default` that stops returning the state. Both would KILL this row and fail the run as STALE-SURVIVOR.",
-    },
-  },
-  {
     id: "D455-condition-gate-arms-are-swapped",
     decision: "D455",
     what: "🛑 **THE DETERMINISTIC GATE RUNS ITS ARMS BACKWARDS** — `D269-arms-are-swapped` records exactly this defect on the COIN gate one branch up and nothing recorded it on the other two, though all three are the same three lines. Swapped, Falkner's Stadium's *\"if [condition], do X, otherwise Y\"* does Y precisely when the board says X, and the gate emits NO EVENT by design (the condition is public), so there is not even a log row to disagree with. `conditionHolds` is a pure read of public state, which is what makes the mutation totally silent: no throw, no refusal, the wrong branch spliced and run to completion",
@@ -45973,7 +45956,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D612 — RE-POINTED: the cache is v8 since WP06 (cache.ts v7→v8); stepping it back past
     // D581's own bump is still a cached-body regression the key rungs must see.
     // 🆕🆕🆕 D628 — RE-POINTED again: the cache is v9 since finding 0b (cache.ts v8→v9); the same mutation.
-    find: 'const CACHE_VERSION = "v9";',
+    find: 'const CACHE_VERSION = "v12";',
     replace: 'const CACHE_VERSION = "v6";',
     expectKilledBy: ["apps/api/src/catalog/cache.test.ts", "apps/api/src/catalog/routes.test.ts"],
   },
@@ -52014,7 +51997,7 @@ export const MUTANTS: Mutant[] = [
     what: "the KV catalog cache stays v7, so a body cached before the remote re-ingest keeps serving tcgdex's raw tags. Killed by cache.test and routes.test.",
     file: "apps/api/src/catalog/cache.ts",
     // 🆕🆕🆕 D628 — RE-POINTED: the cache is v9 since finding 0b (cache.ts v8→v9); the same mutation.
-    find: 'const CACHE_VERSION = "v9";',
+    find: 'const CACHE_VERSION = "v12";',
     replace: 'const CACHE_VERSION = "v7";',
     expectKilledBy: ["apps/api/src/catalog/cache.test.ts", "apps/api/src/catalog/routes.test.ts"],
   },
@@ -54076,7 +54059,7 @@ export const MUTANTS: Mutant[] = [
     file: "apps/api/src/lobby/match.ts",
     // 🆕🆕🆕 D630 — RE-POINTED off the bytes (D540): D621's step is skipped for a v43 record since D630; the same mutation (never taken).
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): `sided` is a two-line ternary since D636 (the v44 arm); the patch still skips D621's step.
-    find: "    v44 || record.version === RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION ? withPool : withD621SideKeys(withPool);",
+    find: "    v44 || record.version === RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION\n      ? withPool\n      : withD621SideKeys(withPool);",
     replace: "    withPool;",
     expectKilledBy: ["apps/api/src/lobby/sideStateMigrationD621.test.ts"],
   },
@@ -55531,7 +55514,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D628",
     what: "the KV catalog cache stays v8, so a brief cached before finding 0b keeps serving \"Normal\" for the 14 tagged Special Energies. Killed by cache.test and routes.test.",
     file: "apps/api/src/catalog/cache.ts",
-    find: 'const CACHE_VERSION = "v9";',
+    find: 'const CACHE_VERSION = "v12";',
     replace: 'const CACHE_VERSION = "v8";',
     expectKilledBy: ["apps/api/src/catalog/cache.test.ts", "apps/api/src/catalog/routes.test.ts"],
   },
@@ -56031,7 +56014,7 @@ export const MUTANTS: Mutant[] = [
     what: "D621's step runs on a v43 record too: a live Acerola's Mischief shield is wiped. Killed by recordKeysMigrationD630.",
     file: "apps/api/src/lobby/match.ts",
     // 🆕🆕🆕 D636 — RE-ANCHORED off the bytes (D540): the v43 arm is the right-hand disjunct since D636; the patch still runs D621's step on a v43 record.
-    find: "    v44 || record.version === RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION ? withPool : withD621SideKeys(withPool);",
+    find: "    v44 || record.version === RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION\n      ? withPool\n      : withD621SideKeys(withPool);",
     replace: "    v44 ? withPool : withD621SideKeys(withPool);",
     expectKilledBy: ["apps/api/src/lobby/recordKeysMigrationD630.test.ts"],
   },
@@ -57458,7 +57441,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D636",
     what: "a live v44 hand-attach mark keeps no `counters` key. Killed by lockKeysMigrationD636.",
     file: "apps/api/src/lobby/match.ts",
-    find: "      handAttachMark: pokemon.handAttachMark === null ? null : { ...pokemon.handAttachMark, counters: 0 },",
+    find: "      handAttachMark:\n        pokemon.handAttachMark === null ? null : { ...pokemon.handAttachMark, counters: 0 },",
     replace: "      handAttachMark: pokemon.handAttachMark,",
     expectKilledBy: ["apps/api/src/lobby/lockKeysMigrationD636.test.ts"],
   },

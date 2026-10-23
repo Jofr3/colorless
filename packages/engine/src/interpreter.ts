@@ -9528,11 +9528,98 @@ export function applyChoice(
       // `continuationOps`, and the one-card `orderCards` answer puts the card back where it
       // was. Spelled rather than left to `default` so the parking op is named here.
       return state;
+    // Synchronous ops never park, so never reach the choice path.
+    case "applyStatus":
+    case "boostAttack":
+    case "boostSideAttacksThisTurn":
+    case "bottomDeckTop":
+    case "bountyDefender":
+    case "bountyThisAttack":
+    case "chooseOneOffered":
+    case "clearStatus":
+    case "coinFlipGate":
+    case "conditionGate":
+    case "counterEachAll":
+    case "countersOnRecordedBody":
+    case "counterUntilRemainingHp":
+    case "cycleOwnPrizes":
+    case "damageActive":
+    case "damageDefender":
+    case "damageNewActive":
+    case "damageSelf":
+    case "damageSubject":
+    case "devolveEach":
+    case "discardDeckBottom":
+    case "discardDeckTop":
+    case "discardDefender":
+    case "discardFromOpponentHand":
+    case "discardHand":
+    case "discardStadium":
+    case "drawCards":
+    case "drawUntilHandSize":
+    case "eachPlayerTakesPrize":
+    case "evolveFromDeckEachBenched":
+    case "exposeDefender":
+    case "exposeSelf":
+    case "flipLockAttack":
+    case "flipLockTrainerPlay":
+    case "handRefresh":
+    case "heal":
+    case "healEach":
+    case "healEachAll":
+    case "healSubject":
+    case "installNoWeakness":
+    case "installRecoil":
+    case "installSideAttackBlock":
+    case "installSideDamageReductionNextTurn":
+    case "knockOutDefender":
+    case "knockOutEach":
+    case "knockOutSelf":
+    case "lockSideAttacks":
+    case "lockSideRetreat":
+    case "markHandAttach":
+    case "preventAttack":
+    case "preventAttackUse":
+    case "preventDamage":
+    case "preventHandPlay":
+    case "preventRetreat":
+    case "randomFromOpponentHand":
+    case "recordGate":
+    case "recoverOneStatus":
+    case "reduceDamage":
+    case "reflipAttackCoins":
+    case "returnSelf":
+    case "retypeDefenderWeakness":
+    case "revealDeckBottomCount":
+    case "revealOpponentHand":
+    case "revealTopDiscardMatching":
+    case "scheduleCounters":
+    case "scheduleDiscard":
+    case "scheduleEndOfTurnHandDiscard":
+    case "scheduleKnockOut":
+    case "shuffleDeck":
+    case "shufflePlayedCardIntoDeck":
+    case "spreadDamage":
+    case "swapTurnedPrizeWithRevealed":
+    case "switchWithDeckNamed":
+    case "takePrize":
+    case "taxDefender":
+    case "useAttackAs":
+    case "useFoundAttackAs":
+    case "useInPlayAttackAs":
+    case "useMilledSupporterEffect":
+    case "weakenDefenderAttacks":
+    case "winGame":
+      return state;
     default:
-      // Synchronous ops never park, so never reach the choice path.
+      // Records written by another engine version can carry op names this build
+      // does not know; they are ignored at runtime but must not typecheck.
+      assertNoOpLeft(op);
       return state;
   }
 }
+
+function assertNoOpLeft(_op: never): void {}
 
 // ── Op implementations ──
 

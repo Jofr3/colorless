@@ -21,6 +21,18 @@ describe("Lua account adapter", () => {
     expect(account.status).toBe("error");
     expect(account.busy).toBe(false);
   });
+  it("shows a failed Google sign-in once, on the next anonymous refresh", async () => {
+    stubFetch({ "GET /auth/me": () => json({}, 401) });
+    const { account } = setup();
+    account.noteAuthError("email-in-use");
+    await account.refresh();
+    expect(account.message).toBe("That email already has an account. Sign in with your password.");
+    await account.refresh();
+    expect(account.message).toBe("");
+    account.noteAuthError("constructor");
+    await account.refresh();
+    expect(account.message).toBe("Google sign-in failed. Try again.");
+  });
   it("saves only the display name using the shared credentialed client", async () => {
     const { impl } = stubFetch({
       ...session,

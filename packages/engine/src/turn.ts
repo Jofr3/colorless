@@ -223,7 +223,11 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
   // attach an Energy card from their hand to the Defending Pokémon, their turn ends"* — is
   // carried to the tail below (R-HY2). A bad bench index reads no mark and is refused below.
   const markedTarget =
-    action.target.spot === "active" ? side.active : side.bench[action.target.index];
+    action.target.spot === "active"
+      ? side.active
+      : isBenchIndex(action.target.index)
+        ? side.bench[action.target.index]
+        : undefined;
   const mark = markedTarget == null ? null : liveHandAttachMark(state, markedTarget);
   if (mark?.barred === true) {
     return err(

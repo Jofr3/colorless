@@ -214,7 +214,8 @@ for _,size in ipairs({{1280,800},{480,850}}) do
     assert(b.w==b.h and b.y==controls[1].y)
     assert(b.x>=0 and b.x+b.w<=sim.L.w)
     if i>1 then assert(b.x>=controls[i-1].x+controls[i-1].w+5) end
-    assert(b.colour==(i>3 and require('ui.sim_hud').insetColour or T.red))
+    local enabledColour=entries[i][2]=='restart' and T.gold or T.red
+    assert(b.colour==(i>3 and require('ui.sim_hud').insetColour or enabledColour))
   end
   sim:openOptions()
   sim:sync(row(101,'ready','Player 1','Player 2',0,'setup:chooseFirst','','Choose who goes first','',0,0,'you','','p1',0,0,0,'','','','new-match'))

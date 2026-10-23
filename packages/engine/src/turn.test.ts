@@ -119,6 +119,18 @@ describe("attachEnergy", () => {
     );
   });
 
+  it("rejects a non-integer bench index without throwing", () => {
+    const state = costOneBoard();
+    const uid = handUid(state, "p1", "fix-energy");
+    for (const index of ["length", "__proto__", 1.5]) {
+      expectErr(
+        state,
+        { type: "attachEnergy", seat: "p1", uid, target: { spot: "bench", index: index as never } },
+        "BAD_BENCH_INDEX",
+      );
+    }
+  });
+
   it("rejects a wire-garbled target without throwing", () => {
     // The target is a wire value like every other: a null / non-object /
     // unknown-spot shape must come back ok:false, never TypeError on `.spot`.

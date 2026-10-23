@@ -209,7 +209,7 @@ describe("GET /auth/oauth/:provider/callback", () => {
     expect(res.status).toBe(503);
   });
 
-  it("400s a state mismatch before exchanging the code", async () => {
+  it("redirects a state mismatch back to the app before exchanging the code", async () => {
     const env = envWith({ GOOGLE_CLIENT_ID: "g-id", GOOGLE_CLIENT_SECRET: "g-secret" });
     const cases = [
       { query: "?code=x&state=forged", cookie: undefined }, // no cookie at all
@@ -223,8 +223,9 @@ describe("GET /auth/oauth/:provider/callback", () => {
         { headers: cookie ? { Cookie: cookie } : {} },
         env,
       );
-      expect(res.status).toBe(400);
-      expect(((await res.json()) as { error: string }).error).toBe("invalid oauth state");
+      expect(res.status).toBe(302);
+      const location = new URL(res.headers.get("Location") ?? "");
+      expect(location.searchParams.get("authError")).toBe("state");
       // The one-shot state cookie is dropped even on failure.
       expect(res.headers.get("Set-Cookie")).toContain("oauth_state=; Max-Age=0");
     }

@@ -56,11 +56,28 @@
 // them readable; `history.censusedInTheGap` is who owes a re-run.
 
 import { Database } from "bun:sqlite";
-import { statSync, writeFileSync } from "node:fs";
+import { readdirSync, statSync, writeFileSync } from "node:fs";
 import { FIXTURE_POOL } from "../packages/engine/src/testFixtures";
 
-const DB_PATH =
-  "apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/8437d86672ef67002c76a06d8e29643de1a9c95e9422816cce0e554c6c5b7286.sqlite";
+const D1_DIR = "apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject";
+
+/** Miniflare names the local D1 file after a hash of the database id, so it is
+    found rather than hard-coded; exactly one database file must exist. */
+function localD1Path(): string {
+  let names: string[];
+  try {
+    names = readdirSync(D1_DIR);
+  } catch {
+    throw new Error(`no local D1 at ${D1_DIR}; run the catalog ingest first`);
+  }
+  const dbs = names.filter((n) => n.endsWith(".sqlite") && n !== "metadata.sqlite");
+  if (dbs.length !== 1) {
+    throw new Error(`expected one D1 sqlite in ${D1_DIR}, found ${dbs.length}: ${dbs.join(", ")}`);
+  }
+  return `${D1_DIR}/${dbs[0]}`;
+}
+
+const DB_PATH = localD1Path();
 const OUT = "packages/engine/src/catalogManifest.ts";
 
 /** A fixture id that names a real printing (as opposed to a synthetic `fix-*`
@@ -444,8 +461,10 @@ if (process.argv.includes("--check")) {
   const current = await Bun.file(OUT)
     .text()
     .catch(() => "");
-  // The `generated` stamp moves every run; compare everything else.
-  const strip = (s: string) => s.replace(/generated: "[^"]*"/, "");
+  // The provenance stamps (local file name, mtime, run date) differ per machine and
+  // per run; compare everything else.
+  const strip = (s: string) =>
+    s.replace(/(path|mtime|generated): "[^"]*"/g, "");
   if (strip(current) !== strip(body)) {
     console.error(`${OUT} is STALE — run: bun run scripts/catalog-manifest.ts`);
     process.exit(1);
