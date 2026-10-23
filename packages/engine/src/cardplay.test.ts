@@ -477,8 +477,7 @@ describe("playTrainer / useAbility — validation", () => {
     const result = applyAction(state, {
       type: "useAbility",
       seat: "p1",
-      // biome-ignore lint/suspicious/noExplicitAny: wire-shape probe
-      target: null as any,
+      target: null as never,
       abilityName: "Shivery Chill",
     });
     expect(result.ok).toBe(false);
