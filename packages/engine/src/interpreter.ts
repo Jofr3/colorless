@@ -1944,21 +1944,7 @@ function stepOp(
         // Per-target scaling: each pick reads its own counters, so placement walks the refs one at
         // a time.
         if (op.perDamageCounterOnTarget === true) {
-          let next = state;
-          for (const ref of candidates) {
-            next = placeSnipe(
-              next,
-              [ref],
-              snipeAmount(op, next, ctx, record, ref),
-              op.deals === true,
-              op.ignoreWR === true,
-              op.source,
-              ctx,
-              events,
-              op.wrOnly === true,
-            );
-          }
-          return { done: next };
+          return { done: snipeEachByCounters(state, candidates, op, ctx, events, record) };
         }
         // Nullifying Zero: one coin per candidate, all coins before any damage; heads targets take
         // the hit together.
@@ -1975,37 +1961,13 @@ function stepOp(
               schedule: [{ op: "reflipCoins", toolUid: redo, faces, retry: op }],
             };
           const hit = candidates.filter((_, index) => faces[index] === "heads");
-          return {
-            done: placeSnipe(
-              flipped,
-              hit,
-              amount,
-              op.deals === true,
-              op.ignoreWR === true,
-              op.source,
-              ctx,
-              events,
-              op.wrOnly === true,
-            ),
-          };
+          return { done: placeSnipe(flipped, hit, amount, op, ctx, events) };
         }
         // Target Together with one candidate: the pick is forced, then the coins.
         if (op.perHeadsInPlay !== undefined) {
           return perHeadsHit(state, op, op.perHeadsInPlay, candidates, amount, ctx, events);
         }
-        return {
-          done: placeSnipe(
-            state,
-            candidates,
-            amount,
-            op.deals === true,
-            op.ignoreWR === true,
-            op.source,
-            ctx,
-            events,
-            op.wrOnly === true,
-          ),
-        };
+        return { done: placeSnipe(state, candidates, amount, op, ctx, events) };
       }
       return {
         park: {
@@ -2014,18 +1976,7 @@ function stepOp(
           min: take,
           max: take,
           declinable,
-          note: snipeNote(
-            amount,
-            take,
-            declinable,
-            op.deals === true,
-            op.target,
-            op.damagedOnly === true,
-            op.filter,
-            op.perDamageCounterOnTarget === true,
-            op.perHeadsInPlay !== undefined,
-            op.specialEnergyOnly === true,
-          ),
+          note: snipeNote(amount, take, declinable, op),
         },
       };
     }
@@ -2224,28 +2175,7 @@ function stepOp(
           // key differs from an undefined one.
           ...(caps.length === 0 ? {} : { caps }),
           // The caption quotes the printed groups, never the resolved ones.
-          note: searchNote(
-            printedGroups,
-            op.dest,
-            max,
-            op.exact === true,
-            op.distinctEnergyTypes === true,
-            op.typedAsAttachedBasicEnergy === true,
-          ),
-          // Love Ball's caption carries its printed rule.
-          ...(op.sameNameAsOpponentInPlay === true
-            ? {
-                note: searchNote(
-                  printedGroups,
-                  op.dest,
-                  max,
-                  op.exact === true,
-                  op.distinctEnergyTypes === true,
-                  op.typedAsAttachedBasicEnergy === true,
-                  true,
-                ),
-              }
-            : {}),
+          note: searchNote(printedGroups, max, op),
         },
       };
     }
@@ -5131,21 +5061,7 @@ export function applyChoice(
       // Per-target fold: the multiplier is the chosen body's own counters, so the pick is walked
       // ref by ref with `snipeAmount`, as `stepOp`'s forced branch does.
       if (choice.kind === "pokemonMulti" && op.perDamageCounterOnTarget === true) {
-        let resumed = state;
-        for (const ref of choice.refs) {
-          resumed = placeSnipe(
-            resumed,
-            [ref],
-            snipeAmount(op, resumed, ctx, record, ref),
-            op.deals === true,
-            op.ignoreWR === true,
-            op.source,
-            ctx,
-            events,
-            op.wrOnly === true,
-          );
-        }
-        return resumed;
+        return snipeEachByCounters(state, choice.refs, op, ctx, events, record);
       }
       // Target Together: the pick moves nothing; `continuationOps` reschedules the op with
       // `hitRefs` and `stepOp` flips, so a Backtrack Badge offer can park.
@@ -5154,20 +5070,9 @@ export function applyChoice(
       // happened between parking and this pick, so the count is unchanged — the
       // same value snipeNote quoted in the prompt.
       return choice.kind === "pokemonMulti"
-        ? placeSnipe(
-            state,
-            choice.refs,
-            snipeAmount(op, state, ctx, record),
-            op.deals === true,
-            op.ignoreWR === true,
-            // The provenance rides the parked op, so a resumed pick emits the same row an inline
-            // one would.
-            op.source,
-            ctx,
-            events,
-            // The parked op's own `wrOnly`; an older park without it keeps the old reading.
-            op.wrOnly === true,
-          )
+        ? // The riders, provenance included, ride the parked op, so a resumed pick emits the same
+          // row an inline one would.
+          placeSnipe(state, choice.refs, snipeAmount(op, state, ctx, record), op, ctx, events)
         : state;
     case "attachEnergyFrom":
       // An absent ref is the decline: the board is returned untouched with no event. `choice.take`
@@ -7022,19 +6927,7 @@ function perHeadsHit(
     };
   }
   const heads = faces.filter((face) => face === "heads").length;
-  return {
-    done: placeSnipe(
-      flipped,
-      refs,
-      amount * heads,
-      op.deals === true,
-      op.ignoreWR === true,
-      op.source,
-      ctx,
-      events,
-      op.wrOnly === true,
-    ),
-  };
+  return { done: placeSnipe(flipped, refs, amount * heads, op, ctx, events) };
 }
 
 /**
@@ -7070,23 +6963,46 @@ export function coinRedoPrompt(
   };
 }
 
+/** The `damageChosen` riders that shape one placement; `source` is Venture Bomb's Item placement. */
+type SnipeRider = Pick<OpOf<"damageChosen">, "deals" | "ignoreWR" | "wrOnly" | "source">;
+
+/**
+ * Per-target scaling: each pick reads its own counters, so placement walks the refs one at a time.
+ * Shared by the forced branch and the resumed pick.
+ */
+function snipeEachByCounters(
+  state: GameState,
+  refs: readonly PokemonRef[],
+  op: OpOf<"damageChosen">,
+  ctx: EffectContext,
+  events: GameEvent[],
+  record: EffectRecord,
+): GameState {
+  let next = state;
+  for (const ref of refs) {
+    next = placeSnipe(next, [ref], snipeAmount(op, next, ctx, record, ref), op, ctx, events);
+  }
+  return next;
+}
+
 function placeSnipe(
   state: GameState,
   refs: readonly PokemonRef[],
   amount: number,
-  deals: boolean,
-  printedIgnoreWR: boolean,
-  source: "ability" | "attack" | "trainer", // Venture Bomb's Item placement
+  rider: SnipeRider,
   ctx: EffectContext,
   events: GameEvent[],
-  wrOnly: boolean, // The bare W/R tail: ignore Weakness and Resistance only
 ): GameState {
   if (amount <= 0) return state;
+  const deals = rider.deals === true;
+  const source = rider.source;
+  // The bare W/R tail: ignore Weakness and Resistance only.
+  const wrOnly = rider.wrOnly === true;
   const opponent = otherSeat(ctx.seat);
   // `ignoreWR` is only the form that also ignores effects on the target. The bare tail (`wrOnly`)
   // skips only Weakness and Resistance, so it takes the plain hit's path and passes `wrOnly` to
   // `snipeActive` for an Active pick.
-  const ignoreWR = printedIgnoreWR && !wrOnly;
+  const ignoreWR = rider.ignoreWR === true && !wrOnly;
   // The Active target (`opponentAny` only). Weakness and Resistance apply only to the Active, so a
   // hit that lands there goes through W/R unlike a Bench target; `ignoreWR` (Feint Attack) skips
   // W/R and the reduction passive. A placement (`!deals`) uses `damageActive` instead, since a
@@ -7794,32 +7710,32 @@ function snipeNote(
   amount: number,
   count: number,
   optional: boolean,
-  deals: boolean,
-  /**
-   * Widened for `yourAny`; unreachable today because that op is `count: "all"` and takes the forced
-   * branch, but the caption must read correctly once a park reaches it.
-   */
-  target: "opponentBench" | "opponentAny" | "yourBench" | "yourAny" = "opponentBench",
-  /** `op.damagedOnly`: the caption must name exactly the set the prompt offers. */
-  damagedOnly = false,
-  /**
-   * `op.filter`: the caption names the narrowed candidate class via `retrieveNoun`, writing the
-   * zone word once ("Benched Pokémon ex or Pokémon V").
-   */
-  narrowing?: CardFilter,
-  /**
-   * `op.perDamageCounterOnTarget`: the amount depends on the unchosen body, so the caption quotes
-   * the rule ("20 damage for each damage counter on it") instead of a number.
-   */
-  perDamageCounterOnTarget = false,
-  /**
-   * `op.perHeadsInPlay`: coins are flipped after the pick, so the caption quotes the rule ("50
-   * damage for each heads").
-   */
-  perHeads = false,
-  /** `op.specialEnergyOnly`: the caption names the narrowed set. */
-  specialEnergyOnly = false,
+  op: Pick<
+    OpOf<"damageChosen">,
+    | "deals"
+    | "target"
+    | "damagedOnly"
+    | "filter"
+    | "perDamageCounterOnTarget"
+    | "perHeadsInPlay"
+    | "specialEnergyOnly"
+  >,
 ): string {
+  const deals = op.deals === true;
+  // `yourAny` is unreachable today because that op is `count: "all"` and takes the forced branch,
+  // but the caption must read correctly once a park reaches it.
+  const target = op.target;
+  // `damagedOnly` and `specialEnergyOnly` narrow the offer, so the caption names exactly that set.
+  const damagedOnly = op.damagedOnly === true;
+  const specialEnergyOnly = op.specialEnergyOnly === true;
+  // The caption names the narrowed candidate class via `retrieveNoun`, writing the zone word once
+  // ("Benched Pokémon ex or Pokémon V").
+  const narrowing = op.filter;
+  // The amount depends on the unchosen body, so the caption quotes the rule ("20 damage for each
+  // damage counter on it") instead of a number.
+  const perDamageCounterOnTarget = op.perDamageCounterOnTarget === true;
+  // Coins are flipped after the pick, so the caption quotes the rule ("50 damage for each heads").
+  const perHeads = op.perHeadsInPlay !== undefined;
   const verb = optional ? "You may choose" : "Choose";
   const each = deals
     ? `${amount} damage`
@@ -13145,11 +13061,14 @@ function searchOrElseNote(
 ): string {
   return `Search your deck for up to ${max} ${retrieveNoun(filter).plural} or ${alternative.max} ${
     retrieveNoun(alternative.filter).plural
-  } ${SEARCH_OR_ELSE_PLACE[dest]}.`;
+  } ${SEARCH_DEST_PHRASE[dest]}.`;
 }
 
-/** `searchOrElseNote`'s place phrase, keyed as a total record on `dest`. */
-const SEARCH_OR_ELSE_PLACE: Record<OpOf<"searchDeck">["dest"], string> = {
+/**
+ * A deck search's place phrase, keyed as a total record on `dest`. Prints "your deck" rather than
+ * the card's "it", since a heading has no antecedent.
+ */
+const SEARCH_DEST_PHRASE: Record<OpOf<"searchDeck">["dest"], string> = {
   bench: "onto your Bench",
   hand: "into your hand",
   deckTop: "on top of your deck",
@@ -13164,41 +13083,25 @@ function searchNote(
    * is a separate parameter.
    */
   groups: readonly { filter: CardFilter; max: SearchDeckMax }[],
-  dest: "bench" | "hand" | "deckTop" | "discard" | "attachToSelf",
   max: number,
-  /**
-   * The op's `exact`: the caption drops "up to" so it matches a Confirm button that refuses fewer.
-   */
-  exact = false,
-  /**
-   * The op's `distinctEnergyTypes`: the caption carries "of different types" so the player can see
-   * why a duplicate type is refused.
-   */
-  distinctEnergyTypes = false,
-  /**
-   * The op's `typedAsAttachedBasicEnergy`: the caption quotes the printed rule, not the resolved
-   * types. Plural noun only.
-   */
-  typedAsAttachedBasicEnergy = false,
-  /**
-   * The op's `sameNameAsOpponentInPlay` (Love Ball), on the singular noun; the caption quotes the
-   * rule.
-   */
-  sameNameAsOpponentInPlay = false,
+  op: Pick<
+    OpOf<"searchDeck">,
+    | "dest"
+    | "exact"
+    | "distinctEnergyTypes"
+    | "typedAsAttachedBasicEnergy"
+    | "sameNameAsOpponentInPlay"
+  >,
 ): string {
-  const where =
-    dest === "bench"
-      ? "onto your Bench"
-      : // Prints "your deck" rather than the card's "it", since a heading has no antecedent.
-        dest === "deckTop"
-        ? "on top of your deck"
-        : // Brilliant Blender
-          dest === "discard"
-          ? "and discard them"
-          : // Impromptu Carrier
-            dest === "attachToSelf"
-            ? "and attach it to this Pokémon"
-            : "into your hand";
+  const where = SEARCH_DEST_PHRASE[op.dest];
+  // `exact` drops "up to" so the caption matches a Confirm button that refuses fewer.
+  const exact = op.exact === true;
+  // "Of different types" lets the player see why a duplicate type is refused.
+  const distinctEnergyTypes = op.distinctEnergyTypes === true;
+  // These two quote the printed rule, not the resolved types or names: Love Ball's on the singular
+  // noun, the typed-as-attached one on the plural only.
+  const typedAsAttachedBasicEnergy = op.typedAsAttachedBasicEnergy === true;
+  const sameNameAsOpponentInPlay = op.sameNameAsOpponentInPlay === true;
   // Reads the clamped `max`, so a bench search cut by `benchSpace` captions the number the dialog
   // accepts.
   const first = groups[0];
