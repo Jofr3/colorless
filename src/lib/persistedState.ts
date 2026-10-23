@@ -1,6 +1,5 @@
 // Best-effort localStorage helpers. Reading validates/parses and falls back;
-// writing swallows failures (private mode, quota). Centralizes the try/catch
-// boilerplate that the settings and decks features previously hand-rolled.
+// writing and removing swallow failures (private mode, quota).
 
 /**
  * Read and parse a persisted value. Returns `fallback` when the key is absent,
@@ -29,5 +28,14 @@ export function writePersisted(key: string, value: string): void {
   } catch {
     // Best-effort — the value still applies for this session, it just won't
     // survive a refresh.
+  }
+}
+
+/** Remove a persisted value, swallowing storage failures. */
+export function removePersisted(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Storage may be unavailable; nothing persisted to clear.
   }
 }

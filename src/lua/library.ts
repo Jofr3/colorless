@@ -3,16 +3,10 @@ import type { Deck } from "../decks/data";
 import { deckLegality } from "../game/sandboxDecks";
 import { decodeFields, encodeFields } from "./wire";
 import { reportError } from "../lib/reportError";
+import { readPersisted, writePersisted } from "../lib/persistedState";
 
-const sorts: [string, ...string[]] = ["name-asc", "name-desc", "cards-desc"];
-const stored = (key: string, allowed: [string, ...string[]]) => {
-  try {
-    const value = localStorage.getItem(key);
-    return value && allowed.includes(value) ? value : allowed[0];
-  } catch {
-    return allowed[0];
-  }
-};
+const sorts = ["name-asc", "name-desc", "cards-desc"];
+const SORT_KEY = "decks.sortKey";
 
 /** Data/session adapter only. Layout, card physics and all controls live in Lua. */
 export class LuaLibrary {
@@ -20,7 +14,7 @@ export class LuaLibrary {
   /** Deck id → legal, for the "!" alert on a pile; absent while unchecked. */
   legality = new Map<string, boolean>();
   query = "";
-  sort = stored("decks.sortKey", sorts);
+  sort = readPersisted(SORT_KEY, (raw) => (sorts.includes(raw) ? raw : undefined), "name-asc");
   page = 1;
   size = 12;
   phase = "loading";
@@ -216,11 +210,7 @@ export class LuaLibrary {
     if (action === "sort" && sorts.includes(a)) {
       this.sort = a;
       this.page = 1;
-      try {
-        localStorage.setItem("decks.sortKey", a);
-      } catch {
-        /* Optional preference. */
-      }
+      writePersisted(SORT_KEY, a);
     }
     if (action === "page") {
       const pages = Math.max(1, Math.ceil(this.visible().decks.length / this.size));

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { readPersisted, writePersisted } from "./persistedState";
+import { readPersisted, removePersisted, writePersisted } from "./persistedState";
 
 function fakeStorage(initial: Record<string, string> = {}) {
   const store = new Map(Object.entries(initial));
@@ -71,5 +71,24 @@ describe("writePersisted", () => {
   it("swallows a throwing setItem", () => {
     vi.stubGlobal("localStorage", throwingStorage());
     expect(() => writePersisted("k", "v")).not.toThrow();
+  });
+});
+
+describe("removePersisted", () => {
+  it("removes the value", () => {
+    const storage = fakeStorage({ k: "v" });
+    vi.stubGlobal("localStorage", storage);
+    removePersisted("k");
+    expect(storage.getItem("k")).toBeNull();
+  });
+
+  it("swallows a throwing removeItem", () => {
+    vi.stubGlobal("localStorage", {
+      ...throwingStorage(),
+      removeItem: () => {
+        throw new Error("storage blocked");
+      },
+    });
+    expect(() => removePersisted("k")).not.toThrow();
   });
 });
