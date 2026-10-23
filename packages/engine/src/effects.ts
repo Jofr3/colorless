@@ -2288,17 +2288,13 @@ const DEFENDER_CONFUSION_N =
   /^Your opponent['’]s Active Pokémon is now Confused\. Put (\d+) damage counters instead of 3 on that Pokémon for this Special Condition\.$/;
 
 // The Poison compound has its own anchor so that matching only the lock clause never drops the
-// Poison.
+// Poison. "that Pokémon" is only printed after a clause naming the opponent's Active Pokémon, so it
+// is read as the Defending Pokémon; that form is reached through `splitAttackTrailingClause`.
 const DEFENDER_CANT_RETREAT =
-  /^During your opponent['’]s next turn, the Defending Pokémon can['’]t retreat\.$/;
+  /^During your opponent['’]s next turn, (?:the Defending|that) Pokémon can['’]t retreat\.$/;
 
 const DEFENDER_POISON_CANT_RETREAT =
   /^Your opponent['’]s Active Pokémon is now Poisoned\. During your opponent['’]s next turn, that Pokémon can['’]t retreat\.$/;
-
-// Only printed after a clause naming the opponent's Active Pokémon, so "that Pokémon" is read as
-// the Defending Pokémon. Reached through `splitAttackTrailingClause`.
-const DEFENDER_PRONOUN_CANT_RETREAT =
-  /^During your opponent['’]s next turn, that Pokémon can['’]t retreat\.$/;
 
 // Only printed as the tail of a heal compound. It is kept bare so that `splitAttackTrailingClause`
 // composes it after `SELF_HEAL`.
@@ -3477,36 +3473,25 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     }
   }
 
-  // 5b. "During your opponent's next turn, the Defending Pokémon can't
-  //     retreat." — the whole effect on 15 printings, none of which needs a
-  //     registry row.
-  match = DEFENDER_CANT_RETREAT.exec(effect);
-  if (match !== null) {
+  // 5b. "During your opponent's next turn, the Defending Pokémon can't retreat.", or "that Pokémon"
+  //     as the tail of a compound.
+  if (DEFENDER_CANT_RETREAT.test(effect)) {
     return [{ op: "preventRetreat" }];
   }
 
   // 5c. "Your opponent's Active Pokémon is now Poisoned. During your opponent's
   //     next turn, that Pokémon can't retreat." (Paldean Clodsire "Poison
   //     Ring") — the same lock behind a Poison clause; ops in printed order.
-  match = DEFENDER_POISON_CANT_RETREAT.exec(effect);
-  if (match !== null) {
+  if (DEFENDER_POISON_CANT_RETREAT.test(effect)) {
     return [
       { op: "applyStatus", target: "defender", status: "poisoned" },
       { op: "preventRetreat" },
     ];
   }
 
-  // 5d. The defender's retreat lock, reached only as the tail of a compound split by
-  // `splitAttackTrailingClause`.
-  match = DEFENDER_PRONOUN_CANT_RETREAT.exec(effect);
-  if (match !== null) {
-    return [{ op: "preventRetreat" }];
-  }
-
   // 5e. Self retreat lock. It needs both `target` and a turn stamp, because the paralysis clock
   // (§13.4) would clear the flag at the end of the attacker's own turn, before the lock applies.
-  match = SELF_CANT_RETREAT.exec(effect);
-  if (match !== null) {
+  if (SELF_CANT_RETREAT.test(effect)) {
     return [{ op: "preventRetreat", target: "self" }];
   }
 
@@ -3520,26 +3505,22 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
 
   // 5g. Discards the Defending Pokémon without a Knock Out, so no Prize is taken. A separate op
   // from 5h for that reason.
-  match = DELAYED_DEFENDER_DISCARD.exec(effect);
-  if (match !== null) {
+  if (DELAYED_DEFENDER_DISCARD.test(effect)) {
     return [{ op: "scheduleDiscard" }];
   }
 
   // 5h. A delayed Knock Out, which does award a Prize.
-  match = DELAYED_DEFENDER_KO.exec(effect);
-  if (match !== null) {
+  if (DELAYED_DEFENDER_KO.test(effect)) {
     return [{ op: "scheduleKnockOut" }];
   }
 
   // 6a.
-  match = OPPONENT_ACTIVE_BASIC_KO.exec(effect);
-  if (match !== null) {
+  if (OPPONENT_ACTIVE_BASIC_KO.test(effect)) {
     return [conditionGate({ kind: "opponentActiveIsBasic" }, [{ op: "knockOutDefender" }])];
   }
 
   // 6a-ii.
-  match = OPPONENT_ACTIVE_SPECIAL_ENERGY_KO.exec(effect);
-  if (match !== null) {
+  if (OPPONENT_ACTIVE_SPECIAL_ENERGY_KO.test(effect)) {
     return [
       conditionGate({ kind: "opponentActiveHasEnergyAttached", energy: "special" }, [
         { op: "knockOutDefender" },
@@ -3548,16 +3529,14 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   }
 
   // 6a-ii-b.
-  match = OPPONENT_ACTIVE_SPECIAL_CONDITION_KO.exec(effect);
-  if (match !== null) {
+  if (OPPONENT_ACTIVE_SPECIAL_CONDITION_KO.test(effect)) {
     return [
       conditionGate({ kind: "opponentActiveHasSpecialCondition" }, [{ op: "knockOutDefender" }]),
     ];
   }
 
   // 6a-iii.
-  match = SELF_PRIZE_GATE_PARALYZE.exec(effect);
-  if (match !== null) {
+  if (SELF_PRIZE_GATE_PARALYZE.test(effect)) {
     return [
       conditionGate({ kind: "yourPrizesRemaining", counts: [1] }, [
         { op: "applyStatus", target: "defender", status: "paralyzed" },
@@ -3566,8 +3545,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   }
 
   // 6b. Both Knock Outs resolve in one instant (§8.1), which also orders the Prizes.
-  match = BOTH_ACTIVES_KO.exec(effect);
-  if (match !== null) {
+  if (BOTH_ACTIVES_KO.test(effect)) {
     return [{ op: "knockOutDefender" }, { op: "knockOutSelf" }];
   }
 
@@ -3584,8 +3562,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
 
   // 6d. One coin with both arms. The heads arm keeps the Basic restriction because
   // `knockOutDefender` only checks that an Active exists.
-  match = FLIP_KO_ACTIVE_OR_BENCHED_BASIC.exec(effect);
-  if (match !== null) {
+  if (FLIP_KO_ACTIVE_OR_BENCHED_BASIC.test(effect)) {
     return [
       headsGate(
         [conditionGate({ kind: "opponentActiveIsBasic" }, [{ op: "knockOutDefender" }])],
@@ -4086,8 +4063,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
 
   // "This Pokémon recovers from all Special Conditions." `clearStatus` reads `ctx.seat`'s Active,
   // which in an attack program is the attacker, so no `target` is needed.
-  match = SELF_RECOVERS_ALL.exec(effect);
-  if (match !== null) {
+  if (SELF_RECOVERS_ALL.test(effect)) {
     return [{ op: "clearStatus" }];
   }
 
@@ -5755,8 +5731,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     return [{ op: "preventAttack", target: "defender" }];
   }
 
-  match = SELF_DISCARD_ONE_THEN_DEFENDER_LOCK.exec(effect);
-  if (match !== null) {
+  if (SELF_DISCARD_ONE_THEN_DEFENDER_LOCK.test(effect)) {
     return [
       // The PARK, and it comes first because it is printed first: with two
       // different Energy attached the pick is a real decision, so the lock behind
