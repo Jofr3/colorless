@@ -7,6 +7,7 @@ local Controls=require('ui.controls')
 local Button=require('ui.button')
 local Modal=require('ui.modal')
 local Codec=require('ui.codec')
+local Mailbox=require('ui.mailbox')
 local Fit=require('ui.text_fit')
 local PageText=require('ui.page_text')
 local Pile=require('ui.deck_pile')
@@ -129,8 +130,8 @@ function Sandbox:hit(x,y)
 end
 function Sandbox:update(dt,time,mx,my,reduced)
   self.time,self.reduced=time,reduced
-  if love.filesystem.getInfo('__sandbox.txt') then self:sync(love.filesystem.read('__sandbox.txt')) end
-  if love.filesystem.getInfo('__sandbox_input.txt') then self:input(love.filesystem.read('__sandbox_input.txt')) end
+  self:sync(Mailbox.read('__sandbox.txt'))
+  self:input(Mailbox.read('__sandbox_input.txt'))
   if self.motion then self.motion:update(dt,time,false,false,reduced) end
   self.mx,self.my=mx,my-self:offset();self.hover=self:hit(mx,my)
   for i,card in ipairs(self.cards) do

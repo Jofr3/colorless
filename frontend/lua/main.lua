@@ -7,6 +7,7 @@ local Preferences = require('ui.preferences')
 local Settings = require('ui.settings')
 local Account = require('ui.account')
 local Codec = require('ui.codec')
+local Mailbox = require('ui.mailbox')
 local Library = require('ui.library')
 local Builder = require('ui.builder')
 local Sandbox = require('ui.sandbox')
@@ -160,19 +161,20 @@ requestPage=function(page,deckId)
 end
 local function browserState()
   -- A tiny host-to-Lua mailbox. All rendering and interaction remain in Lua.
-  if not love.filesystem.getInfo('__viewport.txt') then return end
-  local raw=love.filesystem.read('__viewport.txt')
+  local raw=Mailbox.read('__viewport.txt')
+  if not raw then return end
   local w,h,reduced,_,request,tab=raw:match('^(%d+) (%d+) (%d) (%d)%s*(%d*)%s*(%d*)')
   w,h=tonumber(w),tonumber(h)
   if w and h and (width~=w or height~=h) then love.window.setMode(w,h,{resizable=true,vsync=1}); layout(w,h) end
   state.systemReduced=reduced=='1'
-  if not state.preferencesLoaded and love.filesystem.getInfo('__preferences.txt') then
-    preferences=Preferences.new(love.filesystem.read('__preferences.txt'))
+  local preferencesRaw=not state.preferencesLoaded and Mailbox.read('__preferences.txt')
+  if preferencesRaw then
+    preferences=Preferences.new(preferencesRaw)
     state.preferencesLoaded=true
   end
   applyPreferences()
-  if love.filesystem.getInfo('__page.txt') then
-    local pageRaw=love.filesystem.read('__page.txt')
+  local pageRaw=Mailbox.read('__page.txt')
+  if pageRaw then
     if pageRaw~=state.pageRaw then
       state.pageRaw=pageRaw
       local fields=Codec.fields(pageRaw)
@@ -322,15 +324,16 @@ function love.update(dt)
   if state.page=='online' then online:update(dt,state.time,popup and -1000 or mx,popup and -1000 or my,state.reduced) end
   if wipe then love.mouse.setCursor(state.arrowCursor);return end
   if popup then
-    if love.filesystem.getInfo('__account.txt') then
+    local accountRaw=Mailbox.read('__account.txt')
+    if accountRaw then
       local previousMessage=account.message
-      if account:sync(love.filesystem.read('__account.txt')) then
+      if account:sync(accountRaw) then
         popup:accountChanged()
         if popup.tab==4 and account.message~='' and account.message~=previousMessage then announce(account.message) end
       end
     end
-    if love.filesystem.getInfo('__account_input.txt') then account:input(love.filesystem.read('__account_input.txt')) end
-    if love.filesystem.getInfo('__auth_input.txt') then popup:authInput(love.filesystem.read('__auth_input.txt')) end
+    account:input(Mailbox.read('__account_input.txt'))
+    popup:authInput(Mailbox.read('__auth_input.txt'))
     popup:update(dt,state.time,mx,my,state.reduced)
     love.mouse.setCursor(popup.hover>0 and state.handCursor or state.arrowCursor)
     return

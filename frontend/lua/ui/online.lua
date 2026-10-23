@@ -11,6 +11,7 @@ local Button=require('ui.button')
 local Modal=require('ui.modal')
 local Motion=require('ui.motion')
 local Codec=require('ui.codec')
+local Mailbox=require('ui.mailbox')
 local Fit=require('ui.text_fit')
 local Input=require('ui.text_input')
 local Dyna=require('ui.dynatext')
@@ -393,8 +394,8 @@ end
 function Online:update(dt,time,mx,my,reduced)
   self.time,self.reduced=time,reduced
   self.markerTime=reduced and 12 or time
-  if love.filesystem.getInfo('__online.txt') then self:sync(love.filesystem.read('__online.txt')) end
-  if love.filesystem.getInfo('__online_input.txt') then self:input(love.filesystem.read('__online_input.txt')) end
+  self:sync(Mailbox.read('__online.txt'))
+  self:input(Mailbox.read('__online_input.txt'))
   self.motion:update(dt,time,false,false,reduced)
   self.mx,self.my=mx,my-self:offset()
   self.hover,self.hoverPart=self:hit(mx,my,true)

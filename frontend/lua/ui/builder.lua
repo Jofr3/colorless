@@ -14,6 +14,7 @@ local Energy=require('ui.energy')
 local PageText=require('ui.page_text')
 local Modal=require('ui.modal')
 local Codec=require('ui.codec')
+local Mailbox=require('ui.mailbox')
 local Fit=require('ui.text_fit')
 local Input=require('ui.text_input')
 local g=love.graphics
@@ -418,14 +419,14 @@ function Builder:update(dt,time,mx,my,reduced)
   self.time,self.reduced=time,reduced
   if self.motion then self.motion:update(dt,time,false,false,reduced)end
   my=my-self:offset();self.mx,self.my=mx,my
-  for _,file in ipairs({'__builder.txt','__builder_input.txt','__builder_art.txt','__builder_clipboard.txt'})do
-    if love.filesystem.getInfo(file)then local raw=love.filesystem.read(file)
+  for _,file in ipairs({'__builder.txt','__builder_input.txt',Mailbox.ART,'__builder_clipboard.txt'})do
+    local raw=Mailbox.read(file)
+    if raw then
       if file=='__builder.txt' then self:sync(raw)
       elseif file=='__builder_input.txt' and raw~=self.inputRaw then
         self.inputRaw=raw;local f=Codec.fields(raw);self.editing=f[6]=='input' and f[2] or '';self.values[f[2]]=f[3];self.first,self.last=tonumber(f[4]),tonumber(f[5]);if f[2]=='transfer'then self.transfer=f[3];self.clipboard=nil end
-      elseif file=='__builder_art.txt' and raw~=self.artRaw then
-        self.artRaw=raw;local old=self.art;self.art={}
-        for line in raw:gmatch('[^\n]+')do local f=Codec.fields(line);if #f==2 then self.art[f[1]]=f[2]end end
+      elseif file==Mailbox.ART and raw~=self.artRaw then
+        self.artRaw=raw;local old=self.art;self.art=Mailbox.artMap(raw)
         for _,c in ipairs(self.cards)do if self.art[c.item.id] and old[c.item.id]~=self.art[c.item.id]then c:rebuild()end end
         for _,c in ipairs(self.deckCards)do if self.art[c.item.id] and old[c.item.id]~=self.art[c.item.id]then c:rebuild()end end
         if self.dragCard and self.art[self.dragCard.item.id]~=old[self.dragCard.item.id]then self.dragCard:rebuild()end

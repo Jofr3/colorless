@@ -9,6 +9,7 @@ local DeckLabels=require('ui.deck_labels')
 local PageText=require('ui.page_text')
 local Modal=require('ui.modal')
 local Codec=require('ui.codec')
+local Mailbox=require('ui.mailbox')
 local Fit=require('ui.text_fit')
 local Input=require('ui.text_input')
 local g=love.graphics
@@ -226,8 +227,8 @@ function Library:update(dt,time,mx,my,reduced)
   if self.motion then self.motion:update(dt,time,false,false,reduced) end
   my=my-self:offset()
   self.time,self.mx,self.my,self.reduced=time,mx,my,reduced
-  if love.filesystem.getInfo('__library.txt') then self:sync(love.filesystem.read('__library.txt')) end
-  if love.filesystem.getInfo('__library_input.txt') then self:input(love.filesystem.read('__library_input.txt')) end
+  self:sync(Mailbox.read('__library.txt'))
+  self:input(Mailbox.read('__library_input.txt'))
   if self.pendingSearch and not self.busy then
     self.searchDelay=self.searchDelay-dt
     if self.searchDelay<=0 then self:command('search',self.pendingSearch); self.pendingSearch=nil end

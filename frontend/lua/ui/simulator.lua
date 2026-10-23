@@ -15,6 +15,7 @@ local Dissolve=require('ui.dissolve')
 local Pile=require('ui.deck_pile')
 local Library=require('ui.library')
 local Codec=require('ui.codec')
+local Mailbox=require('ui.mailbox')
 local Modal=require('ui.modal')
 local Dyna=require('ui.dynatext')
 local Energy=require('ui.energy')
@@ -1287,19 +1288,16 @@ end
 -- ---------------------------------------------------------------- update
 function Simulator:update(dt,time,mx,my,reduced)
   self.time,self.reduced=time,reduced
-  if love.filesystem.getInfo('__simulator.txt') then self:sync(love.filesystem.read('__simulator.txt')) end
-  if love.filesystem.getInfo('__builder_art.txt') then
-    local raw=love.filesystem.read('__builder_art.txt')
-    if raw~=self.artRaw then
-      self.artRaw=raw;local art={}
-      for line in raw:gmatch('[^\n]+') do local r=Codec.fields(line);if r[2] then art[r[1]]=r[2] end end
-      local old=self.art;self.art=art
-      for _,c in ipairs(self.cards) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end
-      -- Discard piles paint their top card's scan, which can arrive after a reload.
-      for _,p in ipairs(self.piles) do if p.topItem and old[p.topItem.cardId]~=art[p.topItem.cardId] then p:rebuild() end end
-      for _,c in pairs(self.attached or {}) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end
-      if self.overlay then for _,c in ipairs(self.overlay.cards) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end end
-    end
+  self:sync(Mailbox.read('__simulator.txt'))
+  local raw=Mailbox.read(Mailbox.ART)
+  if raw and raw~=self.artRaw then
+    self.artRaw=raw;local art=Mailbox.artMap(raw)
+    local old=self.art;self.art=art
+    for _,c in ipairs(self.cards) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end
+    -- Discard piles paint their top card's scan, which can arrive after a reload.
+    for _,p in ipairs(self.piles) do if p.topItem and old[p.topItem.cardId]~=art[p.topItem.cardId] then p:rebuild() end end
+    for _,c in pairs(self.attached or {}) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end
+    if self.overlay then for _,c in ipairs(self.overlay.cards) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end end
   end
   mx,my=self:point(mx,my);self.mx,self.my=mx,my
   -- Table juice waits behind an open coin flip, like Balatro's event queue.
