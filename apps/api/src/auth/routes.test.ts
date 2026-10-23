@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { Env } from "../env";
 import app from "../index";
 import { unpackStateCookieValue } from "./oauth";
@@ -221,6 +221,25 @@ describe("GET /auth/oauth/:provider/callback", () => {
       expect(location.searchParams.get("authError")).toBe("state");
       // The one-shot state cookie is dropped even on failure.
       expect(res.headers.get("Set-Cookie")).toContain("oauth_state=; Max-Age=0");
+    }
+  });
+  it.each([
+    ["a network error", () => Promise.reject(new TypeError("network down"))],
+    ["a non-JSON body", () => Promise.resolve(new Response("<html>", { status: 200 }))],
+    ["an upstream 5xx", () => Promise.resolve(new Response("{}", { status: 502 }))],
+  ])("redirects %s during the code exchange back to the app", async (_label, upstream) => {
+    vi.stubGlobal("fetch", vi.fn(upstream));
+    try {
+      const res = await app.request(
+        "/auth/oauth/google/callback?code=x&state=real",
+        { headers: { Cookie: "oauth_state=real.Lw" } },
+        envWith({ GOOGLE_CLIENT_ID: "g-id", GOOGLE_CLIENT_SECRET: "g-secret" }),
+      );
+      expect(res.status).toBe(302);
+      const location = new URL(res.headers.get("Location") ?? "");
+      expect(location.searchParams.get("authError")).toBe("exchange");
+    } finally {
+      vi.unstubAllGlobals();
     }
   });
 });

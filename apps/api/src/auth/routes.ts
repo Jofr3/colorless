@@ -297,6 +297,17 @@ function oauthFailureRedirect(env: Env, redirect: string, failure: OAuthFailure)
   return url.toString();
 }
 
+/** The JSON body of a 2xx provider response, or null for a network error, a non-2xx status or a
+    body that is not JSON. */
+async function upstreamJson(url: string, init: RequestInit): Promise<unknown> {
+  try {
+    const response = await fetch(url, init);
+    return response.ok ? await response.json() : null;
+  } catch {
+    return null;
+  }
+}
+
 authRoutes.get("/oauth/:provider/callback", async (c) => {
   const provider = parseProvider(c.req.param("provider"));
   if (provider === null) {
@@ -317,21 +328,23 @@ authRoutes.get("/oauth/:provider/callback", async (c) => {
 
   // Code → access token.
   const exchange = tokenRequest(config, code, callbackUrl(c, provider));
-  const tokenResponse = await fetch(exchange.url, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
-    body: exchange.body,
-  });
-  const accessToken = tokenResponse.ok ? parseTokenResponse(await tokenResponse.json()) : null;
+  const accessToken = parseTokenResponse(
+    await upstreamJson(exchange.url, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+      body: exchange.body,
+    }),
+  );
   if (accessToken === null) {
     return c.redirect(oauthFailureRedirect(c.env, packed.redirect, "exchange"), 302);
   }
 
   // Access token → normalized profile.
-  const profileResponse = await fetch(config.userinfoUrl, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  const profile = profileResponse.ok ? parseOAuthProfile(await profileResponse.json()) : null;
+  const profile = parseOAuthProfile(
+    await upstreamJson(config.userinfoUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+  );
   if (profile === null) {
     return c.redirect(oauthFailureRedirect(c.env, packed.redirect, "profile"), 302);
   }
