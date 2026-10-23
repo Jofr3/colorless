@@ -210,7 +210,7 @@ export type EffectPrompt =
   | { kind: "choosePrize"; indices: number[]; note: string }
   /**
    * The printed "You may ...": a yes/no answered by the controller whose "yes" splices the
-   * `optional` op's `then` into the program. Kept separate from `mayDraw`, whose answer moves
+   * `optional` op's `ops` into the program. Kept separate from `mayDraw`, whose answer moves
    * cards. `labels` gives button captions for printed "Choose 1:" choices.
    */
   | {
@@ -291,7 +291,7 @@ export type EffectChoice =
    * offered integer.
    */
   | { kind: "prize"; index: number }
-  /** The `confirm` answer — `yes: true` splices the `optional` op's `then` ahead
+  /** The `confirm` answer — `yes: true` splices the `optional` op's `ops` ahead
       of the rest of the program, `false` runs nothing. A plain boolean, and
       wire-checked to be one for `mayDraw`'s exact reason: a P4 client's truthy
       string must not read as consent. Answered by the CONTROLLER. */

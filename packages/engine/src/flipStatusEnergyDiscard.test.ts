@@ -146,7 +146,7 @@ describe("§2 — the derivation, and the population it was measured on", () => 
     expect(deriveAttackEffect(PRINTED)).toEqual([
       {
         op: "coinFlipGate",
-        then: [
+        ops: [
           { op: "applyStatus", target: "defender", status: "paralyzed" },
           { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
         ],
@@ -155,7 +155,7 @@ describe("§2 — the derivation, and the population it was measured on", () => 
   });
 
   it("the program is the two shipped arms' `then` lists CONCATENATED — asserted, not described", () => {
-    const gate = (ops: unknown) => (ops as { then: unknown[] }[])[0]?.then ?? [];
+    const gate = (ops: unknown) => (ops as { ops: unknown[] }[])[0]?.ops ?? [];
     expect(gate(deriveAttackEffect(PRINTED))).toEqual([
       ...gate(deriveAttackEffect(BARE_FLIP_STATUS)),
       ...gate(deriveAttackEffect(BARE_FLIP_DISCARD)),
@@ -183,7 +183,7 @@ describe("§2 — the derivation, and the population it was measured on", () => 
       expect(deriveAttackEffect(PRINTED.replace("Paralyzed", word))).toEqual([
         {
           op: "coinFlipGate",
-          then: [
+          ops: [
             { op: "applyStatus", target: "defender", status },
             { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
           ],
@@ -195,7 +195,7 @@ describe("§2 — the derivation, and the population it was measured on", () => 
   it("ZERO false positives over the WHOLE 640-sentence column — one row, two printings", () => {
     const hits = legalAttackCorpus().filter(([, s]) => {
       const ops = deriveAttackEffect(s);
-      const then = ops?.[0]?.op === "coinFlipGate" ? ops[0].then : [];
+      const then = ops?.[0]?.op === "coinFlipGate" ? ops[0].ops : [];
       return (
         ops?.length === 1 &&
         then.length === 2 &&
@@ -262,7 +262,7 @@ describe("§2 — the derivation, and the population it was measured on", () => 
     expect(deriveAttackEffect(BARE_FLIP_STATUS)).toEqual([
       {
         op: "coinFlipGate",
-        then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
+        ops: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
       },
     ]);
     expect(deriveAttackEffect("Your opponent's Active Pokémon is now Burned.")).toEqual([
@@ -503,7 +503,7 @@ describe("§7 — purity and the structural answers", () => {
     expect(parked.phase.cont.rest).toEqual([]);
     const sibling = deriveAttackEffect(BARE_FLIP_DISCARD)?.[0];
     expect(sibling?.op).toBe("coinFlipGate");
-    expect(JSON.stringify(sibling?.op === "coinFlipGate" ? sibling.then[0] : null)).toBe(shipped);
+    expect(JSON.stringify(sibling?.op === "coinFlipGate" ? sibling.ops[0] : null)).toBe(shipped);
     // …and the SpecialConditions block is the shipped three-key shape, not a widened one.
     expect(Object.keys(persisted.players.p2.active?.conditions ?? {}).sort()).toEqual([
       "burned",

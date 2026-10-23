@@ -123,7 +123,7 @@ describe("D605 §1 — the five sentences and their programs", () => {
         op: string;
         status?: string;
         note?: string;
-        then?: unknown[];
+        ops?: unknown[];
         otherwise?: unknown[];
         labels?: { yes: string; no: string };
       };
@@ -134,10 +134,10 @@ describe("D605 §1 — the five sentences and their programs", () => {
       }
       expect(op.op).toBe("optional");
       expect(op.note).toBe(PAINT_NOTE);
-      walk(op.then ?? [], [...labels, `yes:${op.labels?.yes}`]);
+      walk(op.ops ?? [], [...labels, `yes:${op.labels?.yes}`]);
       walk(op.otherwise ?? [], [...labels, `no:${op.labels?.no}`]);
     };
-    walk(gate.then, []);
+    walk(gate.ops, []);
     expect(paths).toEqual([
       ["yes:Asleep", "asleep"],
       ["no:Burned, Confused, Paralyzed or Poisoned", "yes:Burned", "burned"],

@@ -778,7 +778,7 @@ describe("D248 — `toEach` is ORTHOGONAL to `benchOnly`, not welded to it", () 
     deepFreeze(state);
     const events: GameEvent[] = [];
     const program = deriveAttackEffect(EACH_UNNARROWED) ?? [];
-    const result = runProgram(state, program, { seat: "p1" }, events);
+    const result = runProgram(state, program, { seat: "p1" }, {}, events);
     if (result.kind !== "done") throw new Error(`expected done, got ${result.kind}`);
     // THREE bodies — the Active and both Benched — and three attachments. Under
     // the welded reading this would be 2, with the Active left holding only its

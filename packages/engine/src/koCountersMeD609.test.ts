@@ -80,7 +80,7 @@ describe("D609 §2 — the readings", () => {
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveDamageCountersExactly", count: 6 },
-        then: [{ op: "knockOutDefender" }],
+        ops: [{ op: "knockOutDefender" }],
       },
     ]);
     expect(deriveAttackEffect(TERMINAL_PERIOD.replace("6", "4"))?.[0]).toMatchObject({

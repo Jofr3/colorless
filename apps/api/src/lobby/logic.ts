@@ -280,7 +280,35 @@ export function abandonsMatch(prev: LobbySnapshot | null, next: LobbySnapshot): 
 // which the seat is marked disconnected (unless they returned first). At most
 // two entries ever exist; stored as a plain array in DO storage.
 
-export type PendingDisconnect = { playerId: string; deadline: number };
+const pendingDisconnectSchema = z.object({ playerId: z.string(), deadline: z.number() });
+
+export type PendingDisconnect = z.infer<typeof pendingDisconnectSchema>;
+
+// --- Stored values -----------------------------------------------------------
+// The schemas the DO reads its smaller storage keys back through. The snapshot and the match
+// record have their own readers (`readSnapshot`, `readMatchRecord`).
+
+export const storedPendingSchema = z.array(pendingDisconnectSchema);
+
+/** playerId → the account bound to that seat. */
+export const storedSeatUsersSchema = z.record(z.string(), z.string());
+
+export const storedCodeSchema = z.string();
+
+/** The empty-lobby expiry, epoch ms. It feeds `Math.min` in the alarm scheduler. */
+export const storedCleanupAtSchema = z.number();
+
+/** The playerId who picks the next game's play order. */
+export const storedChooserSchema = z.string();
+
+/**
+ * A stored value read through `schema`, or undefined when it is absent or unreadable. An
+ * unreadable value is treated as never written, so the next write replaces it.
+ */
+export function readStored<T>(schema: z.ZodType<T>, raw: unknown): T | undefined {
+  const parsed = schema.safeParse(raw);
+  return parsed.success ? parsed.data : undefined;
+}
 
 /** Add (or refresh) a player's pending disconnect. */
 export function withPendingDisconnect(

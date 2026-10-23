@@ -508,14 +508,14 @@ describe("the record CARRIES across a park — the mechanism, not just the stora
       op: "recordGate",
       slot: "moved",
       contains: "yourActive",
-      then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
+      ops: [{ op: "applyStatus", target: "self", status: "poisoned" }],
     },
   ];
 
   it("poisons only after the SECOND park resolves, off the carried record", () => {
     const state = janineBoard();
     const events: GameEvent[] = [];
-    const first = runProgram(state, laterPark, { seat: "p1" }, events);
+    const first = runProgram(state, laterPark, { seat: "p1" }, {}, events);
     if (first.kind !== "parked") throw new Error("expected the attach to park");
     const attachPrompt = first.prompt;
     if (attachPrompt.kind !== "attachCards") throw new Error("expected attachCards");
@@ -547,7 +547,7 @@ describe("the record CARRIES across a park — the mechanism, not just the stora
   it("and does NOT poison when the carried record's card went to the Bench", () => {
     const state = janineBoard(SEED, 1);
     const events: GameEvent[] = [];
-    const first = runProgram(state, laterPark, { seat: "p1" }, events);
+    const first = runProgram(state, laterPark, { seat: "p1" }, {}, events);
     if (first.kind !== "parked" || first.prompt.kind !== "attachCards") {
       throw new Error("expected an attachCards park");
     }
@@ -667,7 +667,7 @@ describe("the offer's CLAMP — invisible on both shipped cards, load-bearing an
 
   it("offers `max` per CLASS but still caps the pick at the printed max", () => {
     const state = janineBoard();
-    const parked = runProgram(state, anyBasic, { seat: "p1" }, []);
+    const parked = runProgram(state, anyBasic, { seat: "p1" }, {}, []);
     if (parked.kind !== "parked" || parked.prompt.kind !== "attachCards") {
       throw new Error("expected an attachCards park");
     }
@@ -788,11 +788,11 @@ describe("the §9.2 record files what MOVED — read without the board narrowing
       max: 1,
       recordAs: "moved",
     },
-    { op: "recordGate", slot: "moved", then: [{ op: "drawCards", count: 1 }] },
+    { op: "recordGate", slot: "moved", ops: [{ op: "drawCards", count: 1 }] },
   ];
 
   function drivePlain(to: PokemonRef) {
-    const first = runProgram(janineBoard(SEED, 1), plainGate, { seat: "p1" }, []);
+    const first = runProgram(janineBoard(SEED, 1), plainGate, { seat: "p1" }, {}, []);
     if (first.kind !== "parked" || first.prompt.kind !== "attachCards") {
       throw new Error("expected an attachCards park");
     }
@@ -834,10 +834,10 @@ describe("the §9.2 record files what MOVED — read without the board narrowing
         op: "recordGate",
         slot: "moved",
         contains: "yourActive",
-        then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
+        ops: [{ op: "applyStatus", target: "self", status: "poisoned" }],
       },
     ];
-    const first = runProgram(state, gateProgram, { seat: "p1" }, []);
+    const first = runProgram(state, gateProgram, { seat: "p1" }, {}, []);
     if (first.kind !== "parked" || first.prompt.kind !== "attachCards") {
       throw new Error("expected an attachCards park");
     }
@@ -872,9 +872,9 @@ describe("the §9.2 record files what MOVED — read without the board narrowing
         max: 1,
         recordAs: "moved",
       },
-      { op: "recordGate", slot: "moved", then: [{ op: "drawCards", count: 1 }] },
+      { op: "recordGate", slot: "moved", ops: [{ op: "drawCards", count: 1 }] },
     ];
-    const first = runProgram(janineBoard(SEED, 1), twoWriters, { seat: "p1" }, []);
+    const first = runProgram(janineBoard(SEED, 1), twoWriters, { seat: "p1" }, {}, []);
     if (first.kind !== "parked" || first.prompt.kind !== "attachCards") {
       throw new Error("expected an attachCards park");
     }
@@ -906,10 +906,10 @@ describe("the §9.2 record files what MOVED — read without the board narrowing
         op: "recordGate",
         slot: "moved",
         contains: "yourActive",
-        then: [{ op: "drawCards", count: 1 }],
+        ops: [{ op: "drawCards", count: 1 }],
       },
     ];
-    const first = runProgram(janineBoard(SEED, 1), gate, { seat: "p1" }, []);
+    const first = runProgram(janineBoard(SEED, 1), gate, { seat: "p1" }, {}, []);
     if (first.kind !== "parked" || first.prompt.kind !== "attachCards") {
       throw new Error("expected an attachCards park");
     }
@@ -936,7 +936,7 @@ describe("the §9.2 record files what MOVED — read without the board narrowing
 
 describe("the prompt note — the branches no shipped card reaches", () => {
   function noteOf(program: EffectOp[]): string {
-    const parked = runProgram(janineBoard(), program, { seat: "p1" }, []);
+    const parked = runProgram(janineBoard(), program, { seat: "p1" }, {}, []);
     if (parked.kind !== "parked") throw new Error("expected a park");
     return parked.prompt.note;
   }
@@ -971,7 +971,7 @@ describe("the prompt note — the branches no shipped card reaches", () => {
           op: "recordGate",
           slot: "moved",
           contains: "yourActive",
-          then: [{ op: "applyStatus", target: "self", status: "burned" }],
+          ops: [{ op: "applyStatus", target: "self", status: "burned" }],
         },
       ]),
     ).toBe(
@@ -987,7 +987,7 @@ describe("the prompt note — the branches no shipped card reaches", () => {
           op: "recordGate",
           slot: "moved",
           contains: "yourActive",
-          then: [{ op: "applyStatus", target: "defender", status: "poisoned" }],
+          ops: [{ op: "applyStatus", target: "defender", status: "poisoned" }],
         },
       ]),
     ).toBe("Search your deck for a Basic Darkness Energy card and attach it to your Pokémon.");
@@ -1051,12 +1051,12 @@ describe('§9.2 `contains: "yourActive"` resolves on the LATER truth', () => {
     op: "recordGate",
     slot: "moved",
     contains: "yourActive",
-    then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
+    ops: [{ op: "applyStatus", target: "self", status: "poisoned" }],
   };
 
   function drive(program: EffectOp[], to: PokemonRef): GameState {
     const events: GameEvent[] = [];
-    const first = runProgram(janineBoard(SEED, 1), program, { seat: "p1" }, events);
+    const first = runProgram(janineBoard(SEED, 1), program, { seat: "p1" }, {}, events);
     if (first.kind !== "parked" || first.prompt.kind !== "attachCards") {
       throw new Error("expected an attachCards park");
     }

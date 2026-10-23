@@ -445,7 +445,7 @@ describe("§1 — the prints and the registry rows", () => {
             {
               op: "recordGate",
               slot: "moved",
-              then: [{ op: "returnSelf", dest: "deckTop", attachmentsTo: "discard" }],
+              ops: [{ op: "returnSelf", dest: "deckTop", attachmentsTo: "discard" }],
             },
           ],
         },
@@ -899,7 +899,7 @@ describe('§4 — Farfetch\'d "Impromptu Carrier" (a searched Tool attached to i
     const ctx: EffectContext = { seat: "p1", sourceUid: top(bodyAt(state, "p1", 0)) };
     const events: GameEvent[] = [];
     const program = (programFor(FARFETCHD)?.triggered ?? [])[0]?.program as EffectOp[];
-    const out = runProgram(state, program, ctx, events);
+    const out = runProgram(state, program, ctx, {}, events);
     expect(out.kind).toBe("done");
     expect(all(events, "SHUFFLE")).toHaveLength(1);
     expect(all(events, "TOOL_ATTACHED")).toHaveLength(0);

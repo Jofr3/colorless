@@ -239,7 +239,7 @@ describe("D616 §2 — the readings", () => {
       {
         op: "optional",
         note: ROTO_CALL,
-        then: [
+        ops: [
           {
             op: "searchDeck",
             filter: { kind: "pokemonNameContaining", fragment: "Rotom" },
@@ -256,7 +256,7 @@ describe("D616 §2 — the readings", () => {
       op: "optional",
     });
     const pikachu = deriveAttackEffect(ROTO_CALL.replace("Rotom", "Pikachu"));
-    expect(pikachu?.[0]?.op === "optional" ? pikachu[0].then[0] : null).toMatchObject({
+    expect(pikachu?.[0]?.op === "optional" ? pikachu[0].ops[0] : null).toMatchObject({
       filter: { kind: "pokemonNameContaining", fragment: "Pikachu" },
     });
     expect(deriveAttackEffect(ROTO_CALL.replace("You may search", "Search"))).toBeNull();

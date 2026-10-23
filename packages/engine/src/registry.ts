@@ -57,7 +57,7 @@ const SWITCH: CardProgram = { trainer: [{ op: "switchActive" }] };
 const SURFER: CardProgram = {
   trainer: [
     { op: "switchActive", recordAs: "moved" },
-    { op: "recordGate", slot: "moved", then: [{ op: "drawUntilHandSize", size: 5 }] },
+    { op: "recordGate", slot: "moved", ops: [{ op: "drawUntilHandSize", size: 5 }] },
   ],
 };
 
@@ -69,14 +69,14 @@ const SURFER: CardProgram = {
 const PRIME_CATCHER: CardProgram = {
   trainer: [
     { op: "gust", recordAs: "moved" },
-    { op: "recordGate", slot: "moved", then: [{ op: "switchActive" }] },
+    { op: "recordGate", slot: "moved", ops: [{ op: "switchActive" }] },
   ],
 };
 
 const TEAM_ROCKETS_GIOVANNI: CardProgram = {
   trainer: [
     { op: "switchActive", ownerPokemon: "Team Rocket", recordAs: "moved" },
-    { op: "recordGate", slot: "moved", then: [{ op: "gust" }] },
+    { op: "recordGate", slot: "moved", ops: [{ op: "gust" }] },
   ],
 };
 
@@ -543,7 +543,7 @@ const ARTAZON: CardProgram = {
     heads, that player searches their deck for a Pokémon, reveals it, and puts it
     into their hand. Then, that player shuffles their deck." (Stadium activated
     ability) — the Poké Ball program exactly: the search AND the shuffle are BOTH
-    gated on heads, so shuffleDeck sits INSIDE the coin gate's `then`. */
+    gated on heads, so shuffleDeck sits INSIDE the coin gate's `ops`. */
 const MESAGOZA: CardProgram = {
   stadium: {
     ability: {
@@ -551,7 +551,7 @@ const MESAGOZA: CardProgram = {
       program: [
         {
           op: "coinFlipGate",
-          then: searchThenShuffle({
+          ops: searchThenShuffle({
             filter: { kind: "anyPokemon" },
             dest: "hand",
             max: 1,
@@ -585,12 +585,6 @@ const TOWN_STORE: CardProgram = {
     more damage to your opponent's Active Pokémon (before applying Weakness
     and Resistance)." (Tool) */
 const VITALITY_BAND: CardProgram = { passive: { damageBonusBeforeWR: 10 } };
-
-/**
- * Fixture: a flat pre-W/R bonus as the holder's own printed passive, so an Ability lock can switch
- * it off, unlike Vitality Band.
- */
-const FIX_BOOSTER_ABILITY: CardProgram = { passive: { damageBonusBeforeWR: 30 } };
 
 /**
  * Defiance Band: +30 damage to the opponent's Active before W/R while you have more Prize cards
@@ -968,7 +962,7 @@ const SUBJUGATING_CHAINS: CardProgram = {
         {
           op: "recordGate",
           slot: "moved",
-          then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
+          ops: [{ op: "applyStatus", target: "self", status: "poisoned" }],
         },
       ],
     },
@@ -1297,7 +1291,7 @@ const DENDRA: CardProgram = {
     {
       op: "recordGate",
       slot: "paid",
-      then: [{ op: "drawUntilHandSize", size: 5 }],
+      ops: [{ op: "drawUntilHandSize", size: 5 }],
     },
   ],
 };
@@ -1356,35 +1350,6 @@ const MUNKIDORI_EX: CardProgram = {
   ],
 };
 
-/**
- * Fixture for the clamp in `koPrizeReduction`: `by: 2` on a 1-Prize body. No printed card can reach
- * the clamp.
- */
-const FIX_KOPRIZE: CardProgram = {
-  triggered: [
-    {
-      name: "Oh No You Don't",
-      trigger: "onKnockOut",
-      program: [],
-      onKoPrizeReduction: { by: 2, requiresInPlay: "Pecharunt ex" },
-    },
-  ],
-};
-
-/**
- * Fixture for an on-KO Ability that parks on a decision mid-sweep; the sweep resumes after the
- * answer.
- */
-const FIX_ONKO: CardProgram = {
-  triggered: [
-    {
-      name: "Last Wish",
-      trigger: "onKnockOut",
-      program: searchThenShuffle({ filter: { kind: "basicPokemon" }, dest: "hand", max: 1 }),
-    },
-  ],
-};
-
 // ── M4 slice 7: Rare Candy (§7.1) — the Basic→Stage 2 evolve-skip Item. ──
 
 /** Rare Candy — "Choose 1 of your Basic Pokémon in play. If you have a Stage 2
@@ -1407,7 +1372,7 @@ const POKE_BALL: CardProgram = {
   trainer: [
     {
       op: "coinFlipGate",
-      then: searchThenShuffle({
+      ops: searchThenShuffle({
         filter: { kind: "anyPokemon" },
         dest: "hand",
         max: 1,
@@ -1420,7 +1385,7 @@ const POKE_BALL: CardProgram = {
 /** Pokémon Catcher — "Flip a coin. If heads, switch in 1 of your opponent's
     Benched Pokémon to the Active Spot." (Item — a coin-gated gust). */
 const POKEMON_CATCHER: CardProgram = {
-  trainer: [{ op: "coinFlipGate", then: [{ op: "gust" }] }],
+  trainer: [{ op: "coinFlipGate", ops: [{ op: "gust" }] }],
 };
 
 /** Nemona — "Draw 3 cards." (Supporter) */
@@ -1648,19 +1613,6 @@ const BAXCALIBUR: CardProgram = {
   ],
 };
 
-/** FIXTURE (id fix-attacher): the DISCARD-source + type-filter branch of
-    attachEnergyFrom (attach a Basic Fire Energy from the discard pile to a chosen
-    Pokémon). The clean real discard-attach card without extra riders; Koraidon
-    "Dino Cry" (multi + "your turn ends") still needs later ops. */
-const FIX_ATTACHER: CardProgram = {
-  abilities: [
-    activated({
-      name: "Recharge",
-      program: [{ op: "attachEnergyFrom", source: "discard", energyType: "Fire" }],
-    }),
-  ],
-};
-
 /** Koraidon ex — "Dino Cry". Two attach ops, each `declinable`, so "up to 2" allows 0, 1 or 2. */
 const KORAIDON_EX: CardProgram = {
   abilities: [
@@ -1782,7 +1734,7 @@ const MIRIAM: CardProgram = {
     {
       op: "recordGate",
       slot: "moved",
-      then: [{ op: "drawCards", count: 3 }],
+      ops: [{ op: "drawCards", count: 3 }],
     },
   ],
 };
@@ -1794,7 +1746,7 @@ const ORTEGA: CardProgram = {
     {
       op: "recordGate",
       slot: "moved",
-      then: [{ op: "opponentMayDraw", count: 1 }],
+      ops: [{ op: "opponentMayDraw", count: 1 }],
     },
   ],
 };
@@ -1922,34 +1874,6 @@ const NS_PLAN: CardProgram = {
 //    Its second consumer (the first is the typed self-discard family, which is
 //    DERIVED and so has no rows here): the moveEnergy fixed-endpoint route the
 //    row above deferred. (verified vs the local catalog 2026-07-21). ──
-
-/**
- * Fixture Special Energy providing two distinct types ({R} and {W}), so `providesEnergy` is tested
- * beyond the first unit.
- */
-const FIX_BLEND: CardProgram = {
-  energy: { provides: ["Fire", "Water"] },
-};
-
-/**
- * Fixture Special Energy providing {G}{G}: one card, two units. `countAttachedEnergy` counts it as
- * 1.
- */
-const FIX_GRASSDOUBLE: CardProgram = {
-  energy: { provides: ["Grass", "Grass"] },
-};
-
-/**
- * Fixture: a `providesEnergy` filter on a deck search matches nothing, because provision is only
- * read while attached.
- */
-const FIX_PILESCAN: CardProgram = {
-  trainer: searchThenShuffle({
-    filter: { kind: "providesEnergy", energyType: "Fire" },
-    dest: "hand",
-    max: 1,
-  }),
-};
 
 /**
  * Armarouge — "Fire Off". No once-per-turn limit; usable from the Bench. "a {R} Energy" is
@@ -2185,7 +2109,7 @@ const FALKNER: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "yourStadiumInPlay" },
-      then: [{ op: "drawCards", count: 2 }],
+      ops: [{ op: "drawCards", count: 2 }],
     },
   ],
 };
@@ -2201,55 +2125,10 @@ const GRUSHA: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "noEnergyOnYourPokemon" },
-      then: [{ op: "drawUntilHandSize", size: 7 }],
+      ops: [{ op: "drawUntilHandSize", size: 7 }],
       otherwise: [{ op: "drawUntilHandSize", size: 5 }],
     },
   ],
-};
-
-/** fix-condgate — FIXTURE demonstrator, no printed card: a conditionGate whose
-    BOTH arms hold a PARKING op. Neither real card needs this (Falkner and Grusha
-    branch into automatic draws only), but runProgram splices a branch into the
-    work queue precisely so an op inside one can still park — this is the fixture
-    that proves it, on both the `then` and the `otherwise` side. */
-const FIX_CONDGATE: CardProgram = {
-  trainer: [
-    {
-      op: "conditionGate",
-      cond: { kind: "morePrizesThanOpponent" },
-      then: [{ op: "healChosen", amount: 30 }],
-      otherwise: [{ op: "gust" }],
-    },
-  ],
-};
-
-/**
- * Fixture: the gate reads the board as of the gate, an arm's ops are spliced to the front of the
- * queue, and ops after the gate still run.
- */
-const FIX_GATEORDER: CardProgram = {
-  trainer: [
-    { op: "attachEnergyFrom", source: "hand" },
-    {
-      op: "conditionGate",
-      cond: { kind: "noEnergyOnYourPokemon" },
-      then: [{ op: "drawCards", count: 3 }],
-      otherwise: [
-        { op: "drawCards", count: 1 },
-        { op: "drawCards", count: 4 },
-      ],
-    },
-    { op: "drawCards", count: 2 },
-  ],
-};
-
-/** fix-gatedsup — FIXTURE demonstrator: a gated SUPPORTER. Every real card with
-    a `trainerPlayableIf` is an Item, so nothing else pins that the gate is
-    checked BEFORE `allowances.supporterPlayed` is written — a rejected gated
-    Supporter must not burn the one-Supporter-per-turn allowance (§7.2). */
-const FIX_GATEDSUP: CardProgram = {
-  trainerPlayableIf: { kind: "morePrizesThanOpponent" },
-  trainer: [{ op: "drawCards", count: 1 }],
 };
 
 // ── M5 op-slice: discardEnergy (the §15 energy-removal "hammer" family) —
@@ -2270,7 +2149,7 @@ const CRUSHING_HAMMER: CardProgram = {
   trainer: [
     {
       op: "coinFlipGate",
-      then: [{ op: "discardEnergy", from: "opponentChosen", filter: { kind: "anyEnergy" } }],
+      ops: [{ op: "discardEnergy", from: "opponentChosen", filter: { kind: "anyEnergy" } }],
     },
   ],
 };
@@ -2300,15 +2179,6 @@ const MAWILE: CardProgram = {
       program: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "specialEnergy" } }],
     },
   ],
-};
-
-/** fix-hammer — FIXTURE Item, no printed card: Crushing Hammer's `opponentChosen`
-    discard WITHOUT the coin gate. Every real card that reaches this arm is behind
-    a flip, so the fixture is what pins the arm's own behaviour — the park, the
-    forced auto-resolve and the `programPlayable` whiff gate — without threading a
-    seeded coin flip through each assertion. */
-const FIX_HAMMER: CardProgram = {
-  trainer: [{ op: "discardEnergy", from: "opponentChosen", filter: { kind: "anyEnergy" } }],
 };
 
 /**
@@ -2351,7 +2221,7 @@ const JANINES_SECRET_ART: CardProgram = {
       op: "recordGate",
       slot: "moved",
       contains: "yourActive",
-      then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
+      ops: [{ op: "applyStatus", target: "self", status: "poisoned" }],
     },
   ],
 };
@@ -2479,7 +2349,7 @@ const TEAM_ROCKETS_CROBAT_EX: CardProgram = {
       {
         op: "optional",
         note: "You may put this Pokémon into your hand. (Discard all cards attached to this Pokémon.)",
-        then: [{ op: "returnSelf", dest: "hand", attachmentsTo: "discard" }],
+        ops: [{ op: "returnSelf", dest: "hand", attachmentsTo: "discard" }],
       },
     ],
   },
@@ -2644,12 +2514,12 @@ const RAPID_VERNIER: CardProgram = {
         {
           op: "optional",
           note: "You may switch this Pokémon with your Active Pokémon. If you do, you may move any amount of Energy from your other Pokémon to this Pokémon.",
-          then: [
+          ops: [
             { op: "switchActive", fromSource: true, recordAs: "moved" },
             {
               op: "recordGate",
               slot: "moved",
-              then: [
+              ops: [
                 {
                   op: "moveEnergy",
                   filter: { kind: "anyEnergy" },
@@ -2675,27 +2545,6 @@ const SHOWTIME: CardProgram = {
     activated({
       name: "Showtime",
       program: [{ op: "switchActive", fromSource: true }],
-    }),
-  ],
-};
-
-/**
- * Constructed program: a bare `othersToSelf` used from the Bench, which distinguishes it from
- * `benchToActive` + `anySource`. Registered on a `fix-*` id only.
- */
-const GATHER_INWARD: CardProgram = {
-  abilities: [
-    activated({
-      name: "Gather Inward",
-      program: [
-        {
-          op: "moveEnergy",
-          filter: { kind: "anyEnergy" },
-          max: "any",
-          route: "othersToSelf",
-          anySource: true,
-        },
-      ],
     }),
   ],
 };
@@ -3140,7 +2989,7 @@ const KOFU: CardProgram = {
     {
       op: "recordGate",
       slot: "paid",
-      then: [
+      ops: [
         { op: "reorderTop", n: 2, from: "bottom" },
         { op: "drawCards", count: 4 },
       ],
@@ -3266,7 +3115,7 @@ const LT_SURGES_BARGAIN: CardProgram = {
       op: "optional",
       note: "Your opponent played Lt. Surge's Bargain: may each player take a Prize card? If you say no, they draw 4 cards.",
       askOpponent: true,
-      then: [{ op: "eachPlayerTakesPrize" }],
+      ops: [{ op: "eachPlayerTakesPrize" }],
       otherwise: [{ op: "drawCards", count: 4 }],
       labels: { yes: "Yes: each player takes a Prize card", no: "No: they draw 4 cards" },
     },
@@ -3674,7 +3523,7 @@ const LACEY: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "opponentPrizesRemaining", counts: [0, 1, 2, 3] },
-      then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],
+      ops: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],
       otherwise: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 4 } }],
     },
   ],
@@ -3685,7 +3534,7 @@ const PICNICKER: CardProgram = {
   trainer: [
     {
       op: "coinFlipGate",
-      then: [{ op: "drawCards", count: 4 }],
+      ops: [{ op: "drawCards", count: 4 }],
       otherwise: [{ op: "drawCards", count: 2 }],
     },
   ],
@@ -3699,7 +3548,7 @@ const DRASNA: CardProgram = {
   trainer: [
     {
       op: "coinFlipGate",
-      then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],
+      ops: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],
       otherwise: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 3 } }],
     },
   ],
@@ -3713,7 +3562,7 @@ const HARLEQUIN: CardProgram = {
   trainer: [
     {
       op: "coinFlipGate",
-      then: [{ op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 5, opponent: 3 } }],
+      ops: [{ op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 5, opponent: 3 } }],
       otherwise: [
         { op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 3, opponent: 5 } },
       ],
@@ -3764,7 +3613,7 @@ const EMCEES_HYPE: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "opponentPrizesRemaining", counts: [0, 1, 2, 3] },
-      then: [{ op: "drawCards", count: 2 }],
+      ops: [{ op: "drawCards", count: 2 }],
     },
   ],
 };
@@ -3788,7 +3637,7 @@ const TEAL_DANCE: CardProgram = {
         {
           op: "recordGate",
           slot: "moved",
-          then: [{ op: "drawCards", count: 1 }],
+          ops: [{ op: "drawCards", count: 1 }],
         },
       ],
     }),
@@ -3963,7 +3812,7 @@ const CAPTIVATING_INVITATION: CardProgram = {
       program: [
         {
           op: "coinFlipGate",
-          then: [{ op: "gust" }, { op: "applyStatus", target: "defender", status: "confused" }],
+          ops: [{ op: "gust" }, { op: "applyStatus", target: "defender", status: "confused" }],
         },
       ],
     }),
@@ -4130,7 +3979,7 @@ const RUN_AWAY_DRAW: CardProgram = {
       name: "Run Away Draw",
       program: [
         { op: "drawCards", count: 3, recordAs: "moved" },
-        { op: "recordGate", slot: "moved", then: [{ op: "returnSelf", dest: "deck" }] },
+        { op: "recordGate", slot: "moved", ops: [{ op: "returnSelf", dest: "deck" }] },
       ],
     }),
   ],
@@ -4158,7 +4007,7 @@ const SURF_BACK: CardProgram = {
       {
         op: "optional",
         note: "You may shuffle this Pokémon and all attached cards into your deck.",
-        then: [{ op: "returnSelf", dest: "deck" }],
+        ops: [{ op: "returnSelf", dest: "deck" }],
       },
     ],
   },
@@ -4301,7 +4150,7 @@ const ENERGY_COIN: CardProgram = {
     {
       op: "coinFlipGate",
       coins: 2,
-      then: [
+      ops: [
         { op: "attachFromDeck", filter: { kind: "basicEnergy" }, max: 1 },
         { op: "shuffleDeck" },
       ],
@@ -4457,7 +4306,7 @@ const TORRENTIAL_WHIRLPOOL: CardProgram = {
       name: "Torrential Whirlpool",
       program: [
         { op: "switchActive", recordAs: "moved" },
-        { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },
+        { op: "recordGate", slot: "moved", ops: [{ op: "opponentSwitchOut" }] },
       ],
     }),
   ],
@@ -4493,11 +4342,11 @@ const SNOW_SINK: CardProgram = {
         {
           op: "conditionGate",
           cond: { kind: "stadiumInPlay" },
-          then: [
+          ops: [
             {
               op: "optional",
               note: "You may discard a Stadium in play.",
-              then: [{ op: "discardStadium" }],
+              ops: [{ op: "discardStadium" }],
             },
           ],
         },
@@ -4515,11 +4364,11 @@ const WICKED_TAIL: CardProgram = {
       program: [
         {
           op: "coinFlipGate",
-          then: [{ op: "randomFromOpponentHand", to: "deck" }],
+          ops: [{ op: "randomFromOpponentHand", to: "deck" }],
         },
         {
           op: "coinFlipGate",
-          then: [{ op: "randomFromOpponentHand", to: "deck" }],
+          ops: [{ op: "randomFromOpponentHand", to: "deck" }],
         },
       ],
     },
@@ -4541,7 +4390,7 @@ const TEAM_ROCKETS_ARIANA: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "yourPokemonAllOwner", owner: "Team Rocket" },
-      then: [{ op: "drawUntilHandSize", size: 8 }],
+      ops: [{ op: "drawUntilHandSize", size: 8 }],
       otherwise: [{ op: "drawUntilHandSize", size: 5 }],
     },
   ],
@@ -4554,7 +4403,7 @@ const BILLY_AND_ONARE: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "yourHandAtLeast", count: 10 },
-      then: [{ op: "drawCards", count: 2 }],
+      ops: [{ op: "drawCards", count: 2 }],
     },
   ],
 };
@@ -4565,7 +4414,7 @@ const DRAGON_ELIXIR: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "yourActiveHasType", type: "Dragon" },
-      then: [{ op: "heal", target: "self", amount: 60 }],
+      ops: [{ op: "heal", target: "self", amount: 60 }],
     },
   ],
 };
@@ -4577,7 +4426,7 @@ const TEAM_ROCKETS_GREAT_BALL: CardProgram = {
   trainer: [
     {
       op: "coinFlipGate",
-      then: [
+      ops: [
         {
           op: "searchDeck",
           filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "evolution" },
@@ -4607,11 +4456,11 @@ const CARETAKER: CardProgram = {
     {
       op: "recordGate",
       slot: "moved",
-      then: [
+      ops: [
         {
           op: "conditionGate",
           cond: { kind: "stadiumInPlayNamed", name: "Community Center" },
-          then: [{ op: "shufflePlayedCardIntoDeck" }],
+          ops: [{ op: "shufflePlayedCardIntoDeck" }],
         },
       ],
     },
@@ -4681,7 +4530,7 @@ const TOXIC_SUBJUGATION: CardProgram = {
         {
           op: "conditionGate",
           cond: { kind: "opponentActivePoisoned" },
-          then: [{ op: "damageActive", amount: 50, source: "ability" }],
+          ops: [{ op: "damageActive", amount: 50, source: "ability" }],
         },
       ],
     },
@@ -4695,7 +4544,7 @@ const KIERAN: CardProgram = {
       op: "optional",
       note: "Choose 1: • Switch your Active Pokémon with 1 of your Benched Pokémon. • During this turn, attacks used by your Pokémon do 30 more damage to your opponent's Active Pokémon ex and Active Pokémon V (before applying Weakness and Resistance).",
       labels: { yes: "Switch your Active Pokémon", no: "+30 damage to ex and V this turn" },
-      then: [{ op: "switchActive" }],
+      ops: [{ op: "switchActive" }],
       otherwise: [
         {
           op: "boostSideAttacksThisTurn",
@@ -4721,9 +4570,7 @@ const TEAM_ROCKETS_VENTURE_BOMB: CardProgram = {
   trainer: [
     {
       op: "coinFlipGate",
-      then: [
-        { op: "damageChosen", target: "opponentAny", amount: 20, count: 1, source: "trainer" },
-      ],
+      ops: [{ op: "damageChosen", target: "opponentAny", amount: 20, count: 1, source: "trainer" }],
       otherwise: [{ op: "damageSelf", amount: 20, source: "trainer" }],
     },
   ],
@@ -4749,12 +4596,12 @@ const MALAMAR_COLLUDING_TENTACLES: CardProgram = {
       {
         op: "conditionGate",
         cond: { kind: "youPlayedSupporterNamedThisTurn", name: "Xerosic's Machinations" },
-        then: [
+        ops: [
           { op: "gust", recordAs: "moved" },
           {
             op: "recordGate",
             slot: "moved",
-            then: [{ op: "damageNewActive", amount: 120 }],
+            ops: [{ op: "damageNewActive", amount: 120 }],
           },
         ],
       },
@@ -4783,7 +4630,7 @@ const ARVENS_SANDWICH: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "yourActiveOwner", owner: "Arven" },
-      then: [{ op: "heal", target: "self", amount: 100 }],
+      ops: [{ op: "heal", target: "self", amount: 100 }],
       otherwise: [{ op: "heal", target: "self", amount: 30 }],
     },
   ],
@@ -5041,15 +4888,15 @@ const WAFTING_HEAL: CardProgram = {
         {
           op: "conditionGate",
           cond: { kind: "yourActiveHasType", type: "Grass" },
-          then: [
+          ops: [
             {
               op: "conditionGate",
               cond: { kind: "yourActiveDamaged" },
-              then: [
+              ops: [
                 {
                   op: "optional",
                   note: WAFTING_HEAL_TEXT,
-                  then: [
+                  ops: [
                     { op: "heal", target: "self", amount: "all", discardEnergyFromHealed: true },
                   ],
                 },
@@ -5072,7 +4919,7 @@ const TIME_TO_CHOW_DOWN: CardProgram = {
         {
           op: "optional",
           note: "When you play this Pokémon from your hand to evolve 1 of your Pokémon during your turn, you may heal all damage from each of your Evolution Pokémon. If you healed any damage in this way, discard all Energy from those Pokémon.",
-          then: [
+          ops: [
             {
               op: "healEach",
               amount: "all",
@@ -5105,18 +4952,18 @@ const SELECTIVE_SLIME: CardProgram = {
       program: [
         {
           op: "coinFlipGate",
-          then: [
+          ops: [
             {
               op: "optional",
               note: "Selective Slime: choose Burned, Confused, or Poisoned. Your opponent's Active Pokémon is now affected by that Special Condition.",
               labels: { yes: "Burned", no: "Confused or Poisoned" },
-              then: [{ op: "applyStatus", target: "defender", status: "burned" }],
+              ops: [{ op: "applyStatus", target: "defender", status: "burned" }],
               otherwise: [
                 {
                   op: "optional",
                   note: "Selective Slime: choose Confused or Poisoned. Your opponent's Active Pokémon is now affected by that Special Condition.",
                   labels: { yes: "Confused", no: "Poisoned" },
-                  then: [{ op: "applyStatus", target: "defender", status: "confused" }],
+                  ops: [{ op: "applyStatus", target: "defender", status: "confused" }],
                   otherwise: [{ op: "applyStatus", target: "defender", status: "poisoned" }],
                 },
               ],
@@ -5142,7 +4989,7 @@ const PERRIN: CardProgram = {
     {
       op: "recordGate",
       slot: "paid",
-      then: [
+      ops: [
         {
           op: "searchDeck",
           filter: { kind: "anyPokemon" },
@@ -5213,7 +5060,7 @@ const SCRAMBLE_SWITCH: CardProgram = {
     {
       op: "recordGate",
       slot: "moved",
-      then: [
+      ops: [
         {
           op: "moveEnergy",
           filter: { kind: "anyEnergy" },
@@ -5352,7 +5199,7 @@ const FLUSTERED_LEAP: CardProgram = {
         {
           op: "recordGate",
           slot: "moved",
-          then: [{ op: "returnSelf", dest: "deckTop", attachmentsTo: "discard" }],
+          ops: [{ op: "returnSelf", dest: "deckTop", attachmentsTo: "discard" }],
         },
       ],
     }),
@@ -5493,15 +5340,15 @@ const TEAM_ROCKETS_BOTHER_BOT: CardProgram = {
     {
       op: "recordGate",
       slot: "turnedPrize",
-      then: [
+      ops: [
         {
           op: "recordGate",
           slot: "revealed",
-          then: [
+          ops: [
             {
               op: "optional",
               note: "You may have your opponent switch the revealed card with the Prize card you turned face up.",
-              then: [{ op: "swapTurnedPrizeWithRevealed" }],
+              ops: [{ op: "swapTurnedPrizeWithRevealed" }],
             },
           ],
         },
@@ -5586,7 +5433,7 @@ const JEWEL_SEEKER: CardProgram = {
         {
           op: "conditionGate",
           cond: { kind: "yourBannerPokemonInPlay", banner: "Tera" },
-          then: searchThenShuffle({
+          ops: searchThenShuffle({
             filter: { kind: "trainerCard" },
             dest: "hand",
             max: 2,
@@ -5646,7 +5493,7 @@ const LAND_COLLAPSE: CardProgram = {
       {
         op: "conditionGate",
         cond: { kind: "yourPlayedBannerSupporterThisTurn", banner: "Ancient" },
-        then: [{ op: "discardDeckTop", whose: "opponent", count: 3 }],
+        ops: [{ op: "discardDeckTop", whose: "opponent", count: 3 }],
       },
     ],
   },
@@ -5906,7 +5753,7 @@ const FLOAT_UP: CardProgram = {
       {
         op: "optional",
         note: "You may shuffle this Pokémon and all attached cards into your deck.",
-        then: [{ op: "returnSelf", dest: "deck" }],
+        ops: [{ op: "returnSelf", dest: "deck" }],
       },
     ],
   },
@@ -6174,7 +6021,7 @@ const LILLIES_DETERMINATION: CardProgram = {
     {
       op: "conditionGate",
       cond: { kind: "yourPrizesRemaining", counts: [6] },
-      then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],
+      ops: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],
       otherwise: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 6 } }],
     },
   ],
@@ -6298,7 +6145,7 @@ const AZS_TRANQUILITY: CardProgram = {
     {
       op: "recordGate",
       slot: "moved",
-      then: [
+      ops: [
         {
           op: "healChosen",
           amount: 80,
@@ -6400,7 +6247,7 @@ const PSYCHIC_DRAW_3: CardProgram = {
         {
           op: "optional",
           note: PSYCHIC_DRAW_3_TEXT,
-          then: [{ op: "drawCards", count: 3 }],
+          ops: [{ op: "drawCards", count: 3 }],
         },
       ],
     },
@@ -6417,7 +6264,7 @@ const PSYCHIC_DRAW_2: CardProgram = {
         {
           op: "optional",
           note: PSYCHIC_DRAW_2_TEXT,
-          then: [{ op: "drawCards", count: 2 }],
+          ops: [{ op: "drawCards", count: 2 }],
         },
       ],
     },
@@ -6440,7 +6287,7 @@ const PRISON_PANIC: CardProgram = {
         {
           op: "optional",
           note: PRISON_PANIC_TEXT,
-          then: [{ op: "applyStatus", target: "defender", status: "confused" }],
+          ops: [{ op: "applyStatus", target: "defender", status: "confused" }],
         },
       ],
     },
@@ -6534,7 +6381,7 @@ const HAPHAZARD_HAMMER: CardProgram = {
       program: [
         {
           op: "coinFlipGate",
-          then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+          ops: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
         },
       ],
     },
@@ -6695,7 +6542,7 @@ const TUCK_TAIL: CardProgram = {
         {
           op: "optional",
           note: "You may search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck.",
-          then: searchThenShuffle({
+          ops: searchThenShuffle({
             filter: { kind: "supporter" },
             dest: "hand",
             max: 1,
@@ -6833,7 +6680,7 @@ const GUIDING_DANCE: CardProgram = {
       program: [
         {
           op: "coinFlipGate",
-          then: searchThenShuffle({
+          ops: searchThenShuffle({
             filter: { kind: "anyPokemon" },
             dest: "hand",
             max: 1,
@@ -7275,7 +7122,7 @@ const TEAM_ROCKETS_HYPNOTIZER: CardProgram = {
         {
           op: "conditionGate",
           cond: { kind: "yourActiveOwner", owner: "Team Rocket" },
-          then: [{ op: "applyStatus", target: "attacker", status: "asleep" }],
+          ops: [{ op: "applyStatus", target: "attacker", status: "asleep" }],
         },
       ],
     },
@@ -7395,20 +7242,20 @@ const JUMBO_ICE_CREAM: CardProgram = {
 
 /**
  * Dark Bell — both Active non-{D} Pokémon become Confused. The negation is a `conditionGate` with
- * an empty `then` and the status in `otherwise`; a dual type including {D} is spared.
+ * an empty `ops` and the status in `otherwise`; a dual type including {D} is spared.
  */
 const DARK_BELL: CardProgram = {
   trainer: [
     {
       op: "conditionGate",
       cond: { kind: "opponentActiveHasType", type: "Darkness" },
-      then: [],
+      ops: [],
       otherwise: [{ op: "applyStatus", target: "defender", status: "confused" }],
     },
     {
       op: "conditionGate",
       cond: { kind: "yourActiveHasType", type: "Darkness" },
-      then: [],
+      ops: [],
       otherwise: [{ op: "applyStatus", target: "self", status: "confused" }],
     },
   ],
@@ -7502,7 +7349,7 @@ const SANDY_FLAPPING: CardProgram = {
         {
           op: "optional",
           note: SANDY_FLAPPING_TEXT,
-          then: [{ op: "discardDeckTop", whose: "opponent", count: 2 }],
+          ops: [{ op: "discardDeckTop", whose: "opponent", count: 2 }],
         },
       ],
     },
@@ -7515,7 +7362,7 @@ const SANDY_FLAPPING: CardProgram = {
         {
           op: "optional",
           note: SANDY_FLAPPING_TEXT,
-          then: [{ op: "discardDeckTop", whose: "opponent", count: 2 }],
+          ops: [{ op: "discardDeckTop", whose: "opponent", count: 2 }],
         },
       ],
     },
@@ -7562,7 +7409,7 @@ const ADVERSITY_POLICY: CardProgram = {
         {
           op: "conditionGate",
           cond: { kind: "yourActiveWeakToOpponentActiveType" },
-          then: [{ op: "drawCards", count: 3 }],
+          ops: [{ op: "drawCards", count: 3 }],
         },
       ],
     },
@@ -7666,7 +7513,7 @@ const GOOD_SLEEP: CardProgram = {
         {
           op: "conditionGate",
           cond: { kind: "yourActiveAsleep" },
-          then: [{ op: "heal", target: "self", amount: "all" }],
+          ops: [{ op: "heal", target: "self", amount: "all" }],
         },
       ],
     },
@@ -7905,7 +7752,7 @@ const BOISTEROUS_WIND: CardProgram = {
       program: [
         {
           op: "coinFlipGate",
-          then: [
+          ops: [
             {
               op: "discardEnergy",
               from: "opponentActive",
@@ -7932,7 +7779,7 @@ const DESTRUCTIVE_HEADBUTTING: CardProgram = {
       program: [
         {
           op: "coinFlipGate",
-          then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+          ops: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
         },
       ],
     },
@@ -7960,7 +7807,7 @@ const SKY_HUNT: CardProgram = {
       program: [
         {
           op: "coinFlipGate",
-          then: [{ op: "randomFromOpponentHand", to: "discard" }],
+          ops: [{ op: "randomFromOpponentHand", to: "discard" }],
         },
       ],
     }),
@@ -8094,7 +7941,6 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv03-196": TOWN_STORE, // Town Store — search a Pokémon Tool → hand
   // Vitality Band (Tool)
   "sv01-197": VITALITY_BAND,
-  "fix-booster-ability": FIX_BOOSTER_ABILITY, // Fixture: an Ability-lockable pre-W/R bonus
   "sv01-169": DEFIANCE_BAND, // +30 before W/R while behind on Prizes (morePrizesThanOpponent)
   "sv02-176": CHOICE_BELT, // +30 before W/R vs a defending Pokémon V (name-derived suffix)
   // Bravery Charm (Tool)
@@ -8140,8 +7986,6 @@ const REGISTRY: Record<string, CardProgram> = {
   // — M4 slice 9: on-KO triggered Abilities (verified vs the live catalog 2026-07-19). —
   // Glimmora — Shattering Crystal (on-KO: flip; heads → opponent takes no prize for it)
   "sv02-126": GLIMMORA,
-  // fix-onko — FIXTURE demonstrator: an on-KO Ability that PARKS (resume-the-tail)
-  "fix-onko": FIX_ONKO,
   // Munkidori ex — Oh No You Don't: 1 fewer Prize on a KO while a Pecharunt ex is in play.
   "sv06.5-037": MUNKIDORI_EX,
   "sv06.5-083": MUNKIDORI_EX,
@@ -8157,8 +8001,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv07-118": FAN_CALL,
   "sv08.5-085": FAN_CALL,
   "sv10.5w-064": LOOK_FOR_PREY,
-  "sv10.5w-145": LOOK_FOR_PREY, // Fixture: the Prize reduction on a one-Prize body, to reach the clamp.
-  "fix-koprize": FIX_KOPRIZE,
+  "sv10.5w-145": LOOK_FOR_PREY,
   // — M5 coverage pass #1: existing-op cards (verified vs the local catalog 2026-07-19). —
   "sv01-185": POKE_BALL, // Poké Ball — coin-gated search a Pokémon → hand
   "sv01-187": POKEMON_CATCHER, // Pokémon Catcher — coin-gated gust
@@ -8200,7 +8043,6 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv05-215": AZURE_SEAS, // (reprint)
   "sv08.5-178": AZURE_SEAS, // (reprint)
   "svp-127": AZURE_SEAS, // (reprint — promo)
-  "fix-azureseas": AZURE_SEAS, // Fixture: drives the row on a synthetic body
   "sv08-057": KO_SURVIVAL, // Pikachu ex — Resolute Heart
   "sv08-219": KO_SURVIVAL, // (reprint)
   "sv08-238": KO_SURVIVAL, // (reprint)
@@ -8208,11 +8050,6 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08.5-179": KO_SURVIVAL, // (reprint)
   "sv10.5b-052": KO_SURVIVAL, // Crustle — Sturdy (a DIFFERENT Ability name, the SAME sentence)
   "sv10.5b-130": KO_SURVIVAL, // (reprint)
-  "fix-sturdy": KO_SURVIVAL, // FIXTURE — 120 HP Basic, the demonstrator that DRIVES the row
-  "fix-sturdytiny": KO_SURVIVAL, // FIXTURE — 20 HP Basic: the CHECKUP-boundary witness
-  "fix-suppresswall": REDUCE_30_AFTER_WR, // Fixture: ×2 Fire and −30 after W/R, which orders Weakness before reduction
-  "fix-carapace-tough": REDUCE_30_AFTER_WR,
-  "fix-resistwall": REDUCE_30_AFTER_WR, // Fixture: −30 Fire Resistance and −30 after W/R
   "sv01-099": WELL_BAKED_BODY, // Dachsbun — Well-Baked Body (Burn immunity and {R} prevention)
   "sv03-078": INSULATOR, // Bellibolt — Insulator ("Prevent all damage done to this Pokémon by attacks from your opponent's {L} Pokémon")
   "sv03-201": INSULATOR, // (reprint — Illustration rare)
@@ -8236,7 +8073,6 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-054": QUAQUAVAL, // Quaquaval — Energy Carnival (attach a Basic Energy from hand)
   "sv02-060": BAXCALIBUR, // Baxcalibur — Super Cold (attach a Basic {W} from hand, repeatable)
   "sv02-210": BAXCALIBUR, // Baxcalibur (reprint)
-  "fix-attacher": FIX_ATTACHER, // FIXTURE — the discard-source attach branch
   // — attachEnergyFrom riders: Gardevoir ex (targetType + bonusCounters + notIfKO). —
   "sv01-086": GARDEVOIR_EX, // Gardevoir ex — Psychic Embrace
   "sv01-228": GARDEVOIR_EX, // (reprint)
@@ -8288,25 +8124,18 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-184": GRUSHA, // Grusha — draw until 5 in hand, until 7 if no Energy on your board
   "sv02-253": GRUSHA, // Grusha (reprint)
   "sv02-268": GRUSHA, // Grusha (reprint)
-  "fix-condgate": FIX_CONDGATE, // FIXTURE — a parking op inside each gate arm
-  "fix-gateorder": FIX_GATEORDER, // FIXTURE — gate timing, splice order, surviving tail
-  "fix-gatedsup": FIX_GATEDSUP, // FIXTURE — a GATED Supporter (the allowance ordering)
   // — M5 op-slice: discardEnergy (verified vs the local catalog 2026-07-21). —
   "sv01-168": CRUSHING_HAMMER, // Crushing Hammer — coin-gated: an Energy off 1 opp Pokémon
   "sv02-182": GIACOMO, // Giacomo — a Special Energy off EACH of the opponent's Pokémon
   "sv02-252": GIACOMO, // Giacomo (reprint)
   "sv02-267": GIACOMO, // Giacomo (reprint)
   "sv03-143": MAWILE, // Mawile — Special Eater (on-bench: a Special Energy off their Active)
-  "fix-hammer": FIX_HAMMER, // FIXTURE — the opponentChosen arm without the coin gate
   // — M5 op-slice: the providesEnergy filter (verified vs the local catalog
   //   2026-07-21). The typed self-discard family it also lands is DERIVED from
   //   printed text (Kilowattrel, Arcanine ex ×2, Charmeleon, Charizard), so it
   //   adds no rows here — these two are the filter's SECOND consumer. —
   "sv01-041": ARMAROUGE, // Armarouge — Fire Off ({R} benched→Active, as often as you like)
   "sv01-203": ARMAROUGE, // Armarouge (reprint)
-  "fix-pilescan": FIX_PILESCAN, // FIXTURE — the filter handed to a DECK search: no match
-  "fix-blend": FIX_BLEND, // FIXTURE — a Special providing TWO distinct types
-  "fix-grassdouble": FIX_GRASSDOUBLE, // FIXTURE — a Special providing ONE type TWICE
   // — M5 op-slice: attachFromTop (verified vs the local catalog 2026-07-21). —
   "sv01-170": ELECTRIC_GENERATOR, // Electric Generator — top 5, up to 2 Basic {L} → Benched {L}
   "sv02-140": HYDREIGON, // Hydreigon — Tri Howl (top 3, any Energy → your Pokémon, discard rest)
@@ -9170,16 +8999,6 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv07-107": METAL_BRIDGE, // Archaludon — "Metal Bridge" (mark H)
   "sv07-155": METAL_BRIDGE, // Archaludon (reprint)
   "sv08.5-070": METAL_BRIDGE, // Archaludon (mark H)
-  // FIXTURE demonstrators — synthetic `fix-*` bodies (never catalog rows) that
-  // carry the three programs above so `registryOnlyPrograms.test.ts` can DRIVE
-  // each one through the real engine. The eleven printings cannot be fielded
-  // themselves: a fixture id naming a real printing must appear in
-  // `catalogManifest.ts`, which is generated off the LOCAL sqlite — absent in
-  // this clone, and measuring a 978-row / 6-set catalog that holds none of
-  // `sv05`/`sv07`/`sv08.5`/`sv09`/`sv10.5b` anyway.
-  "fix-poisonpoint": POISON_POINT,
-  "fix-trade": NS_ZOROARK_EX,
-  "fix-metalbridge": METAL_BRIDGE,
   "sv10-122": TEAM_ROCKETS_CROBAT_EX, // T.R.'s Crobat ex — "Biting Spree" and "Assassin's Return"
   "sv10-217": TEAM_ROCKETS_CROBAT_EX, // (reprint)
   "sv10-234": TEAM_ROCKETS_CROBAT_EX, // (reprint)
@@ -9236,24 +9055,14 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv09-190": SPIKY_ENERGY, // (reprint)
   "sv05-161": MIST_ENERGY, // Mist Energy — the effects-only shield, borne by an ENERGY
   "sv08-191": ENRICHING_ENERGY, // Enriching Energy — draw 4 on attach from hand
-  // FIXTURE demonstrators — `fix-spherical`'s reason verbatim: the manifest holds
-  // no `sv05`/`sv08` Energy row, and the manifest generator cannot run (§ the
-  // top-of-file note in progress.md), so a REAL-id fixture may not be added.
-  "fix-mist-energy": MIST_ENERGY,
-  "fix-enriching-energy": ENRICHING_ENERGY,
   "sv05-162": NEO_UPPER_ENERGY, // Neo Upper Energy — the CONDITIONAL provision (Stage 2)
-  "fix-neo-upper-energy": NEO_UPPER_ENERGY,
   "sv10.5b-086": PRISM_ENERGY, // Prism Energy — the same shape, gated on Basic
-  "fix-prism-energy": PRISM_ENERGY,
   // Reversal Energy: the same shape behind a three-term antecedent (Evolution, no Rule Box, more
   // Prizes remaining).
   "sv04-266": REVERSAL_ENERGY,
   "sv02-192": REVERSAL_ENERGY,
-  "fix-reversal-energy": REVERSAL_ENERGY,
   "sv06-167": LEGACY_ENERGY, // Legacy Energy (ACE SPEC Special Energy, mark H)
-  "fix-legacy-energy": LEGACY_ENERGY,
   "sv09-151": LILLIES_PEARL, // Lillie's Pearl (Pokémon Tool, mark I)
-  "fix-lillies-pearl": LILLIES_PEARL,
   // — 1 printing each. Cheap because each is a re-parameterisation of a program
   //   already above; kept because a registry row is keyed by id and a printing
   //   nobody names stays unsimulated forever. —
@@ -9288,63 +9097,6 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08.5-101": BUDDY_BUDDY_POFFIN, // (reprint)
   "sv10.5b-024": GENTLE_FIN, // Alomomola — "Gentle Fin" (mark I)
   "sv10.5b-108": GENTLE_FIN, // (reprint)
-  "fix-bitingspree": TEAM_ROCKETS_CROBAT_EX,
-  "fix-sneakybite": SNEAKY_BITE,
-  "fix-attractcustomers": ATTRACT_CUSTOMERS,
-  "fix-scaldingsteam": SCALDING_STEAM,
-  "fix-captivatinginvitation": CAPTIVATING_INVITATION,
-  "fix-lisiasappeal": LISIAS_APPEAL,
-  "fix-drayton": DRAYTON,
-  "fix-rotostick": ROTO_STICK,
-  "fix-bugcatchingset": BUG_CATCHING_SET,
-  "fix-explorersguidance": EXPLORERS_GUIDANCE,
-  "fix-drakloak": DRAKLOAK,
-  "fix-rika": RIKA,
-  "fix-larrysskill": LARRYS_SKILL,
-  "fix-secretbox": SECRET_BOX,
-  "fix-ethansadventure": ETHANS_ADVENTURE,
-  "fix-trainersearch": TRAINER_SEARCH,
-  "fix-calminglight": CALMING_LIGHT,
-  "fix-suddenshearing": SUDDEN_SHEARING,
-  "fix-defianthorn": DEFIANT_HORN,
-  "fix-infernofandango": INFERNO_FANDANGO,
-  "fix-seethingspirit": SEETHING_SPIRIT,
-  "fix-chargingup": CHARGING_UP,
-  "fix-dynamotor": DYNAMOTOR,
-  "fix-assemblealloy": ASSEMBLE_ALLOY,
-  "fix-confectionarygift": CONFECTIONARY_GIFT,
-  "fix-insomnia": INSOMNIA,
-  "fix-reconstitute": RECONSTITUTE,
-  "fix-uptempo": UP_TEMPO,
-  "fix-enhancedhammer": ENHANCED_HAMMER,
-  "fix-fennel": FENNEL,
-  "fix-clemontsquickwit": CLEMONTS_QUICK_WIT,
-  "fix-nightstretcher": NIGHT_STRETCHER,
-  "fix-maxrod": MAX_ROD,
-  "fix-miracleheadset": MIRACLE_HEADSET,
-  "fix-energyrecycler": ENERGY_RECYCLER,
-  "fix-sacredash": SACRED_ASH,
-  "fix-masterball": MASTER_BALL,
-  "fix-treasuretracker": TREASURE_TRACKER,
-  "fix-dangerouslaser": DANGEROUS_LASER,
-  "fix-kofu": KOFU,
-  "fix-maximumbelt": MAXIMUM_BELT,
-  "fix-bindingmochi": BINDING_MOCHI,
-  "fix-levincia": LEVINCIA,
-  "fix-spikyenergy": SPIKY_ENERGY,
-  "fix-lanasaid": LANAS_AID,
-  "fix-greedyorder": GREEDY_ORDER,
-  "fix-buddybuddypoffin": BUDDY_BUDDY_POFFIN,
-  "fix-gentlefin": GENTLE_FIN,
-  "fix-skyliner": SKYLINER,
-  "fix-distortedfuture": DISTORTED_FUTURE,
-  "fix-picnicker": PICNICKER,
-  "fix-drasna": DRASNA,
-  "fix-harlequin": HARLEQUIN,
-  "fix-unfairstamp": UNFAIR_STAMP,
-  "fix-hassel": HASSEL,
-  "fix-archer": TEAM_ROCKETS_ARCHER,
-  "fix-stamp": UNFAIR_STAMP,
 
   "sv10-103": CHAMPIONS_CALL, // Cynthia's Gabite — "Champion's Call" (Ability, mark I)
   "sv10-050": SWIM_TOGETHER, // Misty's Lapras — "Swim Together" (attack 0, mark I)
@@ -9352,11 +9104,6 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv09-147": HOPS_BAG, // Hop's Bag (Item, mark I)
   "sv10-083": SUMMONING_SIGN, // Steven's Baltoy — "Summoning Sign" (attack 0, mark I)
   "sv09-068": LILLIES_COMFEY, // Lillie's Comfey — "Inviting Flowers" (attack 0) and "Fade Out" (attack 1)
-  "fix-championscall": CHAMPIONS_CALL,
-  "fix-swimtogether": SWIM_TOGETHER,
-  "fix-hopsbag": HOPS_BAG,
-  "fix-summoningsign": SUMMONING_SIGN,
-  "fix-invitingflowers": LILLIES_COMFEY,
   "sv10-169": SPIKEMUTH_GYM, // Spikemuth Gym (Stadium, mark I) — nothing new
   "sv09-053": IONOS_BELLIBOLT_EX, // Iono's Bellibolt ex — "Electric Streamer"
   "sv09-172": IONOS_BELLIBOLT_EX, // Iono's Bellibolt ex (reprint)
@@ -9365,17 +9112,12 @@ const REGISTRY: Record<string, CardProgram> = {
   "svp-194": IONOS_BELLIBOLT_EX, // Iono's Bellibolt ex (promo)
   "sv09-153": NS_PP_UP, // N's PP Up (Item, mark I)
   "sv10-136": MARNIES_GRIMMSNARL_EX, // Marnie's Grimmsnarl ex — "Punk Up"
-  "fix-spikemuthgym": SPIKEMUTH_GYM,
-  "fix-electricstreamer": IONOS_BELLIBOLT_EX,
-  "fix-nsppup": NS_PP_UP,
-  "fix-punkup": MARNIES_GRIMMSNARL_EX,
   // Team Rocket's Wobbuffet's counter move needs no registry entry: the `COUNTER_MOVE_TO_DEFENDER`
   // reader in effects.ts derives it.
   "sv10-039": ETHANS_HO_OH_EX, // Ethan's Ho-Oh ex — "Golden Flame"
   "sv10-209": ETHANS_HO_OH_EX, // Ethan's Ho-Oh ex (reprint)
   "sv10-230": ETHANS_HO_OH_EX, // Ethan's Ho-Oh ex (reprint)
   "sv10-239": ETHANS_HO_OH_EX, // Ethan's Ho-Oh ex (reprint)
-  "fix-goldenflame": ETHANS_HO_OH_EX,
   "sv07-139": LACEY, // Lacey — shuffle hand into deck, draw 4 (8 instead if opp ≤ 3 Prizes)
   "sv07-166": LACEY, // Lacey (reprint)
   "sv07-172": LACEY, // Lacey (reprint)
@@ -9391,22 +9133,17 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08.5-012": TEAL_DANCE, // Teal Mask Ogerpon ex (mark H)
   "sv08.5-145": TEAL_DANCE, // (reprint)
   "sv08.5-177": TEAL_DANCE, // (reprint)
-  "fix-tealdance": TEAL_DANCE,
   "sv07-014": RIPENING_CHARGE, // Hydrapple ex — "Ripening Charge" (mark H)
   "sv07-156": RIPENING_CHARGE, // (reprint)
   "sv07-167": RIPENING_CHARGE, // (reprint)
   "sv08.5-011": RIPENING_CHARGE, // (reprint)
-  "fix-ripening": RIPENING_CHARGE,
   "sv06.5-025": BATTLE_HARDENED, // Bloodmoon Ursaluna — "Battle-Hardened" (mark H)
   "sv08.5-054": BATTLE_HARDENED, // (reprint, byte-identical)
   "svp-182": FLASHING_DRAW, // Iono's Kilowattrel — "Flashing Draw" (promo, mark I)
   "sv09-055": FLASHING_DRAW, // Iono's Kilowattrel (mark I)
   "sv09-163": FLASHING_DRAW, // (reprint)
-  "fix-flashingdraw": FLASHING_DRAW,
   "sv08-165": CALL_BELL,
-  "fix-callbell": CALL_BELL,
   "sv08-166": CHILL_TEASER_TOY,
-  "fix-chillteaser": CHILL_TEASER_TOY,
   "sv07-128": TERAPAGOS_EX_UNIFIED_BEATDOWN,
   "sv07-170": TERAPAGOS_EX_UNIFIED_BEATDOWN,
   "sv07-173": TERAPAGOS_EX_UNIFIED_BEATDOWN,
@@ -9428,14 +9165,11 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06-204": CARMINE,
   "sv06-217": CARMINE,
   "sv08.5-103": CARMINE,
-  "fix-carmine": CARMINE,
   "sv10-177": TEAM_ROCKETS_PROTON,
   "sv10-227": TEAM_ROCKETS_PROTON,
-  "fix-proton": TEAM_ROCKETS_PROTON,
   "sv10.5b-083": NS_PLAN,
   "sv10.5b-163": NS_PLAN,
   "sv10.5b-170": NS_PLAN,
-  "fix-nsplan": NS_PLAN,
   "svp-205": POWER_SAVER, // Team Rocket's Mewtwo ex — "Power Saver" (promo)
   "svp-216": POWER_SAVER,
   "sv10-081": POWER_SAVER,
@@ -9486,18 +9220,6 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv04-172": RIKA, // Rika — `lookAtTopN.restTo: "shuffledBottom"`'s only consumer (OUT OF STANDARD)
   "sv04-241": RIKA, // (reprint)
   "sv04-258": RIKA, // (reprint)
-  "fix-powersaver": POWER_SAVER,
-  "fix-seasoned": SEASONED_SKILL,
-  // `fix-cynthia-body` and `fix-plain-body` deliberately carry no program: they are the
-  // beneficiaries the filter is read against, and a program on them would be indistinguishable from
-  // a second aura.
-  "fix-regalcheer": REGAL_CHEER,
-  "fix-cynthia-aura": CHEER_ON_TO_GLORY,
-  "fix-hop-aura": EXTRA_HELPINGS,
-  "fix-sunnyday": SUNNY_DAY,
-  "fix-victorycheer": VICTORY_CHEER,
-  "fix-primalknowledge": PRIMAL_KNOWLEDGE,
-  "fix-metallicsignal": METALLIC_SIGNAL,
   "svp-128": RAPID_VERNIER, // Iron Leaves ex — "Rapid Vernier" (promo)
   "sv05-025": RAPID_VERNIER,
   "sv05-186": RAPID_VERNIER,
@@ -9505,78 +9227,39 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv05-213": RAPID_VERNIER,
   "sv08.5-176": RAPID_VERNIER,
   "sv09-018": SHOWTIME, // Meowscarada — "Showtime"
-  "fix-rapidvernier": RAPID_VERNIER,
-  "fix-showtime": SHOWTIME,
-  // A `fix-*` id only: a constructed program, deliberately unreachable from any printed card.
-  "fix-othersmove": GATHER_INWARD,
   "sv06-112": CORNERSTONE_STANCE, // Cornerstone Mask Ogerpon ex — "Cornerstone Stance"
   "sv06-199": CORNERSTONE_STANCE, // (reprint)
   "sv06-215": CORNERSTONE_STANCE, // (reprint)
   "sv08.5-058": CORNERSTONE_STANCE, // (reprint)
   "sv08.5-160": CORNERSTONE_STANCE, // (reprint)
-  "fix-cornerstone": CORNERSTONE_STANCE,
   "sv10.5b-023": MIGHTY_SHELL, // Carracosta — "Mighty Shell"
   "sv10.5b-107": MIGHTY_SHELL, // (reprint)
-  "fix-mightyshell": MIGHTY_SHELL,
   "sv06-020": CURIOUS_TEA_PARTY, // Poltchageist — "Storehouse Hideaway"
   "sv06-171": CURIOUS_TEA_PARTY, // (reprint)
   "sv10-048": CURIOUS_TEA_PARTY, // Misty's Magikarp — "So Submerged", the same sentence
-  "fix-teaparty": CURIOUS_TEA_PARTY,
   "sv05-024": SPHERICAL_SHIELD, // Rabsca — "Spherical Shield"
-  // FIXTURE demonstrator — `fix-teaparty`'s reason verbatim: the manifest holds no
-  // `sv05-024` row either (it is the ROTATED six-set population).
-  "fix-spherical": SPHERICAL_SHIELD,
   "sv06.5-045": UNNERVE, // Fraxure — "Unnerve"
   "sv06.5-077": UNNERVE, // (reprint)
   "sv10-065": UNNERVE, // Cetitan ex — "Snow Camouflage", the SAME printed sentence
   "sv10-210": UNNERVE, // (reprint)
   "sv07-076": WIDE_WALL, // Rhyperior — "Wide Wall", the Supporter-only seat rule
-  // FIXTURE demonstrators — `fix-spherical`'s reason verbatim: the manifest holds
-  // no `sv06.5`/`sv07`/`sv10` row either. TWO of them, because this row is TWO
-  // printed sentences and one demonstrator could show neither the Item/Supporter
-  // split nor the holder/seat split.
-  "fix-unnerve": UNNERVE,
-  "fix-widewall": WIDE_WALL,
   "sv09-095": DAUNTING_GAZE, // Tyranitar — "Daunting Gaze", Items only
   "sv10.5w-045": OCEANIC_CURSE, // Jellicent ex — "Oceanic Curse", Items AND Tools
   "sv10.5w-160": OCEANIC_CURSE, // (reprint)
   "sv10.5w-168": OCEANIC_CURSE, // (reprint)
   "sv10-113": POTENT_GLARE, // Team Rocket's Arbok — "Potent Glare"
-  // FIXTURE demonstrator — `fix-spherical`'s reason verbatim (the manifest holds
-  // no `sv10` row). ONE, because this row is ONE printed sentence.
-  "fix-potentglare": POTENT_GLARE,
   "sv06.5-042": MASSIVE_BODY, // Copperajah — "Massive Body", Stadiums only
   "sv06.5-040": ACE_NULLIFIER, // Genesect — "ACE Nullifier", every ACE SPEC at once
   "sv08-031": UNAWARE, // Skeledirge — "Unaware", the HOLDER rule
   "sv10-051": REPELLING_VEIL, // Team Rocket's Articuno — "Repelling Veil", the GROUP rule
-  // FIXTURE demonstrators — `fix-spherical`'s reason verbatim (no `sv08`/`sv10`
-  // row in the manifest). TWO, because this row is TWO printed sentences and one
-  // body could show neither the fold/scan split nor the target-group filter.
-  "fix-unaware": UNAWARE,
-  "fix-repellingveil": REPELLING_VEIL,
   "sv08.5-040": PREVENT_FROM_EX, // Sylveon — "Safeguard" (NOT Mimikyu's ex-and-V one)
   "sv10-012": PREVENT_FROM_EX, // Crustle — "Mysterious Rock Inn", same sentence
   "sv10-186": PREVENT_FROM_EX, // (reprint)
   "sv05-108": PREVENT_FROM_BASIC_EX, // Farigiraf ex — "Armor Tail"
   "sv05-194": PREVENT_FROM_BASIC_EX, // (reprint)
-  // FIXTURE demonstrators — `fix-spherical`'s reason verbatim: the manifest holds no
-  // `sv05`/`sv08.5`/`sv10` row either. TWO of them, because this row is TWO printed
-  // sentences and a single demonstrator could not show the stage conjunct at all.
-  "fix-safeguardex": PREVENT_FROM_EX,
-  "fix-armortail": PREVENT_FROM_BASIC_EX,
   "sv10-010": FLOWER_CURTAIN, // Shaymin — "Flower Curtain"
   "sv10-185": FLOWER_CURTAIN, // (reprint)
-  // FIXTURE demonstrator — `fix-spherical`'s reason verbatim: the manifest holds no
-  // `sv10` row either.
-  "fix-flowercurtain": FLOWER_CURTAIN,
   "sv07-044": IMPERVIOUS_SHELL, // Drednaw — "Impervious Shell"
-  // FIXTURE demonstrator — `fix-flowercurtain`'s reason verbatim: the manifest
-  // holds no `sv07` row either.
-  "fix-imperviousshell": IMPERVIOUS_SHELL,
-  // The SAME program on a body that differs by ONE printed field (a {G} Weakness
-  // ×2), which is what turns "the threshold is read against the number that would
-  // ACTUALLY be placed" into a controlled comparison rather than an assertion.
-  "fix-imperviousweak": IMPERVIOUS_SHELL,
   // Two objects because these are two printed sentences by two cards; a shared one would log the
   // wrong Ability name for half of them.
   "sv06-096": ADRENA_PHEROMONE, // Fezandipiti — "Adrena-Pheromone" ({D}-gated)
@@ -9584,15 +9267,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08.5-045": ADRENA_PHEROMONE, // (reprint)
   "sv08-150": EXPERT_HIDER, // Kecleon — "Expert Hider" (the antecedent dropped)
   "sv08-213": EXPERT_HIDER, // (reprint)
-  // FIXTURE demonstrators — `fix-imperviousshell`'s reason verbatim: the manifest
-  // holds no `sv06`/`sv08` row either. TWO of them, because this row is TWO printed
-  // sentences and one demonstrator could not show the Energy conjunct at all.
-  "fix-adrenapheromone": ADRENA_PHEROMONE,
-  "fix-experthider": EXPERT_HIDER,
   "sv05-133": EMERGENCY_EVOLUTION,
-  // FIXTURE demonstrator — the manifest holds no `sv05` row (`fix-imperviousshell`'s
-  // reason verbatim). ONE, because this row is ONE printed sentence.
-  "fix-emergencyevolution": EMERGENCY_EVOLUTION,
   "sv05-129": RUN_AWAY_DRAW,
   "sv08.5-080": RUN_AWAY_DRAW, // (reprint)
   "sv06-080": TELEPORTER,
@@ -9653,17 +9328,31 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv09-107": AUTO_HEAL, // Magearna — "Auto Heal", the self direction's first printing
 };
 
+/** The fixture pool's programs; empty outside the test suite. */
+let testPrograms: Readonly<Record<string, CardProgram>> = {};
+
 /** The authored program for a catalog card id, or undefined when the card has
     none (an unsimulated Trainer/Ability, or a Pokémon whose attacks are wholly
     text-derived). */
 export function programFor(cardId: string): CardProgram | undefined {
-  return Object.hasOwn(REGISTRY, cardId) ? REGISTRY[cardId] : undefined;
+  if (Object.hasOwn(REGISTRY, cardId)) return REGISTRY[cardId];
+  return Object.hasOwn(testPrograms, cardId) ? testPrograms[cardId] : undefined;
 }
 
 /**
- * Every catalog id this registry programs. Not re-exported from the package index; it exists so
- * in-suite audits can iterate the real authored pool.
+ * Every id this registry programs, the registered test programs included. Not re-exported from the
+ * package index; it exists so in-suite audits can iterate the authored pool.
  */
 export function registryCardIds(): string[] {
-  return Object.keys(REGISTRY);
+  return [...Object.keys(REGISTRY), ...Object.keys(testPrograms)];
+}
+
+/**
+ * Installs the fixture pool's programs (`fixtures/registry.ts`). Only the vitest setup file calls
+ * it, and it is not re-exported from the package index.
+ */
+export function registerTestPrograms(programs: Readonly<Record<string, CardProgram>>): void {
+  const clash = Object.keys(programs).find((id) => Object.hasOwn(REGISTRY, id));
+  if (clash !== undefined) throw new Error(`registerTestPrograms: ${clash} is a registry id`);
+  testPrograms = programs;
 }

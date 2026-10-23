@@ -169,7 +169,7 @@ function inWindow(state: GameState): GameState {
 }
 
 function runOne(state: GameState, program: readonly EffectOp[], events: GameEvent[]): GameState {
-  const result = runProgram(state, program, { seat: "p1", invokedBy: "attack" }, events);
+  const result = runProgram(state, program, { seat: "p1", invokedBy: "attack" }, {}, events);
   if (result.kind !== "done") throw new Error(`expected done, got ${result.kind}`);
   return result.state;
 }

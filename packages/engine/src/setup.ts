@@ -184,7 +184,7 @@ function resolveMulligans(state: GameState, seat: Seat, events: GameEvent[]): Ga
       hand: [],
       mulligans: side.mulligans + 1,
     });
-    next = drawToHand(next, seat, HAND_SIZE, "mulligan", events);
+    next = drawToHand(next, seat, HAND_SIZE, "mulligan", "top", events);
   }
   return next;
 }
@@ -215,7 +215,7 @@ export function chooseFirstPlayer(state: GameState, action: ChooseFirstPlayerAct
   // (turn order = step 3, hands = step 4) and keeping createGame free of
   // decision points.
   for (const seat of SEATS) {
-    next = drawToHand(next, seat, HAND_SIZE, "opening", events);
+    next = drawToHand(next, seat, HAND_SIZE, "opening", "top", events);
   }
 
   // If neither player can place an Active, resolve their mulligans first.
@@ -245,8 +245,8 @@ export function setupDrawExtra(state: GameState, action: SetupDrawExtraAction): 
   }
   const events: GameEvent[] = [];
   // Older saved setups may have entered this phase before reserving prizes.
-  let next = setSetupPrizes(state, events);
-  next = drawToHand(next, action.seat, action.count, "compensation", events);
+  let next = setSetupPrizes(state, SEATS, events);
+  next = drawToHand(next, action.seat, action.count, "compensation", "top", events);
   events.push({ type: "COMPENSATION_DECIDED", seat: action.seat, drawn: action.count, owed });
 
   const decided: Record<Seat, boolean> = { ...phase.decided, [action.seat]: true };
@@ -367,7 +367,7 @@ export function setupReady(state: GameState, action: SetupReadyAction): ApplyRes
   const events: GameEvent[] = [{ type: "SETUP_READY", seat: action.seat }];
   let next: GameState = { ...state, phase: { ...phase, ready } };
   if (phase.stage === "opening") {
-    next = setSetupPrizes(next, events, [action.seat]);
+    next = setSetupPrizes(next, [action.seat], events);
     const opponent = otherSeat(action.seat);
     if (next.players[opponent].active === null) {
       next = resolveMulligans(next, opponent, events);
@@ -395,11 +395,7 @@ export function setupReady(state: GameState, action: SetupReadyAction): ApplyRes
 }
 
 /** Reserve prizes once, retaining any already-set cards when a setup resumes. */
-function setSetupPrizes(
-  state: GameState,
-  events: GameEvent[],
-  seats: readonly Seat[] = SEATS,
-): GameState {
+function setSetupPrizes(state: GameState, seats: readonly Seat[], events: GameEvent[]): GameState {
   let next = state;
   for (const seat of seats) {
     const side = next.players[seat];
@@ -415,7 +411,7 @@ function setSetupPrizes(
 /** Reveal the board and begin the first player's turn. */
 function finishSetup(state: GameState, events: GameEvent[]): ApplyResult {
   // Preserve compatibility with older saves parked at placement without prizes.
-  const next = setSetupPrizes(state, events);
+  const next = setSetupPrizes(state, SEATS, events);
   // §3.9 — everything flips face-up. The board is already in the state, so
   // the event carries no payload.
   events.push({ type: "SETUP_REVEALED" });

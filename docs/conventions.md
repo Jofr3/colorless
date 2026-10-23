@@ -61,10 +61,17 @@ only the conclusion.
   `effectTargets.ts`, `boardCondition.ts`, `effectPrompt.ts` and `promptText.ts`;
   `interpreter.ts` keeps runProgram, stepOp, applyChoice and resume. Test
   helpers live in `fixtures/` behind the `testFixtures.ts` barrel (`driveSetup`,
-  `patchSide`, `roundTrip`, `mustDerive`, `seedForFlips`).
+  `patchSide`, `roundTrip`, `mustDerive`, `seedForFlips`). The fixture pool's
+  `fix-*` card programs live in `fixtures/registry.ts`, not in `registry.ts`:
+  the vitest setup file (`fixtures/vitestSetup.ts`, wired in `vite.config.ts`)
+  installs them with `registerTestPrograms`, which nothing else calls and the
+  package index does not export, so the production registry holds no `fix-*` id.
 - `scripts/residue-census*.ts` and `scripts/opaque-anatomy*.ts` were deleted
   (2026-10-23) after measuring zero residue; sections below that describe them
   are history.
+- An engine function that appends to an `events: GameEvent[]` out-parameter takes it as its last
+  positional parameter, after any options record; optional parameters before it are passed
+  explicitly (`undefined`, or `{}` for a fresh `EffectRecord`).
 - Pure logic gets unit tests (see the many `*.test.ts` in the repo); DOM tests
   opt into jsdom per-file (`// @vitest-environment jsdom`).
 - **Never inherit a suite figure from prose — six were stale in one session**
@@ -5254,7 +5261,7 @@ Two consecutive slices, a work order predicted describer work from the fact that
 times the obligation was **empty**.
 
 `withConsequence` returns the prompt unchanged unless the QUEUE holds a `recordGate` on the slot the
-parking op files; `describeBranch`/`describeCondition` are reached only from `recordGate.then`.
+parking op files; `describeBranch`/`describeCondition` are reached only from `recordGate.ops`.
 **Parking is not the trigger — a gate is.** Trace the one call site; do not argue from the op's
 category.
 

@@ -375,7 +375,7 @@ describe("§3 — a NEW `EffectOp` inhabitant, and the record version does not m
     const mutilated = JSON.parse(
       JSON.stringify(fresh, (k, v) => (k === "remainingHp" ? undefined : v)),
     ) as EffectOp;
-    const run = runProgram(board, [mutilated], { seat: "p1", invokedBy: "attack" }, events);
+    const run = runProgram(board, [mutilated], { seat: "p1", invokedBy: "attack" }, {}, events);
     expect(Number.isNaN(run.state.players.p2.active?.damage ?? 0)).toBe(true);
     expect(placements(events)[0]?.amount).toBeNaN();
     // …and NONE of the three is reachable, because direction 2 established there is no
@@ -445,6 +445,7 @@ describe("§4 — the maximum is the CONTINUOUS one and a Tool moves it", () => 
       gapped,
       mustDerive(deriveAttackEffect, ACTIVE_50),
       { seat: "p1", invokedBy: "attack" },
+      {},
       events,
     );
     expect(placements(events)).toHaveLength(0);
@@ -615,6 +616,7 @@ describe("§7 — the no-Knock-Out property, and the guard that owns it", () => 
           },
         ],
         { seat: "p1", invokedBy: "attack" },
+        {},
         events,
       );
       expect(run.state, `remainingHp ${remainingHp}`).toBe(board);
@@ -635,6 +637,7 @@ describe("§7 — the no-Knock-Out property, and the guard that owns it", () => 
         },
       ],
       { seat: "p1", invokedBy: "attack" },
+      {},
       events,
     );
     expect(run.state.players.p2.active?.damage).toBe(BIG_HP - 1);

@@ -32,7 +32,7 @@ const CLAUSES = [
       {
         op: "optional",
         note: "You may switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
-        then: [{ op: "opponentSwitchOut" }],
+        ops: [{ op: "opponentSwitchOut" }],
       },
     ] as EffectOp[],
     printings: 3,
@@ -42,7 +42,7 @@ const CLAUSES = [
     text: "Switch this Pokémon with 1 of your Benched Pokémon. If you do, switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
     program: [
       { op: "switchActive", recordAs: "moved" },
-      { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },
+      { op: "recordGate", slot: "moved", ops: [{ op: "opponentSwitchOut" }] },
     ] as EffectOp[],
     printings: 8,
     legalPrintings: 1,
@@ -151,7 +151,7 @@ describe("the three anchors — one new op, and two compositions of things that 
     // building a different card.
     const gated = deriveAttackEffect(CLAUSES[MAY].text)?.[0];
     expect(gated?.op).toBe("optional");
-    expect(gated?.op === "optional" ? gated.then : undefined).toEqual(
+    expect(gated?.op === "optional" ? gated.ops : undefined).toEqual(
       deriveAttackEffect(CLAUSES[BARE].text),
     );
     // …and the note is the WHOLE printed sentence, which is what the dialog shows.

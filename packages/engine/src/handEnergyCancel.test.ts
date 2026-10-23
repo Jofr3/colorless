@@ -552,7 +552,7 @@ describe("§4 — THE STRUCTURAL GUARD: a hand cost in an attack program owes a 
     expect(
       handCostIsSlotGated([
         { op: "payFromHand", count: 1, to: "discard" },
-        { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: 2 }] },
+        { op: "recordGate", slot: "paid", ops: [{ op: "drawCards", count: 2 }] },
       ]),
     ).toBe(false);
     // (b) the gate reads a DIFFERENT slot — it fires off some other op's filing, so
@@ -560,13 +560,13 @@ describe("§4 — THE STRUCTURAL GUARD: a hand cost in an attack program owes a 
     expect(
       handCostIsSlotGated([
         { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-        { op: "recordGate", slot: "moved", then: [{ op: "drawCards", count: 2 }] },
+        { op: "recordGate", slot: "moved", ops: [{ op: "drawCards", count: 2 }] },
       ]),
     ).toBe(false);
     expect(
       handCostIsSlotGated([
         { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-        { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: 2 }] },
+        { op: "recordGate", slot: "paid", ops: [{ op: "drawCards", count: 2 }] },
         { op: "knockOutDefender" },
       ]),
     ).toBe(false);
@@ -578,7 +578,7 @@ describe("§4 — THE STRUCTURAL GUARD: a hand cost in an attack program owes a 
         {
           op: "recordGate",
           slot: "paid",
-          then: [pay(6), { op: "knockOutDefender" }],
+          ops: [pay(6), { op: "knockOutDefender" }],
         },
       ]),
     ).toBe(false);
@@ -592,7 +592,7 @@ describe("§4 — THE STRUCTURAL GUARD: a hand cost in an attack program owes a 
       {
         op: "conditionGate",
         cond: need(2),
-        then: [pay(2)],
+        ops: [pay(2)],
       },
     ];
     expect(carriesHandCost(wrapped)).toBe(true);

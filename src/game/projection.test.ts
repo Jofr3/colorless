@@ -1274,7 +1274,7 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
         op: "optional",
         note: "Choose 1: …",
         labels,
-        then: [{ op: "switchActive" }],
+        ops: [{ op: "switchActive" }],
         otherwise: [{ op: "drawCards", count: 1 }],
       },
       rest: [],

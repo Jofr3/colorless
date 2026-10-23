@@ -102,8 +102,9 @@ export function runBoardTrigger(
   // `optional` op.
   events.push({ type: "ABILITY_TRIGGERED", seat, uid, ability: ability.name });
   return settleProgram(
-    runProgram(armed, ability.program, { seat, sourceUid: uid, invokedBy: "ability" }, events),
+    runProgram(armed, ability.program, { seat, sourceUid: uid, invokedBy: "ability" }, {}, events),
     seat,
+    {},
     events,
   );
 }
@@ -120,8 +121,8 @@ export function runWatchedTriggers(
   actorSeat: Seat,
   subjectUid: string,
   timing: TriggerTiming,
-  events: GameEvent[],
   atMoment: GameState,
+  events: GameEvent[],
 ): GameState {
   return sweepTriggers(
     state,
@@ -129,8 +130,9 @@ export function runWatchedTriggers(
     subjectUid,
     timing,
     "opponent",
-    events,
     atMoment,
+    undefined,
+    events,
   );
 }
 
@@ -143,10 +145,10 @@ export function runSelfWatchedTriggers(
   actorSeat: Seat,
   subjectUid: string,
   timing: TriggerTiming,
-  events: GameEvent[],
   atMoment: GameState,
+  events: GameEvent[],
 ): GameState {
-  return sweepTriggers(state, actorSeat, subjectUid, timing, "self", events, atMoment);
+  return sweepTriggers(state, actorSeat, subjectUid, timing, "self", atMoment, undefined, events);
 }
 
 /**
@@ -161,13 +163,13 @@ function sweepTriggers(
   subjectUid: string,
   timing: TriggerTiming,
   watch: "self" | "opponent",
-  events: GameEvent[],
   atMoment: GameState,
   /**
    * Restricts the sweep to one body, for self-direction triggers about "this Pokémon" moving.
    * Absent means every body.
    */
-  onlyUid?: string,
+  onlyUid: string | undefined,
+  events: GameEvent[],
 ): GameState {
   // Active, then each bench slot. The walk re-reads the CURRENT board each step
   // for `runCheckupTriggers`' reason — and the bench LENGTH cannot change here,
@@ -211,6 +213,7 @@ function sweepTriggers(
           next,
           ability.program,
           { seat: watcher, sourceUid: uid, subjectUid, invokedBy: "ability" },
+          {},
           events,
         ).state,
         events,
@@ -235,7 +238,7 @@ export function runActiveBenchedTriggers(
   if (phaseViewOf(state, seat).activeSeat !== seat) return state;
   // `state` is the moment board here: movers only rearrange `seat`'s own board, and the watcher is
   // the other seat.
-  const watched = runWatchedTriggers(state, seat, movedUid, "onActiveMovedToBench", events, state);
+  const watched = runWatchedTriggers(state, seat, movedUid, "onActiveMovedToBench", state, events);
   // The self direction (Palafin "Zero to Hero"), restricted to the body that moved, behind the same
   // "during your turn" gate. The opponent's watched triggers run first, with no Knock Out check
   // between the two sweeps.
@@ -245,9 +248,9 @@ export function runActiveBenchedTriggers(
     movedUid,
     "onActiveMovedToBench",
     "self",
-    events,
     state,
     movedUid,
+    events,
   );
 }
 
@@ -287,8 +290,13 @@ export function runCheckupTriggers(
         // recovery, which is restored here. It runs inside the loop because the invariant is per
         // program.
         next = recoverStatuses(
-          runProgram(next, ability.program, { seat, sourceUid: uid, invokedBy: "ability" }, events)
-            .state,
+          runProgram(
+            next,
+            ability.program,
+            { seat, sourceUid: uid, invokedBy: "ability" },
+            {},
+            events,
+          ).state,
           events,
         );
       }

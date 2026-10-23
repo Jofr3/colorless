@@ -346,11 +346,11 @@ describe("D524 §2 — the gate asks only on a non-empty Active, the confirm hol
       {
         op: "conditionGate",
         cond: GATE,
-        then: [
+        ops: [
           {
             op: "optional",
             note: PRINTED,
-            then: [DISCARD_ALL_TO_HAND, { op: "damageDefender", amount: BASE + BONUS }],
+            ops: [DISCARD_ALL_TO_HAND, { op: "damageDefender", amount: BASE + BONUS }],
             otherwise: [{ op: "damageDefender", amount: BASE }],
           },
         ],

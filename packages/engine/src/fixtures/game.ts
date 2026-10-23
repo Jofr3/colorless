@@ -1,5 +1,6 @@
 import type {
   ApplyResult,
+  EffectPrompt,
   ErrorCode,
   GameAction,
   GameEvent,
@@ -34,6 +35,23 @@ export function effectPrompt(state: GameState) {
     throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   }
   return state.phase.prompt;
+}
+
+/** The pending effect prompt narrowed to `kind`; throws unless the game is parked on that kind. */
+export function effectPromptOf<K extends EffectPrompt["kind"]>(
+  state: GameState,
+  kind: K,
+): Extract<EffectPrompt, { kind: K }> {
+  const prompt = effectPrompt(state);
+  if (!isPromptOf(prompt, kind)) throw new Error(`expected prompt ${kind}, got ${prompt.kind}`);
+  return prompt;
+}
+
+function isPromptOf<K extends EffectPrompt["kind"]>(
+  prompt: EffectPrompt,
+  kind: K,
+): prompt is Extract<EffectPrompt, { kind: K }> {
+  return prompt.kind === kind;
 }
 
 /** applyAction that throws on rejection and hands back state + events. */

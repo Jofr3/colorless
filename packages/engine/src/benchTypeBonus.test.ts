@@ -528,7 +528,7 @@ describe("§6 — the census, and a 2-printing sentence this slice found on the 
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveHasType", type: "Dragon" },
-        then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
+        ops: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
       },
     ]);
     for (const read of READERS) {

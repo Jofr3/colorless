@@ -102,7 +102,7 @@ describe("the registry rows and the derived twin", () => {
         {
           op: "recordGate",
           slot: "moved",
-          then: [{ op: "opponentMayDraw", count: 1 }],
+          ops: [{ op: "opponentMayDraw", count: 1 }],
         },
       ]);
     }
@@ -327,7 +327,13 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
   it("carries the printed COUNT through the prompt, the note and the draw", () => {
     const state = ortegaBoard(["fix-item"]);
     const events: GameEvent[] = [];
-    const result = runProgram(state, [{ op: "opponentMayDraw", count: 3 }], { seat: "p1" }, events);
+    const result = runProgram(
+      state,
+      [{ op: "opponentMayDraw", count: 3 }],
+      { seat: "p1" },
+      {},
+      events,
+    );
     if (result.kind !== "parked") throw new Error("expected the may park");
     expect(result.decider).toBe("p2");
     const prompt = result.prompt;
@@ -350,10 +356,11 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
         {
           op: "recordGate",
           slot: "paid",
-          then: [{ op: "opponentMayDraw", count: 1 }],
+          ops: [{ op: "opponentMayDraw", count: 1 }],
         },
       ],
       { seat: "p1" },
+      {},
       events,
     );
     if (result.kind !== "parked") throw new Error("expected the pick park");
@@ -384,7 +391,13 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
     let state = ortegaBoard(["fix-item"]);
     state = withDeckSize(state, "p2", 0);
     const events: GameEvent[] = [];
-    const result = runProgram(state, [{ op: "opponentMayDraw", count: 1 }], { seat: "p1" }, events);
+    const result = runProgram(
+      state,
+      [{ op: "opponentMayDraw", count: 1 }],
+      { seat: "p1" },
+      {},
+      events,
+    );
     if (result.kind !== "done") throw new Error("an empty-deck may must not park");
     expect(events).toEqual([]);
   });
@@ -524,10 +537,11 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
         {
           op: "recordGate",
           slot: "moved",
-          then: [{ op: "opponentMayDraw", count: 1 }],
+          ops: [{ op: "opponentMayDraw", count: 1 }],
         },
       ],
       { seat: "p1" },
+      {},
       events,
     );
     if (result.kind !== "parked") throw new Error("expected the pick park");
@@ -547,6 +561,7 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
         { op: "searchDeck", filter: { kind: "basicPokemon" }, dest: "bench", max: 1 },
       ],
       { seat: "p1" },
+      {},
       events,
     );
     if (result.kind !== "parked") throw new Error("expected the search park");
@@ -646,10 +661,11 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
         {
           op: "recordGate",
           slot: "moved",
-          then: [{ op: "drawCards", count: 1 }],
+          ops: [{ op: "drawCards", count: 1 }],
         },
       ],
       { seat: "p1" },
+      {},
       events,
     );
     if (result.kind !== "done") throw new Error("a matchless filter must not park");

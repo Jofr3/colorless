@@ -165,11 +165,11 @@ describe("§1 the deriver — two sentences, six printings, one parking op", () 
     expect(deriveAttackEffect(FLIP_KO_TEXT)).toEqual([
       {
         op: "coinFlipGate",
-        then: [
+        ops: [
           {
             op: "conditionGate",
             cond: { kind: "opponentActiveIsBasic" },
-            then: [{ op: "knockOutDefender" }],
+            ops: [{ op: "knockOutDefender" }],
           },
         ],
         otherwise: [{ op: "knockOutChosen", target: "opponentBench", basicOnly: true }],
@@ -742,7 +742,13 @@ describe("§6 the BENCHED non-damage Knock Out — `flow.ts` needed nothing, dri
   it("stamps D414's marker on a BENCHED body and marks it lethal where it stands", () => {
     const board = armed(1, "fix-koc-flip", "fix-koc-basic", ["fix-koc-basic2"]);
     const events: GameEvent[] = [];
-    const result = runProgram(board, [BENCH_BASIC_OP], { seat: "p1", invokedBy: "attack" }, events);
+    const result = runProgram(
+      board,
+      [BENCH_BASIC_OP],
+      { seat: "p1", invokedBy: "attack" },
+      {},
+      events,
+    );
     const doomed = result.state.players.p2.bench[0];
     expect(doomed?.markers).toEqual([koByEffectMarker(board.turn)]);
     expect(doomed?.damage).toBe(120);
@@ -755,6 +761,7 @@ describe("§6 the BENCHED non-damage Knock Out — `flow.ts` needed nothing, dri
       result.state,
       [BENCH_BASIC_OP],
       { seat: "p1", invokedBy: "attack" },
+      {},
       twice,
     );
     expect(again.state.players.p2.bench[0]?.markers).toEqual([koByEffectMarker(board.turn)]);

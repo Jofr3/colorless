@@ -447,6 +447,7 @@ describe("D621 §4 — Premium Power Pro: +30 for {F} attackers; two Items stack
       board(PLAIN, []),
       [{ op: "boostSideAttacksThisTurn", amount: 40, target: { kind: "anyPokemon" } }],
       { seat: "p1", invokedBy: "supporter" },
+      {},
       [],
     );
     if (result.kind !== "done") throw new Error("expected done");
@@ -768,6 +769,7 @@ describe("D621 §6 — Roxie's Performance: the opponent's Poisoned Pokémon can
       window(true).state,
       [{ op: "switchActive" }],
       { seat: "p2", invokedBy: "item" },
+      {},
       [],
     );
     if (result.kind !== "done") throw new Error("expected done");

@@ -202,7 +202,7 @@ describe("the anchor — 16 printings, 7 clauses, both directions", () => {
     expect(deriveAttackEffect(gated)).toEqual([
       {
         op: "coinFlipGate",
-        then: deriveAttackEffect("Discard the top card of your opponent's deck."),
+        ops: deriveAttackEffect("Discard the top card of your opponent's deck."),
       },
     ]);
     // And the coin reader still does not claim it either — a gated op is not an

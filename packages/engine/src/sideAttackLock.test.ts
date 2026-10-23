@@ -122,7 +122,7 @@ const refusal = (state: GameState, seat: Seat, index: number): string | null => 
 };
 
 function runAs(state: GameState, seat: Seat, program: readonly EffectOp[], events: GameEvent[]) {
-  const result = runProgram(state, program, { seat, invokedBy: "attack" }, events);
+  const result = runProgram(state, program, { seat, invokedBy: "attack" }, {}, events);
   if (result.kind !== "done") throw new Error(`expected done, got ${result.kind}`);
   return result.state;
 }

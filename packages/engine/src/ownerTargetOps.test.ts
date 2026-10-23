@@ -674,7 +674,7 @@ describe("LANDED BY D206 — Team Rocket's Giovanni sv10-174/-225/-238 (3 legal)
     for (const id of IDS) {
       expect(programFor(id)?.trainer, `${id} lost its D206 program`).toEqual([
         { op: "switchActive", ownerPokemon: "Team Rocket", recordAs: "moved" },
-        { op: "recordGate", slot: "moved", then: [{ op: "gust" }] },
+        { op: "recordGate", slot: "moved", ops: [{ op: "gust" }] },
       ]);
     }
   });

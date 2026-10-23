@@ -254,10 +254,10 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
   // `playedUid` is the played card itself (Caretaker shuffles itself into the deck). Not
   // `sourceUid`, which names a Pokémon and must stay absent for a Trainer.
   return settleProgram(
-    runProgram(next, program, { seat: action.seat, invokedBy, playedUid: action.uid }, events),
+    runProgram(next, program, { seat: action.seat, invokedBy, playedUid: action.uid }, {}, events),
     action.seat,
-    events,
     { endsTurn },
+    events,
   );
 }
 
@@ -378,7 +378,7 @@ function playStadium(state: GameState, action: PlayTrainerAction, card: Card): A
   // zone is written. Status recovery (Festival Grounds) runs first so the event order is
   // STATUS_CLEARED then KO. The replaced Stadium's owner trims first (Area Zero Underdepths).
   next = recoverStatuses(next, events);
-  return resolveMidTurnKnockOuts(next, action.seat, SEATS, events, undefined, current?.owner);
+  return resolveMidTurnKnockOuts(next, action.seat, SEATS, undefined, current?.owner, events);
 }
 
 /** Is the Stadium in play the one `card`'s `playOnlyOverStadium` names? By name, either owner's. */
@@ -811,11 +811,12 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
       next,
       ability.program,
       { seat: action.seat, sourceUid: uid, invokedBy: "ability" },
+      {},
       events,
     ),
     action.seat,
-    events,
     { endsTurn: ability.endsTurn === true },
+    events,
   );
 }
 
@@ -883,11 +884,17 @@ export function useStadiumAbility(state: GameState, action: UseStadiumAbilityAct
     next,
     ability.program,
     { seat: action.seat, sourceUid: stadium.uid },
+    {},
     events,
   );
-  return settleProgram(result, action.seat, events, {
-    endsTurn: stadiumUseEndsTurn(ability, events, action.seat),
-  });
+  return settleProgram(
+    result,
+    action.seat,
+    {
+      endsTurn: stadiumUseEndsTurn(ability, events, action.seat),
+    },
+    events,
+  );
 }
 
 /**
@@ -948,13 +955,13 @@ export function resolveEffect(state: GameState, action: ResolveEffectAction): Ap
   return settleProgram(
     resumeProgram(state, phase.cont, action.choice, events),
     phase.seat,
-    events,
     {
       resumeTail: phase.resumeTail === true,
       // endsTurn (Koraidon "Dino Cry"): the parked Ability ends the turn once its
       // program finishes, threaded across re-parks by settleProgram.
       endsTurn: phase.endsTurn === true,
     },
+    events,
   );
 }
 
@@ -1037,12 +1044,12 @@ export function programPlayable(
   for (const op of program) {
     if (op.op === "coinFlipGate") {
       // A coin flip is procedure, not effect, so if the branches that could run would only whiff,
-      // the card can only whiff and cannot be played (§7). A one-armed gate is checked on `then`;
+      // the card can only whiff and cannot be played (§7). A one-armed gate is checked on `ops`;
       // with `otherwise` the card is refused only if both arms would whiff. Not extended to
       // `optional` (declining is a legal resolution) or to `conditionGate`. The source uid is
       // passed down so a gated `self` cost is still that Pokémon's.
       if (
-        !programPlayable(state, op.then, seat, sourceUid) &&
+        !programPlayable(state, op.ops, seat, sourceUid) &&
         (op.otherwise === undefined || !programPlayable(state, op.otherwise, seat, sourceUid))
       ) {
         return false;

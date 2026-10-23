@@ -52,7 +52,7 @@ export function applyStatus(
   // A §12 Special Condition is an effect of the attack, so a body with the wider §11 block takes
   // none. Checked on the resolved seat so it covers both targets; `effectRefusedOn` does not refuse
   // the attacker's own self-inflicted condition.
-  if (effectRefused(state, seat, ctx, events)) return state;
+  if (effectRefused(state, seat, ctx, undefined, events)) return state;
   // Printed status immunities are read through `passivesOf`, so a locked holder's own Ability is
   // already dropped while attached Tools and Energy still count. One gate ahead of every condition
   // arm below, so no arm can be missed.
@@ -107,9 +107,9 @@ export function applyStatus(
 export function clearStatus(
   state: GameState,
   ctx: EffectContext,
-  events: GameEvent[],
   // One named condition to clear; absent means all.
-  only?: StatusName,
+  only: StatusName | undefined,
+  events: GameEvent[],
 ): GameState {
   const active = state.players[ctx.seat].active;
   if (active === null) return state;
@@ -309,8 +309,8 @@ export function preventAttack(
 export function flipLockAttack(
   state: GameState,
   ctx: EffectContext,
+  coins: 2 | undefined,
   events: GameEvent[],
-  coins?: 2,
 ): GameState {
   const seat = otherSeat(ctx.seat);
   const live = unrefusedActive(state, seat, ctx, events);
@@ -519,7 +519,7 @@ export function markHandAttach(
   if (marked === null) return state;
   const markedUid = topUid(marked);
   if (markedUid === undefined) return state;
-  if (effectRefused(state, victimSeat, ctx, events)) return state;
+  if (effectRefused(state, victimSeat, ctx, undefined, events)) return state;
   const turn = state.turn + 1;
   const prior = marked.handAttachMark;
   const same = prior !== null && prior.turn === turn;
@@ -664,11 +664,11 @@ export function boostAttack(
   amount: number,
   base: true | undefined,
   ctx: EffectContext,
-  events: GameEvent[],
   // Write the record on the program's source body (Bench or Active) instead of the seat's Active.
-  holder?: "source",
+  holder: "source" | undefined,
   // Stamp `state.turn` for a printed "during this turn" instead of `+ 2`.
-  thisTurn?: true,
+  thisTurn: true | undefined,
+  events: GameEvent[],
 ): GameState {
   // An all-attacks base override is refused: no card prints one and `boostedAttackBase` would never
   // pay it.
@@ -750,7 +750,7 @@ export function preventChosenAttack(
 ): { done: GameState } | { park: EffectPrompt } {
   const victim = otherSeat(ctx.seat);
   // Refused before the candidate scan so a shielded defender is never prompted.
-  if (effectRefused(state, victim, ctx, events)) return { done: state };
+  if (effectRefused(state, victim, ctx, undefined, events)) return { done: state };
   const active = state.players[victim].active;
   if (active === null) return { done: state };
   const card = topCardOf(state, active);
@@ -937,9 +937,9 @@ export function retypeDefenderWeakness(
   state: GameState,
   type: string,
   ctx: EffectContext,
-  events: GameEvent[],
   // Overwriting Bolt's "(Apply Weakness as ×2.)".
   asTimesTwo: boolean,
+  events: GameEvent[],
 ): GameState {
   const seat = otherSeat(ctx.seat);
   const live = unrefusedActive(state, seat, ctx, events);

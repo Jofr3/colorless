@@ -249,7 +249,7 @@ describe("D359 §1 — the quantity population, over the registry AND the derive
       {
         op: "recordGate",
         slot: "moved",
-        then: [
+        ops: [
           {
             op: "attachEnergyFrom",
             source: "hand",
@@ -439,6 +439,7 @@ describe("D359 §3 — the validator is the only place the printed ceiling is en
       parked.phase.cont.pendingOp,
       { kind: "pokemon", ref: benchRef(0), take: 4 },
       parked.phase.cont.ctx,
+      {},
       events,
     );
     expect(energyOn(after, benchRef(0))).toEqual([WATER, WATER]);

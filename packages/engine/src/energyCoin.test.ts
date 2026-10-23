@@ -240,7 +240,7 @@ describe("D355 §3 — absent `coins` is ONE coin, byte for byte", () => {
     expect(gate).toEqual({
       op: "coinFlipGate",
       coins: 2,
-      then: [
+      ops: [
         { op: "attachFromDeck", filter: { kind: "basicEnergy" }, max: 1 },
         { op: "shuffleDeck" },
       ],

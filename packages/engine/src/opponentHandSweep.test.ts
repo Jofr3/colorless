@@ -250,7 +250,7 @@ describe("§4 — `discardFromOpponentHand`, driven off a program", () => {
   it("sweeps every match out of the OPPONENT's hand and NEVER parks", () => {
     const state = table();
     const events: GameEvent[] = [];
-    const result = runProgram(deepFreeze(state), SWEEP_PROGRAM, { seat: "p1" }, events);
+    const result = runProgram(deepFreeze(state), SWEEP_PROGRAM, { seat: "p1" }, {}, events);
     if (result.kind !== "done") throw new Error("the sweep must not park");
     expect(idsIn(result.state, "p2", "hand")).toEqual(
       ["d485-nrg", "d485-stadium", "d485-sup"].sort(),
@@ -269,7 +269,7 @@ describe("§4 — `discardFromOpponentHand`, driven off a program", () => {
     const state = table();
     const before = idsIn(state, "p1", "hand");
     const events: GameEvent[] = [];
-    const result = runProgram(deepFreeze(state), SWEEP_PROGRAM, { seat: "p1" }, events);
+    const result = runProgram(deepFreeze(state), SWEEP_PROGRAM, { seat: "p1" }, {}, events);
     if (result.kind !== "done") throw new Error("the sweep must not park");
     expect(idsIn(result.state, "p1", "hand")).toEqual(before);
     expect(idsIn(result.state, "p1", "discard")).toEqual(idsIn(state, "p1", "discard"));
@@ -278,7 +278,7 @@ describe("§4 — `discardFromOpponentHand`, driven off a program", () => {
   it("an EMPTY hand reveals honestly and discards nothing", () => {
     const state = table([]);
     const events: GameEvent[] = [];
-    const result = runProgram(deepFreeze(state), SWEEP_PROGRAM, { seat: "p1" }, events);
+    const result = runProgram(deepFreeze(state), SWEEP_PROGRAM, { seat: "p1" }, {}, events);
     if (result.kind !== "done") throw new Error("the sweep must not park");
     // The reveal still fires — "they showed me nothing" is a real thing that happened at
     // the table (`revealOpponentHand`'s own rule) — and the sweep files nothing.
@@ -335,7 +335,7 @@ describe("§5 — the discriminating board, computed BEFORE it is asserted", () 
       ],
     ] as readonly (readonly EffectOp[])[]) {
       const events: GameEvent[] = [];
-      const result = runProgram(deepFreeze(table(ONE_MATCH)), program, { seat: "p1" }, events);
+      const result = runProgram(deepFreeze(table(ONE_MATCH)), program, { seat: "p1" }, {}, events);
       if (result.kind !== "done") throw new Error("a one-match hand asks nobody anything");
       expect(idsIn(result.state, "p2", "discard")).toEqual(["d485-item-a"]);
       expect(idsIn(result.state, "p2", "hand")).toEqual(["d485-nrg", "d485-sup"].sort());
@@ -344,9 +344,9 @@ describe("§5 — the discriminating board, computed BEFORE it is asserted", () 
       { op: "revealOpponentHand" },
       { op: "bottomFromOpponentHand", filter: SWEEP_FILTER, dest: "discard" },
     ];
-    const parked = runProgram(deepFreeze(table()), near, { seat: "p1" }, []);
+    const parked = runProgram(deepFreeze(table()), near, { seat: "p1" }, {}, []);
     expect(parked.kind).toBe("parked");
-    const done = runProgram(deepFreeze(table()), SWEEP_PROGRAM, { seat: "p1" }, []);
+    const done = runProgram(deepFreeze(table()), SWEEP_PROGRAM, { seat: "p1" }, {}, []);
     expect(done.kind).toBe("done");
   });
 
@@ -483,7 +483,7 @@ describe("§8 — the persisted record cannot hold this op", () => {
       ["d485-item-a"],
       ["d485-tool-a", "d485-tool-b"],
     ]) {
-      const result = runProgram(deepFreeze(table(hand)), SWEEP_PROGRAM, { seat: "p1" }, []);
+      const result = runProgram(deepFreeze(table(hand)), SWEEP_PROGRAM, { seat: "p1" }, {}, []);
       expect(result.kind, JSON.stringify(hand)).toBe("done");
     }
     // …and through the real action API, where a park would surface as the phase.

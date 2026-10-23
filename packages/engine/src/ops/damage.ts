@@ -398,8 +398,8 @@ export function snipeEachByCounters(
   refs: readonly PokemonRef[],
   op: OpOf<"damageChosen">,
   ctx: EffectContext,
-  events: GameEvent[],
   record: EffectRecord,
+  events: GameEvent[],
 ): GameState {
   let next = state;
   for (const ref of refs) {
@@ -433,7 +433,7 @@ export function placeSnipe(
   let next = state;
   if (refs.some((r) => r.seat === opponent && r.spot.spot === "active")) {
     next = deals
-      ? snipeActive(next, amount, ignoreWR, ctx, events, wrOnly)
+      ? snipeActive(next, amount, ignoreWR, ctx, wrOnly, events)
       : damageActive(next, amount, source, ctx, events);
   }
   // The attacker's own Active (a `yourAny` target). This is flat, like `damageSelf`: the attacker
@@ -487,7 +487,7 @@ export function placeSnipe(
       // The default put-counter snipe: flat, no W/R and no reduction passive (a placed counter is
       // not damage from an attack). It is still refused by §11 effect prevention on the picked
       // body; an own-Bench pick is never refused.
-      if (effectRefused(next, benchVictim, ctx, events, pokemon)) {
+      if (effectRefused(next, benchVictim, ctx, pokemon, events)) {
         bench.push(pokemon);
         continue;
       }
@@ -684,10 +684,9 @@ export function snipeActive(
   amount: number,
   ignoreWR: boolean,
   ctx: EffectContext,
-  events: GameEvent[],
   // `wrOnly` skips only Weakness and Resistance; every effect on the target still applies.
-  // Defaulted for the `damageDefender` callers, whose hit always goes through W/R.
-  wrOnly = false,
+  wrOnly: boolean,
+  events: GameEvent[],
 ): GameState {
   const opponent = otherSeat(ctx.seat);
   // Both spots as in-play cards, so W/R and type-keyed shields read the types each body has in
@@ -1249,7 +1248,7 @@ export function counterEachAll(
       if (op.damagedOnly === true && !hasAnyDamageCounters(pokemon)) return pokemon;
       const uid = topUid(pokemon);
       if (uid === undefined) return pokemon;
-      if (effectRefused(next, seat, ctx, events, pokemon)) return pokemon;
+      if (effectRefused(next, seat, ctx, pokemon, events)) return pokemon;
       // Battle Cage, on a Benched body only.
       if (pokemon !== board.active && benchCountersCaged(next, seat, ctx)) return pokemon;
       events.push({ type: "COUNTERS_PLACED", seat, uid, amount, source: op.source });
@@ -1287,7 +1286,7 @@ export function counterUntilRemainingHp(
     if (placed <= 0) return pokemon;
     const uid = topUid(pokemon);
     if (uid === undefined) return pokemon;
-    if (effectRefused(state, victim, ctx, events, pokemon)) return pokemon;
+    if (effectRefused(state, victim, ctx, pokemon, events)) return pokemon;
     // Battle Cage, on a Benched body only.
     if (pokemon !== board.active && benchCountersCaged(state, victim, ctx)) return pokemon;
     events.push({
@@ -1342,8 +1341,8 @@ export function countersOnRecordedBody(
   state: GameState,
   op: OpOf<"countersOnRecordedBody">,
   ctx: EffectContext,
-  events: GameEvent[],
   record: EffectRecord,
+  events: GameEvent[],
 ): GameState {
   const [filed] = recorded(record, op.slot);
   if (filed === undefined) return state;
@@ -1387,14 +1386,14 @@ export function damageSubject(
   const active = side.active;
   if (active !== null && topUid(active) === uid) {
     // §11 funnel on the subject body (Luminous Wing).
-    if (effectRefused(state, seat, ctx, events, active)) return state;
+    if (effectRefused(state, seat, ctx, active, events)) return state;
     events.push({ type: "COUNTERS_PLACED", seat, uid, amount, source: "ability" });
     return withActive(state, seat, { ...active, damage: active.damage + amount });
   }
   const index = side.bench.findIndex((pokemon) => topUid(pokemon) === uid);
   if (index === -1) return state;
   const benched = side.bench[index];
-  if (benched !== undefined && effectRefused(state, seat, ctx, events, benched)) return state;
+  if (benched !== undefined && effectRefused(state, seat, ctx, benched, events)) return state;
   // Battle Cage: an opponent's Ability puts no counters on the Benched subject.
   if (benchCountersCaged(state, seat, ctx)) return state;
   events.push({ type: "COUNTERS_PLACED", seat, uid, amount, source: "ability" });
@@ -1490,7 +1489,7 @@ export function moveCountersFromBench(
   if (targetUid === undefined) return state;
   // §11: the destination half is a placement (an effect), so the effects block refuses the whole
   // move, checked before the HEALED row so counters are never removed without arriving.
-  if (effectRefused(state, dest.seat, ctx, events, target)) {
+  if (effectRefused(state, dest.seat, ctx, target, events)) {
     return state;
   }
   // Battle Cage: a move onto a Benched body is refused whole, before the HEALED row.
@@ -1809,9 +1808,9 @@ export function damageSelf(
   state: GameState,
   amount: number,
   ctx: EffectContext,
-  events: GameEvent[],
   // Optional provenance; absent means the `"self"` recoil.
-  source?: "trainer" | "ability",
+  source: "trainer" | "ability" | undefined,
+  events: GameEvent[],
 ): GameState {
   if (amount <= 0) return state;
   const active = state.players[ctx.seat].active;
@@ -1854,8 +1853,8 @@ export function damageSourceBody(
   state: GameState,
   amount: number,
   ctx: EffectContext,
+  source: "trainer" | "ability" | undefined,
   events: GameEvent[],
-  source?: "trainer" | "ability",
 ): GameState {
   if (amount <= 0) return state;
   const [ref] = sourceRef(state, ctx);

@@ -303,7 +303,7 @@ describe("Surfer sv08-187/-235 — `switchActive.recordAs` + §9.2, and nothing 
     for (const id of ["sv08-187", "sv08-235"]) {
       expect(programFor(id)?.trainer, `${id}`).toEqual([
         { op: "switchActive", recordAs: "moved" },
-        { op: "recordGate", slot: "moved", then: [{ op: "drawUntilHandSize", size: 5 }] },
+        { op: "recordGate", slot: "moved", ops: [{ op: "drawUntilHandSize", size: 5 }] },
       ]);
     }
     expect(SURFER).toContain("If you do");
@@ -459,13 +459,13 @@ describe("Team Rocket's Giovanni sv10-174/-225/-238 — both printed nouns, one 
     for (const id of ["sv10-174", "sv10-225", "sv10-238"]) {
       expect(programFor(id)?.trainer, `${id}`).toEqual([
         { op: "switchActive", ownerPokemon: "Team Rocket", recordAs: "moved" },
-        { op: "recordGate", slot: "moved", then: [{ op: "gust" }] },
+        { op: "recordGate", slot: "moved", ops: [{ op: "gust" }] },
       ]);
     }
     // The consequent IS Boss's Orders' whole program, byte for byte — one printed
     // action read off two different cards, which is this family's checkable claim.
     const gate = programFor("sv10-174")?.trainer?.[1];
-    expect(gate?.op === "recordGate" ? gate.then : undefined).toEqual(
+    expect(gate?.op === "recordGate" ? gate.ops : undefined).toEqual(
       programFor("sv02-172")?.trainer,
     );
     expect(GIOVANNI).toContain(BOSSS_ORDERS.charAt(0).toLowerCase() + BOSSS_ORDERS.slice(1));
@@ -569,11 +569,11 @@ describe("Prime Catcher sv05-157/sv08.5-119 — `gust.recordAs`, the mirror fiel
     for (const id of ["sv05-157", "sv08.5-119"]) {
       expect(programFor(id)?.trainer, `${id}`).toEqual([
         { op: "gust", recordAs: "moved" },
-        { op: "recordGate", slot: "moved", then: [{ op: "switchActive" }] },
+        { op: "recordGate", slot: "moved", ops: [{ op: "switchActive" }] },
       ]);
     }
     const gate = programFor("sv05-157")?.trainer?.[1];
-    expect(gate?.op === "recordGate" ? gate.then : undefined).toEqual(
+    expect(gate?.op === "recordGate" ? gate.ops : undefined).toEqual(
       programFor("sv01-194")?.trainer,
     );
   });
@@ -757,7 +757,7 @@ describe("D561 BUILT — Scramble Switch sv08-186 (1 legal), the seam's third Tr
     const energy = scramble.players.p1.active?.energy ?? [];
     expect(energy).toHaveLength(2);
     const events: GameEvent[] = [];
-    const first = runProgram(scramble, program ?? [], { seat: "p1" }, events);
+    const first = runProgram(scramble, program ?? [], { seat: "p1" }, {}, events);
     if (first.kind !== "parked") throw new Error("expected the switch to park");
     const second = resumeProgram(
       first.state,
@@ -813,7 +813,7 @@ describe("⏹️ FLAGGED — the seam on the ATTACK surface (4 legal printings)"
       {
         op: "recordGate",
         slot: "moved",
-        then: [
+        ops: [
           {
             op: "attachEnergyFrom",
             source: "hand",
@@ -827,12 +827,12 @@ describe("⏹️ FLAGGED — the seam on the ATTACK surface (4 legal printings)"
     expect(deriveAttackEffect(RETURN_CHARGE)).not.toEqual(deriveAttackEffect(SELF_SWITCH));
     expect(deriveAttackEffect(INTERJET)).toEqual([
       { op: "switchActive", recordAs: "moved" },
-      { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },
+      { op: "recordGate", slot: "moved", ops: [{ op: "opponentSwitchOut" }] },
     ]);
     expect(deriveAttackEffect(INTERJET)).not.toEqual(deriveAttackEffect(SELF_SWITCH));
     expect(deriveAttackEffect(GOAD_N_GRAB)).toEqual([
       { op: "opponentSwitchOut", recordAs: "moved" },
-      { op: "recordGate", slot: "moved", then: [{ op: "damageNewActive", amount: 160 }] },
+      { op: "recordGate", slot: "moved", ops: [{ op: "damageNewActive", amount: 160 }] },
     ]);
     expect(deriveAttackEffect(GOAD_N_GRAB)).not.toEqual([{ op: "opponentSwitchOut" }]);
     for (const id of ["sv08-068", "sv06-062", "sv07-096"]) {
@@ -850,7 +850,7 @@ describe("⏹️ FLAGGED — the seam on the ATTACK surface (4 legal printings)"
     expect(goldenFlame).not.toHaveProperty("toSelf");
     expect(deriveAttackEffect(RETURN_CHARGE)?.[1]).toMatchObject({
       op: "recordGate",
-      then: [{ op: "attachEnergyFrom", toSelf: true }],
+      ops: [{ op: "attachEnergyFrom", toSelf: true }],
     });
     expect(programFor("sv02-172")?.trainer).toEqual([{ op: "gust" }]);
     expect(INTERJET).toContain("Your opponent chooses");

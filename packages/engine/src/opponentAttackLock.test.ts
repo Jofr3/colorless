@@ -208,7 +208,7 @@ describe("the printed datum — both printings re-queried, field by field", () =
         "Flip a coin. If heads, choose 1 of your opponent's Benched Pokémon. Shuffle that Pokémon and all attached cards into their deck.",
       ),
     ).toEqual([
-      { op: "coinFlipGate", then: [{ op: "returnBenched", whose: "opponent", dest: "deck" }] },
+      { op: "coinFlipGate", ops: [{ op: "returnBenched", whose: "opponent", dest: "deck" }] },
     ]);
     expect(deriveAttackEffect("During your next turn, this Pokémon can't use Peck.")).toEqual([
       { op: "preventAttackUse", attack: "Peck" },
@@ -383,6 +383,7 @@ describe("the install — the record lands ACROSS the table, stamped + 1", () =>
       same,
       [{ op: "preventChosenAttack" }],
       { seat: "p1", invokedBy: "attack" },
+      {},
       events,
     );
     if (again.kind !== "parked") throw new Error("expected a park");
@@ -418,6 +419,7 @@ describe("the install — the record lands ACROSS the table, stamped + 1", () =>
       board,
       [{ op: "preventChosenAttack" }],
       { seat: "p1", invokedBy: "attack" },
+      {},
       parkEvents,
     );
     if (result.kind !== "parked") throw new Error("expected a park");

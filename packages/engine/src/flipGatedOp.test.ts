@@ -124,8 +124,8 @@ describe("the anchors — 3 printings, 2 clauses, two literal arms", () => {
   it("derives both clauses to a coinFlipGate over the BARE anchor's own program", () => {
     for (const { text, inner, bare } of CLAUSES) {
       const ops = deriveAttackEffect(text);
-      expect(ops).toEqual([{ op: "coinFlipGate", then: [inner] }]);
-      expect(deriveAttackEffect(text)?.[0]).toMatchObject({ then: deriveAttackEffect(bare) });
+      expect(ops).toEqual([{ op: "coinFlipGate", ops: [inner] }]);
+      expect(deriveAttackEffect(text)?.[0]).toMatchObject({ ops: deriveAttackEffect(bare) });
     }
     expect(CLAUSES).toHaveLength(2);
     expect(CLAUSES.reduce((n, c) => n + c.printings, 0)).toBe(3);
@@ -158,7 +158,7 @@ describe("the anchors — 3 printings, 2 clauses, two literal arms", () => {
     // No CEILING, by contrast: the interpreter clamps the heal to the damage present,
     // so a malformed large amount heals to full and stops — a legal board state.
     expect(deriveAttackEffect("Flip a coin. If heads, heal 999 damage from this Pokémon.")).toEqual(
-      [{ op: "coinFlipGate", then: [{ op: "heal", target: "self", amount: 999 }] }],
+      [{ op: "coinFlipGate", ops: [{ op: "heal", target: "self", amount: 999 }] }],
     );
   });
 
@@ -176,7 +176,7 @@ describe("the anchors — 3 printings, 2 clauses, two literal arms", () => {
     expect(deriveAttackEffect(REAL_NEAR_MISSES[0])).toEqual([
       {
         op: "coinFlipGate",
-        then: [{ op: "switchWithDeckChosen", filter: { kind: "anyPokemon" } }],
+        ops: [{ op: "switchWithDeckChosen", filter: { kind: "anyPokemon" } }],
       },
     ]);
   });
@@ -185,19 +185,19 @@ describe("the anchors — 3 printings, 2 clauses, two literal arms", () => {
     expect(deriveAttackEffect(REAL_NEAR_MISSES[3])).toEqual([
       {
         op: "coinFlipGate",
-        then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
+        ops: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
       },
     ]);
     expect(deriveAttackEffect(REAL_NEAR_MISSES[4])).toEqual([
       {
         op: "coinFlipGate",
-        then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+        ops: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
       },
     ]);
     expect(deriveAttackEffect(REAL_NEAR_MISSES[5])).toEqual([
       {
         op: "coinFlipGate",
-        then: [{ op: "gust" }],
+        ops: [{ op: "gust" }],
       },
     ]);
   });
@@ -268,11 +268,11 @@ describe("the anchors — 3 printings, 2 clauses, two literal arms", () => {
     // which drift is tolerated and which is not.
     expect(
       deriveAttackEffect("  Flip a coin. If heads, heal 30 damage from this Pokémon.\n"),
-    ).toEqual([{ op: "coinFlipGate", then: [{ op: "heal", target: "self", amount: 30 }] }]);
+    ).toEqual([{ op: "coinFlipGate", ops: [{ op: "heal", target: "self", amount: 30 }] }]);
     expect(
       deriveAttackEffect("\tFlip a coin. If heads, discard the top card of your opponent's deck. "),
     ).toEqual([
-      { op: "coinFlipGate", then: [{ op: "discardDeckTop", whose: "opponent", count: 1 }] },
+      { op: "coinFlipGate", ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }] },
     ]);
   });
 
@@ -297,7 +297,7 @@ describe("the fixtures' printed text — the sentence is load-bearing", () => {
     // the entire visible result of the declaration — and a tails moves nothing.
     expect(spacingOut?.damage).toBeUndefined();
     expect(deriveAttackEffect(spacingOut?.effect ?? "")).toEqual([
-      { op: "coinFlipGate", then: [{ op: "heal", target: "self", amount: SPACING_OUT_HEAL }] },
+      { op: "coinFlipGate", ops: [{ op: "heal", target: "self", amount: SPACING_OUT_HEAL }] },
     ]);
     expect(FIXTURE_POOL["sv02-035"]?.name).toBe("Fuecoco");
     expect(FIXTURE_POOL["sv02-035"]?.stage).toBe("Basic");
@@ -319,7 +319,7 @@ describe("the fixtures' printed text — the sentence is load-bearing", () => {
     expect(deriveAttackEffect(digALittle?.effect ?? "")).toEqual([
       {
         op: "coinFlipGate",
-        then: [{ op: "discardDeckTop", whose: "opponent", count: DIG_A_LITTLE_MILL }],
+        ops: [{ op: "discardDeckTop", whose: "opponent", count: DIG_A_LITTLE_MILL }],
       },
     ]);
     expect(FIXTURE_POOL["sv01-056"]?.name).toBe("Wiglett");
@@ -600,12 +600,12 @@ describe("what the flip-gated family costs the rest of the engine — nothing", 
 
   it("emits the SAME ops the bare anchors do — one action, two printings, no mechanism", () => {
     expect(deriveAttackEffect(CLAUSES[0].text)).toEqual([
-      { op: "coinFlipGate", then: deriveAttackEffect("Heal 30 damage from this Pokémon.") },
+      { op: "coinFlipGate", ops: deriveAttackEffect("Heal 30 damage from this Pokémon.") },
     ]);
     expect(deriveAttackEffect(CLAUSES[1].text)).toEqual([
       {
         op: "coinFlipGate",
-        then: deriveAttackEffect("Discard the top card of your opponent's deck."),
+        ops: deriveAttackEffect("Discard the top card of your opponent's deck."),
       },
     ]);
   });

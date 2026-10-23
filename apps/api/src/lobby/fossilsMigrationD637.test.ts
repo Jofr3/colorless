@@ -156,8 +156,8 @@ function oldRecord(version: 41 | 42 | 43 | 44 | 45, state?: GameState): MatchRec
 }
 
 describe("D637 — the version and the gate", () => {
-  it("MATCH_RECORD_VERSION is 46 ( 47 since D640; 48 since D643; 49 since D646); v41 pool-migrated, v42 side-key-, v43 record-key-, v44 lock-key-migrated, v45 re-stamped ( D640: and v46 re-stamped, prizeStageMigrationD640.test.ts; D643: and v47 re-stamped, toolTrimMigrationD643.test.ts; D646: and v48 re-stamped, coinRedoMigrationD646.test.ts)", () => {
-    expect(MATCH_RECORD_VERSION).toBe(49);
+  it("MATCH_RECORD_VERSION is 46 ( 47 since D640; 48 since D643; 49 since D646; 50 since the gate-key rename); v41 pool-migrated, v42 side-key-, v43 record-key-, v44 lock-key-migrated, v45 re-stamped ( D640: and v46 re-stamped, prizeStageMigrationD640.test.ts; D643: and v47 re-stamped, toolTrimMigrationD643.test.ts; D646: and v48 re-stamped, coinRedoMigrationD646.test.ts)", () => {
+    expect(MATCH_RECORD_VERSION).toBe(50);
     expect(MIGRATABLE_MATCH_RECORD_VERSION).toBe(41);
     expect(SIDE_KEYS_MIGRATABLE_MATCH_RECORD_VERSION).toBe(42);
     expect(RECORD_KEYS_MIGRATABLE_MATCH_RECORD_VERSION).toBe(43);
@@ -169,12 +169,12 @@ describe("D637 — the version and the gate", () => {
     const old = oldRecord(45);
     expect(readMatchRecord(old)).toBeNull();
     expect(migratablePoolIdsOf(old)).toEqual([]);
-    expect(readMatchRecord({ ...old, version: 49 })).not.toBeNull();
+    expect(readMatchRecord({ ...old, version: 50 })).not.toBeNull();
   });
 
-  it("v40 and v47 ( D640 (D539): v48 — v47 is this build's own; D643 (D539): v49 — v48 is; D646 (D539): v50 — v49 is) are neither read nor migrated; a v45 record missing its players or its log is not migrated", () => {
+  it("v40 and v47 ( D640 (D539): v48 — v47 is this build's own; D643 (D539): v49 — v48 is; D646 (D539): v50 — v49 is; then v51 — v50 is) are neither read nor migrated; a v45 record missing its players or its log is not migrated", () => {
     const old = oldRecord(45);
-    for (const version of [40, 50]) {
+    for (const version of [40, 51]) {
       expect(readMatchRecord({ ...old, version })).toBeNull();
       expect(migratablePoolIdsOf({ ...old, version })).toBeNull();
       expect(migrateMatchRecord({ ...old, version }, {})).toBeNull();
@@ -190,7 +190,7 @@ describe("D637 — what the migration writes", () => {
     const old = oldRecord(45, board);
     const migrated = migrateMatchRecord(old, { [JAW]: { ...JAW_CARD, name: "stale" } as Card });
     if (migrated === null) throw new Error("not migrated");
-    expect(migrated.version).toBe(49);
+    expect(migrated.version).toBe(50);
     expect(readMatchRecord(migrated)).not.toBeNull();
     expect(migrated.state).toEqual(board);
     expect(migrated.state.cardPool[JAW]).toBe(old.state.cardPool[JAW]);
@@ -223,11 +223,11 @@ describe("D637 — what the migration writes", () => {
     expect(migrated.state.handPlayLockedTurn.p1.Stadium).toBe(board.turn);
   });
 
-  it("v44: D636's keys; v43, v42 and v41: the earlier steps too — every one lands at v46 ( v47 since D640; v48 since D643; v49 since D646)", () => {
+  it("v44: D636's keys; v43, v42 and v41: the earlier steps too — every one lands at v46 ( v47 since D640; v48 since D643; v49 since D646; v50 since the gate-key rename)", () => {
     for (const version of [44, 43, 42, 41] as const) {
       const migrated = migrateMatchRecord(oldRecord(version), { [JAW]: JAW_CARD });
       if (migrated === null) throw new Error(`v${version} not migrated`);
-      expect(migrated.version).toBe(49);
+      expect(migrated.version).toBe(50);
       expect(readMatchRecord(migrated)).not.toBeNull();
       expect(migrated.state.players.p1.trainerFlipLockTurn).toBeNull();
       expect(migrated.state.handPlayLockedTurn.p2.Stadium).toBeNull();
@@ -296,20 +296,20 @@ function fakeSlot(value: unknown) {
 }
 
 describe("D637 — the DO's read migrates a v45 record without asking D1", () => {
-  it("a v45 record: written once as v46 ( v47 since D640; v48 since D643; v49 since D646), D1 never asked; the next read is plain", async () => {
+  it("a v45 record: written once as v46 ( v47 since D640; v48 since D643; v49 since D646; v50 since the gate-key rename), D1 never asked; the next read is plain", async () => {
     const { slot, api } = fakeSlot(oldRecord(45));
     const never = async (): Promise<Record<string, Card>> => {
       throw new Error("D1 asked");
     };
     const load = await loadMatchRecord(api, never);
     if (load.kind !== "ok") throw new Error(`expected ok, got ${load.kind}`);
-    expect(load.record.version).toBe(49);
+    expect(load.record.version).toBe(50);
     expect(slot.puts).toEqual([load.record]);
     expect((await loadMatchRecord(api, never)).kind).toBe("ok");
     expect(slot.puts).toHaveLength(1);
   });
 
-  it("a v41 record still asks D1 for its pool, and lands at v46 ( v47 since D640; v48 since D643; v49 since D646) with every key", async () => {
+  it("a v41 record still asks D1 for its pool, and lands at v46 ( v47 since D640; v48 since D643; v49 since D646; v50 since the gate-key rename) with every key", async () => {
     const { slot, api } = fakeSlot(oldRecord(41));
     const asked: string[][] = [];
     const load = await loadMatchRecord(api, async (ids) => {
@@ -318,7 +318,7 @@ describe("D637 — the DO's read migrates a v45 record without asking D1", () =>
     });
     expect(asked).toEqual([[BODY, JAW].sort()]);
     if (load.kind !== "ok") throw new Error(`expected ok, got ${load.kind}`);
-    expect(load.record.version).toBe(49);
+    expect(load.record.version).toBe(50);
     expect(load.record.state.players.p1.trainerFlipLockTurn).toBeNull();
     expect(slot.puts).toHaveLength(1);
   });

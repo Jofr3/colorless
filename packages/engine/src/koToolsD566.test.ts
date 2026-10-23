@@ -571,7 +571,7 @@ describe("§3 — Amulet of Hope: a koTrigger per Tool, AFTER the Knock Out", ()
     let state = amulet({ seed: 5688 });
     state = withBody(state, "p2", "active", (p) => ({ ...p, damage: 900 }));
     const events: GameEvent[] = [];
-    const result = resolveMidTurnKnockOuts(state, "p1", ["p1", "p2"], events);
+    const result = resolveMidTurnKnockOuts(state, "p1", ["p1", "p2"], undefined, undefined, events);
     if (!result.ok) throw new Error("sweep failed");
     expect(all(events, "KNOCKED_OUT")).toHaveLength(1);
     expect(result.state.pending.some((stage) => stage.kind === "koTrigger")).toBe(false);

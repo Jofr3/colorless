@@ -65,7 +65,7 @@ const PROGRAM: readonly EffectOp[] = [
   {
     op: "conditionGate",
     cond: SALANDIT,
-    then: [{ op: "opponentDiscardsFromHand", count: 2 }],
+    ops: [{ op: "opponentDiscardsFromHand", count: 2 }],
   },
 ];
 
@@ -73,7 +73,7 @@ const SIBLING: readonly EffectOp[] = [
   {
     op: "conditionGate",
     cond: SALANDIT,
-    then: [{ op: "opponentDiscardsFromHand", count: 3 }],
+    ops: [{ op: "opponentDiscardsFromHand", count: 3 }],
     otherwise: [{ op: "opponentDiscardsFromHand", count: 1 }],
   },
 ];
@@ -234,7 +234,7 @@ function drive(
   seat: Seat = "p1",
 ): { state: GameState; parks: number; events: GameEvent[] } {
   const events: GameEvent[] = [];
-  let result = runProgram(deepFreeze(state), program, { seat }, events);
+  let result = runProgram(deepFreeze(state), program, { seat }, {}, events);
   let parks = 0;
   while (result.kind === "parked") {
     parks += 1;
@@ -355,7 +355,7 @@ describe("§3 — the derived program, and what the arm refuses", () => {
       ),
     ).toEqual([
       { op: "opponentDiscardsFromHand", count: 1 },
-      { op: "conditionGate", cond: SALANDIT, then: [{ op: "opponentDiscardsFromHand", count: 4 }] },
+      { op: "conditionGate", cond: SALANDIT, ops: [{ op: "opponentDiscardsFromHand", count: 4 }] },
     ]);
   });
 
@@ -441,13 +441,13 @@ const CANDIDATES: readonly (readonly [string, readonly EffectOp[]])[] = [
   ],
   [
     "the HEAD dropped — the gated half alone",
-    [{ op: "conditionGate", cond: SALANDIT, then: [{ op: "opponentDiscardsFromHand", count: 2 }] }],
+    [{ op: "conditionGate", cond: SALANDIT, ops: [{ op: "opponentDiscardsFromHand", count: 2 }] }],
   ],
   [
     '"2 more" read as the TOTAL — one, then three',
     [
       { op: "opponentDiscardsFromHand", count: 1 },
-      { op: "conditionGate", cond: SALANDIT, then: [{ op: "opponentDiscardsFromHand", count: 3 }] },
+      { op: "conditionGate", cond: SALANDIT, ops: [{ op: "opponentDiscardsFromHand", count: 3 }] },
     ],
   ],
   [
@@ -457,7 +457,7 @@ const CANDIDATES: readonly (readonly [string, readonly EffectOp[]])[] = [
       {
         op: "conditionGate",
         cond: SALANDIT,
-        then: [],
+        ops: [],
         otherwise: [{ op: "opponentDiscardsFromHand", count: 2 }],
       },
     ],
@@ -545,7 +545,7 @@ describe("§5 — five candidate readings, and the sibling that no card count ca
   it("on a FIVE-card hand the shipped program asks TWICE, in the printed voices", () => {
     const state = ready({ from: "d486-salandit", to: "d486-salazzle" });
     const notes: string[] = [];
-    let result = runProgram(deepFreeze(state), PROGRAM, { seat: "p1" }, []);
+    let result = runProgram(deepFreeze(state), PROGRAM, { seat: "p1" }, {}, []);
     while (result.kind === "parked") {
       const prompt = result.prompt;
       if (prompt.kind !== "chooseCards") throw new Error("expected a chooseCards prompt");
@@ -655,7 +655,7 @@ describe("§8 — what this program can put into a persisted `phase.cont`", () =
       {
         op: "conditionGate",
         cond: SALANDIT,
-        then: [{ op: "opponentDiscardsFromHand", count: 2 }],
+        ops: [{ op: "opponentDiscardsFromHand", count: 2 }],
       },
     ]);
   });

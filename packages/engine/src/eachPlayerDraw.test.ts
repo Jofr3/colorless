@@ -514,7 +514,7 @@ describe("D491 §8 — the record is filed ONCE, over both seats' cards", () => 
     const program: readonly EffectOp[] = [
       { op: "drawCards", count: COUNT, who: "eachPlayer", recordAs: "moved" },
     ];
-    runProgram(state, program, { seat: "p1" }, events, record);
+    runProgram(state, program, { seat: "p1" }, record, events);
     expect(record.moved).toHaveLength(2 * COUNT);
     expect((record.moved ?? []).map((uid) => idOf(uid, state))).toEqual([
       "d491-a1",
@@ -547,7 +547,7 @@ describe("D491 §9 — the version question, asked at the address that persists"
   it("the ADDRESS does persist, so this is NOT a no-carrier argument", () => {
     expect(deriveAttackEffect("Discard a card from your hand. If you do, draw 2 cards.")).toEqual([
       { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-      { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: 2 }] },
+      { op: "recordGate", slot: "paid", ops: [{ op: "drawCards", count: 2 }] },
     ]);
   });
 
@@ -556,14 +556,14 @@ describe("D491 §9 — the version question, asked at the address that persists"
     const v29: readonly EffectOp[] = [{ op: "drawCards", count: COUNT }];
     const events: GameEvent[] = [];
     const record: EffectRecord = {};
-    const next = runProgram(state, v29, { seat: "p1" }, events, record);
+    const next = runProgram(state, v29, { seat: "p1" }, record, events);
     if ("park" in next) throw new Error("drawCards must not park");
     expect(all(events, "CARDS_DRAWN")).toHaveLength(1);
     expect(gained(state, next.state, "p1")).toEqual(["d491-a1", "d491-a2", "d491-a3"]);
     expect(gained(state, next.state, "p2")).toEqual([]);
     const wide: readonly EffectOp[] = [{ op: "drawCards", count: COUNT, who: "eachPlayer" }];
     const wideEvents: GameEvent[] = [];
-    const widened = runProgram(state, wide, { seat: "p1" }, wideEvents, {});
+    const widened = runProgram(state, wide, { seat: "p1" }, {}, wideEvents);
     if ("park" in widened) throw new Error("drawCards must not park");
     expect(gained(state, widened.state, "p2")).toHaveLength(COUNT);
     expect(all(wideEvents, "CARDS_DRAWN")).toHaveLength(2);

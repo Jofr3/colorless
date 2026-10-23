@@ -253,7 +253,7 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
           {
             op: "conditionGate",
             cond: { kind: "opponentActiveDamaged" },
-            then: [{ op: "damageDefender", amount: 50 }],
+            ops: [{ op: "damageDefender", amount: 50 }],
           },
           { op: "spreadDamage", target: "yourBench", amount: 50, damagedOnly: true },
           { op: "spreadDamage", target: "opponentBench", amount: 50, damagedOnly: true },

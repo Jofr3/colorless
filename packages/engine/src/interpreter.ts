@@ -385,12 +385,11 @@ export function runProgram(
   state: GameState,
   program: readonly EffectOp[],
   ctx: EffectContext,
+  /** What earlier ops recorded (§9.2): `{}` for a program run from the top,
+      which is every caller but `resumeProgram`. Mutated in place as the run
+      proceeds, like `events`. */
+  record: EffectRecord,
   events: GameEvent[],
-  /** What earlier ops recorded (§9.2). Every caller but `resumeProgram` starts a
-      program from the top, where nothing has run yet — hence the default, which
-      is also what keeps this widening invisible to attack.ts / cardplay.ts /
-      triggers.ts / flow.ts. Mutated in place as the run proceeds, like `events`. */
-  record: EffectRecord = {},
 ): RunResult {
   let next = state;
   const queue: EffectOp[] = [...program];
@@ -414,7 +413,7 @@ export function runProgram(
       // The winning face defaults to heads. Either branch is spliced by the same `unshift`, so an
       // op inside it can park; an absent `otherwise` splices nothing.
       queue.unshift(
-        ...(face === (op.onTails === true ? "tails" : "heads") ? op.then : (op.otherwise ?? [])),
+        ...(face === (op.onTails === true ? "tails" : "heads") ? op.ops : (op.otherwise ?? [])),
       );
       continue;
     }
@@ -424,7 +423,7 @@ export function runProgram(
       // against `next` — the board AS OF this point, with every earlier op in
       // the program applied. No event: the condition is public (BoardCondition),
       // so unlike a coin flip it tells the opponent nothing they can't see.
-      queue.unshift(...(conditionHolds(next, ctx.seat, op.cond) ? op.then : (op.otherwise ?? [])));
+      queue.unshift(...(conditionHolds(next, ctx.seat, op.cond) ? op.ops : (op.otherwise ?? [])));
       continue;
     }
     if (op.op === "recordGate") {
@@ -435,13 +434,13 @@ export function runProgram(
       // must see writes made since the run started — including one made by an
       // op that parked and resolved through resolveEffect. No event: the
       // recording op already announced these cards by uid.
-      queue.unshift(...(recordGateHolds(next, ctx, op, record) ? op.then : (op.otherwise ?? [])));
+      queue.unshift(...(recordGateHolds(next, ctx, op, record) ? op.ops : (op.otherwise ?? [])));
       continue;
     }
     // An `atLeastOne` attach learns here whether it may be declined; the queue and record are only
     // visible at this level.
     const live = atLeastOneDecline(next, op, queue, ctx, record);
-    const stepped = stepOp(next, live, ctx, events, record);
+    const stepped = stepOp(next, live, ctx, record, events);
     if ("park" in stepped) {
       // rest = the queue as it stands after shifting `op` — a plain EffectOp[].
       return {
@@ -598,7 +597,7 @@ function withConsequence(
   if (slot === undefined) return prompt;
   const gate = queue.find((q) => q.op === "recordGate" && q.slot === slot);
   if (gate === undefined || gate.op !== "recordGate") return prompt;
-  const clause = describeBranch(gate.then);
+  const clause = describeBranch(gate.ops);
   if (clause === null) return prompt;
   // The CONDITION, not just the consequence. "If you do" is right for a gate that
   // asks whether the op did anything at all; it is wrong — and quietly wrong, the
@@ -981,7 +980,7 @@ function oneOfRecordedChoice(
       },
       cards: { yes: first.uid, ...(second === undefined ? {} : { no: second.uid }) },
       targets,
-      then: attach(first.type),
+      ops: attach(first.type),
       ...(second === undefined ? {} : { otherwise: attach(second.type) }),
     },
   ];
@@ -1078,7 +1077,7 @@ function continuationOps(
   if (op.op === "optional") {
     if (choice.kind === "confirm" && choice.target !== undefined && op.cards !== undefined)
       return [];
-    return choice.kind === "confirm" && choice.yes ? [...op.then] : [...(op.otherwise ?? [])];
+    return choice.kind === "confirm" && choice.yes ? [...op.ops] : [...(op.otherwise ?? [])];
   }
   // Deduction Kit: an empty ordering is the printed alternative (shuffle them onto the bottom).
   // `validateChoice` only admits it when the prompt carries `alt`.
@@ -1167,13 +1166,13 @@ export function resumeProgram(
   // The answer may attach or move Team Rocket's Energy, so the state check runs before the rest of
   // the program.
   const applied = discardMisplacedEnergy(
-    applyChoice(state, cont.pendingOp, choice, cont.ctx, events, record),
+    applyChoice(state, cont.pendingOp, choice, cont.ctx, record, events),
     events,
   );
   // The answer's continuation ops are spliced ahead of the rest here, the only place holding both
   // the applied state and the remaining ops.
   const rest = [...continuationOps(cont, choice, state), ...cont.rest];
-  return runProgram(applied, rest, cont.ctx, events, record);
+  return runProgram(applied, rest, cont.ctx, record, events);
 }
 
 /** `retry` carrying the kept Backtrack Badge `faces`; only the two coin ops read them. */
@@ -1237,8 +1236,8 @@ function stepOp(
   state: GameState,
   op: SteppedOp,
   ctx: EffectContext,
-  events: GameEvent[],
   record: EffectRecord,
+  events: GameEvent[],
 ): { done: GameState; schedule?: EffectOp[] } | { park: EffectPrompt; decider?: Seat } {
   // Patrat "Watchful Eye": while a holder is in play, a counter move whiffs.
   if (isCounterMoveOp(op) && countersMoveLocked(state)) return { done: state };
@@ -1246,7 +1245,7 @@ function stepOp(
     case "applyStatus":
       return { done: applyStatus(state, op, ctx, events) };
     case "clearStatus":
-      return { done: clearStatus(state, ctx, events, op.only) };
+      return { done: clearStatus(state, ctx, op.only, events) };
     // "Choose 1": only branches with a target are offered as a labelled binary chain, built from
     // the board at this step; one branch runs directly, none is a no-op.
     case "chooseOneOffered":
@@ -1259,7 +1258,7 @@ function stepOp(
       const present = active === null ? [] : presentStatuses(active.conditions);
       const [first, second, third] = present;
       if (first === undefined) return { done: state };
-      if (second === undefined) return { done: clearStatus(state, ctx, events, first) };
+      if (second === undefined) return { done: clearStatus(state, ctx, first, events) };
       const word = (status: StatusName) => STATUS_WORD_OF[status];
       const clear = (status: StatusName): EffectOp[] => [{ op: "clearStatus", only: status }];
       const note = "Your Active Pokémon recovers from a Special Condition. Which one?";
@@ -1271,7 +1270,7 @@ function stepOp(
                 op: "optional",
                 note,
                 labels: { yes: word(second), no: word(third) },
-                then: clear(second),
+                ops: clear(second),
                 otherwise: clear(third),
               },
             ];
@@ -1285,7 +1284,7 @@ function stepOp(
               yes: word(first),
               no: third === undefined ? word(second) : `${word(second)} or ${word(third)}`,
             },
-            then: clear(first),
+            ops: clear(first),
             otherwise: tail,
           },
         ],
@@ -1302,7 +1301,7 @@ function stepOp(
     case "preventAttack":
       return { done: preventAttack(state, op, ctx, events) };
     case "flipLockAttack":
-      return { done: flipLockAttack(state, ctx, events, op.coins) };
+      return { done: flipLockAttack(state, ctx, op.coins, events) };
     case "flipLockTrainerPlay":
       return { done: flipLockTrainerPlay(state, ctx, events) };
     case "lockSideAttacks":
@@ -1317,9 +1316,9 @@ function stepOp(
           op.amount,
           op.base,
           ctx,
-          events,
           op.holder,
           op.thisTurn,
+          events,
         ),
       };
     case "boostSideAttacksThisTurn":
@@ -1357,7 +1356,7 @@ function stepOp(
     case "exposeSelf":
       return { done: exposeSelf(state, op.amount, ctx, events) };
     case "retypeDefenderWeakness":
-      return { done: retypeDefenderWeakness(state, op.type, ctx, events, op.asTimesTwo === true) };
+      return { done: retypeDefenderWeakness(state, op.type, ctx, op.asTimesTwo === true, events) };
     case "taxDefender":
       return { done: taxDefender(state, ctx, events) };
     case "bountyDefender":
@@ -1425,7 +1424,7 @@ function stepOp(
     case "damageSubject":
       return { done: damageSubject(state, op.amount, ctx, events) };
     case "countersOnRecordedBody":
-      return { done: countersOnRecordedBody(state, op, ctx, events, record) };
+      return { done: countersOnRecordedBody(state, op, ctx, record, events) };
     case "healSubject":
       return { done: healSubject(state, op.amount, ctx, events) };
     case "moveCountersToDefender":
@@ -1726,20 +1725,20 @@ function stepOp(
       // The amount is scaled here so `damageSelf` stays a flat placement. `op.on === "source"`
       // places on the program's source body instead, unscaled.
       if (op.on === "source")
-        return { done: damageSourceBody(state, op.amount, ctx, events, op.source) };
-      return { done: damageSelf(state, recoilAmount(op, state, ctx), ctx, events, op.source) };
+        return { done: damageSourceBody(state, op.amount, ctx, op.source, events) };
+      return { done: damageSelf(state, recoilAmount(op, state, ctx), ctx, op.source, events) };
     case "damageDefender": {
       // Chien-Pao ex "Hail Blade": `per` damage per card filed under `count`, through the full §8.5
       // pipeline. Flat `amount` is the "you may do N more damage" arm. Zero places nothing.
       const amount =
         op.amount ?? (op.base ?? 0) + scoredSlot(record, state, op.count, op.countFilter) * op.per;
       if (amount <= 0) return { done: state };
-      return { done: snipeActive(state, amount, false, ctx, events) };
+      return { done: snipeActive(state, amount, false, ctx, false, events) };
     }
     case "damageNewActive":
       // "This attack does N damage to the new Active Pokémon": `snipeActive` reads the Active after
       // the earlier promotion, with the full §8.5 pipeline.
-      return { done: snipeActive(state, op.amount, false, ctx, events) };
+      return { done: snipeActive(state, op.amount, false, ctx, false, events) };
     case "damageChosen": {
       // Resumed Target Together pick: coins flip here, where a Backtrack Badge offer can park.
       if (op.hitRefs !== undefined && op.perHeadsInPlay !== undefined) {
@@ -1773,7 +1772,7 @@ function stepOp(
         // Per-target scaling: each pick reads its own counters, so placement walks the refs one at
         // a time.
         if (op.perDamageCounterOnTarget === true) {
-          return { done: snipeEachByCounters(state, candidates, op, ctx, events, record) };
+          return { done: snipeEachByCounters(state, candidates, op, ctx, record, events) };
         }
         // Nullifying Zero: one coin per candidate, all coins before any damage; heads targets take
         // the hit together.
@@ -1856,7 +1855,7 @@ function stepOp(
             ? deck.slice(Math.max(0, deck.length - wanted))
             : deck.slice(0, wanted)),
         );
-        done = drawToHand(done, drawSeat, count, "effect", events, op.from ?? "top");
+        done = drawToHand(done, drawSeat, count, "effect", op.from ?? "top", events);
       }
       recordMoved(record, op.recordAs, drawn);
       return { done };
@@ -1879,6 +1878,7 @@ function stepOp(
             ctx.seat,
             target - state.players[ctx.seat].hand.length,
             "effect",
+            "top",
             events,
           ),
         };
@@ -1889,6 +1889,7 @@ function stepOp(
           ctx.seat,
           op.size - state.players[ctx.seat].hand.length,
           "effect",
+          "top",
           events,
         ),
       };
@@ -2559,7 +2560,7 @@ function stepOp(
         op.from !== "opponentChosen" &&
         discardVictimSeat(ctx.seat, op) !== ctx.seat
       ) {
-        if (effectRefused(state, discardVictimSeat(ctx.seat, op), ctx, events)) {
+        if (effectRefused(state, discardVictimSeat(ctx.seat, op), ctx, undefined, events)) {
           recordMoved(record, op.recordAs, []);
           return { done: state };
         }
@@ -2689,12 +2690,12 @@ function stepOp(
     }
     // The owner picks which prize; on `side: "opponent"` the controller picks.
     case "turnPrizeFaceUp":
-      return turnPrizeFaceUp(state, op, ctx, events, record);
+      return turnPrizeFaceUp(state, op, ctx, record, events);
     case "cycleOwnPrizes":
       return { done: cycleOwnPrizes(state, ctx, events) };
     // Bother-Bot's switch reads the two recorded uids and never parks.
     case "swapTurnedPrizeWithRevealed":
-      return { done: swapTurnedPrizeWithRevealed(state, ctx, events, record) };
+      return { done: swapTurnedPrizeWithRevealed(state, ctx, record, events) };
     case "revealFromHand": {
       // Weaponized Swords: any non-empty offer parks since each count gives different damage; no
       // collapse. An empty offer files `[]`.
@@ -2779,7 +2780,7 @@ function stepOp(
       // Auto-resolve a lone candidate only when the pick is mandatory; under "up to" moving nothing
       // is a different answer, so it must still be asked.
       if (op.upTo === undefined && candidates.length === 1) {
-        const moved = bottomFromOpponentHandApply(state, candidates, ctx, events, op.dest);
+        const moved = bottomFromOpponentHandApply(state, candidates, ctx, op.dest, events);
         recordMoved(record, op.recordAs, moved.moved);
         return { done: moved.state };
       }
@@ -2849,10 +2850,10 @@ function stepOp(
     case "randomFromOpponentHand":
       // Drawn from `rngState`; never parks, since "random" has no chooser.
       if (op.untilHandSize === undefined)
-        return { done: randomFromOpponentHand(state, op, ctx, events, record) };
+        return { done: randomFromOpponentHand(state, op, ctx, record, events) };
       // Hand Trim: the take is read off the opponent's hand once, then each card is its own random
       // draw.
-      return { done: randomDiscardDownTo(state, op, op.untilHandSize, ctx, events, record) };
+      return { done: randomDiscardDownTo(state, op, op.untilHandSize, ctx, record, events) };
     case "opponentDiscardsFromHand": {
       // The opponent chooses from their own hand, so `owner` is the hand, chooser, discard pile and
       // answerer, hence `decider`. With `whose: "self"` all roles are the controller and no
@@ -2978,7 +2979,7 @@ function stepOp(
       return parkOrForce(
         state,
         candidates,
-        (ref) => switchRecording(op, (into) => switchOwn(state, ref, ctx, into), events, record),
+        (ref) => switchRecording(op, (into) => switchOwn(state, ref, ctx, into), record, events),
         `Switch to which ${switchTargetNoun(op)}?`,
       );
     }
@@ -2989,7 +2990,7 @@ function stepOp(
       return parkOrForce(
         state,
         unshieldedRefs(state, gustTargets(state, ctx.seat, op), ctx, events),
-        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),
+        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), record, events),
         gustTargetNoun(op),
         undefined,
         // The printed "you may switch in": a ceiling of one allows declining.
@@ -3001,7 +3002,7 @@ function stepOp(
       return parkOrForce(
         state,
         oppBenchRefs(state, ctx.seat),
-        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),
+        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), record, events),
         "Choose your new Active Pokémon.",
         otherSeat(ctx.seat),
       );
@@ -3265,9 +3266,10 @@ function stepOp(
               op,
               op.pickOnto.ref,
               ctx,
-              events,
               record,
               op.pickOnto.take,
+              undefined,
+              events,
             ),
           };
         }
@@ -3329,7 +3331,8 @@ function stepOp(
         }
         return {
           done: attachEnergyTargets(state, ctx.seat, op).reduce(
-            (soFar, ref) => attachEnergyFrom(soFar, op, ref, ctx, events, record),
+            (soFar, ref) =>
+              attachEnergyFrom(soFar, op, ref, ctx, record, undefined, undefined, events),
             state,
           ),
         };
@@ -3350,7 +3353,7 @@ function stepOp(
       return parkOrForce(
         state,
         op.toSelf === true ? sourceRef(state, ctx) : attachEnergyTargets(state, ctx.seat, op),
-        (ref) => attachEnergyFrom(state, op, ref, ctx, events, record),
+        (ref) => attachEnergyFrom(state, op, ref, ctx, record, undefined, undefined, events),
         // Branches on the field's presence, not its value: `count: 1` is never authored. A `toSelf`
         // caption does not use `attachTargetNoun`, since that row has no class rider.
         `Attach ${op.count === undefined ? "the Energy" : `up to ${op.count} Energy`} to ${
@@ -3419,10 +3422,10 @@ export function applyChoice(
   op: EffectOp,
   choice: EffectChoice,
   ctx: EffectContext,
-  events: GameEvent[],
   /** The running §9.2 record — the two recording ops both PARK, so this path is
       where nearly every recording is actually made (see resumeProgram). */
-  record: EffectRecord = {},
+  record: EffectRecord,
+  events: GameEvent[],
 ): GameState {
   switch (op.op) {
     // Backtrack Badge: "yes" spends the once-per-turn key and files `COINS_REFLIPPED`; "no" moves
@@ -3555,7 +3558,7 @@ export function applyChoice(
         : discardChosenFromHand(state, otherSeat(ctx.seat), choice.uids, events);
     case "bottomFromOpponentHand": {
       if (choice.kind !== "cards") return state;
-      const moved = bottomFromOpponentHandApply(state, choice.uids, ctx, events, op.dest);
+      const moved = bottomFromOpponentHandApply(state, choice.uids, ctx, op.dest, events);
       // What actually MOVED, not what was picked — the retrieval/payment rule
       // (§9.2): a wire-dropped uid never left the hand, and Ortega's "if you
       // put a card on the bottom of your opponent's deck in this way" must not
@@ -3583,16 +3586,23 @@ export function applyChoice(
       // The drawer is the answerer — the controller's OPPONENT (the op's whole
       // point); a decline moves nothing and says nothing.
       return choice.kind === "mayDraw" && choice.draw
-        ? drawToHand(state, otherSeat(ctx.seat), op.count, "effect", events)
+        ? drawToHand(state, otherSeat(ctx.seat), op.count, "effect", "top", events)
         : state;
     case "optional":
       if (choice.kind === "confirm" && choice.target !== undefined && op.cards !== undefined) {
-        const attach = (choice.yes ? op.then : op.otherwise)?.[0];
+        const attach = (choice.yes ? op.ops : op.otherwise)?.[0];
         const uid = choice.yes ? op.cards.yes : op.cards.no;
         if (attach?.op === "attachEnergyFrom" && uid !== undefined) {
-          return attachEnergyFrom(state, attach, choice.target, ctx, events, record, undefined, [
-            uid,
-          ]);
+          return attachEnergyFrom(
+            state,
+            attach,
+            choice.target,
+            ctx,
+            record,
+            undefined,
+            [uid],
+            events,
+          );
         }
       }
       // Other optional prompts splice their branch through continuationOps.
@@ -3601,11 +3611,11 @@ export function applyChoice(
       // Records what moved, not what was picked: an answer that `switchInto` then refused must not
       // file a switch.
       return pickedPokemon(choice)
-        ? switchRecording(op, (into) => switchOwn(state, choice.ref, ctx, into), events, record)
+        ? switchRecording(op, (into) => switchOwn(state, choice.ref, ctx, into), record, events)
         : state;
     case "gust":
       return pickedPokemon(choice)
-        ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), events, record)
+        ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), record, events)
         : state;
     case "knockOutChosen":
       // The same call the forced half makes, so both produce identical boards; `doomBodyAt` no-ops
@@ -3662,7 +3672,7 @@ export function applyChoice(
       // answered. The recording is needed on this arm too: with two or more benched bodies the op
       // always parks.
       return pickedPokemon(choice)
-        ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), events, record)
+        ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), record, events)
         : state;
     case "healChosen":
       // The "up to N" arm answers with a SET (each ref healed `amount`,
@@ -3754,7 +3764,7 @@ export function applyChoice(
       // Per-target fold: the multiplier is the chosen body's own counters, so the pick is walked
       // ref by ref with `snipeAmount`, as `stepOp`'s forced branch does.
       if (choice.kind === "pokemonMulti" && op.perDamageCounterOnTarget === true) {
-        return snipeEachByCounters(state, choice.refs, op, ctx, events, record);
+        return snipeEachByCounters(state, choice.refs, op, ctx, record, events);
       }
       // Target Together: the pick moves nothing; `continuationOps` reschedules the op with
       // `hitRefs` and `stepOp` flips, so a Backtrack Badge offer can park.
@@ -3775,7 +3785,8 @@ export function applyChoice(
       // (`toEach`) puts one card onto each chosen body in the order named.
       if (op.toEach === true && choice.kind === "pokemonMulti") {
         return choice.refs.reduce(
-          (board, ref) => attachEnergyFrom(board, op, ref, ctx, events, record),
+          (board, ref) =>
+            attachEnergyFrom(board, op, ref, ctx, record, undefined, undefined, events),
           state,
         );
       }
@@ -3786,10 +3797,10 @@ export function applyChoice(
               op,
               op.pickOnto.ref,
               ctx,
-              events,
               record,
               op.pickOnto.take,
               choice.uids,
+              events,
             )
           : state;
       }
@@ -3800,7 +3811,7 @@ export function applyChoice(
         return state;
       }
       return pickedPokemon(choice)
-        ? attachEnergyFrom(state, op, choice.ref, ctx, events, record, choice.take)
+        ? attachEnergyFrom(state, op, choice.ref, ctx, record, choice.take, undefined, events)
         : state;
     case "attachFromTop":
       return choice.kind === "attachCards"
@@ -3863,7 +3874,7 @@ export function applyChoice(
       // `side` picks the row (Bother-Bot's is the opponent's) and `recordAs` files the uid actually
       // turned.
       return choice.kind === "prize"
-        ? turnPrizeFaceUpAt(state, choice.index, op, ctx, events, record)
+        ? turnPrizeFaceUpAt(state, choice.index, op, ctx, record, events)
         : state;
     case "preventChosenAttack":
       // The parked half of the opponent-side per-attack lock.

@@ -49,16 +49,6 @@
   },
   "overrides": [
     {
-      "include": ["packages/engine/**", "src/game/**", "scripts/mutation/**"],
-      "linter": {
-        "rules": {
-          "suspicious": {
-            "noThenProperty": "off"
-          }
-        }
-      }
-    },
-    {
       "include": ["frontend/lua/**"],
       "linter": {
         "rules": {

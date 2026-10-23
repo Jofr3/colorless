@@ -69,7 +69,7 @@ const units = (rows: readonly (readonly [number, string])[]): number =>
     has drifted from what this file means by it. */
 const program = (discarded: number): EffectOp[] => [
   { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-  { op: "recordGate", slot: "paid", then: [{ op: "opponentDiscardsFromHand", count: discarded }] },
+  { op: "recordGate", slot: "paid", ops: [{ op: "opponentDiscardsFromHand", count: discarded }] },
 ];
 
 describe("D515 §1 — the sentence, measured live over the legal column", () => {
@@ -174,7 +174,7 @@ describe("D515 §1 — the sentence, measured live over the legal column", () =>
       if (derived === null || derived.length !== 2) return false;
       const [cost, gate] = derived;
       if (cost?.op !== "payFromHand" || gate?.op !== "recordGate") return false;
-      return gate.then.length === 1 && gate.then[0]?.op === "opponentDiscardsFromHand";
+      return gate.ops.length === 1 && gate.ops[0]?.op === "opponentDiscardsFromHand";
     });
     expect(mine).toEqual([GATED_DISCARD]);
     expect(points.filter((s) => resolvedByAnyReader(s)).sort()).toEqual(
@@ -455,7 +455,7 @@ describe("D515 §3 — the BOARD: two parks, two seats, and the gate between the
 describe("D515 §4 — what the column now holds, measured rather than claimed", () => {
   /** Run `ops` for p1 and settle every park by paying the FIRST candidates offered. */
   function settle(state: GameState, ops: EffectOp[]): GameState {
-    let result = runProgram(state, ops, { seat: "p1" }, []);
+    let result = runProgram(state, ops, { seat: "p1" }, {}, []);
     while (result.kind === "parked") {
       const prompt = result.prompt;
       if (prompt.kind !== "chooseCards") throw new Error(`unexpected park: ${prompt.kind}`);
@@ -475,8 +475,7 @@ describe("D515 §4 — what the column now holds, measured rather than claimed",
       if (derived === null) return false;
       return derived.some(
         (op) =>
-          op.op === "recordGate" &&
-          op.then.some((inner) => inner.op === "opponentDiscardsFromHand"),
+          op.op === "recordGate" && op.ops.some((inner) => inner.op === "opponentDiscardsFromHand"),
       );
     });
     expect(crossSeatGated.map(([, s]) => s)).toEqual([GATED_DISCARD]);
@@ -486,11 +485,11 @@ describe("D515 §4 — what the column now holds, measured rather than claimed",
   it("the OTHER two members of the family are UNMOVED — this anchor claims neither", () => {
     expect(deriveAttackEffect(DRAW2)).toEqual([
       { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-      { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: 2 }] },
+      { op: "recordGate", slot: "paid", ops: [{ op: "drawCards", count: 2 }] },
     ]);
     expect(deriveAttackEffect(DRAW3)).toEqual([
       { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-      { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: 3 }] },
+      { op: "recordGate", slot: "paid", ops: [{ op: "drawCards", count: 3 }] },
     ]);
   });
 
@@ -520,7 +519,7 @@ describe("D515 §5 — THE DESCRIBER, which is the blocker D473 named, driven BO
   it("an UNDESCRIBED gate branch degrades the caption to the BARE COST, byte for byte", () => {
     const board = handOfIds(handOfIds(fielded(16), "p1", THREE), "p2", THREE);
     const noteOf = (ops: EffectOp[]): string => {
-      const result = runProgram(board, ops, { seat: "p1" }, []);
+      const result = runProgram(board, ops, { seat: "p1" }, {}, []);
       if (result.kind !== "parked") throw new Error("expected a park");
       if (result.prompt.kind !== "chooseCards") throw new Error("expected chooseCards");
       return result.prompt.note;
@@ -528,7 +527,7 @@ describe("D515 §5 — THE DESCRIBER, which is the blocker D473 named, driven BO
     const bare = [{ op: "payFromHand", count: 1, to: "discard", recordAs: "paid" }] as EffectOp[];
     const undescribed = [
       { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-      { op: "recordGate", slot: "paid", then: [{ op: "revealOpponentHand" }] },
+      { op: "recordGate", slot: "paid", ops: [{ op: "revealOpponentHand" }] },
     ] as EffectOp[];
     expect(noteOf(undescribed)).toBe(noteOf(bare));
     expect(noteOf(undescribed)).toBe("Discard a card from your hand.");
@@ -538,7 +537,7 @@ describe("D515 §5 — THE DESCRIBER, which is the blocker D473 named, driven BO
 
   it("the PLURAL branch is unreachable from any printing and is DRIVEN anyway", () => {
     const board = handOfIds(handOfIds(fielded(17), "p1", THREE), "p2", THREE);
-    const result = runProgram(board, program(2), { seat: "p1" }, []);
+    const result = runProgram(board, program(2), { seat: "p1" }, {}, []);
     if (result.kind !== "parked") throw new Error("expected a park");
     if (result.prompt.kind !== "chooseCards") throw new Error("expected chooseCards");
     expect(result.prompt.note).toBe(
@@ -554,7 +553,7 @@ describe("D515 §6 — `MATCH_RECORD_VERSION` stays 30, and the argument is DRIV
   it("the SERIALIZED ALPHABET: every byte this arm can write, a v30 deploy could write", () => {
     const emitted = JSON.stringify(deriveAttackEffect(GATED_DISCARD));
     expect(emitted).toBe(
-      '[{"op":"payFromHand","count":1,"to":"discard","recordAs":"paid"},{"op":"recordGate","slot":"paid","then":[{"op":"opponentDiscardsFromHand","count":1}]}]',
+      '[{"op":"payFromHand","count":1,"to":"discard","recordAs":"paid"},{"op":"recordGate","slot":"paid","ops":[{"op":"opponentDiscardsFromHand","count":1}]}]',
     );
     const parked = mustStep(
       handOfIds(handOfIds(fielded(18), "p1", THREE), "p2", THREE),

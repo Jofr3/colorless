@@ -165,7 +165,7 @@ describe("the self-lock — derived, not authored", () => {
       {
         op: "coinFlipGate",
         onTails: true,
-        then: deriveAttackEffect(BARE_TEXT),
+        ops: deriveAttackEffect(BARE_TEXT),
       },
     ]);
     // …and this anchor does NOT claim the gated string, which is what keeps the
@@ -198,7 +198,7 @@ describe("the self-lock — derived, not authored", () => {
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveIsBasic" },
-        then: [{ op: "preventAttack", target: "defender" }],
+        ops: [{ op: "preventAttack", target: "defender" }],
       },
     ]);
     expect(

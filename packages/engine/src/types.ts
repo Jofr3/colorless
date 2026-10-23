@@ -1335,7 +1335,7 @@ export function evolveOnto(
 }
 
 /**
- * Moves up to `count` cards from the top (or, with `from`, the bottom) of the deck to hand and
+ * Moves up to `count` cards from the `from` end of the deck to hand and
  * records CARDS_DRAWN. Callers that care about deck-out check emptiness themselves. On a deck no
  * deeper than `count`, top and bottom draws take the same cards in the same order.
  */
@@ -1344,8 +1344,8 @@ export function drawToHand(
   seat: Seat,
   count: number,
   reason: DrawReason,
+  from: "top" | "bottom",
   events: GameEvent[],
-  from: "top" | "bottom" = "top",
 ): GameState {
   if (count <= 0) return state;
   const side = state.players[seat];

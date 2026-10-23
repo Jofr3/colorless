@@ -337,11 +337,11 @@ describe("§3 — the program, pinned byte-for-byte: two gates, and BOTH carry a
       {
         op: "conditionGate",
         cond: { kind: "stadiumInPlay" },
-        then: [
+        ops: [
           {
             op: "optional",
             note: CETITAN,
-            then: [{ op: "discardStadium" }, { op: "damageDefender", amount: 280 }],
+            ops: [{ op: "discardStadium" }, { op: "damageDefender", amount: 280 }],
             otherwise: [{ op: "damageDefender", amount: 140 }],
           },
         ],
@@ -357,7 +357,7 @@ describe("§3 — the program, pinned byte-for-byte: two gates, and BOTH carry a
     const gate = optionalCostBoostProgram(reading, 140, CETITAN)[0];
     if (gate === undefined || gate.op !== "conditionGate") throw new Error("expected the gate");
     expect(gate.otherwise).toEqual([{ op: "damageDefender", amount: 140 }]);
-    const ask = gate.then[0];
+    const ask = gate.ops[0];
     if (ask === undefined || ask.op !== "optional") throw new Error("expected the confirm");
     expect(ask.otherwise).toEqual([{ op: "damageDefender", amount: 140 }]);
     // The confirm's note is the WHOLE printed sentence and not a re-voicing — the op's
@@ -372,9 +372,9 @@ describe("§3 — the program, pinned byte-for-byte: two gates, and BOTH carry a
       const gate = optionalCostBoostProgram(reading, trial, CETITAN)[0];
       if (gate === undefined || gate.op !== "conditionGate") throw new Error("expected the gate");
       expect(gate.otherwise).toEqual([{ op: "damageDefender", amount: trial }]);
-      const ask = gate.then[0];
+      const ask = gate.ops[0];
       if (ask === undefined || ask.op !== "optional") throw new Error("expected the confirm");
-      expect(ask.then[1]).toEqual({ op: "damageDefender", amount: trial + 140 });
+      expect(ask.ops[1]).toEqual({ op: "damageDefender", amount: trial + 140 });
     }
   });
 });

@@ -809,8 +809,8 @@ describe("D580 Look-Alike Show §7 — the wire, the replay, and MRV 41 under a 
         events,
       ),
       phase.seat,
-      events,
       { resumeTail: phase.resumeTail === true, endsTurn: phase.endsTurn === true },
+      events,
     );
     if (!rolled.ok) throw new Error("the rollback reading failed");
     expect(types(rolled.events)).not.toContain("SUPPORTER_EFFECT_USED");

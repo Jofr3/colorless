@@ -69,7 +69,7 @@ const units = (rows: readonly (readonly [number, string])[]): number =>
     has drifted from what this file means by it. */
 const program = (drawn: number): EffectOp[] => [
   { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-  { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: drawn }] },
+  { op: "recordGate", slot: "paid", ops: [{ op: "drawCards", count: drawn }] },
 ];
 
 describe("D473 §1 — the two sentences, measured live over the legal column", () => {
@@ -130,14 +130,14 @@ describe("D473 §1 — the two sentences, measured live over the legal column", 
       const derived = deriveAttackEffect(s);
       if (derived === null || derived.length !== 2) return false;
       const gate = derived[1];
-      return gate?.op === "recordGate" && gate.then[0]?.op === "drawCards";
+      return gate?.op === "recordGate" && gate.ops[0]?.op === "drawCards";
     });
     expect(byThisAnchor.map(([, s]) => s).sort()).toEqual([DRAW2, DRAW3].sort());
     expect(byThisAnchor.map(([, s]) => s)).not.toContain(SIBLING_BUILT_AT_D515);
     expect(resolvedByAnyReader(SIBLING_BUILT_AT_D515)).toBe(true);
     expect(deriveAttackEffect(SIBLING_BUILT_AT_D515)).toEqual([
       { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-      { op: "recordGate", slot: "paid", then: [{ op: "opponentDiscardsFromHand", count: 1 }] },
+      { op: "recordGate", slot: "paid", ops: [{ op: "opponentDiscardsFromHand", count: 1 }] },
     ]);
   });
 });
@@ -322,7 +322,7 @@ function zones(state: GameState): [hand: number, discard: number, deck: number] 
 
 function settle(state: GameState, ops: EffectOp[]): GameState {
   const events: GameEvent[] = [];
-  let result = runProgram(state, ops, { seat: "p1" }, events);
+  let result = runProgram(state, ops, { seat: "p1" }, {}, events);
   while (result.kind === "parked") {
     const prompt = result.prompt;
     if (prompt.kind !== "chooseCards") throw new Error(`unexpected park: ${prompt.kind}`);
@@ -353,24 +353,24 @@ describe("D473 §3 — the discriminating board: EIGHT readings, EIGHT different
     // engine carries (Ultra Ball, SER and Kofu all pay 2).
     paysTwo: [
       { op: "payFromHand", count: 2, to: "discard", recordAs: "paid" },
-      { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: 2 }] },
+      { op: "recordGate", slot: "paid", ops: [{ op: "drawCards", count: 2 }] },
     ],
     // The DESTINATION crossed — Dendra's `deckBottom`, the sibling value on the very
     // field this arm sets, and the discard pile is what tells them apart.
     toDeckBottom: [
       { op: "payFromHand", count: 1, to: "deckBottom", recordAs: "paid" },
-      { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: 2 }] },
+      { op: "recordGate", slot: "paid", ops: [{ op: "drawCards", count: 2 }] },
     ],
     wholeHand: [{ op: "discardHand" }, { op: "drawCards", count: 2 }],
     // The gate reading ANOTHER slot: it compiles, it derives, and it never fires.
     wrongSlot: [
       { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-      { op: "recordGate", slot: "moved", then: [{ op: "drawCards", count: 2 }] },
+      { op: "recordGate", slot: "moved", ops: [{ op: "drawCards", count: 2 }] },
     ],
     // The payment filing NOTHING: same shape, same gate, and the draw is dead.
     noRecordAs: [
       { op: "payFromHand", count: 1, to: "discard" },
-      { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: 2 }] },
+      { op: "recordGate", slot: "paid", ops: [{ op: "drawCards", count: 2 }] },
     ],
   };
 
@@ -536,7 +536,7 @@ describe("D473 §6 — `MATCH_RECORD_VERSION` stays 29, and the argument is DRIV
   it("the SERIALIZED ALPHABET: every byte this arm can write, a v29 deploy could write", () => {
     const emitted = JSON.stringify(deriveAttackEffect(DRAW2));
     expect(emitted).toBe(
-      '[{"op":"payFromHand","count":1,"to":"discard","recordAs":"paid"},{"op":"recordGate","slot":"paid","then":[{"op":"drawCards","count":2}]}]',
+      '[{"op":"payFromHand","count":1,"to":"discard","recordAs":"paid"},{"op":"recordGate","slot":"paid","ops":[{"op":"drawCards","count":2}]}]',
     );
     // …and the persisted continuation really does hold exactly that, driven rather
     // than argued: the park's `pendingOp` is the payment and its `rest` is the gate.

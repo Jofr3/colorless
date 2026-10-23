@@ -77,6 +77,8 @@ export default defineConfig(({ mode }) => {
       // Every suite is pure logic (adapters, reducers, parsing), so the fast
       // Node environment covers them all.
       environment: "node",
+      // The fixture pool's `fix-*` programs live outside the production registry.
+      setupFiles: ["packages/engine/src/fixtures/vitestSetup.ts"],
       include: [
         "src/**/*.{test,spec}.ts",
         "apps/*/src/**/*.{test,spec}.ts",

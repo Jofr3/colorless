@@ -1253,12 +1253,12 @@ export type EffectOp =
    */
   | { op: "damageNewActive"; amount: number }
   /**
-   * "Flip a coin. If heads, ...": `then` runs on the winning face only. `onTails` makes tails the
+   * "Flip a coin. If heads, ...": `ops` runs on the winning face only. `onTails` makes tails the
    * winning face.
    */
   | {
       op: "coinFlipGate";
-      then: EffectOp[];
+      ops: EffectOp[];
       otherwise?: EffectOp[];
       onTails?: true;
       coins?: number;
@@ -2278,12 +2278,12 @@ export type EffectOp =
    */
   | { op: "opponentMayDraw"; count: number }
   /**
-   * Run `then` when `cond` holds for the controller, else `otherwise`. Ops inside a branch can
+   * Run `ops` when `cond` holds for the controller, else `otherwise`. Ops inside a branch can
    * still park. Emits no event, and `cond` is evaluated after every earlier op has applied.
    */
-  | { op: "conditionGate"; cond: BoardCondition; then: EffectOp[]; otherwise?: EffectOp[] }
+  | { op: "conditionGate"; cond: BoardCondition; ops: EffectOp[]; otherwise?: EffectOp[] }
   /**
-   * Run `then` when an earlier op in this program filed at least one card under `slot` (the printed
+   * Run `ops` when an earlier op in this program filed at least one card under `slot` (the printed
    * "if you do" / "in this way"), else `otherwise`. `contains: "yourActive"` requires a filed card
    * to be attached to the controller's Active now, which is a board read and can differ from
    * history if an op in between moves it.
@@ -2292,18 +2292,18 @@ export type EffectOp =
       op: "recordGate";
       slot: EffectSlot;
       contains?: "yourActive";
-      then: EffectOp[];
+      ops: EffectOp[];
       otherwise?: EffectOp[];
     }
   /**
-   * The printed "You may ...": a `confirm` prompt whose yes runs `then` and no runs `otherwise`.
+   * The printed "You may ...": a `confirm` prompt whose yes runs `ops` and no runs `otherwise`.
    * `note` is the whole printed sentence. Only needed when the inner op has no empty answer of its
    * own. `labels` replace Yes/No with captions for a "Choose 1" card.
    */
   | {
       op: "optional";
       note: string;
-      then: EffectOp[];
+      ops: EffectOp[];
       otherwise?: EffectOp[];
       labels?: { yes: string; no: string };
       /** Optional card faces for a binary card choice; resolution still uses the branches. */

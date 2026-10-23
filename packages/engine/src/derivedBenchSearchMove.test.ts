@@ -43,7 +43,7 @@ const PROGRAM: readonly EffectOp[] = [
   {
     op: "recordGate",
     slot: "moved",
-    then: [
+    ops: [
       {
         op: "moveEnergy",
         filter: { kind: "anyEnergy" },
@@ -80,7 +80,7 @@ describe("§1 — the sentence, the corpus row, and D230's refusal paid", () => 
       { op: "shuffleDeck" },
     ]);
     expect(Object.hasOwn(headProgram[0] ?? {}, "recordAs")).toBe(false);
-    const move = (PROGRAM[2] as Extract<EffectOp, { op: "recordGate" }>).then[0];
+    const move = (PROGRAM[2] as Extract<EffectOp, { op: "recordGate" }>).ops[0];
     expect(move).toMatchObject({ op: "moveEnergy", route: "selfToBench", destRecorded: "moved" });
     const sibling =
       deriveAttackEffect("Move an Energy from this Pokémon to 1 of your Benched Pokémon.") ?? [];
@@ -669,7 +669,7 @@ describe("§6 — the describer and the log rows, RENDERED", () => {
       const out: Record<string, unknown>[] = [];
       for (const o of ops as Record<string, unknown>[]) {
         out.push(o);
-        for (const key of ["then", "otherwise", "ops"]) {
+        for (const key of ["ops", "otherwise"]) {
           const nested = o[key];
           if (Array.isArray(nested)) out.push(...walk(nested));
         }
@@ -735,8 +735,8 @@ describe("§7 — the persisted shape: `MATCH_RECORD_VERSION` stays 30", () => {
     expect(bytes.pendingOp.op).toBe("searchDeck");
     expect(bytes.pendingOp.recordAs).toBe("moved"); // door one, IN the bytes
     expect(bytes.rest.map((o) => o.op)).toEqual(["shuffleDeck", "recordGate"]);
-    const gate = bytes.rest[1] as { then: Record<string, unknown>[] };
-    expect(gate.then[0]?.destRecorded).toBe("moved");
+    const gate = bytes.rest[1] as { ops: Record<string, unknown>[] };
+    expect(gate.ops[0]?.destRecorded).toBe("moved");
     expect(Object.keys(bytes.pendingOp).sort()).toEqual([
       "dest",
       "filter",
@@ -744,7 +744,7 @@ describe("§7 — the persisted shape: `MATCH_RECORD_VERSION` stays 30", () => {
       "op",
       "recordAs",
     ]);
-    expect(Object.keys(gate.then[0] ?? {}).sort()).toEqual([
+    expect(Object.keys(gate.ops[0] ?? {}).sort()).toEqual([
       "destRecorded",
       "filter",
       "max",
@@ -777,8 +777,8 @@ describe("§7 — the persisted shape: `MATCH_RECORD_VERSION` stays 30", () => {
       string,
       unknown
     >;
-    const gate = bytes.phase.cont.rest[1] as unknown as { then: Record<string, unknown>[] };
-    const { destRecorded: _pin, ...v30Move } = (gate.then[0] ?? {}) as Record<string, unknown>;
+    const gate = bytes.phase.cont.rest[1] as unknown as { ops: Record<string, unknown>[] };
+    const { destRecorded: _pin, ...v30Move } = (gate.ops[0] ?? {}) as Record<string, unknown>;
     const stripped: GameState = {
       ...bytes,
       phase: {
@@ -788,7 +788,7 @@ describe("§7 — the persisted shape: `MATCH_RECORD_VERSION` stays 30", () => {
           pendingOp: v30Search as unknown as EffectOp,
           rest: [
             bytes.phase.cont.rest[0] as EffectOp,
-            { ...gate, then: [v30Move] } as unknown as EffectOp,
+            { ...gate, ops: [v30Move] } as unknown as EffectOp,
           ],
         },
       },
@@ -849,9 +849,9 @@ describe("§8 — the census this row moves, and the summands it does not", () =
     expect(resolvedByAnyReader(SENTENCE)).toBe(true);
     const program = deriveAttackEffect(SENTENCE) ?? [];
     const copy = JSON.parse(JSON.stringify(program)) as Record<string, unknown>[];
-    const gate = copy[2] as { then: Record<string, unknown>[] };
-    const { destRecorded: _pin, ...unpinnedMove } = (gate.then[0] ?? {}) as Record<string, unknown>;
-    const unpinned = [copy[0], copy[1], { ...gate, then: [unpinnedMove] }];
+    const gate = copy[2] as { ops: Record<string, unknown>[] };
+    const { destRecorded: _pin, ...unpinnedMove } = (gate.ops[0] ?? {}) as Record<string, unknown>;
+    const unpinned = [copy[0], copy[1], { ...gate, ops: [unpinnedMove] }];
     expect(unpinned).not.toEqual(program);
     expect(JSON.stringify(unpinned)).not.toContain("destRecorded");
   });

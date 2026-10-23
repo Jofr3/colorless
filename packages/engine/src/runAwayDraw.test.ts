@@ -195,7 +195,7 @@ describe("D311 §1 — the print, the population, and the registry row that maps
     const program = programFor(DUDUNSPARCE)?.abilities?.[0]?.program ?? [];
     expect(program).toEqual([
       { op: "drawCards", count: 3, recordAs: "moved" },
-      { op: "recordGate", slot: "moved", then: [{ op: "returnSelf", dest: "deck" }] },
+      { op: "recordGate", slot: "moved", ops: [{ op: "returnSelf", dest: "deck" }] },
     ]);
     // The gate has NO `otherwise`: the printed sentence says what happens if you
     // drew, and nothing at all about the other branch.
@@ -327,7 +327,7 @@ describe("D311 §3 — the ACTIVE case: the §8.1 promotion the family was price
     // promotion. Without the skip, the empty-spot sweep would queue another.
     const board = setDamage(benched(), "p1", 200); // FILLER is a 200 HP body
     const events: GameEvent[] = [];
-    const result = resolveMidTurnKnockOuts(board, "p1", ["p1", "p2"], events);
+    const result = resolveMidTurnKnockOuts(board, "p1", ["p1", "p2"], undefined, undefined, events);
     if (!result.ok) throw new Error(`sweep failed: ${result.error.code}`);
     const promotes = [
       ...result.state.pending.filter((stage) => stage.kind === "promote"),

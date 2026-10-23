@@ -330,6 +330,7 @@ describe("the deckBottom apply's wire guards", () => {
       { op: "payFromHand", count: 1, to: "deckBottom" },
       { kind: "cards", uids: [deckCard] },
       { seat: "p1" },
+      {},
       events,
     );
     expect(events).toHaveLength(0);
@@ -349,6 +350,7 @@ describe("the deckBottom apply's wire guards", () => {
       { op: "payFromHand", count: 2, to: "deckBottom" },
       { kind: "cards", uids: [uid, uid] },
       { seat: "p1" },
+      {},
       events,
     );
     expect(findEvent(events, "HAND_COST_PAID")?.uids).toEqual([uid]);
@@ -367,6 +369,7 @@ describe("the deckBottom apply's wire guards", () => {
       { op: "payFromHand", count: 1, to: "deckBottom" },
       { kind: "pokemonMulti", refs: [] },
       { seat: "p1" },
+      {},
       events,
     );
     expect(next).toBe(state);
@@ -387,6 +390,7 @@ describe("the deckBottom apply's wire guards", () => {
       { op: "payFromHand", count: 2, to: "deckBottom" },
       { kind: "cards", uids: [first, second] },
       { seat: "p1" },
+      {},
       events,
     );
     expect(next.players.p1.deck.slice(-2)).toEqual([first, second]);

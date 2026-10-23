@@ -907,16 +907,16 @@ describe('§3 — Milotic "Mentally Calm" (the in-play → hand lock)', () => {
     const program: EffectOp[] = [
       { op: "returnBenched", whose: "self", dest: "hand", includeActive: true },
     ];
-    const out = runProgram(start, program, { seat: "p1" }, events);
+    const out = runProgram(start, program, { seat: "p1" }, {}, events);
     if (out.kind !== "parked") throw new Error("expected the two-body pick to park");
     // Answer the ACTIVE through the resumed path is not reachable here; ask the writer on a ONE-body board instead.
     const lone = table(FILLER, [], MILOTIC);
     const loneEvents: GameEvent[] = [];
-    const done = runProgram(lone, program, { seat: "p1" }, loneEvents);
+    const done = runProgram(lone, program, { seat: "p1" }, {}, loneEvents);
     if (done.kind !== "done") throw new Error("expected the forced pick to finish");
     expect(done.state.players.p1.active).not.toBeNull();
     expect(all(loneEvents, "POKEMON_RETURNED")).toEqual([]);
-    const free = runProgram(table(FILLER), program, { seat: "p1" }, []);
+    const free = runProgram(table(FILLER), program, { seat: "p1" }, {}, []);
     if (free.kind !== "done") throw new Error("expected done");
     expect(free.state.players.p1.active).toBeNull();
   });

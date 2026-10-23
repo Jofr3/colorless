@@ -4,11 +4,15 @@ import { describe, expect, it } from "vitest";
 import { ALL_BASIC_DECK, driveSetup } from "../../../../packages/engine/src/testFixtures";
 import {
   applyMatchAction,
+  loadMatchRecord,
   MATCH_RECORD_VERSION,
   MATCH_ACTION_DISPOSITION,
-  matchSeatOf,
-  playerIdOfSeat,
   type MatchRecord,
+  type MatchSlot,
+  MIGRATABLE_MATCH_RECORD_VERSION,
+  matchSeatOf,
+  migrateMatchRecord,
+  playerIdOfSeat,
   readMatchRecord,
   rematchChooser,
   SEAT_OF_SLOT,
@@ -441,7 +445,7 @@ describe("readMatchRecord — the persisted-shape gate", () => {
 
   it("refuses a version this build doesn't write (older AND newer)", () => {
     const { record } = freshRecord();
-    expect(MATCH_RECORD_VERSION).toBe(49);
+    expect(MATCH_RECORD_VERSION).toBe(50);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.
@@ -466,9 +470,67 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     expect(readMatchRecord(42)).toBeNull();
   });
 
-  it("does NOT re-validate the embedded engine state (same version = this build wrote it)", () => {
+  it("checks the embedded engine state only at its top level", () => {
     const { record } = freshRecord();
-    expect(readMatchRecord({ ...record, state: { nonsense: true } })).not.toBeNull();
+    expect(readMatchRecord({ ...record, state: { nonsense: true } })).toBeNull();
+    expect(readMatchRecord({ ...record, state: { ...record.state, phase: null } })).toBeNull();
+    expect(readMatchRecord({ ...record, state: { ...record.state, players: "p1" } })).toBeNull();
+    const shallow = { phase: { kind: "nonsense" }, players: {} };
+    expect(readMatchRecord({ ...record, state: shallow })?.state).toBe(shallow);
+  });
+
+  it("refuses a log row that is not an object, and NaN timing", () => {
+    const { record } = freshRecord();
+    expect(readMatchRecord({ ...record, log: [...record.log, "row"] })).toBeNull();
+    expect(readMatchRecord({ ...record, seed: Number.NaN })).toBeNull();
+  });
+
+  it("hands back the stored state and log rows as they were written", () => {
+    const { record } = freshRecord();
+    const read = readMatchRecord(record);
+    expect(read).toEqual(record);
+    expect(read?.state).toBe(record.state);
+    expect(read?.log.every((row, i) => row === record.log[i])).toBe(true);
+  });
+
+  it("reads an unreadable current-version record as stale, and writes nothing", async () => {
+    const { record } = freshRecord();
+    const puts: MatchRecord[] = [];
+    const slot: MatchSlot = {
+      get: async () => ({ ...record, state: null }),
+      put: async (written) => {
+        puts.push(written);
+      },
+    };
+    const load = await loadMatchRecord(slot, async () => {
+      throw new Error("D1 asked");
+    });
+    expect(load).toEqual({ kind: "stale" });
+    expect(puts).toEqual([]);
+  });
+
+  it("accepts what every writer produces: a migration from each migratable version", () => {
+    const { record } = freshRecord();
+    for (let version = MIGRATABLE_MATCH_RECORD_VERSION; version < MATCH_RECORD_VERSION; version++) {
+      const stored = JSON.parse(JSON.stringify({ ...record, version }));
+      expect(readMatchRecord(stored)).toBeNull();
+      const migrated = migrateMatchRecord(stored, {});
+      expect(migrated?.version).toBe(MATCH_RECORD_VERSION);
+      expect(readMatchRecord(JSON.parse(JSON.stringify(migrated)))).not.toBeNull();
+    }
+    expect(
+      migrateMatchRecord({ ...record, version: MIGRATABLE_MATCH_RECORD_VERSION - 1 }, {}),
+    ).toBeNull();
+    expect(
+      migrateMatchRecord(
+        {
+          ...record,
+          version: MIGRATABLE_MATCH_RECORD_VERSION,
+          state: { ...record.state, cardPool: null },
+        },
+        {},
+      ),
+    ).toBeNull();
   });
 });
 

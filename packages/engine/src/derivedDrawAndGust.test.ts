@@ -51,7 +51,7 @@ const CLAUSES = [
   },
   {
     text: "Flip a coin. If heads, switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
-    program: [{ op: "coinFlipGate", then: [{ op: "gust" }] }] as EffectOp[],
+    program: [{ op: "coinFlipGate", ops: [{ op: "gust" }] }] as EffectOp[],
     printings: 1,
     legalPrintings: null,
   },
@@ -63,7 +63,7 @@ const CLAUSES = [
   },
   {
     text: "Flip a coin. If heads, switch this Pokémon with 1 of your Benched Pokémon.",
-    program: [{ op: "coinFlipGate", then: [{ op: "switchActive" }] }] as EffectOp[],
+    program: [{ op: "coinFlipGate", ops: [{ op: "switchActive" }] }] as EffectOp[],
     printings: 1,
     legalPrintings: 0,
   },
@@ -86,7 +86,7 @@ const YOU_MAY_SELF_SWITCH_PROGRAM: EffectOp[] = [
   {
     op: "optional",
     note: YOU_MAY_SELF_SWITCH,
-    then: [{ op: "switchActive" }],
+    ops: [{ op: "switchActive" }],
   },
 ];
 
@@ -141,7 +141,7 @@ describe("the five anchors — three ops that already existed, four readers that
     expect(CLAUSES[SELF_SWITCH].legalPrintings).toBe(7);
     expect(deriveAttackEffect(YOU_MAY_SELF_SWITCH)).toEqual(YOU_MAY_SELF_SWITCH_PROGRAM);
     const wrapped = deriveAttackEffect(YOU_MAY_SELF_SWITCH)?.[0];
-    expect(wrapped?.op === "optional" ? wrapped.then : undefined).toEqual(
+    expect(wrapped?.op === "optional" ? wrapped.ops : undefined).toEqual(
       deriveAttackEffect(SELF_SWITCH_BARE),
     );
     // …and it is NOT the bare program, which is what a dropped wrapper looks like.
@@ -183,7 +183,7 @@ describe("the five anchors — three ops that already existed, four readers that
     expect(gated).toHaveLength(1);
     const gate = gated?.[0];
     expect(gate?.op).toBe("coinFlipGate");
-    expect(gate?.op === "coinFlipGate" ? gate.then : undefined).toEqual(bare);
+    expect(gate?.op === "coinFlipGate" ? gate.ops : undefined).toEqual(bare);
     expect(gate?.op === "coinFlipGate" ? gate.onTails : "absent").toBeUndefined();
   });
 });
@@ -878,7 +878,7 @@ describe("end to end — the SELF-SWITCH, the family D181 priced and D189 paid f
     expect(gated).toHaveLength(1);
     const inner = gated?.[0];
     if (inner === undefined || inner.op !== "coinFlipGate") throw new Error("expected a gate");
-    expect(inner.then).toEqual(bare);
+    expect(inner.ops).toEqual(bare);
     // …and it also equals the REGISTRY program printed on the Switch ITEM, which
     // is the same action read off two different seams by two different readers.
     expect(bare).toEqual(programFor("sv01-194")?.trainer);

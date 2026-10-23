@@ -337,6 +337,7 @@ describe("D534 §3 — the degenerate boards and the constructed ops", () => {
       state,
       [{ op: "reorderTop", n: 1, side: "opponent" }],
       { seat: "p1" },
+      {},
       events,
     );
     expect(result.kind).toBe("done");
@@ -357,6 +358,7 @@ describe("D534 §3 — the degenerate boards and the constructed ops", () => {
         },
       ],
       { seat: "p1" },
+      {},
       events,
     );
     if (result.kind !== "parked" || result.prompt.kind !== "orderCards") {
@@ -374,6 +376,7 @@ describe("D534 §3 — the degenerate boards and the constructed ops", () => {
       state,
       [{ op: "reorderTop", n: 3, side: "opponent" }],
       { seat: "p1" },
+      {},
       events,
     );
     if (result.kind !== "parked" || result.prompt.kind !== "orderCards") throw new Error("no park");
@@ -385,7 +388,7 @@ describe("D534 §3 — the degenerate boards and the constructed ops", () => {
   it("a bare `shuffleDeck` (no `whose`) still shuffles the CONTROLLER's deck — every pre-slice construction site keeps its meaning", () => {
     const state = board(53);
     const events: GameEvent[] = [];
-    const result = runProgram(state, [{ op: "shuffleDeck" }], { seat: "p1" }, events);
+    const result = runProgram(state, [{ op: "shuffleDeck" }], { seat: "p1" }, {}, events);
     if (result.kind !== "done") throw new Error("shuffleDeck parked");
     expect(shuffleSeats(events)).toEqual(["p1"]);
     expect(result.state.players.p2.deck).toEqual(state.players.p2.deck);

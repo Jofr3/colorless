@@ -94,7 +94,7 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
       {
         op: "coinFlipGate",
         onTails: true,
-        then: deriveAttackEffect("Discard all Energy from this Pokémon."),
+        ops: deriveAttackEffect("Discard all Energy from this Pokémon."),
       },
     ]);
   });

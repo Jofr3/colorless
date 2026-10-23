@@ -285,7 +285,7 @@ describe("D556 §1 — the prints, and the registry rows that map them", () => {
           {
             op: "conditionGate",
             cond: { kind: "yourPokemonAllOwner", owner: "Team Rocket" },
-            then: [{ op: "drawUntilHandSize", size: 8 }],
+            ops: [{ op: "drawUntilHandSize", size: 8 }],
             otherwise: [{ op: "drawUntilHandSize", size: 5 }],
           },
         ],
@@ -302,7 +302,7 @@ describe("D556 §1 — the prints, and the registry rows that map them", () => {
           {
             op: "conditionGate",
             cond: { kind: "yourHandAtLeast", count: 10 },
-            then: [{ op: "drawCards", count: 2 }],
+            ops: [{ op: "drawCards", count: 2 }],
           },
         ],
       },
@@ -317,7 +317,7 @@ describe("D556 §1 — the prints, and the registry rows that map them", () => {
           {
             op: "conditionGate",
             cond: { kind: "yourActiveHasType", type: "Dragon" },
-            then: [{ op: "heal", target: "self", amount: 60 }],
+            ops: [{ op: "heal", target: "self", amount: 60 }],
           },
         ],
       },
@@ -331,7 +331,7 @@ describe("D556 §1 — the prints, and the registry rows that map them", () => {
         trainer: [
           {
             op: "coinFlipGate",
-            then: [
+            ops: [
               {
                 op: "searchDeck",
                 filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "evolution" },
@@ -365,11 +365,11 @@ describe("D556 §1 — the prints, and the registry rows that map them", () => {
           {
             op: "recordGate",
             slot: "moved",
-            then: [
+            ops: [
               {
                 op: "conditionGate",
                 cond: { kind: "stadiumInPlayNamed", name: "Community Center" },
-                then: [{ op: "shufflePlayedCardIntoDeck" }],
+                ops: [{ op: "shufflePlayedCardIntoDeck" }],
               },
             ],
           },
@@ -404,7 +404,7 @@ describe("D556 §1 — the prints, and the registry rows that map them", () => {
             {
               op: "conditionGate",
               cond: { kind: "opponentActivePoisoned" },
-              then: [{ op: "damageActive", amount: 50, source: "ability" }],
+              ops: [{ op: "damageActive", amount: 50, source: "ability" }],
             },
           ],
         },

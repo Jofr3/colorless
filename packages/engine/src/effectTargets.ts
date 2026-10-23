@@ -64,7 +64,7 @@ export function unrefusedActive(
   if (active === null) return null;
   const uid = topUid(active);
   if (uid === undefined) return null;
-  if (effectRefused(state, seat, ctx, events)) return null;
+  if (effectRefused(state, seat, ctx, undefined, events)) return null;
   return { active, uid };
 }
 
@@ -142,7 +142,7 @@ function effectRefusedOn(
 }
 
 /**
- * §11 — is an effect aimed at `seat`'s `target` (default: its Active) refused, and if so announce
+ * §11 — is an effect aimed at `seat`'s `target` (`undefined`: its Active) refused, and if so announce
  * it with `ATTACK_EFFECT_PREVENTED`. Exported for attack.ts's pre-damage strip; it returns a
  * boolean and never parks.
  */
@@ -150,9 +150,11 @@ export function effectRefused(
   state: GameState,
   seat: Seat,
   ctx: EffectContext,
+  target: InPlayPokemon | null | undefined,
   events: GameEvent[],
-  target: InPlayPokemon | null = state.players[seat].active,
 ): boolean {
+  if (target === undefined)
+    return effectRefused(state, seat, ctx, state.players[seat].active, events);
   if (target === null) return false;
   if (!effectRefusedOn(state, target, seat, ctx)) return false;
   const uid = topUid(target);
@@ -196,7 +198,7 @@ export function unshieldedRefs(
     const side = state.players[ref.seat];
     const body = bodyAt(side, ref.spot);
     if (body === undefined) return true; // not our call — the op validates refs
-    return !effectRefused(state, ref.seat, ctx, events, body);
+    return !effectRefused(state, ref.seat, ctx, body, events);
   });
 }
 

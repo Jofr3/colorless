@@ -235,7 +235,7 @@ function searchOps(id: string): EffectOp[] {
   const walk = (ops: readonly EffectOp[] | undefined): void => {
     for (const op of ops ?? []) {
       if (op.op === "searchDeck" || op.op === "lookAtTopN") found.push(op);
-      if ("then" in op) walk(op.then);
+      if ("ops" in op) walk(op.ops);
     }
   };
   walk(program.trainer);
@@ -481,9 +481,9 @@ describe("D225 — which registry rows carry the rider", () => {
   it("D556 — Team Rocket's Great Ball's TAILS arm (the `otherwise` `searchOps` does not descend) reveals too", () => {
     const gate = programFor("sv10-175")?.trainer?.[0];
     if (gate?.op !== "coinFlipGate") throw new Error("expected Great Ball's coin gate");
-    expect(gate.then).toHaveLength(1);
+    expect(gate.ops).toHaveLength(1);
     expect(gate.otherwise).toHaveLength(1);
-    expect(gate.then[0]).toMatchObject({ op: "searchDeck", reveal: true });
+    expect(gate.ops[0]).toMatchObject({ op: "searchDeck", reveal: true });
     expect(gate.otherwise?.[0]).toMatchObject({ op: "searchDeck", reveal: true });
   });
 

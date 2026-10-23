@@ -149,7 +149,7 @@ describe("the opponent-side lock — derived, not authored", () => {
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveIsBasic" },
-        then: [{ op: "preventAttack", target: "defender" }],
+        ops: [{ op: "preventAttack", target: "defender" }],
       },
     ]);
     expect(deriveAttackEffect(HOUNDOOM_TEXT.replace(/'/g, "’"))).toEqual(
@@ -162,8 +162,8 @@ describe("the opponent-side lock — derived, not authored", () => {
     const gate = gated[0];
     if (gate?.op !== "conditionGate") throw new Error("expected a conditionGate");
     const compound = mustDerive(deriveAttackEffect, EISCUE_TEXT);
-    expect(gate.then).toEqual([compound[1]]);
-    expect(Object.keys(gate)).toEqual(["op", "cond", "then"]);
+    expect(gate.ops).toEqual([compound[1]]);
+    expect(Object.keys(gate)).toEqual(["op", "cond", "ops"]);
   });
 
   it("the DEFENDER arm and the SELF arm are two different programs", () => {

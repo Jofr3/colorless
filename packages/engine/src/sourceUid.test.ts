@@ -268,7 +268,7 @@ describe("the empty sources — toSelf with nothing to point at", () => {
   it("a context with NO source whiffs rather than guessing a target", () => {
     const state = withBoard(board(), PLAIN_BODY, [PAWMOT]);
     const events: GameEvent[] = [];
-    const result = runProgram(state, program, { seat: "p1" }, events);
+    const result = runProgram(state, program, { seat: "p1" }, {}, events);
     expect(result.kind).toBe("done");
     expect(all(events, "ENERGY_ATTACHED")).toHaveLength(0);
     expect(types(events)).toContain("SHUFFLE");
@@ -280,7 +280,7 @@ describe("the empty sources — toSelf with nothing to point at", () => {
     const state = withBoard(board(), PLAIN_BODY, [PAWMOT]);
     const inDeck = state.players.p1.deck[0] as string;
     const events: GameEvent[] = [];
-    const result = runProgram(state, program, { seat: "p1", sourceUid: inDeck }, events);
+    const result = runProgram(state, program, { seat: "p1", sourceUid: inDeck }, {}, events);
     expect(result.kind).toBe("done");
     expect(all(events, "ENERGY_ATTACHED")).toHaveLength(0);
   });

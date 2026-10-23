@@ -649,7 +649,7 @@ describe("D539 §4 — the fold, and the 30 that lands on every named body", () 
       source: "attack",
       filter: PAIR_FILTER,
     } as unknown as EffectOp;
-    const run = runProgram(state, [placed], { seat: "p1", invokedBy: "attack" }, events);
+    const run = runProgram(state, [placed], { seat: "p1", invokedBy: "attack" }, {}, events);
     if (run.kind !== "done") throw new Error("expected done");
     expect(damageVector(run.state, "p1")).toEqual([20, 20, 0]);
     expect(eventTypes(events)).toEqual(["COUNTERS_PLACED", "COUNTERS_PLACED"]);
@@ -767,7 +767,7 @@ describe("D539 §7 — the widening at a persisted address, and the version does
       deals: true,
       filter: PAIR_FILTER,
     } as unknown as EffectOp;
-    const run = runProgram(state, [v30], { seat: "p1", invokedBy: "attack" }, events);
+    const run = runProgram(state, [v30], { seat: "p1", invokedBy: "attack" }, {}, events);
     if (run.kind !== "done") throw new Error("expected done");
     expect(damageVector(run.state, "p1")).toEqual([0, 30, 0]);
   });

@@ -494,7 +494,7 @@ describe("the Attacking Pokémon is a UID the epilogue CARRIES — D189 paid the
       deriveAttackEffect(
         "Flip a coin. If heads, switch this Pokémon with 1 of your Benched Pokémon.",
       ),
-    ).toEqual([{ op: "coinFlipGate", then: [{ op: "switchActive" }] }]);
+    ).toEqual([{ op: "coinFlipGate", ops: [{ op: "switchActive" }] }]);
     expect(inTrainers.has("switchActive")).toBe(true);
     expect(programFor("sv01-194")?.trainer).toEqual([{ op: "switchActive" }]);
   });
@@ -600,7 +600,7 @@ describe("the Attacking Pokémon is a UID the epilogue CARRIES — D189 paid the
         return (derived ?? []).some(
           (op) =>
             op.op === "switchActive" ||
-            (op.op === "coinFlipGate" && op.then.some((inner) => inner.op === "switchActive")),
+            (op.op === "coinFlipGate" && op.ops.some((inner) => inner.op === "switchActive")),
         );
       }),
     );

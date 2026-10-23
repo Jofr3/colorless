@@ -95,7 +95,7 @@ describe("D627 §2 — the readings", () => {
       {
         op: "conditionGate",
         cond: gate(6),
-        then: [
+        ops: [
           {
             op: "counterEachAll",
             amount: 40,
@@ -118,7 +118,7 @@ describe("D627 §2 — the readings", () => {
       {
         op: "conditionGate",
         cond: gate(13),
-        then: [
+        ops: [
           {
             op: "damageChosen",
             target: "opponentAny",

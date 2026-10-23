@@ -266,7 +266,7 @@ describe("§5 — the family, measured over the whole column rather than describ
         op: "coinFlipGate",
         coins: 2,
         onTails: true,
-        then: [{ op: "damageSelf", amount: 90 }],
+        ops: [{ op: "damageSelf", amount: 90 }],
       },
     ]);
     expect(unbuilt).toContain(

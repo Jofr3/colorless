@@ -5,6 +5,8 @@ import { applyAction } from "./index";
 import { attachEnergyTargets, conditionHolds, conditionNote } from "./interpreter";
 import { programFor } from "./registry";
 import {
+  effectPrompt,
+  effectPromptOf,
   FIXTURE_POOL,
   attachBenchFromDeck,
   battler,
@@ -203,11 +205,6 @@ const playToBench = (state: GameState, id: string) => {
 };
 const retreat = (state: GameState) =>
   ok(applyAction(state, { type: "retreat", seat: "p1", discardEnergy: [], promoteBenchIndex: 0 }));
-function prompt(state: GameState): Record<string, unknown> {
-  if (state.phase.kind !== "effect:choose")
-    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
-  return state.phase.prompt as unknown as Record<string, unknown>;
-}
 const ids = (state: GameState, uids: readonly string[]) => uids.map((u) => state.cardIdByUid[u]);
 const of = <T extends GameEvent["type"]>(events: readonly GameEvent[], type: T) =>
   events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
@@ -228,7 +225,7 @@ describe("D628 §1 — the programs: Meowth ex on D593's object, two new objects
               {
                 op: "optional",
                 note: CONFIRM_NOTE,
-                then: [
+                ops: [
                   {
                     op: "searchDeck",
                     filter: { kind: "supporter" },
@@ -308,14 +305,11 @@ describe("D628 §2 — Last-Ditch Catch: bench Meowth ex, confirm, search a Supp
     expect(of(benched.events, "ABILITY_TRIGGERED").map((e) => e.ability)).toEqual([
       "Last-Ditch Catch",
     ]);
-    expect(prompt(benched.state)).toStrictEqual({ kind: "confirm", note: CONFIRM_NOTE });
+    expect(effectPrompt(benched.state)).toStrictEqual({ kind: "confirm", note: CONFIRM_NOTE });
     const searching = resolve(benched.state, { kind: "confirm", yes: true });
-    const offer = prompt(searching.state);
-    expect(offer.kind).toBe("chooseCards");
-    expect(new Set(ids(searching.state, offer.candidates as string[]))).toEqual(
-      new Set([SUPPORTER]),
-    );
-    const pick = (offer.candidates as string[])[0] as string;
+    const offer = effectPromptOf(searching.state, "chooseCards");
+    expect(new Set(ids(searching.state, offer.candidates))).toEqual(new Set([SUPPORTER]));
+    const pick = offer.candidates[0] as string;
     const done = resolve(searching.state, { kind: "cards", uids: [pick] });
     expect(done.state.phase.kind).toBe("turn:action");
     expect(done.state.players.p1.hand).toEqual([pick]);
@@ -345,7 +339,7 @@ describe("D628 §2 — Last-Ditch Catch: bench Meowth ex, confirm, search a Supp
       if (first)
         after = resolve(after, {
           kind: "cards",
-          uids: [(prompt(after).candidates as string[])[0]],
+          uids: [effectPromptOf(after, "chooseCards").candidates[0]],
         }).state;
       const second = playToBench(after, MEOWTH[1]);
       expect(of(second.events, "ABILITY_TRIGGERED"), String(first)).toEqual([]);
@@ -386,10 +380,9 @@ describe("D628 §3 — Lustrous Assist: after your Mega Latias ex moved up this 
     expect(state.cardIdByUid[state.players.p1.active?.stack.at(-1) ?? ""]).toBe(MEGA_LATIAS);
     const at = benchIndexOf(state, LATIOS);
     const parked = ok(use(state, "Lustrous Assist", bench(at)));
-    const offer = prompt(parked.state);
-    expect(offer.kind).toBe("moveEnergy");
+    const offer = effectPromptOf(parked.state, "moveEnergy");
     expect(offer.destinations).toEqual([P1_ACTIVE]);
-    const movable = offer.movable as { uid: string }[];
+    const movable = offer.movable;
     expect(
       new Set(
         ids(
@@ -468,14 +461,13 @@ describe("D628 §4 — Lethargic Charge: from the Bench, the chosen Energy card 
   it("offers every Energy card in hand (Special too) onto the Active alone; the chosen one is attached; once per turn", () => {
     const state = table({ active: LARRYS, bench: [KOMALA, LARRYS], hand: [R, SUPPORTER, SPECIAL] });
     const parked = ok(use(state, "Lethargic Charge", bench(0)));
-    const offer = prompt(parked.state);
-    expect(offer.kind).toBe("attachCards");
+    const offer = effectPromptOf(parked.state, "attachCards");
     expect(offer.max).toBe(1);
     expect(offer.note).toBe(NOTE);
-    expect(ids(parked.state, offer.candidates as string[])).toEqual([R, SPECIAL]);
+    expect(ids(parked.state, offer.candidates)).toEqual([R, SPECIAL]);
     // The Benched Larry's Pokémon is not a target: "your ACTIVE Larry's Pokémon".
     expect(offer.targets).toEqual([P1_ACTIVE]);
-    const special = (offer.candidates as string[])[1] as string;
+    const special = offer.candidates[1] as string;
     const done = resolve(parked.state, {
       kind: "attachCards",
       assignments: [{ uid: special, to: P1_ACTIVE }],
@@ -493,7 +485,7 @@ describe("D628 §4 — Lethargic Charge: from the Bench, the chosen Energy card 
   it("R-LGC1 (UNRULED): the attach is mandatory — an empty answer attaches the first offered card", () => {
     const state = table({ active: LARRYS, bench: [KOMALA], hand: [W, R] });
     const parked = ok(use(state, "Lethargic Charge", bench(0)));
-    const first = (prompt(parked.state).candidates as string[])[0] as string;
+    const first = effectPromptOf(parked.state, "attachCards").candidates[0] as string;
     const done = resolve(parked.state, { kind: "attachCards", assignments: [] });
     expect(done.state.players.p1.active?.energy).toEqual([first]);
     expect(ids(done.state, done.state.players.p1.active?.energy ?? [])).toEqual([W]);

@@ -78,7 +78,7 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
     ).toEqual([
       {
         op: "coinFlipGate",
-        then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+        ops: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
       },
     ]);
     // The catalog's straight apostrophe and the typographic one both parse, so a

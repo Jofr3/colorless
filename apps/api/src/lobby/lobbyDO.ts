@@ -27,6 +27,7 @@ import {
   type Seat,
 } from "@colorless/engine";
 import { type DrizzleD1Database, drizzle } from "drizzle-orm/d1";
+import type { z } from "zod";
 import type { Env } from "../env";
 import { avatarSeedFrom } from "../auth/avatar";
 import { resolveUserIdFromCookie } from "../auth/resolveSession";
@@ -57,6 +58,7 @@ import {
   parseClientMessage,
   type PendingDisconnect,
   readSnapshot,
+  readStored,
   rematch,
   reseatHost,
   resetAfterFailedStart,
@@ -66,6 +68,11 @@ import {
   socketIsSilent,
   splitDuePending,
   stampCountdown,
+  storedChooserSchema,
+  storedCleanupAtSchema,
+  storedCodeSchema,
+  storedPendingSchema,
+  storedSeatUsersSchema,
   withForfeitAt,
   withoutPendingDisconnect,
   withPendingDisconnect,
@@ -273,7 +280,7 @@ export class LobbyDO {
   ): Promise<LobbySnapshot | null> {
     switch (decision) {
       case "claim-host": {
-        const code = await this.state.storage.get<string>(CODE_KEY);
+        const code = await this.read(CODE_KEY, storedCodeSchema);
         return code === undefined
           ? null
           : createSnapshot(code, makePlayer(playerId, name, avatarSeed));
@@ -516,7 +523,7 @@ export class LobbyDO {
 
     // 3) An empty lobby past its expiry evaporates entirely, freeing the code
     //    for a future POST /lobby to mint again.
-    const cleanupAt = await this.state.storage.get<number>(CLEANUP_AT_KEY);
+    const cleanupAt = await this.read(CLEANUP_AT_KEY, storedCleanupAtSchema);
     if (sockets.length === 0 && cleanupAt !== undefined && now >= cleanupAt) {
       this.snapshot = null;
       await this.state.storage.deleteAll();
@@ -608,7 +615,7 @@ export class LobbyDO {
     });
     if (!result.ok) return { ok: false, reason: matchStartReason(result.error.code) };
     // A player no longer seated (a new guest since the rematch) falls back to the coin.
-    const chooserId = await this.state.storage.get<string>(CHOOSER_KEY);
+    const chooserId = await this.read(CHOOSER_KEY, storedChooserSchema);
     const chooser = chooserId === undefined ? null : matchSeatOf(snapshot, chooserId);
     const opening = settleFirstPlayer(result.state, result.events, chooser);
     // Seat display names for the game log's system rows (host → p1, guest → p2,
@@ -646,7 +653,7 @@ export class LobbyDO {
   /** playerId → the account bound to it (3a-sec). Empty until an authenticated
       socket claims a seat. */
   private async seatUsers(): Promise<Record<string, string>> {
-    return (await this.state.storage.get<Record<string, string>>(SEAT_USERS_KEY)) ?? {};
+    return (await this.read(SEAT_USERS_KEY, storedSeatUsersSchema)) ?? {};
   }
 
   /** Persist → broadcast → re-arm the alarm: the ONE path every snapshot
@@ -693,7 +700,7 @@ export class LobbyDO {
     if (sockets.length > 0) deadlines.push(Date.now() + LIVENESS_SWEEP_MS);
 
     if (sockets.length === 0) {
-      let cleanupAt = await this.state.storage.get<number>(CLEANUP_AT_KEY);
+      let cleanupAt = await this.read(CLEANUP_AT_KEY, storedCleanupAtSchema);
       if (cleanupAt === undefined) {
         cleanupAt = Date.now() + EMPTY_LOBBY_TTL_MS;
         await this.state.storage.put(CLEANUP_AT_KEY, cleanupAt);
@@ -719,8 +726,13 @@ export class LobbyDO {
     return this.snapshot;
   }
 
+  /** The value stored under `key`, or undefined when it is absent or does not parse. */
+  private async read<T>(key: string, schema: z.ZodType<T>): Promise<T | undefined> {
+    return readStored(schema, await this.state.storage.get(key));
+  }
+
   private async pendingDisconnects(): Promise<PendingDisconnect[]> {
-    return (await this.state.storage.get<PendingDisconnect[]>(PENDING_KEY)) ?? [];
+    return (await this.read(PENDING_KEY, storedPendingSchema)) ?? [];
   }
 
   /**

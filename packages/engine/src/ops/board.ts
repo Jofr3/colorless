@@ -940,7 +940,7 @@ export function ownDevolveAnswered(
             yes: cards(k),
             no: k + 1 === n ? cards(n) : `${k + 1} to ${n} Evolution cards`,
           },
-          then: [shedOp(k)],
+          ops: [shedOp(k)],
           otherwise: [chain(k + 1)],
         };
   return [chain(1)];
@@ -1021,7 +1021,7 @@ export function chooseOneChain(
       op: "optional",
       note,
       labels: { yes: first.label, no: rest.map((b) => b.label).join(" or ") },
-      then: [first.op],
+      ops: [first.op],
       otherwise: chooseOneChain(note, rest),
     },
   ];
@@ -1079,7 +1079,7 @@ export function knockOutDefender(
 ): GameState {
   const seat = otherSeat(ctx.seat);
   if (state.players[seat].active === null) return state;
-  if (effectRefused(state, seat, ctx, events)) return state;
+  if (effectRefused(state, seat, ctx, undefined, events)) return state;
   // The §11 guard runs before the max-HP read.
   return doomBodyAt(state, { seat, spot: { spot: "active" } }, koByEffectMarker(state.turn));
 }
@@ -1098,7 +1098,7 @@ export function discardDefender(
   const side = state.players[seat];
   const active = side.active;
   if (active === null) return state;
-  if (effectRefused(state, seat, ctx, events)) return state;
+  if (effectRefused(state, seat, ctx, undefined, events)) return state;
   const uid = topUid(active);
   if (uid === undefined) return state;
   const cleanup = discardFromStack(side, active, "all");
@@ -1181,20 +1181,20 @@ export function queueTakePrize(
 /**
  * Turn one face-down Prize face up, of the controller's row or the opponent's (`side: "opponent"`).
  * The player picks rather than the engine. Zero face-down prizes is a silent no-op, one is forced,
- * more parks a choice inside the confirm's `then`.
+ * more parks a choice inside the confirm's `ops`.
  */
 export function turnPrizeFaceUp(
   state: GameState,
   op: OpOf<"turnPrizeFaceUp">,
   ctx: EffectContext,
-  events: GameEvent[],
   record: EffectRecord,
+  events: GameEvent[],
 ): { done: GameState } | { park: EffectPrompt } {
   const owner = relativeSeat(ctx.seat, op.side === "opponent");
   const indices = faceDownPrizeIndices(state, owner);
   if (indices.length === 0) return { done: state };
   if (indices.length === 1)
-    return { done: turnPrizeFaceUpAt(state, indices[0] ?? -1, op, ctx, events, record) };
+    return { done: turnPrizeFaceUpAt(state, indices[0] ?? -1, op, ctx, record, events) };
   return {
     park: {
       kind: "choosePrize",
@@ -1227,8 +1227,8 @@ export function turnPrizeFaceUpAt(
   index: number,
   op: OpOf<"turnPrizeFaceUp">,
   ctx: EffectContext,
-  events: GameEvent[],
   record: EffectRecord,
+  events: GameEvent[],
 ): GameState {
   const owner = relativeSeat(ctx.seat, op.side === "opponent");
   const side = state.players[owner];
@@ -1284,8 +1284,8 @@ export function cycleOwnPrizes(
 export function swapTurnedPrizeWithRevealed(
   state: GameState,
   ctx: EffectContext,
-  events: GameEvent[],
   record: EffectRecord,
+  events: GameEvent[],
 ): GameState {
   const owner = otherSeat(ctx.seat);
   const side = state.players[owner];
@@ -1328,8 +1328,8 @@ export function switchOwn(
 export function switchRecording(
   op: { recordAs?: EffectSlot; recordDemoted?: true; demotedAsMoved?: true },
   move: (into: GameEvent[]) => GameState,
-  events: GameEvent[],
   record: EffectRecord,
+  events: GameEvent[],
 ): GameState {
   const emitted: GameEvent[] = [];
   const next = move(emitted);

@@ -544,7 +544,7 @@ describe("D527 §2 — the literal resolves to the ATTACKER's Bench length at ST
       ...PROGRAM,
     ];
     const events: GameEvent[] = [];
-    const first = runProgram(before, program, ctx, events);
+    const first = runProgram(before, program, ctx, {}, events);
     if (first.kind !== "parked" || first.prompt.kind !== "chooseCards")
       throw new Error("expected the bench park");
     expect(first.prompt.dest).toBe("bench");
@@ -560,7 +560,7 @@ describe("D527 §2 — the literal resolves to the ATTACKER's Bench length at ST
     expect(second.prompt.note).toBe(CAPTION);
     expect(second.cont.pendingOp).toEqual(PROGRAM[0]);
     // …and the same literal on the ORIGINAL board reads 1: the number is the board's at the step.
-    const direct = runProgram(before, PROGRAM, ctx, []);
+    const direct = runProgram(before, PROGRAM, ctx, {}, []);
     if (direct.kind !== "parked" || direct.prompt.kind !== "chooseCards")
       throw new Error("expected a park");
     expect(direct.prompt.max).toBe(1);
@@ -576,7 +576,7 @@ describe("D527 §2 — the literal resolves to the ATTACKER's Bench length at ST
       max: "yourBenchCount",
       also: [{ filter: { kind: "item" }, max: 1 }],
     };
-    const out = runProgram(state, [op], ctx, []);
+    const out = runProgram(state, [op], ctx, {}, []);
     if (out.kind !== "parked" || out.prompt.kind !== "chooseCards")
       throw new Error("expected a chooseCards park");
     expect(out.prompt.note).toBe(
@@ -640,7 +640,7 @@ describe("D527 §3 — `MATCH_RECORD_VERSION` HOLDS at 30 ( held at THIS slice; 
     const literal = mustApply(board, { type: "attack", seat: "p1", index: 0 }).state;
     const v30 = continuation(mustApply(board, { type: "attack", seat: "p1", index: 1 }).state);
     expect((v30.pendingOp as { max?: unknown }).max).toBe(3);
-    const resumed = runProgram(literal, [v30.pendingOp as EffectOp], v30.ctx, []);
+    const resumed = runProgram(literal, [v30.pendingOp as EffectOp], v30.ctx, {}, []);
     if (resumed.kind !== "parked" || resumed.prompt.kind !== "chooseCards") {
       throw new Error("expected the v30 op to park a chooseCards");
     }
@@ -648,7 +648,7 @@ describe("D527 §3 — `MATCH_RECORD_VERSION` HOLDS at 30 ( held at THIS slice; 
     expect(resumed.prompt.note).toBe("Search your deck for up to 3 cards into your hand.");
     const anyOp = deriveAttackEffect(ANY_NUMBER)?.[0];
     if (anyOp === undefined) throw new Error("the any-number control derived null");
-    const any = runProgram(literal, [anyOp], v30.ctx, []);
+    const any = runProgram(literal, [anyOp], v30.ctx, {}, []);
     if (any.kind !== "parked" || any.prompt.kind !== "chooseCards")
       throw new Error("expected a park");
     expect(any.prompt.max).toBe(literal.players.p1.deck.length);

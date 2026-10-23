@@ -847,7 +847,7 @@ describe("the EIGHTH printing — Radiant Charizard swsh10.5-011, unread until t
     CONSTRUCTED cases need (`preventBlock.test.ts`'s move). The op never parks, so
     the run is always `done` and the assertion says so rather than assuming it. */
 function runOne(state: GameState, program: readonly EffectOp[], events: GameEvent[]): GameState {
-  const result = runProgram(state, program, { seat: "p1", invokedBy: "attack" }, events);
+  const result = runProgram(state, program, { seat: "p1", invokedBy: "attack" }, {}, events);
   if (result.kind !== "done") throw new Error(`expected done, got ${result.kind}`);
   return result.state;
 }

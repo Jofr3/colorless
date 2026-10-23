@@ -62,7 +62,7 @@ const program = (amount: number): EffectOp[] => [
     op: "coinFlipGate",
     coins: 2,
     onTails: true,
-    then: [{ op: "damageSelf", amount }],
+    ops: [{ op: "damageSelf", amount }],
   },
 ];
 const PROGRAM = program(90);
@@ -218,19 +218,19 @@ describe("D521 §1 — the printed row derives to EXACTLY the one-op program", (
 
   it("the gate's sorted KEY SET is exactly [coins, onTails, op, then] — no stray field, no missing one", () => {
     const op = mustDerive(deriveAttackEffect, PRINTED)[0] as object;
-    expect(Object.keys(op).sort()).toEqual(["coins", "onTails", "op", "then"]);
+    expect(Object.keys(op).sort()).toEqual(["coins", "onTails", "op", "ops"]);
   });
 
   it("the `then` is BYTE-EQUAL to what the bare recoil anchor derives — one action, the coins in front of it", () => {
     const gate = mustDerive(deriveAttackEffect, PRINTED)[0];
     if (gate?.op !== "coinFlipGate") throw new Error("op 0 is not a coinFlipGate");
-    expect(gate.then).toEqual(deriveAttackEffect(BARE));
+    expect(gate.ops).toEqual(deriveAttackEffect(BARE));
     expect(deriveAttackEffect(BARE)).toEqual([{ op: "damageSelf", amount: 90 }]);
     // …and the one-coin sibling's `then` is the SAME bytes — the family claim at N=1 and N=2.
     const one = mustDerive(deriveAttackEffect, ONE_COIN)[0];
     if (one?.op !== "coinFlipGate") throw new Error("sibling op 0 is not a coinFlipGate");
-    expect(one.then).toEqual(gate.then);
-    expect(Object.keys(one).sort()).toEqual(["onTails", "op", "then"]);
+    expect(one.ops).toEqual(gate.ops);
+    expect(Object.keys(one).sort()).toEqual(["onTails", "op", "ops"]);
   });
 
   it("the anchor's claimed set over all 640 rows is EXACTLY {file line 202} — 1 sentence / 2 printings", () => {
@@ -272,7 +272,7 @@ describe("D521 §1 — the printed row derives to EXACTLY the one-op program", (
       {
         op: "coinFlipGate",
         onTails: true,
-        then: [{ op: "damageSelf", amount: 90 }],
+        ops: [{ op: "damageSelf", amount: 90 }],
       },
     ]);
   });

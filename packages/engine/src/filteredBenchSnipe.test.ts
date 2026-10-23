@@ -263,7 +263,7 @@ describe("§2 — the derivation, and the number agreement that keeps D399's run
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveDamaged" },
-        then: [
+        ops: [
           {
             op: "damageChosen",
             target: "opponentBench",

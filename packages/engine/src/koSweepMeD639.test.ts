@@ -66,7 +66,7 @@ describe("D639 §2 — the readings", () => {
       {
         op: "conditionGate",
         cond: { kind: "opponentKnockedOutByDamage" },
-        then: [{ op: "preventDamage", effects: true }],
+        ops: [{ op: "preventDamage", effects: true }],
       },
     ]);
     expect(

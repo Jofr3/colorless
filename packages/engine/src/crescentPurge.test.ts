@@ -213,10 +213,10 @@ describe("§1 — the reading, on the real card's bytes", () => {
     const gate = program[0] as Extract<EffectOp, { op: "conditionGate" }>;
     expect(gate.op).toBe("conditionGate");
     expect(gate.cond).toEqual({ kind: "yourFaceDownPrizeRemains" });
-    const ask = gate.then[0] as Extract<EffectOp, { op: "optional" }>;
+    const ask = gate.ops[0] as Extract<EffectOp, { op: "optional" }>;
     expect(ask.op).toBe("optional");
     expect(ask.note).toBe(SENTENCE);
-    expect(ask.then[0]).toEqual({ op: "turnPrizeFaceUp" });
+    expect(ask.ops[0]).toEqual({ op: "turnPrizeFaceUp" });
   });
 
   it("the gate's pill says what the board must hold", () => {
@@ -553,6 +553,7 @@ describe("§12 — validateChoice refuses out-of-range, face-up and multi-index 
       state,
       [{ op: "turnPrizeFaceUp" }],
       { seat: "p1", invokedBy: "attack" },
+      {},
       events,
     );
     expect(result.kind).toBe("done");

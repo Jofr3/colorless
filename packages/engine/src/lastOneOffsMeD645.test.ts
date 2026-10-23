@@ -273,7 +273,7 @@ describe("D645 §1 — the prints and the registry rows", () => {
       {
         op: "conditionGate",
         cond: { kind: "extraEnergyBeyondAttackCost", extra: 2 },
-        then: [
+        ops: [
           {
             op: "damageChosen",
             target: "opponentBench",

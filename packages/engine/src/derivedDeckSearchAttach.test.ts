@@ -156,7 +156,7 @@ const CLAUSES = [
       {
         op: "recordGate",
         slot: "moved",
-        then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
+        ops: [{ op: "applyStatus", target: "self", status: "poisoned" }],
       },
     ] as EffectOp[],
     printings: 3,
@@ -516,7 +516,7 @@ describe("the anchor — fifteen printed sentences, ONE arm and TWO optional gro
     expect(gated[2]).toEqual({
       op: "recordGate",
       slot: "moved",
-      then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
+      ops: [{ op: "applyStatus", target: "self", status: "poisoned" }],
     });
     // `recordAs` rides the gate and NOTHING else — an unread filing is a field
     // with no observable meaning.
@@ -611,7 +611,7 @@ describe("the anchor — fifteen printed sentences, ONE arm and TWO optional gro
         "oneTarget",
       ],
       shuffleDeck: ["op"],
-      recordGate: ["op", "slot", "then"],
+      recordGate: ["op", "slot", "ops"],
     };
     for (const { program, text } of CLAUSES) {
       for (const op of program) {

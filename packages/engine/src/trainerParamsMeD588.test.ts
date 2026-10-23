@@ -157,8 +157,8 @@ describe("D588 §2 — the registry: each twin's op at the printed parameter", (
   });
 
   it("the Grunt = Crushing Hammer's heads op without the coin", () => {
-    const hammer = programFor("sv01-168")?.trainer?.[0] as { then: unknown[] };
-    expect(programFor(GRUNT)?.trainer).toEqual(hammer.then);
+    const hammer = programFor("sv01-168")?.trainer?.[0] as { ops: unknown[] };
+    expect(programFor(GRUNT)?.trainer).toEqual(hammer.ops);
   });
 
   it("Waitress = Electric Generator's look at 6 / 1, any Basic Energy, to any of your Pokémon", () => {

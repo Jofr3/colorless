@@ -320,7 +320,7 @@ function dealt(state: GameState): Extract<GameEvent, { type: "DAMAGE_DEALT" }> {
 function runAttackProgram(state: GameState, text: string): GameState {
   const program = deriveAttackEffect(text);
   if (program === null) throw new Error(`does not derive: ${text}`);
-  const result = runProgram(state, program, { seat: "p1", invokedBy: "attack" }, []);
+  const result = runProgram(state, program, { seat: "p1", invokedBy: "attack" }, {}, []);
   if (result.kind !== "done") throw new Error(`expected done, got ${result.kind}`);
   return result.state;
 }
@@ -756,7 +756,7 @@ describe("D558 §8 — Full Metal Lab: {M} Pokémon take 30 less, both sides, bo
     if (program === null) throw new Error("the sentence derives");
     const board = stadium(table(PLAIN, [], WALL, [METAL, WALL]), FML);
     const run = (ops: readonly EffectOp[]) => {
-      const result = runProgram(board, ops, { seat: "p1", invokedBy: "attack" }, []);
+      const result = runProgram(board, ops, { seat: "p1", invokedBy: "attack" }, {}, []);
       if (result.kind !== "done") throw new Error(`expected done, got ${result.kind}`);
       return result.state;
     };
@@ -766,7 +766,7 @@ describe("D558 §8 — Full Metal Lab: {M} Pokémon take 30 less, both sides, bo
     // The CONTROL: the same two ops in the SWAPPED order pay the {M} body the full 30.
     const gate = program[0];
     if (gate?.op !== "conditionGate") throw new Error("expected the Stadium gate");
-    const swapped = run([...gate.then].reverse());
+    const swapped = run([...gate.ops].reverse());
     expect(swapped.players.p2.bench.map((b) => b.damage)).toEqual([30, 30]);
   });
 

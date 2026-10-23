@@ -46,7 +46,7 @@ const FAMILY = [
       {
         op: "conditionGate",
         cond: { kind: "yourActiveEvolvedFromThisTurn", name: "Salandit" },
-        then: [{ op: "opponentDiscardsFromHand", count: 2 }],
+        ops: [{ op: "opponentDiscardsFromHand", count: 2 }],
       },
     ],
     printings: 1,
@@ -568,9 +568,10 @@ describe("§8b — the gate caption names the DECK, driven from a hand-built pro
       board,
       [
         { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-        { op: "recordGate", slot: "paid", then: [...inner] },
+        { op: "recordGate", slot: "paid", ops: [...inner] },
       ],
       { seat: "p1" },
+      {},
       [],
     );
     if (result.kind !== "parked") throw new Error("expected a park");

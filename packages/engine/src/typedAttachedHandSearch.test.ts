@@ -510,8 +510,8 @@ describe("D531 §3 — a new optional rider on a PERSISTED op, and the record ve
     expect(JSON.stringify(v30)).toBe(
       '{"op":"searchDeck","filter":{"kind":"anyPokemon"},"dest":"hand","max":5,"reveal":true}',
     );
-    const typed = runProgram(board, [fresh], ctx, []);
-    const flat = runProgram(board, [v30], ctx, []);
+    const typed = runProgram(board, [fresh], ctx, {}, []);
+    const flat = runProgram(board, [v30], ctx, {}, []);
     if (typed.kind !== "parked" || typed.prompt.kind !== "chooseCards")
       throw new Error("the fresh op did not park");
     if (flat.kind !== "parked" || flat.prompt.kind !== "chooseCards")
@@ -762,15 +762,15 @@ describe("D531 §4 — the park offers EXACTLY the Pokémon whose type is a Basi
     const { sourceUid, ...sourceless } = ctx;
     expect(sourceUid).toBe(activeUid(board, "p1"));
     const events: GameEvent[] = [];
-    const none = runProgram(board, PROGRAM, sourceless, events);
+    const none = runProgram(board, PROGRAM, sourceless, {}, events);
     expect(none.kind).toBe("done");
     expect(searchedRows(events)).toHaveLength(0);
     expect(shuffleRows(events)).toEqual([{ type: "SHUFFLE", seat: "p1" }]);
     const deckUid = board.players.p1.deck[0];
     if (deckUid === undefined) throw new Error("empty deck");
-    const offBoard = runProgram(board, PROGRAM, { ...ctx, sourceUid: deckUid }, []);
+    const offBoard = runProgram(board, PROGRAM, { ...ctx, sourceUid: deckUid }, {}, []);
     expect(offBoard.kind).toBe("done");
-    const live = runProgram(board, PROGRAM, ctx, []);
+    const live = runProgram(board, PROGRAM, ctx, {}, []);
     expect(live.kind).toBe("parked");
   });
 
@@ -789,6 +789,7 @@ describe("D531 §4 — the park offers EXACTLY the Pokémon whose type is a Basi
       board,
       PROGRAM,
       { ...ctx, sourceUid: benchTopUid(board, "p1", 0) },
+      {},
       [],
     );
     if (fromBench.kind !== "parked" || fromBench.prompt.kind !== "chooseCards")
@@ -799,7 +800,7 @@ describe("D531 §4 — the park offers EXACTLY the Pokémon whose type is a Basi
     expect(fromBench.prompt.note).toBe(CAPTION);
     // …and the Active as source on the SAME board reads its own {W}+{R}: the two offers are disjoint
     // except for the dual body.
-    const fromActive = runProgram(board, PROGRAM, ctx, []);
+    const fromActive = runProgram(board, PROGRAM, ctx, {}, []);
     if (fromActive.kind !== "parked" || fromActive.prompt.kind !== "chooseCards")
       throw new Error("expected a park");
     expect(fromActive.prompt.candidates).toEqual(inDeck(board, [WATER, FIRE, DUAL]));
@@ -818,7 +819,7 @@ describe("D531 §4 — the park offers EXACTLY the Pokémon whose type is a Basi
       ...PROGRAM,
     ];
     const events: GameEvent[] = [];
-    let out = runProgram(board, program, ctx, events);
+    let out = runProgram(board, program, ctx, {}, events);
     // The discard may park its own pick when it has a choice; a single {W} is forced. Either way the
     // search that follows reads the board AFTER the discard.
     if (out.kind === "parked" && out.prompt.kind === "discardEnergy") {
@@ -832,7 +833,7 @@ describe("D531 §4 — the park offers EXACTLY the Pokémon whose type is a Basi
     expect(out.prompt.candidates).toEqual(inDeck(out.state, [FIRE, DUAL]));
     for (const uid of inDeck(out.state, [WATER])) expect(out.prompt.candidates).not.toContain(uid);
     // …and the same op on the ORIGINAL board reads {W}+{R}: the types are the board's at the step.
-    out = runProgram(board, PROGRAM, ctx, []);
+    out = runProgram(board, PROGRAM, ctx, {}, []);
     if (out.kind !== "parked" || out.prompt.kind !== "chooseCards")
       throw new Error("expected a park");
     expect(out.prompt.candidates).toEqual(inDeck(board, [WATER, FIRE, DUAL]));
@@ -848,7 +849,7 @@ describe("D531 §4 — the park offers EXACTLY the Pokémon whose type is a Basi
       max: "any",
       typedAsAttachedBasicEnergy: true,
     };
-    const out = runProgram(board, [op], ctx, []);
+    const out = runProgram(board, [op], ctx, {}, []);
     if (out.kind !== "parked" || out.prompt.kind !== "chooseCards")
       throw new Error("expected a park");
     expect(out.prompt.candidates).toEqual(inDeck(board, [WATER, FIRE, DUAL]));

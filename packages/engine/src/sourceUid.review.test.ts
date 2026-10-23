@@ -125,6 +125,7 @@ describe("'this Pokémon' is the board TOP, not the stack", () => {
       deepFreeze(state),
       ELECTROGENESIS,
       { seat: "p1", sourceUid: pawmotUid },
+      {},
       events,
     );
     expect(result.kind).toBe("done");
@@ -162,6 +163,7 @@ describe("'this Pokémon' is the board TOP — the ACTIVE arm", () => {
       deepFreeze(state),
       ELECTROGENESIS,
       { seat: "p1", sourceUid: pawmotUid },
+      {},
       events,
     );
     expect(result.kind).toBe("done");
@@ -286,6 +288,7 @@ describe("the plural toSelf note — the branch no shipped card reaches", () => 
       state,
       program,
       { seat: "p1", sourceUid: activeUid(state, "p1") },
+      {},
       [],
     );
     if (result.kind !== "parked") throw new Error("expected a park");

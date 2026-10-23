@@ -335,7 +335,7 @@ describe("D620 §1 — the prints, the registry rows and the readings", () => {
             {
               op: "conditionGate",
               cond: { kind: "yourActiveOwner", owner: "Team Rocket" },
-              then: [{ op: "applyStatus", target: "attacker", status: "asleep" }],
+              ops: [{ op: "applyStatus", target: "attacker", status: "asleep" }],
             },
           ],
         },
@@ -395,7 +395,7 @@ describe("D620 §1 — the prints, the registry rows and the readings", () => {
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveDamaged" },
-        then: [{ op: "damageDefender", amount: 30 }],
+        ops: [{ op: "damageDefender", amount: 30 }],
         otherwise: [{ op: "damageDefender", amount: 260 }],
       },
     ]);

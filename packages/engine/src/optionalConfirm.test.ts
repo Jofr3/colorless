@@ -35,7 +35,7 @@ const DRAW_UNTIL_6: EffectOp = { op: "drawUntilHandSize", size: 6 };
 const DRAW_1: EffectOp = { op: "drawCards", count: 1 };
 
 function wrapped(note: string, ops: EffectOp[]): EffectOp[] {
-  return [{ op: "optional", note, then: ops }];
+  return [{ op: "optional", note, ops: ops }];
 }
 
 /** The ordering program: "you may draw until 6", then an unconditional draw. */
@@ -50,7 +50,7 @@ function handSize(state: GameState): number {
 describe("the `optional` op parks a `confirm`", () => {
   it("parks with the printed sentence, no candidates and NO decider (the controller answers)", () => {
     const events: GameEvent[] = [];
-    const result = runProgram(board(), orderingProgram(), CTX, events);
+    const result = runProgram(board(), orderingProgram(), CTX, {}, events);
     if (result.kind !== "parked") throw new Error("expected the confirm park");
     // The whole prompt: a kind and the printed sentence. No `count` (the
     // mayDraw sibling's field is meaningless on a generic confirm), no
@@ -71,8 +71,9 @@ describe("the `optional` op parks a `confirm`", () => {
     const events: GameEvent[] = [];
     const result = runProgram(
       full,
-      [{ op: "optional", note: SENTENCE, then: [{ op: "drawUntilHandSize", size: 0 }] }],
+      [{ op: "optional", note: SENTENCE, ops: [{ op: "drawUntilHandSize", size: 0 }] }],
       CTX,
+      {},
       events,
     );
     expect(result.kind).toBe("parked");
@@ -82,7 +83,7 @@ describe("the `optional` op parks a `confirm`", () => {
 describe("the answer — accept splices, DECLINE runs nothing", () => {
   it("YES runs the wrapped ops and then the rest", () => {
     const events: GameEvent[] = [];
-    const parked = runProgram(board(), orderingProgram(), CTX, events);
+    const parked = runProgram(board(), orderingProgram(), CTX, {}, events);
     if (parked.kind !== "parked") throw new Error("expected the confirm park");
     const done = resumeProgram(parked.state, parked.cont, { kind: "confirm", yes: true }, events);
     if (done.kind !== "done") throw new Error("expected the program to finish");
@@ -92,7 +93,7 @@ describe("the answer — accept splices, DECLINE runs nothing", () => {
 
   it("NO runs the wrapped ops NOT AT ALL — and still runs the rest", () => {
     const events: GameEvent[] = [];
-    const parked = runProgram(board(), orderingProgram(), CTX, events);
+    const parked = runProgram(board(), orderingProgram(), CTX, {}, events);
     if (parked.kind !== "parked") throw new Error("expected the confirm park");
     const done = resumeProgram(parked.state, parked.cont, { kind: "confirm", yes: false }, events);
     if (done.kind !== "done") throw new Error("expected the program to finish");
@@ -106,7 +107,7 @@ describe("the answer — accept splices, DECLINE runs nothing", () => {
 
   it("THE SPLICE IS A PREPEND: `then` runs BEFORE `rest`, not after", () => {
     const events: GameEvent[] = [];
-    const parked = runProgram(board(), orderingProgram(), CTX, events);
+    const parked = runProgram(board(), orderingProgram(), CTX, {}, events);
     if (parked.kind !== "parked") throw new Error("expected the confirm park");
     const done = resumeProgram(parked.state, parked.cont, { kind: "confirm", yes: true }, events);
     if (done.kind !== "done") throw new Error("expected the program to finish");
@@ -116,7 +117,7 @@ describe("the answer — accept splices, DECLINE runs nothing", () => {
 
   it("a WRONG-SHAPED answer reaching the interpreter splices nothing", () => {
     const events: GameEvent[] = [];
-    const parked = runProgram(board(), orderingProgram(), CTX, events);
+    const parked = runProgram(board(), orderingProgram(), CTX, {}, events);
     if (parked.kind !== "parked") throw new Error("expected the confirm park");
     const done = resumeProgram(
       parked.state,
@@ -140,8 +141,9 @@ describe("composition — the gate nests like the other three", () => {
     }
     const parked = runProgram(
       bench,
-      [{ op: "optional", note: "You may switch.", then: [{ op: "switchActive" }] }],
+      [{ op: "optional", note: "You may switch.", ops: [{ op: "switchActive" }] }],
       CTX,
+      {},
       events,
     );
     if (parked.kind !== "parked") throw new Error("expected the confirm park");
@@ -169,10 +171,11 @@ describe("composition — the gate nests like the other three", () => {
         [
           {
             op: "coinFlipGate",
-            then: [{ op: "optional", note: SENTENCE, then: [DRAW_UNTIL_6] }],
+            ops: [{ op: "optional", note: SENTENCE, ops: [DRAW_UNTIL_6] }],
           },
         ],
         CTX,
+        {},
         events,
       );
       kinds.add(result.kind);
@@ -198,10 +201,11 @@ describe("what this op deliberately does NOT touch", () => {
     const result = runProgram(
       board(),
       [
-        { op: "optional", note: SENTENCE, then: [DRAW_UNTIL_6] },
-        { op: "recordGate", slot: "moved", then: [DRAW_1] },
+        { op: "optional", note: SENTENCE, ops: [DRAW_UNTIL_6] },
+        { op: "recordGate", slot: "moved", ops: [DRAW_1] },
       ],
       CTX,
+      {},
       events,
     );
     if (result.kind !== "parked") throw new Error("expected the confirm park");
@@ -213,12 +217,12 @@ describe("what this op deliberately does NOT touch", () => {
     const result = runProgram(
       board(),
       [
-        { op: "optional", note: SENTENCE, then: [DRAW_UNTIL_6] },
-        { op: "recordGate", slot: "moved", then: [DRAW_1] },
+        { op: "optional", note: SENTENCE, ops: [DRAW_UNTIL_6] },
+        { op: "recordGate", slot: "moved", ops: [DRAW_1] },
       ],
       CTX,
-      events,
       { moved: ["seeded-uid"] },
+      events,
     );
     if (result.kind !== "parked") throw new Error("expected the confirm park");
     expect(result.cont.record).toEqual({ moved: ["seeded-uid"] });
@@ -234,8 +238,8 @@ describe("what this op deliberately does NOT touch", () => {
     phase, so this drives the same code path a Trainer/attack park would. */
 function parkedState(): GameState {
   const events: GameEvent[] = [];
-  const result = runProgram(board(), orderingProgram(), CTX, events);
-  const settled = settleProgram(result, "p1", events);
+  const result = runProgram(board(), orderingProgram(), CTX, {}, events);
+  const settled = settleProgram(result, "p1", {}, events);
   if (!settled.ok) throw new Error("expected the park to settle");
   return settled.state;
 }
@@ -243,8 +247,8 @@ function parkedState(): GameState {
 describe("the phase, the wire check and the seat gate", () => {
   it("settles into an effect:choose with NO answerer — the controller owns it", () => {
     const events: GameEvent[] = [];
-    const result = runProgram(board(), orderingProgram(), CTX, events);
-    const settled = settleProgram(result, "p1", events);
+    const result = runProgram(board(), orderingProgram(), CTX, {}, events);
+    const settled = settleProgram(result, "p1", {}, events);
     if (!settled.ok) throw new Error("expected the park to settle");
     if (settled.state.phase.kind !== "effect:choose") throw new Error("expected the park");
     expect(settled.state.phase.seat).toBe("p1");
@@ -349,7 +353,7 @@ describe("RE-POINTED at D202 — the pins that were written to go red, and did",
       // consumed, not a rebuild of it, because both HUDs render it as the
       // dialog's only prose.
       expect(op?.op === "optional" ? op.note : undefined).toBe(text);
-      expect(op?.op === "optional" ? op.then : undefined).toEqual(deriveAttackEffect(inner));
+      expect(op?.op === "optional" ? op.ops : undefined).toEqual(deriveAttackEffect(inner));
     });
   }
 

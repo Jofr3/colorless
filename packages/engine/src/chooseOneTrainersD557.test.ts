@@ -300,7 +300,7 @@ describe("D557 §1 — Kieran: the print, and the registry row that maps it", ()
           op: "optional",
           note: KIERAN_TEXT,
           labels: LABELS,
-          then: [{ op: "switchActive" }],
+          ops: [{ op: "switchActive" }],
           otherwise: [{ op: "boostSideAttacksThisTurn", amount: KIERAN_BONUS, target: EX_OR_V }],
         },
       ],
@@ -370,9 +370,9 @@ describe("D557 §2 — the park: a labelled `confirm`, answered by the controlle
   it("an UNLABELED `optional` parks the byte-identical two-field prompt (D135)", () => {
     const start = ready();
     const program: EffectOp[] = [
-      { op: "optional", note: "You may draw a card.", then: [{ op: "drawCards", count: 1 }] },
+      { op: "optional", note: "You may draw a card.", ops: [{ op: "drawCards", count: 1 }] },
     ];
-    const run = runProgram(start, program, { seat: "p1" }, []);
+    const run = runProgram(start, program, { seat: "p1" }, {}, []);
     if (run.kind !== "parked") throw new Error(`expected parked, got ${run.kind}`);
     expect(run.prompt).toStrictEqual({ kind: "confirm", note: "You may draw a card." });
     expect(Object.keys(run.prompt)).toEqual(["kind", "note"]);
@@ -486,7 +486,13 @@ describe("D557 §4 — the SECOND bullet (no): +30 to an Active ex and an Active
       ["d557-wall-ex", 50 + KIERAN_BONUS + 40],
       ["d557-wall-v", 50 + KIERAN_BONUS],
     ] as const) {
-      const after = runProgram(kieran(false, { defender }).state, blackBelt, { seat: "p1" }, []);
+      const after = runProgram(
+        kieran(false, { defender }).state,
+        blackBelt,
+        { seat: "p1" },
+        {},
+        [],
+      );
       if (after.kind !== "done") throw new Error("expected done");
       expect(after.state.allowances.sideAttackBonuses, defender).toHaveLength(2);
       expect(dealt(after.state)?.dealt, defender).toBe(expected);
@@ -552,7 +558,7 @@ describe("D557 §7 — Venture Bomb: the print, and the registry row that maps i
       trainer: [
         {
           op: "coinFlipGate",
-          then: [
+          ops: [
             { op: "damageChosen", target: "opponentAny", amount: 20, count: 1, source: "trainer" },
           ],
           otherwise: [{ op: "damageSelf", amount: 20, source: "trainer" }],
@@ -674,6 +680,7 @@ describe("D557 §9 — TAILS: 2 counters on YOUR OWN Active", () => {
       start,
       [{ op: "damageSelf", amount: 30 }],
       { seat: "p1", invokedBy: "attack" },
+      {},
       events,
     );
     if (run.kind !== "done") throw new Error("expected done");

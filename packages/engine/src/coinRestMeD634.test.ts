@@ -97,7 +97,7 @@ describe("D634 §1 — the seven sentences and their programs", () => {
       {
         op: "coinFlipGate",
         coins: 2,
-        then: [
+        ops: [
           { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "bench", max: 1 },
           { op: "shuffleDeck" },
         ],
@@ -106,7 +106,7 @@ describe("D634 §1 — the seven sentences and their programs", () => {
     expect(deriveAttackEffect(T.gust)).toEqual([
       {
         op: "coinFlipGate",
-        then: [{ op: "returnBenched", whose: "opponent", dest: "deck", includeActive: true }],
+        ops: [{ op: "returnBenched", whose: "opponent", dest: "deck", includeActive: true }],
       },
     ]);
     for (const text of [T.delivery, T.gust]) expect(deriveAttackCoinFlip(text), text).toBeNull();
@@ -147,7 +147,7 @@ describe("D634 §2 — near misses stay null; arm 46b's crossings", () => {
     expect(
       deriveAttackEffect(T.gust.replace("opponent's Pokémon", "opponent's Benched Pokémon")),
     ).toEqual([
-      { op: "coinFlipGate", then: [{ op: "returnBenched", whose: "opponent", dest: "deck" }] },
+      { op: "coinFlipGate", ops: [{ op: "returnBenched", whose: "opponent", dest: "deck" }] },
     ]);
   });
 

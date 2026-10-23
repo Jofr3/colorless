@@ -608,12 +608,12 @@ describe("D574 §1 — the readers: two resolve-time copy anchors, two counter-m
       {
         op: "conditionGate",
         cond: { kind: "youPlayedSupporterNamedThisTurn", name: "Xerosic's Machinations" },
-        then: [
+        ops: [
           { op: "gust", recordAs: "moved" },
           {
             op: "recordGate",
             slot: "moved",
-            then: [{ op: "damageNewActive", amount: 120 }],
+            ops: [{ op: "damageNewActive", amount: 120 }],
           },
         ],
       },
@@ -1403,10 +1403,15 @@ describe("D574 §6 — the parks: wire-legal, serialisable, and INERT under a 0.
       ? { ...phase.cont, pendingOp: { op: "unknownTo0457" } as unknown as EffectOp }
       : phase.cont;
     const events: GameEvent[] = [];
-    const rolled = settleProgram(resumeProgram(parked, cont, choice, events), phase.seat, events, {
-      resumeTail: phase.resumeTail === true,
-      endsTurn: phase.endsTurn === true,
-    });
+    const rolled = settleProgram(
+      resumeProgram(parked, cont, choice, events),
+      phase.seat,
+      {
+        resumeTail: phase.resumeTail === true,
+        endsTurn: phase.endsTurn === true,
+      },
+      events,
+    );
     if (!rolled.ok) throw new Error("the rollback reading failed");
     return rolled;
   }

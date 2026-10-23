@@ -30,7 +30,7 @@ const PROGRAM: EffectOp[] = [
     filter: { kind: "byName", name: TR_ENERGY_NAME },
     recordAs: "discarded",
   },
-  { op: "recordGate", slot: "discarded", then: [{ op: "discardDefender" }] },
+  { op: "recordGate", slot: "discarded", ops: [{ op: "discardDefender" }] },
 ];
 
 const MOLTRES = "d536-moltres";
@@ -355,7 +355,7 @@ describe("D536 §3 — the PROGRAM: two ops, printed order, gated on `discarded`
     const gate = (deriveAttackEffect(PRINTED) ?? [])[1] as Record<string, unknown>;
     expect(gate.op).toBe("recordGate");
     expect(gate.slot).toBe("discarded");
-    expect(gate.then).toEqual([{ op: "discardDefender" }]);
+    expect(gate.ops).toEqual([{ op: "discardDefender" }]);
     expect("otherwise" in gate).toBe(false);
     const slots = legalAttackCorpus()
       .flatMap(([, s]) => deriveAttackEffect(s) ?? [])
@@ -662,8 +662,8 @@ describe("D536 §9 — the MEASUREMENT that turned a PRICED CONTINGENCY into an 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D536 §10 — the PERSISTED bytes, both directions", () => {
   it("the op is FIELD-FREE — `Object.keys` as a LITERAL key set", () => {
-    const gate = (deriveAttackEffect(PRINTED) ?? [])[1] as { then: EffectOp[] };
-    const op = gate.then[0] as Record<string, unknown>;
+    const gate = (deriveAttackEffect(PRINTED) ?? [])[1] as { ops: EffectOp[] };
+    const op = gate.ops[0] as Record<string, unknown>;
     expect(Object.keys(op)).toEqual(["op"]);
     expect(op).toEqual({ op: "discardDefender" });
   });

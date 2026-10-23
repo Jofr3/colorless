@@ -88,7 +88,7 @@ describe("walkProgram — the structural predicate", () => {
   it("yields the op itself, in pre-order, before its branches", () => {
     const program: EffectOp[] = [
       { op: "drawCards", count: 1 },
-      { op: "coinFlipGate", then: [{ op: "gust" }] },
+      { op: "coinFlipGate", ops: [{ op: "gust" }] },
     ];
     expect(walkProgram(program).map((op) => op.op)).toEqual(["drawCards", "coinFlipGate", "gust"]);
   });
@@ -100,15 +100,15 @@ describe("walkProgram — the structural predicate", () => {
     const program: EffectOp[] = [
       {
         op: "coinFlipGate",
-        then: [{ op: "gust" }],
+        ops: [{ op: "gust" }],
         otherwise: [{ op: "drawCards", count: 2 }],
       },
       {
         op: "optional",
         note: "You may.",
-        then: [
+        ops: [
           { op: "switchActive" },
-          { op: "recordGate", slot: "moved", then: [{ op: "shuffleDeck" }] },
+          { op: "recordGate", slot: "moved", ops: [{ op: "shuffleDeck" }] },
         ],
       },
     ];
@@ -139,7 +139,7 @@ describe("walkProgram — the structural predicate", () => {
     // trap. It matters for `programBranchCarriers`: an empty `otherwise` would
     // otherwise be reported as a carrier the pool does not actually exercise.
     const program = [
-      { op: "conditionGate", cond: { kind: "isActive" }, then: [], otherwise: [] },
+      { op: "conditionGate", cond: { kind: "isActive" }, ops: [], otherwise: [] },
     ] as unknown as EffectOp[];
     expect(walkProgram(program).map((op) => op.op)).toEqual(["conditionGate"]);
     expect([...programBranchCarriers(program).keys()]).toEqual([]);
@@ -151,9 +151,9 @@ describe("the pool sweep, structurally", () => {
     const enumerated = (ops: readonly EffectOp[], out: EffectOp[]): EffectOp[] => {
       for (const op of ops) {
         out.push(op);
-        if (op.op === "coinFlipGate") enumerated(op.then, out);
+        if (op.op === "coinFlipGate") enumerated(op.ops, out);
         if (op.op === "conditionGate" || op.op === "recordGate") {
-          enumerated(op.then, out);
+          enumerated(op.ops, out);
           enumerated(op.otherwise ?? [], out);
         }
       }
@@ -300,10 +300,10 @@ describe("the pool sweep, structurally", () => {
     }
     expect([...carriers.entries()].map(([op, keys]) => [op, [...keys].sort()]).sort()).toEqual([
       ["chooseOneOffered", ["branches"]],
-      ["coinFlipGate", ["otherwise", "then"]],
-      ["conditionGate", ["otherwise", "then"]],
-      ["optional", ["otherwise", "then"]],
-      ["recordGate", ["then"]],
+      ["coinFlipGate", ["ops", "otherwise"]],
+      ["conditionGate", ["ops", "otherwise"]],
+      ["optional", ["ops", "otherwise"]],
+      ["recordGate", ["ops"]],
       ["reorderTop", ["otherwise"]],
     ]);
   });

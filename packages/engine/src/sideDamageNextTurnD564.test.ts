@@ -210,6 +210,7 @@ describe("§2 — the install: a record on the PLAYER's side, stamped for the op
       state,
       [{ op: "installSideDamageReductionNextTurn", amount: 50 }],
       { seat: "p1" },
+      {},
       events,
     );
     if (again.kind !== "done") throw new Error("expected done");

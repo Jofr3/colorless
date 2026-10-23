@@ -272,7 +272,7 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
   // Enriching Energy: "When you attach this card from your hand to a Pokémon, draw 4 cards." No
   // spot condition, unlike Jet Energy.
   if (onAttach?.kind === "draw") {
-    next = drawToHand(next, action.seat, onAttach.count, "effect", events);
+    next = drawToHand(next, action.seat, onAttach.count, "effect", "top", events);
   }
   // §12: the hand attach is the one route an Energy reaches a body outside an effect program, so
   // status recovery (Therapeutic Energy) runs here. It runs last, after the Jet switch, which
@@ -290,16 +290,16 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
       action.seat,
       attachedTo,
       "onEnergyAttach",
-      events,
       atAttach,
+      events,
     );
     const watched = runWatchedTriggers(
       next,
       action.seat,
       attachedTo,
       "onEnergyAttach",
-      events,
       atAttach,
+      events,
     );
     // Pachirisu "Electrified Incisors": the marked body takes its counters after the watched
     // triggers; the sweep below handles the Knock Out.
@@ -316,8 +316,9 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
         next,
         action.seat,
         [action.seat],
-        events,
         endsTurn ? turnTail(action.seat) : undefined,
+        undefined,
+        events,
       );
     }
   }
@@ -368,10 +369,10 @@ function searchAfterAttach(
   events: GameEvent[],
 ): ApplyResult {
   return settleProgram(
-    runProgram(state, program, { seat }, events),
+    runProgram(state, program, { seat }, {}, events),
     seat,
-    events,
     endsTurn ? { endsTurn: true } : {},
+    events,
   );
 }
 
@@ -664,18 +665,18 @@ export function placeEvolution(
     events,
   );
   if (isLethallyDamaged(next, evolved)) {
-    return resolveMidTurnKnockOuts(next, seat, [seat], events);
+    return resolveMidTurnKnockOuts(next, seat, [seat], undefined, undefined, events);
   }
   // The opponent's watched evolve triggers (Team Rocket's Ampharos "Darkest Impulse", "from their
   // hand"). Only hand routes reach this function, so deck-sourced evolves do not fire it. Runs
   // after the §8.1 check and before the controller's own on-evolve trigger, which may park.
-  const watched = runWatchedTriggers(next, seat, evolutionUid, "onEvolve", events, next);
+  const watched = runWatchedTriggers(next, seat, evolutionUid, "onEvolve", next, events);
   const subject =
     target.spot === "active"
       ? watched.players[seat].active
       : watched.players[seat].bench[target.index];
   if (subject !== null && subject !== undefined && isLethallyDamaged(watched, subject)) {
-    return resolveMidTurnKnockOuts(watched, seat, [seat], events);
+    return resolveMidTurnKnockOuts(watched, seat, [seat], undefined, undefined, events);
   }
   const triggered = runBoardTrigger(watched, seat, target, "onEvolve", events);
   // §7.3: an evolution that removed `seat`'s last Tera Pokémon under Area Zero Underdepths owes the
@@ -687,7 +688,14 @@ export function placeEvolution(
   ) {
     return triggered;
   }
-  return resolveMidTurnKnockOuts(triggered.state, seat, [seat], triggered.events);
+  return resolveMidTurnKnockOuts(
+    triggered.state,
+    seat,
+    [seat],
+    undefined,
+    undefined,
+    triggered.events,
+  );
 }
 
 /**
@@ -877,7 +885,7 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
   // bonus (Conkeldurr "Craftsmanship"); move triggers can also place counters. Only the actor's
   // board can change. The sweep runs after the move triggers so an Ability answering the move fires
   // before the Knock Out.
-  return resolveMidTurnKnockOuts(moved, action.seat, [action.seat], events);
+  return resolveMidTurnKnockOuts(moved, action.seat, [action.seat], undefined, undefined, events);
 }
 
 /** Pass: seed the staged tail (flow.ts turnTail) and drain it. */
@@ -949,5 +957,5 @@ export function discardFromPlay(state: GameState, action: DiscardFromPlayAction)
       ? { ...cleanup.side, active: null }
       : { ...cleanup.side, bench: cleanup.side.bench.filter((_, index) => index !== target.index) },
   );
-  return resolveMidTurnKnockOuts(next, action.seat, [action.seat], events);
+  return resolveMidTurnKnockOuts(next, action.seat, [action.seat], undefined, undefined, events);
 }

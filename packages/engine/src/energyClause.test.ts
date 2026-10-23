@@ -347,7 +347,7 @@ describe("deriveAttackDamageBonus — the near-misses that stay UNMAPPED (and th
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveHasEnergyAttached", energy: "special" },
-        then: [{ op: "knockOutDefender" }],
+        ops: [{ op: "knockOutDefender" }],
       },
     ]);
     expect(deriveAttackDamageBonus(SPECIAL_HAMMER)?.count).toEqual({

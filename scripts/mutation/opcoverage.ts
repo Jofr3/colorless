@@ -1,10 +1,11 @@
 #!/usr/bin/env bun
 /**
  * Op-coverage instrument (`bun scripts/mutation/opcoverage.ts`): for each `EffectOp` kind, counts
- * corpus rows quoting its producer region (effects.ts, registry.ts) and its implementation region
- * (stepOp's case arms plus helpers with fan-in ≤ FANIN, across interpreter.ts and the modules split
- * out of it), and reports seat-line coverage. It cannot see resume-side code such as
- * `continuationOps`, or whether a row is any good. Env: `FANIN` (default 4), `LEV` (default 2).
+ * corpus rows quoting its producer region (effects.ts, registry.ts, fixtures/registry.ts) and its
+ * implementation region (stepOp's case arms plus helpers with fan-in ≤ FANIN, across interpreter.ts
+ * and the modules split out of it), and reports seat-line coverage. It cannot see resume-side code
+ * such as `continuationOps`, or whether a row is any good. Env: `FANIN` (default 4), `LEV`
+ * (default 2).
  */
 
 import { envInt } from "../lib/cli";
@@ -17,6 +18,7 @@ const LEV = envInt("LEV", 2);
 const EFFECT_TYPES = "packages/engine/src/effectTypes.ts";
 const EFFECTS = "packages/engine/src/effects.ts";
 const REGISTRY = "packages/engine/src/registry.ts";
+const FIXTURE_REGISTRY = "packages/engine/src/fixtures/registry.ts";
 const INTERP = "packages/engine/src/interpreter.ts";
 /** interpreter.ts and the modules split out of it, read as one text. */
 const IMPL_FILES = [
@@ -264,6 +266,7 @@ function producerSpans(file: string): Span[] {
 const PRODUCERS = new Map<string, Span[]>([
   [EFFECTS, producerSpans(EFFECTS)],
   [REGISTRY, producerSpans(REGISTRY)],
+  [FIXTURE_REGISTRY, producerSpans(FIXTURE_REGISTRY)],
 ]);
 
 // ─── 6. ATTRIBUTE THE CORPUS ─────────────────────────────────────────────────

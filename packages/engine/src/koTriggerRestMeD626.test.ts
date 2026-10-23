@@ -294,7 +294,7 @@ describe("D626 §1 — the texts and the registry rows", () => {
   it("Flygon ×3: two `Sandy Flapping` rows — `onEvolve`, and `onKnockOut` behind `activeOnly` + `byOpponentAttack` — each a confirm around the reader's mill", () => {
     const mill = deriveAttackEffect("Discard the top 2 cards of your opponent's deck.");
     expect(mill).toEqual([{ op: "discardDeckTop", whose: "opponent", count: 2 }]);
-    const confirm = [{ op: "optional", note: SANDY_FLAPPING, then: mill }];
+    const confirm = [{ op: "optional", note: SANDY_FLAPPING, ops: mill }];
     for (const id of FLYGON) {
       expect(programFor(id), id).toEqual({
         triggered: [
@@ -345,7 +345,7 @@ describe("D626 §1 — the texts and the registry rows", () => {
             {
               op: "conditionGate",
               cond: { kind: "yourActiveWeakToOpponentActiveType" },
-              then: [{ op: "drawCards", count: 3 }],
+              ops: [{ op: "drawCards", count: 3 }],
             },
           ],
         },

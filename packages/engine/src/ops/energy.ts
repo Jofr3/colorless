@@ -610,8 +610,8 @@ function handAttachWatched(
     );
     const subject = host == null ? undefined : topUid(host);
     if (subject === undefined) continue;
-    next = runSelfWatchedTriggers(next, actor, subject, "onEnergyAttach", events, atMoment);
-    next = runWatchedTriggers(next, actor, subject, "onEnergyAttach", events, atMoment);
+    next = runSelfWatchedTriggers(next, actor, subject, "onEnergyAttach", atMoment, events);
+    next = runWatchedTriggers(next, actor, subject, "onEnergyAttach", atMoment, events);
     next = shockHandAttachHost(next, actor, subject, events);
   }
   return next;
@@ -712,22 +712,22 @@ export function attachEnergyFrom(
   op: OpOf<"attachEnergyFrom">,
   ref: PokemonRef,
   ctx: EffectContext,
-  events: GameEvent[],
   /**
    * The running §9.2 record. Whiffs return early and file nothing, since a missing key already
    * reads as empty.
    */
-  record: EffectRecord = {},
+  record: EffectRecord,
   /**
    * How many the controller asked for. Absent means the whole printed batch (the forced path).
    * Clamped to the printed ceiling because a wire-supplied number can reach here.
    */
-  take?: number,
+  take: number | undefined,
   /**
    * The Energy cards the controller picked. Absent means the leading matches in pile order, used
    * only when they are interchangeable. A picked uid no longer attachable is skipped.
    */
-  chosenUids?: readonly string[],
+  chosenUids: readonly string[] | undefined,
+  events: GameEvent[],
 ): GameState {
   // The owner's seat, resolved once: the pile, the validated board and the rewritten side are all
   // the owner's. `ctx.seat` is used only on events (the actor).
