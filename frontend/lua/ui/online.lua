@@ -22,7 +22,6 @@ local g=love.graphics
 local Online={}
 Online.__index=Online
 local ALPHABET='ABCDEFGHJKMNPQRSTUVWXYZ23456789'
-local GREY={95/255,115/255,119/255,1}
 local heights={menu=540,joining=420,waiting=540,starting=420}
 local info={
   invalid={'Invalid lobby code',"That code doesn't look right. Head back and try again."},
@@ -570,10 +569,10 @@ function Online:drawSeat(tag)
   g.setLineWidth(2);Button.outline(p.x+12,p.y+12,bw,bh,colour)
   Dyna.static(seat.present and seat.name or 'Waiting for opponent...',0.45,p.x+20,p.y+12,bw-16,bh,T.white,{fit=true,roomWidth=self.width})
   local ry=p.y+bh+22
-  Button.panel(p.x+16,ry+7,12,12,seat.present and seat.connected and colour or GREY,0.9)
+  Button.panel(p.x+16,ry+7,12,12,seat.present and seat.connected and colour or T.grey,0.9)
   T.text(tag=='you' and 'You' or 'Opponent',24,p.x+36,ry,160,T.white,'left')
   -- The seat state is coloured text: gold choosing, green ready.
-  local label,tint='Waiting',mix(GREY,T.white,0.4)
+  local label,tint='Waiting',mix(T.grey,T.white,0.4)
   if seat.present and not seat.connected then label,tint='Away',T.red
   elseif seat.present and seat.ready then label,tint='Ready',T.green
   elseif seat.present then label,tint='Choosing deck',T.gold end
@@ -624,7 +623,7 @@ function Online:draw()
   if not x then return end
   g.push();g.translate(0,self:offset())
   Button.panel(x,y+6,w,h,{0.525,0.546,0.585,1},2.4)
-  Button.panel(x,y,w,h,{191/255,199/255,213/255,1},2.4)
+  Button.modalFrame(x,y,w,h)
   Button.panel(x+4,y+4,w-8,h-8,T.tray,2.4)
   local step,d=self.step,self.dyna
   if self.link=='connecting' and (step=='waiting' or step=='versus' or step=='countdown') then

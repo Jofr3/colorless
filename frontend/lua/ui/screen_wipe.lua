@@ -5,6 +5,7 @@ local Card=require('ui.card')
 local CardFrame=require('ui.card_frame')
 local D=require('ui.card_dimensions')
 local Dissolve=require('ui.dissolve')
+local T=require('ui.theme')
 local TransitionArt=require('ui.transition_art')
 local Wipe={};Wipe.__index=Wipe
 local g=love.graphics
@@ -12,8 +13,7 @@ Wipe.coverTime=0.7
 Wipe.lifespan=1.7
 Wipe.dissolveAt=Wipe.coverTime+0.55
 Wipe.removeAt=Wipe.coverTime+1.1
-Wipe.palette={{55/255,66/255,68/255,1},{253/255,162/255,0,1},
-  {234/255,192/255,88/255,1},{254/255,95/255,85/255,1}}
+Wipe.palette={T.panel,T.orange,T.paleGold,T.red}
 local centers
 local function atlases()
   if centers then return end

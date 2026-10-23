@@ -13,7 +13,7 @@ function Stats.rows(deck)
   local total=deck.count
   local left={
     {label='Format',value=deck.format=='expanded' and 'Expanded' or 'Standard'},
-    {label='Total cards',value=total..'/60',colour=total>60 and T.red or total==60 and {234/255,192/255,88/255,1} or T.blue},
+    {label='Total cards',value=total..'/60',colour=total>60 and T.red or total==60 and T.paleGold or T.blue},
     {label='Basic Pokemon',value=tostring(basic),colour=basic==0 and T.red or T.white},
   }
   local right={}
@@ -29,7 +29,7 @@ function Stats.layout(modal)
 end
 -- Exact G.C.JOKER_GREY and G.C.BLACK from globals.lua. The profile button
 -- colour is a different grey; G.C.BLACK is T.panel, not the deeper T.ink.
-Stats.colours={label={191/255*0.9,199/255*0.9,213/255*0.9,1},value=T.panel,muted={191/255,199/255,213/255,1}}
+Stats.colours={label={191/255*0.9,199/255*0.9,213/255*0.9,1},value=T.panel,muted=T.jokerGrey}
 local g=love.graphics
 local function embossed(x,y,w,h,colour)
   Button.panel(x,y+3,w,h,{colour[1]*0.7,colour[2]*0.7,colour[3]*0.7,colour[4]})

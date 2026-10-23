@@ -287,7 +287,7 @@ function Library:draw(shaders)
   local frameW=p and w-32 or 1032
   local frameX=(w-frameW)/2
   Button.panel(frameX,26,frameW,h-34,{0.525,0.546,0.585,1},2.4)
-  Button.panel(frameX,20,frameW,h-34,{191/255,199/255,213/255,1},2.4)
+  Button.modalFrame(frameX,20,frameW,h-34)
   Button.panel(frameX+4,24,frameW-8,h-42,T.tray,2.4)
   if self.phase=='ready' then
     -- Joker collection row: G.C.BLACK, r=0.1, emboss=0.05; no drop shadow.
@@ -343,7 +343,7 @@ function Library:drawModal()
     local m=self.modal
     g.push(); g.translate(0,m.motion.VT.y*60)
     Button.panel(m.x,m.y+6,m.w,m.h,{0.525,0.546,0.585,1},2.4)
-    Button.panel(m.x,m.y,m.w,m.h,{191/255,199/255,213/255,1},2.4)
+    Button.modalFrame(m.x,m.y,m.w,m.h)
     Button.panel(m.x+4,m.y+4,m.w-8,m.h-8,T.tray,2.4)
     caption(m.mode=='manage' and m.item.name or (m.mode=='create' and 'New ' or m.mode=='delete' and 'Delete ' or 'Rename ')..m.item.kind,36,m.x+20,m.y+20,m.w-40)
     if m.mode=='delete' then

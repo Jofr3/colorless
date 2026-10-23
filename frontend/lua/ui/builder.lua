@@ -32,7 +32,7 @@ local function caption(text,size,x,y,w,colour,align)
 end
 local function frame(x,y,w,h)
   Button.panel(x,y+6,w,h,{0.525,0.546,0.585,1},2.4)
-  Button.panel(x,y,w,h,{191/255,199/255,213/255,1},2.4)
+  Button.modalFrame(x,y,w,h)
   Button.panel(x+4,y+4,w-8,h-8,T.tray,2.4)
 end
 function Builder.new(callbacks)

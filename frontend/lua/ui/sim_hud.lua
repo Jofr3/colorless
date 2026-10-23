@@ -19,8 +19,6 @@ local HAND_AREA=shade(BLACK,0.9)                           -- darken(BLACK,0.1):
 local SMALL=mix(T.blue,BLACK,0.6)                          -- get_blind_main_colour('bl_small')
 local SMALL_RED=mix(T.red,BLACK,0.6)                       -- same mix for the second seat
 local LIGHT={1,1,1,1}
-local MONEY={243/255,185/255,88/255,1}
-local JOKER_GREY={191/255,199/255,213/255,1}
 -- Content height of the desktop column (turn panel to the counter grid); the
 -- column itself spans the room and the content sits centred like align 'cm'.
 -- create_UIBox_HUD: button column 1.5 + 2*0.2 tiles, counters
@@ -56,7 +54,7 @@ function Hud.new(callbacks)
   -- Hand sizes by seat (the hot-seat table has no fixed "you"): P1 blue, P2 red.
   self.p1HandText=Dyna.new({string='0',scale=0.8,colours={T.blue},shadow=true,rotate=true,font_offset=true})
   self.p2HandText=Dyna.new({string='0',scale=0.8,colours={T.red},shadow=true,rotate=true,font_offset=true})
-  self.turnCount=Dyna.new({string='0',scale=0.88,colours={MONEY},shadow=true,bump=true,spacing=2,font_offset=true})
+  self.turnCount=Dyna.new({string='0',scale=0.88,colours={T.money},shadow=true,bump=true,spacing=2,font_offset=true})
   self.values={};self.inited={}
   self.hint='';self.oppName='';self.allow={};self.hasActive=false
   self.p1Label,self.p2Label='P1 Hand','P2 Hand'
@@ -256,7 +254,7 @@ local function cell(x,y,b,label,text,roomWidth,on)
   Dyna.static(label,0.34*s,x,y+0.05*u,w,labelH,LIGHT,{roomWidth=roomWidth,fit=true})
   Button.panel(x+(w-1.2*u)/2,valueY,1.2*u,valueH,on and T.green or BOSS_DARK,1.8*s)
   if type(text)=='string' then
-    Dyna.static(text,0.4*s,x,valueY,w,valueH,on and LIGHT or JOKER_GREY,{roomWidth=roomWidth,fit=true})
+    Dyna.static(text,0.4*s,x,valueY,w,valueH,on and LIGHT or T.jokerGrey,{roomWidth=roomWidth,fit=true})
   else
     g.push();g.translate(x+w/2,valueY+valueH/2);g.scale(s)
     text:draw(0,0,roomWidth,nil,x+w/2)
@@ -284,7 +282,7 @@ function Hud:drawPrompt(sim,L,x,y,w,h)
   end
   yy=yy+8
   for _,line in ipairs(notes) do
-    Dyna.static(line,scale*0.8,x,yy,w,nh,JOKER_GREY,{roomWidth=L.w,shadow=false,fit=true});yy=yy+nh+3
+    Dyna.static(line,scale*0.8,x,yy,w,nh,T.jokerGrey,{roomWidth=L.w,shadow=false,fit=true});yy=yy+nh+3
   end
 end
 function Hud:draw(sim,L,time,reduced,hovered)
@@ -383,7 +381,7 @@ function Hud:drawPortrait(sim,L,time,reduced,hovered)
   end
   self.turnText.cfg.maxw=140
   self.turnText:draw(ix+75,y+30,rw)
-  Dyna.static(self.hint,choosingFirst and 0.24 or 0.26,ix,y+56,230,14,JOKER_GREY,{roomWidth=rw,fit=true,shadow=false})
+  Dyna.static(self.hint,choosingFirst and 0.24 or 0.26,ix,y+56,230,14,T.jokerGrey,{roomWidth=rw,fit=true,shadow=false})
   local function mini(xx,yy,label,text,colour)
     emboss(xx,yy,64,44,BOSS_MAIN,1.2)
     Dyna.static(label,0.26,xx,yy+2,64,12,LIGHT,{roomWidth=rw,fit=true})

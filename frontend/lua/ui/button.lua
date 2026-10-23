@@ -28,6 +28,7 @@ local function panel(x,y,w,h,colour,r,progress,mode)
 end
 
 Button.panel=panel
+function Button.modalFrame(x,y,w,h) Button.panel(x,y,w,h,T.jokerGrey,2.4) end
 function Button.outline(x,y,w,h,colour,r)
   panel(x,y,w,h,colour,r,nil,'line')
 end

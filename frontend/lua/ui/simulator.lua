@@ -25,9 +25,6 @@ local Fx=require('ui.sim_fx')
 local Popup=require('ui.popup')
 local Simulator={};Simulator.__index=Simulator
 local g=love.graphics
-local MONEY={243/255,185/255,88/255,1}
-local PURPLE={136/255,103/255,165/255,1}
-local CHANCE={75/255,194/255,146/255,1}
 local STATUS_ROTATION={asleep=-math.pi/2,paralyzed=math.pi/2,confused=math.pi}
 local function prefix(owner) return owner=='opponent' and 'opp_' or owner=='global' and '' or 'you_' end
 function Simulator.new(callbacks)
@@ -837,7 +834,7 @@ function Simulator:react(previous)
       elseif item.damage<was.damage then
         local amount=was.damage-item.damage
         fx:after(delay,function()
-          fx:attention({text='+'..amount,scale=0.8,colour=T.white,backdrop=CHANCE,follow=function() return c.x,c.y end,offsetY=-0.15*D.H*c.baseScale,hold=0.7,sound='chips1'})
+          fx:attention({text='+'..amount,scale=0.8,colour=T.white,backdrop=T.green,follow=function() return c.x,c.y end,offsetY=-0.15*D.H*c.baseScale,hold=0.7,sound='chips1'})
           if not transferred then c:juiceUp(self.time,0.3,0.05,self.reduced) end
         end)
         delay=0.3
@@ -845,7 +842,7 @@ function Simulator:react(previous)
       if item.status~=was.status and item.status~='' then
         local label=item.status:gsub('^%l',string.upper):gsub(',%s*',' + ')
         fx:after(delay,function()
-          fx:attention({text=label,scale=0.6,colour=T.white,backdrop=PURPLE,follow=function() return c.x,c.y end,offsetY=0.2*D.H*c.baseScale,hold=0.9,sound='tarot2',pitch=0.9})
+          fx:attention({text=label,scale=0.6,colour=T.white,backdrop=T.purple,follow=function() return c.x,c.y end,offsetY=0.2*D.H*c.baseScale,hold=0.9,sound='tarot2',pitch=0.9})
         end)
         delay=0.3
       end
@@ -884,7 +881,7 @@ function Simulator:react(previous)
       local zone=L.zones[(owner=='you' and 'you' or 'opp')..'_prizes']
       local taken=was.prizes-now.prizes
       fx:after(delay,function()
-        fx:attention({text='+'..taken..(taken>1 and ' PRIZES' or ' PRIZE'),scale=0.7,colour=T.white,backdrop=MONEY,x=zone.well.x+zone.well.w/2,y=zone.well.y+zone.well.h/2,hold=1.0,sound='coin3',jiggle=1})
+        fx:attention({text='+'..taken..(taken>1 and ' PRIZES' or ' PRIZE'),scale=0.7,colour=T.white,backdrop=T.money,x=zone.well.x+zone.well.w/2,y=zone.well.y+zone.well.h/2,hold=1.0,sound='coin3',jiggle=1})
       end)
       delay=0.4
     end
@@ -908,7 +905,7 @@ function Simulator:openGameOver()
   local rows={
     {label='Winner',value=winner,colour=self.outcome=='win' and T.blue or T.red},
     {label='Reason',value=self.outcomeDetail~='' and self.outcomeDetail or 'Game over'},
-    {label='Turns played',value=tostring(self.turn),colour=MONEY},
+    {label='Turns played',value=tostring(self.turn),colour=T.money},
     {label='Your prizes left',value=tostring(you.prizes),colour=T.blue},
     {label='Opponent prizes left',value=tostring(opp.prizes),colour=T.red},
     {label='Cards in hand',value=tostring(you.hand)},
@@ -1135,7 +1132,7 @@ function Simulator:buildAttached(card)
     local added=self:add(b.label,x+pad,buttonY,bw,b.height,action,b.colour,{token=b.token,disabled=b.disabled,fontSize=21,attached=true,card=card,group=b,cost=b.cost,damage=b.damage,hasCost=b.hasCost,ability=b.ability})
     self.attachedPopup.buttons[#self.attachedPopup.buttons+1]=added
     buttonY=buttonY+b.height+gap
-    if b.disabled then added.colour={95/255,115/255,119/255,1} end -- G.C.GREY, not the panel black
+    if b.disabled then added.colour=T.grey end -- not the panel black
   end
 end
 local function popupOffset(popup)
@@ -1650,7 +1647,7 @@ function Simulator:drawBadges(c,rw)
     for _,s in ipairs(Codec.list(item.status)) do names[#names+1]=s:sub(1,1):upper()..s:sub(2) end
     local label=table.concat(names,' ')
     local tw=Dyna.measure(label,0.26)+12
-    Button.panel(c.x-tw/2,c.y-ch/2-20,tw,16,PURPLE,1)
+    Button.panel(c.x-tw/2,c.y-ch/2-20,tw,16,T.purple,1)
     Dyna.static(label,0.26,c.x-tw/2,c.y-ch/2-20,tw,16,T.white,{roomWidth=rw})
   end
 end
