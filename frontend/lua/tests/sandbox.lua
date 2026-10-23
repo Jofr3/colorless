@@ -4,7 +4,7 @@ love={math={random=function() return 0.5 end},graphics={},keyboard={isDown=funct
 local Card=require('ui.card')
 Card.rebuild=function(self) self.texture={release=function() end} end
 local Sandbox=require('ui.sandbox')
-local Codec=require('ui.account')
+local Codec=require('ui.codec')
 local calls={};local left=false
 local chooser=Sandbox.new({command=function(raw) calls[#calls+1]=Codec.fields(raw) end,feedback=function() end,announce=function() end,home=function() left=true end})
 local function snapshot(revision,count,busy)

@@ -1,13 +1,16 @@
 local D=require('ui.card_dimensions')
 local WheelPager=require('ui.wheel_pager')
 local T=require('ui.theme')
+local Controls=require('ui.controls')
 local Button=require('ui.button')
 local Pile=require('ui.deck_pile')
 local Alert=require('ui.card_alert')
 local DeckLabels=require('ui.deck_labels')
 local PageText=require('ui.page_text')
 local Modal=require('ui.modal')
-local Codec=require('ui.account')
+local Codec=require('ui.codec')
+local Mailbox=require('ui.mailbox')
+local Fit=require('ui.text_fit')
 local Input=require('ui.text_input')
 local g=love.graphics
 local Library={}
@@ -18,21 +21,8 @@ local function nextValue(values,current)
   for i,v in ipairs(values) do if v==current then return values[i%#values+1] end end
   return values[1]
 end
-local function fit(text,size,width)
-  text=text:gsub('%c',' ')
-  while size>14 and T.font(size):getWidth(text)>width do size=size-1 end
-  if T.font(size):getWidth(text)>width then
-    local out=''
-    for c in text:gmatch('[%z\1-\127\194-\244][\128-\191]*') do
-      if T.font(size):getWidth(out..c..'...')>width then break end
-      out=out..c
-    end
-    text=out..'...'
-  end
-  return text,size
-end
 local function caption(text,size,x,y,w,colour)
-  text,size=fit(text,size,w); T.text(text,size,x,y,w,colour)
+  text,size=Fit.fit(text,size,w); T.text(text,size,x,y,w,colour)
 end
 function Library.new(callbacks)
   return setmetatable({callbacks=callbacks,pageText=PageText.new(),phase='loading',busy=false,message='',query='',sort='name-asc',page=1,pages=1,total=0,items={},cards={},controls={},focus=0,hover=0,time=0,draft='',search='',editing=''},Library)
@@ -46,9 +36,7 @@ function Library:offset()
   return self.motion and self.motion.VT.y*60 or 0
 end
 function Library:command(...)
-  local args={...}
-  for i,v in ipairs(args) do args[i]=Codec.encode(v) end
-  self.callbacks.command(table.concat(args,'\t'))
+  Codec.command(self.callbacks.command,...)
 end
 function Library:release()
   for _,card in ipairs(self.cards) do
@@ -91,7 +79,7 @@ end
 function Library:sync(raw)
   if not raw or raw==self.raw then return end
   self.raw=raw
-  local lines={}; for line in raw:gmatch('[^\n]+') do lines[#lines+1]=Codec.fields(line) end
+  local lines=Codec.rows(raw)
   local f=lines[1]; if not f or #f<14 then return end
   self.phase,self.busy,self.message=f[2],f[3]=='1',f[4]
   self.query,self.sort=f[6],f[8]
@@ -239,8 +227,8 @@ function Library:update(dt,time,mx,my,reduced)
   if self.motion then self.motion:update(dt,time,false,false,reduced) end
   my=my-self:offset()
   self.time,self.mx,self.my,self.reduced=time,mx,my,reduced
-  if love.filesystem.getInfo('__library.txt') then self:sync(love.filesystem.read('__library.txt')) end
-  if love.filesystem.getInfo('__library_input.txt') then self:input(love.filesystem.read('__library_input.txt')) end
+  self:sync(Mailbox.read('__library.txt'))
+  self:input(Mailbox.read('__library_input.txt'))
   if self.pendingSearch and not self.busy then
     self.searchDelay=self.searchDelay-dt
     if self.searchDelay<=0 then self:command('search',self.pendingSearch); self.pendingSearch=nil end
@@ -284,11 +272,7 @@ function Library:keypressed(key)
     if self.modal then self:closeModal()
     else self.callbacks.home() end
   elseif key=='tab' or key=='right' or key=='down' or key=='left' or key=='up' then
-    local backwards=key=='left' or key=='up' or (key=='tab' and love.keyboard.isDown('lshift','rshift'))
-    for _=1,#self.controls do
-      self.focus=(self.focus-1+(backwards and -1 or 1))%#self.controls+1
-      if not self.controls[self.focus].disabled then break end
-    end
+    self.focus=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,#self.controls,function(i) return self.controls[i].disabled end)
     local b=self.controls[self.focus]; if b then self.callbacks.announce((b.action=='manage' and 'Manage '..self.items[b.card].name) or b.label~='' and b.label or 'Search decks') end
   elseif key=='return' or key=='space' then self:activate(self.focus)
   elseif key=='pageup' or key=='pagedown' then if not self.modal then self:command('page',key=='pageup' and -1 or 1) end end
@@ -301,7 +285,7 @@ function Library:draw(shaders)
   local frameW=p and w-32 or 1032
   local frameX=(w-frameW)/2
   Button.panel(frameX,26,frameW,h-34,{0.525,0.546,0.585,1},2.4)
-  Button.panel(frameX,20,frameW,h-34,{191/255,199/255,213/255,1},2.4)
+  Button.modalFrame(frameX,20,frameW,h-34)
   Button.panel(frameX+4,24,frameW-8,h-42,T.tray,2.4)
   if self.phase=='ready' then
     -- Joker collection row: G.C.BLACK, r=0.1, emboss=0.05; no drop shadow.
@@ -357,7 +341,7 @@ function Library:drawModal()
     local m=self.modal
     g.push(); g.translate(0,m.motion.VT.y*60)
     Button.panel(m.x,m.y+6,m.w,m.h,{0.525,0.546,0.585,1},2.4)
-    Button.panel(m.x,m.y,m.w,m.h,{191/255,199/255,213/255,1},2.4)
+    Button.modalFrame(m.x,m.y,m.w,m.h)
     Button.panel(m.x+4,m.y+4,m.w-8,m.h-8,T.tray,2.4)
     caption(m.mode=='manage' and m.item.name or (m.mode=='create' and 'New ' or m.mode=='delete' and 'Delete ' or 'Rename ')..m.item.kind,36,m.x+20,m.y+20,m.w-40)
     if m.mode=='delete' then

@@ -1,6 +1,6 @@
 local T=require('ui.theme')
 local Button=require('ui.button')
-local Account=require('ui.account')
+local Codec=require('ui.codec')
 local Input={}
 function Input.background(item,editing,disabled,hovered)
   -- create_text_input + G.FUNCS.text_input: hooked colour is 30% darker;
@@ -21,8 +21,8 @@ function Input.draw(item,value,editing,firstUnit,lastUnit,time,disabled,hovered)
   local font=T.font(size)
   local scale=math.min(1,(item.w-20)/math.max(1,font:getWidth(value)))
   g.push(); g.translate(item.x+10,item.y+5); g.scale(scale,1)
-  local first=font:getWidth(Account.prefix(value,firstUnit or 0))
-  local last=font:getWidth(Account.prefix(value,lastUnit or 0))
+  local first=font:getWidth(Codec.utf16Prefix(value,firstUnit or 0))
+  local last=font:getWidth(Codec.utf16Prefix(value,lastUnit or 0))
   if editing and last>first then g.setColor(T.blue); g.rectangle('fill',first,0,last-first,30) end
   T.text(value~='' and value or (item.placeholder or ''),size,0,0,(item.w-20)/scale,
     (disabled or value=='') and T.profile or T.white,'left')

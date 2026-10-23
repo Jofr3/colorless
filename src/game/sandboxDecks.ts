@@ -1,3 +1,4 @@
+import { DECK_SIZE } from "@colorless/engine";
 import type { Card, Deck as SavedDeck } from "@colorless/schema";
 import { ApiError, getDeck } from "../lib/api";
 import { formatById } from "../decks/cards";
@@ -35,7 +36,7 @@ async function judgeSandboxDecks(
   summaries: Deck[],
   current: () => boolean,
 ): Promise<Map<string, Verdict>> {
-  const candidates = summaries.filter((deck) => deck.cardCount === 60);
+  const candidates = summaries.filter((deck) => deck.cardCount === DECK_SIZE);
   const queue = candidates.values();
   const saved = new Map<string, SavedDeck>();
   const verdicts = new Map<string, Verdict>();
@@ -109,7 +110,7 @@ export async function deckLegality(
   current: () => boolean,
 ): Promise<Map<string, boolean>> {
   const legality = new Map<string, boolean>();
-  for (const deck of summaries) if (deck.cardCount !== 60) legality.set(deck.id, false);
+  for (const deck of summaries) if (deck.cardCount !== DECK_SIZE) legality.set(deck.id, false);
   const verdicts = await judgeSandboxDecks(summaries, current);
   for (const [id, verdict] of verdicts) legality.set(id, verdict.valid);
   return legality;

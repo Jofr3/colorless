@@ -1,6 +1,7 @@
 local D=require('ui.card_dimensions')
 local WheelPager=require('ui.wheel_pager')
 local T=require('ui.theme')
+local Controls=require('ui.controls')
 local Button=require('ui.button')
 local Card=require('ui.card')
 local Collection=require('ui.collection_motion')
@@ -12,7 +13,9 @@ local Alert=require('ui.card_alert')
 local Energy=require('ui.energy')
 local PageText=require('ui.page_text')
 local Modal=require('ui.modal')
-local Codec=require('ui.account')
+local Codec=require('ui.codec')
+local Mailbox=require('ui.mailbox')
+local Fit=require('ui.text_fit')
 local Input=require('ui.text_input')
 local g=love.graphics
 local PANEL_Y,PANEL_HEIGHT=95,554
@@ -21,9 +24,9 @@ local deckTypes={{key='all',label='All'},{key='Pokémon',label='Pokemon'},{key='
 local Builder={}; Builder.__index=Builder
 local function caption(text,size,x,y,w,colour,align)
   text=(text or ''):gsub('%c',' ')
-  while size>14 and T.font(size):getWidth(text)>w do size=size-1 end
+  size=Fit.shrink(text,size,14,w)
   if T.font(size):getWidth(text)>w then
-    local out='';for c in text:gmatch('[%z\1-\127\194-\244][\128-\191]*') do
+    local out='';for c in Fit.chars(text) do
       if T.font(size):getWidth(out..'...')>w then break end;out=out..c
     end;text=out..'...'
   end
@@ -31,15 +34,14 @@ local function caption(text,size,x,y,w,colour,align)
 end
 local function frame(x,y,w,h)
   Button.panel(x,y+6,w,h,{0.525,0.546,0.585,1},2.4)
-  Button.panel(x,y,w,h,{191/255,199/255,213/255,1},2.4)
+  Button.modalFrame(x,y,w,h)
   Button.panel(x+4,y+4,w-8,h-8,T.tray,2.4)
 end
 function Builder.new(callbacks)
   return setmetatable({callbacks=callbacks,phase='loading',time=0,hover=0,focus=0,controls={},cards={},deckCards={},deckView='list',items={},deck={},options={},fields={},art={},pageText=PageText.new(),deckPageText=PageText.new(),page=1,pages=1,total=0,count=0,name='',format='standard',message='',saveStatus='',details='',transfer='',deckPage=1,deckType='all',tab='catalog',filterPage=1,editing='',values={},validation='',groups={0,0,0},choices={},optionLabel='',optionPage=1,optionPages=1},Builder)
 end
 function Builder:command(...)
-  local args={...};for i,v in ipairs(args) do args[i]=Codec.encode(v) end
-  self.callbacks.command(table.concat(args,'\t'))
+  Codec.command(self.callbacks.command,...)
 end
 function Builder:open(reduced,id)
   if self.dragCard then self.dragCard.texture:release();self.dragCard=nil end
@@ -167,7 +169,7 @@ function Builder:makeCards(entering)
 end
 function Builder:sync(raw)
   if not raw or raw==self.raw then return end;self.raw=raw
-  local lines={};for line in raw:gmatch('[^\n]+')do lines[#lines+1]=Codec.fields(line)end
+  local lines=Codec.rows(raw)
   local f=lines[1];if not f or #f<17 then return end
   self.phase,self.name,self.format,self.saveStatus,self.message=f[2],f[3],f[4],f[5],f[6]
   self.busy=f[7]=='1';self.page,self.pages,self.total,self.count=tonumber(f[8]),tonumber(f[9]),tonumber(f[10]),tonumber(f[11])
@@ -233,9 +235,7 @@ function Builder:filterCycle(label,value,key,y,count,index,selected,x,width)
   local display=value
   local limit=(centreWidth-12)/(0.4*0.3)
   if T.font(200):getWidth(display)>limit then
-    display='';for char in value:gmatch('[%z\1-\127\194-\244][\128-\191]*')do
-      if T.font(200):getWidth(display..char..'...')>limit then break end;display=display..char
-    end;display=display..'...'
+    display=Fit.ellipsize(value,limit,function(s) return T.font(200):getWidth(s) end)
   end
   text:set(display,self.time)
   self:add(value,x+36,y,centreWidth,38.4,'filter-value',T.red,key,
@@ -419,14 +419,14 @@ function Builder:update(dt,time,mx,my,reduced)
   self.time,self.reduced=time,reduced
   if self.motion then self.motion:update(dt,time,false,false,reduced)end
   my=my-self:offset();self.mx,self.my=mx,my
-  for _,file in ipairs({'__builder.txt','__builder_input.txt','__builder_art.txt','__builder_clipboard.txt'})do
-    if love.filesystem.getInfo(file)then local raw=love.filesystem.read(file)
+  for _,file in ipairs({'__builder.txt','__builder_input.txt',Mailbox.ART,'__builder_clipboard.txt'})do
+    local raw=Mailbox.read(file)
+    if raw then
       if file=='__builder.txt' then self:sync(raw)
       elseif file=='__builder_input.txt' and raw~=self.inputRaw then
         self.inputRaw=raw;local f=Codec.fields(raw);self.editing=f[6]=='input' and f[2] or '';self.values[f[2]]=f[3];self.first,self.last=tonumber(f[4]),tonumber(f[5]);if f[2]=='transfer'then self.transfer=f[3];self.clipboard=nil end
-      elseif file=='__builder_art.txt' and raw~=self.artRaw then
-        self.artRaw=raw;local old=self.art;self.art={}
-        for line in raw:gmatch('[^\n]+')do local f=Codec.fields(line);if #f==2 then self.art[f[1]]=f[2]end end
+      elseif file==Mailbox.ART and raw~=self.artRaw then
+        self.artRaw=raw;local old=self.art;self.art=Mailbox.artMap(raw)
         for _,c in ipairs(self.cards)do if self.art[c.item.id] and old[c.item.id]~=self.art[c.item.id]then c:rebuild()end end
         for _,c in ipairs(self.deckCards)do if self.art[c.item.id] and old[c.item.id]~=self.art[c.item.id]then c:rebuild()end end
         if self.dragCard and self.art[self.dragCard.item.id]~=old[self.dragCard.item.id]then self.dragCard:rebuild()end
@@ -530,9 +530,8 @@ function Builder:keypressed(key)
     self.callbacks.announce(control.label..': '..((self.fields[control.arg] or '')~='' and self.fields[control.arg] or 'Any'))
   elseif key=='escape' then if self.modal then local choices=self.modal.mode=='choices';self:closeModal();if choices then self:openModal('filters')end else self:command('leave')end
   elseif key=='tab' or key=='right' or key=='down' or key=='left' or key=='up' then
-    local back=key=='left' or key=='up' or key=='tab' and love.keyboard.isDown('lshift','rshift')
     if #self.controls==0 then return end
-    repeat self.focus=(self.focus-1+(back and -1 or 1))%#self.controls+1 until not self.controls[self.focus].disabled and not self.controls[self.focus].inert
+    self.focus=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,#self.controls,function(i) return self.controls[i].disabled or self.controls[i].inert end)
     self.callbacks.announce(self.controls[self.focus].label)
   elseif key=='return' or key=='space'then self:activate(self.focus)
   elseif not self.modal and (key=='pagedown' or key=='pageup')then self:command('page',key=='pageup' and -1 or 1)end
@@ -594,7 +593,7 @@ function Builder:drawControlFaces(controls,active)
         end
         base=base+#paragraph+1
       end
-      local first=#Codec.prefix(value,self.first or 0);local last=#Codec.prefix(value,self.last or 0)
+      local first=#Codec.utf16Prefix(value,self.first or 0);local last=#Codec.utf16Prefix(value,self.last or 0)
       local caretLine=1
       for i,line in ipairs(lines)do if last>=line.first then caretLine=i end end
       local visible=math.floor((b.h-20)/25)
@@ -618,9 +617,9 @@ function Builder:drawControlFaces(controls,active)
       end
     elseif b.action~='card' and b.action~='deck-card' then
       local original=b.label;local size=b.fontSize
-      while size>14 and T.font(size):getWidth(b.label)>b.w-16 do size=size-1 end
+      size=Fit.shrink(b.label,size,14,b.w-16)
       if T.font(size):getWidth(b.label)>b.w-16 then
-        local out='';for c in b.label:gmatch('[%z\1-\127\194-\244][\128-\191]*')do if T.font(size):getWidth(out..c..'...')>b.w-16 then break end;out=out..c end;b.label=out..'...'
+        b.label=Fit.ellipsize(b.label,b.w-16,function(s) return T.font(size):getWidth(s) end)
       end
       b.fontSize=size;Button.draw(b,active and not b.disabled and (self.hover==i or self.focus==i),active and self.pressed==i,false,self.width);b.label=original
       if b.icon then

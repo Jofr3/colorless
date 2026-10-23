@@ -6,18 +6,7 @@ import {
   type PokemonRef,
 } from "@colorless/engine";
 import type { Card, RedactedCard, RedactedInPlay, RedactedGame } from "@colorless/schema";
-import { encodeFields } from "./account";
-
-/** m6x11plus has no arrow, middle dot, em dash, minus or ellipsis glyphs; the
-    engine's log and card text use them, so spell them in ASCII for Lua. */
-function pixelText(text: string): string {
-  return text
-    .replace(/\s*→\s*/g, " -> ")
-    .replace(/\s*·\s*/g, ", ")
-    .replace(/\s*—\s*/g, " - ")
-    .replace(/−/g, "-")
-    .replace(/…/g, "...");
-}
+import { decodeFields, encodeFields, pixelText } from "./wire";
 import type { LocalGameSetup } from "../game/localHost";
 import { GAME_OVER_DETAIL } from "../game/projection";
 import { moveToAction } from "../game/moveToAction";
@@ -28,9 +17,111 @@ import { viewLogEntries } from "../game/viewLog";
 import { usedTrainersForTurn } from "../game/usedTrainers";
 import { SimulatorOrder } from "./simulatorOrder";
 import { LUA_ART_SLOTS } from "./artworkCache";
-import { LocalTableSource, type TableSource } from "./tableSource";
+import { LocalTableSource, type HistoryStep, type TableSource } from "./tableSource";
 import { LuaOnlineMatch, onlineGate } from "./onlineTable";
 
+const HISTORY_COMMANDS = new Map<string, HistoryStep>([
+  ["previous", "previousTurn"],
+  ["next", "nextTurn"],
+  ["undoAction", "undoAction"],
+  ["redoAction", "redoAction"],
+  ["undoTurn", "undoTurn"],
+  ["redoTurn", "redoTurn"],
+]);
+
+/** Where a pending Rare Candy lands when hand card `uid` is dropped on
+    `zone`/`index`, or null when that drop is not one of the phase's options. */
+export function rareCandyTarget(
+  phase: RedactedGame["phase"],
+  zone: string | undefined,
+  index: string | undefined,
+  uid: string,
+): PokemonTarget | null {
+  const target: PokemonTarget | null =
+    zone === "active"
+      ? { spot: "active" }
+      : zone === "bench" && Number.isInteger(Number(index))
+        ? { spot: "bench", index: Number(index) }
+        : null;
+  if (!target || phase.kind !== "turn:action") return null;
+  const matches = phase.rareCandy.some(
+    (option) =>
+      option.target.spot === target.spot &&
+      (option.target.spot !== "bench" ||
+        (target.spot === "bench" && option.target.index === target.index)) &&
+      option.stage2.some((e) => e.uid === uid),
+  );
+  return matches ? target : null;
+}
+
+/** The header's outcome key, title and hint for the viewer's current phase. */
+function headerText(
+  v: RedactedGame | null,
+  names: { you: string; opponent: string } | undefined,
+  online: boolean,
+  rareCandyPending: boolean,
+) {
+  const outcome = v?.outcome
+    ? v.outcome.result === "tie"
+      ? "tie"
+      : v.outcome.winner === "you"
+        ? "win"
+        : "loss"
+    : "";
+  let title = v?.outcome
+    ? v.outcome.result === "tie"
+      ? "Draw"
+      : `${v.outcome.winner === "you" ? names?.you : names?.opponent} wins`
+    : v?.phase.kind === "setup:chooseFirst"
+      ? "Choose who goes first"
+      : v?.phase.kind === "setup:place"
+        ? "Place your Pokémon"
+        : v?.phase.kind === "turn:action"
+          ? "Your turn"
+          : "Choose your next move";
+  let hint = v ? (HINTS[v.phase.kind as keyof typeof HINTS] ?? "") : "Choose two decks to start.";
+  if (v?.phase.kind === "setup:drawExtra") hint = "Drawing mulligan bonus cards.";
+  if (v?.phase.kind === "ko:takePrizes")
+    hint = `Take ${v.phase.count} Prize card${v.phase.count === 1 ? "" : "s"}.`;
+  if (v?.phase.kind === "effect:choose" && v.phase.prompt?.note) hint = v.phase.prompt.note;
+  if (v?.phase.kind === "gameOver" && v.outcome?.result === "win")
+    hint = GAME_OVER_DETAIL[v.outcome.reason];
+  if (online && v && names && !v.outcome) {
+    const them = names.opponent;
+    // Online, only a rematch's loser chooses; a first game's order is the coin's.
+    if (v.phase.kind === "setup:chooseFirst" && v.waitingOn !== "you")
+      hint = `${them} lost the last game and is choosing who goes first.`;
+    else if (v.phase.kind === "setup:chooseFirst")
+      hint = "You lost the last game. Choose who goes first.";
+    else if (v.phase.kind === "setup:place" && v.phase.ready.you)
+      hint = `Waiting for ${them} to finish placing.`;
+    else if (v.waitingOn === "opponent") hint = `Waiting for ${them}...`;
+    if (v.phase.kind === "turn:action" && v.activePlayer === "opponent") title = `${them}'s turn`;
+  }
+  if (rareCandyPending) hint = "Drag a Stage 2 onto its Basic Pokemon. Escape cancels Rare Candy.";
+  return { outcome, title, hint };
+}
+
+/** A colour key of frontend/lua/ui/theme.lua; Lua falls back to blue for unknown keys. */
+export type ThemeColour =
+  | "red"
+  | "blue"
+  | "green"
+  | "gold"
+  | "orange"
+  | "paleGreen"
+  | "tray"
+  | "profile"
+  | "ink"
+  | "panel"
+  | "white"
+  | "paper"
+  | "jokerGrey"
+  | "grey"
+  | "textDark"
+  | "money"
+  | "paleGold"
+  | "purple";
 export interface SimOption {
   label: string;
   run: () => void;
@@ -39,7 +130,7 @@ export interface SimOption {
   dimmed?: boolean;
   selected?: boolean;
   card?: RedactedCard;
-  colour?: string;
+  colour?: ThemeColour;
   /** Board/prize menus: the top-card uid or `prize:<index>` Lua highlights. */
   uid?: string;
   /** Sidebar placement: primary (blue, big), danger (red), minor. */
@@ -73,7 +164,7 @@ export interface SimCardAction {
   label: string;
   run: () => void;
   disabled?: boolean;
-  colour?: string;
+  colour?: ThemeColour;
   targetUid?: string;
   group?: string;
   cost?: readonly string[];
@@ -315,7 +406,7 @@ export class LuaSimulator {
     this.open(next.setup);
     this.persist();
   }
-  action(label: string, action: GameAction, colour = "blue"): SimOption {
+  action(label: string, action: GameAction, colour: ThemeColour = "blue"): SimOption {
     return { label, colour, disabled: !this.allowed(action), run: () => this.dispatch(action) };
   }
   private cancelRareCandy() {
@@ -415,7 +506,7 @@ export class LuaSimulator {
       uid: string,
       label: string,
       action: GameAction,
-      colour = "blue",
+      colour: ThemeColour = "blue",
       extra: Partial<SimCardAction> = {},
     ) =>
       push(uid, {
@@ -607,9 +698,7 @@ export class LuaSimulator {
     draw();
     this.emit();
   }
-  history(
-    type: "previousTurn" | "nextTurn" | "undoAction" | "redoAction" | "undoTurn" | "redoTurn",
-  ) {
+  history(type: HistoryStep) {
     const local = this.local;
     if (!local) return;
     if (this.pendingRareCandy) {
@@ -763,288 +852,273 @@ export class LuaSimulator {
     for (const entry of this.menuArt) add(entry);
     this.images([...ordered].slice(0, LUA_ART_SLOTS).map(([id, url]) => ({ id, url })));
   }
+  /** Commands Lua may send while no table is bound. */
+  private readonly anytimeCommands = new Map<string, (args: string[]) => void>([
+    ["menu-page", (args) => this.onMenuPage(args)],
+    ["resume", () => this.route(loadSimulatorSave() ? "simulator" : "sandbox")],
+    ["open", (args) => this.onOpen(args)],
+    ["close", () => this.onClose()],
+  ]);
+  /** Commands that act on the bound table; ignored while inactive. */
+  private readonly tableCommands = new Map<string, (args: string[]) => void>([
+    ["cancelRareCandy", () => this.cancelRareCandy()],
+    ["invoke", (args) => this.onInvoke(args)],
+    ["dismiss", () => this.onDismiss()],
+    ["rematch", () => this.online?.rematch()],
+    ["history", (args) => this.onHistory(args)],
+    ["choosedecks", () => this.onChooseDecks()],
+    ["newgame", () => this.onNewGame()],
+    ["concede", () => this.onConcede()],
+    ["leave", () => this.onLeave()],
+    ["log", () => this.onLog()],
+    ["pile", (args) => this.onPile(args)],
+    ["retreat", (args) => this.onRetreat(args)],
+    ["reorder", (args) => this.onReorder(args)],
+    ["move", (args) => this.onMove(args)],
+  ]);
   command(raw: string) {
-    const [cmd, ...args] = raw.split("\t").map(decodeURIComponent);
-    if (cmd === "menu-page") {
-      this.menuWindow = {
-        menuId: args[0] ?? "",
-        first: Number(args[1]) || 0,
-        size: Number(args[2]) || 0,
-      };
-      this.publishImages();
+    const fields = decodeFields(raw);
+    if (!fields) return;
+    const [cmd = "", ...args] = fields;
+    const anytime = this.anytimeCommands.get(cmd);
+    if (anytime) return anytime(args);
+    if (this.active) this.tableCommands.get(cmd)?.(args);
+  }
+  private onMenuPage(args: string[]) {
+    this.menuWindow = {
+      menuId: args[0] ?? "",
+      first: Number(args[1]) || 0,
+      size: Number(args[2]) || 0,
+    };
+    this.publishImages();
+  }
+  private onOpen(args: string[]) {
+    if (args[0] !== "online") {
+      this.open();
       return;
     }
-    if (cmd === "resume") {
-      this.route(loadSimulatorSave() ? "simulator" : "sandbox");
-      return;
-    }
-    if (cmd === "open") {
-      if (args[0] !== "online") {
-        this.open();
-        return;
-      }
-      // `open\tonline\t<code>`: the lobby's live match, or back to its modal.
-      const code = args[1] ?? "";
-      const source = this.onlineSource(code);
-      if (source) this.bind(source);
-      else {
-        this.release();
-        this.active = false;
-        this.route("online", code, true);
-      }
-      return;
-    }
-    if (cmd === "close") {
+    // `open\tonline\t<code>`: the lobby's live match, or back to its modal.
+    const code = args[1] ?? "";
+    const source = this.onlineSource(code);
+    if (source) this.bind(source);
+    else {
       this.release();
       this.active = false;
-      this.menu = null;
-      this.pendingRareCandy = null;
-      return;
+      this.route("online", code, true);
     }
-    if (!this.active) return;
-    if (cmd === "cancelRareCandy") {
-      this.cancelRareCandy();
+  }
+  private onClose() {
+    this.release();
+    this.active = false;
+    this.menu = null;
+    this.pendingRareCandy = null;
+  }
+  private onInvoke(args: string[]) {
+    if (Number(args[0]) === this.revision) this.handlers.get(args[1] ?? "")?.();
+  }
+  private onDismiss() {
+    if (this.menu?.mandatory) return;
+    this.menu = null;
+    // A decision may have arrived behind the closed menu.
+    if (this.online) this.prompt();
+    this.emit();
+  }
+  private onHistory(args: string[]) {
+    if (!this.local || this.menu) return;
+    const type = HISTORY_COMMANDS.get(args[0] ?? "");
+    if (type) this.history(type);
+  }
+  private onChooseDecks() {
+    if (this.online || this.menu) return;
+    this.choose(
+      "Start new game with different decks?",
+      [
+        {
+          label: "Choose decks",
+          colour: "red",
+          run: () => {
+            clearSimulatorSave();
+            this.route("sandbox");
+          },
+        },
+      ],
+      "",
+      false,
+      "confirm",
+    );
+  }
+  private onNewGame() {
+    if (!this.local || this.menu) return;
+    this.choose(
+      "Start a new game?",
+      [{ label: "New game", colour: "red", run: () => this.restart() }],
+      "",
+      false,
+      "confirm",
+    );
+  }
+  private onConcede() {
+    if (!this.source || this.menu) return;
+    const seat = this.view()?.seat;
+    if (!seat) return;
+    this.choose(
+      this.online ? "Concede the match?" : "Concede the game?",
+      [this.action("Concede", { type: "concede", seat }, "red")],
+      this.online
+        ? "Your opponent wins immediately. This can't be undone."
+        : "Your opponent wins immediately.",
+    );
+  }
+  private onLeave() {
+    // Online the canvas already asked (press again to confirm): bye now.
+    const online = this.online;
+    if (online) {
+      this.release();
+      this.active = false;
+      online.leave();
+    } else this.persist();
+    this.route("home");
+  }
+  private onLog() {
+    if (!this.source) return;
+    const names = this.source.names();
+    const seat = this.view()?.seat;
+    this.choose(
+      "Game log",
+      [],
+      this.source
+        .log()
+        .map((e) =>
+          e.kind === "turn"
+            ? `turn\t\t\tTurn ${e.turn}`
+            : [
+                e.who,
+                e.who === "system" ? "" : e.who === seat ? names.you : names.opponent,
+                e.elapsed,
+                e.segments.map((s) => s.text).join(""),
+              ].join("\t"),
+        )
+        .join("\n"),
+      false,
+      "log",
+    );
+  }
+  private onPile(args: string[]) {
+    if (!this.source || this.menu) return;
+    const v = this.view();
+    if (!v) return;
+    const piles = this.tablePiles(v);
+    const side = args[0] === "opponent" ? piles.opponent : piles.you;
+    this.choose(
+      "",
+      side.discard
+        .slice()
+        .reverse()
+        .map((card) => ({ label: card.name, card, uid: card.id, run: () => {}, disabled: true })),
+      "",
+      false,
+      "pile",
+    );
+  }
+  private onRetreat(args: string[]) {
+    if (!this.source || this.menu) return;
+    const index = Number(args[0]);
+    this.retreat(Number.isInteger(index) && index >= 0 ? index : undefined);
+  }
+  private onReorder(args: string[]) {
+    if (!this.source || this.menu) return;
+    const [zone, uid, index] = args;
+    if (zone !== "hand" && zone !== "bench") return;
+    const src = this.source;
+    const v = this.view();
+    if (!v) return;
+    const seat = v.seat;
+    const cards =
+      zone === "hand"
+        ? v.board.you.hand
+            .filter((c) => c.id !== this.pendingRareCandy)
+            .map((c) => ({ uid: c.id, key: c.id }))
+        : v.board.you.bench.map((c, i) => ({ uid: c.id, key: src.benchKey("you", i) }));
+    const card = cards.find((c) => c.uid === uid);
+    if (!card) return;
+    this.cardOrder.move(
+      seat,
+      zone,
+      cards.map((c) => c.key),
+      card.key,
+      Number(index),
+    );
+    this.message = "";
+    this.emit();
+  }
+  private onMove(args: string[]) {
+    if (!this.source || this.menu) return;
+    const [uid, fromZone, fromIndex, zone, index] = args;
+    if (
+      !uid ||
+      !["hand", "bench", "active"].includes(fromZone ?? "") ||
+      !["active", "bench", "playmat", "stadium"].includes(zone ?? "")
+    )
       return;
-    }
-    if (cmd === "invoke") {
-      if (Number(args[0]) === this.revision) this.handlers.get(args[1] ?? "")?.();
-      return;
-    }
-    if (cmd === "dismiss") {
-      if (!this.menu?.mandatory) {
-        this.menu = null;
-        // A decision may have arrived behind the closed menu.
-        if (this.online) this.prompt();
+    const src = this.source;
+    const v = this.view();
+    if (!v) return;
+    const phase = v.phase;
+    if (this.pendingRareCandy) {
+      const target = fromZone === "hand" ? rareCandyTarget(phase, zone, index, uid) : null;
+      if (target) {
+        this.dispatch({
+          type: "rareCandy",
+          seat: v.seat,
+          uid: this.pendingRareCandy,
+          target,
+          evolutionUid: uid,
+        });
+      } else {
+        this.message = "Drag a matching Stage 2 onto its Basic Pokemon, or cancel Rare Candy.";
         this.emit();
       }
       return;
     }
-    if (cmd === "rematch") {
-      this.online?.rematch();
-      return;
-    }
-    if (cmd === "history" && this.local && !this.menu) {
-      const kinds = {
-        previous: "previousTurn",
-        next: "nextTurn",
-        undoAction: "undoAction",
-        redoAction: "redoAction",
-        undoTurn: "undoTurn",
-        redoTurn: "redoTurn",
-      } as const;
-      const type = kinds[args[0] as keyof typeof kinds];
-      if (type) this.history(type);
-      return;
-    }
-    if (cmd === "choosedecks" && !this.online && !this.menu) {
-      this.choose(
-        "Start new game with different decks?",
-        [
-          {
-            label: "Choose decks",
-            colour: "red",
-            run: () => {
-              clearSimulatorSave();
-              this.route("sandbox");
-            },
-          },
-        ],
-        "",
-        false,
-        "confirm",
-      );
-      return;
-    }
-    if (cmd === "newgame" && this.local && !this.menu) {
-      this.choose(
-        "Start a new game?",
-        [{ label: "New game", colour: "red", run: () => this.restart() }],
-        "",
-        false,
-        "confirm",
-      );
-      return;
-    }
-    if (cmd === "concede" && this.source && !this.menu) {
-      const seat = this.view()?.seat;
-      if (!seat) return;
-      this.choose(
-        this.online ? "Concede the match?" : "Concede the game?",
-        [this.action("Concede", { type: "concede", seat }, "red")],
-        this.online
-          ? "Your opponent wins immediately. This can't be undone."
-          : "Your opponent wins immediately.",
-      );
-      return;
-    }
-    if (cmd === "leave") {
-      // Online the canvas already asked (press again to confirm): bye now.
-      const online = this.online;
-      if (online) {
-        this.release();
-        this.active = false;
-        online.leave();
-      } else this.persist();
-      this.route("home");
-      return;
-    }
-    if (cmd === "log" && this.source) {
-      const names = this.source.names();
-      const seat = this.view()?.seat;
-      this.choose(
-        "Game log",
-        [],
-        this.source
-          .log()
-          .map((e) =>
-            e.kind === "turn"
-              ? `turn\t\t\tTurn ${e.turn}`
-              : [
-                  e.who,
-                  e.who === "system" ? "" : e.who === seat ? names.you : names.opponent,
-                  e.elapsed,
-                  e.segments.map((s) => s.text).join(""),
-                ].join("\t"),
-          )
-          .join("\n"),
-        false,
-        "log",
-      );
-      return;
-    }
-    if (cmd === "pile" && this.source && !this.menu) {
-      const v = this.view();
-      if (!v) return;
-      const piles = this.tablePiles(v);
-      const side = args[0] === "opponent" ? piles.opponent : piles.you;
-      this.choose(
-        "",
-        side.discard
-          .slice()
-          .reverse()
-          .map((card) => ({ label: card.name, card, uid: card.id, run: () => {}, disabled: true })),
-        "",
-        false,
-        "pile",
-      );
-      return;
-    }
-    if (cmd === "retreat" && this.source && !this.menu) {
-      const index = Number(args[0]);
-      this.retreat(Number.isInteger(index) && index >= 0 ? index : undefined);
-      return;
-    }
-    if (cmd === "reorder" && this.source && !this.menu) {
-      const [zone, uid, index] = args;
-      if (zone !== "hand" && zone !== "bench") return;
-      const src = this.source;
-      const v = this.view();
-      if (!v) return;
-      const seat = v.seat;
-      const cards =
-        zone === "hand"
-          ? v.board.you.hand
-              .filter((c) => c.id !== this.pendingRareCandy)
-              .map((c) => ({ uid: c.id, key: c.id }))
-          : v.board.you.bench.map((c, i) => ({ uid: c.id, key: src.benchKey("you", i) }));
-      const card = cards.find((c) => c.uid === uid);
-      if (!card) return;
-      this.cardOrder.move(
-        seat,
-        zone,
-        cards.map((c) => c.key),
-        card.key,
-        Number(index),
-      );
-      this.message = "";
+    const candy =
+      phase.kind === "turn:action"
+        ? phase.trainers.find((t) => t.uid === uid && t.rareCandy)
+        : undefined;
+    if (fromZone === "hand" && zone === "playmat" && candy) {
+      if (candy.disabled) this.message = candy.reason ?? "No valid Rare Candy evolution right now.";
+      else {
+        this.pendingRareCandy = uid;
+        this.message = "";
+      }
       this.emit();
       return;
     }
-    if (cmd === "move" && this.source && !this.menu) {
-      const [uid, fromZone, fromIndex, zone, index] = args;
-      if (
-        !uid ||
-        !["hand", "bench", "active"].includes(fromZone ?? "") ||
-        !["active", "bench", "playmat", "stadium"].includes(zone ?? "")
-      )
-        return;
-      const src = this.source;
-      const v = this.view();
-      if (!v) return;
-      const phase = v.phase;
-      if (this.pendingRareCandy) {
-        const target: PokemonTarget | null =
-          zone === "active"
-            ? { spot: "active" }
-            : zone === "bench" && Number.isInteger(Number(index))
-              ? { spot: "bench", index: Number(index) }
-              : null;
-        if (
-          fromZone === "hand" &&
-          target &&
-          phase.kind === "turn:action" &&
-          phase.rareCandy.some(
-            (option) =>
-              option.target.spot === target.spot &&
-              (option.target.spot !== "bench" ||
-                (target.spot === "bench" && option.target.index === target.index)) &&
-              option.stage2.some((e) => e.uid === uid),
-          )
-        ) {
-          this.dispatch({
-            type: "rareCandy",
-            seat: v.seat,
-            uid: this.pendingRareCandy,
-            target,
-            evolutionUid: uid,
-          });
-        } else {
-          this.message = "Drag a matching Stage 2 onto its Basic Pokemon, or cancel Rare Candy.";
-          this.emit();
-        }
-        return;
-      }
-      const candy =
-        phase.kind === "turn:action"
-          ? phase.trainers.find((t) => t.uid === uid && t.rareCandy)
-          : undefined;
-      if (fromZone === "hand" && zone === "playmat" && candy) {
-        if (candy.disabled)
-          this.message = candy.reason ?? "No valid Rare Candy evolution right now.";
-        else {
-          this.pendingRareCandy = uid;
-          this.message = "";
-        }
-        this.emit();
-        return;
-      }
-      const action = moveToAction(
-        {
-          cardId: uid,
-          from: {
-            owner: "you",
-            zone: fromZone as "hand" | "bench" | "active",
-            index: Number(fromIndex),
-          },
-          to:
-            zone === "stadium"
-              ? { owner: "global", zone: "stadium" }
-              : zone === "active" || zone === "playmat"
-                ? { owner: "you", zone }
-                : { owner: "you", zone: "bench", index: Number(index) },
+    const action = moveToAction(
+      {
+        cardId: uid,
+        from: {
+          owner: "you",
+          zone: fromZone as "hand" | "bench" | "active",
+          index: Number(fromIndex),
         },
-        {
-          board: src.board(),
-          viewerSeat: v.seat,
-          phaseKind: phase.kind,
-          isViewerTurn: phase.kind === "turn:action" && v.activePlayer === "you",
-        },
-      );
-      if (action) this.dispatch(action);
-      else if (fromZone === "hand") {
-        this.message = "That card cannot go there right now.";
-        this.emit();
-      }
+        to:
+          zone === "stadium"
+            ? { owner: "global", zone: "stadium" }
+            : zone === "active" || zone === "playmat"
+              ? { owner: "you", zone }
+              : { owner: "you", zone: "bench", index: Number(index) },
+      },
+      {
+        board: src.board(),
+        viewerSeat: v.seat,
+        phaseKind: phase.kind,
+        isViewerTurn: phase.kind === "turn:action" && v.activePlayer === "you",
+      },
+    );
+    if (action) this.dispatch(action);
+    else if (fromZone === "hand") {
+      this.message = "That card cannot go there right now.";
+      this.emit();
     }
   }
   private infoRow(card: Card): string {
@@ -1128,45 +1202,7 @@ export class LuaSimulator {
         if (c && c.cardId !== "hidden" && c.cardId !== "empty") infoIds.add(c.cardId);
       } else noteArt(o.card);
     };
-    const outcome = v?.outcome
-      ? v.outcome.result === "tie"
-        ? "tie"
-        : v.outcome.winner === "you"
-          ? "win"
-          : "loss"
-      : "";
-    let title = v?.outcome
-      ? v.outcome.result === "tie"
-        ? "Draw"
-        : `${v.outcome.winner === "you" ? names?.you : names?.opponent} wins`
-      : v?.phase.kind === "setup:chooseFirst"
-        ? "Choose who goes first"
-        : v?.phase.kind === "setup:place"
-          ? "Place your Pokémon"
-          : v?.phase.kind === "turn:action"
-            ? "Your turn"
-            : "Choose your next move";
-    let hint = v ? (HINTS[v.phase.kind as keyof typeof HINTS] ?? "") : "Choose two decks to start.";
-    if (v?.phase.kind === "setup:drawExtra") hint = "Drawing mulligan bonus cards.";
-    if (v?.phase.kind === "ko:takePrizes")
-      hint = `Take ${v.phase.count} Prize card${v.phase.count === 1 ? "" : "s"}.`;
-    if (v?.phase.kind === "effect:choose" && v.phase.prompt?.note) hint = v.phase.prompt.note;
-    if (v?.phase.kind === "gameOver" && v.outcome?.result === "win")
-      hint = GAME_OVER_DETAIL[v.outcome.reason];
-    if (this.online && v && names && !v.outcome) {
-      const them = names.opponent;
-      // Online, only a rematch's loser chooses; a first game's order is the coin's.
-      if (v.phase.kind === "setup:chooseFirst" && v.waitingOn !== "you")
-        hint = `${them} lost the last game and is choosing who goes first.`;
-      else if (v.phase.kind === "setup:chooseFirst")
-        hint = "You lost the last game. Choose who goes first.";
-      else if (v.phase.kind === "setup:place" && v.phase.ready.you)
-        hint = `Waiting for ${them} to finish placing.`;
-      else if (v.waitingOn === "opponent") hint = `Waiting for ${them}...`;
-      if (v.phase.kind === "turn:action" && v.activePlayer === "opponent") title = `${them}'s turn`;
-    }
-    if (this.pendingRareCandy)
-      hint = "Drag a Stage 2 onto its Basic Pokemon. Escape cancels Rare Candy.";
+    const { outcome, title, hint } = headerText(v, names, !!this.online, !!this.pendingRareCandy);
     const allow = src?.allowances();
     const turns = this.local?.turns();
     row(

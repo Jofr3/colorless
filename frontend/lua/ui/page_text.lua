@@ -1,6 +1,7 @@
 -- create_option_cycle's DynaText subset: pop_in_rate=8, reset_pop_in=true,
 -- float=true, bump=true, silent=true, shadow=true, scale=0.5.
 local T=require('ui.theme')
+local Codec=require('ui.codec')
 local Text={}
 Text.__index=Text
 local g=love.graphics
@@ -24,7 +25,7 @@ function Text:draw(time,reduced,x,y,w,h,roomWidth,textScale)
   local factor=scale*0.1/20*unit
   local letters={}
   local width=0
-  for char in self.value:gmatch('[%z\1-\127\194-\244][\128-\191]*') do
+  for char in self.value:gmatch(Codec.UTF8_CHAR) do
     local cw=font:getWidth(char)*factor
     letters[#letters+1]={char=char,w=cw,rawWidth=font:getWidth(char)}
     width=width+cw

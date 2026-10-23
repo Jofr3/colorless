@@ -89,7 +89,7 @@ assert(reduced:update(1/60) and calls==1);reduced:update(1/60);assert(calls==1)
 -- A selected cache file may be evicted during the covered scene swap.
 -- The image must survive both the flip and subsequent viewport changes.
 local exists,loads=true,0
-love.filesystem={getInfo=function(path)return path=='__builder_art.txt' or (path=='cached.png' and exists)end,
+love.filesystem={getInfo=function(path)return path=='__art.txt' or (path=='cached.png' and exists)end,
   read=function()return '2\ncached-card\tcached.png' end}
 love.image={newImageData=function()error('No pixels in this stub')end}
 local originalImage=love.graphics.newImage

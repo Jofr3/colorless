@@ -6,10 +6,13 @@ local WheelPager=require('ui.wheel_pager')
 -- with a create_option_cycle filter and an
 -- attention_text countdown. src/lua/online.ts owns the socket.
 local T=require('ui.theme')
+local Controls=require('ui.controls')
 local Button=require('ui.button')
 local Modal=require('ui.modal')
 local Motion=require('ui.motion')
-local Codec=require('ui.account')
+local Codec=require('ui.codec')
+local Mailbox=require('ui.mailbox')
+local Fit=require('ui.text_fit')
 local Input=require('ui.text_input')
 local Dyna=require('ui.dynatext')
 local Fx=require('ui.sim_fx')
@@ -21,7 +24,6 @@ local g=love.graphics
 local Online={}
 Online.__index=Online
 local ALPHABET='ABCDEFGHJKMNPQRSTUVWXYZ23456789'
-local GREY={95/255,115/255,119/255,1}
 local heights={menu=540,joining=420,waiting=540,starting=420}
 local info={
   invalid={'Invalid lobby code',"That code doesn't look right. Head back and try again."},
@@ -37,19 +39,6 @@ local filters={{'All decks'},{'Standard legal','standard',true},{'Not Standard l
 local function darken(c,t) return {c[1]*(1-t),c[2]*(1-t),c[3]*(1-t),c[4] or 1} end
 local function mix(a,b,t) return {a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t,a[3]+(b[3]-a[3])*t,1} end
 local function spell(code) return (code:gsub('.','%0 '):gsub('%s+$','')) end
-local function fitted(text,size,width)
-  text=text:gsub('%c',' ')
-  while size>14 and T.font(size):getWidth(text)>width do size=size-1 end
-  if T.font(size):getWidth(text)>width then
-    local result=''
-    for char in text:gmatch('[%z\1-\127\194-\244][\128-\191]*') do
-      if T.font(size):getWidth(result..char..'...')>width then break end
-      result=result..char
-    end
-    text=result..'...'
-  end
-  return text,size
-end
 -- Mirrors normalizeLobbyCode: upper-case, drop look-alikes, cap at four.
 function Online.normalize(raw)
   local out=''
@@ -69,8 +58,7 @@ function Online.new(callbacks)
   return self
 end
 function Online:command(...)
-  local fields={...};for i,v in ipairs(fields) do fields[i]=Codec.encode(v) end
-  self.callbacks.command(table.concat(fields,'\t'))
+  Codec.command(self.callbacks.command,...)
 end
 function Online:offset() return self.motion.VT.y*60 end
 function Online:open(reduced,code)
@@ -300,7 +288,7 @@ end
 function Online:sync(raw)
   if not raw or raw==self.raw then return end
   self.raw=raw
-  local rows={};for line in raw:gmatch('[^\n]+') do rows[#rows+1]=Codec.fields(line) end
+  local rows=Codec.rows(raw)
   local f=rows[1];if not f or #f<14 then return end
   local was={step=self.step,seats=self.seats,status=self.status,message=self.message,notice=self.notice,
     countdown=self.countdown,deckPhase=self.deckPhase}
@@ -406,8 +394,8 @@ end
 function Online:update(dt,time,mx,my,reduced)
   self.time,self.reduced=time,reduced
   self.markerTime=reduced and 12 or time
-  if love.filesystem.getInfo('__online.txt') then self:sync(love.filesystem.read('__online.txt')) end
-  if love.filesystem.getInfo('__online_input.txt') then self:input(love.filesystem.read('__online_input.txt')) end
+  self:sync(Mailbox.read('__online.txt'))
+  self:input(Mailbox.read('__online_input.txt'))
   self.motion:update(dt,time,false,false,reduced)
   self.mx,self.my=mx,my-self:offset()
   self.hover,self.hoverPart=self:hit(mx,my,true)
@@ -504,11 +492,7 @@ function Online:keypressed(key)
   if (key=='left' or key=='right') and item and item.kind=='cycle' then self:activate(self.focus,key=='left' and -1 or 1)
   elseif (key=='left' or key=='right') and self.step=='menu' then self:activate(self.tab==1 and 2 or 1)
   elseif key=='tab' or key=='up' or key=='down' or key=='left' or key=='right' then
-    local direction=(key=='up' or key=='left' or (key=='tab' and love.keyboard.isDown('lshift','rshift'))) and -1 or 1
-    for _=1,#self.items do
-      self.focus=(self.focus-1+direction)%#self.items+1
-      if not self.items[self.focus].disabled then break end
-    end
+    self.focus=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,#self.items,function(i) return self.items[i].disabled end)
     self.callbacks.announce(self:describe(self.items[self.focus]))
   elseif key=='pageup' or key=='pagedown' then self:changePage(key=='pageup' and -1 or 1)
   elseif key=='return' or key=='space' then self:activate(self.focus)
@@ -535,13 +519,13 @@ function Online:drawCode(item,hovered)
     T.text(item.placeholder,40,item.x,top,item.w,T.profile)
   else
     if editing then
-      local first,last=font:getWidth(Codec.prefix(value,self.first or 0)),font:getWidth(Codec.prefix(value,self.last or 0))
+      local first,last=font:getWidth(Codec.utf16Prefix(value,self.first or 0)),font:getWidth(Codec.utf16Prefix(value,self.last or 0))
       if last>first then g.setColor(T.blue);g.rectangle('fill',left+first,top,last-first,font:getHeight()) end
     end
     T.text(value,40,left,top,font:getWidth(value)+8,T.white,'left')
   end
   if editing and math.floor(self.time*2)%2==0 then
-    g.setColor(T.white);g.rectangle('fill',left+font:getWidth(Codec.prefix(value,self.last or #value)),top+4,3,font:getHeight()-8)
+    g.setColor(T.white);g.rectangle('fill',left+font:getWidth(Codec.utf16Prefix(value,self.last or #value)),top+4,3,font:getHeight()-8)
   end
 end
 -- Settings' create_option_cycle with five pips.
@@ -583,10 +567,10 @@ function Online:drawSeat(tag)
   g.setLineWidth(2);Button.outline(p.x+12,p.y+12,bw,bh,colour)
   Dyna.static(seat.present and seat.name or 'Waiting for opponent...',0.45,p.x+20,p.y+12,bw-16,bh,T.white,{fit=true,roomWidth=self.width})
   local ry=p.y+bh+22
-  Button.panel(p.x+16,ry+7,12,12,seat.present and seat.connected and colour or GREY,0.9)
+  Button.panel(p.x+16,ry+7,12,12,seat.present and seat.connected and colour or T.grey,0.9)
   T.text(tag=='you' and 'You' or 'Opponent',24,p.x+36,ry,160,T.white,'left')
   -- The seat state is coloured text: gold choosing, green ready.
-  local label,tint='Waiting',mix(GREY,T.white,0.4)
+  local label,tint='Waiting',mix(T.grey,T.white,0.4)
   if seat.present and not seat.connected then label,tint='Away',T.red
   elseif seat.present and seat.ready then label,tint='Ready',T.green
   elseif seat.present then label,tint='Choosing deck',T.gold end
@@ -613,7 +597,7 @@ function Online:drawDeck(card,chosen)
     Button.outline(left,titleY-5,right-left,bottom-titleY+10,T.white,1.2)
     g.pop()
   end
-  local text,size=fitted(card.item.name,22,titleWidth)
+  local text,size=Fit.fit(card.item.name,22,titleWidth)
   T.text(text,size,titleX,titleY,titleWidth,T.white)
 end
 function Online:drawPicker()
@@ -637,7 +621,7 @@ function Online:draw()
   if not x then return end
   g.push();g.translate(0,self:offset())
   Button.panel(x,y+6,w,h,{0.525,0.546,0.585,1},2.4)
-  Button.panel(x,y,w,h,{191/255,199/255,213/255,1},2.4)
+  Button.modalFrame(x,y,w,h)
   Button.panel(x+4,y+4,w-8,h-8,T.tray,2.4)
   local step,d=self.step,self.dyna
   if self.link=='connecting' and (step=='waiting' or step=='versus' or step=='countdown') then
@@ -646,7 +630,7 @@ function Online:draw()
   if self.picker then self:drawPicker()
   elseif step=='menu' then
     if self.tab==1 then T.text('Get a code to share, then wait for your opponent to join.',26,x+48,y+118,w-96,T.paper) end
-    if self.message~='' then local text,size=fitted(self.message,20,w-48);T.text(text,size,x+24,y+300,w-48,T.red) end
+    if self.message~='' then local text,size=Fit.fit(self.message,20,w-48);T.text(text,size,x+24,y+300,w-48,T.red) end
     if self.account=='anonymous' then T.text('Sign in to play with your decks.',20,x+24,y+h-148,w-48,T.white) end
   elseif step=='joining' then
     d.title:draw(x+w/2,y+130,self.width)
@@ -663,7 +647,7 @@ function Online:draw()
     self:drawSeat('opponent');self:drawSeat('you')
     if step=='versus' then d.vs:draw(self.vs.x,self.vs.y,self.width) end
     local pad,px=self.pad,self.padX
-    if self.message~='' then local text,size=fitted(self.message,20,w-2*px);T.text(text,size,x+px,y+h-pad-78,w-2*px,T.red) end
+    if self.message~='' then local text,size=Fit.fit(self.message,20,w-2*px);T.text(text,size,x+px,y+h-pad-78,w-2*px,T.red) end
   elseif step=='starting' then
     d.title:draw(x+w/2,y+130,self.width)
     T.text('Starting the match...',26,x+24,y+196,w-48,T.paper)

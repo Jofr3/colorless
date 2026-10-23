@@ -1,5 +1,5 @@
 import { engineVersion, type GameState } from "@colorless/engine";
-import { readPersisted, writePersisted } from "../lib/persistedState";
+import { readPersisted, removePersisted, writePersisted } from "../lib/persistedState";
 import { projectGameState } from "./projection";
 import type { LocalGameSetup, LocalTurnSnapshot } from "./localHost";
 
@@ -35,11 +35,7 @@ export function saveSimulator(snapshot: LocalGameSetup): void {
 }
 
 export function clearSimulatorSave(): void {
-  try {
-    localStorage.removeItem(SIMULATOR_SAVE_KEY);
-  } catch {
-    // Storage may be unavailable; starting a new game must still work.
-  }
+  removePersisted(SIMULATOR_SAVE_KEY);
 }
 
 export function loadSimulatorSave(): LocalGameSetup | null {

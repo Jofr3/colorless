@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { json, stubFetch } from "../test/fetchStub";
 import { cardBrief } from "../test/fixtures";
 import { clearCardPoolCache } from "../game/cardPool";
-import { encodeFields } from "./account";
+import { encodeFields } from "./wire";
 import { LuaLibrary } from "./library";
 
 const decks = [

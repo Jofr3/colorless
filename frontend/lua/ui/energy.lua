@@ -2,6 +2,7 @@
 -- Lua. Pips are used on card popups, under in-play
 -- Pokémon for attached Energy, and inside attack buttons for costs.
 local T=require('ui.theme')
+local Codec=require('ui.codec')
 local g=love.graphics
 local Energy={}
 local GLYPH_INK={0.025,0.035,0.04,1}
@@ -117,12 +118,5 @@ function Energy.row(types,x,y,r,gap,alpha,align)
   for i,kind in ipairs(types) do Energy.pip(start+(i-1)*step,y,r,kind,alpha) end
   return width
 end
-function Energy.split(csv)
-  local list={}
-  for part in tostring(csv or ''):gmatch('[^,]+') do
-    part=part:match('^%s*(.-)%s*$')
-    if part~='' then list[#list+1]=part end
-  end
-  return list
-end
+Energy.split=Codec.list
 return Energy

@@ -21,8 +21,10 @@ import {
   stakeIdentity,
 } from "../online/session";
 import { type PlayableDeck, playableDecks } from "../game/sandboxDecks";
-import { encodeFields } from "./account";
+import { decodeFields, encodeFields } from "./wire";
 import { type CardPool, LuaOnlineMatch } from "./onlineTable";
+import { reportError } from "../lib/reportError";
+import type { AccountStatus } from "./account";
 
 export type OnlineStep =
   | "menu"
@@ -202,7 +204,7 @@ export class LuaOnline {
     );
   }
 
-  session(status: string, id: string) {
+  session(status: AccountStatus, id: string) {
     const account =
       status === "authenticated" ? status : status === "loading" ? status : "anonymous";
     const user = account === "authenticated" ? id : "";
@@ -230,7 +232,9 @@ export class LuaOnline {
   }
 
   async command(raw: string) {
-    const [action, a] = raw.split("\t").map(decodeURIComponent);
+    const fields = decodeFields(raw);
+    if (!fields) return;
+    const [action, a] = fields;
     if (action === "open") {
       this.surface = "modal";
       this.routed = "";
@@ -252,7 +256,8 @@ export class LuaOnline {
       let code = "";
       try {
         code = await createLobbyCode();
-      } catch {
+      } catch (error) {
+        reportError("create lobby code", error);
         if (op === this.op)
           this.message = "Couldn't reach the lobby server. Try again in a moment.";
       }

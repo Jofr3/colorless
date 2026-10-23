@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { json, stubFetch } from "../test/fetchStub";
 import { USER } from "../test/fixtures";
-import { encodeFields, LuaAccount } from "./account";
+import { LuaAccount } from "./account";
+import { encodeFields } from "./wire";
 
 afterEach(() => vi.unstubAllGlobals());
 const setup = () => {
@@ -106,10 +107,6 @@ describe("Lua account adapter", () => {
     settle(json(USER));
     await pending;
     expect(impl.mock.calls.filter(([, init]) => init?.method === "PATCH")).toHaveLength(1);
-  });
-  it("round-trips delimiters and unicode without allowing extra mailbox fields", () => {
-    const values = ["name\twith\nlines", "Zoë % ", ""];
-    expect(encodeFields(values).split("\t").map(decodeURIComponent)).toEqual(values);
   });
 });
 

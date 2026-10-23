@@ -1,3 +1,5 @@
+import { reportError } from "../lib/reportError";
+
 /** Compressed, already resized PNGs live on disk; only metadata is scanned
  * when choosing a transition. No bulk decoding or WASM preload is needed. */
 interface Entry {
@@ -58,7 +60,8 @@ export class ArtworkCache {
           settled = true;
           resolve(null);
         };
-      } catch {
+      } catch (error) {
+        reportError("open artwork cache", error);
         resolve(null);
       }
     });
@@ -82,7 +85,8 @@ export class ArtworkCache {
         const result = await work(tx);
         await completed;
         return result;
-      } catch {
+      } catch (error) {
+        reportError("artwork cache transaction", error);
         try {
           tx.abort();
         } catch {
@@ -91,7 +95,8 @@ export class ArtworkCache {
         await completed.catch(() => {});
         return null;
       }
-    } catch {
+    } catch (error) {
+      reportError("artwork cache transaction", error);
       return null;
     }
   }

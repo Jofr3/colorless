@@ -7,6 +7,8 @@ T.orange, T.paleGreen, T.tray = hex('FDA200'), hex('56A887'), hex('4F6367')
 -- Profile button: mix_colours(WHITE, GREY, 0.2).
 T.profile = {0.2+0.8*95/255,0.2+0.8*115/255,0.2+0.8*119/255,1}
 T.ink, T.panel, T.white, T.paper = hex('1E2B2D'), hex('374244'), hex('FFFFFF'), hex('F0EAD6')
+T.jokerGrey, T.grey, T.textDark = hex('BFC7D5'), hex('5F7377'), hex('4F6367')
+T.money, T.paleGold, T.purple = hex('F3B958'), hex('EAC058'), hex('8867A5')
 T.fonts = {}
 function T.font(size)
   if not T.fonts[size] then

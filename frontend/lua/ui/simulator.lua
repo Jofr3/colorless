@@ -6,6 +6,7 @@ local D=require('ui.card_dimensions')
 -- juice for damage and prizes, and generic-options overlays for prompts.
 -- The browser host (LuaSimulator) owns the rules; Lua owns everything seen.
 local T=require('ui.theme')
+local Controls=require('ui.controls')
 local Button=require('ui.button')
 local Card=require('ui.card')
 local CardFrame=require('ui.card_frame')
@@ -13,7 +14,8 @@ local Motion=require('ui.motion')
 local Dissolve=require('ui.dissolve')
 local Pile=require('ui.deck_pile')
 local Library=require('ui.library')
-local Codec=require('ui.account')
+local Codec=require('ui.codec')
+local Mailbox=require('ui.mailbox')
 local Modal=require('ui.modal')
 local Dyna=require('ui.dynatext')
 local Energy=require('ui.energy')
@@ -25,16 +27,8 @@ local Fx=require('ui.sim_fx')
 local Popup=require('ui.popup')
 local Simulator={};Simulator.__index=Simulator
 local g=love.graphics
-local MONEY={243/255,185/255,88/255,1}
-local PURPLE={136/255,103/255,165/255,1}
-local CHANCE={75/255,194/255,146/255,1}
 local STATUS_ROTATION={asleep=-math.pi/2,paralyzed=math.pi/2,confused=math.pi}
 local function prefix(owner) return owner=='opponent' and 'opp_' or owner=='global' and '' or 'you_' end
-local function fieldsOf(raw)
-  local rows={}
-  for line in raw:gmatch('[^\n]+') do rows[#rows+1]=Codec.fields(line) end
-  return rows
-end
 function Simulator.new(callbacks)
   local self=setmetatable({callbacks=callbacks,phase='empty',items={},sides={},info={},actions={},cardActions={},cards={},byUid={},ghosts={},piles={},art={},controls={},time=0,focus=0,hover=0,
     message='',title='',hint='',outcome='',outcomeDetail='',gamePhase='',turn=0,turnIndex=0,turnCount=0,waiting='',activePlayer='',viewerSeat='',allow={},
@@ -44,8 +38,7 @@ function Simulator.new(callbacks)
   return self
 end
 function Simulator:command(...)
-  local fields={...};for i,v in ipairs(fields) do fields[i]=Codec.encode(tostring(v)) end
-  self.callbacks.command(table.concat(fields,'\t'))
+  Codec.command(self.callbacks.command,...)
 end
 -- `mode` 'online' binds the lobby's live match for `code`; an internal reopen
 -- (skipCommand, a new matchId) keeps the table's mode.
@@ -185,7 +178,7 @@ end
 function Simulator:beginKoPrizes()
   local p=self.koPresentation
   p.prizes={};p.prizeStart=self.time
-  local rows=fieldsOf(p.raw)
+  local rows=Codec.rows(p.raw)
   local flipped=rows[1][14]~=self.viewerSeat
   -- The destination snapshot may already face the next player. Map its
   -- public pile counts back onto the table that is still being presented.
@@ -289,7 +282,7 @@ function Simulator:sync(raw,finishKo)
   if self.wipeRaw then self.wipeRaw=raw;return end
   local pending=self.koPresentation
   if (pending and raw==pending.raw) or (not pending and raw==self.raw) then return end
-  local rows=fieldsOf(raw)
+  local rows=Codec.rows(raw)
   local f=rows[1];if not f then return end
   -- A same-deck restart is a fresh table, even though card UIDs are reused.
   if f[21] and f[21]~='' then
@@ -378,7 +371,7 @@ function Simulator:sync(raw,finishKo)
       -- Lifecycle: mode, spectating, away name and forfeit ms, flags, allow.
       if (r[2] or '')~='' then self.mode=r[2] end
       away={name=r[4] or '',ms=r[5] or ''}
-      self.flags={};for _,flag in ipairs(Energy.split(r[6])) do self.flags[flag]=true end
+      self.flags={};for _,flag in ipairs(Codec.list(r[6])) do self.flags[flag]=true end
       self.allow.partial=r[7]=='partial'
     elseif r[1]=='I' then
       self.info[r[2]]={category=r[3] or '',trainerType=r[4] or '',stage=r[5] or '',hp=r[6] or '',types=r[7] or '',retreat=r[8] or '',weakness=r[9] or '',resistance=r[10] or '',effect=r[11] or '',abilities=r[12] or '',attacks=r[13] or '',energyType=r[14] or '',name=r[15] or ''}
@@ -639,7 +632,7 @@ function Simulator:placeCards(resize,previous)
       c.fan=item.zone=='hand' and (item.displayIndex-(n-1)/2)/n or nil
       c.lift=0;c.dragging=false
       local statusRotation=0
-      for _,s in ipairs(Energy.split(item.status)) do statusRotation=STATUS_ROTATION[s] or statusRotation end
+      for _,s in ipairs(Codec.list(item.status)) do statusRotation=STATUS_ROTATION[s] or statusRotation end
       c.statusRotation=statusRotation
       c.motion.T.r=rotation+statusRotation
       c.zoneKey=item.owner..'_'..item.zone
@@ -843,7 +836,7 @@ function Simulator:react(previous)
       elseif item.damage<was.damage then
         local amount=was.damage-item.damage
         fx:after(delay,function()
-          fx:attention({text='+'..amount,scale=0.8,colour=T.white,backdrop=CHANCE,follow=function() return c.x,c.y end,offsetY=-0.15*D.H*c.baseScale,hold=0.7,sound='chips1'})
+          fx:attention({text='+'..amount,scale=0.8,colour=T.white,backdrop=T.green,follow=function() return c.x,c.y end,offsetY=-0.15*D.H*c.baseScale,hold=0.7,sound='chips1'})
           if not transferred then c:juiceUp(self.time,0.3,0.05,self.reduced) end
         end)
         delay=0.3
@@ -851,7 +844,7 @@ function Simulator:react(previous)
       if item.status~=was.status and item.status~='' then
         local label=item.status:gsub('^%l',string.upper):gsub(',%s*',' + ')
         fx:after(delay,function()
-          fx:attention({text=label,scale=0.6,colour=T.white,backdrop=PURPLE,follow=function() return c.x,c.y end,offsetY=0.2*D.H*c.baseScale,hold=0.9,sound='tarot2',pitch=0.9})
+          fx:attention({text=label,scale=0.6,colour=T.white,backdrop=T.purple,follow=function() return c.x,c.y end,offsetY=0.2*D.H*c.baseScale,hold=0.9,sound='tarot2',pitch=0.9})
         end)
         delay=0.3
       end
@@ -890,7 +883,7 @@ function Simulator:react(previous)
       local zone=L.zones[(owner=='you' and 'you' or 'opp')..'_prizes']
       local taken=was.prizes-now.prizes
       fx:after(delay,function()
-        fx:attention({text='+'..taken..(taken>1 and ' PRIZES' or ' PRIZE'),scale=0.7,colour=T.white,backdrop=MONEY,x=zone.well.x+zone.well.w/2,y=zone.well.y+zone.well.h/2,hold=1.0,sound='coin3',jiggle=1})
+        fx:attention({text='+'..taken..(taken>1 and ' PRIZES' or ' PRIZE'),scale=0.7,colour=T.white,backdrop=T.money,x=zone.well.x+zone.well.w/2,y=zone.well.y+zone.well.h/2,hold=1.0,sound='coin3',jiggle=1})
       end)
       delay=0.4
     end
@@ -914,7 +907,7 @@ function Simulator:openGameOver()
   local rows={
     {label='Winner',value=winner,colour=self.outcome=='win' and T.blue or T.red},
     {label='Reason',value=self.outcomeDetail~='' and self.outcomeDetail or 'Game over'},
-    {label='Turns played',value=tostring(self.turn),colour=MONEY},
+    {label='Turns played',value=tostring(self.turn),colour=T.money},
     {label='Your prizes left',value=tostring(you.prizes),colour=T.blue},
     {label='Opponent prizes left',value=tostring(opp.prizes),colour=T.red},
     {label='Cards in hand',value=tostring(you.hand)},
@@ -1141,7 +1134,7 @@ function Simulator:buildAttached(card)
     local added=self:add(b.label,x+pad,buttonY,bw,b.height,action,b.colour,{token=b.token,disabled=b.disabled,fontSize=21,attached=true,card=card,group=b,cost=b.cost,damage=b.damage,hasCost=b.hasCost,ability=b.ability})
     self.attachedPopup.buttons[#self.attachedPopup.buttons+1]=added
     buttonY=buttonY+b.height+gap
-    if b.disabled then added.colour={95/255,115/255,119/255,1} end -- G.C.GREY, not the panel black
+    if b.disabled then added.colour=T.grey end -- not the panel black
   end
 end
 local function popupOffset(popup)
@@ -1295,19 +1288,16 @@ end
 -- ---------------------------------------------------------------- update
 function Simulator:update(dt,time,mx,my,reduced)
   self.time,self.reduced=time,reduced
-  if love.filesystem.getInfo('__simulator.txt') then self:sync(love.filesystem.read('__simulator.txt')) end
-  if love.filesystem.getInfo('__builder_art.txt') then
-    local raw=love.filesystem.read('__builder_art.txt')
-    if raw~=self.artRaw then
-      self.artRaw=raw;local art={}
-      for line in raw:gmatch('[^\n]+') do local r=Codec.fields(line);if r[2] then art[r[1]]=r[2] end end
-      local old=self.art;self.art=art
-      for _,c in ipairs(self.cards) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end
-      -- Discard piles paint their top card's scan, which can arrive after a reload.
-      for _,p in ipairs(self.piles) do if p.topItem and old[p.topItem.cardId]~=art[p.topItem.cardId] then p:rebuild() end end
-      for _,c in pairs(self.attached or {}) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end
-      if self.overlay then for _,c in ipairs(self.overlay.cards) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end end
-    end
+  self:sync(Mailbox.read('__simulator.txt'))
+  local raw=Mailbox.read(Mailbox.ART)
+  if raw and raw~=self.artRaw then
+    self.artRaw=raw;local art=Mailbox.artMap(raw)
+    local old=self.art;self.art=art
+    for _,c in ipairs(self.cards) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end
+    -- Discard piles paint their top card's scan, which can arrive after a reload.
+    for _,p in ipairs(self.piles) do if p.topItem and old[p.topItem.cardId]~=art[p.topItem.cardId] then p:rebuild() end end
+    for _,c in pairs(self.attached or {}) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end
+    if self.overlay then for _,c in ipairs(self.overlay.cards) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end end
   end
   mx,my=self:point(mx,my);self.mx,self.my=mx,my
   -- Table juice waits behind an open coin flip, like Balatro's event queue.
@@ -1622,11 +1612,14 @@ function Simulator:keypressed(key)
   if key=='tab' or key=='left' or key=='right' or key=='up' or key=='down' then
     local cardCount=#self.cards
     local total=#self.controls+cardCount;if total==0 then return end
-    local delta=(key=='left' or key=='up' or (key=='tab' and love.keyboard.isDown('lshift','rshift'))) and -1 or 1
-    for _=1,total do
-      self.focus=(self.focus-1+delta+total)%total+1
+    local found
+    self.focus,found=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,total,function(i)
+      local b=self.controls[i];local c=self.cards[i-#self.controls]
+      return not ((b and not b.disabled and not b.invisible) or (c and not c.item.hidden and not c.drawAfterPromotion))
+    end)
+    if found then
       local b=self.controls[self.focus];local c=self.cards[self.focus-#self.controls]
-      if (b and not b.disabled and not b.invisible) or (c and not c.item.hidden and not c.drawAfterPromotion) then self.focusCard=c;self.callbacks.announce(b and b.label or c.item.name);break end
+      self.focusCard=c;self.callbacks.announce(b and b.label or c.item.name)
     end
   elseif key=='return' or key=='space' then
     if self.focusCard then
@@ -1653,10 +1646,10 @@ function Simulator:drawBadges(c,rw)
   local ch=D.H*c.baseScale*c.motion.VT.scale
   if item.status~='' then
     local names={}
-    for _,s in ipairs(Energy.split(item.status)) do names[#names+1]=s:sub(1,1):upper()..s:sub(2) end
+    for _,s in ipairs(Codec.list(item.status)) do names[#names+1]=s:sub(1,1):upper()..s:sub(2) end
     local label=table.concat(names,' ')
     local tw=Dyna.measure(label,0.26)+12
-    Button.panel(c.x-tw/2,c.y-ch/2-20,tw,16,PURPLE,1)
+    Button.panel(c.x-tw/2,c.y-ch/2-20,tw,16,T.purple,1)
     Dyna.static(label,0.26,c.x-tw/2,c.y-ch/2-20,tw,16,T.white,{roomWidth=rw})
   end
 end

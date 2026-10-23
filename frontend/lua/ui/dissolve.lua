@@ -1,16 +1,11 @@
 local D=require('ui.card_dimensions')
+local T=require('ui.theme')
 -- Balatro Card:start_dissolve (card.lua:2130), engine/particles.lua and
 -- globals.lua's default burn palette. The unmodified dissolve.fs is bundled
 -- by build.mjs; this supplies its animation, juice and attached square embers.
 local Dissolve={};Dissolve.__index=Dissolve
 local g=love.graphics
-local palette={
-  {55/255,66/255,68/255,1}, -- BLACK
-  {253/255,162/255,0,1}, -- ORANGE
-  {254/255,95/255,85/255,1}, -- RED
-  {234/255,192/255,88/255,1}, -- GOLD
-  {191/255,199/255,213/255,1}, -- JOKER_GREY
-}
+local palette={T.panel,T.orange,T.red,T.paleGold,T.jokerGrey}
 Dissolve.duration=0.7
 Dissolve.removeAfter=1.05*Dissolve.duration
 function Dissolve.new(card,time,colours,reduced)

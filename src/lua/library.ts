@@ -1,17 +1,15 @@
+import { DECK_SIZE } from "@colorless/engine";
+import { DECK_NAME_MAX } from "@colorless/schema";
 import * as api from "../lib/api";
 import type { Deck } from "../decks/data";
 import { deckLegality } from "../game/sandboxDecks";
-import { encodeFields } from "./account";
+import { decodeFields, encodeFields } from "./wire";
+import { reportError } from "../lib/reportError";
+import { readPersisted, writePersisted } from "../lib/persistedState";
+import type { AccountStatus } from "./account";
 
-const sorts: [string, ...string[]] = ["name-asc", "name-desc", "cards-desc"];
-const stored = (key: string, allowed: [string, ...string[]]) => {
-  try {
-    const value = localStorage.getItem(key);
-    return value && allowed.includes(value) ? value : allowed[0];
-  } catch {
-    return allowed[0];
-  }
-};
+const sorts = ["name-asc", "name-desc", "cards-desc"];
+const SORT_KEY = "decks.sortKey";
 
 /** Data/session adapter only. Layout, card physics and all controls live in Lua. */
 export class LuaLibrary {
@@ -19,7 +17,7 @@ export class LuaLibrary {
   /** Deck id → legal, for the "!" alert on a pile; absent while unchecked. */
   legality = new Map<string, boolean>();
   query = "";
-  sort = stored("decks.sortKey", sorts);
+  sort = readPersisted(SORT_KEY, (raw) => (sorts.includes(raw) ? raw : undefined), "name-asc");
   page = 1;
   size = 12;
   phase = "loading";
@@ -35,7 +33,7 @@ export class LuaLibrary {
     private openDeck: (id: string) => void,
   ) {}
 
-  session(status: string, id: string) {
+  session(status: AccountStatus, id: string) {
     if (id === this.user && status === "authenticated") return;
     if (status === "loading") return;
     this.epoch++;
@@ -119,7 +117,7 @@ export class LuaLibrary {
       this.decks = decks;
       // Incomplete decks are illegal on sight; complete ones are judged below.
       this.legality = new Map(
-        decks.filter((d) => d.cardCount !== 60).map((d) => [d.id, false] as const),
+        decks.filter((d) => d.cardCount !== DECK_SIZE).map((d) => [d.id, false] as const),
       );
       this.phase = "ready";
       void this.judge(epoch);
@@ -151,8 +149,8 @@ export class LuaLibrary {
       if (!current()) return;
       this.legality = legality;
       this.emit();
-    } catch {
-      /* Left unmarked; see above. */
+    } catch (error) {
+      reportError("judge deck legality", error);
     }
   }
 
@@ -184,12 +182,8 @@ export class LuaLibrary {
   }
 
   async command(raw: string) {
-    let fields: string[];
-    try {
-      fields = raw.split("\t").map(decodeURIComponent);
-    } catch {
-      return;
-    }
+    const fields = decodeFields(raw);
+    if (!fields) return;
     const [action, a = "", b = "", c = ""] = fields;
     if (action === "open") {
       this.active = true;
@@ -219,11 +213,7 @@ export class LuaLibrary {
     if (action === "sort" && sorts.includes(a)) {
       this.sort = a;
       this.page = 1;
-      try {
-        localStorage.setItem("decks.sortKey", a);
-      } catch {
-        /* Optional preference. */
-      }
+      writePersisted(SORT_KEY, a);
     }
     if (action === "page") {
       const pages = Math.max(1, Math.ceil(this.visible().decks.length / this.size));
@@ -242,8 +232,8 @@ export class LuaLibrary {
     }
     if (action === "create" || (action === "rename" && item)) {
       const name = (action === "create" ? b : c).trim();
-      if (!name || name.length > 100) {
-        this.message = "Use 1 to 100 characters for the name.";
+      if (!name || name.length > DECK_NAME_MAX) {
+        this.message = `Use 1 to ${DECK_NAME_MAX} characters for the name.`;
         this.emit();
         return;
       }

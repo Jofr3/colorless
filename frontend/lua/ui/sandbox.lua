@@ -3,9 +3,12 @@ local WheelPager=require('ui.wheel_pager')
 -- Shared library elements: text input, collection tray, deck piles/counts and
 -- animated red pagination. Player tabs and the sandbox launch remain outside.
 local T=require('ui.theme')
+local Controls=require('ui.controls')
 local Button=require('ui.button')
 local Modal=require('ui.modal')
-local Codec=require('ui.account')
+local Codec=require('ui.codec')
+local Mailbox=require('ui.mailbox')
+local Fit=require('ui.text_fit')
 local PageText=require('ui.page_text')
 local Pile=require('ui.deck_pile')
 local Labels=require('ui.deck_labels')
@@ -14,25 +17,11 @@ local Library=require('ui.library')
 local g=love.graphics
 local Sandbox={}
 Sandbox.__index=Sandbox
-local function fitted(text,size,width)
-  text=text:gsub('%c',' ')
-  while size>14 and T.font(size):getWidth(text)>width do size=size-1 end
-  if T.font(size):getWidth(text)>width then
-    local result=''
-    for char in text:gmatch('[%z\1-\127\194-\244][\128-\191]*') do
-      if T.font(size):getWidth(result..char..'...')>width then break end
-      result=result..char
-    end
-    text=result..'...'
-  end
-  return text,size
-end
 function Sandbox.new(callbacks)
   return setmetatable({callbacks=callbacks,phase='loading',busy=false,message='',items={},selected={'',''},tab=1,controls={},cards={},query='',editing=false,page=1,pages=1,focus=0,hover=0,time=0,pageText=PageText.new()},Sandbox)
 end
 function Sandbox:command(...)
-  local fields={...}; for i,v in ipairs(fields) do fields[i]=Codec.encode(v) end
-  self.callbacks.command(table.concat(fields,'\t'))
+  Codec.command(self.callbacks.command,...)
 end
 function Sandbox:open(reduced)
   self.motion=Modal.motion(reduced); self.focus=0; self.hover=0; self.pressed=nil
@@ -109,7 +98,7 @@ end
 function Sandbox:sync(raw)
   if not raw or raw==self.raw then return end
   self.raw=raw
-  local rows={};for line in raw:gmatch('[^\n]+') do rows[#rows+1]=Codec.fields(line) end
+  local rows=Codec.rows(raw)
   local f=rows[1];if not f or #f<6 then return end
   self.phase,self.busy,self.message=f[2],f[3]=='1',f[4]
   if self.phase~='ready' and self.editing then self:command('finish-input');self.editing=false end
@@ -141,8 +130,8 @@ function Sandbox:hit(x,y)
 end
 function Sandbox:update(dt,time,mx,my,reduced)
   self.time,self.reduced=time,reduced
-  if love.filesystem.getInfo('__sandbox.txt') then self:sync(love.filesystem.read('__sandbox.txt')) end
-  if love.filesystem.getInfo('__sandbox_input.txt') then self:input(love.filesystem.read('__sandbox_input.txt')) end
+  self:sync(Mailbox.read('__sandbox.txt'))
+  self:input(Mailbox.read('__sandbox_input.txt'))
   if self.motion then self.motion:update(dt,time,false,false,reduced) end
   self.mx,self.my=mx,my-self:offset();self.hover=self:hit(mx,my)
   for i,card in ipairs(self.cards) do
@@ -190,11 +179,9 @@ end
 function Sandbox:keypressed(key)
   if key=='escape' then self:leave('home');return end
   if key=='tab' or key=='up' or key=='down' or key=='left' or key=='right' then
-    local direction=(key=='up' or key=='left' or (key=='tab' and love.keyboard.isDown('lshift','rshift'))) and -1 or 1
-    for _=1,#self.controls do
-      self.focus=(self.focus-1+direction)%#self.controls+1
-      if not self.controls[self.focus].disabled then self.callbacks.announce(self.controls[self.focus].label~='' and self.controls[self.focus].label or 'Search decks');break end
-    end
+    local found
+    self.focus,found=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,#self.controls,function(i) return self.controls[i].disabled end)
+    if found then self.callbacks.announce(self.controls[self.focus].label~='' and self.controls[self.focus].label or 'Search decks') end
   elseif key=='pageup' or key=='pagedown' then self:changePage(key=='pageup' and -1 or 1)
   elseif key=='return' or key=='space' then self:activate(self.focus) end
 end
@@ -202,7 +189,7 @@ function Sandbox:wheelmoved(y) if y~=0 and not self.editing and WheelPager.ready
 function Sandbox:draw()
   local x,y,w,h=self.x,self.y,self.w,self.h
   Button.panel(x,y+6,w,h,{0.525,0.546,0.585,1},2.4)
-  Button.panel(x,y,w,h,{191/255,199/255,213/255,1},2.4)
+  Button.modalFrame(x,y,w,h)
   Button.panel(x+4,y+4,w-8,h-8,T.tray,2.4)
   if self.phase=='ready' then
     local a=self.area
@@ -221,7 +208,7 @@ function Sandbox:draw()
         Button.outline(left,titleY-5,right-left,bottom-titleY+10,T.white,1.2)
         g.pop()
       end
-      local text,size=fitted(card.item.name,22,titleWidth)
+      local text,size=Fit.fit(card.item.name,22,titleWidth)
       T.text(text,size,titleX,titleY,titleWidth,T.white)
     end
     if #self.cards==0 then T.text(#self.items==0 and 'No valid decks' or 'No matches',32,a.x,a.y+80,a.w) end
@@ -236,7 +223,7 @@ function Sandbox:draw()
   if message=='' and self.phase=='ready' then
     for seat=1,2 do local d=self:deck(seat);if d and d.count~=60 then message='Player '..seat..': choose a 60-card deck.';break end end
   end
-  if message~='' then local text,size=fitted(message,18,w-40);T.text(text,size,x+20,y+h-124,w-40,T.red) end
+  if message~='' then local text,size=Fit.fit(message,18,w-40);T.text(text,size,x+20,y+h-124,w-40,T.red) end
   for i,b in ipairs(self.controls) do
     if b.input then Input.draw(b,self.query,self.editing,self.first,self.last,self.time,b.disabled,self.hover==i)
     elseif not b.card then Button.draw(b,not b.disabled and (self.hover==i or self.focus==i),self.pressed==i,false,self.width) end

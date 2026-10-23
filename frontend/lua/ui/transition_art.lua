@@ -1,6 +1,7 @@
 -- The browser stages one image from its persistent disk pool. The current
 -- session's working cache and bundled art remain fallbacks while it loads.
-local Codec=require('ui.account')
+local Codec=require('ui.codec')
+local Mailbox=require('ui.mailbox')
 local Art={}
 local bundled={'sv01-030','sv01-033','sv01-036','sv01-038','sv01-042','sv01-046','sv01-047','sv01-052'}
 local shown,last={},nil
@@ -33,24 +34,20 @@ end
 function Art.fallback() return draw(fallbackPool()) end
 
 function Art.pick()
-  if love.filesystem.getInfo('__transition_art.txt') then
-    local fields=Codec.fields(love.filesystem.read('__transition_art.txt') or '')
+  local transition=Mailbox.read('__transition_art.txt')
+  if transition then
+    local fields=Codec.fields(transition)
     local token,id,path=tonumber(fields[1]),fields[2],fields[3]
     if token and id and path and love.filesystem.getInfo(path) then
       return {id=id,path=path,token=token}
     end
   end
   local pool,ids={},{}
-  if love.filesystem.getInfo('__builder_art.txt') then
-    local raw=love.filesystem.read('__builder_art.txt') or ''
-    for line in raw:gmatch('[^\n]+') do
-      local fields=Codec.fields(line)
-      local id,path=fields[1],fields[2]
-      -- The first line is a revision, not a card. Ignore stale or duplicate
-      -- entries rather than selecting artwork already evicted from WASM.
-      if id and id~='' and path and not ids[id] and love.filesystem.getInfo(path) then
-        ids[id]=true;pool[#pool+1]={id=id,path=path}
-      end
+  for _,row in ipairs(Mailbox.artRows(Mailbox.read(Mailbox.ART))) do
+    -- Ignore stale or duplicate entries rather than selecting artwork
+    -- already evicted from WASM.
+    if row.id~='' and not ids[row.id] and love.filesystem.getInfo(row.path) then
+      ids[row.id]=true;pool[#pool+1]=row
     end
   end
   if #pool==0 then return Art.fallback() end

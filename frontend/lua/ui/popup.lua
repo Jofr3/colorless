@@ -2,13 +2,13 @@
 -- 0.07 emboss, a darkened BLACK body, a white description box with TEXT_DARK
 -- copy, and coloured badges with floating white DynaText.
 local T=require('ui.theme')
+local Codec=require('ui.codec')
 local Button=require('ui.button')
 local Dyna=require('ui.dynatext')
 local Energy=require('ui.energy')
 local Popup={}
 local FRAME={0.5+191/255*0.5,0.5+199/255*0.5,0.5+213/255*0.5,1} -- lighten(JOKER_GREY,0.5)
 local BODY={55/255*0.9,66/255*0.9,68/255*0.9,0.8}                -- darken(BLACK,0.1) at 0.8
-local TEXT_DARK={79/255,99/255,103/255,1}
 local WHITE_BOX={1,1,1,1}
 -- name_from_rows / desc_from_rows: white, pixel-rounded panels with 0.05 emboss.
 local function whiteSection(x,y,w,h)
@@ -23,7 +23,7 @@ end
 function Popup.action(button,active,pressed,roomWidth)
   local x,y,w,h=button.x,button.y,button.w,button.h
   local scale=0.28
-  local colour=button.disabled and {0.55,0.59,0.6,1} or TEXT_DARK
+  local colour=button.disabled and {0.55,0.59,0.6,1} or T.textDark
   if pressed and not button.disabled then y=y+2 end
   if button.ability then
     local red=button.disabled and {0.6,0.3,0.28,1} or Button.hoverColour(T.red,active)
@@ -54,7 +54,7 @@ function Popup.action(button,active,pressed,roomWidth)
   end
 end
 local RS,US='\30','\31'
-Popup.badgeColours={Item=T.blue,Supporter=T.orange,Stadium=T.green,Tool={136/255,103/255,165/255,1},['Pokémon Tool']={136/255,103/255,165/255,1},Special={136/255,103/255,165/255,1}}
+Popup.badgeColours={Item=T.blue,Supporter=T.orange,Stadium=T.green,Tool=T.purple,['Pokémon Tool']=T.purple,Special=T.purple}
 local function split(text,sep)
   local out={}
   for part in (tostring(text or '')..sep):gmatch('(.-)'..sep) do out[#out+1]=part end
@@ -116,7 +116,7 @@ function Popup.build(info,item,maxWidth,roomWidth,compact)
   row(nameH+(compact and spacing or 0),function(x,y)
     if compact then whiteSection(x,y,boxW,nameH) end
     local inset=compact and spacing or 4
-    local colour=compact and TEXT_DARK or T.white
+    local colour=compact and T.textDark or T.white
     Dyna.static(info.name or '',scale.name,x+inset,y,boxW-2*inset-hpW,nameH,colour,{align='left',fit=true,shadow=not compact,roomWidth=roomWidth})
     if hpText then Dyna.static(hpText,hpScale,x+boxW-inset-hpW,y,hpW,nameH,(inPlay and (item.damage or 0)>0) and T.red or colour,{align='right',shadow=not compact,roomWidth=roomWidth}) end
   end)
@@ -133,22 +133,22 @@ function Popup.build(info,item,maxWidth,roomWidth,compact)
   local attacks=Popup.parseAttacks(info.attacks)
   if item and item.status and item.status~='' then
     local parts={}
-    for _,s in ipairs(Energy.split(item.status)) do parts[#parts+1]=s:sub(1,1):upper()..s:sub(2) end
+    for _,s in ipairs(Codec.list(item.status)) do parts[#parts+1]=s:sub(1,1):upper()..s:sub(2) end
     text(table.concat(parts,' · '),scale.small,T.red)
   end
   for _,a in ipairs(abilities) do
     lines[#lines+1]={kind='label',text=a.name,tag=a.type~='' and a.type or 'Ability',scale=scale.body,h=lh+4}
-    if a.effect~='' then text(a.effect,scale.small,TEXT_DARK) end
+    if a.effect~='' then text(a.effect,scale.small,T.textDark) end
   end
   for _,a in ipairs(attacks) do
     lines[#lines+1]={kind='attack',attack=a,scale=scale.body,h=lh+4}
-    if a.effect~='' then text(a.effect,scale.small,TEXT_DARK) end
+    if a.effect~='' then text(a.effect,scale.small,T.textDark) end
   end
-  if info.effect and info.effect~='' then text(info.effect,scale.small,TEXT_DARK) end
+  if info.effect and info.effect~='' then text(info.effect,scale.small,T.textDark) end
   if info.category=='Pokemon' then
     lines[#lines+1]={kind='footer',scale=scale.small,h=sh+6}
   end
-  if #lines==0 then text(info.category=='Energy' and 'Provides one Energy.' or ' ',scale.small,TEXT_DARK) end
+  if #lines==0 then text(info.category=='Energy' and 'Provides one Energy.' or ' ',scale.small,T.textDark) end
   local boxH=2*pad+2
   for _,l in ipairs(lines) do boxH=boxH+l.h end
   row(boxH+4,function(x,y)
@@ -174,11 +174,11 @@ function Popup.build(info,item,maxWidth,roomWidth,compact)
       elseif l.kind=='footer' then
         local cx=x+pad+2
         local function part(label,types,value)
-          Dyna.static(label,scale.small,cx,cy,100,l.h-4,TEXT_DARK,{align='left',shadow=false,roomWidth=roomWidth})
+          Dyna.static(label,scale.small,cx,cy,100,l.h-4,T.textDark,{align='left',shadow=false,roomWidth=roomWidth})
           cx=cx+Dyna.measure(label,scale.small)+4
           if types and #types>0 then cx=cx+Energy.row(types,cx,cy+l.h/2-2,5,2,1,'left')+3 end
           if value and value~='' then
-            Dyna.static(value,scale.small,cx,cy,80,l.h-4,TEXT_DARK,{align='left',shadow=false,roomWidth=roomWidth})
+            Dyna.static(value,scale.small,cx,cy,80,l.h-4,T.textDark,{align='left',shadow=false,roomWidth=roomWidth})
             cx=cx+Dyna.measure(value,scale.small)
           end
           cx=cx+10
@@ -200,7 +200,7 @@ function Popup.build(info,item,maxWidth,roomWidth,compact)
   if info.category=='Pokemon' then
     for _,t in ipairs(Energy.split(info.types)) do badges[#badges+1]={text=t:upper(),colour=Energy.colour(t)} end
     local st=stageLabel(info.stage)
-    if st then badges[#badges+1]={text=st,colour={79/255,99/255,103/255,1}} end
+    if st then badges[#badges+1]={text=st,colour=T.textDark} end
   elseif info.category=='Trainer' then
     local kind=info.trainerType~='' and info.trainerType or 'Trainer'
     badges[#badges+1]={text=kind:upper(),colour=Popup.badgeColours[kind] or T.blue}
@@ -238,7 +238,7 @@ function Popup.build(info,item,maxWidth,roomWidth,compact)
         local bx=inlineBadges and nextX or x+(boxW-bw)/2
         local colour=T.white
         if compact then
-          colour=(b.colour[1]+b.colour[2]+b.colour[3])/3>0.65 and TEXT_DARK or b.colour
+          colour=(b.colour[1]+b.colour[2]+b.colour[3])/3>0.65 and T.textDark or b.colour
         else
           Button.panel(bx,by+3,bw,bh,{b.colour[1]*0.7,b.colour[2]*0.7,b.colour[3]*0.7,1},1.2)
           Button.panel(bx,by,bw,bh,b.colour,1.2)

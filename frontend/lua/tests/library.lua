@@ -4,7 +4,7 @@ love={math={random=function() return 0.5 end},graphics={},keyboard={isDown=funct
 local Card=require('ui.card')
 Card.rebuild=function(self) self.texture={release=function() end} end
 local Library=require('ui.library')
-local Codec=require('ui.account')
+local Codec=require('ui.codec')
 local commands={}
 local library=Library.new({command=function(raw) commands[#commands+1]=Codec.fields(raw) end,announce=function() end,feedback=function() end})
 local function snapshot(revision,count,result,page)

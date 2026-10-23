@@ -1,6 +1,7 @@
 -- Layout and controls follow create_UIBox_settings/create_UIBox_generic_options,
 -- create_slider and create_toggle. Only settings supported by this home appear.
 local T=require('ui.theme')
+local Controls=require('ui.controls')
 local Button=require('ui.button')
 local Modal=require('ui.modal')
 local Account=require('ui.account')
@@ -261,7 +262,7 @@ function Settings:keypressed(key)
   elseif (key=='left' or key=='right') and item and item.kind=='tab' then
     self:activate((item.tab-1+(key=='left' and -1 or 1))%#tabs+1)
   elseif key=='tab' or key=='down' or key=='up' or key=='left' or key=='right' then
-    local backward=key=='up' or key=='left' or (key=='tab' and love.keyboard.isDown('lshift','rshift'))
+    local backward=Controls.backward(key)
     self.focus=self.focus==0 and (backward and #self.items or 1)
       or ((self.focus-1+(backward and -1 or 1))%#self.items)+1
     self.callbacks.announce(self:describe(self.items[self.focus]))
@@ -272,7 +273,7 @@ function Settings:draw()
   g.push(); g.translate(0,self.motion.VT.y*60)
   -- Generic options: JOKER_GREY border, 0.1-tile emboss, L_BLACK interior.
   panel(self.x,self.y+6,self.w,self.h,{0.525,0.546,0.585,1},2.4)
-  panel(self.x,self.y,self.w,self.h,{191/255,199/255,213/255,1},2.4)
+  Button.modalFrame(self.x,self.y,self.w,self.h)
   panel(self.x+4,self.y+4,self.w-8,self.h-8,T.tray,2.4)
   if self.auth then
     if self.account.message~='' then T.text(self.account.message,19,self.x+30,self.y+self.authMessageY,self.w-60,T.paper) end

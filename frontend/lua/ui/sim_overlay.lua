@@ -1,12 +1,13 @@
 local D=require('ui.card_dimensions')
 local WheelPager=require('ui.wheel_pager')
--- Overlay menus for the table: create_UIBox_generic_options (JOKER_GREY frame,
+-- Overlay menus for the table: create_UIBox_generic_options (T.jokerGrey frame,
 -- 0.1 emboss, L_BLACK body, orange Back) holding engine prompts rendered as
 -- button lists or real card rows (the booster-pack picker), the coin flip,
 -- the game log, discard piles, the options menu, a card
 -- inspector and the game-over screen (create_UIBox_game_over). Online, Leave
 -- match uses delete_profile's press-again confirm because leaving forfeits.
 local T=require('ui.theme')
+local Controls=require('ui.controls')
 local Button=require('ui.button')
 local Modal=require('ui.modal')
 local Dyna=require('ui.dynatext')
@@ -17,12 +18,10 @@ local CollectionMotion=require('ui.collection_motion')
 local Motion=require('ui.motion')
 local Overlay={};Overlay.__index=Overlay
 local g=love.graphics
-local JOKER_GREY={191/255,199/255,213/255,1}
 local GREY_DARK={0.525,0.546,0.585,1}
-local MONEY={243/255,185/255,88/255,1}
 local function frame(x,y,w,h)
   Button.panel(x,y+6,w,h,GREY_DARK,2.4)
-  Button.panel(x,y,w,h,JOKER_GREY,2.4)
+  Button.panel(x,y,w,h,T.jokerGrey,2.4)
   Button.panel(x+4,y+4,w-8,h-8,T.tray,2.4)
 end
 Overlay.frame=frame
@@ -433,8 +432,7 @@ function Overlay:keypressed(key)
   end
   if key=='tab' or key=='left' or key=='right' or key=='up' or key=='down' then
     local total=#self.controls;if total==0 then return true end
-    local delta=(key=='left' or key=='up' or (key=='tab' and love.keyboard.isDown('lshift','rshift'))) and -1 or 1
-    for _=1,total do self.focus=(self.focus-1+delta+total)%total+1;if not self.controls[self.focus].disabled then break end end
+    self.focus=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,total,function(i) return self.controls[i].disabled end)
     local b=self.controls[self.focus]
     if self.armed and (not b or b.action~='leave') then self:disarm() end
     if b then
@@ -471,11 +469,11 @@ function Overlay:draw(shaders)
   if kind~='inspect' and kind~='gameover' and kind~='options' and (d.title or '')~='' then self.titleText:draw(x+w/2,y+38,rw) end
   if kind=='list' or kind=='confirm' then
     local top=y+74
-    for i=1,math.min(4,#(self.noteLines or {})) do Dyna.static(self.noteLines[i],0.3,x+32,top+(i-1)*18,w-64,18,JOKER_GREY,{roomWidth=rw}) end
+    for i=1,math.min(4,#(self.noteLines or {})) do Dyna.static(self.noteLines[i],0.3,x+32,top+(i-1)*18,w-64,18,T.jokerGrey,{roomWidth=rw}) end
     if self.pages>1 then cycle(self,x+w/2-112,y+h-54-(d.mandatory and 0 or 50)-48,224,36) end
   elseif kind=='cards' or kind=='pile' then
     local top=y+(kind=='pile' and 64 or 66)
-    for i=1,math.min(2,#(self.noteLines or {})) do Dyna.static(self.noteLines[i],0.28,x+32,top+(i-1)*16,w-64,16,JOKER_GREY,{roomWidth=rw}) end
+    for i=1,math.min(2,#(self.noteLines or {})) do Dyna.static(self.noteLines[i],0.28,x+32,top+(i-1)*16,w-64,16,T.jokerGrey,{roomWidth=rw}) end
     -- The pack tray: G.C.BLACK inset with a 0.05 emboss, like the collection.
     local v=self.viewport
     local tx,ty,tw,th=v.x,v.y,v.w,v.h
@@ -516,24 +514,24 @@ function Overlay:draw(shaders)
       end
       if f.landed then
         Dyna.static(f.heads and 'HEADS' or 'TAILS',0.42,cx-60,cy+56,120,22,f.heads and T.blue or T.red,{roomWidth=rw})
-        Dyna.static(f.who,0.26,cx-70,cy+80,140,16,JOKER_GREY,{roomWidth=rw,fit=true})
+        Dyna.static(f.who,0.26,cx-70,cy+80,140,16,T.jokerGrey,{roomWidth=rw,fit=true})
       end
     end
   elseif kind=='log' then
     local top=y+74
     local first=(self.page-1)*self.visible
-    local seatColour={p1=T.blue,p2=T.red,system=JOKER_GREY}
+    local seatColour={p1=T.blue,p2=T.red,system=T.jokerGrey}
     for i=first+1,math.min(#self.logLines,first+self.visible) do
       local line=self.logLines[i]
       local ly=top+(i-first-1)*(p and 24 or 25)
       if line.turn then
-        Dyna.static(line.turn,0.3,x+32,ly,w-64,20,MONEY,{align='center',roomWidth=rw})
+        Dyna.static(line.turn,0.3,x+32,ly,w-64,20,T.money,{align='center',roomWidth=rw})
       elseif p then
         Dyna.static(line.text,0.3,x+32,ly,w-64,20,T.white,{align='left',roomWidth=rw})
       else
         -- Elapsed stamp, the seat's name in its colour, then the line.
-        Dyna.static(line.elapsed,0.26,x+32,ly+1,56,20,JOKER_GREY,{align='left',roomWidth=rw,shadow=false})
-        Dyna.static(line.name,0.3,x+92,ly,90,20,seatColour[line.who] or JOKER_GREY,{align='left',fit=true,roomWidth=rw})
+        Dyna.static(line.elapsed,0.26,x+32,ly+1,56,20,T.jokerGrey,{align='left',roomWidth=rw,shadow=false})
+        Dyna.static(line.name,0.3,x+92,ly,90,20,seatColour[line.who] or T.jokerGrey,{align='left',fit=true,roomWidth=rw})
         Dyna.static(line.text,0.3,x+32+150,ly,w-64-150,20,T.white,{align='left',roomWidth=rw})
       end
     end
@@ -557,7 +555,7 @@ function Overlay:draw(shaders)
     local rows=d.rows or {}
     for i,r in ipairs(rows) do
       local ry=by+12+(i-1)*34
-      Dyna.static(r.label,0.34,bx+16,ry,bw/2,24,JOKER_GREY,{align='left',roomWidth=rw})
+      Dyna.static(r.label,0.34,bx+16,ry,bw/2,24,T.jokerGrey,{align='left',roomWidth=rw})
       Dyna.static(r.value,0.4,bx+bw/2,ry-2,bw/2-16,28,r.colour or T.white,{align='right',roomWidth=rw,fit=true})
     end
   end

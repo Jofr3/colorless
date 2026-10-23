@@ -10,7 +10,7 @@ import { fetchCardPool } from "../game/cardPool";
 import { projectionFromRedacted } from "../game/projection";
 import type { ActionError, LobbyClient } from "../online/lobbyClient";
 import { benchLimitFor } from "../game/board";
-import type { TableEvents, TableLifecycle, TableSource } from "./tableSource";
+import type { LifecycleFlag, TableEvents, TableLifecycle, TableSource } from "./tableSource";
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 const roomOnBench = (v: RedactedGame) =>
@@ -245,13 +245,13 @@ export class LuaOnlineMatch implements TableSource {
     const over = !!this.seen?.outcome;
     const opponent = this.client.opponent;
     const sent = this.sentRematch === this.matchId();
+    const flags: LifecycleFlag[] = [];
+    if (this.seen && !over) flags.push("concede");
+    if (over) flags.push("rematch");
+    if (over && sent) flags.push("rematch-sent");
+    flags.push("leave");
     return {
-      flags: [
-        ...(this.seen && !over ? ["concede"] : []),
-        ...(over ? ["rematch"] : []),
-        ...(over && sent ? ["rematch-sent"] : []),
-        "leave",
-      ],
+      flags,
       opponentAway:
         opponent && !opponent.connected && !over
           ? { name: opponent.name, forfeitAt: opponent.forfeitAt }
