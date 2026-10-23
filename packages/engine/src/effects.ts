@@ -55,6 +55,15 @@ export type {
 
 export { POKEMON_TYPES } from "./effectTypes";
 
+/**
+ * A printed count, or null when it is below 1 (or not a number). A printed 0 would build an op that
+ * does nothing, or spend a flip to add nothing, so the sentence refuses instead.
+ */
+function positiveInt(digits: string | undefined): number | null {
+  const n = Number(digits);
+  return n >= 1 ? n : null;
+}
+
 type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";
 
 /** A Special Condition as the CARDS print it — capitalized, the form the deriver
@@ -1249,6 +1258,32 @@ const ATTACK_COIN_BONUS_LADDER =
 const MAX_PRINTED_FLIPS = 10;
 
 /**
+ * A printed "Flip N coins" count, or null. The plural "coins" means at least 2 (one coin is printed
+ * "Flip a coin." and read by its own anchors), and `MAX_PRINTED_FLIPS` is the ingested-text ceiling.
+ */
+function printedFlipCount(digits: string | undefined): number | null {
+  const n = Number(digits);
+  return n >= 2 && n <= MAX_PRINTED_FLIPS ? n : null;
+}
+
+function printedFlips(count: number): AttackFlipCount {
+  return { kind: "printed", count };
+}
+
+/** Until-tails flips need no ceiling: `MAX_UNTIL_TAILS_FLIPS` in the RNG bounds them. */
+function untilTails(): AttackFlipCount {
+  return { kind: "untilTails" };
+}
+
+function programPerHeads(
+  flips: AttackFlipCount,
+  ops: EffectOp[],
+  face: CoinFace = "heads",
+): AttackCoinFlip {
+  return { kind: "programPerHeads", flips, ops, face };
+}
+
+/**
  * The coin flip an attack's printed text calls for, or null when the text is not a recognised whole
  * sentence, keeping the attack on the loud ATTACK_EFFECT_SKIPPED path.
  */
@@ -1256,33 +1291,23 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
   const effect = text.trim();
   const bonus = ATTACK_COIN_BONUS.exec(effect);
   if (bonus !== null) {
-    const per = Number(bonus[1]);
-    // The same `per >= 1` guard every arm of the scaling family carries: a
-    // printed 0 is not a bonus, and admitting one would spend a flip (and an
-    // rngState step) to add nothing. No card prints it; the guard is what keeps
-    // that a fact about the pool rather than an assumption.
-    return per >= 1 ? { kind: "bonusOnHeads", flips: { kind: "printed", count: 1 }, per } : null;
+    const per = positiveInt(bonus[1]);
+    return per !== null ? { kind: "bonusOnHeads", flips: printedFlips(1), per } : null;
   }
   const multi = ATTACK_COIN_MULTI.exec(effect);
   if (multi !== null) {
-    const flips = Number(multi[1]);
-    const per = Number(multi[2]);
-    // `flips >= 2` because the regex's own "coins" is PLURAL: the one-flip form is
-    // printed "Flip a coin." and is read by the two patterns above, so "Flip 1
-    // coins." is not English and not in the pool. Refusing it (rather than quietly
-    // treating it as one flip) keeps the grammar of the sentence and the shape of
-    // the value in agreement. `per >= 1` is the same guard every scaling arm
-    // carries; `flips <= MAX_PRINTED_FLIPS` is the ingested-text ceiling.
-    return flips >= 2 && flips <= MAX_PRINTED_FLIPS && per >= 1
-      ? { kind: "perHeads", flips: { kind: "printed", count: flips }, per }
+    const flips = printedFlipCount(multi[1]);
+    const per = positiveInt(multi[2]);
+    return flips !== null && per !== null
+      ? { kind: "perHeads", flips: printedFlips(flips), per }
       : null;
   }
   const multiBonus = ATTACK_COIN_MULTI_BONUS.exec(effect);
   if (multiBonus !== null) {
-    const flips = Number(multiBonus[1]);
-    const per = Number(multiBonus[2]);
-    return flips >= 2 && flips <= MAX_PRINTED_FLIPS && per >= 1
-      ? { kind: "bonusOnHeads", flips: { kind: "printed", count: flips }, per }
+    const flips = printedFlipCount(multiBonus[1]);
+    const per = positiveInt(multiBonus[2]);
+    return flips !== null && per !== null
+      ? { kind: "bonusOnHeads", flips: printedFlips(flips), per }
       : null;
   }
   // "Flip N coins. If M or more of them are heads, …": the threshold must be between 1 and the flip
@@ -1290,188 +1315,151 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
   // The word forms ("either"/"both of them") only apply to 2 coins.
   const multiThreshold = ATTACK_COIN_MULTI_THRESHOLD_STATUS.exec(effect);
   if (multiThreshold !== null) {
-    const flips = Number(multiThreshold[1]);
-    const per = Number(multiThreshold[2]);
+    const flips = printedFlipCount(multiThreshold[1]);
+    const per = positiveInt(multiThreshold[2]);
     const word = multiThreshold[3];
-    // Exactly one of the two capture groups is defined — the alternation guarantees it
-    // — so this is a resolution and not a default: the WORD branch goes through the
-    // closed map, the NUMERIC branch through the digits the card printed.
+    // The alternation defines exactly one of the word and digit groups.
     const atLeast = word === undefined ? Number(multiThreshold[4]) : FLIP_THRESHOLD_WORDS[word];
     const face = multiThreshold[5] === "tails" ? "tails" : "heads";
     if (atLeast === undefined) return null;
-    return flips >= 2 &&
-      flips <= MAX_PRINTED_FLIPS &&
-      per >= 1 &&
+    return flips !== null &&
+      per !== null &&
       atLeast >= 1 &&
       atLeast <= flips &&
       (word === undefined || flips === 2)
       ? {
           kind: "perHeadsThenThreshold",
-          flips: { kind: "printed", count: flips },
+          flips: printedFlips(flips),
           per,
           threshold: { face, atLeast },
           ops: [{ op: "applyStatus", target: "defender", status: statusOf(multiThreshold[6]) }],
         }
       : null;
   }
+  // Board-counted flips (this arm and the next two) need no ceiling.
   const perEnergy = ATTACK_COIN_PER_ENERGY.exec(effect);
   if (perEnergy !== null) {
     const token = perEnergy[1];
-    const per = Number(perEnergy[2]);
+    const per = positiveInt(perEnergy[2]);
     // An undefined token is the unfiltered sentence ("for each Energy attached") and resolves to
     // `energy: null`. An unresolvable token must refuse rather than count every attached card, so
-    // the two are told apart by the token, not the lookup. No flip ceiling: the count is read off
-    // the board.
+    // the two are told apart by the token, not the lookup.
     if (token !== undefined) {
       const energy = literalClauseRow(CLAUSE_ENERGY_TOKENS, token);
-      return energy !== undefined && per >= 1
+      return energy !== undefined && per !== null
         ? { kind: "perHeads", flips: { kind: "attachedEnergy", energy }, per }
         : null;
     }
-    return per >= 1
+    return per !== null
       ? { kind: "perHeads", flips: { kind: "attachedEnergy", energy: null }, per }
       : null;
   }
   // Counts Pokémon in play rather than Energy attached. An unresolvable body noun refuses rather
-  // than counting zero forever. No flip ceiling: the count comes from the board, not from ingested
-  // text.
+  // than counting zero forever.
   const inPlayBodies = ATTACK_COIN_PER_BODY_IN_PLAY.exec(effect);
   if (inPlayBodies !== null) {
-    const per = Number(inPlayBodies[2]);
-    // Through the SHARED vocabulary, not a local table — `inPlayBodyFilter` is the
-    // one place this file resolves a printed body noun, and an unresolvable noun
-    // answers `null` here exactly as it does for the three damage anchors.
+    const per = positiveInt(inPlayBodies[2]);
     const filter = inPlayBodyFilter(inPlayBodies[1] ?? "");
-    return filter !== null && per >= 1
+    return filter !== null && per !== null
       ? { kind: "perHeads", flips: { kind: "pokemonInPlay", filter }, per }
       : null;
   }
-  // Counts Energy attached to both Active Pokémon. No flip ceiling: the count comes from the board.
   const bothActivesFlip = ATTACK_COIN_PER_BOTH_ACTIVES_ENERGY.exec(effect);
   if (bothActivesFlip !== null) {
-    const per = Number(bothActivesFlip[1]);
-    return per >= 1 ? { kind: "perHeads", flips: { kind: "bothActivesEnergy" }, per } : null;
+    const per = positiveInt(bothActivesFlip[1]);
+    return per !== null ? { kind: "perHeads", flips: { kind: "bothActivesEnergy" }, per } : null;
   }
-  // No flip ceiling on until-tails: termination is bounded by `MAX_UNTIL_TAILS_FLIPS` in the RNG,
-  // not by the sentence.
   const untilBonus = ATTACK_COIN_UNTIL_TAILS_BONUS.exec(effect);
   if (untilBonus !== null) {
-    const per = Number(untilBonus[1]);
-    return per >= 1 ? { kind: "bonusOnHeads", flips: { kind: "untilTails" }, per } : null;
+    const per = positiveInt(untilBonus[1]);
+    return per !== null ? { kind: "bonusOnHeads", flips: untilTails(), per } : null;
   }
   const untilMulti = ATTACK_COIN_UNTIL_TAILS_MULTI.exec(effect);
   if (untilMulti !== null) {
-    const per = Number(untilMulti[1]);
-    return per >= 1 ? { kind: "perHeads", flips: { kind: "untilTails" }, per } : null;
+    const per = positiveInt(untilMulti[1]);
+    return per !== null ? { kind: "perHeads", flips: untilTails(), per } : null;
   }
+  // The program grows one copy per heads, which is the other reason printed flips are capped.
   const millPrinted = ATTACK_COIN_MILL_PRINTED.exec(effect);
   if (millPrinted !== null) {
-    const flips = Number(millPrinted[1]);
-    const count = Number(millPrinted[2]);
-    // `flips >= 2` because the one-coin form is printed "Flip a coin."; `flips <=
-    // MAX_PRINTED_FLIPS` because the digits come from ingested text and the program grows one copy
-    // per heads. A count of 0 would move nothing.
-    return flips >= 2 && flips <= MAX_PRINTED_FLIPS && count >= 1
-      ? {
-          kind: "programPerHeads",
-          flips: { kind: "printed", count: flips },
-          ops: [{ op: "discardDeckTop", whose: "opponent", count }],
-          face: "heads",
-        }
+    const flips = printedFlipCount(millPrinted[1]);
+    const count = positiveInt(millPrinted[2]);
+    return flips !== null && count !== null
+      ? programPerHeads(printedFlips(flips), [{ op: "discardDeckTop", whose: "opponent", count }])
       : null;
   }
   const millUntil = ATTACK_COIN_MILL_UNTIL_TAILS.exec(effect);
   if (millUntil !== null) {
-    const count = Number(millUntil[1]);
-    // No ceiling here: termination is bounded by `MAX_UNTIL_TAILS_FLIPS` in the RNG.
-    return count >= 1
-      ? {
-          kind: "programPerHeads",
-          flips: { kind: "untilTails" },
-          ops: [{ op: "discardDeckTop", whose: "opponent", count }],
-          face: "heads",
-        }
+    const count = positiveInt(millUntil[1]);
+    return count !== null
+      ? programPerHeads(untilTails(), [{ op: "discardDeckTop", whose: "opponent", count }])
       : null;
   }
   // The singular "discard the top card" form: the count is the article, so the op is built with a
   // literal 1.
   const millOnePrinted = ATTACK_COIN_MILL_ONE_PRINTED.exec(effect);
   if (millOnePrinted !== null) {
-    const flips = Number(millOnePrinted[1]);
-    return flips >= 2 && flips <= MAX_PRINTED_FLIPS
-      ? {
-          kind: "programPerHeads",
-          flips: { kind: "printed", count: flips },
-          ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
-          face: "heads",
-        }
+    const flips = printedFlipCount(millOnePrinted[1]);
+    return flips !== null
+      ? programPerHeads(printedFlips(flips), [
+          { op: "discardDeckTop", whose: "opponent", count: 1 },
+        ])
       : null;
   }
   // The op carries no count; each heads appends one copy, so every discard is an independent random
   // pick from the shrinking hand.
   const handPrinted = ATTACK_COIN_HAND_PRINTED.exec(effect);
   if (handPrinted !== null) {
-    const flips = Number(handPrinted[1]);
-    return flips >= 2 && flips <= MAX_PRINTED_FLIPS
-      ? {
-          kind: "programPerHeads",
-          flips: { kind: "printed", count: flips },
-          ops: [{ op: "randomFromOpponentHand", to: "discard" }],
-          face: "heads",
-        }
+    const flips = printedFlipCount(handPrinted[1]);
+    return flips !== null
+      ? programPerHeads(printedFlips(flips), [{ op: "randomFromOpponentHand", to: "discard" }])
       : null;
   }
   const energyPrinted = ATTACK_COIN_ENERGY_PRINTED.exec(effect);
   if (energyPrinted !== null) {
-    const flips = Number(energyPrinted[1]);
-    return flips >= 2 && flips <= MAX_PRINTED_FLIPS
-      ? {
-          kind: "programPerHeads",
-          flips: { kind: "printed", count: flips },
-          ops: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
-          face: "heads",
-        }
+    const flips = printedFlipCount(energyPrinted[1]);
+    return flips !== null
+      ? programPerHeads(printedFlips(flips), [
+          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
+        ])
       : null;
   }
-  // Unbounded flips and no printed digit, so there is nothing to guard.
   if (ATTACK_COIN_ENERGY_UNTIL_TAILS.test(effect)) {
-    return {
-      kind: "programPerHeads",
-      flips: { kind: "untilTails" },
-      ops: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
-      face: "heads",
-    };
+    return programPerHeads(untilTails(), [
+      { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
+    ]);
   }
   // The opponent flips one coin per Benched Pokémon. `deriveAttackDamageSuppression` is gated on
   // this return, so refusing here also refuses the suppression half.
   const opponentBenchTails = ATTACK_OPPONENT_BENCH_TAILS.exec(effect);
   if (opponentBenchTails !== null) {
-    const per = Number(opponentBenchTails[1]);
-    return per >= 1 ? { kind: "opponentPerTails", flips: { kind: "opponentBench" }, per } : null;
+    const per = positiveInt(opponentBenchTails[1]);
+    return per !== null
+      ? { kind: "opponentPerTails", flips: { kind: "opponentBench" }, per }
+      : null;
   }
   // `face: "tails"` is stated here so the flip site counts tails directly rather than deriving them
   // from heads.
   const selfEnergyTails = ATTACK_COIN_SELF_ENERGY_PER_TAILS.exec(effect);
   if (selfEnergyTails !== null) {
-    const flips = Number(selfEnergyTails[1]);
-    return flips >= 2 && flips <= MAX_PRINTED_FLIPS
-      ? {
-          kind: "programPerHeads",
-          flips: { kind: "printed", count: flips },
-          ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } }],
-          face: "tails",
-        }
+    const flips = printedFlipCount(selfEnergyTails[1]);
+    return flips !== null
+      ? programPerHeads(
+          printedFlips(flips),
+          [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } }],
+          "tails",
+        )
       : null;
   }
   // "Put up to that many cards": one park with `max` set to the heads count at the fold, not one
   // park per heads.
   const upToHeads = ATTACK_COIN_RETRIEVAL_UP_TO_HEADS.exec(effect);
   if (upToHeads !== null) {
-    const n = Number(upToHeads[1]);
-    if (n < 2 || n > MAX_PRINTED_FLIPS) return null;
+    const flips = printedFlipCount(upToHeads[1]);
+    if (flips === null) return null;
     return {
       kind: "retrievalUpToHeads",
-      flips: { kind: "printed", count: n },
+      flips: printedFlips(flips),
       filter: { kind: "anyCard" },
       dest: "hand",
     };
@@ -1480,136 +1468,102 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
   // distributes the cards independently. An unmapped Energy code refuses.
   const attachUpToHeads = ATTACK_COIN_ATTACH_UP_TO_HEADS.exec(effect);
   if (attachUpToHeads !== null) {
-    const coins = Number(attachUpToHeads[1]);
-    if (coins < 2) return null;
-    if (coins > MAX_PRINTED_FLIPS) return null;
+    const flips = printedFlipCount(attachUpToHeads[1]);
+    if (flips === null) return null;
     const attachType = ENERGY_TYPE_BY_CODE[attachUpToHeads[2] ?? ""];
     if (attachType === undefined) return null;
-    return {
-      kind: "programPerHeads",
-      flips: { kind: "printed", count: coins },
-      ops: [
-        {
-          op: "attachEnergyFrom",
-          source: "discard",
-          energyType: attachType,
-          benchOnly: true,
-          declinable: true,
-        },
-      ],
-      face: "heads",
-    };
+    return programPerHeads(printedFlips(flips), [
+      {
+        op: "attachEnergyFrom",
+        source: "discard",
+        energyType: attachType,
+        benchOnly: true,
+        declinable: true,
+      },
+    ]);
   }
-  // Until-tails arms have no digit to guard.
   const attachAnyUpToHeads = ATTACK_COIN_ATTACH_ANY_UP_TO_HEADS.exec(effect);
   if (attachAnyUpToHeads !== null) {
-    const sketchCoins = Number(attachAnyUpToHeads[1]);
-    if (sketchCoins < 2 || sketchCoins > MAX_PRINTED_FLIPS) return null;
-    return {
-      kind: "programPerHeads",
-      flips: { kind: "printed", count: sketchCoins },
-      ops: [{ op: "attachEnergyFrom", source: "discard", benchOnly: true, declinable: true }],
-      face: "heads",
-    };
+    const flips = printedFlipCount(attachAnyUpToHeads[1]);
+    if (flips === null) return null;
+    return programPerHeads(printedFlips(flips), [
+      { op: "attachEnergyFrom", source: "discard", benchOnly: true, declinable: true },
+    ]);
   }
   if (ATTACK_COIN_MILL_ONE_UNTIL_TAILS.test(effect)) {
-    return {
-      kind: "programPerHeads",
-      flips: { kind: "untilTails" },
-      ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
-      face: "heads",
-    };
+    return programPerHeads(untilTails(), [{ op: "discardDeckTop", whose: "opponent", count: 1 }]);
   }
   if (ATTACK_COIN_HAND_TO_DECK_UNTIL_TAILS.test(effect)) {
-    return {
-      kind: "programPerHeads",
-      flips: { kind: "untilTails" },
-      ops: [{ op: "randomFromOpponentHand", to: "deck" }],
-      face: "heads",
-    };
+    return programPerHeads(untilTails(), [{ op: "randomFromOpponentHand", to: "deck" }]);
   }
   // The board-counted flip count needs no ceiling.
   const millPerNamed = ATTACK_COIN_MILL_PER_NAMED_IN_PLAY.exec(effect);
   if (millPerNamed !== null) {
-    const gnawCount = Number(millPerNamed[2]);
-    if (gnawCount < 1) return null;
-    return {
-      kind: "programPerHeads",
-      flips: { kind: "pokemonInPlay", filter: { kind: "byName", name: millPerNamed[1] ?? "" } },
-      ops: [{ op: "discardDeckTop", whose: "opponent", count: gnawCount }],
-      face: "heads",
-    };
+    const count = positiveInt(millPerNamed[2]);
+    if (count === null) return null;
+    return programPerHeads(
+      { kind: "pokemonInPlay", filter: { kind: "byName", name: millPerNamed[1] ?? "" } },
+      [{ op: "discardDeckTop", whose: "opponent", count }],
+    );
   }
   const deckAttachPerHeads = ATTACK_COIN_DECK_ATTACH_PER_HEADS.exec(effect);
   if (deckAttachPerHeads !== null) {
-    const waltzCoins = Number(deckAttachPerHeads[1]);
-    const waltzMax = Number(deckAttachPerHeads[2]);
-    if (waltzCoins < 2 || waltzCoins > MAX_PRINTED_FLIPS || waltzMax < 1) return null;
-    return {
-      kind: "programPerHeads",
-      flips: { kind: "printed", count: waltzCoins },
-      ops: [
-        { op: "attachFromDeck", filter: { kind: "basicEnergy" }, max: waltzMax },
-        { op: "shuffleDeck" },
-      ],
-      face: "heads",
-    };
+    const flips = printedFlipCount(deckAttachPerHeads[1]);
+    const max = positiveInt(deckAttachPerHeads[2]);
+    if (flips === null || max === null) return null;
+    return programPerHeads(printedFlips(flips), [
+      { op: "attachFromDeck", filter: { kind: "basicEnergy" }, max },
+      { op: "shuffleDeck" },
+    ]);
   }
-  const lariat = ATTACK_COIN_BOTH_HEADS_BONUS.exec(effect);
-  if (lariat !== null) {
-    const lariatBonus = Number(lariat[1]);
-    return lariatBonus >= 1
-      ? { kind: "bonusOnAllHeads", flips: { kind: "printed", count: 2 }, bonus: lariatBonus }
-      : null;
+  const bothHeads = ATTACK_COIN_BOTH_HEADS_BONUS.exec(effect);
+  if (bothHeads !== null) {
+    const bonus = positiveInt(bothHeads[1]);
+    return bonus !== null ? { kind: "bonusOnAllHeads", flips: printedFlips(2), bonus } : null;
   }
   if (ATTACK_COIN_UNTIL_TAILS_DECK_TO_HAND.test(effect)) {
     return {
       kind: "deckUpToHeads",
-      flips: { kind: "untilTails" },
+      flips: untilTails(),
       filter: { kind: "anyCard" },
       to: "hand",
     };
   }
-  const gormandize = ATTACK_COIN_UNTIL_TAILS_DECK_ATTACH_SELF.exec(effect);
-  if (gormandize !== null) {
-    const gormandizeCode = gormandize[1];
-    if (gormandizeCode === undefined) {
+  const deckAttachSelf = ATTACK_COIN_UNTIL_TAILS_DECK_ATTACH_SELF.exec(effect);
+  if (deckAttachSelf !== null) {
+    const code = deckAttachSelf[1];
+    if (code === undefined) {
       return {
         kind: "deckUpToHeads",
-        flips: { kind: "untilTails" },
+        flips: untilTails(),
         filter: { kind: "basicEnergy" },
         to: "self",
       };
     }
-    const gormandizeType = ENERGY_TYPE_BY_CODE[gormandizeCode];
-    if (gormandizeType === undefined) return null;
+    const energyType = ENERGY_TYPE_BY_CODE[code];
+    if (energyType === undefined) return null;
     return {
       kind: "deckUpToHeads",
-      flips: { kind: "untilTails" },
-      filter: { kind: "basicEnergy", energyType: gormandizeType },
+      flips: untilTails(),
+      filter: { kind: "basicEnergy", energyType },
       to: "self",
     };
   }
-  const snapInspection = ATTACK_COIN_REVEALED_HAND_TO_DECK.exec(effect);
-  if (snapInspection !== null) {
-    const snapCoins = Number(snapInspection[1]);
-    if (snapCoins < 2 || snapCoins > MAX_PRINTED_FLIPS) return null;
-    return {
-      kind: "programPerHeads",
-      flips: { kind: "printed", count: snapCoins },
-      ops: [{ op: "bottomFromOpponentHand", dest: "deck" }],
-      face: "heads",
-    };
+  const revealedHandToDeck = ATTACK_COIN_REVEALED_HAND_TO_DECK.exec(effect);
+  if (revealedHandToDeck !== null) {
+    const flips = printedFlipCount(revealedHandToDeck[1]);
+    if (flips === null) return null;
+    return programPerHeads(printedFlips(flips), [{ op: "bottomFromOpponentHand", dest: "deck" }]);
   }
   // The coin count is fixed at 3 by the anchor, and the tuple holds the printed tiers in order;
   // `attack.ts` indexes it by `heads - 1`. A zero tier refuses the whole sentence.
   const ladder = ATTACK_COIN_BONUS_LADDER.exec(effect);
   if (ladder !== null) {
-    const t1 = Number(ladder[1]);
-    const t2 = Number(ladder[2]);
-    const t3 = Number(ladder[3]);
-    if (t1 < 1 || t2 < 1 || t3 < 1) return null;
-    return { kind: "bonusLadder", flips: { kind: "printed", count: 3 }, ladder: [t1, t2, t3] };
+    const t1 = positiveInt(ladder[1]);
+    const t2 = positiveInt(ladder[2]);
+    const t3 = positiveInt(ladder[3]);
+    if (t1 === null || t2 === null || t3 === null) return null;
+    return { kind: "bonusLadder", flips: printedFlips(3), ladder: [t1, t2, t3] };
   }
   // The bare cancel runs first so that if its `$` were lost, it would claim the compound sentence
   // observably rather than silently.
@@ -3498,8 +3452,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // 5a. Counters convert to HP here (one counter = 10, §12). A printed 0 is refused.
   match = DEFENDER_CONFUSION_N.exec(effect);
   if (match !== null) {
-    const counters = Number(match[1]);
-    if (counters >= 1) {
+    const counters = positiveInt(match[1]);
+    if (counters !== null) {
       return [
         {
           op: "applyStatus",
@@ -3548,8 +3502,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // HP here, and a printed 0 is refused.
   match = DELAYED_DEFENDER_COUNTERS.exec(effect);
   if (match !== null) {
-    const counters = Number(match[1]);
-    if (counters >= 1) return [{ op: "scheduleCounters", amount: counters * HP_PER_COUNTER }];
+    const counters = positiveInt(match[1]);
+    if (counters !== null) return [{ op: "scheduleCounters", amount: counters * HP_PER_COUNTER }];
   }
 
   // 5g. Discards the Defending Pokémon without a Knock Out, so no Prize is taken. A separate op
@@ -3658,16 +3612,16 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // 6e. `opponentAny` covers the Active and the Bench. A printed 0 is refused.
   match = KO_EXACT_DAMAGE_COUNTERS.exec(effect);
   if (match !== null) {
-    const counters = Number(match[1]);
-    if (counters >= 1) {
+    const counters = positiveInt(match[1]);
+    if (counters !== null) {
       return [{ op: "knockOutChosen", target: "opponentAny", damageCountersExactly: counters }];
     }
   }
 
   match = OPPONENT_ACTIVE_EXACT_COUNTERS_KO.exec(effect);
   if (match !== null) {
-    const exactCounters = Number(match[1]);
-    if (exactCounters >= 1) {
+    const exactCounters = positiveInt(match[1]);
+    if (exactCounters !== null) {
       return [
         {
           op: "conditionGate",
@@ -3727,8 +3681,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   }
   match = EACH_PLAYER_HAND_ATTACH.exec(effect);
   if (match !== null) {
-    const max = Number(match[1]);
-    if (max >= 1) {
+    const max = positiveInt(match[1]);
+    if (max !== null) {
       return [
         { op: "attachFromHand", filter: { kind: "basicEnergy" }, max, whose: "opponent" },
         { op: "attachFromHand", filter: { kind: "basicEnergy" }, max },
@@ -3788,13 +3742,13 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   }
   match = HEAL_EACH_BOTH_SIDES.exec(effect);
   if (match !== null) {
-    const healedEach = Number(match[1]);
-    if (healedEach >= 1) return [{ op: "healEachAll", amount: healedEach }];
+    const healedEach = positiveInt(match[1]);
+    if (healedEach !== null) return [{ op: "healEachAll", amount: healedEach }];
   }
   match = OPPONENT_SHUFFLES_HAND_DRAWS.exec(effect);
   if (match !== null) {
-    const opponentDraws = Number(match[1]);
-    if (opponentDraws >= 1) {
+    const opponentDraws = positiveInt(match[1]);
+    if (opponentDraws !== null) {
       return [
         { op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: opponentDraws } },
       ];
@@ -4046,8 +4000,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   }
   match = RANDOM_DISCARD_OPPONENT_HAND_DOWN_TO.exec(effect);
   if (match !== null) {
-    const keptInHand = Number(match[1]);
-    if (keptInHand >= 1)
+    const keptInHand = positiveInt(match[1]);
+    if (keptInHand !== null)
       return [{ op: "randomFromOpponentHand", to: "discard", untilHandSize: keptInHand }];
   }
   match = MILL_TOP_KEEP_ONE.exec(effect);
@@ -4230,8 +4184,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // Active.
   match = SPREAD_EACH_DAMAGED_FOUR_ZONE.exec(effect);
   if (match !== null) {
-    const amount = Number(match[1]);
-    if (amount >= 1) {
+    const amount = positiveInt(match[1]);
+    if (amount !== null) {
       return [
         {
           op: "conditionGate",
@@ -4316,8 +4270,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     placed counter. A printed 0-per is not a real card — left on the loud path.
   match = BENCHED_SNIPE_TAKEN_PRIZES.exec(effect);
   if (match !== null) {
-    const per = Number(match[1]);
-    if (per >= 1) {
+    const per = positiveInt(match[1]);
+    if (per !== null) {
       return [
         {
           op: "damageChosen",
@@ -4339,8 +4293,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // `Benched` the target is `opponentAny`.
   match = BENCHED_SNIPE_TARGET_COUNTERS.exec(effect);
   if (match !== null) {
-    const per = Number(match[1]);
-    if (per >= 1) {
+    const per = positiveInt(match[1]);
+    if (per !== null) {
       return [
         {
           op: "damageChosen",
@@ -4994,8 +4948,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       ...(match[2] === undefined ? {} : { recordAs: "discarded" }),
     };
     if (match[2] === undefined) return [pay];
-    const per = Number(match[2]);
-    if (per >= 1) return [pay, { op: "damageDefender", per, count: "discarded" }];
+    const per = positiveInt(match[2]);
+    if (per !== null) return [pay, { op: "damageDefender", per, count: "discarded" }];
   }
   match = HAND_REVEAL_NAMED_SCALED.exec(effect);
   if (match !== null) {
@@ -5015,8 +4969,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   }
   match = SELF_DAMAGE_AND_PARALYZE_OPTIONAL.exec(effect);
   if (match !== null) {
-    const amount = Number(match[1]);
-    if (amount >= 1) {
+    const amount = positiveInt(match[1]);
+    if (amount !== null) {
       return [
         {
           op: "optional",
@@ -5165,8 +5119,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // match the flat sentence, so the two arms are mutually exclusive.
   match = SELF_DAMAGE_PER_COUNTER.exec(effect);
   if (match !== null) {
-    const amount = Number(match[1]);
-    if (amount >= 1) return [{ op: "damageSelf", amount, perDamageCounterOnSelf: true }];
+    const amount = positiveInt(match[1]);
+    if (amount !== null) return [{ op: "damageSelf", amount, perDamageCounterOnSelf: true }];
   }
 
   match = SELF_DAMAGE.exec(effect);
@@ -5298,8 +5252,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (BAR_HAND_ATTACH_DEFENDER.test(effect)) return [{ op: "markHandAttach", barred: true }];
   match = HAND_ATTACH_COUNTERS.exec(effect);
   if (match !== null) {
-    const counters = Number(match[1]);
-    if (counters >= 1) return [{ op: "markHandAttach", counters }];
+    const counters = positiveInt(match[1]);
+    if (counters !== null) return [{ op: "markHandAttach", counters }];
   }
   if (DEFENDER_TWO_COIN_ATTACK_LOCK.test(effect)) return [{ op: "flipLockAttack", coins: 2 }];
   if (TRAINER_PLAY_FLIP_LOCK.test(effect)) return [{ op: "flipLockTrainerPlay" }];
@@ -5319,13 +5273,13 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   }
   match = SELF_DAMAGE_REDUCTION_FROM_EVOLUTION.exec(effect);
   if (match !== null) {
-    const amount = Number(match[1]);
-    if (amount >= 1) return [{ op: "reduceDamage", amount, fromClass: { stage: "evolution" } }];
+    const amount = positiveInt(match[1]);
+    if (amount !== null) return [{ op: "reduceDamage", amount, fromClass: { stage: "evolution" } }];
   }
   match = SELF_VULNERABLE_NEXT_TURN.exec(effect);
   if (match !== null) {
-    const amount = Number(match[1]);
-    if (amount >= 1) return [{ op: "exposeSelf", amount }];
+    const amount = positiveInt(match[1]);
+    if (amount !== null) return [{ op: "exposeSelf", amount }];
   }
   if (LOOK_AT_OPPONENT_PRIZE.test(effect)) return [{ op: "lookAtPrize", side: "opponent" }];
   if (WIN_AT_ONE_PRIZE.test(effect)) {
@@ -5365,8 +5319,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (SELF_NO_WEAKNESS.test(effect)) return [{ op: "installNoWeakness" }];
   match = SELF_DISCARD_ALL_THEN_REDUCTION.exec(effect);
   if (match !== null) {
-    const amount = Number(match[1]);
-    if (amount >= 1) {
+    const amount = positiveInt(match[1]);
+    if (amount !== null) {
       return [
         { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
         { op: "reduceDamage", amount },
@@ -5386,8 +5340,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // applying Weakness and Resistance)."
   match = DEFENDER_VULNERABLE_NEXT_TURN.exec(effect);
   if (match !== null) {
-    const amount = Number(match[1]);
-    if (amount >= 1) return [{ op: "exposeDefender", amount }];
+    const amount = positiveInt(match[1]);
+    if (amount !== null) return [{ op: "exposeDefender", amount }];
   }
   // "Until the end of your next turn, the Defending Pokémon's Weakness is now {C}." The printed
   // `{C}` is the op's `type`.
@@ -5410,8 +5364,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // "During your next turn, if the Defending Pokémon is Knocked Out, take {N} more Prize cards."
   match = DEFENDER_KO_BOUNTY_NEXT_TURN.exec(effect);
   if (match !== null) {
-    const amount = Number(match[1]);
-    if (amount >= 1) return [{ op: "bountyDefender", amount }];
+    const amount = positiveInt(match[1]);
+    if (amount !== null) return [{ op: "bountyDefender", amount }];
   }
   // Reactive recoil installed by an attack: the trigger is the §9 site's `dealt > 0` gate. The
   // printed counters are converted to HP (× 10) here.
@@ -5687,8 +5641,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // in-play body, which is what the card says.
   match = COUNTER_FOLD_ON_OPPONENT_ALL.exec(effect);
   if (match !== null) {
-    const oppFoldCounters = Number(match[1]);
-    if (oppFoldCounters >= 1) {
+    const oppFoldCounters = positiveInt(match[1]);
+    if (oppFoldCounters !== null) {
       return [
         {
           op: "counterEachAll",
@@ -5708,8 +5662,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // separated only by the `$`.
   match = COUNTER_FOLD_ON_OPPONENT_DAMAGED.exec(effect);
   if (match !== null) {
-    const damagedFoldCounters = Number(match[1]);
-    if (damagedFoldCounters >= 1) {
+    const damagedFoldCounters = positiveInt(match[1]);
+    if (damagedFoldCounters !== null) {
       return [
         {
           op: "counterEachAll",
@@ -5729,8 +5683,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // capture is already HP, so no × 10. A destination of 0 would be lethal, so it is refused.
   match = COUNTER_UNTIL_REMAINING_HP_ACTIVE.exec(effect);
   if (match !== null) {
-    const activeRemainingHp = Number(match[1]);
-    if (activeRemainingHp >= 1) {
+    const activeRemainingHp = positiveInt(match[1]);
+    if (activeRemainingHp !== null) {
       return [
         {
           op: "counterUntilRemainingHp",
@@ -5749,8 +5703,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // Each body is filled to `remainingHp` independently, so the op carries no amount.
   match = COUNTER_UNTIL_REMAINING_HP_BENCH.exec(effect);
   if (match !== null) {
-    const benchRemainingHp = Number(match[1]);
-    if (benchRemainingHp >= 1) {
+    const benchRemainingHp = positiveInt(match[1]);
+    if (benchRemainingHp !== null) {
       return [
         {
           op: "counterUntilRemainingHp",
@@ -5819,8 +5773,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // printed base instead of adding to it. A printed 0 would zero the attack, so it stays loud.
   match = SELF_ATTACK_BASE_SET.exec(effect);
   if (match !== null) {
-    const amount = Number(match[2]);
-    if (amount >= 1) {
+    const amount = positiveInt(match[2]);
+    if (amount !== null) {
       return [{ op: "boostAttack", attack: foldApostrophes(match[1] ?? ""), amount, base: true }];
     }
   }
@@ -5831,8 +5785,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // the boost.
   match = SELF_EVERY_ATTACK_BOOST.exec(effect);
   if (match !== null) {
-    const amount = Number(match[2]);
-    if (amount >= 1) {
+    const amount = positiveInt(match[2]);
+    if (amount !== null) {
       const boost: EffectOp = { op: "boostAttack", attack: null, amount };
       return match[1] === undefined
         ? [boost]
@@ -5974,8 +5928,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // coins are flipped and logged before the branch, and the recoil lands only when both are tails.
   match = FLIP_TWO_BOTH_TAILS_SELF_DAMAGE.exec(effect);
   if (match !== null) {
-    const amount = Number(match[1]);
-    if (amount >= 1) {
+    const amount = positiveInt(match[1]);
+    if (amount !== null) {
       return [
         {
           op: "coinFlipGate",
@@ -6006,14 +5960,14 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // Draw from the bottom of the deck.
   match = ATTACK_DRAW_BOTTOM.exec(effect);
   if (match !== null) {
-    const count = Number(match[1]);
-    if (count >= 1) return [{ op: "drawCards", count, from: "bottom" }];
+    const count = positiveInt(match[1]);
+    if (count !== null) return [{ op: "drawCards", count, from: "bottom" }];
   }
   // Each player draws; `drawToHand` short-draws per seat (§8.6).
   match = ATTACK_EACH_PLAYER_DRAW.exec(effect);
   if (match !== null) {
-    const count = Number(match[1]);
-    if (count >= 1) return [{ op: "drawCards", count, who: "eachPlayer" }];
+    const count = positiveInt(match[1]);
+    if (count !== null) return [{ op: "drawCards", count, who: "eachPlayer" }];
   }
   match = ATTACK_DRAW_UNTIL.exec(effect);
   if (match !== null) {
@@ -6030,15 +5984,15 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // board.
   match = ATTACK_MAY_DRAW.exec(effect);
   if (match !== null) {
-    const count = Number(match[1]);
-    if (count >= 1) {
+    const count = positiveInt(match[1]);
+    if (count !== null) {
       return [{ op: "optional", note: effect, then: [{ op: "drawCards", count }] }];
     }
   }
   match = ATTACK_MAY_DRAW_UNTIL.exec(effect);
   if (match !== null) {
-    const size = Number(match[1]);
-    if (size >= 1) {
+    const size = positiveInt(match[1]);
+    if (size !== null) {
       return [{ op: "optional", note: effect, then: [{ op: "drawUntilHandSize", size }] }];
     }
   }
@@ -6427,8 +6381,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   {
     const match = ATTACK_DISCARD_TOOLS_UP_TO.exec(effect);
     if (match !== null) {
-      const count = Number(match[1]);
-      if (count >= 1) return [{ op: "discardTools", count }];
+      const count = positiveInt(match[1]);
+      if (count !== null) return [{ op: "discardTools", count }];
     }
   }
   // This sentence is read here for the reveal and by `deriveAttackDamageMultiplier` for the damage,
@@ -6868,8 +6822,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // afterward.
   match = STADIUM_GATED_BENCH_SPREAD.exec(effect);
   if (match !== null) {
-    const amount = Number(match[1]);
-    if (amount >= 1) {
+    const amount = positiveInt(match[1]);
+    if (amount !== null) {
       return [
         {
           op: "conditionGate",
@@ -6884,8 +6838,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // draws what it can; deck-out is checked at the next turn's draw (§14.3).
   match = DISCARD_HAND_DRAW.exec(effect);
   if (match !== null) {
-    const count = Number(match[1]);
-    if (count >= 1) {
+    const count = positiveInt(match[1]);
+    if (count !== null) {
       return [{ op: "discardHand" }, { op: "drawCards", count }];
     }
   }
@@ -6895,8 +6849,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // rename it.
   match = SHUFFLE_HAND_DRAW.exec(effect);
   if (match !== null) {
-    const redrawn = Number(match[1]);
-    if (redrawn >= 1) {
+    const redrawn = positiveInt(match[1]);
+    if (redrawn !== null) {
       return [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: redrawn } }];
     }
   }
@@ -6912,8 +6866,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // rename it.
   match = HAND_COST_THEN_DRAW.exec(effect);
   if (match !== null) {
-    const drawn = Number(match[1]);
-    if (drawn >= 1) {
+    const drawn = positiveInt(match[1]);
+    if (drawn !== null) {
       return [
         { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
         { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: drawn }] },
@@ -6967,8 +6921,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // Target Together.
   const targetTogether = CHOSEN_PER_HEADS_IN_PLAY.exec(effect);
   if (targetTogether !== null) {
-    const perHeads = Number(targetTogether[2]);
-    if (perHeads >= 1) {
+    const perHeads = positiveInt(targetTogether[2]);
+    if (perHeads !== null) {
       return [
         {
           op: "damageChosen",
@@ -6986,8 +6940,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // Nullifying Zero.
   const nullifyingZero = FLIP_EACH_OPPONENT_SNIPE.exec(effect);
   if (nullifyingZero !== null) {
-    const amount = Number(nullifyingZero[1]);
-    if (amount >= 1) {
+    const amount = positiveInt(nullifyingZero[1]);
+    if (amount !== null) {
       return [
         {
           op: "damageChosen",
@@ -7156,45 +7110,45 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   // carry.
   const selfCounters = SELF_COUNTER_SCALE.exec(effect);
   if (selfCounters !== null) {
-    const per = Number(selfCounters[1]);
-    if (per >= 1) return { per, count: { kind: "damageCountersOnSelf" } };
+    const per = positiveInt(selfCounters[1]);
+    if (per !== null) return { per, count: { kind: "damageCountersOnSelf" } };
   }
   const opponentPrizes = OPPONENT_PRIZES_SCALE.exec(effect);
   if (opponentPrizes !== null) {
-    const per = Number(opponentPrizes[1]);
-    if (per >= 1) return { per, count: { kind: "opponentPrizesTaken" } };
+    const per = positiveInt(opponentPrizes[1]);
+    if (per !== null) return { per, count: { kind: "opponentPrizesTaken" } };
   }
   const lastTurnPrizes = OPPONENT_PRIZES_LAST_TURN_SCALE.exec(effect);
   if (lastTurnPrizes !== null) {
-    const per = Number(lastTurnPrizes[1]);
-    if (per >= 1) return { per, count: { kind: "opponentPrizesTakenLastTurn" } };
+    const per = positiveInt(lastTurnPrizes[1]);
+    if (per !== null) return { per, count: { kind: "opponentPrizesTakenLastTurn" } };
   }
   if (DAMAGED_LAST_TURN_THAT_MUCH_MORE.test(effect))
     return { per: 1, count: { kind: "attackDamageTakenLastTurnOnSelf" } };
   const retreatCost = RETREAT_COST_SCALE.exec(effect);
   if (retreatCost !== null) {
-    const per = Number(retreatCost[1]);
-    if (per >= 1) return { per, count: { kind: "opponentActiveRetreatCost" } };
+    const per = positiveInt(retreatCost[1]);
+    if (per !== null) return { per, count: { kind: "opponentActiveRetreatCost" } };
   }
   const opponentCounters = OPPONENT_COUNTER_SCALE.exec(effect);
   if (opponentCounters !== null) {
-    const per = Number(opponentCounters[1]);
-    if (per >= 1) return { per, count: { kind: "damageCountersOnOpponentActive" } };
+    const per = positiveInt(opponentCounters[1]);
+    if (per !== null) return { per, count: { kind: "damageCountersOnOpponentActive" } };
   }
   const opponentBoardCounters = OPPONENT_BOARD_COUNTER_SCALE.exec(effect);
   if (opponentBoardCounters !== null) {
-    const per = Number(opponentBoardCounters[1]);
-    if (per >= 1) return { per, count: { kind: "damageCountersOnOpponentBoard" } };
+    const per = positiveInt(opponentBoardCounters[1]);
+    if (per !== null) return { per, count: { kind: "damageCountersOnOpponentBoard" } };
   }
   const bothBench = BOTH_BENCH_SCALE.exec(effect);
   if (bothBench !== null) {
-    const per = Number(bothBench[1]);
-    if (per >= 1) return { per, count: { kind: "bothSidesBenchCount" } };
+    const per = positiveInt(bothBench[1]);
+    if (per !== null) return { per, count: { kind: "bothSidesBenchCount" } };
   }
   const opponentBench = OPPONENT_BENCH_SCALE.exec(effect);
   if (opponentBench !== null) {
-    const per = Number(opponentBench[1]);
-    if (per >= 1) return { per, count: { kind: "opponentBenchCount" } };
+    const per = positiveInt(opponentBench[1]);
+    if (per !== null) return { per, count: { kind: "opponentBenchCount" } };
   }
   // Bench count narrowed by a bare printed name. Deliberately checked before the unfiltered arm it
   // narrows; see `YOUR_BENCHED_NOUN_SCALE`.
@@ -7208,8 +7162,8 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   }
   const yourBench = YOUR_BENCH_SCALE.exec(effect);
   if (yourBench !== null) {
-    const per = Number(yourBench[1]);
-    if (per >= 1) return { per, count: { kind: "yourBenchCount" } };
+    const per = positiveInt(yourBench[1]);
+    if (per !== null) return { per, count: { kind: "yourBenchCount" } };
   }
   // An absent filter means every Benched Pokémon; `filter !== null` keeps unknown nouns on the loud
   // skipped path.
@@ -7292,8 +7246,8 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   }
   const bothActivesEnergy = SELF_ENERGY_BOTH_ACTIVES_SCALE.exec(effect);
   if (bothActivesEnergy !== null) {
-    const per = Number(bothActivesEnergy[1]);
-    if (per >= 1) return { per, count: { kind: "bothActivesEnergyCount" } };
+    const per = positiveInt(bothActivesEnergy[1]);
+    if (per !== null) return { per, count: { kind: "bothActivesEnergyCount" } };
   }
   const extraEnergy = EXTRA_ENERGY_BONUS.exec(effect);
   if (extraEnergy !== null) {
@@ -7344,18 +7298,18 @@ export function deriveAttackDamagePenalty(text: string): AttackDamageBonus | nul
   // than silently claiming to simulate a sentence that does nothing.
   const selfCounters = SELF_COUNTER_PENALTY.exec(effect);
   if (selfCounters !== null) {
-    const per = Number(selfCounters[1]);
-    if (per >= 1) return { per, count: { kind: "damageCountersOnSelf" } };
+    const per = positiveInt(selfCounters[1]);
+    if (per !== null) return { per, count: { kind: "damageCountersOnSelf" } };
   }
   const retreatCost = RETREAT_COST_PENALTY.exec(effect);
   if (retreatCost !== null) {
-    const per = Number(retreatCost[1]);
-    if (per >= 1) return { per, count: { kind: "opponentActiveRetreatCost" } };
+    const per = positiveInt(retreatCost[1]);
+    if (per !== null) return { per, count: { kind: "opponentActiveRetreatCost" } };
   }
   const opponentEnergy = OPPONENT_ENERGY_PENALTY.exec(effect);
   if (opponentEnergy !== null) {
-    const per = Number(opponentEnergy[1]);
-    if (per >= 1)
+    const per = positiveInt(opponentEnergy[1]);
+    if (per !== null)
       return { per, count: { kind: "energyOnOpponent", zone: "active", energyType: null } };
   }
   return null;
@@ -7519,39 +7473,39 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
   // carries.
   const selfCounters = SELF_COUNTER_MULTIPLY.exec(effect);
   if (selfCounters !== null) {
-    const per = Number(selfCounters[1]);
-    if (per >= 1) return { per, count: { kind: "damageCountersOnSelf" } };
+    const per = positiveInt(selfCounters[1]);
+    if (per !== null) return { per, count: { kind: "damageCountersOnSelf" } };
   }
   const opponentPrizes = OPPONENT_PRIZES_MULTIPLY.exec(effect);
   if (opponentPrizes !== null) {
     // A printed 0 does nothing — left loud, the guard the additive rules carry.
-    const per = Number(opponentPrizes[1]);
-    if (per >= 1) return { per, count: { kind: "opponentPrizesTaken" } };
+    const per = positiveInt(opponentPrizes[1]);
+    if (per !== null) return { per, count: { kind: "opponentPrizesTaken" } };
   }
   const yourPrizes = YOUR_PRIZES_MULTIPLY.exec(effect);
   if (yourPrizes !== null) {
-    const per = Number(yourPrizes[1]);
-    if (per >= 1) return { per, count: { kind: "yourPrizesTaken" } };
+    const per = positiveInt(yourPrizes[1]);
+    if (per !== null) return { per, count: { kind: "yourPrizesTaken" } };
   }
   const retreatCost = RETREAT_COST_MULTIPLY.exec(effect);
   if (retreatCost !== null) {
-    const per = Number(retreatCost[1]);
-    if (per >= 1) return { per, count: { kind: "opponentActiveRetreatCost" } };
+    const per = positiveInt(retreatCost[1]);
+    if (per !== null) return { per, count: { kind: "opponentActiveRetreatCost" } };
   }
   const opponentCounters = OPPONENT_COUNTER_MULTIPLY.exec(effect);
   if (opponentCounters !== null) {
-    const per = Number(opponentCounters[1]);
-    if (per >= 1) return { per, count: { kind: "damageCountersOnOpponentActive" } };
+    const per = positiveInt(opponentCounters[1]);
+    if (per !== null) return { per, count: { kind: "damageCountersOnOpponentActive" } };
   }
   const opponentConditions = OPPONENT_CONDITION_COUNT_MULTIPLY.exec(effect);
   if (opponentConditions !== null) {
-    const per = Number(opponentConditions[1]);
-    if (per >= 1) return { per, count: { kind: "specialConditionsOnOpponentActive" } };
+    const per = positiveInt(opponentConditions[1]);
+    if (per !== null) return { per, count: { kind: "specialConditionsOnOpponentActive" } };
   }
   const benchCounters = BENCH_COUNTER_MULTIPLY.exec(effect);
   if (benchCounters !== null) {
-    const per = Number(benchCounters[1]);
-    if (per >= 1) return { per, count: { kind: "damageCountersOnYourBench" } };
+    const per = positiveInt(benchCounters[1]);
+    if (per !== null) return { per, count: { kind: "damageCountersOnYourBench" } };
   }
   // An absent filter means every Benched Pokémon. The suppressed compound has the same capture
   // groups, so both spellings fold identically.
@@ -7566,14 +7520,14 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
   }
   const opponentBench = OPPONENT_BENCH_MULTIPLY.exec(effect);
   if (opponentBench !== null) {
-    const per = Number(opponentBench[1]);
-    if (per >= 1) return { per, count: { kind: "opponentBenchCount" } };
+    const per = positiveInt(opponentBench[1]);
+    if (per !== null) return { per, count: { kind: "opponentBenchCount" } };
   }
   // Terapagos ex reaches this only after `splitAttackGateClause` has removed its gate clause.
   const yourBench = YOUR_BENCH_MULTIPLY.exec(effect);
   if (yourBench !== null) {
-    const per = Number(yourBench[1]);
-    if (per >= 1) return { per, count: { kind: "yourBenchCount" } };
+    const per = positiveInt(yourBench[1]);
+    if (per !== null) return { per, count: { kind: "yourBenchCount" } };
   }
   const inPlayBodies = IN_PLAY_BODY_MULTIPLY.exec(effect);
   if (inPlayBodies !== null) {
@@ -7737,8 +7691,8 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
   }
   const yourTools = YOUR_TOOLS_MULTIPLY.exec(effect);
   if (yourTools !== null) {
-    const per = Number(yourTools[1]);
-    if (per >= 1) return { per, count: { kind: "toolsOnYourBoard" } };
+    const per = positiveInt(yourTools[1]);
+    if (per !== null) return { per, count: { kind: "toolsOnYourBoard" } };
   }
   const allTools = BOTH_SIDES_TOOLS_MULTIPLY.exec(effect);
   if (allTools !== null && Number(allTools[1]) >= 1) {
@@ -7858,8 +7812,8 @@ export function deriveAttackOptionalBoost(text: string): AttackOptionalBoost | n
   }
   const recoil = BOOST_SELF_DAMAGE.exec(consequent);
   if (recoil !== null) {
-    const amount = Number(recoil[1]);
-    return amount >= 1 ? { bonus, ops: [{ op: "damageSelf", amount }] } : null;
+    const amount = positiveInt(recoil[1]);
+    return amount !== null ? { bonus, ops: [{ op: "damageSelf", amount }] } : null;
   }
   if (BOOST_CANT_ATTACK.test(consequent)) return { bonus, ops: [{ op: "preventAttack" }] };
   return null;
