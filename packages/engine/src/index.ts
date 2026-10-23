@@ -186,7 +186,7 @@ export type {
   StadiumEffects,
   TriggeredAbility,
   TriggerTiming,
-} from "./registry";
+} from "./programTypes";
 export { programFor } from "./registry";
 export type { DrawReason, GameEvent, StatusName } from "./events";
 export { inSetup, phaseViewOf } from "./phaseView";

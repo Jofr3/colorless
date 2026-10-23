@@ -11,7 +11,7 @@ import { runProgram } from "./interpreter";
 // here only as a type, so this value import creates no runtime cycle.
 import { phaseViewOf } from "./phaseView";
 import { programFor } from "./registry";
-import type { TriggeredAbility, TriggerTiming } from "./registry";
+import type { TriggeredAbility, TriggerTiming } from "./programTypes";
 import type { GameState, InPlayPokemon, PokemonTarget, Seat } from "./types";
 import { inPlayOf, otherSeat, pokemonAt } from "./types";
 

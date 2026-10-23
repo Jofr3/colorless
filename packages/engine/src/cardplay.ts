@@ -76,7 +76,7 @@ import {
   switchActiveTargets,
 } from "./ops/board";
 import { handCostAction } from "./promptText";
-import type { AbilityProgram, StadiumAbility } from "./registry";
+import type { AbilityProgram, StadiumAbility } from "./programTypes";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import { isBenchIndex, isPokemonTarget, placeEvolution, turnGate } from "./turn";

@@ -45,7 +45,7 @@ import type {
   MaxHpScale,
   PassiveEffects,
   StadiumEffects,
-} from "./registry";
+} from "./programTypes";
 import { programFor, registryCardIds } from "./registry";
 import type {
   AttackBlock,

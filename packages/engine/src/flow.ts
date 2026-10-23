@@ -37,7 +37,7 @@ import { discardHand } from "./ops/cards";
 import { doomBodyAt } from "./ops/board";
 import { effectRefused } from "./effectTargets";
 import { runProgram } from "./interpreter";
-import type { KoPrizeReduction } from "./registry";
+import type { KoPrizeReduction } from "./programTypes";
 import { programFor } from "./registry";
 import { flipCoin, shuffle } from "./rng";
 import {
