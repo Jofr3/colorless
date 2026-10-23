@@ -1013,9 +1013,6 @@ export type Phase =
     }
   | { kind: "gameOver"; outcome: GameOutcome };
 
-/** The in-turn phase, narrowed — the shape every turn action is gated on. */
-export type TurnPhase = Extract<Phase, { kind: "turn:action" }>;
-
 /** No hand-play lock live on either seat — `createGame`'s initialiser, written
     once here rather than spelled at the literal (the `freshAllowances` idiom).
     Every class present with `null`; see `GameState.handPlayLockedTurn`. */

@@ -204,7 +204,7 @@ const plain = (text: string): LogSegment => ({ text });
 /** Event vocabulary → the capitalized condition words the rules use (§12).
     UI-side single source for the labels — GameHud's status copy reads this
     map too, so the wording cannot drift between the log and the panels. */
-export const STATUS_LABELS: Record<StatusName, string> = {
+const STATUS_LABELS: Record<StatusName, string> = {
   asleep: "Asleep",
   paralyzed: "Paralyzed",
   confused: "Confused",

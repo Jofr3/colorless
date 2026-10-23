@@ -37,6 +37,7 @@ export type {
   AttachToolAction,
   AttackAction,
   ChooseFirstPlayerAction,
+  ConcedeAction,
   DiscardFromPlayAction,
   EndTurnAction,
   EngineError,
@@ -56,6 +57,7 @@ export type {
   SetupReadyAction,
   TakePrizesAction,
   UseAbilityAction,
+  UseStadiumAbilityAction,
 } from "./actions";
 export {
   ANY_ENERGY,
@@ -104,7 +106,6 @@ export {
   hasAttachedEnergy,
   hasFreeRetreatAura,
   hasFreeRetreatSelf,
-  attackerSuppressesTargetEffects,
   boostedAttackBase,
   boostedAttackDamage,
   installedNoWeakness,
@@ -164,7 +165,7 @@ export { handCostAction, handCostUnmet } from "./interpreter";
 export { programPlayable, trainerProgramPlayable } from "./cardplay";
 export { fossilPlayable } from "./cardplay";
 export { stadiumPlayOverUnmet, stadiumSpentPlayLifted } from "./cardplay";
-export { abilityBodyGateClause, abilityBodyGateMet, abilityUsedKey } from "./cardplay";
+export { abilityBodyGateMet, abilityUsedKey } from "./cardplay";
 export type { BlockingAttackGate } from "./interpreter";
 export type {
   DiscardScope,
@@ -190,7 +191,7 @@ export type { DrawReason, GameEvent, StatusName } from "./events";
 export { inSetup, phaseViewOf } from "./phaseView";
 export type { PendingDecision, PhaseView } from "./phaseView";
 export { redactGame } from "./redact";
-export { formatElapsed, logFromEvents, STATUS_LABELS } from "./log";
+export { formatElapsed, logFromEvents } from "./log";
 export type { LogContext } from "./log";
 export type { CoinFace } from "./rng";
 export { createGame } from "./setup";
@@ -224,7 +225,6 @@ export type {
   SpecialConditions,
   StadiumInPlay,
   TurnAllowances,
-  TurnPhase,
 } from "./types";
 export { turnGate, evolutionTargetUids } from "./turn";
 export { discardableTargets } from "./turn";
