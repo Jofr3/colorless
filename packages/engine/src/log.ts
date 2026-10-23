@@ -175,7 +175,7 @@ function energyHostName(
   state: GameState,
   seat: Seat,
   energyUid: string,
-  koHosts: ReadonlyMap<string, string> = new Map(),
+  koHosts: ReadonlyMap<string, string>,
 ): string {
   const carrierOf = (owner: Seat) => {
     const side = state.players[owner];
@@ -228,18 +228,188 @@ const GAME_OVER_REASONS: Record<GameOverReason, string> = {
   cardEffect: "a card's effect won the game",
 };
 
-/** One event → its log rows (usually one), or null to skip it. The switch is
-    deliberately NOT exhaustive-checked: a future engine event must fall out
-    as "skipped", never as a crash (coverage doctrine, simulator.md). */
+type EventOf<K extends GameEvent["type"]> = Extract<GameEvent, { type: K }>;
+
+/** What every per-family formatter reads: the log context plus the one-row builder. */
+interface LogFormat {
+  names: Record<Seat, string>;
+  state: GameState;
+  elapsed: string;
+  koHosts: ReadonlyMap<string, string>;
+  row: (who: Seat | "system", segments: LogSegment[]) => SeatLogEntry[];
+}
+
+/** One event → its log rows (usually one), or null to skip it. */
 function formatEvent(
   event: GameEvent,
   ctx: LogContext,
-  koHosts: ReadonlyMap<string, string> = new Map(),
+  koHosts: ReadonlyMap<string, string>,
 ): SeatLogEntry[] | null {
   const { names, state, elapsed } = ctx;
-  const row = (who: Seat | "system", segments: LogSegment[]): SeatLogEntry[] => [
-    { kind: "action", who, elapsed, segments },
-  ];
+  const fmt: LogFormat = {
+    names,
+    state,
+    elapsed,
+    koHosts,
+    row: (who, segments) => [{ kind: "action", who, elapsed, segments }],
+  };
+  switch (event.type) {
+    case "SHUFFLE":
+    case "COIN_FLIP":
+    case "FIRST_PLAYER_CHOSEN":
+    case "CARDS_DRAWN":
+    case "MULLIGAN_REVEALED":
+    case "POKEMON_PLACED":
+    case "POKEMON_BENCHED":
+    case "POKEMON_EVOLVED":
+    case "POKEMON_DEVOLVED":
+    case "COMPENSATION_DECIDED":
+    case "PRIZES_SET":
+    case "SETUP_READY":
+    case "SETUP_REVEALED":
+    case "TURN_STARTED":
+    case "RETREATED":
+    case "POKEMON_SWITCHED":
+    case "TURN_ENDED":
+    case "GAME_OVER":
+      return formatGameFlowEvent(event, fmt);
+    case "ATTACK_DECLARED":
+    case "ATTACK_COPY_RESOLVED":
+    case "ATTACK_EFFECT_SKIPPED":
+    case "DAMAGE_DEALT":
+    case "COUNTERS_PLACED":
+    case "ATTACK_FAILED":
+    case "HEALED":
+      return formatAttackEvent(event, fmt);
+    case "STATUS_APPLIED":
+    case "STATUS_PREVENTED":
+    case "STATUS_CLEARED":
+      return formatStatusEvent(event, fmt);
+    case "RETREAT_BLOCKED":
+    case "RETREAT_BLOCK_ENDED":
+    case "HAND_PLAY_BLOCKED":
+    case "ATTACK_BLOCK_APPLIED":
+    case "ATTACK_LOCKED":
+    case "DAMAGE_REDUCTION_APPLIED":
+    case "WEAKNESS_REMOVED":
+    case "ATTACK_DEBUFF_APPLIED":
+    case "DAMAGE_VULNERABILITY_APPLIED":
+    case "WEAKNESS_RETYPED":
+    case "COST_TAX_APPLIED":
+    case "KO_BOUNTY_APPLIED":
+    case "SIDE_ATTACKS_LOCKED":
+    case "SIDE_ATTACKS_BOOSTED":
+    case "SIDE_ATTACK_BLOCK_APPLIED":
+    case "SIDE_ATTACK_BLOCK_ENDED":
+    case "HAND_ATTACH_MARKED":
+    case "PRIZE_LOOKED_AT":
+    case "CHOSEN_ATTACK_SHIELD_INSTALLED":
+    case "SIDE_RETREAT_LOCKED":
+    case "SIDE_DAMAGE_REDUCTION_INSTALLED":
+    case "HAND_DISCARD_SCHEDULED":
+    case "ATTACK_AGAIN_OFFERED":
+    case "EFFECT_SCHEDULED":
+    case "RECOIL_ARMED":
+    case "ATTACK_BOOSTED":
+    case "ATTACK_EFFECT_PREVENTED":
+    case "TRAINER_EFFECT_PREVENTED":
+    case "ABILITY_EFFECT_PREVENTED":
+      return formatInstalledEffectEvent(event, fmt);
+    case "CHECKUP_COIN_FLIP":
+    case "CONFUSION_CHECK":
+    case "TRAINER_FLIP_LOCKED":
+    case "TRAINER_FLIP_LOCK_CHECK":
+    case "COINS_REFLIPPED":
+    case "ATTACK_FLIP_LOCK_CHECK":
+    case "ATTACK_EFFECT_COIN_FLIP":
+    case "ABILITY_COIN_FLIP":
+      return formatCoinEvent(event, fmt);
+    case "KNOCKED_OUT":
+    case "POKEMON_RETURNED":
+    case "POKEMON_SWAPPED_FROM_DECK":
+    case "POKEMON_SWAPPED_FROM_DISCARD":
+    case "PRIZES_OWED":
+    case "PRIZES_TAKEN":
+    case "PRIZE_TURNED_FACE_UP":
+    case "PRIZES_CYCLED":
+    case "PRIZE_SWITCHED_WITH_HAND":
+    case "PROMOTION_REQUIRED":
+    case "POKEMON_PROMOTED":
+    case "PRIZE_REDUCED":
+    case "PRIZE_BONUS":
+    case "PRIZE_PREVENTED":
+      return formatKnockOutEvent(event, fmt);
+    case "TRAINER_PLAYED":
+    case "TOOL_ATTACHED":
+    case "TOOLS_DISCARDED":
+    case "STADIUM_DISCARDED":
+    case "POKEMON_NAMED":
+    case "SUPPORTER_EFFECT_USED":
+    case "HP_GUESSED":
+    case "BENCH_TRIMMED":
+    case "ABILITY_USED":
+    case "STADIUM_ABILITY_ACTIVATED":
+    case "ABILITY_TRIGGERED":
+      return formatTrainerAbilityEvent(event, fmt);
+    case "HAND_COST_PAID":
+    case "HAND_DISCARDED":
+    case "FORCED_HAND_DISCARD":
+    case "HAND_SHUFFLED_INTO_DECK":
+    case "HAND_TO_BOTTOM_OF_DECK":
+    case "HAND_REVEALED":
+    case "HAND_CARDS_REVEALED":
+    case "CARD_TO_BOTTOM_OF_DECK":
+    case "HAND_CARD_SHUFFLED_INTO_DECK":
+    case "CARD_DISCARDED_FROM_HAND":
+    case "RANDOM_CARD_REVEALED":
+    case "RANDOM_CARD_TAKEN":
+      return formatHandEvent(event, fmt);
+    case "DECK_SEARCHED":
+    case "DISCARD_RETRIEVED":
+    case "DECK_TOP_REVEALED":
+    case "DECK_TOP_DISCARDED":
+    case "DECK_BOTTOM_DISCARDED":
+    case "DECK_TOP_REORDERED":
+    case "DECK_TOP_TO_BOTTOM":
+      return formatDeckEvent(event, fmt);
+    case "ENERGY_ATTACHED":
+    case "ENERGY_MOVED":
+    case "ENERGY_DISCARDED":
+      return formatEnergyEvent(event, fmt);
+    case "EFFECT_PENDING":
+      return null;
+    default:
+      // Fails to compile when an event type has no case; an unknown runtime event logs nothing.
+      event satisfies never;
+      return null;
+  }
+}
+
+/** Setup, turn structure, play to the board and the game result. */
+function formatGameFlowEvent(
+  event: EventOf<
+    | "SHUFFLE"
+    | "COIN_FLIP"
+    | "FIRST_PLAYER_CHOSEN"
+    | "CARDS_DRAWN"
+    | "MULLIGAN_REVEALED"
+    | "POKEMON_PLACED"
+    | "POKEMON_BENCHED"
+    | "POKEMON_EVOLVED"
+    | "POKEMON_DEVOLVED"
+    | "COMPENSATION_DECIDED"
+    | "PRIZES_SET"
+    | "SETUP_READY"
+    | "SETUP_REVEALED"
+    | "TURN_STARTED"
+    | "RETREATED"
+    | "POKEMON_SWITCHED"
+    | "TURN_ENDED"
+    | "GAME_OVER"
+  >,
+  fmt: LogFormat,
+): SeatLogEntry[] | null {
+  const { names, state, row } = fmt;
   switch (event.type) {
     case "SHUFFLE":
       return row(event.seat, [plain("shuffled their deck")]);
@@ -330,16 +500,6 @@ function formatEvent(
       return row("system", [plain("Both players ready — the board is revealed")]);
     case "TURN_STARTED":
       return [{ kind: "turn", turn: event.turn }];
-    case "ENERGY_ATTACHED":
-      // Resolve the host by the energy's uid, NOT the target slot: Jet Energy's
-      // on-attach switch (§6.1) moves its benched host to the Active Spot in
-      // this same batch, so the target index would name the wrong Pokémon.
-      return row(event.seat, [
-        plain("attached "),
-        { text: cardName(state, event.uid), tone: "energy" },
-        plain(" → "),
-        strong(energyHostName(state, event.seat, event.uid, koHosts)),
-      ]);
     case "RETREATED": {
       const segments: LogSegment[] = [
         plain("retreated "),
@@ -353,6 +513,42 @@ function formatEvent(
       }
       return row(event.seat, segments);
     }
+    case "POKEMON_SWITCHED":
+      // Passive voice — the causing card already logged its own row (Switch /
+      // Boss's Orders a TRAINER_PLAYED, Jet Energy an ENERGY_ATTACHED); `seat`
+      // owns the board that changed.
+      return row(event.seat, [
+        strong(cardName(state, event.nowActive)),
+        plain(" was switched to the Active spot"),
+      ]);
+    case "TURN_ENDED":
+      return row(event.seat, [plain("ended their turn")]);
+    case "GAME_OVER": {
+      const outcome = event.outcome;
+      if (outcome.result === "win") {
+        const reason = GAME_OVER_REASONS[outcome.reason];
+        return row("system", [strong(names[outcome.winner]), plain(` wins — ${reason}`)]);
+      }
+      return row("system", [strong("The game ends in a tie")]);
+    }
+  }
+}
+
+/** Declaring and resolving an attack: damage, counters, failure and healing. */
+function formatAttackEvent(
+  event: EventOf<
+    | "ATTACK_DECLARED"
+    | "ATTACK_COPY_RESOLVED"
+    | "ATTACK_EFFECT_SKIPPED"
+    | "DAMAGE_DEALT"
+    | "COUNTERS_PLACED"
+    | "ATTACK_FAILED"
+    | "HEALED"
+  >,
+  fmt: LogFormat,
+): SeatLogEntry[] | null {
+  const { state, row } = fmt;
+  switch (event.type) {
     case "ATTACK_DECLARED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
@@ -431,12 +627,105 @@ function formatEvent(
       if (event.survived === true) segments.push(plain(" · survived the Knock Out"));
       return row(event.by, segments);
     }
-    // — M3 special conditions (§12) + the Pokémon Checkup (§13). Card names
-    //   resolve off the event's own uid, so a status that lands on a Pokémon
-    //   the same batch then KOs still names it correctly.
-    //   §13 batch semantics (for future animation authors): a Checkup batch
-    //   can hold recovery events that PRECEDE a KNOCKED_OUT for the SAME uid
-    //   — key animations off post-batch state, never a lone STATUS_CLEARED.
+    case "COUNTERS_PLACED": {
+      // Checkup ticks and the confusion self-hit are the game's doing, not a
+      // player action — system rows, like the coin toss.
+      const seat = event.seat;
+      const name = cardName(state, event.uid);
+      const amount: LogSegment = { text: String(event.amount), tone: "damage" };
+      switch (event.source) {
+        case "poison":
+          return row("system", [plain("Poison: "), amount, plain(" damage to "), strong(name)]);
+        case "burn":
+          return row("system", [plain("Burn: "), amount, plain(" damage to "), strong(name)]);
+        case "confusion":
+          return row("system", [
+            plain("Confusion: "),
+            strong(name),
+            plain(" hit itself for "),
+            amount,
+          ]);
+        case "ability":
+          // Damage counters an Ability placed — a between-turns/on-play trigger
+          // (Trevenant's Forest Miasma, the snipe) OR a during-turn self-attach
+          // (Gardevoir's Psychic Embrace, +2 on the attached-to Pokémon). Always
+          // a system row; the ABILITY_TRIGGERED/ABILITY_USED row just before
+          // names the source.
+          return row("system", [plain("Ability: "), amount, plain(" damage to "), strong(name)]);
+        case "self":
+          // An attack's own recoil ("This Pokémon also does N damage to itself" —
+          // Skeledirge "Blazing Shout"). The attacker CHOSE this attack, so unlike
+          // the confusion self-hit it reads in the attacker's own voice (its seat)
+          // rather than as a system row; it echoes the printed sentence.
+          return row(seat, [strong(name), plain(" did "), amount, plain(" damage to itself")]);
+        case "moved":
+          // The destination half of a counter move (Dedenne ex "Tail Swap"). System voice because
+          // `seat` owns the damaged Pokémon, not the actor.
+          return row("system", [plain("Moved: "), amount, plain(" damage onto "), strong(name)]);
+        case "attack":
+          // An attack's printed "Put {N} damage counters on …"; system voice because `seat` owns
+          // the damaged Pokémon. The actor is named by the ATTACK_DECLARED row above.
+          return row("system", [plain("Put: "), amount, plain(" damage onto "), strong(name)]);
+        case "counterattack":
+          // Reactive recoil (§9) on the attacking Pokémon, in system voice. The label names the
+          // mechanism because the amount can sum an Ability and Tools; it is not "Recoil", which
+          // means self-damage. No other row announces it.
+          return row("system", [
+            plain("Counterattack: "),
+            amount,
+            plain(" damage to "),
+            strong(name),
+          ]);
+        // Counters an attack scheduled a turn ago, placed at Checkup (§13); system voice, labelled
+        // to match the EFFECT_SCHEDULED row.
+        case "delayed":
+          return row("system", [plain("Delayed: "), amount, plain(" damage to "), strong(name)]);
+        // Counters placed by an Item (Team Rocket's Venture Bomb); system voice, since on heads
+        // `seat` is the opponent and on tails self-damage wording would be wrong.
+        case "trainer":
+          return row("system", [plain("Trainer: "), amount, plain(" damage to "), strong(name)]);
+        default:
+          return row(seat, [amount, plain(" damage to "), strong(name)]);
+      }
+    }
+    case "ATTACK_FAILED":
+      // "confusion" is §12's tails (self-damage follows as its own row). "requirement" is "this
+      // attack does nothing" with its clause held, and "coinFlip" follows its own coin row, so it
+      // states only the consequence. "preDamage" names the act because the attack failed for
+      // finding nothing to discard.
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(
+          event.reason === "confusion"
+            ? "'s attack failed — Confused"
+            : event.reason === "coinFlip"
+              ? "'s attack did nothing — the coin flip missed"
+              : event.reason === "preDamage"
+                ? "'s attack did nothing — it had no Pokémon Tool to discard"
+                : // "flipLock" needs an explicit arm: the default would claim a condition the printed sentence lacks.
+                  event.reason === "flipLock"
+                  ? "'s attack didn't happen — the flip lock's coin was tails"
+                  : "'s attack did nothing — its condition was not met",
+        ),
+      ]);
+    case "HEALED":
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(` healed ${event.amount} damage`),
+      ]);
+  }
+}
+
+/** §12 Special Conditions. */
+function formatStatusEvent(
+  event: EventOf<"STATUS_APPLIED" | "STATUS_PREVENTED" | "STATUS_CLEARED">,
+  fmt: LogFormat,
+): SeatLogEntry[] | null {
+  const { state, row } = fmt;
+  switch (event.type) {
+    // Card names resolve off the event's own uid, so a status on a Pokémon the same batch then
+    // Knocks Out still names it. A §13 Checkup batch can hold recovery events that precede a
+    // KNOCKED_OUT for the same uid, so animations key off the post-batch state.
     case "STATUS_APPLIED": {
       const segments: LogSegment[] = [
         strong(cardName(state, event.uid)),
@@ -503,6 +792,46 @@ function formatEvent(
           return row(seat, [strong(name), plain(" recovered from "), strong(statuses)]);
       }
     }
+  }
+}
+
+/** Effects installed on a body or a side for later turns, and their refusals. */
+function formatInstalledEffectEvent(
+  event: EventOf<
+    | "RETREAT_BLOCKED"
+    | "RETREAT_BLOCK_ENDED"
+    | "HAND_PLAY_BLOCKED"
+    | "ATTACK_BLOCK_APPLIED"
+    | "ATTACK_LOCKED"
+    | "DAMAGE_REDUCTION_APPLIED"
+    | "WEAKNESS_REMOVED"
+    | "ATTACK_DEBUFF_APPLIED"
+    | "DAMAGE_VULNERABILITY_APPLIED"
+    | "WEAKNESS_RETYPED"
+    | "COST_TAX_APPLIED"
+    | "KO_BOUNTY_APPLIED"
+    | "SIDE_ATTACKS_LOCKED"
+    | "SIDE_ATTACKS_BOOSTED"
+    | "SIDE_ATTACK_BLOCK_APPLIED"
+    | "SIDE_ATTACK_BLOCK_ENDED"
+    | "HAND_ATTACH_MARKED"
+    | "PRIZE_LOOKED_AT"
+    | "CHOSEN_ATTACK_SHIELD_INSTALLED"
+    | "SIDE_RETREAT_LOCKED"
+    | "SIDE_DAMAGE_REDUCTION_INSTALLED"
+    | "HAND_DISCARD_SCHEDULED"
+    | "ATTACK_AGAIN_OFFERED"
+    | "EFFECT_SCHEDULED"
+    | "RECOIL_ARMED"
+    | "ATTACK_BOOSTED"
+    | "ATTACK_EFFECT_PREVENTED"
+    | "TRAINER_EFFECT_PREVENTED"
+    | "ABILITY_EFFECT_PREVENTED"
+  >,
+  fmt: LogFormat,
+): SeatLogEntry[] | null {
+  const { names, state, row } = fmt;
+  switch (event.type) {
     // §11 — the retreat block. Its own rows, not STATUS_* ones: it is not a
     // Special Condition, so the "is now …"/"recovered from …" phrasings (which
     // name a §12 status) would read wrong.
@@ -823,67 +1152,25 @@ function formatEvent(
         strong(cardName(state, event.uid)),
         plain(" prevented the effect of the Ability"),
       ]);
-    case "COUNTERS_PLACED": {
-      // Checkup ticks and the confusion self-hit are the game's doing, not a
-      // player action — system rows, like the coin toss.
-      const seat = event.seat;
-      const name = cardName(state, event.uid);
-      const amount: LogSegment = { text: String(event.amount), tone: "damage" };
-      switch (event.source) {
-        case "poison":
-          return row("system", [plain("Poison: "), amount, plain(" damage to "), strong(name)]);
-        case "burn":
-          return row("system", [plain("Burn: "), amount, plain(" damage to "), strong(name)]);
-        case "confusion":
-          return row("system", [
-            plain("Confusion: "),
-            strong(name),
-            plain(" hit itself for "),
-            amount,
-          ]);
-        case "ability":
-          // Damage counters an Ability placed — a between-turns/on-play trigger
-          // (Trevenant's Forest Miasma, the snipe) OR a during-turn self-attach
-          // (Gardevoir's Psychic Embrace, +2 on the attached-to Pokémon). Always
-          // a system row; the ABILITY_TRIGGERED/ABILITY_USED row just before
-          // names the source.
-          return row("system", [plain("Ability: "), amount, plain(" damage to "), strong(name)]);
-        case "self":
-          // An attack's own recoil ("This Pokémon also does N damage to itself" —
-          // Skeledirge "Blazing Shout"). The attacker CHOSE this attack, so unlike
-          // the confusion self-hit it reads in the attacker's own voice (its seat)
-          // rather than as a system row; it echoes the printed sentence.
-          return row(seat, [strong(name), plain(" did "), amount, plain(" damage to itself")]);
-        case "moved":
-          // The destination half of a counter move (Dedenne ex "Tail Swap"). System voice because
-          // `seat` owns the damaged Pokémon, not the actor.
-          return row("system", [plain("Moved: "), amount, plain(" damage onto "), strong(name)]);
-        case "attack":
-          // An attack's printed "Put {N} damage counters on …"; system voice because `seat` owns
-          // the damaged Pokémon. The actor is named by the ATTACK_DECLARED row above.
-          return row("system", [plain("Put: "), amount, plain(" damage onto "), strong(name)]);
-        case "counterattack":
-          // Reactive recoil (§9) on the attacking Pokémon, in system voice. The label names the
-          // mechanism because the amount can sum an Ability and Tools; it is not "Recoil", which
-          // means self-damage. No other row announces it.
-          return row("system", [
-            plain("Counterattack: "),
-            amount,
-            plain(" damage to "),
-            strong(name),
-          ]);
-        // Counters an attack scheduled a turn ago, placed at Checkup (§13); system voice, labelled
-        // to match the EFFECT_SCHEDULED row.
-        case "delayed":
-          return row("system", [plain("Delayed: "), amount, plain(" damage to "), strong(name)]);
-        // Counters placed by an Item (Team Rocket's Venture Bomb); system voice, since on heads
-        // `seat` is the opponent and on tails self-damage wording would be wrong.
-        case "trainer":
-          return row("system", [plain("Trainer: "), amount, plain(" damage to "), strong(name)]);
-        default:
-          return row(seat, [amount, plain(" damage to "), strong(name)]);
-      }
-    }
+  }
+}
+
+/** Coin flips outside an attack's own printed flip. */
+function formatCoinEvent(
+  event: EventOf<
+    | "CHECKUP_COIN_FLIP"
+    | "CONFUSION_CHECK"
+    | "TRAINER_FLIP_LOCKED"
+    | "TRAINER_FLIP_LOCK_CHECK"
+    | "COINS_REFLIPPED"
+    | "ATTACK_FLIP_LOCK_CHECK"
+    | "ATTACK_EFFECT_COIN_FLIP"
+    | "ABILITY_COIN_FLIP"
+  >,
+  fmt: LogFormat,
+): SeatLogEntry[] | null {
+  const { names, state, row } = fmt;
+  switch (event.type) {
     case "CHECKUP_COIN_FLIP":
       // event.status is the "asleep" | "burned" subset of StatusName — the
       // shared label map covers it.
@@ -929,36 +1216,45 @@ function formatEvent(
         plain(" is under a flip lock — flip: "),
         strong(event.result),
       ]);
-    case "ATTACK_FAILED":
-      // "confusion" is §12's tails (self-damage follows as its own row). "requirement" is "this
-      // attack does nothing" with its clause held, and "coinFlip" follows its own coin row, so it
-      // states only the consequence. "preDamage" names the act because the attack failed for
-      // finding nothing to discard.
-      return row(event.seat, [
-        strong(cardName(state, event.uid)),
-        plain(
-          event.reason === "confusion"
-            ? "'s attack failed — Confused"
-            : event.reason === "coinFlip"
-              ? "'s attack did nothing — the coin flip missed"
-              : event.reason === "preDamage"
-                ? "'s attack did nothing — it had no Pokémon Tool to discard"
-                : // "flipLock" needs an explicit arm: the default would claim a condition the printed sentence lacks.
-                  event.reason === "flipLock"
-                  ? "'s attack didn't happen — the flip lock's coin was tails"
-                  : "'s attack did nothing — its condition was not met",
-        ),
-      ]);
-    case "HEALED":
-      return row(event.seat, [
-        strong(cardName(state, event.uid)),
-        plain(` healed ${event.amount} damage`),
-      ]);
     case "ATTACK_EFFECT_COIN_FLIP":
       // A coinFlipGate flip, from an attack or a Trainer. `seat` is the seat that flipped: usually
       // the actor, but `opponentPerTails` files under the opponent. The copy stays neutral despite
       // the "ATTACK_" event id.
       return row(event.seat, [plain("flipped "), strong(event.result), plain(" for the effect")]);
+    case "ABILITY_COIN_FLIP":
+      // §9 — a triggered Ability's own coin flip (Glimmora "Shattering Crystal"
+      // on Knock Out). Follows its ABILITY_TRIGGERED row.
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(" flipped "),
+        strong(event.result),
+        plain(` for ${event.ability}`),
+      ]);
+  }
+}
+
+/** §8.1 Knock Outs, Prizes and promotion. */
+function formatKnockOutEvent(
+  event: EventOf<
+    | "KNOCKED_OUT"
+    | "POKEMON_RETURNED"
+    | "POKEMON_SWAPPED_FROM_DECK"
+    | "POKEMON_SWAPPED_FROM_DISCARD"
+    | "PRIZES_OWED"
+    | "PRIZES_TAKEN"
+    | "PRIZE_TURNED_FACE_UP"
+    | "PRIZES_CYCLED"
+    | "PRIZE_SWITCHED_WITH_HAND"
+    | "PROMOTION_REQUIRED"
+    | "POKEMON_PROMOTED"
+    | "PRIZE_REDUCED"
+    | "PRIZE_BONUS"
+    | "PRIZE_PREVENTED"
+  >,
+  fmt: LogFormat,
+): SeatLogEntry[] | null {
+  const { names, state, row } = fmt;
+  switch (event.type) {
     case "KNOCKED_OUT":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
@@ -1067,7 +1363,54 @@ function formatEvent(
         strong(cardName(state, event.uid)),
         plain(" to Active"),
       ]);
-    // — M4 Trainer / Ability plays (§7/§9) and their effect ops (§15). —
+    case "PRIZE_REDUCED":
+      // An on-KO Ability (Munkidori ex) reduced the Prize (§8.1). System voice, since `seat` owns
+      // the dying Pokémon but the opponent takes fewer. Both numbers are stated so the change is
+      // readable.
+      return row("system", [
+        strong(cardName(state, event.uid)),
+        plain(
+          ` — your opponent takes ${event.by} fewer Prize card${event.by === 1 ? "" : "s"} for it (${event.count} instead of ${event.count + event.by})`,
+        ),
+      ]);
+    case "PRIZE_BONUS":
+      // An effect on the killing side added Prize cards for this Knock Out (§8.1). System voice for
+      // the same reason as above; both numbers are stated.
+      return row("system", [
+        strong(cardName(state, event.uid)),
+        plain(
+          ` — your opponent takes ${event.by} more Prize card${event.by === 1 ? "" : "s"} for it (${event.count} instead of ${event.count - event.by})`,
+        ),
+      ]);
+    case "PRIZE_PREVENTED":
+      // §8.1 — an on-KO Ability (Glimmora heads) denied the opponent the Prize
+      // for the Knocked Out Pokémon; a system row, the flip above named it.
+      return row("system", [
+        strong(cardName(state, event.uid)),
+        plain(" — no Prize card is taken for it"),
+      ]);
+  }
+}
+
+/** Trainer cards, Tools, Stadiums and Abilities. */
+function formatTrainerAbilityEvent(
+  event: EventOf<
+    | "TRAINER_PLAYED"
+    | "TOOL_ATTACHED"
+    | "TOOLS_DISCARDED"
+    | "STADIUM_DISCARDED"
+    | "POKEMON_NAMED"
+    | "SUPPORTER_EFFECT_USED"
+    | "HP_GUESSED"
+    | "BENCH_TRIMMED"
+    | "ABILITY_USED"
+    | "STADIUM_ABILITY_ACTIVATED"
+    | "ABILITY_TRIGGERED"
+  >,
+  fmt: LogFormat,
+): SeatLogEntry[] | null {
+  const { names, state, row } = fmt;
+  switch (event.type) {
     case "TRAINER_PLAYED":
       return row(event.seat, [plain("played "), strong(cardName(state, event.uid))]);
     case "TOOL_ATTACHED":
@@ -1165,41 +1508,29 @@ function formatEvent(
         strong(event.ability),
         plain(" activated"),
       ]);
-    case "ABILITY_COIN_FLIP":
-      // §9 — a triggered Ability's own coin flip (Glimmora "Shattering Crystal"
-      // on Knock Out). Follows its ABILITY_TRIGGERED row.
-      return row(event.seat, [
-        strong(cardName(state, event.uid)),
-        plain(" flipped "),
-        strong(event.result),
-        plain(` for ${event.ability}`),
-      ]);
-    case "PRIZE_REDUCED":
-      // An on-KO Ability (Munkidori ex) reduced the Prize (§8.1). System voice, since `seat` owns
-      // the dying Pokémon but the opponent takes fewer. Both numbers are stated so the change is
-      // readable.
-      return row("system", [
-        strong(cardName(state, event.uid)),
-        plain(
-          ` — your opponent takes ${event.by} fewer Prize card${event.by === 1 ? "" : "s"} for it (${event.count} instead of ${event.count + event.by})`,
-        ),
-      ]);
-    case "PRIZE_BONUS":
-      // An effect on the killing side added Prize cards for this Knock Out (§8.1). System voice for
-      // the same reason as above; both numbers are stated.
-      return row("system", [
-        strong(cardName(state, event.uid)),
-        plain(
-          ` — your opponent takes ${event.by} more Prize card${event.by === 1 ? "" : "s"} for it (${event.count} instead of ${event.count - event.by})`,
-        ),
-      ]);
-    case "PRIZE_PREVENTED":
-      // §8.1 — an on-KO Ability (Glimmora heads) denied the opponent the Prize
-      // for the Knocked Out Pokémon; a system row, the flip above named it.
-      return row("system", [
-        strong(cardName(state, event.uid)),
-        plain(" — no Prize card is taken for it"),
-      ]);
+  }
+}
+
+/** Hand costs, discards, reveals and moves. */
+function formatHandEvent(
+  event: EventOf<
+    | "HAND_COST_PAID"
+    | "HAND_DISCARDED"
+    | "FORCED_HAND_DISCARD"
+    | "HAND_SHUFFLED_INTO_DECK"
+    | "HAND_TO_BOTTOM_OF_DECK"
+    | "HAND_REVEALED"
+    | "HAND_CARDS_REVEALED"
+    | "CARD_TO_BOTTOM_OF_DECK"
+    | "HAND_CARD_SHUFFLED_INTO_DECK"
+    | "CARD_DISCARDED_FROM_HAND"
+    | "RANDOM_CARD_REVEALED"
+    | "RANDOM_CARD_TAKEN"
+  >,
+  fmt: LogFormat,
+): SeatLogEntry[] | null {
+  const { names, state, row } = fmt;
+  switch (event.type) {
     case "HAND_COST_PAID": {
       // The printed hand cost (§7/§9), after the TRAINER_PLAYED / ABILITY_USED row and before
       // whatever it bought. Count only, as cards leaving the hidden hand; the verb distinguishes
@@ -1332,6 +1663,24 @@ function formatEvent(
             : ` at random from ${names[event.seat]}'s hand and shuffled it into their deck`,
         ),
       ]);
+  }
+}
+
+/** Deck searches, retrievals and deck-top manipulation. */
+function formatDeckEvent(
+  event: EventOf<
+    | "DECK_SEARCHED"
+    | "DISCARD_RETRIEVED"
+    | "DECK_TOP_REVEALED"
+    | "DECK_TOP_DISCARDED"
+    | "DECK_BOTTOM_DISCARDED"
+    | "DECK_TOP_REORDERED"
+    | "DECK_TOP_TO_BOTTOM"
+  >,
+  fmt: LogFormat,
+): SeatLogEntry[] | null {
+  const { names, state, row } = fmt;
+  switch (event.type) {
     case "DECK_SEARCHED": {
       // Endings: bench is count only (the card is public anyway); hand with printed `reveal` names
       // the cards; hand without reveal is count only so the hand stays private; "deckTop" is count
@@ -1508,6 +1857,26 @@ function formatEvent(
         plain(`shuffled the top ${cards} of their deck to the bottom of it`),
       ]);
     }
+  }
+}
+
+/** Energy attaching, moving and discarding. */
+function formatEnergyEvent(
+  event: EventOf<"ENERGY_ATTACHED" | "ENERGY_MOVED" | "ENERGY_DISCARDED">,
+  fmt: LogFormat,
+): SeatLogEntry[] | null {
+  const { names, state, koHosts, row } = fmt;
+  switch (event.type) {
+    case "ENERGY_ATTACHED":
+      // Resolve the host by the energy's uid, NOT the target slot: Jet Energy's
+      // on-attach switch (§6.1) moves its benched host to the Active Spot in
+      // this same batch, so the target index would name the wrong Pokémon.
+      return row(event.seat, [
+        plain("attached "),
+        { text: cardName(state, event.uid), tone: "energy" },
+        plain(" → "),
+        strong(energyHostName(state, event.seat, event.uid, koHosts)),
+      ]);
     case "ENERGY_MOVED": {
       // Energy Switch / Poppy (moveEnergy): Energy moved between two of one player's Pokémon,
       // `event.seat`, who is not necessarily the actor. The source is named by uid when the event
@@ -1570,29 +1939,5 @@ function formatEvent(
         strong(`${names[event.seat]}'s ${cardName(state, event.host)}`),
       ]);
     }
-    case "POKEMON_SWITCHED":
-      // Passive voice — the causing card already logged its own row (Switch /
-      // Boss's Orders a TRAINER_PLAYED, Jet Energy an ENERGY_ATTACHED); `seat`
-      // owns the board that changed.
-      return row(event.seat, [
-        strong(cardName(state, event.nowActive)),
-        plain(" was switched to the Active spot"),
-      ]);
-    case "TURN_ENDED":
-      return row(event.seat, [plain("ended their turn")]);
-    case "GAME_OVER": {
-      const outcome = event.outcome;
-      if (outcome.result === "win") {
-        const reason = GAME_OVER_REASONS[outcome.reason];
-        return row("system", [strong(names[outcome.winner]), plain(` wins — ${reason}`)]);
-      }
-      return row("system", [strong("The game ends in a tie")]);
-    }
-    case "EFFECT_PENDING":
-      return null;
-    default:
-      // Fails to compile when an event type has no case; an unknown runtime event logs nothing.
-      event satisfies never;
-      return null;
   }
 }
