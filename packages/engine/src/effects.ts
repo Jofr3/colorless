@@ -19,6 +19,7 @@ import type {
   DamageCountSource,
   DiscardPileSeat,
   EffectOp,
+  EffectSlot,
   InPlayAttackCopy,
   OpOf,
   OpponentEnergyZone,
@@ -62,6 +63,40 @@ export { POKEMON_TYPES } from "./effectTypes";
 function positiveInt(digits: string | undefined): number | null {
   const n = Number(digits);
   return n >= 1 ? n : null;
+}
+
+// Gate-op builders. Each returns a fresh object with the fields in the order the hand-written
+// literals used, and leaves optional fields absent rather than undefined.
+function headsGate(then: EffectOp[], otherwise?: EffectOp[]): OpOf<"coinFlipGate"> {
+  return otherwise === undefined
+    ? { op: "coinFlipGate", then }
+    : { op: "coinFlipGate", then, otherwise };
+}
+
+function tailsGate(then: EffectOp[], coins?: number): OpOf<"coinFlipGate"> {
+  return coins === undefined
+    ? { op: "coinFlipGate", onTails: true, then }
+    : { op: "coinFlipGate", coins, onTails: true, then };
+}
+
+function conditionGate(
+  cond: BoardCondition,
+  then: EffectOp[],
+  otherwise?: EffectOp[],
+): OpOf<"conditionGate"> {
+  return otherwise === undefined
+    ? { op: "conditionGate", cond, then }
+    : { op: "conditionGate", cond, then, otherwise };
+}
+
+function optionalStep(note: string, then: EffectOp[], otherwise?: EffectOp[]): OpOf<"optional"> {
+  return otherwise === undefined
+    ? { op: "optional", note, then }
+    : { op: "optional", note, then, otherwise };
+}
+
+function recordGate(slot: EffectSlot, then: EffectOp[]): OpOf<"recordGate"> {
+  return { op: "recordGate", slot, then };
 }
 
 type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";
@@ -3339,12 +3374,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // 2. "Flip a coin. If heads, your opponent's Active Pokémon is now {X}."
   match = FLIP_DEFENDER_NOW.exec(effect);
   if (match !== null) {
-    return [
-      {
-        op: "coinFlipGate",
-        then: [{ op: "applyStatus", target: "defender", status: statusOf(match[1]) }],
-      },
-    ];
+    return [headsGate([{ op: "applyStatus", target: "defender", status: statusOf(match[1]) }])];
   }
 
   // 2b. Two statuses in printed order. `defenderStatusOps` returns null when both share a
@@ -3357,14 +3387,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   match = FLIP_DEFENDER_STATUS_PAIR.exec(effect);
   if (match !== null) {
     const then = defenderStatusOps([match[1], match[2]]);
-    return then === null
-      ? null
-      : [
-          {
-            op: "coinFlipGate",
-            then,
-          },
-        ];
+    return then === null ? null : [headsGate(then)];
   }
 
   // 2b-bis. One coin with both arms. The collision check applies only to the heads pair, since the
@@ -3374,13 +3397,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const heads = defenderStatusOps([match[1], match[2]]);
     return heads === null
       ? null
-      : [
-          {
-            op: "coinFlipGate",
-            then: heads,
-            otherwise: [{ op: "applyStatus", target: "defender", status: statusOf(match[3]) }],
-          },
-        ];
+      : [headsGate(heads, [{ op: "applyStatus", target: "defender", status: statusOf(match[3]) }])];
   }
 
   // 2c. Three statuses in printed order, checked pairwise for collisions.
@@ -3393,13 +3410,10 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   match = FLIP_DEFENDER_STATUS_THEN_DISCARD.exec(effect);
   if (match !== null) {
     return [
-      {
-        op: "coinFlipGate",
-        then: [
-          { op: "applyStatus", target: "defender", status: statusOf(match[1]) },
-          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
-        ],
-      },
+      headsGate([
+        { op: "applyStatus", target: "defender", status: statusOf(match[1]) },
+        { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
+      ]),
     ];
   }
 
@@ -3409,11 +3423,9 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const gate = boardConditionForClause(match[1] ?? "");
     if (gate !== null) {
       return [
-        {
-          op: "conditionGate",
-          cond: gate,
-          then: [{ op: "applyStatus", target: "defender", status: statusOf(match[2]) }],
-        },
+        conditionGate(gate, [
+          { op: "applyStatus", target: "defender", status: statusOf(match[2]) },
+        ]),
       ];
     }
   }
@@ -3522,24 +3534,16 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // 6a.
   match = OPPONENT_ACTIVE_BASIC_KO.exec(effect);
   if (match !== null) {
-    return [
-      {
-        op: "conditionGate",
-        cond: { kind: "opponentActiveIsBasic" },
-        then: [{ op: "knockOutDefender" }],
-      },
-    ];
+    return [conditionGate({ kind: "opponentActiveIsBasic" }, [{ op: "knockOutDefender" }])];
   }
 
   // 6a-ii.
   match = OPPONENT_ACTIVE_SPECIAL_ENERGY_KO.exec(effect);
   if (match !== null) {
     return [
-      {
-        op: "conditionGate",
-        cond: { kind: "opponentActiveHasEnergyAttached", energy: "special" },
-        then: [{ op: "knockOutDefender" }],
-      },
+      conditionGate({ kind: "opponentActiveHasEnergyAttached", energy: "special" }, [
+        { op: "knockOutDefender" },
+      ]),
     ];
   }
 
@@ -3547,11 +3551,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   match = OPPONENT_ACTIVE_SPECIAL_CONDITION_KO.exec(effect);
   if (match !== null) {
     return [
-      {
-        op: "conditionGate",
-        cond: { kind: "opponentActiveHasSpecialCondition" },
-        then: [{ op: "knockOutDefender" }],
-      },
+      conditionGate({ kind: "opponentActiveHasSpecialCondition" }, [{ op: "knockOutDefender" }]),
     ];
   }
 
@@ -3559,11 +3559,9 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   match = SELF_PRIZE_GATE_PARALYZE.exec(effect);
   if (match !== null) {
     return [
-      {
-        op: "conditionGate",
-        cond: { kind: "yourPrizesRemaining", counts: [1] },
-        then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
-      },
+      conditionGate({ kind: "yourPrizesRemaining", counts: [1] }, [
+        { op: "applyStatus", target: "defender", status: "paralyzed" },
+      ]),
     ];
   }
 
@@ -3580,13 +3578,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // `amount >= 1` is the guard every self-damage arm carries — a printed 0 is
     // not a cost and would derive a silent no-op.
     if (amount >= 1) {
-      return [
-        { op: "damageSelf", amount },
-        {
-          op: "coinFlipGate",
-          then: [{ op: "knockOutDefender" }],
-        },
-      ];
+      return [{ op: "damageSelf", amount }, headsGate([{ op: "knockOutDefender" }])];
     }
   }
 
@@ -3595,17 +3587,10 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   match = FLIP_KO_ACTIVE_OR_BENCHED_BASIC.exec(effect);
   if (match !== null) {
     return [
-      {
-        op: "coinFlipGate",
-        then: [
-          {
-            op: "conditionGate",
-            cond: { kind: "opponentActiveIsBasic" },
-            then: [{ op: "knockOutDefender" }],
-          },
-        ],
-        otherwise: [{ op: "knockOutChosen", target: "opponentBench", basicOnly: true }],
-      },
+      headsGate(
+        [conditionGate({ kind: "opponentActiveIsBasic" }, [{ op: "knockOutDefender" }])],
+        [{ op: "knockOutChosen", target: "opponentBench", basicOnly: true }],
+      ),
     ];
   }
 
@@ -3623,11 +3608,9 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const exactCounters = positiveInt(match[1]);
     if (exactCounters !== null) {
       return [
-        {
-          op: "conditionGate",
-          cond: { kind: "opponentActiveDamageCountersExactly", count: exactCounters },
-          then: [{ op: "knockOutDefender" }],
-        },
+        conditionGate({ kind: "opponentActiveDamageCountersExactly", count: exactCounters }, [
+          { op: "knockOutDefender" },
+        ]),
       ];
     }
   }
@@ -3636,11 +3619,9 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   }
   if (KO_BY_THIS_ATTACK_PREVENT_ALL.test(effect)) {
     return [
-      {
-        op: "conditionGate",
-        cond: { kind: "opponentKnockedOutByDamage" },
-        then: [{ op: "preventDamage", effects: true }],
-      },
+      conditionGate({ kind: "opponentKnockedOutByDamage" }, [
+        { op: "preventDamage", effects: true },
+      ]),
     ];
   }
   match = KO_BY_THIS_ATTACK_MORE_PRIZES.exec(effect);
@@ -3655,12 +3636,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     if (hp >= 10) return [{ op: "knockOutEach", remainingHpAtMost: hp }];
   }
   if (FLIP_SWITCH_WITH_DECK_POKEMON.test(effect)) {
-    return [
-      {
-        op: "coinFlipGate",
-        then: [{ op: "switchWithDeckChosen", filter: { kind: "anyPokemon" } }],
-      },
-    ];
+    return [headsGate([{ op: "switchWithDeckChosen", filter: { kind: "anyPokemon" } }])];
   }
   match = BOTTOM_REVEAL_NAMED_ATTACK_SCALE.exec(effect);
   if (match !== null) {
@@ -3845,19 +3821,15 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   match = MAY_SEARCH_NAMED_FRAGMENT_TO_BENCH.exec(effect);
   if (match !== null) {
     return [
-      {
-        op: "optional",
-        note: effect,
-        then: [
-          {
-            op: "searchDeck",
-            filter: { kind: "pokemonNameContaining", fragment: match[1] ?? "" },
-            dest: "bench",
-            max: "any",
-          },
-          { op: "shuffleDeck" },
-        ],
-      },
+      optionalStep(effect, [
+        {
+          op: "searchDeck",
+          filter: { kind: "pokemonNameContaining", fragment: match[1] ?? "" },
+          dest: "bench",
+          max: "any",
+        },
+        { op: "shuffleDeck" },
+      ]),
     ];
   }
   match = SHUFFLE_POKEMON_OR_BASIC_ENERGY_FROM_DISCARD.exec(effect);
@@ -3905,11 +3877,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const milled = Number(match[2]);
     if (millGate !== null && milled >= 1) {
       return [
-        {
-          op: "conditionGate",
-          cond: millGate,
-          then: [{ op: "discardDeckTop", whose: "opponent", count: milled }],
-        },
+        conditionGate(millGate, [{ op: "discardDeckTop", whose: "opponent", count: milled }]),
       ];
     }
   }
@@ -3920,19 +3888,15 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const foldCounters = Number(match[2]);
     if (foldGate !== null && foldCounters >= 1) {
       return [
-        {
-          op: "conditionGate",
-          cond: foldGate,
-          then: [
-            {
-              op: "counterEachAll",
-              amount: foldCounters * HP_PER_COUNTER,
-              filter: { kind: "anyPokemon" },
-              side: "opponent",
-              source: "attack",
-            },
-          ],
-        },
+        conditionGate(foldGate, [
+          {
+            op: "counterEachAll",
+            amount: foldCounters * HP_PER_COUNTER,
+            filter: { kind: "anyPokemon" },
+            side: "opponent",
+            source: "attack",
+          },
+        ]),
       ];
     }
   }
@@ -3942,21 +3906,17 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const quadrupled = Number(match[2]);
     if (quadrupleGate !== null && quadrupled >= 1) {
       return [
-        {
-          op: "conditionGate",
-          cond: quadrupleGate,
-          then: [
-            {
-              op: "damageChosen",
-              target: "opponentAny",
-              // 3 more counters per counter already on the pick: four times the number.
-              amount: 30,
-              count: quadrupled,
-              source: "attack",
-              perDamageCounterOnTarget: true,
-            },
-          ],
-        },
+        conditionGate(quadrupleGate, [
+          {
+            op: "damageChosen",
+            target: "opponentAny",
+            // 3 more counters per counter already on the pick: four times the number.
+            amount: 30,
+            count: quadrupled,
+            source: "attack",
+            perDamageCounterOnTarget: true,
+          },
+        ]),
       ];
     }
   }
@@ -3966,19 +3926,15 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const benchCounters = Number(match[2]);
     if (benchCounterGate !== null && benchCounters >= 1) {
       return [
-        {
-          op: "conditionGate",
-          cond: benchCounterGate,
-          then: [
-            {
-              op: "damageChosen",
-              target: "opponentBench",
-              amount: benchCounters * HP_PER_COUNTER,
-              count: 1,
-              source: "attack",
-            },
-          ],
-        },
+        conditionGate(benchCounterGate, [
+          {
+            op: "damageChosen",
+            target: "opponentBench",
+            amount: benchCounters * HP_PER_COUNTER,
+            count: 1,
+            source: "attack",
+          },
+        ]),
       ];
     }
   }
@@ -4187,11 +4143,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const amount = positiveInt(match[1]);
     if (amount !== null) {
       return [
-        {
-          op: "conditionGate",
-          cond: { kind: "opponentActiveDamaged" },
-          then: [{ op: "damageDefender", amount }],
-        },
+        conditionGate({ kind: "opponentActiveDamaged" }, [{ op: "damageDefender", amount }]),
         { op: "spreadDamage", target: "yourBench", amount, damagedOnly: true },
         { op: "spreadDamage", target: "opponentBench", amount, damagedOnly: true },
       ];
@@ -4397,28 +4349,23 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     ) {
       if (gatedNarrowing !== undefined) {
         return [
-          {
-            op: "conditionGate",
-            cond,
-            then: [
-              {
-                op: "damageChosen",
-                target: gatedSide,
-                amount,
-                count,
-                source: "attack",
-                deals: true,
-                filter: gatedNarrowing,
-              },
-            ],
-          },
+          conditionGate(cond, [
+            {
+              op: "damageChosen",
+              target: gatedSide,
+              amount,
+              count,
+              source: "attack",
+              deals: true,
+              filter: gatedNarrowing,
+            },
+          ]),
         ];
       }
       return [
-        {
-          op: "conditionGate",
+        conditionGate(
           cond,
-          then: damagedOnly
+          damagedOnly
             ? [
                 {
                   op: "damageChosen",
@@ -4440,7 +4387,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
                   deals: true,
                 },
               ],
-        },
+        ),
       ];
     }
   }
@@ -4972,14 +4919,10 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const amount = positiveInt(match[1]);
     if (amount !== null) {
       return [
-        {
-          op: "optional",
-          note: effect,
-          then: [
-            { op: "damageSelf", amount },
-            { op: "applyStatus", target: "defender", status: "paralyzed" },
-          ],
-        },
+        optionalStep(effect, [
+          { op: "damageSelf", amount },
+          { op: "applyStatus", target: "defender", status: "paralyzed" },
+        ]),
       ];
     }
   }
@@ -5007,11 +4950,9 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // specific sentence and wraps the same op in a condition gate.
   if (OPPONENT_ACTIVE_EX_DISCARD.test(effect)) {
     return [
-      {
-        op: "conditionGate",
-        cond: { kind: "opponentActiveIsEx" },
-        then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
-      },
+      conditionGate({ kind: "opponentActiveIsEx" }, [
+        { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
+      ]),
     ];
   }
   match = OPPONENT_ACTIVE_DISCARD.exec(effect);
@@ -5053,10 +4994,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   }
   if (FLIP_OPPONENT_ACTIVE_DISCARD.test(effect)) {
     return [
-      {
-        op: "coinFlipGate",
-        then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
-      },
+      headsGate([{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }]),
     ];
   }
 
@@ -5083,18 +5021,12 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         ...(count === undefined ? {} : { count }),
       };
       // `note` is the whole matched sentence, so the prompt shows the printed text.
-      const ask: EffectOp = { op: "optional", note: effect, then: [put] };
+      const ask: EffectOp = optionalStep(effect, [put]);
       // The Stage 2 gate is the outer op so no Yes/No is asked on a board where it would do
       // nothing.
       return match[2] === undefined
         ? [ask]
-        : [
-            {
-              op: "conditionGate",
-              cond: { kind: "opponentActiveIsStage2" },
-              then: [ask],
-            },
-          ];
+        : [conditionGate({ kind: "opponentActiveIsStage2" }, [ask])];
     }
   }
 
@@ -5188,42 +5120,22 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // coin and then does nothing on either face, which is worse than an unread
     // sentence because the flip makes it look like something happened.
     if (amount >= 1) {
-      return [
-        {
-          op: "coinFlipGate",
-          then: [{ op: "heal", target: "self", amount }],
-        },
-      ];
+      return [headsGate([{ op: "heal", target: "self", amount }])];
     }
   }
   if (FLIP_DECK_TOP_MILL.test(effect)) {
     // No capture at all — the one printing is the SINGULAR, and the `count: 1` is
     // invented at the site exactly as `DECK_TOP_MILL`'s singular branch invents it.
-    return [
-      {
-        op: "coinFlipGate",
-        then: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
-      },
-    ];
+    return [headsGate([{ op: "discardDeckTop", whose: "opponent", count: 1 }])];
   }
   // Coin-gated damage prevention for "this Pokémon" during the opponent's next turn; "from and
   // effects of" sets `effects`.
   if (FLIP_PREVENT_DAMAGE_AND_EFFECTS.test(effect)) {
-    return [
-      {
-        op: "coinFlipGate",
-        then: [{ op: "preventDamage", effects: true }],
-      },
-    ];
+    return [headsGate([{ op: "preventDamage", effects: true }])];
   }
   if (FLIP_PREVENT_DAMAGE.test(effect)) {
     // `effects` is absent, not `false`, when the sentence does not say "from and effects of".
-    return [
-      {
-        op: "coinFlipGate",
-        then: [{ op: "preventDamage" }],
-      },
-    ];
+    return [headsGate([{ op: "preventDamage" }])];
   }
   // Ungated prevention narrowed to an attacker class, with an optional `non-{X}` exclusion. An
   // unresolvable code falls through to the loud path rather than installing a wider block.
@@ -5259,11 +5171,10 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (TRAINER_PLAY_FLIP_LOCK.test(effect)) return [{ op: "flipLockTrainerPlay" }];
   if (DISCARD_OPPONENT_STADIUM_AND_BAR.test(effect)) {
     return [
-      {
-        op: "conditionGate",
-        cond: { kind: "opponentStadiumInPlay" },
-        then: [{ op: "discardStadium" }, { op: "preventHandPlay", bars: "Stadium" }],
-      },
+      conditionGate({ kind: "opponentStadiumInPlay" }, [
+        { op: "discardStadium" },
+        { op: "preventHandPlay", bars: "Stadium" },
+      ]),
     ];
   }
   match = PREVENT_DAMAGE_FROM_CLASS_D630.exec(effect);
@@ -5285,13 +5196,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (WIN_AT_ONE_PRIZE.test(effect)) {
     // Bound once so this arm's text stays distinct from the paralyze arm's `cond:` line.
     const atOnePrize: BoardCondition = { kind: "yourPrizesRemaining", counts: [1] };
-    return [
-      {
-        op: "conditionGate",
-        cond: atOnePrize,
-        then: [{ op: "winGame" }],
-      },
-    ];
+    return [conditionGate(atOnePrize, [{ op: "winGame" }])];
   }
   // Damage cap: `maxDamage` is an upper bound, so an "or more" sentence is refused rather than
   // installed as an inverted cap.
@@ -5350,11 +5255,9 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // Celebration: the Prize stage, then the shuffle.
   if (HAND_EXACTLY_TAKE_PRIZES_THEN_SHUFFLE.test(effect)) {
     return [
-      {
-        op: "conditionGate",
-        cond: { kind: "yourHandExactly", count: 30 },
-        then: [{ op: "takePrize", count: 2, thenShuffleHand: true }],
-      },
+      conditionGate({ kind: "yourHandExactly", count: 30 }, [
+        { op: "takePrize", count: 2, thenShuffleHand: true },
+      ]),
     ];
   }
   // Overwriting Bolt: the same op with the printed `{L}`, applied as ×2.
@@ -5880,12 +5783,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // The same lock behind the heads face of a coin. Deliberately a separate copy of the bare
   // program; do not merge them into a shared constant.
   if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {
-    return [
-      {
-        op: "coinFlipGate",
-        then: [{ op: "preventAttack", target: "defender" }],
-      },
-    ];
+    return [headsGate([{ op: "preventAttack", target: "defender" }])];
   }
   // "During your opponent's next turn, if the Defending Pokémon tries to use an attack, your
   // opponent flips a coin. If tails, that attack doesn't happen." Not a `coinFlipGate`: the locked
@@ -5900,13 +5798,9 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // if that hit was prevented; a cancelled attack does not run it.
   if (FLIP_TAILS_SELF_DISCARD_ALL.test(effect)) {
     return [
-      {
-        op: "coinFlipGate",
-        onTails: true,
-        then: [
-          { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
-        ],
-      },
+      tailsGate([
+        { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
+      ]),
     ];
   }
   match = FLIP_TAILS_SELF_DAMAGE.exec(effect);
@@ -5915,13 +5809,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // The bare arm's guard, verbatim: a printed 0 would derive to a silent no-op,
     // so it stays on the loud ATTACK_EFFECT_SKIPPED path.
     if (amount >= 1) {
-      return [
-        {
-          op: "coinFlipGate",
-          onTails: true,
-          then: [{ op: "damageSelf", amount }],
-        },
-      ];
+      return [tailsGate([{ op: "damageSelf", amount }])];
     }
   }
   // "Flip 2 coins. If both of them are tails, this Pokémon also does {N} damage to itself." Both
@@ -5930,14 +5818,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     const amount = positiveInt(match[1]);
     if (amount !== null) {
-      return [
-        {
-          op: "coinFlipGate",
-          coins: 2,
-          onTails: true,
-          then: [{ op: "damageSelf", amount }],
-        },
-      ];
+      return [tailsGate([{ op: "damageSelf", amount }], 2)];
     }
   }
 
@@ -5986,14 +5867,14 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     const count = positiveInt(match[1]);
     if (count !== null) {
-      return [{ op: "optional", note: effect, then: [{ op: "drawCards", count }] }];
+      return [optionalStep(effect, [{ op: "drawCards", count }])];
     }
   }
   match = ATTACK_MAY_DRAW_UNTIL.exec(effect);
   if (match !== null) {
     const size = positiveInt(match[1]);
     if (size !== null) {
-      return [{ op: "optional", note: effect, then: [{ op: "drawUntilHandSize", size }] }];
+      return [optionalStep(effect, [{ op: "drawUntilHandSize", size }])];
     }
   }
 
@@ -6003,12 +5884,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     return [{ op: "gust" }];
   }
   if (ATTACK_FLIP_GUST.test(effect)) {
-    return [
-      {
-        op: "coinFlipGate",
-        then: [{ op: "gust" }],
-      },
-    ];
+    return [headsGate([{ op: "gust" }])];
   }
   // Self-switch: moves the attacker off the Active Spot. With an empty Bench the attack is still
   // usable and the switch does nothing.
@@ -6024,18 +5900,13 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     if (targetType !== undefined) return [{ op: "switchActive", targetType }];
   }
   if (ATTACK_FLIP_SELF_SWITCH.test(effect)) {
-    return [
-      {
-        op: "coinFlipGate",
-        then: [{ op: "switchActive" }],
-      },
-    ];
+    return [headsGate([{ op: "switchActive" }])];
   }
   // "You may switch this Pokémon…": `optional` parks a confirm and the mandatory switch runs on
   // yes. With an empty Bench the player is still asked and yes does nothing, matching the
   // opponent-switch mirror.
   if (ATTACK_MAY_SELF_SWITCH.test(effect)) {
-    return [{ op: "optional", note: effect, then: [{ op: "switchActive" }] }];
+    return [optionalStep(effect, [{ op: "switchActive" }])];
   }
   // Moves the defender's Active like `gust`, but the defender chooses the replacement.
   if (ATTACK_OPPONENT_SWITCH_OUT.test(effect)) {
@@ -6047,7 +5918,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // consents, then the opponent chooses. Both parks are `resumeTail` parks behind
   // the same `attackEpilogue`, which is what makes the sequence work at all.
   if (ATTACK_MAY_OPPONENT_SWITCH_OUT.test(effect)) {
-    return [{ op: "optional", note: effect, then: [{ op: "opponentSwitchOut" }] }];
+    return [optionalStep(effect, [{ op: "opponentSwitchOut" }])];
   }
   // Iron Bundle — Interjet: self-switch, then the §9.2 gate, then the opponent chooses their new
   // Active. The gate matters: with an empty Bench the attacker cannot switch, nothing is recorded,
@@ -6055,7 +5926,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (ATTACK_SELF_SWITCH_THEN_OPPONENT_SWITCH_OUT.test(effect)) {
     return [
       { op: "switchActive", recordAs: "moved" },
-      { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },
+      recordGate("moved", [{ op: "opponentSwitchOut" }]),
     ];
   }
   // Both arms promote a new Active and then damage it with `damageNewActive`; they differ only by
@@ -6069,11 +5940,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     return [
       { op: "opponentSwitchOut", recordAs: "moved" },
-      {
-        op: "recordGate",
-        slot: "moved",
-        then: [{ op: "damageNewActive", amount: Number(match[1]) }],
-      },
+      recordGate("moved", [{ op: "damageNewActive", amount: Number(match[1]) }]),
     ];
   }
   // Destination-side spread: "in any way you like" maps to `anyDest: true`.
@@ -6197,19 +6064,15 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         recordAs: "moved",
       },
       { op: "shuffleDeck" },
-      {
-        op: "recordGate",
-        slot: "moved",
-        then: [
-          {
-            op: "moveEnergy",
-            filter: { kind: "anyEnergy" },
-            max: 1,
-            route: "selfToBench",
-            destRecorded: "moved",
-          },
-        ],
-      },
+      recordGate("moved", [
+        {
+          op: "moveEnergy",
+          filter: { kind: "anyEnergy" },
+          max: 1,
+          route: "selfToBench",
+          destRecorded: "moved",
+        },
+      ]),
     ];
   }
   // Hand search whose max is the attacker's Bench size, resolved when the op runs; an empty Bench
@@ -6340,11 +6203,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     if (gate !== null && more >= 1) {
       return [
         { op: "opponentDiscardsFromHand", count: 1 },
-        {
-          op: "conditionGate",
-          cond: gate,
-          then: [{ op: "opponentDiscardsFromHand", count: more }],
-        },
+        conditionGate(gate, [{ op: "opponentDiscardsFromHand", count: more }]),
       ];
     }
   }
@@ -6477,10 +6336,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     const program = attachFromZoneProgram(match, "hand");
     if (program !== null) {
-      return [
-        { op: "switchActive", recordAs: "moved" },
-        { op: "recordGate", slot: "moved", then: program },
-      ];
+      return [{ op: "switchActive", recordAs: "moved" }, recordGate("moved", program)];
     }
   }
   // Deck search that attaches, with an optional §9.2 poison tail. Must come after
@@ -6553,11 +6409,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         : [
             ...searches,
             { op: "shuffleDeck" },
-            {
-              op: "recordGate",
-              slot: "moved",
-              then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
-            },
+            recordGate("moved", [{ op: "applyStatus", target: "self", status: "poisoned" }]),
           ];
     }
   }
@@ -6780,12 +6632,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const shuffleAway: EffectOp = { op: "returnBenched", whose: "opponent", dest: "deck" };
     // Sylveon's coin-gated spelling uses the same op behind the coin gate.
     if (match[4] !== undefined) {
-      return [
-        {
-          op: "coinFlipGate",
-          then: [shuffleAway],
-        },
-      ];
+      return [headsGate([shuffleAway])];
     }
     return [shuffleAway];
   }
@@ -6825,11 +6672,10 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const amount = positiveInt(match[1]);
     if (amount !== null) {
       return [
-        {
-          op: "conditionGate",
-          cond: { kind: "stadiumInPlay" },
-          then: [{ op: "spreadDamage", target: "opponentBench", amount }, { op: "discardStadium" }],
-        },
+        conditionGate({ kind: "stadiumInPlay" }, [
+          { op: "spreadDamage", target: "opponentBench", amount },
+          { op: "discardStadium" },
+        ]),
       ];
     }
   }
@@ -6870,7 +6716,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     if (drawn !== null) {
       return [
         { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-        { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: drawn }] },
+        recordGate("paid", [{ op: "drawCards", count: drawn }]),
       ];
     }
   }
@@ -6880,7 +6726,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (HAND_COST_THEN_OPPONENT_DISCARD.test(effect)) {
     return [
       { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
-      { op: "recordGate", slot: "paid", then: [{ op: "opponentDiscardsFromHand", count: 1 }] },
+      recordGate("paid", [{ op: "opponentDiscardsFromHand", count: 1 }]),
     ];
   }
 
@@ -6895,7 +6741,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         filter: { kind: "byName", name: "Team Rocket's Energy" },
         recordAs: "discarded",
       },
-      { op: "recordGate", slot: "discarded", then: [{ op: "discardDefender" }] },
+      recordGate("discarded", [{ op: "discardDefender" }]),
     ];
   }
 
@@ -7972,8 +7818,8 @@ export function bonusConsequentProgram(reading: AttackBonusConsequent, base: num
       ? boosted
       : [{ op: "damageDefender", amount: reading.baseOverride }];
   return reading.decider.kind === "coinFlip"
-    ? [{ op: "coinFlipGate", then, otherwise }]
-    : [{ op: "conditionGate", cond: reading.decider.cond, then, otherwise }];
+    ? [headsGate(then, otherwise)]
+    : [conditionGate(reading.decider.cond, then, otherwise)];
 }
 
 /**
@@ -8306,8 +8152,8 @@ export function optionalCostBoostProgram(
       ...reading.ops,
       { op: "applyStatus", target: "defender", status: reading.payoff.status },
     ];
-    const offer: EffectOp = { op: "optional", note, then };
-    return [{ op: "conditionGate", cond: reading.cond, then: [offer] }];
+    const offer: EffectOp = optionalStep(note, then);
+    return [conditionGate(reading.cond, [offer])];
   }
   const [boosted, otherwise] = boostedArms(base, reading.payoff.bonus, []);
   const then = [...reading.ops, ...boosted];
@@ -8352,7 +8198,7 @@ function costSnipeProgram(
     // still applies; Weakness and Resistance never apply to Benched Pokémon (§8.5).
     { op: "damageChosen", target: "opponentBench", amount, count, source: "attack", deals: true },
   ];
-  const offer: EffectOp = { op: "optional", note, then };
+  const offer: EffectOp = optionalStep(note, then);
   return [
     {
       op: "conditionGate",
