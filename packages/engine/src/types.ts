@@ -51,6 +51,16 @@ export const BENCH_MAX = 5;
  */
 export const BENCH_CEILING = 8;
 
+/** §12: one damage counter is 10 HP. */
+export const HP_PER_COUNTER = 10;
+
+export function damageCountersOn(pokemon: InPlayPokemon): number {
+  return Math.floor(pokemon.damage / HP_PER_COUNTER);
+}
+
+/** §13.1: the HP a Burned Pokémon takes at each Checkup (2 counters). */
+export const BURN_DAMAGE = 20;
+
 /** §12/§13.1 — the HP a Poisoned Pokémon takes at each Checkup unless the
     inflicting effect raised it ("put N damage counters … instead of 1"). */
 export const DEFAULT_POISON_DAMAGE = 10;

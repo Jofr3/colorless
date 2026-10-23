@@ -148,7 +148,9 @@ import type {
 import {
   bodyAt,
   inPlayOf,
+  HP_PER_COUNTER,
   clearedAttackEffects,
+  damageCountersOn,
   pokemonAt,
   turnOwnerOf,
   BENCH_CEILING,
@@ -786,7 +788,7 @@ function withCountersConsequence(
   if (slot === undefined) return prompt;
   const counters = queue.find((q) => q.op === "countersOnRecordedBody" && q.slot === slot);
   if (counters === undefined || counters.op !== "countersOnRecordedBody") return prompt;
-  const n = counters.amount / 10;
+  const n = counters.amount / HP_PER_COUNTER;
   return {
     ...prompt,
     note: `${prompt.note} If you do, place ${n} damage counter${n === 1 ? "" : "s"} on that Pokémon.`,
@@ -4092,7 +4094,7 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
     case "yourActiveDamageCountersAtLeast": {
       // The field is the printed counter count; one counter is 10 damage. Empty Spot is false.
       const active = state.players[seat].active;
-      return active !== null && active.damage >= cond.count * 10;
+      return active !== null && active.damage >= cond.count * HP_PER_COUNTER;
     }
     case "opponentActiveHasAbility": {
       // Galvantula: the defender's top card has a printed Ability; a locked Ability still counts.
@@ -7813,7 +7815,7 @@ function snipeNote(
   const verb = optional ? "You may choose" : "Choose";
   const each = deals
     ? `${amount} damage`
-    : `${Math.round(amount / 10)} damage counter${Math.round(amount / 10) === 1 ? "" : "s"}`;
+    : `${Math.round(amount / HP_PER_COUNTER)} damage counter${Math.round(amount / HP_PER_COUNTER) === 1 ? "" : "s"}`;
   // `opponentAny` offers the Active too, so the heading drops "Benched".
   const noun = narrowing === undefined ? "Pokémon" : retrieveNoun(narrowing).plural;
   // `yourAny` drops "Benched" like `opponentAny`: the candidate set includes the Active.
@@ -8386,7 +8388,7 @@ function moveCountersToOpponent(
   if (source === undefined || target === undefined) return state;
   const targetUid = topUid(target);
   const sourceUid = topUid(source);
-  const moved = Math.min(count * 10, source.damage);
+  const moved = Math.min(count * HP_PER_COUNTER, source.damage);
   if (targetUid === undefined || sourceUid === undefined || moved <= 0) return state;
   // Battle Cage: a move onto a Benched body is refused whole.
   if (dest.spot.spot === "bench" && benchCountersCaged(state, dest.seat, ctx)) return state;
@@ -8426,7 +8428,7 @@ function anyWayZone(state: GameState, seat: Seat, from: "bench" | "any"): Pokemo
 /** The total counters the op may move: those on its source zone when it first steps. */
 function anyWayBudget(state: GameState, seat: Seat, from: "bench" | "any"): number {
   return anyWayZone(state, seat, from).reduce(
-    (sum, ref) => sum + Math.floor((refPokemon(state, ref)?.damage ?? 0) / 10),
+    (sum, ref) => sum + Math.floor((refPokemon(state, ref)?.damage ?? 0) / HP_PER_COUNTER),
     0,
   );
 }
@@ -8477,7 +8479,7 @@ function anyWaySourceAnswered(
   take: number | undefined,
 ): EffectOp {
   const budget = op.budget ?? 0;
-  const onSource = Math.floor((refPokemon(before, ref)?.damage ?? 0) / 10);
+  const onSource = Math.floor((refPokemon(before, ref)?.damage ?? 0) / HP_PER_COUNTER);
   return { ...op, source: ref.spot, take: Math.min(take ?? budget, onSource, budget) };
 }
 
@@ -8511,7 +8513,7 @@ function moveCountersBetweenOpponents(
   if (source === undefined || target === undefined) return state;
   const sourceUid = topUid(source);
   const targetUid = topUid(target);
-  const moved = Math.min(source.damage, count * 10);
+  const moved = Math.min(source.damage, count * HP_PER_COUNTER);
   if (sourceUid === undefined || targetUid === undefined || moved <= 0) return state;
   events.push({ type: "HEALED", seat: opp, uid: sourceUid, amount: moved });
   const relieved = withBodyAt(state, from, healedBody(source, moved, state.turn));
@@ -8745,7 +8747,7 @@ function recoilAmount(
 ): number {
   if (op.perDamageCounterOnSelf !== true) return op.amount;
   const recoilingPokemon = state.players[ctx.seat].active;
-  return recoilingPokemon === null ? 0 : op.amount * Math.floor(recoilingPokemon.damage / 10);
+  return recoilingPokemon === null ? 0 : op.amount * damageCountersOn(recoilingPokemon);
 }
 
 function damageSelf(
@@ -8779,7 +8781,7 @@ function placeCountersOnSelf(
   const active = state.players[ctx.seat].active;
   const uid = active === null ? undefined : topUid(active);
   if (count <= 0 || active === null || uid === undefined) return { state, placed: [] };
-  const amount = count * 10;
+  const amount = count * HP_PER_COUNTER;
   events.push({ type: "COUNTERS_PLACED", seat: ctx.seat, uid, amount, source: "self" });
   return {
     state: withActive(state, ctx.seat, { ...active, damage: active.damage + amount }),
@@ -11185,11 +11187,6 @@ export function gustTargets(state: GameState, seat: Seat, op: OpOf<"gust">): Pok
   });
 }
 
-/** Damage counters on a body: `Math.floor(damage / 10)`, matching the attack scalings. */
-function damageCountersOn(pokemon: InPlayPokemon): number {
-  return Math.floor(pokemon.damage / 10);
-}
-
 /** Whether a body has any damage counters: `damage > 0`, matching the `conditionHolds` arms. */
 function hasAnyDamageCounters(pokemon: InPlayPokemon): boolean {
   return pokemon.damage > 0;
@@ -11982,7 +11979,7 @@ export function shockHandAttach(
   const counters = liveHandAttachMark(state, body)?.counters ?? 0;
   const uid = topUid(body);
   if (counters <= 0 || cards <= 0 || uid === undefined) return body;
-  const amount = counters * 10 * cards;
+  const amount = counters * HP_PER_COUNTER * cards;
   events.push({ type: "COUNTERS_PLACED", seat, uid, amount, source: "attack" });
   return { ...body, damage: body.damage + amount };
 }

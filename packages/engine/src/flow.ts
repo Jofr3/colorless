@@ -66,6 +66,7 @@ import type {
   UsedAttack,
 } from "./types";
 import {
+  BURN_DAMAGE,
   bodyAt,
   inPlayOf,
   turnOwnerOf,
@@ -1553,7 +1554,7 @@ function runCheckup(state: GameState, endedSeat: Seat, events: GameEvent[]): App
     const surge = seatBurnExtraCounters(next, seat);
     const surgeRefused = surge > 0 && passivesOf(next, active).preventAbilityEffects;
     if (surgeRefused) events.push({ type: "ABILITY_EFFECT_PREVENTED", seat, uid });
-    const burn = 20 + (surgeRefused ? 0 : surge);
+    const burn = BURN_DAMAGE + (surgeRefused ? 0 : surge);
     let updated = { ...active, damage: active.damage + burn };
     events.push({ type: "COUNTERS_PLACED", seat, uid, amount: burn, source: "burn" });
     const [face, rngState] = flipCoin(next.rngState);

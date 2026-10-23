@@ -10,7 +10,7 @@ import type { AttackTimingGate } from "./registry";
 // Type-only import; a value import would create a cycle with cards.ts.
 import type { PokemonSuffix } from "./cards";
 import type { Banner } from "./banners";
-import { BENCH_MAX, type PokemonTarget, type SpecialConditions } from "./types";
+import { BENCH_MAX, HP_PER_COUNTER, type PokemonTarget, type SpecialConditions } from "./types";
 import type { CoinFace } from "./rng";
 // Type-only import, so no runtime cycle with attack.ts.
 import type { AttackCopyOverride } from "./attack";
@@ -5700,7 +5700,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         op: "applyStatus",
         target: "defender",
         status: "poisoned",
-        poisonDamage: Number(match[1]) * 10,
+        poisonDamage: Number(match[1]) * HP_PER_COUNTER,
       },
     ];
   }
@@ -5715,7 +5715,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           op: "applyStatus",
           target: "defender",
           status: "confused",
-          confusionDamage: counters * 10,
+          confusionDamage: counters * HP_PER_COUNTER,
         },
       ];
     }
@@ -5759,7 +5759,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   match = DELAYED_DEFENDER_COUNTERS.exec(effect);
   if (match !== null) {
     const counters = Number(match[1]);
-    if (counters >= 1) return [{ op: "scheduleCounters", amount: counters * 10 }];
+    if (counters >= 1) return [{ op: "scheduleCounters", amount: counters * HP_PER_COUNTER }];
   }
 
   // 5g. Discards the Defending Pokémon without a Knock Out, so no Prize is taken. A separate op
@@ -6182,7 +6182,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           then: [
             {
               op: "counterEachAll",
-              amount: foldCounters * 10,
+              amount: foldCounters * HP_PER_COUNTER,
               filter: { kind: "anyPokemon" },
               side: "opponent",
               source: "attack",
@@ -6229,7 +6229,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
             {
               op: "damageChosen",
               target: "opponentBench",
-              amount: benchCounters * 10,
+              amount: benchCounters * HP_PER_COUNTER,
               count: 1,
               source: "attack",
             },
@@ -6882,7 +6882,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       {
         op: "damageChosen",
         target: "opponentAny",
-        amount: Number(match[1]) * 10,
+        amount: Number(match[1]) * HP_PER_COUNTER,
         count: 1,
         source: "attack",
       },
@@ -7632,7 +7632,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // damage counters" would arm a trap that changes no arithmetic anywhere and
     // emit a row announcing it, which is worse than an unread sentence — it
     // claims a threat that does not exist. Leave it LOUD.
-    if (counters >= 1) return [{ op: "installRecoil", amount: counters * 10 }];
+    if (counters >= 1) return [{ op: "installRecoil", amount: counters * HP_PER_COUNTER }];
   }
   // The same trap with `amount: "damageTaken"`: the damage the holder took, resolved at the §9
   // recoil site a turn later. Deliberately not `heal`'s `"dealt"`, which is the attacker's own
@@ -7710,7 +7710,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // whatever it Knocks Out, so a malformed 999 counters KOs the defender and
     // stops, which is a legal board state rather than a runaway.
     if (counters >= 1) {
-      return [{ op: "damageActive", amount: counters * 10, source: "attack" }];
+      return [{ op: "damageActive", amount: counters * HP_PER_COUNTER, source: "attack" }];
     }
   }
 
@@ -7720,7 +7720,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     return [
       {
         op: "damageActive",
-        amount: Number(match[1]) * 10,
+        amount: Number(match[1]) * HP_PER_COUNTER,
         source: "attack",
         per: { kind: "cardsInYourHand" },
       },
@@ -7742,7 +7742,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         {
           op: "damageChosen",
           target: "opponentBench",
-          amount: counters * 10,
+          amount: counters * HP_PER_COUNTER,
           // EXACT, not a ceiling: the printed "1 of" carries no "up to" (the op's
           // own doc block), so the park asks for one on the nose and §8.6 is the
           // only thing that softens it — an empty Bench places nothing.
@@ -7807,7 +7807,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         {
           op: "damageChosen",
           target: "opponentAny",
-          amount: pileCounters * 10,
+          amount: pileCounters * HP_PER_COUNTER,
           count: 1,
           source: "attack",
           // The printed "for each …" as a PAYLOAD and not a flag: the multiplier is a
@@ -7840,7 +7840,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           // "1 of your opponent's POKÉMON" — the Active OR a Bench, so `oppAnyRefs`
           // and never empty during an attack.
           target: "opponentAny",
-          amount: anyZoneCounters * 10,
+          amount: anyZoneCounters * HP_PER_COUNTER,
           // EXACT at one body, not a ceiling: the print says "1 of" and carries no
           // "up to", so §8.6 is the only thing that softens the pick.
           count: 1,
@@ -7863,7 +7863,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         {
           op: "damageChosen",
           target: "opponentAny",
-          amount: chosenCounters * 10,
+          amount: chosenCounters * HP_PER_COUNTER,
           count: chosenBodies,
           source: "attack",
         },
@@ -7882,7 +7882,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       return [
         {
           op: "counterEachAll",
-          amount: abilityFoldCounters * 10,
+          amount: abilityFoldCounters * HP_PER_COUNTER,
           filter: { kind: "abilityPokemon" },
           // The printed "(both yours and your opponent's)", said as the enum value
           // it is rather than as a modifier on a one-seat op.
@@ -7902,7 +7902,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       return [
         {
           op: "counterEachAll",
-          amount: oppFoldCounters * 10,
+          amount: oppFoldCounters * HP_PER_COUNTER,
           filter: { kind: "anyPokemon" },
           // `otherSeat(ctx.seat)` alone — their Active AND their Bench, which is what
           // "each of your opponent's Pokémon" prints and what the ZONE-scoped
@@ -7923,7 +7923,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       return [
         {
           op: "counterEachAll",
-          amount: damagedFoldCounters * 10,
+          amount: damagedFoldCounters * HP_PER_COUNTER,
           filter: { kind: "anyPokemon" },
           side: "opponent",
           source: "attack",
@@ -8078,7 +8078,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           // Active or Bench, so never empty during an attack. No `deals`: placed counters stay flat
           // even on the Active.
           target: "opponentAny",
-          amount: counters * 10,
+          amount: counters * HP_PER_COUNTER,
           // EXACT, not a ceiling: no "up to" is printed.
           count: 1,
           // Provenance printed on the COUNTERS_PLACED row.

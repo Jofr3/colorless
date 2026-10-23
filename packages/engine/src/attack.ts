@@ -158,6 +158,7 @@ import { damagedByAttackAbility, damagedToolTriggersOf, koToolTriggersOf } from 
 import { isBenchIndex, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PendingStage, Phase, PokemonTarget, Seat } from "./types";
 import {
+  damageCountersOn,
   inPlayOf,
   attackDamageTakenLastTurn,
   isImmobilized,
@@ -252,7 +253,7 @@ function scaledAttackDamage(
     case "damageCountersOnSelf":
       // One damage counter = 10 HP (§12). `attacker` is the Active as of declaration, so an attack
       // cannot bootstrap the counters it scales off.
-      return Math.floor(attacker.damage / 10) * bonus.per;
+      return damageCountersOn(attacker) * bonus.per;
     case "opponentPrizesTaken":
       // Prizes the opponent has TAKEN (6 − their remaining pile, §8.1), read at
       // declaration before this attack's own KOs award any Prize.
@@ -282,7 +283,7 @@ function scaledAttackDamage(
       // Damage counters on the defending Active, read at declaration so this attack's own hit
       // cannot count; a missing Active cannot happen here, and 0 keeps the arm total.
       const defenderActive = state.players[defenderSeat].active;
-      return defenderActive === null ? 0 : Math.floor(defenderActive.damage / 10) * bonus.per;
+      return defenderActive === null ? 0 : damageCountersOn(defenderActive) * bonus.per;
     }
     case "specialConditionsOnOpponentActive": {
       // Counts Special Conditions via `presentStatuses`, not raw fields: `confusionDamage` is a
@@ -303,7 +304,7 @@ function scaledAttackDamage(
           (total, p) =>
             total +
             (p !== null && (filter === undefined || matchesFilter(inPlayCardOf(state, p), filter))
-              ? Math.floor(p.damage / 10)
+              ? damageCountersOn(p)
               : 0),
           0,
         ) * bonus.per

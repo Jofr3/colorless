@@ -61,6 +61,7 @@ import type {
   SpecialConditions,
 } from "./types";
 import {
+  damageCountersOn,
   inPlayOf,
   BENCH_MAX,
   SEATS,
@@ -2533,7 +2534,7 @@ export function countDamageCountersInPlay(state: GameState, seat: Seat): number 
   const side = state.players[seat];
   const holders = inPlayOf(side);
   let total = 0;
-  for (const holder of holders) total += Math.floor(holder.damage / 10);
+  for (const holder of holders) total += damageCountersOn(holder);
   return total;
 }
 
