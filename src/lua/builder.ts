@@ -27,6 +27,7 @@ import type { AccountStatus } from "./account";
 type Option = { key: string; label: string; values: string[]; labels?: string[] };
 type CatalogPage = { items: BuilderCard[]; total: number };
 type Catalog = { query: ReturnType<typeof filtersToCardsQuery>; size: number; key: string };
+type Command = (a: string, b: string) => void | Promise<void>;
 /** Pages fetched on each side of the visible one, so paging never waits. */
 const PREFETCH_PAGES = 2;
 const SEARCH_DEBOUNCE_MS = 250;
@@ -548,305 +549,321 @@ export class LuaBuilder {
     if (done) done();
     else this.back();
   }
+  /** Commands that apply in every phase. */
+  private readonly anytimeCommands = new Map<string, Command>([
+    ["open", (a) => this.onOpen(a)],
+    ["size", (a) => this.onSize(a)],
+    ["leave", () => this.onLeave()],
+    ["close", () => this.onClose()],
+  ]);
+  /** Commands that need a loaded deck; while it loads only `retry` applies. */
+  private readonly readyCommands = new Map<string, Command>([
+    ["preview-cards", (a, b) => this.onPreviewCards(a, b)],
+    ["retry-save", () => this.saver?.flush()],
+    ["retry", () => this.onRetry()],
+    ["name", (a) => this.onName(a)],
+    ["format", () => this.onFormat()],
+    ["add", (a) => this.onAdd(a)],
+    ["discard", (a) => this.onDiscard(a)],
+    ["remove", (a) => this.onRemove(a)],
+    ["clear", () => this.onClear()],
+    ["cover", (a) => this.onCover(a)],
+    ["page", (a) => this.onPage(a)],
+    ["sort", () => this.onSort()],
+    ["options", (a) => this.onOptions(a)],
+    ["option-query", (a) => this.onOptionQuery(a)],
+    ["option-page", (a) => this.onOptionPage(a)],
+    ["option-pick", (a) => this.onOptionPick(a)],
+    ["reset", () => this.onReset()],
+    ["filter", (a, b) => this.onFilter("filter", a, b)],
+    ["cycle", (a, b) => this.onFilter("cycle", a, b)],
+    ["detail", (a) => this.onDetail(a)],
+    ["export", () => this.onExport()],
+    ["cancel-import", () => this.onCancelImport()],
+    ["import", (a) => this.onImport(a)],
+  ]);
   async command(raw: string) {
     const fields = decodeFields(raw);
     if (!fields) return;
-    const [action, a = "", b = ""] = fields;
-    if (action === "open") {
-      if (this.active && this.id === a && this.phase === "ready") return;
-      this.active = true;
-      this.id = a;
-      this.leaving = false;
-      this.page = 1;
-      this.filters = { ...DEFAULT_FILTERS };
-      await this.load();
-      return;
-    }
-    if (action === "size") {
-      this.size = Number(a) === 4 ? 4 : 8;
-      this.page = 1;
-      await this.search();
-      return;
-    }
-    if (action === "leave") {
-      if (this.dirty) {
-        this.pendingExit = undefined;
-        this.leaving = true;
-        this.saver?.flush();
-      } else this.exit();
-      return;
-    }
-    if (action === "close") {
-      this.importGeneration++;
-      this.importing = false;
-      this.saver?.flush();
-      this.active = false;
+    const [action = "", a = "", b = ""] = fields;
+    const anytime = this.anytimeCommands.get(action);
+    if (anytime) {
+      await anytime(a, b);
       return;
     }
     if (this.phase !== "ready") {
       if (action === "retry") await this.load();
       return;
     }
-    if (action === "preview-cards") {
-      this.previewIds = a
-        .split("\n")
-        .filter((id) => this.entries.has(id))
-        .slice(0, 6);
-      this.nearbyPreviewIds = b
-        .split("\n")
-        .filter((id) => this.entries.has(id))
-        .slice(0, 6 * 2 * PREFETCH_PAGES);
-      this.emit();
-      return;
-    }
-    if (action === "retry-save") {
+    await this.readyCommands.get(action)?.(a, b);
+  }
+  private async onOpen(id: string) {
+    if (this.active && this.id === id && this.phase === "ready") return;
+    this.active = true;
+    this.id = id;
+    this.leaving = false;
+    this.page = 1;
+    this.filters = { ...DEFAULT_FILTERS };
+    await this.load();
+  }
+  private async onSize(size: string) {
+    this.size = Number(size) === 4 ? 4 : 8;
+    this.page = 1;
+    await this.search();
+  }
+  private onLeave() {
+    if (this.dirty) {
+      this.pendingExit = undefined;
+      this.leaving = true;
       this.saver?.flush();
+    } else this.exit();
+  }
+  private onClose() {
+    this.importGeneration++;
+    this.importing = false;
+    this.saver?.flush();
+    this.active = false;
+  }
+  private onPreviewCards(visible: string, nearby: string) {
+    this.previewIds = visible
+      .split("\n")
+      .filter((id) => this.entries.has(id))
+      .slice(0, 6);
+    this.nearbyPreviewIds = nearby
+      .split("\n")
+      .filter((id) => this.entries.has(id))
+      .slice(0, 6 * 2 * PREFETCH_PAGES);
+    this.emit();
+  }
+  private async onRetry() {
+    await Promise.all([this.hydrate(this.epoch), this.search(), this.loadOptions(this.epoch)]);
+  }
+  private onName(name: string) {
+    this.name = name.slice(0, DECK_NAME_MAX);
+    this.changed();
+  }
+  private async onFormat() {
+    this.format = this.format === "standard" ? "expanded" : "standard";
+    this.changed();
+    this.page = 1;
+    await this.search();
+  }
+  private onAdd(id: string) {
+    const c = this.cards.get(id);
+    if ([...this.entries.keys()].some((entry) => !this.cards.has(entry))) {
+      this.message = "Resolve unavailable deck cards before adding more.";
+      this.emit();
       return;
     }
-    if (action === "retry") {
-      await Promise.all([this.hydrate(this.epoch), this.search(), this.loadOptions(this.epoch)]);
-      return;
-    }
-    if (action === "name") {
-      this.name = a.slice(0, DECK_NAME_MAX);
+    if (
+      c &&
+      remainingAllowedFor(this.deck(), formatById(this.format))(c) > 0 &&
+      (this.entries.has(id) || this.entries.size < MAX_DECK_CARD_ENTRIES)
+    ) {
+      this.entries.set(id, (this.entries.get(id) ?? 0) + 1);
       this.changed();
-      return;
+    } else {
+      this.message = "This card has reached its copy limit.";
+      this.emit();
     }
-    if (action === "format") {
-      this.format = this.format === "standard" ? "expanded" : "standard";
-      this.changed();
-      this.page = 1;
+  }
+  /** Drops an entry whose card no longer resolves. */
+  private onDiscard(id: string) {
+    if (this.cards.has(id)) return;
+    this.entries.delete(id);
+    this.changed();
+  }
+  private onRemove(id: string) {
+    const n = this.entries.get(id) ?? 0;
+    if (n <= 1) this.entries.delete(id);
+    else this.entries.set(id, n - 1);
+    this.changed();
+  }
+  private onClear() {
+    this.entries.clear();
+    this.changed();
+  }
+  private onCover(id: string) {
+    this.cover = this.entries.has(id) ? id : null;
+    this.changed();
+  }
+  private async onPage(delta: string) {
+    this.page = Math.max(
+      1,
+      Math.min(Math.max(1, Math.ceil(this.total / this.size)), this.page + Number(delta)),
+    );
+    // A prefetched page shows at once, with no loading state.
+    const catalog = this.catalog();
+    const cached = catalog.key === this.pageKey ? this.pages.get(this.page) : undefined;
+    if (!cached || this.phase !== "ready") {
       await this.search();
       return;
     }
-    if (action === "add") {
-      const c = this.cards.get(a);
-      if ([...this.entries.keys()].some((id) => !this.cards.has(id))) {
-        this.message = "Resolve unavailable deck cards before adding more.";
-        this.emit();
-        return;
-      }
-      if (
-        c &&
-        remainingAllowedFor(this.deck(), formatById(this.format))(c) > 0 &&
-        (this.entries.has(a) || this.entries.size < MAX_DECK_CARD_ENTRIES)
-      ) {
-        this.entries.set(a, (this.entries.get(a) ?? 0) + 1);
-        this.changed();
-      } else {
-        this.message = "This card has reached its copy limit.";
-        this.emit();
-      }
-      return;
-    }
-    if (action === "discard" && !this.cards.has(a)) {
-      this.entries.delete(a);
-      this.changed();
-      return;
-    }
-    if (action === "remove") {
-      const n = this.entries.get(a) ?? 0;
-      if (n <= 1) this.entries.delete(a);
-      else this.entries.set(a, n - 1);
-      this.changed();
-      return;
-    }
-    if (action === "clear") {
-      this.entries.clear();
-      this.changed();
-      return;
-    }
-    if (action === "cover") {
-      this.cover = this.entries.has(a) ? a : null;
-      this.changed();
-      return;
-    }
-    if (action === "page") {
-      this.page = Math.max(
-        1,
-        Math.min(Math.max(1, Math.ceil(this.total / this.size)), this.page + Number(a)),
-      );
-      // A prefetched page shows at once, with no loading state.
-      const catalog = this.catalog();
-      const cached = catalog.key === this.pageKey ? this.pages.get(this.page) : undefined;
-      if (!cached || this.phase !== "ready") {
-        await this.search();
-        return;
-      }
-      clearTimeout(this.searchTimer);
-      this.searchEpoch++;
-      this.busy = false;
-      this.results = cached.items;
-      this.total = cached.total;
-      this.emit();
-      this.prefetch(catalog);
-      return;
-    }
-    if (action === "sort") {
-      const sorts: Filters["sort"][] = ["name", "hp-desc", "set"];
-      this.filters = {
-        ...this.filters,
-        sort: sorts[(sorts.indexOf(this.filters.sort) + 1) % sorts.length] ?? "name",
-      };
-      this.page = 1;
-      await this.search();
-      return;
-    }
-    if (action === "options") {
-      this.optionKey = a;
-      this.optionQuery = "";
-      this.optionPage = 1;
-      this.emit();
-      return;
-    }
-    if (action === "option-query") {
-      this.optionQuery = a;
-      this.optionPage = 1;
-      this.emit();
-      return;
-    }
-    if (action === "option-page") {
-      this.optionPage += Number(a);
-      this.emit();
-      return;
-    }
-    if (action === "option-pick") {
-      const option = this.options().find((o) => o.key === this.optionKey);
-      if (!option?.values.includes(a)) return;
-      const current = this.filters[this.optionKey as keyof Filters];
-      const value = Array.isArray(current)
-        ? a === ""
+    clearTimeout(this.searchTimer);
+    this.searchEpoch++;
+    this.busy = false;
+    this.results = cached.items;
+    this.total = cached.total;
+    this.emit();
+    this.prefetch(catalog);
+  }
+  private async onSort() {
+    const sorts: Filters["sort"][] = ["name", "hp-desc", "set"];
+    this.filters = {
+      ...this.filters,
+      sort: sorts[(sorts.indexOf(this.filters.sort) + 1) % sorts.length] ?? "name",
+    };
+    this.page = 1;
+    await this.search();
+  }
+  private onOptions(key: string) {
+    this.optionKey = key;
+    this.optionQuery = "";
+    this.optionPage = 1;
+    this.emit();
+  }
+  private onOptionQuery(query: string) {
+    this.optionQuery = query;
+    this.optionPage = 1;
+    this.emit();
+  }
+  private onOptionPage(delta: string) {
+    this.optionPage += Number(delta);
+    this.emit();
+  }
+  private async onOptionPick(value: string) {
+    const option = this.options().find((o) => o.key === this.optionKey);
+    if (!option?.values.includes(value)) return;
+    const current = this.filters[this.optionKey as keyof Filters];
+    this.setFilter(
+      this.optionKey,
+      Array.isArray(current)
+        ? value === ""
           ? []
-          : current.includes(a as never)
-            ? current.filter((v) => v !== a)
-            : [...current, a]
+          : current.includes(value as never)
+            ? current.filter((v) => v !== value)
+            : [...current, value]
         : typeof current === "boolean"
-          ? a === "1"
-          : a;
-      this.filters = { ...this.filters, [this.optionKey]: value };
-      if (this.optionKey === "supertype")
-        this.filters = { ...this.filters, subtypes: [], suffixes: [] };
-      this.page = 1;
-      await this.search();
-      return;
+          ? value === "1"
+          : value,
+    );
+    this.page = 1;
+    await this.search();
+  }
+  private async onReset() {
+    this.filters = { ...DEFAULT_FILTERS };
+    this.page = 1;
+    await this.search();
+  }
+  /** `filter` sets a value and debounces the search; `cycle` steps an option by `step`. */
+  private async onFilter(action: "filter" | "cycle", key: string, arg: string) {
+    const option = this.options().find((o) => o.key === key);
+    const value =
+      action === "cycle" && option
+        ? (option.values[
+            (option.values.indexOf(this.value(key)) + Number(arg || 1) + option.values.length) %
+              option.values.length
+          ] ?? "")
+        : arg;
+    if (!option && !["query", "text", "hpMin", "hpMax"].includes(key)) return;
+    const current = this.filters[key as keyof Filters];
+    this.setFilter(
+      key,
+      Array.isArray(current)
+        ? value
+          ? [value]
+          : []
+        : typeof current === "boolean"
+          ? value === "1"
+          : value,
+    );
+    this.page = 1;
+    this.searchEpoch++;
+    clearTimeout(this.searchTimer);
+    if (action === "filter")
+      this.searchTimer = setTimeout(() => void this.search(), SEARCH_DEBOUNCE_MS);
+    else await this.search();
+  }
+  /** Changing the supertype clears the kind and rule-box chips, which depend on it. */
+  private setFilter(key: string, value: string | string[] | boolean) {
+    this.filters = { ...this.filters, [key]: value };
+    if (key === "supertype") this.filters = { ...this.filters, subtypes: [], suffixes: [] };
+  }
+  private async onDetail(id: string) {
+    const epoch = this.epoch;
+    this.selected = id;
+    this.details = "Loading card details...";
+    this.emit();
+    try {
+      const c = await api.getCard(id);
+      if (epoch !== this.epoch || this.selected !== id) return;
+      this.cards.set(c.id, toBuilderCard(c));
+      this.details =
+        [
+          c.effect,
+          ...(c.abilities ?? []).map((x) => `${x.name}: ${x.effect ?? ""}`),
+          ...(c.attacks ?? []).map(
+            (x) => `${x.name}${x.damage ? `  ${x.damage}` : ""}\n${x.effect ?? ""}`,
+          ),
+        ]
+          .filter(Boolean)
+          .join("\n\n") || "No additional rules text.";
+    } catch (error) {
+      reportError("load card details", error);
+      if (epoch !== this.epoch || this.selected !== id) return;
+      this.details = "Details could not load. Close and reopen to retry.";
     }
-    if (action === "reset") {
-      this.filters = { ...DEFAULT_FILTERS };
-      this.page = 1;
-      await this.search();
-      return;
-    }
-    if (action === "filter" || action === "cycle") {
-      const option = this.options().find((o) => o.key === a);
-      const value =
-        action === "cycle" && option
-          ? (option.values[
-              (option.values.indexOf(this.value(a)) + Number(b || 1) + option.values.length) %
-                option.values.length
-            ] ?? "")
-          : b;
-      if (option || ["query", "text", "hpMin", "hpMax"].includes(a)) {
-        const current = this.filters[a as keyof Filters];
-        this.filters = {
-          ...this.filters,
-          [a]: Array.isArray(current)
-            ? value
-              ? [value]
-              : []
-            : typeof current === "boolean"
-              ? value === "1"
-              : value,
-        };
-        if (a === "supertype") this.filters = { ...this.filters, subtypes: [], suffixes: [] };
-        this.page = 1;
-        this.searchEpoch++;
-        clearTimeout(this.searchTimer);
-        if (action === "filter")
-          this.searchTimer = setTimeout(() => void this.search(), SEARCH_DEBOUNCE_MS);
-        else await this.search();
+    this.emit();
+  }
+  private onExport() {
+    const deck = this.deck();
+    this.transfer = deck.length ? formatDecklist(deck) : "";
+    const missing = [...this.entries.keys()].some((id) => !this.cards.has(id));
+    this.message = missing ? "Unavailable cards cannot be exported. Resolve them first." : "";
+    this.emit();
+  }
+  private onCancelImport() {
+    if (!this.importing) return;
+    this.importGeneration++;
+    this.importing = false;
+    this.message = "Import cancelled. Deck unchanged.";
+    this.emit();
+  }
+  private async onImport(text: string) {
+    if (this.importing) return;
+    const generation = ++this.importGeneration;
+    const epoch = this.epoch;
+    this.importing = true;
+    this.message = "Resolving decklist...";
+    this.emit();
+    try {
+      const result = await importDecklist(text);
+      if (epoch !== this.epoch || generation !== this.importGeneration || !this.active) return;
+      if (
+        result.unmatched.length ||
+        result.entries.length === 0 ||
+        result.entries.length > MAX_DECK_CARD_ENTRIES
+      ) {
+        this.message = result.unmatched.length
+          ? `Could not resolve: ${result.unmatched.map((x) => x.raw).join(", ")}. Deck unchanged.`
+          : "No usable decklist, or too many entries. Deck unchanged.";
+      } else {
+        for (const e of result.entries) this.cards.set(e.card.cardId, e.card);
+        this.entries = new Map(
+          result.entries.map((e) => [e.card.cardId, Math.min(MAX_IMPORT_COPIES, e.quantity)]),
+        );
+        this.transfer = text;
+        this.changed();
+        this.message = "Deck imported.";
       }
-      return;
+    } catch (error) {
+      reportError("import decklist", error);
+      if (epoch !== this.epoch || generation !== this.importGeneration || !this.active) return;
+      this.message = "Import failed. Your deck is unchanged. Try again.";
     }
-    if (action === "detail") {
-      const epoch = this.epoch;
-      this.selected = a;
-      this.details = "Loading card details...";
+    if (epoch === this.epoch) {
+      this.importing = false;
       this.emit();
-      try {
-        const c = await api.getCard(a);
-        if (epoch !== this.epoch || this.selected !== a) return;
-        this.cards.set(c.id, toBuilderCard(c));
-        this.details =
-          [
-            c.effect,
-            ...(c.abilities ?? []).map((x) => `${x.name}: ${x.effect ?? ""}`),
-            ...(c.attacks ?? []).map(
-              (x) => `${x.name}${x.damage ? `  ${x.damage}` : ""}\n${x.effect ?? ""}`,
-            ),
-          ]
-            .filter(Boolean)
-            .join("\n\n") || "No additional rules text.";
-      } catch (error) {
-        reportError("load card details", error);
-        if (epoch !== this.epoch || this.selected !== a) return;
-        this.details = "Details could not load. Close and reopen to retry.";
-      }
-      this.emit();
-      return;
-    }
-    if (action === "export") {
-      const deck = this.deck();
-      this.transfer = deck.length ? formatDecklist(deck) : "";
-      const missing = [...this.entries.keys()].some((id) => !this.cards.has(id));
-      this.message = missing ? "Unavailable cards cannot be exported. Resolve them first." : "";
-      this.emit();
-      return;
-    }
-    if (action === "cancel-import") {
-      if (this.importing) {
-        this.importGeneration++;
-        this.importing = false;
-        this.message = "Import cancelled. Deck unchanged.";
-        this.emit();
-      }
-      return;
-    }
-    if (action === "import" && !this.importing) {
-      const generation = ++this.importGeneration;
-      const epoch = this.epoch;
-      this.importing = true;
-      this.message = "Resolving decklist...";
-      this.emit();
-      try {
-        const result = await importDecklist(a);
-        if (epoch !== this.epoch || generation !== this.importGeneration || !this.active) return;
-        if (
-          result.unmatched.length ||
-          result.entries.length === 0 ||
-          result.entries.length > MAX_DECK_CARD_ENTRIES
-        ) {
-          this.message = result.unmatched.length
-            ? `Could not resolve: ${result.unmatched.map((x) => x.raw).join(", ")}. Deck unchanged.`
-            : "No usable decklist, or too many entries. Deck unchanged.";
-        } else {
-          for (const e of result.entries) this.cards.set(e.card.cardId, e.card);
-          this.entries = new Map(
-            result.entries.map((e) => [e.card.cardId, Math.min(MAX_IMPORT_COPIES, e.quantity)]),
-          );
-          this.transfer = a;
-          this.changed();
-          this.message = "Deck imported.";
-        }
-      } catch (error) {
-        reportError("import decklist", error);
-        if (epoch !== this.epoch || generation !== this.importGeneration || !this.active) return;
-        this.message = "Import failed. Your deck is unchanged. Try again.";
-      }
-      if (epoch === this.epoch) {
-        this.importing = false;
-        this.emit();
-      }
-      return;
     }
   }
 }
