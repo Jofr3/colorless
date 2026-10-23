@@ -10,7 +10,6 @@ import {
 } from "./index";
 import type { GameState, Seat } from "./index";
 import {
-  completeSetup,
   FIXTURE_POOL,
   battler,
   benchFromDeck,
@@ -22,6 +21,7 @@ import {
   setActiveFromDeck,
   setDamage,
   must,
+  driveSetup,
 } from "./testFixtures";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -140,15 +140,7 @@ const LOCK_DECK = deckOf({
 const SEEDS = [7201, 7213, 7219, 7229] as const;
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: LOCK_DECK, p2: LOCK_DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  state = completeSetup(state);
-  return state;
+  return driveSetup(seed, { p1: LOCK_DECK, p2: LOCK_DECK }, { pool: POOL, first });
 }
 
 function board(seed: number, first: Seat, barrier: Seat, barrierId: string): GameState {

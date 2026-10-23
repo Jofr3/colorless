@@ -5,7 +5,6 @@ import * as effects from "./effects";
 import type { CardFilter, EffectOp } from "./effects";
 import { deriveAttackDiscardScaledBoost, deriveAttackEffect } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame } from "./index";
 import type { GameState, Seat } from "./index";
 import { matchesFilter } from "./cards";
 import { runProgram } from "./interpreter";
@@ -16,13 +15,12 @@ import {
   battler,
   clearBench,
   deckOf,
-  firstBasicInHand,
   itemTrainer,
-  must,
   mustApply,
   setActiveFromDeck,
   types,
   findEvent,
+  driveSetup,
 } from "./testFixtures";
 
 const MILL_ENERGY =
@@ -176,34 +174,7 @@ const ZERO_DECK = [
 ] as const;
 
 function openTable(first: Seat): GameState {
-  const created = createGame({
-    seed: SEED,
-    decks: { p1: D488_DECK, p2: D488_DECK },
-    cardPool: D488_POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let table = created.state;
-  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(
-    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
-  );
-  while (table.phase.kind === "setup:drawExtra") {
-    const drawing = table.phase;
-    const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
-    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(
-      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(
-      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupReady", seat }));
-  }
-  return table;
+  return driveSetup(SEED, { p1: D488_DECK, p2: D488_DECK }, { pool: D488_POOL, first });
 }
 
 function withZones(

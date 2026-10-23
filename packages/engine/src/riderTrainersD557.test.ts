@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { matchesFilter } from "./cards";
 import type { BoardCondition, CardFilter } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, redactGame } from "./index";
+import { applyAction, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -28,6 +28,7 @@ import {
   must,
   effectPrompt,
   ensureInDeck,
+  driveSetup,
 } from "./testFixtures";
 
 const MORTY = ["sv05-155", "sv05-201", "sv05-211"] as const;
@@ -128,28 +129,7 @@ const NAMES: Record<Seat, string> = { p1: "Ember", p2: "Tide" };
 
 /** Setup with p2 going first; returns p1's (unrestricted) turn 2 after p2 passed. */
 function opened(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  const state = driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 

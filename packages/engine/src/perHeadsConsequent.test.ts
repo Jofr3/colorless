@@ -8,7 +8,7 @@ import {
   deriveAttackEffect,
   deriveAttackRequirement,
 } from "./effects";
-import { applyAction, createGame, programFor } from "./index";
+import { programFor } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { registryCardIds } from "./registry";
@@ -21,12 +21,11 @@ import {
   clearBench,
   deckOf,
   deepFreeze,
-  firstBasicInHand,
-  must,
   mustApply,
   setActiveFromDeck,
   trimDeckTo,
   types,
+  driveSetup,
 } from "./testFixtures";
 
 const SINGLE_MILL = "Flip 2 coins. For each heads, discard the top card of your opponent's deck.";
@@ -106,32 +105,7 @@ function headsIn(events: GameEvent[]): number {
 }
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({
-    seed,
-    decks: { p1: PER_HEADS_DECK, p2: PER_HEADS_DECK },
-    cardPool: POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: PER_HEADS_DECK, p2: PER_HEADS_DECK }, { pool: POOL, first });
 }
 
 /** p1 owns TURN 2 with the demonstrator Active and one {C} attached; p2 goes first

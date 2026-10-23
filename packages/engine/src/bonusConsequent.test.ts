@@ -13,7 +13,6 @@ import {
 import type { EffectOp } from "./effects";
 import {
   applyAction,
-  createGame,
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
@@ -26,7 +25,6 @@ import {
 import type { GameEvent, GameState, Seat } from "./index";
 import { programFor } from "./registry";
 import {
-  completeSetup,
   FIXTURE_POOL,
   battler,
   benchFromDeck,
@@ -38,6 +36,7 @@ import {
   walkProgram,
   must,
   findEvent,
+  driveSetup,
 } from "./testFixtures";
 
 const OGERPON_TEXT =
@@ -170,15 +169,7 @@ function apply(state: GameState, action: Parameters<typeof applyAction>[1]) {
 }
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  state = completeSetup(state);
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first });
 }
 
 /** TEST SURGERY — `count` Energy of one printed type onto p1's Active. */

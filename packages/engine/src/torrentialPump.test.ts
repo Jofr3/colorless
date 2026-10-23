@@ -20,7 +20,7 @@ import {
   optionalCostBoostProgram,
 } from "./effects";
 import { conditionHolds, conditionNote } from "./interpreter";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { BoardCondition, EffectOp, GameEvent, GameState, PokemonRef, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -31,8 +31,8 @@ import {
   setActiveFromDeck,
   types,
   must,
-  firstBasicInHand,
   findEvent,
+  driveSetup,
 } from "./testFixtures";
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
@@ -110,30 +110,8 @@ function apply(state: GameState, action: Parameters<typeof applyAction>[1]) {
   return result;
 }
 
-/** Setup driven over the LOCAL pool, P2 going first. */
 function localSetup(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
 }
 
 /** TEST SURGERY, the local twin of `attachFromDeck`: the shared helper takes ONE

@@ -1,6 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { applyAction, createGame, redactGame } from "./index";
+import { applyAction, redactGame } from "./index";
 import type { GameState, Seat } from "./index";
 import { programFor } from "./registry";
 import {
@@ -9,10 +9,9 @@ import {
   attachToolFromDeck,
   benchFromDeck,
   clearBench,
-  firstBasicInHand,
-  must,
   mustApply,
   setActiveFromDeck,
+  driveSetup,
 } from "./testFixtures";
 
 const PRINTED =
@@ -25,32 +24,7 @@ const GATE = 30;
 const POOL: Record<string, Card> = FIXTURE_POOL;
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({
-    seed,
-    decks: { p1: EMERGENCY_DECK, p2: EMERGENCY_DECK },
-    cardPool: POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: EMERGENCY_DECK, p2: EMERGENCY_DECK }, { pool: POOL, first });
 }
 
 function board(seed = 7): GameState {

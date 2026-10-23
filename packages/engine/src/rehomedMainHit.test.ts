@@ -1,9 +1,8 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import {
-  completeSetup,
   FIXTURE_POOL,
   battler,
   benchFromDeck,
@@ -16,6 +15,7 @@ import {
   typedEnergy,
   must,
   findEvent,
+  driveSetup,
 } from "./testFixtures";
 
 const GURDURR = "sv06-104";
@@ -130,15 +130,7 @@ const SEEDS = [4021, 4099] as const;
 const COIN_SEEDS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 
 function localSetup(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  state = completeSetup(state);
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
 }
 
 /** TEST SURGERY — `count` Energy of one printed type onto p1's Active. */

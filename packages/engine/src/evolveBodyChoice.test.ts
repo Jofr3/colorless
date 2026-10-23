@@ -2,19 +2,18 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import { deriveAttackEffect, splitAttackGateClause } from "./effects";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameState, PokemonRef, Seat } from "./index";
 import {
-  completeSetup,
   FIXTURE_POOL,
   attachFromDeck,
   battler,
   benchFromDeck,
   clearBench,
   deckOf,
-  must,
   mustApply,
   setActiveFromDeck,
+  driveSetup,
 } from "./testFixtures";
 
 const BODY_CHOICE =
@@ -86,15 +85,7 @@ const CHOICE_DECK = deckOf({
 });
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: CHOICE_DECK, p2: CHOICE_DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  state = completeSetup(state);
-  return state;
+  return driveSetup(seed, { p1: CHOICE_DECK, p2: CHOICE_DECK }, { pool: POOL, first });
 }
 
 /** p1 with Duosion Active, `bench` on the Bench in the order given, one {C}

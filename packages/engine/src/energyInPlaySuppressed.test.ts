@@ -12,11 +12,10 @@ import {
   splitAttackRequirementClause,
   splitAttackTrailingClause,
 } from "./effects";
-import { applyAction, createGame, logFromEvents } from "./index";
+import { applyAction, logFromEvents } from "./index";
 import type { BoardCondition, GameState } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import {
-  completeSetup,
   attachBenchFromDeck,
   attachFromDeck,
   battler,
@@ -27,6 +26,7 @@ import {
   typedEnergy,
   must,
   findEvent,
+  driveSetup,
 } from "./testFixtures";
 
 const PRINTED =
@@ -75,18 +75,9 @@ const DECK = deckOf({
 
 const SEEDS = [4940, 4941, 4943] as const;
 
-/** `benchCounterSuppressed.test.ts`'s `localSetup`, verbatim in shape: `driveSetup`
-    builds its game through `mustCreate`, which reads `FIXTURE_POOL`, so a local pool
-    needs its own drive. p2 opens and passes, so p1 carries no §4 first-turn bar. */
+/** p2 opens and passes, so p1 carries no §4 first-turn restriction. */
 function localSetup(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  state = completeSetup(state);
+  const state = driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 

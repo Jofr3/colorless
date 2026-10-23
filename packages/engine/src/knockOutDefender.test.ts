@@ -5,7 +5,7 @@ import {
   deriveAttackEffect,
   splitAttackCancelClause,
 } from "./effects";
-import { applyAction, createGame, programFor } from "./index";
+import { applyAction, programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { conditionHolds, conditionNote, runProgram } from "./interpreter";
 import {
@@ -18,13 +18,13 @@ import {
   clearBench,
   deckOf,
   deepFreeze,
-  firstBasicInHand,
   handToDeck,
   must,
   mustApply,
   setActiveFromDeck,
   types,
   findEvent,
+  driveSetup,
 } from "./testFixtures";
 import {
   koByEffectMarker,
@@ -127,32 +127,7 @@ const OPPONENT_SPECIAL = {
 const BY_ATTACK = { kind: "yourPokemonKoedOnOpponentsLastTurn", byAttack: true } as const;
 
 function localSetup(seed: number, first: Seat, deck: string[] = KO_DEFENDER_DECK): GameState {
-  const created = createGame({
-    seed,
-    decks: { p1: deck, p2: deck },
-    cardPool: POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: deck, p2: deck }, { pool: POOL, first });
 }
 
 function armed(seed: number, victim = "fix-kod-victim", opts: { tool?: string } = {}): GameState {

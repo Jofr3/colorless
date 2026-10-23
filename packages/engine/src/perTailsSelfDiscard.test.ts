@@ -9,7 +9,7 @@ import {
   deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
-import { applyAction, createGame, programFor } from "./index";
+import { programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import type { CoinFace } from "./rng";
 import { flipCoin } from "./rng";
@@ -21,11 +21,10 @@ import {
   clearBench,
   deckOf,
   deepFreeze,
-  firstBasicInHand,
-  must,
   mustApply,
   setActiveFromDeck,
   types,
+  driveSetup,
 } from "./testFixtures";
 
 const PRINTED_TAILS = "Flip 3 coins. For each tails, discard an Energy from this Pokémon.";
@@ -124,34 +123,7 @@ function countOf(events: GameEvent[], face: CoinFace): number {
 }
 
 function openTable(seed: number, first: Seat): GameState {
-  const created = createGame({
-    seed,
-    decks: { p1: TAIL_FLIP_DECK, p2: TAIL_FLIP_DECK },
-    cardPool: POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let table = created.state;
-  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(
-    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
-  );
-  while (table.phase.kind === "setup:drawExtra") {
-    const phase = table.phase;
-    const owing = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(
-      applyAction(table, { type: "setupDrawExtra", seat: owing, count: phase.owed[owing] }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(
-      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupReady", seat }));
-  }
-  return table;
+  return driveSetup(seed, { p1: TAIL_FLIP_DECK, p2: TAIL_FLIP_DECK }, { pool: POOL, first });
 }
 
 function armed(faces: readonly CoinFace[], stock: number): GameState {

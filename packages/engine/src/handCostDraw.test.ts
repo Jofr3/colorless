@@ -22,19 +22,18 @@ import {
   splitAttackRequirementClause,
   splitAttackTrailingClause,
 } from "./effects";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { resumeProgram, runProgram } from "./interpreter";
 import {
-  completeSetup,
   FIXTURE_POOL,
   battler,
   basicEnergy,
   deckOf,
   itemTrainer,
   types,
-  must,
   findEvent,
+  driveSetup,
 } from "./testFixtures";
 import { makeInPlay } from "./types";
 
@@ -251,15 +250,7 @@ function mustStep(state: GameState, action: Parameters<typeof applyAction>[1]) {
 }
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  state = completeSetup(state);
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first });
 }
 
 /** TEST SURGERY: put `cardId` from the deck into the named spot. The fixture

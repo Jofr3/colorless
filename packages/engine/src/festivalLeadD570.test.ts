@@ -2,14 +2,13 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { passivesOf } from "./continuous";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, redactGame } from "./index";
+import { applyAction, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { attackAgainBarred, attackAgainLicensed } from "./interpreter";
 import type { LogContext } from "./log";
 import { formatElapsed, logFromEvents } from "./log";
 import { programFor } from "./registry";
 import {
-  completeSetup,
   FIXTURE_POOL,
   attachFromDeck,
   battler,
@@ -22,6 +21,7 @@ import {
   must,
   mustApply as run,
   ensureInDeck,
+  driveSetup,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 import { freshAllowances } from "./types";
@@ -176,14 +176,7 @@ function refused(state: GameState, action: GameAction): { code: string; message:
 
 /** Setup with p2 going first; returns p1's (unrestricted) turn 2 after p2 passed. */
 function opened(seed: number, deck: readonly string[] = DECK): GameState {
-  const created = createGame({ seed, decks: { p1: [...deck], p2: [...deck] }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  state = completeSetup(state);
+  const state = driveSetup(seed, { p1: [...deck], p2: [...deck] }, { pool: POOL, first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 

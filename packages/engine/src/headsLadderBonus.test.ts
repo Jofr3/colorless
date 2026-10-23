@@ -23,7 +23,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { AttackCoinFlip } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { flipCoin } from "./rng";
 import type { CoinFace } from "./rng";
@@ -34,11 +34,10 @@ import {
   battler,
   clearBench,
   deckOf,
-  firstBasicInHand,
-  must,
   mustApply,
   setActiveFromDeck,
   types,
+  driveSetup,
 } from "./testFixtures";
 
 const LADDER_ROW = legalAttackCorpus().find(([, s]) =>
@@ -141,34 +140,7 @@ const LADDER_DECK = deckOf({
 const SEED = 11;
 
 function openTable(seed: number, first: Seat): GameState {
-  const created = createGame({
-    seed,
-    decks: { p1: LADDER_DECK, p2: LADDER_DECK },
-    cardPool: LADDER_POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let table = created.state;
-  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(
-    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
-  );
-  while (table.phase.kind === "setup:drawExtra") {
-    const drawing = table.phase;
-    const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
-    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(
-      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(
-      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupReady", seat }));
-  }
-  return table;
+  return driveSetup(seed, { p1: LADDER_DECK, p2: LADDER_DECK }, { pool: LADDER_POOL, first });
 }
 
 /** `perTailsSelfDiscard.test.ts`'s idiom: the smallest `rngState` whose next `faces.length` draws are

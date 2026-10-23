@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { disabledAbilityUids, hasSelfKnockOutAbility } from "./continuous";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameState, Seat } from "./index";
 import { programFor, registryCardIds } from "./registry";
 import {
@@ -12,7 +12,7 @@ import {
   deckOf,
   setActiveFromDeck,
   typedEnergy,
-  must,
+  driveSetup,
 } from "./testFixtures";
 
 const DAMP_ITSELF_TEXT =
@@ -184,28 +184,7 @@ const DECK = deckOf({
 
 /** Setup with p1 going first; returns p1's first turn, both hands back into the decks. */
 function opened(): GameState {
-  const created = createGame({ seed: 6320, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  let state = driveSetup(6320, { p1: DECK, p2: DECK }, { pool: POOL, first: "p1" });
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];
     state = {

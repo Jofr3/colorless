@@ -2,10 +2,9 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect, splitAttackGateClause } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, programFor } from "./index";
+import { applyAction, programFor } from "./index";
 import type { GameState, Seat } from "./index";
 import {
-  completeSetup,
   FIXTURE_POOL,
   attachFromDeck,
   battler,
@@ -18,6 +17,7 @@ import {
   mustApply,
   setActiveFromDeck,
   setDamage,
+  driveSetup,
 } from "./testFixtures";
 
 const BARE =
@@ -99,19 +99,7 @@ const ASCENSION_DECK = deckOf({
 });
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({
-    seed,
-    decks: { p1: ASCENSION_DECK, p2: ASCENSION_DECK },
-    cardPool: POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  state = completeSetup(state);
-  return state;
+  return driveSetup(seed, { p1: ASCENSION_DECK, p2: ASCENSION_DECK }, { pool: POOL, first });
 }
 
 /** TEST SURGERY — every copy of `cardId` leaves the seat's deck (to the bottom of

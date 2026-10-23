@@ -10,7 +10,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { GameAction, GameEvent, GameState, PokemonRef } from "./index";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
@@ -27,6 +27,7 @@ import {
   typedEnergy,
   must,
   unprize,
+  driveSetup,
 } from "./testFixtures";
 
 const SPLIT_BOMB =
@@ -434,28 +435,7 @@ const BOARD_IDS = new Set([...Object.keys(LOCAL).filter((id) => id !== FILLER), 
 
 /** Setup, then P1's own FIRST turn (P2 went first and passed); both hands back into the decks. */
 function p1Turn(): GameState {
-  const created = createGame({ seed: 6081, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  let state = driveSetup(6081, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   for (const s of ["p1", "p2"] as const) {
     const side = state.players[s];

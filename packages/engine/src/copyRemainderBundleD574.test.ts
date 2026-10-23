@@ -12,7 +12,7 @@ import {
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { settleProgram } from "./flow";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { resumeProgram } from "./interpreter";
 import type { EffectChoice } from "./interpreter";
@@ -22,7 +22,6 @@ import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import type { CoinFace } from "./rng";
 import {
-  completeSetup,
   FIXTURE_POOL,
   battler,
   benchFromDeck,
@@ -34,6 +33,7 @@ import {
   must,
   mustApply as run,
   effectPrompt,
+  driveSetup,
 } from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
@@ -286,14 +286,7 @@ function refused(state: GameState, action: GameAction): { code: string; message:
 
 /** Setup with p2 going first; returns p1's turn 2 (p1's FIRST turn — p1 went second). */
 function opened(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  state = completeSetup(state);
+  const state = driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 

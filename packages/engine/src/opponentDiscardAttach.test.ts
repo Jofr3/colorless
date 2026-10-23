@@ -26,7 +26,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { EffectOp } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import type { EffectContext, EffectContinuation, EffectPrompt, PokemonRef } from "./interpreter";
 import { attachEnergyTargets, attachSeat, runProgram } from "./interpreter";
@@ -41,11 +41,10 @@ import {
   clearBench,
   deckOf,
   discardFromDeck,
-  firstBasicInHand,
-  must,
   mustApply,
   setActiveFromDeck,
   types,
+  driveSetup,
 } from "./testFixtures";
 
 const PRINTED =
@@ -170,35 +169,13 @@ const ATTACH_DECK = deckOf({
 const SEED = 7;
 
 function openTable(seed: number): GameState {
-  const created = createGame({
+  const state = driveSetup(
     seed,
-    decks: { p1: ATTACH_DECK, p2: ATTACH_DECK },
-    cardPool: ATTACH_POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let table = created.state;
-  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(
-    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first: "p2" }),
+    { p1: ATTACH_DECK, p2: ATTACH_DECK },
+    { pool: ATTACH_POOL, first: "p2" },
   );
-  while (table.phase.kind === "setup:drawExtra") {
-    const drawing = table.phase;
-    const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
-    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(
-      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(
-      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupReady", seat }));
-  }
   // `p2` opens and passes, so `p1` attacks on a turn that carries no first-turn lock.
-  return mustApply(table, { type: "endTurn", seat: "p2" }).state;
+  return mustApply(state, { type: "endTurn", seat: "p2" }).state;
 }
 
 const other = (seat: Seat): Seat => (seat === "p1" ? "p2" : "p1");

@@ -1,10 +1,9 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { applyAction, createGame, handCostAction } from "./index";
+import { applyAction, handCostAction } from "./index";
 import type { EffectOp, GameAction, GameEvent, GameState, PokemonRef, Seat } from "./index";
 import { programFor } from "./registry";
 import {
-  completeSetup,
   FIXTURE_POOL,
   battler,
   benchFromDeck,
@@ -19,6 +18,7 @@ import {
   types,
   must,
   ensureInDeck,
+  driveSetup,
 } from "./testFixtures";
 
 const TORRID_TEXT =
@@ -164,17 +164,8 @@ const DECK = deckOf({
   [BEACH_COURT]: 4,
 });
 
-/** Setup with `first` going first; returns the board at the start of turn 1. */
 function opened(first: Seat, seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  state = completeSetup(state);
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first });
 }
 
 const seatActive = (state: GameState, seat: Seat, id: string) =>

@@ -25,12 +25,10 @@ import {
   attackTimingBlocked,
   attackTimingNote,
   conditionNote,
-  createGame,
   programFor,
   redactGame,
 } from "./index";
 import {
-  completeSetup,
   FIXTURE_POOL,
   attachFromDeck,
   battler,
@@ -41,6 +39,7 @@ import {
   setActiveFromDeck,
   must,
   activeOf,
+  driveSetup,
 } from "./testFixtures";
 
 const ANGELITE =
@@ -124,19 +123,7 @@ const ANGELITE_DECK = deckOf({
 const SEEDS = [6011, 6029, 6037, 6047] as const;
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({
-    seed,
-    decks: { p1: ANGELITE_DECK, p2: ANGELITE_DECK },
-    cardPool: POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  state = completeSetup(state);
-  return state;
+  return driveSetup(seed, { p1: ANGELITE_DECK, p2: ANGELITE_DECK }, { pool: POOL, first });
 }
 
 /** Give the seat's Active one {W}, one {L} and one {P} — enough for BOTH printed

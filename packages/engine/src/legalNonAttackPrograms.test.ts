@@ -3,16 +3,9 @@ import { describe, expect, it } from "vitest";
 import { matchesFilter, topUid } from "./cards";
 import { programPlayable } from "./cardplay";
 import { passivesOf } from "./continuous";
-import {
-  applyAction,
-  createGame,
-  effectiveRetreatCost,
-  hasFreeRetreatAura,
-  programFor,
-} from "./index";
+import { applyAction, effectiveRetreatCost, hasFreeRetreatAura, programFor } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import {
-  completeSetup,
   FIXTURE_POOL,
   attachBenchFromDeck,
   attachFromDeck,
@@ -36,6 +29,7 @@ import {
   trainerCard,
   types,
   findEvent,
+  driveSetup,
 } from "./testFixtures";
 
 const LANDED = [
@@ -840,15 +834,7 @@ function findAll<T extends GameEvent["type"]>(
 }
 
 function localSetup(seed: number, first: Seat, deck: string[]): GameState {
-  const created = createGame({ seed, decks: { p1: deck, p2: deck }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  state = completeSetup(state);
-  return state;
+  return driveSetup(seed, { p1: deck, p2: deck }, { pool: POOL, first });
 }
 
 function board(seed: number, deck: string[], turn = 3): GameState {

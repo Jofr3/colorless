@@ -22,7 +22,7 @@ import {
   splitAttackRequirementClause,
   splitAttackTrailingClause,
 } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { engineVersion } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import { conditionHolds, countPokemonInPlay, runProgram } from "./interpreter";
 import {
@@ -32,13 +32,12 @@ import {
   benchFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
-  must,
   mustApply,
   setActiveFromDeck,
   setBenchDamage,
   setDamage,
   types,
+  driveSetup,
 } from "./testFixtures";
 
 const FOUR_ZONE =
@@ -147,34 +146,11 @@ const FOUR_ZONE_DECK = deckOf({
 });
 
 function openTable(first: Seat): GameState {
-  const created = createGame({
-    seed: SEED,
-    decks: { p1: FOUR_ZONE_DECK, p2: FOUR_ZONE_DECK },
-    cardPool: FOUR_ZONE_POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let table = created.state;
-  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(
-    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
+  return driveSetup(
+    SEED,
+    { p1: FOUR_ZONE_DECK, p2: FOUR_ZONE_DECK },
+    { pool: FOUR_ZONE_POOL, first },
   );
-  while (table.phase.kind === "setup:drawExtra") {
-    const drawing = table.phase;
-    const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
-    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(
-      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(
-      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupReady", seat }));
-  }
-  return table;
 }
 
 /** Existing damage to seed, body by body. Absent means clean. */

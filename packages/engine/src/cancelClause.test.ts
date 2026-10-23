@@ -11,7 +11,6 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { GameState, Seat } from "./index";
-import { applyAction, createGame } from "./index";
 import {
   FIXTURE_POOL,
   attachFromDeck,
@@ -23,9 +22,8 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
-  must,
-  firstBasicInHand,
   findEvent,
+  driveSetup,
 } from "./testFixtures";
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
@@ -101,28 +99,7 @@ const DECK = deckOf({
 const SEEDS = [4171, 4187, 4201] as const;
 
 function localSetup(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
 }
 
 function playStadium(state: GameState, seat: Seat): GameState {

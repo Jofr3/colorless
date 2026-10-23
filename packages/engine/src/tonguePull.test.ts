@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, engineVersion, programFor } from "./index";
+import { engineVersion, programFor } from "./index";
 import type { GameState, Seat } from "./index";
 import type { EffectContext } from "./interpreter";
 import { runProgram } from "./interpreter";
@@ -15,11 +15,10 @@ import {
   benchFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
   handFromDeck,
-  must,
   mustApply,
   setActiveFromDeck,
+  driveSetup,
 } from "./testFixtures";
 import { BENCH_MAX, otherSeat } from "./types";
 
@@ -65,28 +64,7 @@ const PULL_DECK = deckOf({
 });
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: PULL_DECK, p2: PULL_DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: PULL_DECK, p2: PULL_DECK }, { pool: POOL, first });
 }
 
 /** Every uid in the seat's hand goes back under their deck. */

@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { passivesOf } from "./continuous";
 import type { GameState, InPlayPokemon, Seat } from "./index";
-import { applyAction, createGame, programFor } from "./index";
+import { applyAction, programFor } from "./index";
 import { conditionHolds, conditionNote, evolveEarlyLicensed } from "./interpreter";
 import {
   FIXTURE_POOL,
@@ -13,8 +13,8 @@ import {
   handFromDeck,
   setActiveFromDeck,
   must,
-  firstBasicInHand,
   activeOf,
+  driveSetup,
 } from "./testFixtures";
 
 const STIMULATED_TEXT_KARRABLAST =
@@ -130,28 +130,7 @@ const BUG_DECK = deckOf({
 });
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: BUG_DECK, p2: BUG_DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: BUG_DECK, p2: BUG_DECK }, { pool: POOL, first });
 }
 
 function board(

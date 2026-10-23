@@ -1,9 +1,8 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { applyAction, createGame, handPlayBarred, programFor, redactGame } from "./index";
+import { applyAction, handPlayBarred, programFor, redactGame } from "./index";
 import type { GameState, Seat } from "./index";
 import {
-  completeSetup,
   FIXTURE_POOL,
   battler,
   benchFromDeck,
@@ -15,6 +14,7 @@ import {
   setActiveFromDeck,
   setDamage,
   must,
+  driveSetup,
 } from "./testFixtures";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -112,15 +112,7 @@ const LOCK_DECK = deckOf({
 const SEEDS = [6101, 6113, 6121, 6133] as const;
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: LOCK_DECK, p2: LOCK_DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  state = completeSetup(state);
-  return state;
+  return driveSetup(seed, { p1: LOCK_DECK, p2: LOCK_DECK }, { pool: POOL, first });
 }
 
 function board(seed: number, first: Seat, barrier: Seat, barrierId: string): GameState {

@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import type { GameAction, GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import {
@@ -18,6 +18,7 @@ import {
   trainerCard,
   typedEnergy,
   must,
+  driveSetup,
 } from "./testFixtures";
 
 const CALL_A_BUDDY =
@@ -234,28 +235,7 @@ const DECK = deckOf({
 });
 
 function p1Turn(): GameState {
-  const created = createGame({ seed: 6021, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  let state = driveSetup(6021, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
   state = must(applyAction(state, { type: "endTurn", seat: "p2" }));

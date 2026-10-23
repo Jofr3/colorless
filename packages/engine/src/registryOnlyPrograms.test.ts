@@ -1,6 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { applyAction, createGame, effectiveRetreatCost, programFor } from "./index";
+import { applyAction, effectiveRetreatCost, programFor } from "./index";
 import type { GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -9,13 +9,12 @@ import {
   benchFromDeck,
   deckOf,
   deepFreeze,
-  firstBasicInHand,
   handUid,
-  must,
   mustApply,
   setActiveFromDeck,
   types,
   findEvent,
+  driveSetup,
 } from "./testFixtures";
 
 const LANDED = [
@@ -180,31 +179,8 @@ const useTrade = {
   abilityName: "Trade",
 } as const;
 
-/** `driveSetup`, against the LOCAL pool — the one thing `testFixtures.ts` cannot
-    do for us, because it closes over `FIXTURE_POOL`. Same script: choose first,
-    settle compensation, place actives, ready both. */
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  const winner = state.phase.coinWinner;
-  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: winner, first }));
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first });
 }
 
 /** Setup, then open P1's turn (P2 went first and passed). */

@@ -9,7 +9,7 @@ import {
   splitAttackGateClause,
   splitAttackTrailingClause,
 } from "./effects";
-import { applyAction, createGame, logFromEvents } from "./index";
+import { applyAction, logFromEvents } from "./index";
 import type { GameState } from "./index";
 import {
   attachFromDeck,
@@ -22,8 +22,8 @@ import {
   setDamage,
   typedEnergy,
   must,
-  firstBasicInHand,
   findEvent,
+  driveSetup,
 } from "./testFixtures";
 
 const PRINTED =
@@ -71,31 +71,9 @@ const DECK = deckOf({
 
 const SEEDS = [4930, 4931, 4933] as const;
 
-/** `autoHeal.test.ts`'s `localSetup`, verbatim in shape: `driveSetup` builds its game
-    through `mustCreate`, which reads `FIXTURE_POOL`, so a local pool needs its own
-    drive. p2 opens and passes, so p1 carries no §4 first-turn restriction. */
+/** p2 opens and passes, so p1 carries no §4 first-turn restriction. */
 function localSetup(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
+  const state = driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 

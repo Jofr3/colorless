@@ -6,7 +6,7 @@ import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { collectKnockOuts } from "./flow";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { GameState, InPlayPokemon, PokemonRef, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -19,13 +19,13 @@ import {
   benchFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
   handFromDeck,
   handUid,
   must,
   mustApply,
   setActiveFromDeck,
   findEvent,
+  driveSetup,
 } from "./testFixtures";
 import type { KoBounty } from "./types";
 
@@ -127,28 +127,7 @@ function body(pokemon: InPlayPokemon | null | undefined): InPlayPokemon {
 }
 
 function localSetup(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p1" });
 }
 
 /** P1's turn 3: P1 fields the marker with one Energy; P2 fields `victim` with one

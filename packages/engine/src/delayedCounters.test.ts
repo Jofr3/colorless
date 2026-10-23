@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
-import { applyAction, createGame, otherSeat, programFor } from "./index";
+import { applyAction, otherSeat, programFor } from "./index";
 import type { EffectOp, GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, logFromEvents } from "./log";
@@ -15,7 +15,6 @@ import {
   clearBench,
   deckOf,
   deepFreeze,
-  firstBasicInHand,
   handFromDeck,
   handUid,
   must,
@@ -25,6 +24,7 @@ import {
   setDamage,
   types,
   findEvent,
+  driveSetup,
 } from "./testFixtures";
 import { koByEffectMarker, scheduledEffectDue, withActive } from "./types";
 
@@ -133,28 +133,7 @@ function baseUid(pokemon: InPlayPokemon | null | undefined): string {
 }
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: DOOM_DECK, p2: DOOM_DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DOOM_DECK, p2: DOOM_DECK }, { pool: POOL, first });
 }
 
 function armed(installer: Seat, victimCard = "fix-doomed", seed = 4): GameState {

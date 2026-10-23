@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { effectiveMaxHp } from "./continuous";
 import type { GameAction, GameState, InPlayPokemon, PokemonRef, Seat } from "./index";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import { programFor } from "./registry";
 import {
   FIXTURE_POOL,
@@ -20,6 +20,7 @@ import {
   specialEnergy,
   typedEnergy,
   must,
+  driveSetup,
 } from "./testFixtures";
 
 const SOLAR_TRANSFER =
@@ -183,28 +184,7 @@ function reset(state: GameState): GameState {
 
 /** Setup with p2 first, both Actives a Basic from hand; then the clock walks to `seat`'s turn ≥ 3. */
 function turnOf(seat: Seat, seed = 6101): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find(
-      (h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic",
-    );
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const)
-    state = must(applyAction(state, { type: "setupReady", seat: s }));
+  let state = driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p2" });
   for (let i = 0; i < 12; i += 1) {
     if (state.phase.kind !== "turn:action") throw new Error(`stuck in ${state.phase.kind}`);
     if (state.phase.seat === seat && state.turn >= 3) return reset(state);

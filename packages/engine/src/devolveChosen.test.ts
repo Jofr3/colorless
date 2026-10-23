@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import type { EffectOp } from "./effects";
 import { deriveAttackEffect } from "./effects";
-import { applyAction, createGame, programFor, redactGame } from "./index";
+import { applyAction, programFor, redactGame } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, PokemonRef, Seat } from "./index";
 import { type LogContext, logFromEvents } from "./log";
 import {
@@ -15,7 +15,6 @@ import {
   clearBench,
   deckOf,
   deepFreeze,
-  firstBasicInHand,
   handFromDeck,
   handUid,
   must,
@@ -25,6 +24,7 @@ import {
   setDamage,
   types,
   findEvent,
+  driveSetup,
 } from "./testFixtures";
 import { koByEffectMarker } from "./types";
 
@@ -94,28 +94,7 @@ function body(pokemon: InPlayPokemon | null | undefined): InPlayPokemon {
 }
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: CHOSEN_DECK, p2: CHOSEN_DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: CHOSEN_DECK, p2: CHOSEN_DECK }, { pool: POOL, first });
 }
 
 function pass(state: GameState, seat: Seat): GameState {

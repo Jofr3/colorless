@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import * as effectsModule from "./effects";
 import { deriveAttackDamageMultiplier, deriveAttackEffect } from "./effects";
-import { applyAction, createGame } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import {
@@ -14,10 +13,9 @@ import {
   benchFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
-  must,
   mustApply,
   setActiveFromDeck,
+  driveSetup,
 } from "./testFixtures";
 
 const SPREAD_SEED = 492_0492;
@@ -112,34 +110,11 @@ const SPREAD_DECK = deckOf({
 });
 
 function openSpreadTable(first: Seat): GameState {
-  const created = createGame({
-    seed: SPREAD_SEED,
-    decks: { p1: SPREAD_DECK, p2: SPREAD_DECK },
-    cardPool: SPREAD_POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let table = created.state;
-  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(
-    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
+  return driveSetup(
+    SPREAD_SEED,
+    { p1: SPREAD_DECK, p2: SPREAD_DECK },
+    { pool: SPREAD_POOL, first },
   );
-  while (table.phase.kind === "setup:drawExtra") {
-    const drawing = table.phase;
-    const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
-    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(
-      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(
-      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupReady", seat }));
-  }
-  return table;
 }
 
 /** p1 owns TURN 2 with the Sniper Active. BOTH benches are cleared before anything is

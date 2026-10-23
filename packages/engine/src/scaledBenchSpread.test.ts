@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import manifest from "../package.json" with { type: "json" };
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { engineVersion } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import {
@@ -13,11 +13,10 @@ import {
   benchFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
-  must,
   mustApply,
   setActiveFromDeck,
   setPrizes,
+  driveSetup,
 } from "./testFixtures";
 
 const PRINTED =
@@ -91,34 +90,7 @@ const SPREAD_DECK = deckOf({
 });
 
 function openTable(first: Seat): GameState {
-  const created = createGame({
-    seed: SEED,
-    decks: { p1: SPREAD_DECK, p2: SPREAD_DECK },
-    cardPool: SPREAD_POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let table = created.state;
-  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  table = must(
-    applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }),
-  );
-  while (table.phase.kind === "setup:drawExtra") {
-    const drawing = table.phase;
-    const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
-    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
-    table = must(
-      applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(
-      applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    table = must(applyAction(table, { type: "setupReady", seat }));
-  }
-  return table;
+  return driveSetup(SEED, { p1: SPREAD_DECK, p2: SPREAD_DECK }, { pool: SPREAD_POOL, first });
 }
 
 function table(oppRemaining = 3, ownRemaining = 6): GameState {

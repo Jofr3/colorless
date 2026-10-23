@@ -4,7 +4,7 @@ import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import type { EffectOp } from "./effects";
 import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, createGame, redactGame } from "./index";
+import { applyAction, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { runProgram } from "./interpreter";
@@ -16,13 +16,12 @@ import {
   clearBench,
   deckOf,
   deepFreeze,
-  firstBasicInHand,
   handFromDeck,
-  must,
   mustApply,
   setActiveFromDeck,
   types,
   findEvent,
+  driveSetup,
 } from "./testFixtures";
 
 const SENTENCE =
@@ -106,32 +105,7 @@ const SEED = 20260922;
 const other = (seat: Seat): Seat => (seat === "p1" ? "p2" : "p1");
 
 function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({
-    seed,
-    decks: { p1: SHUFFLE_DECK, p2: SHUFFLE_DECK },
-    cardPool: POOL,
-  });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: SHUFFLE_DECK, p2: SHUFFLE_DECK }, { pool: POOL, first });
 }
 
 /** Rebuild `seat`'s HAND outright — the opponent's hand IS the zone under test and

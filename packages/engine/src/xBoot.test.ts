@@ -1,10 +1,10 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { applyAction, createGame } from "./index";
+import { applyAction } from "./index";
 import type { EffectOp, EffectPrompt, GameState, PokemonRef } from "./index";
 import { attachEnergyTargets } from "./interpreter";
 import { programFor, registryCardIds } from "./registry";
-import { battler, deckOf, typedEnergy, must, firstBasicInHand } from "./testFixtures";
+import { battler, deckOf, typedEnergy, must, driveSetup } from "./testFixtures";
 import { FIXTURE_POOL } from "./testFixtures";
 
 const X_BOOT = "sv10-145";
@@ -63,28 +63,7 @@ const benchRef = (index: number): PokemonRef => ({
 });
 
 function localSetup(seed: number): GameState {
-  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
-  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
-  let state = created.state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
-  );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
-  return state;
+  return driveSetup(seed, { p1: DECK, p2: DECK }, { pool: POOL, first: "p1" });
 }
 
 /** TEST SURGERY — p1's Active becomes the Metagross, `bench` names the bodies
