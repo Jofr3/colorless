@@ -5422,13 +5422,9 @@ function preventRetreat(
 ): GameState {
   // A bare target means the opponent here, unlike `preventAttack` where bare means self.
   const seat = relativeSeat(ctx.seat, op.target !== "self");
-  const active = state.players[seat].active;
-  if (active === null) return state;
-  const uid = topUid(active);
-  if (uid === undefined) return state;
-  // Checked before the idempotence early return so a refusal is announced even on an already locked
-  // body.
-  if (effectRefused(state, seat, ctx, events)) return state;
+  const live = unrefusedActive(state, seat, ctx, events);
+  if (live === null) return state;
+  const { active, uid } = live;
   if (op.target === "self") {
     // The installer's OWN next turn is one full round away, which is
     // `attackLockedTurn`'s self-arm number: `otherSeat(ctx.seat)` takes the turn
@@ -5533,6 +5529,38 @@ function sameAttackerClass(a: AttackBlock["fromClass"], b: AttackBlock["fromClas
 }
 
 /**
+ * The Active of `seat` with its top uid, or null when the spot is empty or the body refuses this
+ * effect (§11, announced). The refusal is asked before any idempotence early return, so it is
+ * announced even on a body that already carries the stamp.
+ */
+function unrefusedActive(
+  state: GameState,
+  seat: Seat,
+  ctx: EffectContext,
+  events: GameEvent[],
+): { active: InPlayPokemon; uid: string } | null {
+  const active = state.players[seat].active;
+  if (active === null) return null;
+  const uid = topUid(active);
+  if (uid === undefined) return null;
+  if (effectRefused(state, seat, ctx, events)) return null;
+  return { active, uid };
+}
+
+/**
+ * Keep-the-max merge of a turn-stamped amount: `amount` for a new window, the larger of the two for
+ * a same-window record, or null when the re-install says nothing new.
+ */
+function maxMerged(
+  existing: { readonly turn: number; readonly amount: number } | null,
+  turn: number,
+  amount: number,
+): number | null {
+  if (existing === null || existing.turn !== turn) return amount;
+  return amount > existing.amount ? amount : null;
+}
+
+/**
  * Installs an attack lock on the controller's own Active (`+ 2`, its next turn) or on the defender
  * (`+ 1`, the opponent's next turn). The defender arm is an effect of an attack, so a §11 block can
  * refuse it. A re-install that says nothing new is silent.
@@ -5544,13 +5572,9 @@ function preventAttack(
   events: GameEvent[],
 ): GameState {
   const seat = relativeSeat(ctx.seat, op.target === "defender");
-  const active = state.players[seat].active;
-  if (active === null) return state;
-  const uid = topUid(active);
-  if (uid === undefined) return state;
-  // Checked before the idempotence early return so a refusal is announced even on an already locked
-  // body.
-  if (effectRefused(state, seat, ctx, events)) return state;
+  const live = unrefusedActive(state, seat, ctx, events);
+  if (live === null) return state;
+  const { active, uid } = live;
   // The one rule, on the one seat that matters: the locked body's controller's
   // next turn. `otherSeat(ctx.seat)` is the seat whose turn comes next (§5.3), so
   // the defender arm is `+ 1` and the installer's own is one full round later.
@@ -5572,13 +5596,9 @@ function flipLockAttack(
   coins?: 2,
 ): GameState {
   const seat = otherSeat(ctx.seat);
-  const active = state.players[seat].active;
-  if (active === null) return state;
-  const uid = topUid(active);
-  if (uid === undefined) return state;
-  // Checked before the idempotence early return so a refusal is announced even on an already locked
-  // body.
-  if (effectRefused(state, seat, ctx, events)) return state;
+  const live = unrefusedActive(state, seat, ctx, events);
+  if (live === null) return state;
+  const { active, uid } = live;
   const turn = state.turn + 1;
   // Jet of Ink's two-coin lock has its own stamp (`attackTwoFlipLockTurn`).
   if (coins === 2) {
@@ -6223,18 +6243,12 @@ function weakenDefenderAttacks(
   events: GameEvent[],
 ): GameState {
   const seat = otherSeat(ctx.seat);
-  const active = state.players[seat].active;
-  if (active === null) return state;
-  const uid = topUid(active);
-  if (uid === undefined) return state;
-  // Checked before the idempotence early return so a refusal is announced even on an already
-  // debuffed body.
-  if (effectRefused(state, seat, ctx, events)) return state;
+  const live = unrefusedActive(state, seat, ctx, events);
+  if (live === null) return state;
+  const { active, uid } = live;
   const turn = state.turn + 1;
-  const existing = active.attackDamageDebuff;
-  const stacking = existing !== null && existing.turn === turn;
-  const merged = stacking ? Math.max(existing.amount, amount) : amount;
-  if (stacking && merged === existing.amount) return state;
+  const merged = maxMerged(active.attackDamageDebuff, turn, amount);
+  if (merged === null) return state;
   events.push({ type: "ATTACK_DEBUFF_APPLIED", seat, uid, amount: merged });
   return withActive(state, seat, { ...active, attackDamageDebuff: { turn, amount: merged } });
 }
@@ -6250,18 +6264,12 @@ function exposeDefender(
   events: GameEvent[],
 ): GameState {
   const seat = otherSeat(ctx.seat);
-  const active = state.players[seat].active;
-  if (active === null) return state;
-  const uid = topUid(active);
-  if (uid === undefined) return state;
-  // Checked before the idempotence early return so a refusal is announced even on an already
-  // exposed body.
-  if (effectRefused(state, seat, ctx, events)) return state;
+  const live = unrefusedActive(state, seat, ctx, events);
+  if (live === null) return state;
+  const { active, uid } = live;
   const turn = state.turn + 2;
-  const existing = active.damageVulnerability;
-  const exposedAlready = existing !== null && existing.turn === turn;
-  const worst = exposedAlready ? Math.max(existing.amount, amount) : amount;
-  if (exposedAlready && worst === existing.amount) return state;
+  const worst = maxMerged(active.damageVulnerability, turn, amount);
+  if (worst === null) return state;
   events.push({ type: "DAMAGE_VULNERABILITY_APPLIED", seat, uid, amount: worst });
   return withActive(state, seat, { ...active, damageVulnerability: { turn, amount: worst } });
 }
@@ -6301,13 +6309,9 @@ function retypeDefenderWeakness(
   asTimesTwo: boolean,
 ): GameState {
   const seat = otherSeat(ctx.seat);
-  const active = state.players[seat].active;
-  if (active === null) return state;
-  const uid = topUid(active);
-  if (uid === undefined) return state;
-  // §11 — checked BEFORE the idempotence early-return, `exposeDefender`'s ordering, so a
-  // refusal is announced even on an already-retyped body.
-  if (effectRefused(state, seat, ctx, events)) return state;
+  const live = unrefusedActive(state, seat, ctx, events);
+  if (live === null) return state;
+  const { active, uid } = live;
   const turn = state.turn + 2;
   const existing = active.weaknessRetype;
   if (
@@ -6332,13 +6336,9 @@ function retypeDefenderWeakness(
  */
 function taxDefender(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
   const taxedSeat = otherSeat(ctx.seat);
-  const taxed = state.players[taxedSeat].active;
-  if (taxed === null) return state;
-  const taxedUid = topUid(taxed);
-  if (taxedUid === undefined) return state;
-  // Checked before the same-window early return so a refusal is announced even on an already taxed
-  // body.
-  if (effectRefused(state, taxedSeat, ctx, events)) return state;
+  const live = unrefusedActive(state, taxedSeat, ctx, events);
+  if (live === null) return state;
+  const { active: taxed, uid: taxedUid } = live;
   const taxTurn = state.turn + 1;
   if (taxed.costTaxTurn === taxTurn) return state;
   events.push({ type: "COST_TAX_APPLIED", seat: taxedSeat, uid: taxedUid });
@@ -6356,12 +6356,9 @@ function bountyDefender(
   events: GameEvent[],
 ): GameState {
   const markedSeat = otherSeat(ctx.seat);
-  const marked = state.players[markedSeat].active;
-  if (marked === null) return state;
-  const markedUid = topUid(marked);
-  if (markedUid === undefined) return state;
-  // Checked before the merge's early return.
-  if (effectRefused(state, markedSeat, ctx, events)) return state;
+  const live = unrefusedActive(state, markedSeat, ctx, events);
+  if (live === null) return state;
+  const { active: marked, uid: markedUid } = live;
   const bountyTurn = state.turn + 2;
   const prior = marked.koBounty;
   // A live record from this turn is kept when the marked body will be Knocked Out at this attack's
@@ -6370,9 +6367,8 @@ function bountyDefender(
   const leavesAtSweep =
     isLethallyDamaged(state, marked) || marked.markers.includes(koByEffectMarker(state.turn));
   if (prior !== null && prior.turn === state.turn && leavesAtSweep) return state;
-  const sameWindow = prior !== null && prior.turn === bountyTurn;
-  const payout = sameWindow ? Math.max(prior.amount, amount) : amount;
-  if (sameWindow && payout === prior.amount) return state;
+  const payout = maxMerged(prior, bountyTurn, amount);
+  if (payout === null) return state;
   events.push({ type: "KO_BOUNTY_APPLIED", seat: markedSeat, uid: markedUid, amount: payout });
   return withActive(state, markedSeat, {
     ...marked,
@@ -6472,11 +6468,9 @@ function scheduleDelayed(
   events: GameEvent[],
 ): GameState {
   const seat = otherSeat(ctx.seat);
-  const active = state.players[seat].active;
-  if (active === null) return state;
-  const uid = topUid(active);
-  if (uid === undefined) return state;
-  if (effectRefused(state, seat, ctx, events)) return state;
+  const live = unrefusedActive(state, seat, ctx, events);
+  if (live === null) return state;
+  const { active, uid } = live;
   const turn = state.turn + 1;
   const existing = active.scheduledEffect;
   const stacking = existing !== null && existing.turn === turn ? existing : null;
@@ -8006,13 +8000,11 @@ function damageActive(
 ): GameState {
   if (amount <= 0) return state;
   const opponent = otherSeat(ctx.seat);
-  const active = state.players[opponent].active;
-  if (active === null) return state;
-  const uid = topUid(active);
-  if (uid === undefined) return state;
   // §11: a placed counter is not damage, so only the effects half of a block refuses it ("Damage is
   // not an effect."). The refusal is gated on the invocation, not on `source`.
-  if (effectRefused(state, opponent, ctx, events)) return state;
+  const live = unrefusedActive(state, opponent, ctx, events);
+  if (live === null) return state;
+  const { active, uid } = live;
   events.push({ type: "COUNTERS_PLACED", seat: opponent, uid, amount, source });
   return withActive(state, opponent, { ...active, damage: active.damage + amount });
 }
