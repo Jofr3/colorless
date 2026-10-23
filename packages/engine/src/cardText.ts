@@ -1,4 +1,5 @@
 import type { Ability, Attack, Card } from "@colorless/schema";
+import { POKEMON_TYPES, type PokemonType } from "./effectTypes";
 
 // Normalises tcgdex card-text markup to the `sv` spelling. Applied at ingest and again at read
 // time, because a persisted `GameState.cardPool` may still hold raw faces. Rules: energy-symbol
@@ -6,8 +7,8 @@ import type { Ability, Attack, Card } from "@colorless/schema";
 // ("ColorlessColorless") become `{X}` symbols; `<em>` tags are removed. A type word elsewhere, such
 // as an attack name, is left alone. Idempotent.
 
-/** The type word → its energy-symbol letter (tcgdex's `{X}` spelling in the `sv` rows). */
-const SYMBOL_OF: Readonly<Record<string, string>> = {
+/** Each type word's energy-symbol letter (tcgdex's `{X}` spelling in the `sv` rows). */
+export const TYPE_SYMBOL: Readonly<Record<PokemonType, string>> = {
   Grass: "G",
   Fire: "R",
   Water: "W",
@@ -21,8 +22,9 @@ const SYMBOL_OF: Readonly<Record<string, string>> = {
   Colorless: "C",
 };
 
-const TYPE_WORD =
-  "Grass|Fire|Water|Lightning|Psychic|Fighting|Darkness|Metal|Fairy|Dragon|Colorless";
+const SYMBOL_OF: Readonly<Record<string, string>> = TYPE_SYMBOL;
+
+const TYPE_WORD = POKEMON_TYPES.join("|");
 
 /** Anything the rules below could touch: a tag, a bracket, or a type word. */
 const MAY_CARRY_MARKUP = new RegExp(`[<[]|${TYPE_WORD}`);

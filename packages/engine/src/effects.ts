@@ -5,6 +5,7 @@
 import { BASIC_ENERGY_TYPES, type BasicEnergyType } from "@colorless/schema";
 
 import type { StatusName } from "./events";
+import { TYPE_SYMBOL } from "./cardText";
 
 import { BENCH_MAX, HP_PER_COUNTER, type SpecialConditions } from "./types";
 
@@ -434,17 +435,9 @@ const CONDITIONAL_BONUS_SUPPRESSED =
 // Both printed energy notations: brace codes ({L}) and spelled-out names (Fire). {C} and {N} are
 // absent (§6.1): Colorless is the provision fallback for unauthored Special Energy, so a {C} filter
 // would match cards nobody meant.
-export const ENERGY_TYPE_BY_CODE: Readonly<Record<string, BasicEnergyType>> = {
-  G: "Grass",
-  R: "Fire",
-  W: "Water",
-  L: "Lightning",
-  P: "Psychic",
-  F: "Fighting",
-  D: "Darkness",
-  M: "Metal",
-  Y: "Fairy",
-};
+export const ENERGY_TYPE_BY_CODE: Readonly<Record<string, BasicEnergyType>> = Object.fromEntries(
+  BASIC_ENERGY_TYPES.map((type) => [TYPE_SYMBOL[type], type]),
+);
 
 /** The spelled-out notation, keyed straight off BASIC_ENERGY_TYPES rather than
     re-listed — so the two notations cannot resolve to different vocabularies, and
@@ -458,11 +451,9 @@ const ENERGY_TYPE_BY_NAME: Readonly<Record<string, BasicEnergyType>> = Object.fr
  * with `N` (Dragon, which has no Basic Energy) and `C` (Colorless, excluded from the energy map
  * because `{C}` there is the Special Energy fallback).
  */
-export const POKEMON_TYPE_BY_CODE: Readonly<Record<string, PokemonType>> = {
-  ...ENERGY_TYPE_BY_CODE,
-  N: "Dragon",
-  C: "Colorless",
-};
+export const POKEMON_TYPE_BY_CODE: Readonly<Record<string, PokemonType>> = Object.fromEntries(
+  POKEMON_TYPES.map((type) => [TYPE_SYMBOL[type], type]),
+);
 
 const CLAUSE_ENERGY_TOKENS: ReadonlyMap<string, EnergyClass> = new Map<string, EnergyClass>([
   ...Object.entries(ENERGY_TYPE_BY_CODE).map(([code, type]): [string, EnergyClass] => [
