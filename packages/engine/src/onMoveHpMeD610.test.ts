@@ -355,7 +355,6 @@ describe("D610 §1 — the programs: seven objects over 16 printings", () => {
         text.startsWith("As long as this Pokémon is in the Active Spot"),
       );
       expect(text.includes("you may"), id).toBe(false);
-      expect(trigger(id)?.optional, id).toBeUndefined();
     }
   });
 

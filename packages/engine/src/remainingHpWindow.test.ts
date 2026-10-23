@@ -247,7 +247,6 @@ describe("D349 §1 — the two registry rows, read off the LIVE registry", () =>
     expect(program?.triggered).toHaveLength(1);
     expect(ability?.name).toBe("Glittering Star Pattern");
     expect(ability?.trigger).toBe("onEvolve");
-    expect(ability?.optional).toBe(true);
     expect(ability?.program).toEqual([{ op: "gust", remainingHpAtMost: 90, optional: true }]);
   });
 

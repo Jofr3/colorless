@@ -331,11 +331,10 @@ describe("D626 §1 — the texts and the registry rows", () => {
     for (const id of FLYGON) {
       expect(programFor(id), id).toEqual({
         triggered: [
-          { name: "Sandy Flapping", trigger: "onEvolve", optional: true, program: confirm },
+          { name: "Sandy Flapping", trigger: "onEvolve", program: confirm },
           {
             name: "Sandy Flapping",
             trigger: "onKnockOut",
-            optional: true,
             activeOnly: true,
             byOpponentAttack: true,
             program: confirm,

@@ -70,7 +70,7 @@ describe("D590 §1 — the programs: nine `onEvolve` objects over 13 printings, 
       for (const id of ids) {
         expect(Object.keys(programFor(id) ?? {}), id).toEqual(["triggered"]);
         expect(programFor(id)?.triggered, id).toHaveLength(1);
-        expect(triggerOf(id), id).toMatchObject({ name, trigger: "onEvolve", optional: true });
+        expect(triggerOf(id), id).toMatchObject({ name, trigger: "onEvolve" });
         expect(triggerOf(id), id).not.toHaveProperty("oncePerTurn");
         expect(programFor(id), id).toBe(programFor(ids[0] as string));
       }

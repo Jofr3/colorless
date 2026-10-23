@@ -890,7 +890,6 @@ describe("§3 — the rows, exactly as authored", () => {
         {
           name: "Jewel Seeker",
           trigger: "onEvolve",
-          optional: true,
           program: [
             {
               op: "conditionGate",

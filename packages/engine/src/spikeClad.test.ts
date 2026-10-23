@@ -215,7 +215,6 @@ describe("D353 §1 — the authored row is ONE object over TWO printings", () =>
     const row = triggered[0];
     expect(row?.name).toBe("Spike-Clad");
     expect(row?.trigger).toBe("onEvolve");
-    expect(row?.optional).toBe(true);
     expect(row?.program).toEqual([
       {
         op: "attachEnergyFrom",

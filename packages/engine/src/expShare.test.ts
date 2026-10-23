@@ -152,7 +152,6 @@ describe("the printed datum — re-queried, not inherited", () => {
       {
         name: "Exp. Share",
         trigger: "onAllyActiveKnockOut",
-        optional: true,
         program: [
           {
             op: "moveEnergy",
@@ -338,7 +337,6 @@ describe("the park — who is asked, and what resumes", () => {
     // already declinable and optional triggers already auto-fire.
     expect(after.players.p2.discard).toContain(energy);
     expect(types(events)).toContain("KNOCKED_OUT");
-    expect(programFor("sv01-174")?.triggered?.[0]?.optional).toBe(true);
   });
 
   it("the ATTACKER cannot answer the KO'd player's prompt", () => {

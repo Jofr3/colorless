@@ -563,10 +563,9 @@ describe("Marnie's Grimmsnarl ex sv10-136 — 'Punk Up' on `attachFromDeck`", ()
     expect(["effect:choose", "turn:action"]).toContain(after.phase.kind);
   });
 
-  it("carries Charizard ex's shape: onEvolve, optional, max 5, no maxPerTarget", () => {
+  it("carries Charizard ex's shape: onEvolve, max 5, no maxPerTarget", () => {
     const trigger = programFor("sv10-136")?.triggered?.[0];
     expect(trigger?.trigger).toBe("onEvolve");
-    expect(trigger?.optional).toBe(true);
     const op = trigger?.program[0];
     expect(op).toMatchObject({
       op: "attachFromDeck",

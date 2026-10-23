@@ -205,8 +205,6 @@ describe("D340 §1 — the registry row, read off the LIVE registry", () => {
     expect(ability?.name).toBe("Freezing Shroud");
     expect(ability?.trigger).toBe("betweenTurns");
     expect(ability?.activeOnly).toBeUndefined();
-    // Mandatory: "put", not "you may put".
-    expect(ability?.optional).toBeUndefined();
     // The sentence is not "The effect of Freezing Shroud doesn't stack."
     expect(ability?.doesNotStack).toBeUndefined();
   });

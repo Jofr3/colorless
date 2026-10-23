@@ -94,9 +94,6 @@ describe("D244 §1 — the two programs and the printings they serve", () => {
       expect(triggered, `${id} has no triggered ability`).toBeDefined();
       expect(triggered?.[0]?.name).toBe("Rapid Vernier");
       expect(triggered?.[0]?.trigger).toBe("onPlayToBench");
-      // The printed "you may", carried on the FLAG as well as on the op — the
-      // flag is the sentence, the op is the answer.
-      expect(triggered?.[0]?.optional).toBe(true);
     }
     // One shared object, not six transcriptions that could drift.
     for (const id of RAPID_VERNIER_IDS) {

@@ -98,7 +98,7 @@ export function runBoardTrigger(
       },
     };
   }
-  // Optional triggers auto-fire; a trigger with a downside carries its own confirm as an inner
+  // Triggers auto-fire; a printed "you may" with a downside carries its own confirm as an inner
   // `optional` op.
   events.push({ type: "ABILITY_TRIGGERED", seat, uid, ability: ability.name });
   return settleProgram(

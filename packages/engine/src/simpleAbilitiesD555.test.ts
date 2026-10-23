@@ -419,7 +419,6 @@ describe("D555 B §1 — the print, and the registry rows that map it", () => {
       {
         name: "Snow Sink",
         trigger: "onPlayToBench",
-        optional: true,
         program: [
           {
             op: "conditionGate",
@@ -441,7 +440,6 @@ describe("D555 B §1 — the print, and the registry rows that map it", () => {
       {
         name: "Wicked Tail",
         trigger: "onEvolve",
-        optional: true,
         program: [
           { op: "coinFlipGate", then: [{ op: "randomFromOpponentHand", to: "deck" }] },
           { op: "coinFlipGate", then: [{ op: "randomFromOpponentHand", to: "deck" }] },

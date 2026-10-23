@@ -381,12 +381,11 @@ describe("D560 §1 — the eleven registry rows: 17 printings, 11 objects, NO `a
 
   it("the triggered rows' timings, `optional` and Active-Spot clauses are the printed ones", () => {
     const t = (id: string) => programFor(id)?.triggered?.[0];
-    expect(t(DRILBUR)).toMatchObject({ trigger: "onPlayToBench", optional: true });
+    expect(t(DRILBUR)).toMatchObject({ trigger: "onPlayToBench" });
     expect(t(KOFFING_TR)).toMatchObject({ trigger: "onDamagedByAttack", activeOnly: true });
-    expect(t(KOFFING_TR)?.optional).toBeUndefined(); // no "you may" is printed
-    expect(t(WHIMSICOTT[0])).toMatchObject({ trigger: "onEvolve", optional: true });
-    expect(t(DACHSBUN[0])).toMatchObject({ trigger: "onEvolve", optional: true });
-    expect(t(INDEEDEE[0])).toMatchObject({ trigger: "onPlayToBench", optional: true });
+    expect(t(WHIMSICOTT[0])).toMatchObject({ trigger: "onEvolve" });
+    expect(t(DACHSBUN[0])).toMatchObject({ trigger: "onEvolve" });
+    expect(t(INDEEDEE[0])).toMatchObject({ trigger: "onPlayToBench" });
     expect(t(INDEEDEE[0])?.program).toEqual([
       { op: "heal", target: "self", amount: 30 },
       { op: "recoverOneStatus" },

@@ -1002,7 +1002,6 @@ describe("D199 — the registry map", () => {
       {
         name: "Biting Spree",
         trigger: "onEvolve",
-        optional: true,
         program: [
           {
             op: "damageChosen",
@@ -1046,7 +1045,6 @@ describe("D199 — the registry map", () => {
       {
         name: "Sudden Shearing",
         trigger: "onPlayToBench",
-        optional: true,
         program: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
       },
     ]);
@@ -1083,7 +1081,6 @@ describe("D199 — the registry map", () => {
       {
         name: "Assemble Alloy",
         trigger: "onEvolve",
-        optional: true,
         program: [
           {
             op: "attachEnergyFrom",

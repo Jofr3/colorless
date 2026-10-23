@@ -243,7 +243,6 @@ describe("D628 §1 — the programs: Meowth ex on D593's object, two new objects
           {
             name: "Last-Ditch Catch",
             trigger: "onPlayToBench",
-            optional: true,
             oncePerTurn: "sharedByName",
             program: [
               {

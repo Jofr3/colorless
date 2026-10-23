@@ -317,7 +317,6 @@ describe("§1 — the prints and the registry rows", () => {
         {
           name: "Heavy Baton",
           trigger: "onHolderActiveKnockedOut",
-          optional: true,
           program: [
             {
               op: "moveEnergy",
@@ -354,7 +353,6 @@ describe("§1 — the prints and the registry rows", () => {
         {
           name: "Powerglass",
           trigger: "atEndOfYourTurnInActive",
-          optional: true,
           program: [{ op: "attachEnergyFrom", source: "discard", toSelf: true, declinable: true }],
         },
       ],

@@ -106,11 +106,6 @@ export interface TriggeredAbility {
   trigger: TriggerTiming;
   /** The op program to run (interpreter EffectOps). */
   program: EffectOp[];
-  /**
-   * "You may …": the trigger is optional. Optional triggers currently auto-fire since every one is
-   * pure upside.
-   */
-  optional?: boolean;
   /** Fires only while this Pokémon is in the Active Spot (Trevenant). */
   activeOnly?: boolean;
   /**
@@ -1773,7 +1768,6 @@ const EXP_SHARE: CardProgram = {
     {
       name: "Exp. Share",
       trigger: "onAllyActiveKnockOut",
-      optional: true,
       program: [
         {
           op: "moveEnergy",
@@ -1826,7 +1820,6 @@ const FLAMIGO: CardProgram = {
     {
       name: "Insta-Flock",
       trigger: "onPlayToBench",
-      optional: true,
       program: [
         {
           op: "searchDeck",
@@ -1849,7 +1842,6 @@ const ARBOLIVA: CardProgram = {
     {
       name: "Enriching Oil",
       trigger: "onEvolve",
-      optional: true,
       program: [{ op: "healChosen", amount: "all" }],
     },
   ],
@@ -1943,15 +1935,14 @@ const COUNTERATTACKING_PINCER: CardProgram = {
 // ── M4 slice 8: the mid-turn-damage snipe (§9). ──
 
 /**
- * Hawlucha — "Flying Entry". The trigger's `optional` auto-fires, so the printed "you may" survives
- * as the op's own `optional`: take 2 or none.
+ * Hawlucha — "Flying Entry". The trigger auto-fires, so the printed "you may" survives as the op's
+ * own `optional`: take 2 or none.
  */
 const HAWLUCHA: CardProgram = {
   triggered: [
     {
       name: "Flying Entry",
       trigger: "onPlayToBench",
-      optional: true,
       program: [
         {
           op: "damageChosen",
@@ -2560,7 +2551,6 @@ const FIX_ONKO: CardProgram = {
     {
       name: "Last Wish",
       trigger: "onKnockOut",
-      optional: true,
       program: [
         { op: "searchDeck", filter: { kind: "basicPokemon" }, dest: "hand", max: 1 },
         { op: "shuffleDeck" },
@@ -3501,7 +3491,6 @@ const MAWILE: CardProgram = {
     {
       name: "Special Eater",
       trigger: "onPlayToBench",
-      optional: true,
       program: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "specialEnergy" } }],
     },
   ],
@@ -3525,7 +3514,6 @@ const CHARIZARD_EX: CardProgram = {
     {
       name: "Infernal Reign",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "attachFromDeck",
@@ -3672,7 +3660,6 @@ const TEAM_ROCKETS_CROBAT_EX: CardProgram = {
     {
       name: "Biting Spree",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "damageChosen",
@@ -3702,7 +3689,6 @@ const SNEAKY_BITE: CardProgram = {
     {
       name: "Sneaky Bite",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "damageChosen",
@@ -3764,7 +3750,6 @@ const SUDDEN_SHEARING: CardProgram = {
     {
       name: "Sudden Shearing",
       trigger: "onPlayToBench",
-      optional: true,
       program: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
     },
   ],
@@ -3779,7 +3764,6 @@ const DEFIANT_HORN: CardProgram = {
     {
       name: "Defiant Horn",
       trigger: "onEvolve",
-      optional: true,
       program: [{ op: "gust", optional: true }],
     },
   ],
@@ -3854,7 +3838,6 @@ const RAPID_VERNIER: CardProgram = {
     {
       name: "Rapid Vernier",
       trigger: "onPlayToBench",
-      optional: true,
       program: [
         {
           op: "optional",
@@ -3989,7 +3972,6 @@ const ASSEMBLE_ALLOY: CardProgram = {
     {
       name: "Assemble Alloy",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "attachEnergyFrom",
@@ -4130,7 +4112,6 @@ const GREEDY_ORDER: CardProgram = {
     {
       name: "Greedy Order",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "discardPileRetrieval",
@@ -4153,7 +4134,6 @@ const INVITING_WINK: CardProgram = {
     {
       name: "Inviting Wink",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "bottomFromOpponentHand",
@@ -4246,7 +4226,6 @@ const SPIKE_CLAD: CardProgram = {
     {
       name: "Spike-Clad",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "attachEnergyFrom",
@@ -4904,7 +4883,6 @@ const MARNIES_GRIMMSNARL_EX: CardProgram = {
     {
       name: "Punk Up",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "attachFromDeck",
@@ -5106,7 +5084,6 @@ const BATTLE_HARDENED: CardProgram = {
     {
       name: "Battle-Hardened",
       trigger: "onPlayToBench",
-      optional: true,
       program: [
         {
           op: "attachEnergyFrom",
@@ -5558,7 +5535,6 @@ const GLITTERING_STAR_PATTERN: CardProgram = {
     {
       name: "Glittering Star Pattern",
       trigger: "onEvolve",
-      optional: true,
       // `optional`: the printed "you may" lets the player decline the pick.
       program: [{ op: "gust", remainingHpAtMost: 90, optional: true }],
     },
@@ -5825,7 +5801,6 @@ const SNOW_SINK: CardProgram = {
     {
       name: "Snow Sink",
       trigger: "onPlayToBench",
-      optional: true,
       program: [
         {
           op: "conditionGate",
@@ -5849,7 +5824,6 @@ const WICKED_TAIL: CardProgram = {
     {
       name: "Wicked Tail",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "coinFlipGate",
@@ -6310,7 +6284,6 @@ const DIG_DIG_DIG: CardProgram = {
     {
       name: "Dig Dig Dig",
       trigger: "onPlayToBench",
-      optional: true,
       program: [
         {
           op: "searchDeck",
@@ -6398,7 +6371,6 @@ const WAFTING_HEAL: CardProgram = {
     {
       name: "Wafting Heal",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "conditionGate",
@@ -6430,7 +6402,6 @@ const TIME_TO_CHOW_DOWN: CardProgram = {
     {
       name: "Time to Chow Down",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "optional",
@@ -6455,7 +6426,6 @@ const OBLIGING_HEAL: CardProgram = {
     {
       name: "Obliging Heal",
       trigger: "onPlayToBench",
-      optional: true,
       program: [{ op: "heal", target: "self", amount: 30 }, { op: "recoverOneStatus" }],
     },
   ],
@@ -6766,7 +6736,6 @@ const IMPROMPTU_CARRIER: CardProgram = {
     {
       name: "Impromptu Carrier",
       trigger: "onPlayToBench",
-      optional: true,
       program: [
         { op: "searchDeck", filter: { kind: "toolCard" }, dest: "attachToSelf", max: 1 },
         { op: "shuffleDeck" },
@@ -6781,7 +6750,6 @@ const ZERO_TO_HERO: CardProgram = {
     {
       name: "Zero to Hero",
       trigger: "onActiveMovedToBench",
-      optional: true,
       oncePerTurn: true,
       program: [{ op: "switchWithDeckNamed", name: "Palafin ex" }],
     },
@@ -6819,7 +6787,6 @@ const HEAVY_BATON: CardProgram = {
     {
       name: "Heavy Baton",
       trigger: "onHolderActiveKnockedOut",
-      optional: true,
       program: [
         {
           op: "moveEnergy",
@@ -6853,7 +6820,6 @@ const POWERGLASS: CardProgram = {
     {
       name: "Powerglass",
       trigger: "atEndOfYourTurnInActive",
-      optional: true,
       program: [{ op: "attachEnergyFrom", source: "discard", toSelf: true, declinable: true }],
     },
   ],
@@ -6986,7 +6952,6 @@ const JEWEL_SEEKER: CardProgram = {
     {
       name: "Jewel Seeker",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "conditionGate",
@@ -7821,7 +7786,7 @@ const MORTAL_SHURIKEN: CardProgram = {
 };
 
 // On-evolve Abilities: the `onEvolve` moment is met once by construction, so no `oncePerTurn` key.
-// `optional: true` auto-fires; consequents with a real downside carry an inner `optional` confirm.
+// Triggers auto-fire; consequents with a real downside carry an inner `optional` confirm.
 // Programs that print "Then, shuffle" shuffle even when the "up to" pick takes nothing.
 
 const PSYCHIC_DRAW_3_TEXT =
@@ -7835,7 +7800,6 @@ const PSYCHIC_DRAW_3: CardProgram = {
     {
       name: "Psychic Draw",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "optional",
@@ -7853,7 +7817,6 @@ const PSYCHIC_DRAW_2: CardProgram = {
     {
       name: "Psychic Draw",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "optional",
@@ -7877,7 +7840,6 @@ const PRISON_PANIC: CardProgram = {
     {
       name: "Prison Panic",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "optional",
@@ -7898,7 +7860,6 @@ const ENERGIZED_STEPS: CardProgram = {
     {
       name: "Energized Steps",
       trigger: "onEvolve",
-      optional: true,
       program: [
         { op: "attachFromTop", n: 4, filter: { kind: "basicEnergy" }, max: "any" },
         { op: "shuffleDeck" },
@@ -7913,7 +7874,6 @@ const HEAVE_HO_CATCHER: CardProgram = {
     {
       name: "Heave-Ho Catcher",
       trigger: "onEvolve",
-      optional: true,
       program: [{ op: "gust", optional: true }],
     },
   ],
@@ -7925,7 +7885,6 @@ const CAST_OFF_SHELL: CardProgram = {
     {
       name: "Cast-Off Shell",
       trigger: "onEvolve",
-      optional: true,
       program: [
         { op: "searchDeck", filter: { kind: "byName", name: "Shedinja" }, dest: "bench", max: 1 },
         { op: "shuffleDeck" },
@@ -7940,7 +7899,6 @@ const ENRICHING_MELODY: CardProgram = {
     {
       name: "Enriching Melody",
       trigger: "onEvolve",
-      optional: true,
       program: [{ op: "healChosen", amount: "all" }],
     },
   ],
@@ -7952,7 +7910,6 @@ const MULTIPLYING_COCOON: CardProgram = {
     {
       name: "Multiplying Cocoon",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "searchDeck",
@@ -7981,7 +7938,6 @@ const HAPHAZARD_HAMMER: CardProgram = {
     {
       name: "Haphazard Hammer",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "coinFlipGate",
@@ -8149,7 +8105,6 @@ const TUCK_TAIL: CardProgram = {
     {
       name: "Last-Ditch Catch",
       trigger: "onPlayToBench",
-      optional: true,
       oncePerTurn: "sharedByName",
       program: [
         {
@@ -8988,7 +8943,6 @@ const SANDY_FLAPPING: CardProgram = {
     {
       name: "Sandy Flapping",
       trigger: "onEvolve",
-      optional: true,
       program: [
         {
           op: "optional",
@@ -9000,7 +8954,6 @@ const SANDY_FLAPPING: CardProgram = {
     {
       name: "Sandy Flapping",
       trigger: "onKnockOut",
-      optional: true,
       activeOnly: true,
       byOpponentAttack: true,
       program: [

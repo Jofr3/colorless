@@ -244,9 +244,6 @@ describe("D350 §1 — the registry row, read off the LIVE registry", () => {
     const triggered = program?.triggered?.[0];
     expect(triggered?.name).toBe("Inviting Wink");
     expect(triggered?.trigger).toBe("onEvolve");
-    // The printed "you MAY" lives on the trigger's own decline (GREEDY_ORDER's
-    // reading), not on an `optional` OP — a wrapper would be a second question.
-    expect(triggered?.optional).toBe(true);
     expect(triggered?.program).toHaveLength(1);
   });
 

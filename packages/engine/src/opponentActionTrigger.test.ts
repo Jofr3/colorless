@@ -233,7 +233,6 @@ describe("D319 — the opponent-action trigger", () => {
     expect(impulse?.opponentAction).toBe(true);
     expect(impulse?.doesNotStack).toBe(true);
     expect(impulse?.program).toEqual([{ op: "damageSubject", amount: 40 }]);
-    expect(impulse?.optional).toBeUndefined();
 
     const curse = programFor(GENGAR)?.triggered?.[0];
     expect(curse?.name).toBe("Gnawing Curse");

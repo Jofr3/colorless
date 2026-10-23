@@ -494,7 +494,6 @@ describe("§1 — the prints and the registry rows", () => {
         {
           name: "Impromptu Carrier",
           trigger: "onPlayToBench",
-          optional: true,
           program: [
             { op: "searchDeck", filter: { kind: "toolCard" }, dest: "attachToSelf", max: 1 },
             { op: "shuffleDeck" },
@@ -510,7 +509,6 @@ describe("§1 — the prints and the registry rows", () => {
         {
           name: "Zero to Hero",
           trigger: "onActiveMovedToBench",
-          optional: true,
           oncePerTurn: true,
           program: [{ op: "switchWithDeckNamed", name: "Palafin ex" }],
         },
