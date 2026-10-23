@@ -5,6 +5,9 @@
 
 export type CoinFace = "heads" | "tails";
 
+/** The number of distinct `nextU32` values. */
+const U32_RANGE = 2 ** 32;
+
 /** One mulberry32 step: a uniform u32 plus the advanced state. The state is
     kept a signed int32 (`| 0`) so it JSON round-trips exactly. */
 export function nextU32(state: number): [value: number, nextState: number] {
@@ -53,7 +56,7 @@ export function flipUntilTails(state: number, cap: number): [faces: CoinFace[], 
 export function randomIndex(count: number, state: number): [index: number, nextState: number] {
   if (count <= 0) return [0, state];
   const [value, next] = nextU32(state);
-  return [Math.floor((value / 4294967296) * count), next];
+  return [Math.floor((value / U32_RANGE) * count), next];
 }
 
 /** Fisher–Yates over a copy; the input array is never touched. Both indices
