@@ -529,64 +529,31 @@ export function disabledAbilityUids(state: GameState): Set<string> {
     auras.push({ aura: stadiumAura, sourceSeat: state.stadium.owner, holder: null });
   }
   if (auras.length === 0) return disabled;
-  // The stratified lock pass. `true` = on, `false` = off, `undefined` = undecided. Ground
-  // repeatedly: an aura is on once every aura reaching its holder is off (vacuously for a Stadium),
-  // off once an on aura reaches its holder. When nothing changes, switch on only the source cycles
-  // (strongly connected undecided groups no outside undecided aura reaches) and ground again; each
-  // round decides at least one cycle, so it ends. Run only for two or more auras.
-  const on: (boolean | undefined)[] = auras.map(() => true);
-  if (auras.length >= 2) {
-    // `reachedBy[i]` — the auras whose predicate reaches aura i's HOLDER. A Pokémon aura's
-    // `sourceSeat` IS its holder's seat.
-    const reachedBy = auras.map(({ holder, sourceSeat: holderSeat }) =>
-      holder === null
-        ? []
-        : auras.flatMap(({ aura, sourceSeat }, j) =>
-            auraSuppresses(aura, sourceSeat, holderSeat, holder.body, holder.top, holder.isActive)
-              ? [j]
-              : [],
+  // Run only for two or more auras: a lone aura is always on.
+  const on: readonly boolean[] =
+    auras.length < 2
+      ? auras.map(() => true)
+      : resolveSuppressionGraph(
+          // `reachedBy[i]` — the auras whose predicate reaches aura i's HOLDER. A Pokémon aura's
+          // `sourceSeat` IS its holder's seat.
+          auras.map(({ holder, sourceSeat: holderSeat }) =>
+            holder === null
+              ? []
+              : auras.flatMap(({ aura, sourceSeat }, j) =>
+                  auraSuppresses(
+                    aura,
+                    sourceSeat,
+                    holderSeat,
+                    holder.body,
+                    holder.top,
+                    holder.isActive,
+                  )
+                    ? [j]
+                    : [],
+                ),
           ),
-    );
-    on.fill(undefined);
-    for (;;) {
-      let changed = true;
-      while (changed) {
-        changed = false;
-        for (const [i, by] of reachedBy.entries()) {
-          if (on[i] !== undefined) continue;
-          if (by.some((j) => on[j] === true)) {
-            on[i] = false; // one-way: an ON lock reaches this lock's source
-            changed = true;
-          } else if (by.every((j) => on[j] === false)) {
-            on[i] = true; // grounded: nothing ON reaches it, and nothing undecided does
-            changed = true;
-          }
-        }
-      }
-      // `upstream[i]` — the undecided auras that reach aura i's holder, directly or through
-      // other undecided auras (empty for a decided aura).
-      const upstream = reachedBy.map((by, i) => {
-        const seen = new Set<number>();
-        if (on[i] !== undefined) return seen;
-        const stack = by.filter((j) => on[j] === undefined);
-        for (let j = stack.pop(); j !== undefined; j = stack.pop()) {
-          if (seen.has(j)) continue;
-          seen.add(j);
-          for (const k of reachedBy[j] ?? []) if (on[k] === undefined) stack.push(k);
-        }
-        return seen;
-      });
-      // A source cycle member: it reaches itself, and every undecided aura reaching it is one it
-      // reaches back. Kept on.
-      const sources = upstream.flatMap((up, i) =>
-        up.has(i) && [...up].every((k) => upstream[k]?.has(i) === true) ? [i] : [],
-      );
-      if (sources.length === 0) break;
-      for (const i of sources) on[i] = true;
-    }
-  }
-  // Evaluate each aura's targets. Only an aura switched off stays silent (`!== false`); an
-  // undecided one would read on.
+        );
+  // Evaluate each aura's targets against the auras left on.
   for (const targetSeat of SEATS) {
     const side = state.players[targetSeat];
     const targets = inPlayOf(side);
@@ -599,13 +566,64 @@ export function disabledAbilityUids(state: GameState): Set<string> {
       if (
         auras.some(
           ({ aura, sourceSeat }, i) =>
-            on[i] !== false && auraSuppresses(aura, sourceSeat, targetSeat, target, top, isActive),
+            on[i] === true && auraSuppresses(aura, sourceSeat, targetSeat, target, top, isActive),
         )
       )
         disabled.add(uid);
     }
   }
   return disabled;
+}
+
+/**
+ * Which Ability locks stay on when locks can silence each other's holders. `reachedBy[i]` lists
+ * the locks that reach lock i's holder; the result says, per lock, whether it is on.
+ *
+ * Stratified: a lock is on once every lock reaching it is off (vacuously when nothing reaches it),
+ * and off once an on lock reaches it (one-way). When grounding stalls, every source cycle — a
+ * strongly connected group of undecided locks that no outside undecided lock reaches — is switched
+ * on, and grounding resumes. Each round decides at least one cycle, so it terminates with every
+ * lock decided.
+ */
+export function resolveSuppressionGraph(reachedBy: readonly (readonly number[])[]): boolean[] {
+  const on: (boolean | undefined)[] = reachedBy.map(() => undefined);
+  for (;;) {
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const [i, by] of reachedBy.entries()) {
+        if (on[i] !== undefined) continue;
+        if (by.some((j) => on[j] === true)) {
+          on[i] = false;
+          changed = true;
+        } else if (by.every((j) => on[j] === false)) {
+          on[i] = true;
+          changed = true;
+        }
+      }
+    }
+    // `upstream[i]` — the undecided locks that reach lock i, directly or through other undecided
+    // locks (empty for a decided lock).
+    const upstream = reachedBy.map((by, i) => {
+      const seen = new Set<number>();
+      if (on[i] !== undefined) return seen;
+      const stack = by.filter((j) => on[j] === undefined);
+      for (let j = stack.pop(); j !== undefined; j = stack.pop()) {
+        if (seen.has(j)) continue;
+        seen.add(j);
+        for (const k of reachedBy[j] ?? []) if (on[k] === undefined) stack.push(k);
+      }
+      return seen;
+    });
+    // A source cycle member reaches itself, and reaches back every undecided lock reaching it.
+    const sources = upstream.flatMap((up, i) =>
+      up.has(i) && [...up].every((k) => upstream[k]?.has(i) === true) ? [i] : [],
+    );
+    if (sources.length === 0) break;
+    for (const i of sources) on[i] = true;
+  }
+  // Every lock is decided by now; an undecided one would read on.
+  return on.map((value) => value !== false);
 }
 
 /** Does `aura` (emitted by `sourceSeat`) suppress the Abilities of the in-play
