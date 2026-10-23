@@ -1,6 +1,7 @@
 -- Adapt create_UIBox_current_hand_row (functions/UI_definitions.lua): the
 -- quantity replaces the level, and +/- replace the chips/mult values.
 local T=require('ui.theme')
+local Fit=require('ui.text_fit')
 local Button=require('ui.button')
 local Alert=require('ui.card_alert')
 local Row={colours={
@@ -19,12 +20,7 @@ local function text(value,scale,x,y,w,h,colour,shadow,roomWidth)
   local factor=scale*0.3
   if font:getWidth(value)*factor>w-6 then factor=math.max(0.3*0.3,(w-6)/math.max(1,font:getWidth(value)))end
   if font:getWidth(value)*factor>w-6 then
-    local out=''
-    for char in value:gmatch('[%z\1-\127\194-\244][\128-\191]*')do
-      if font:getWidth(out..char..'...')*factor>w-6 then break end
-      out=out..char
-    end
-    value=out..'...'
+    value=Fit.ellipsize(value,w-6,function(s) return font:getWidth(s)*factor end)
   end
   local tw,th=font:getWidth(value)*factor,font:getHeight()*0.83*factor
   local cx,cy=x+w/2,y+h/2

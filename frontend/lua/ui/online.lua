@@ -10,6 +10,7 @@ local Button=require('ui.button')
 local Modal=require('ui.modal')
 local Motion=require('ui.motion')
 local Codec=require('ui.codec')
+local Fit=require('ui.text_fit')
 local Input=require('ui.text_input')
 local Dyna=require('ui.dynatext')
 local Fx=require('ui.sim_fx')
@@ -37,19 +38,6 @@ local filters={{'All decks'},{'Standard legal','standard',true},{'Not Standard l
 local function darken(c,t) return {c[1]*(1-t),c[2]*(1-t),c[3]*(1-t),c[4] or 1} end
 local function mix(a,b,t) return {a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t,a[3]+(b[3]-a[3])*t,1} end
 local function spell(code) return (code:gsub('.','%0 '):gsub('%s+$','')) end
-local function fitted(text,size,width)
-  text=text:gsub('%c',' ')
-  while size>14 and T.font(size):getWidth(text)>width do size=size-1 end
-  if T.font(size):getWidth(text)>width then
-    local result=''
-    for char in text:gmatch('[%z\1-\127\194-\244][\128-\191]*') do
-      if T.font(size):getWidth(result..char..'...')>width then break end
-      result=result..char
-    end
-    text=result..'...'
-  end
-  return text,size
-end
 -- Mirrors normalizeLobbyCode: upper-case, drop look-alikes, cap at four.
 function Online.normalize(raw)
   local out=''
@@ -612,7 +600,7 @@ function Online:drawDeck(card,chosen)
     Button.outline(left,titleY-5,right-left,bottom-titleY+10,T.white,1.2)
     g.pop()
   end
-  local text,size=fitted(card.item.name,22,titleWidth)
+  local text,size=Fit.fit(card.item.name,22,titleWidth)
   T.text(text,size,titleX,titleY,titleWidth,T.white)
 end
 function Online:drawPicker()
@@ -645,7 +633,7 @@ function Online:draw()
   if self.picker then self:drawPicker()
   elseif step=='menu' then
     if self.tab==1 then T.text('Get a code to share, then wait for your opponent to join.',26,x+48,y+118,w-96,T.paper) end
-    if self.message~='' then local text,size=fitted(self.message,20,w-48);T.text(text,size,x+24,y+300,w-48,T.red) end
+    if self.message~='' then local text,size=Fit.fit(self.message,20,w-48);T.text(text,size,x+24,y+300,w-48,T.red) end
     if self.account=='anonymous' then T.text('Sign in to play with your decks.',20,x+24,y+h-148,w-48,T.white) end
   elseif step=='joining' then
     d.title:draw(x+w/2,y+130,self.width)
@@ -662,7 +650,7 @@ function Online:draw()
     self:drawSeat('opponent');self:drawSeat('you')
     if step=='versus' then d.vs:draw(self.vs.x,self.vs.y,self.width) end
     local pad,px=self.pad,self.padX
-    if self.message~='' then local text,size=fitted(self.message,20,w-2*px);T.text(text,size,x+px,y+h-pad-78,w-2*px,T.red) end
+    if self.message~='' then local text,size=Fit.fit(self.message,20,w-2*px);T.text(text,size,x+px,y+h-pad-78,w-2*px,T.red) end
   elseif step=='starting' then
     d.title:draw(x+w/2,y+130,self.width)
     T.text('Starting the match...',26,x+24,y+196,w-48,T.paper)

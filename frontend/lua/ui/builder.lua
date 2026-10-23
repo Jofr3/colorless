@@ -13,6 +13,7 @@ local Energy=require('ui.energy')
 local PageText=require('ui.page_text')
 local Modal=require('ui.modal')
 local Codec=require('ui.codec')
+local Fit=require('ui.text_fit')
 local Input=require('ui.text_input')
 local g=love.graphics
 local PANEL_Y,PANEL_HEIGHT=95,554
@@ -21,9 +22,9 @@ local deckTypes={{key='all',label='All'},{key='Pokémon',label='Pokemon'},{key='
 local Builder={}; Builder.__index=Builder
 local function caption(text,size,x,y,w,colour,align)
   text=(text or ''):gsub('%c',' ')
-  while size>14 and T.font(size):getWidth(text)>w do size=size-1 end
+  size=Fit.shrink(text,size,14,w)
   if T.font(size):getWidth(text)>w then
-    local out='';for c in text:gmatch('[%z\1-\127\194-\244][\128-\191]*') do
+    local out='';for c in Fit.chars(text) do
       if T.font(size):getWidth(out..'...')>w then break end;out=out..c
     end;text=out..'...'
   end
@@ -232,9 +233,7 @@ function Builder:filterCycle(label,value,key,y,count,index,selected,x,width)
   local display=value
   local limit=(centreWidth-12)/(0.4*0.3)
   if T.font(200):getWidth(display)>limit then
-    display='';for char in value:gmatch('[%z\1-\127\194-\244][\128-\191]*')do
-      if T.font(200):getWidth(display..char..'...')>limit then break end;display=display..char
-    end;display=display..'...'
+    display=Fit.ellipsize(value,limit,function(s) return T.font(200):getWidth(s) end)
   end
   text:set(display,self.time)
   self:add(value,x+36,y,centreWidth,38.4,'filter-value',T.red,key,
@@ -617,9 +616,9 @@ function Builder:drawControlFaces(controls,active)
       end
     elseif b.action~='card' and b.action~='deck-card' then
       local original=b.label;local size=b.fontSize
-      while size>14 and T.font(size):getWidth(b.label)>b.w-16 do size=size-1 end
+      size=Fit.shrink(b.label,size,14,b.w-16)
       if T.font(size):getWidth(b.label)>b.w-16 then
-        local out='';for c in b.label:gmatch('[%z\1-\127\194-\244][\128-\191]*')do if T.font(size):getWidth(out..c..'...')>b.w-16 then break end;out=out..c end;b.label=out..'...'
+        b.label=Fit.ellipsize(b.label,b.w-16,function(s) return T.font(size):getWidth(s) end)
       end
       b.fontSize=size;Button.draw(b,active and not b.disabled and (self.hover==i or self.focus==i),active and self.pressed==i,false,self.width);b.label=original
       if b.icon then

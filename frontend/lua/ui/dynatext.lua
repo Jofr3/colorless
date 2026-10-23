@@ -2,6 +2,7 @@
 -- rotate; shadows use the 30% black / 0.97 prep_draw convention. Text uses the
 -- 200px m6x11plus atlas scaled by `scale*0.1/20*60`, exactly as UIElement text.
 local T=require('ui.theme')
+local Codec=require('ui.codec')
 local Dyna={};Dyna.__index=Dyna
 local g=love.graphics
 local UNIT=60
@@ -9,7 +10,7 @@ Dyna.OFFSET_X,Dyna.OFFSET_Y,Dyna.HEIGHT_SCALE=10,-20,0.83
 local function factor(scale) return scale*0.1/20*UNIT end
 local function chars(text)
   local out={}
-  for c in tostring(text):gmatch('[%z\1-\127\194-\244][\128-\191]*') do out[#out+1]=c end
+  for c in tostring(text):gmatch(Codec.UTF8_CHAR) do out[#out+1]=c end
   return out
 end
 -- Metrics of a static string at a DynaText/UIElement scale, in pixels.

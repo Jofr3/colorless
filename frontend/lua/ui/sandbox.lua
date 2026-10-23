@@ -6,6 +6,7 @@ local T=require('ui.theme')
 local Button=require('ui.button')
 local Modal=require('ui.modal')
 local Codec=require('ui.codec')
+local Fit=require('ui.text_fit')
 local PageText=require('ui.page_text')
 local Pile=require('ui.deck_pile')
 local Labels=require('ui.deck_labels')
@@ -14,19 +15,6 @@ local Library=require('ui.library')
 local g=love.graphics
 local Sandbox={}
 Sandbox.__index=Sandbox
-local function fitted(text,size,width)
-  text=text:gsub('%c',' ')
-  while size>14 and T.font(size):getWidth(text)>width do size=size-1 end
-  if T.font(size):getWidth(text)>width then
-    local result=''
-    for char in text:gmatch('[%z\1-\127\194-\244][\128-\191]*') do
-      if T.font(size):getWidth(result..char..'...')>width then break end
-      result=result..char
-    end
-    text=result..'...'
-  end
-  return text,size
-end
 function Sandbox.new(callbacks)
   return setmetatable({callbacks=callbacks,phase='loading',busy=false,message='',items={},selected={'',''},tab=1,controls={},cards={},query='',editing=false,page=1,pages=1,focus=0,hover=0,time=0,pageText=PageText.new()},Sandbox)
 end
@@ -220,7 +208,7 @@ function Sandbox:draw()
         Button.outline(left,titleY-5,right-left,bottom-titleY+10,T.white,1.2)
         g.pop()
       end
-      local text,size=fitted(card.item.name,22,titleWidth)
+      local text,size=Fit.fit(card.item.name,22,titleWidth)
       T.text(text,size,titleX,titleY,titleWidth,T.white)
     end
     if #self.cards==0 then T.text(#self.items==0 and 'No valid decks' or 'No matches',32,a.x,a.y+80,a.w) end
@@ -235,7 +223,7 @@ function Sandbox:draw()
   if message=='' and self.phase=='ready' then
     for seat=1,2 do local d=self:deck(seat);if d and d.count~=60 then message='Player '..seat..': choose a 60-card deck.';break end end
   end
-  if message~='' then local text,size=fitted(message,18,w-40);T.text(text,size,x+20,y+h-124,w-40,T.red) end
+  if message~='' then local text,size=Fit.fit(message,18,w-40);T.text(text,size,x+20,y+h-124,w-40,T.red) end
   for i,b in ipairs(self.controls) do
     if b.input then Input.draw(b,self.query,self.editing,self.first,self.last,self.time,b.disabled,self.hover==i)
     elseif not b.card then Button.draw(b,not b.disabled and (self.hover==i or self.focus==i),self.pressed==i,false,self.width) end

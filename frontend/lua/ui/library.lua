@@ -8,6 +8,7 @@ local DeckLabels=require('ui.deck_labels')
 local PageText=require('ui.page_text')
 local Modal=require('ui.modal')
 local Codec=require('ui.codec')
+local Fit=require('ui.text_fit')
 local Input=require('ui.text_input')
 local g=love.graphics
 local Library={}
@@ -18,21 +19,8 @@ local function nextValue(values,current)
   for i,v in ipairs(values) do if v==current then return values[i%#values+1] end end
   return values[1]
 end
-local function fit(text,size,width)
-  text=text:gsub('%c',' ')
-  while size>14 and T.font(size):getWidth(text)>width do size=size-1 end
-  if T.font(size):getWidth(text)>width then
-    local out=''
-    for c in text:gmatch('[%z\1-\127\194-\244][\128-\191]*') do
-      if T.font(size):getWidth(out..c..'...')>width then break end
-      out=out..c
-    end
-    text=out..'...'
-  end
-  return text,size
-end
 local function caption(text,size,x,y,w,colour)
-  text,size=fit(text,size,w); T.text(text,size,x,y,w,colour)
+  text,size=Fit.fit(text,size,w); T.text(text,size,x,y,w,colour)
 end
 function Library.new(callbacks)
   return setmetatable({callbacks=callbacks,pageText=PageText.new(),phase='loading',busy=false,message='',query='',sort='name-asc',page=1,pages=1,total=0,items={},cards={},controls={},focus=0,hover=0,time=0,draft='',search='',editing=''},Library)
