@@ -81,6 +81,7 @@ export default defineConfig(({ mode }) => {
         "src/**/*.{test,spec}.ts",
         "apps/*/src/**/*.{test,spec}.ts",
         "packages/*/src/**/*.{test,spec}.ts",
+        "scripts/**/*.{test,spec}.ts",
       ],
     },
     build: {

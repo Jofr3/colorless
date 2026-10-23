@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  BOOLEAN_FLAGS,
-  KNOWN_FLAGS,
-  VALUE_FLAGS,
-  argvProblems,
-  knownFlagsUsage,
-} from "../../../scripts/mutation/argv";
+import { BOOLEAN_FLAGS, KNOWN_FLAGS, VALUE_FLAGS, argvProblems, knownFlagsUsage } from "./argv";
 
 const sorted = (xs: Iterable<string>): string[] => [...xs].sort();
 
